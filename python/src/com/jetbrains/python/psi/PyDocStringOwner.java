@@ -2,10 +2,7 @@ package com.jetbrains.python.psi;
 
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
-public interface PyDocStringOwner {
+public interface PyDocStringOwner extends PyElement {
   @Nullable
-  String getDocString();
+  PyStringLiteralExpression getDocStringExpression();
 }

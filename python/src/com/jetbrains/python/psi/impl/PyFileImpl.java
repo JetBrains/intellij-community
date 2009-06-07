@@ -30,6 +30,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.PythonDosStringFinder;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
@@ -234,5 +235,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       if (the_class != null) myType = new PyClassType(the_class, false); // 'module' is an instance of 'object'
     }
     return myType;
+  }
+
+  public PyStringLiteralExpression getDocStringExpression() {
+    return PythonDosStringFinder.find(this);
   }
 }

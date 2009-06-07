@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public interface PyFile extends PyElement, PsiFile {
+public interface PyFile extends PyElement, PsiFile, PyDocStringOwner {
   
   Key<Boolean> KEY_IS_DIRECTORY = Key.create("Dir impersonated by __init__.py");
   Key<Boolean> KEY_EXCLUDE_BUILTINS = Key.create("Don't include builtins to processDeclaration results");

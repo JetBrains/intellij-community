@@ -26,12 +26,12 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonDosStringFinder;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
-import com.jetbrains.python.validation.DocStringAnnotator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -172,7 +172,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
           }
 
           public void remove() {
-            //To change body of implemented methods use File | Settings | File Templates.
+            throw new UnsupportedOperationException();
           }
         };
       }
@@ -186,7 +186,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       // maybe a bare old-style class?
       // TODO: depend on language version: py3k does not do old style classes
       PsiElement paren = PsiTreeUtil.getChildOfType(this, PyParenthesizedExpression.class).getFirstChild(); // no NPE, we always have the par expr
-      if (paren != null && "(".equals(paren.getText())) { // no, we have "()" after class name, it's new style
+      if (paren != null && "(".equals(paren.getText())) { // "()" after class name, it's new style
         for(PsiElement element: superClassElements) {
           if (element instanceof PyClass) {
             result.add((PyClass) element);
@@ -309,16 +309,6 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
                                      PsiElement lastParent,
                                      @NotNull PsiElement place)
   {
-    /*
-    for(PyFunction func: getMethods()) {
-      if (func == lastParent) continue;
-      if (!processor.execute(func, substitutor)) return false;
-    }
-    for(PyTargetExpression expr: getClassAttributes()) {
-      if (expr == lastParent) continue;
-      if (!processor.execute(expr, substitutor)) return false;
-    }
-    */
     // class level
     final PsiElement the_psi = getNode().getPsi();
     PyResolveUtil.treeCrawlUp(processor, true, the_psi, the_psi);
@@ -339,8 +329,8 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return name != null ? name.getStartOffset() : super.getTextOffset();
   }
 
-  public String getDocString() {
-    return DocStringAnnotator.findDocString(getStatementList());
+  public PyStringLiteralExpression getDocStringExpression() {
+    return PythonDosStringFinder.find(getStatementList());
   }
 
   public String toString() {
