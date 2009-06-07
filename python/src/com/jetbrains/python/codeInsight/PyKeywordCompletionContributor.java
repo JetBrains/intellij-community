@@ -276,7 +276,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       if (!(what instanceof PsiElement)) return false;
       PsiElement p = (PsiElement)what;
       p = p.getUserData(ORG_ELT); // saved by fillCompletionVariants().
-      if (p == null) return false; // just in case
+      if (p == null || p instanceof PsiComment) return false; // just in case
       int point = p.getTextOffset();
       PsiDocumentManager docMgr = PsiDocumentManager.getInstance(p.getProject());
       Document doc = docMgr.getDocument(p.getContainingFile());
@@ -299,6 +299,10 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   }
 
   // ====== conditions
+
+  private static final PsiElementPattern.Capture<PsiElement> IN_COMMENT =
+    psiElement().inside(PsiComment.class)
+  ;
 
   private static final PsiElementPattern.Capture<PsiElement> AFTER_QUALIFIER =
     psiElement().afterLeaf(".")
@@ -621,6 +625,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     extend(
       CompletionType.BASIC, psiElement()
         .withLanguage(PythonLanguage.getInstance())
+        .andNot(IN_COMMENT)
         .andNot(BEFORE_COND)
         .andNot(IN_IMPORT_STMT) // expressions there are not logical anyway
         .andNot(IN_PARAM_LIST)
@@ -641,6 +646,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     extend(
       CompletionType.BASIC, psiElement()
         .withLanguage(PythonLanguage.getInstance())
+        .andNot(IN_COMMENT)
         .andNot(IN_IMPORT_STMT)
         .andNot(IN_PARAM_LIST)
         .andNot(IN_DEFINITION)
