@@ -24,10 +24,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonLanguage;
@@ -40,6 +37,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class PyUtil {
   private PyUtil() {
@@ -200,6 +198,14 @@ public class PyUtil {
 
   private static boolean isWhitespace(ASTNode node) {
     return node != null && node.getElementType().equals(TokenType.WHITE_SPACE);
+  }
+
+
+  @Nullable
+  public static PsiElement getFirstNonCommentAfter(PsiElement start) {
+    PsiElement seeker = start;
+    while (seeker instanceof PsiWhiteSpace || seeker instanceof  PsiComment) seeker = seeker.getNextSibling();
+    return seeker;
   }
 
   /**
@@ -393,6 +399,18 @@ public class PyUtil {
     if (! isFirst) node.addChild(gen.createComma(project), beforeThis);
     node.addChild(itemNode, beforeThis);
     if (! isLast) node.addChild(gen.createComma(project), beforeThis);
+  }
+
+
+  private static Pattern IDENTIFIER_PATTERN = Pattern.compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*");
+
+  /**
+   * @param name to be tested
+   * @return true iff the name is a valid Python identifier.
+   * <b>Note: it allows unicode names which only Py3k supports.</b>
+   */
+  public static boolean isIdentifier(String name) {
+    return IDENTIFIER_PATTERN.matcher(name).matches();
   }
 
 }

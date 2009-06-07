@@ -1,13 +1,16 @@
 package com.jetbrains.python.psi.types;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +25,7 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
   private final PsiFile myModule;
 
   protected static Set<String> ourPossibleFields;
+
   static {
     ourPossibleFields = new HashSet<String>();
     /*ourPossibleFields.addAll(PyObjectType.ourPossibleFields);*/
@@ -68,18 +72,33 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
     return result;
   }
 
-  public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression) {
+  public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression, ProcessingContext context) {
+    Set<String> names_already = context.get(PyType.CTX_NAMES);
     List<Object> result = new ArrayList<Object>();
     if (PsiTreeUtil.getParentOfType(referenceExpression, PyImportElement.class) == null) { // we're not in an import
       final VariantsProcessor processor = new VariantsProcessor();
       myModule.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
-      result.addAll(processor.getResultList());
+      if (names_already != null) {
+        for (LookupElement le : processor.getResultList()) {
+          String name = le.getLookupString();
+          if (!names_already.contains(name)) {
+            result.add(le);
+            names_already.add(name);
+          }
+        }
+      }
+      else result.addAll(processor.getResultList());
     }
     LookupElementFactory maker = LookupElementFactory.getInstance();
     for (PsiFileSystemItem pfsi : getSubmodulesList()) {
       String s = pfsi.getName();
       int pos = s.lastIndexOf('.'); // it may not contain a dot, except in extension; cut it off.
       if (pos > 0) s = s.substring(0, pos);
+      if (!PyUtil.isIdentifier(s)) continue; // file is e.g. a script with a strange name, not a module
+      if (names_already != null) {
+        if (names_already.contains(s)) continue;
+        else names_already.add(s);
+      }
       LookupItem item = (LookupItem)maker.createLookupElement(pfsi, s);
       item.setPresentableText(s); // not raw filename
       result.add(item);
