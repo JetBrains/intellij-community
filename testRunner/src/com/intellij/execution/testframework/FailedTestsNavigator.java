@@ -68,7 +68,7 @@ public class FailedTestsNavigator implements OccurenceNavigator {
     }
 
     private int getDefectNumber() {
-      return myDefect == null ? getDefectsCount() : myDefects.indexOf(myDefect);
+      return myDefect == null ? getDefectsCount() : myDefects.indexOf(myDefect) + 1;
     }
 
     public FailedTestInfo execute() {
