@@ -6,6 +6,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Application;
+import com.intellij.notification.Notifications;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,7 +26,7 @@ public class ProjectNotificationsComponent implements ProjectComponent {
     }
 
     myStatusBar = (StatusBarEx) WindowManager.getInstance().getStatusBar(myProject);
-    myStatusBar.getNotificationArea().setProject(myProject);
+    myProject.getMessageBus().connect().subscribe(Notifications.TOPIC, myStatusBar.getNotificationArea());
   }
 
   public void projectClosed() {
