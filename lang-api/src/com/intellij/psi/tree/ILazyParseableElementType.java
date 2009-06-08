@@ -65,19 +65,6 @@ public class ILazyParseableElementType extends IElementType {
     return parser.parse(this, builder).getFirstChildNode();
   }
 
-  /**
-   * Checks if the specified character sequence can be parsed as a valid content of the
-   * chameleon node.
-   *
-   * @param buffer  the content to parse.
-   * @param project the project containing the content.
-   * @return true if the content is valid, false if not
-   */
-
-  public boolean isParsable(CharSequence buffer, final Project project) {
-    return false;
-  }
-
   @Nullable
   public ASTNode createNode(CharSequence text) {
     return null;

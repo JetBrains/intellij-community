@@ -6,7 +6,6 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lexer.JavaLexer;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
@@ -54,8 +53,6 @@ public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
     final JavaLexer lexer = new JavaLexer(PsiUtil.getLanguageLevel(node.getPsi()));
     return FileTextParsing.parseFileText(manager, lexer, seq, 0, seq.length(), node.getCharTable());
   }
-
-  public boolean isParsable(CharSequence buffer, final Project project) {return true;}
 
   public String getExternalId() {
     return "java.FILE";

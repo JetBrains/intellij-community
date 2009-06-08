@@ -12,7 +12,7 @@ import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.tree.CustomParsingType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.tree.ILazyParseableElementType;
+import com.intellij.psi.tree.IReparseableElementType;
 import com.intellij.psi.tree.xml.IXmlElementType;
 import com.intellij.util.CharTable;
 
@@ -52,7 +52,7 @@ public interface XmlElementType extends XmlTokenType {
   IElementType XHTML_FILE = new IFileElementType(XHTMLLanguage.INSTANCE);
 
 
-  IElementType DTD_FILE = new ILazyParseableElementType("DTD_FILE", DTDLanguage.INSTANCE){
+  IElementType DTD_FILE = new IReparseableElementType("DTD_FILE", DTDLanguage.INSTANCE){
     public ASTNode parseContents(ASTNode chameleon) {
       final CharSequence chars = chameleon.getChars();
       final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);

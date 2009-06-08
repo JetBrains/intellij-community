@@ -9,6 +9,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.parsing.JavaParsingContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
+import com.intellij.psi.tree.IReparseableElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.util.CharTable;
 
@@ -30,8 +31,6 @@ public interface JavaDocElementType {
       return context.getJavadocParsing().parseJavaDocReference(chars, new JavaLexer(LanguageLevel.JDK_1_3), false, manager);
     }
 
-    public boolean isParsable(CharSequence buffer, final Project project) {return false;}
-
     @Override
     public ASTNode createNode(CharSequence text) {
       return new LazyParseablePsiElement(this, text);
@@ -48,15 +47,13 @@ public interface JavaDocElementType {
       return context.getJavadocParsing().parseJavaDocReference(chars, new JavaLexer(LanguageLevel.JDK_1_3), true, manager);
     }
 
-    public boolean isParsable(CharSequence buffer, final Project project) {return false;}
-
     @Override
     public ASTNode createNode(CharSequence text) {
       return new LazyParseablePsiElement(this, text);
     }
   };
 
-  ILazyParseableElementType DOC_COMMENT = new ILazyParseableElementType("DOC_COMMENT", StdLanguages.JAVA){
+  ILazyParseableElementType DOC_COMMENT = new IReparseableElementType("DOC_COMMENT", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {
       final CharSequence chars = chameleon.getChars();
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
