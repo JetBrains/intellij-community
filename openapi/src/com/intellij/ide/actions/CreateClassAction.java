@@ -99,11 +99,11 @@ public class CreateClassAction extends CreateInPackageFromTemplateActionBase {
       public LookupElement[] calculateLookupItems(ExpressionContext context) {
         final LookupElementFactoryImpl factory = LookupElementFactoryImpl.getInstance();
         List<LookupElement> items = new ArrayList<LookupElement>();
-        items.add(factory.createLookupElement("class").setBold().setIcon(Icons.CLASS_ICON).setPriority(0));
-        items.add(factory.createLookupElement("interface").setBold().setIcon(Icons.INTERFACE_ICON).setPriority(0));
+        items.add(factory.createLookupElement("class").setBold().setIcon(Icons.CLASS_ICON).setPriority(3));
+        items.add(factory.createLookupElement("interface").setBold().setIcon(Icons.INTERFACE_ICON).setPriority(2));
         if (LanguageLevelProjectExtension.getInstance(project).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
-          items.add(factory.createLookupElement("enum").setBold().setIcon(Icons.ENUM_ICON).setPriority(2));
-          items.add(factory.createLookupElement("@interface").setBold().setIcon(Icons.ANNOTATION_TYPE_ICON).setPriority(3));
+          items.add(factory.createLookupElement("enum").setBold().setIcon(Icons.ENUM_ICON).setPriority(1));
+          items.add(factory.createLookupElement("@interface").setBold().setIcon(Icons.ANNOTATION_TYPE_ICON).setPriority(0));
         }
         return items.toArray(new LookupElement[items.size()]);
       }
