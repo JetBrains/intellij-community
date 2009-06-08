@@ -1,2 +1,3 @@
 # no warnings here
-<info descr="null">"a\""</info>
+a = 1 # prevent the sting from baeing a doc comment
+"a\""

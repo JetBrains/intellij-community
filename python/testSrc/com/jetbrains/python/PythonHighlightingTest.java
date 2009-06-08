@@ -74,7 +74,7 @@ public class PythonHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testMalformedStringEscaped() throws Exception {
-    doTest();
+    doTest(false, false);
   }
 
   public void testStringEscapedOK() throws Exception {
@@ -98,4 +98,9 @@ public class PythonHighlightingTest extends DaemonAnalyzerTestCase {
   private void doTest() throws Exception {
     doTest(getTestName(true) + ".py", true, true);
   }
+
+  private void doTest(boolean checkWarnings, boolean checkInfos) throws Exception {
+    doTest(getTestName(true) + ".py", checkWarnings, checkInfos);
+  }
+
 }
