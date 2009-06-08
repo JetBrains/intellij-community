@@ -15,8 +15,9 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -64,6 +65,7 @@ public abstract class PassExecutorService {
     // null keys are ok
     Map<Document, List<FileEditor>> documentToEditors = new HashMap<Document, List<FileEditor>>();
     Map<FileEditor, List<TextEditorHighlightingPass>> textPasses = new HashMap<FileEditor, List<TextEditorHighlightingPass>>(passesMap.size());
+    final boolean dumb = DumbService.getInstance(myProject).isDumb();
     for (Map.Entry<FileEditor, HighlightingPass[]> entry : passesMap.entrySet()) {
       FileEditor fileEditor = entry.getKey();
       HighlightingPass[] passes = entry.getValue();
@@ -75,6 +77,10 @@ public abstract class PassExecutorService {
 
       for (int i = 0; i < passes.length; i++) {
         final HighlightingPass pass = passes[i];
+        if (dumb && !(pass instanceof DumbAware)) {
+          continue;
+        }
+        
         TextEditorHighlightingPass textEditorHighlightingPass;
         if (pass instanceof TextEditorHighlightingPass) {
           textEditorHighlightingPass = (TextEditorHighlightingPass)pass;
@@ -280,9 +286,6 @@ public abstract class PassExecutorService {
                   myPass.collectInformation(myUpdateProgress);
                 }
               }
-              catch (IndexNotReadyException e) {
-                log(myUpdateProgress, myPass, "Index not ready ");
-              }
               catch (ProcessCanceledException e) {
                 log(myUpdateProgress, myPass, "Canceled ");
                 myUpdateProgress.cancel(); //for the case then some smartasses throw PCE just for fun
@@ -358,9 +361,6 @@ public abstract class PassExecutorService {
           }
           afterApplyInformationToEditor(pass, fileEditor, updateProgress);
         }
-      }
-      catch (IndexNotReadyException e) {
-        log(updateProgress, pass, "Index not ready");
       }
       catch (RuntimeException e) {
         log(updateProgress, pass, "Error " + e);

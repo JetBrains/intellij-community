@@ -4,13 +4,18 @@
  */
 package com.intellij.openapi.project;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * A service managing IDEA's 'dumb' mode: when indices are updated in background and the functionality is very much limited.
@@ -75,6 +80,24 @@ public abstract class DumbService {
 
   public static DumbService getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, DumbService.class);
+  }
+
+  public <T> List<T> filterByDumbAwareness(Collection<T> collection) {
+    if (isDumb()) {
+      final ArrayList<T> result = new ArrayList<T>(collection);
+      for (Iterator<T> iterator = result.iterator(); iterator.hasNext();) {
+        if (!(iterator.next() instanceof DumbAware)) {
+          iterator.remove();
+        }
+      }
+      return result;
+    }
+
+    if (collection instanceof List) {
+      return (List<T>)collection;
+    }
+
+    return new ArrayList<T>(collection);
   }
 
 

@@ -18,6 +18,8 @@ package com.intellij.codeHighlighting;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
@@ -33,8 +35,9 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   private int[] myCompletionPredecessorIds = ArrayUtil.EMPTY_INT_ARRAY;
   private int[] myStartingPredecessorIds = ArrayUtil.EMPTY_INT_ARRAY;
   private int myId;
+  private boolean myDumb;
 
-  protected TextEditorHighlightingPass(final Project project, @Nullable final Document document) {
+  protected TextEditorHighlightingPass(@NotNull final Project project, @Nullable final Document document) {
     myDocument = document;
     myProject = project;
     myInitialStamp = document == null ? 0 : document.getModificationStamp();
@@ -42,10 +45,19 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
 
   public final void collectInformation(ProgressIndicator progress) {
     if (!isValid()) return; //Document has changed.
+    myDumb = DumbService.getInstance(myProject).isDumb();
     doCollectInformation(progress);
   }
 
+  protected boolean isDumbMode() {
+    return myDumb;
+  }
+
   private boolean isValid() {
+    if (isDumbMode() && !(this instanceof DumbAware)) {
+      return false;
+    }
+
     if (myDocument != null && myDocument.getModificationStamp() != myInitialStamp) return false;
     if (myProject != null && myDocument != null) {
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);

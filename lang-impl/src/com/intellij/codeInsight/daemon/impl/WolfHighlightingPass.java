@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.problems.WolfTheProblemSolverImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author cdr
 */
-class WolfHighlightingPass extends ProgressableTextEditorHighlightingPass {
+class WolfHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   WolfHighlightingPass(@NotNull Project project, @NotNull Document document, @NotNull PsiFile file) {
     super(project, document, null, DaemonBundle.message("pass.wolf"), file);
   }

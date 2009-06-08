@@ -4,12 +4,12 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
-import com.intellij.codeInsight.daemon.LineMarkerProviders;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class SlowLineMarkersPass extends TextEditorHighlightingPass implements LineMarkersProcessor{
+public class SlowLineMarkersPass extends TextEditorHighlightingPass implements LineMarkersProcessor, DumbAware {
   private final PsiFile myFile;
   private final int myStartOffset;
   private final int myEndOffset;
@@ -44,7 +44,7 @@ public class SlowLineMarkersPass extends TextEditorHighlightingPass implements L
       PsiElement psiRoot = viewProvider.getPsi(language);
       if (!HighlightLevelUtil.shouldHighlight(psiRoot)) continue;
       List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
-      final List<LineMarkerProvider> providers = LineMarkerProviders.INSTANCE.allForLanguage(language);
+      final List<LineMarkerProvider> providers = LineMarkersPass.getMarkerProviders(language, myProject);
       addLineMarkers(elements, providers, markers);
       LineMarkersPass.collectLineMarkersForInjected(markers, elements, this, myFile);
     }

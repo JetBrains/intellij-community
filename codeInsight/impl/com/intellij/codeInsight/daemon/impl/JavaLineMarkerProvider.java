@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -30,7 +32,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public class JavaLineMarkerProvider implements LineMarkerProvider {
+public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
   private static final Icon OVERRIDING_METHOD_ICON = IconLoader.getIcon("/gutter/overridingMethod.png");
   private static final Icon IMPLEMENTING_METHOD_ICON = IconLoader.getIcon("/gutter/implementingMethod.png");
 
@@ -115,6 +117,10 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
 
   public void collectSlowLineMarkers(final List<PsiElement> elements, final Collection<LineMarkerInfo> result) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
+
+    if (elements.isEmpty() || DumbService.getInstance(elements.get(0).getProject()).isDumb()) {
+      return;
+    }
 
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
     for (PsiElement element : elements) {

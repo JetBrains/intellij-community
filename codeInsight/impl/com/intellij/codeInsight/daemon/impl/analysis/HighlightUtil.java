@@ -18,6 +18,8 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -1886,8 +1888,12 @@ public class HighlightUtil {
         HighlightInfo info = HighlightInfo.createHighlightInfo(type, refName, description);
         QuickFixActionRegistrar registrar = new QuickFixActionRegistrarImpl(info);
 
+        final boolean dumb = DumbService.getInstance(ref.getProject()).isDumb();
         UnresolvedReferenceQuickFixProvider[] fixProviders = Extensions.getExtensions(UnresolvedReferenceQuickFixProvider.EXTENSION_NAME);
         for (UnresolvedReferenceQuickFixProvider each : fixProviders) {
+          if (dumb && !(each instanceof DumbAware)) {
+            continue;
+          }
           each.registerFixes(ref, registrar);
         }
 

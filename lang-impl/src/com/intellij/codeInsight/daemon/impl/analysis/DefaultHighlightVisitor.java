@@ -10,6 +10,8 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -69,9 +71,14 @@ public class DefaultHighlightVisitor extends PsiElementVisitor implements Highli
   private void runAnnotators(final PsiElement element) {
     List<Annotator> annotators = LanguageAnnotators.INSTANCE.allForLanguage(element.getLanguage());
     if (!annotators.isEmpty()) {
+      final boolean dumb = DumbService.getInstance(myProject).isDumb();
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < annotators.size(); i++) {
         Annotator annotator = annotators.get(i);
+        if (dumb && !(annotator instanceof DumbAware)) {
+          continue;
+        }
+
         annotator.annotate(element, myAnnotationHolder);
       }
       if (myAnnotationHolder.hasAnnotations()) {

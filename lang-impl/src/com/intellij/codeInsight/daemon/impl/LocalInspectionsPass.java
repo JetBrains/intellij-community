@@ -24,6 +24,8 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,7 +48,7 @@ import java.util.*;
 /**
  * @author max
  */
-public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass {
+public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LocalInspectionsPass");
   private final int myStartOffset;
   private final int myEndOffset;
@@ -88,7 +90,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (!HighlightLevelUtil.shouldInspect(myFile)) return;
     final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper();
-    final List<LocalInspectionTool> tools = getInspectionTools(profile);
+    final List<LocalInspectionTool> tools = DumbService.getInstance(myProject).filterByDumbAwareness(getInspectionTools(profile));
 
     inspect(tools, progress, iManager, true, true);
   }

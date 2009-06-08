@@ -33,6 +33,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,7 +56,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass {
+public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass");
   static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/errorsInProgress.png");
   static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
@@ -150,7 +151,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         addInjectedPsiHighlights(elements, Extensions.getExtensions(DefaultHighlightVisitor.FILTER_EP_NAME, myProject));
       }
 
-      result.addAll(highlightTodos(myFile, myDocument.getCharsSequence(), myStartOffset, myEndOffset));
+      if (!isDumbMode()) {
+        result.addAll(highlightTodos(myFile, myDocument.getCharsSequence(), myStartOffset, myEndOffset));
+      }
 
       if (myUpdateAll) {
         fileStatusMap.setErrorFoundFlag(myDocument, myErrorFound);
