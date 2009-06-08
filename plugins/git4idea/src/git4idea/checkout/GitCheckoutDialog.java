@@ -258,7 +258,7 @@ public class GitCheckoutDialog extends DialogWrapper {
         }
         catch (VcsException ex) {
           GitVcs.getInstance(myProject)
-            .showErrors(Collections.singletonList(ex), GitBundle.getString("checkout.retriving.branches.and.tags"));
+            .showErrors(Collections.singletonList(ex), GitBundle.getString("checkout.retrieving.branches.and.tags"));
         }
       }
     };

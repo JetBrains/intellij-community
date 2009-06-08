@@ -150,7 +150,7 @@ public class GitUIUtil {
             }
           }
           catch (VcsException ex) {
-            GitVcs.getInstance(project).showErrors(Collections.singletonList(ex), GitBundle.getString("merge.retriving.branches"));
+            GitVcs.getInstance(project).showErrors(Collections.singletonList(ex), GitBundle.getString("merge.retrieving.branches"));
           }
         }
       };
@@ -245,7 +245,7 @@ public class GitUIUtil {
       }
     }
     catch (VcsException e) {
-      GitVcs.getInstance(project).showErrors(Collections.singletonList(e), GitBundle.getString("pull.retriving.remotes"));
+      GitVcs.getInstance(project).showErrors(Collections.singletonList(e), GitBundle.getString("pull.retrieving.remotes"));
     }
   }
 

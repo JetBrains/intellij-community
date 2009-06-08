@@ -160,7 +160,7 @@ public class GitMergeDialog extends DialogWrapper {
       }
     }
     catch (VcsException e) {
-      GitVcs.getInstance(myProject).showErrors(Collections.singletonList(e), GitBundle.getString("merge.retriving.branches"));
+      GitVcs.getInstance(myProject).showErrors(Collections.singletonList(e), GitBundle.getString("merge.retrieving.branches"));
     }
   }
 

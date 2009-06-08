@@ -244,7 +244,7 @@ public class GitPullDialog extends DialogWrapper {
       }
     }
     catch (VcsException e) {
-      GitVcs.getInstance(myProject).showErrors(Collections.singletonList(e), GitBundle.getString("pull.retriving.remotes"));
+      GitVcs.getInstance(myProject).showErrors(Collections.singletonList(e), GitBundle.getString("pull.retrieving.remotes"));
     }
     finally {
       validateDialog();
