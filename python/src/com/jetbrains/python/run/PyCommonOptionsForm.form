@@ -60,7 +60,7 @@
         <properties/>
         <border type="none" title="Python Interpreter"/>
         <children>
-          <component id="b7269" class="javax.swing.JRadioButton">
+          <component id="b7269" class="javax.swing.JRadioButton" binding="myUseSpecifiiedSdkRadioButton">
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -74,11 +74,12 @@
             </constraints>
             <properties/>
           </component>
-          <component id="64e87" class="javax.swing.JRadioButton" binding="myUseSDKOfModuleRadioButton" default-binding="true">
+          <component id="64e87" class="javax.swing.JRadioButton" binding="myUseModuleSdkRadioButton" default-binding="true">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <selected value="true"/>
               <text value="Use SDK of module"/>
             </properties>
           </component>
@@ -97,4 +98,10 @@
       </grid>
     </children>
   </grid>
+  <buttonGroups>
+    <group name="buttonGroup1">
+      <member id="64e87"/>
+      <member id="b7269"/>
+    </group>
+  </buttonGroups>
 </form>

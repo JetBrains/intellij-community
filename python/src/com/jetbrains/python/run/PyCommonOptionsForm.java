@@ -1,12 +1,17 @@
 package com.jetbrains.python.run;
 
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.SimpleTextAttributes;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,13 +28,34 @@ public class PyCommonOptionsForm implements AbstractPythonRunConfigurationParams
   private EnvironmentVariablesComponent myEnvsComponent;
   private RawCommandLineEditor myInterpreterOptionsTextField;
   private JComboBox myInterpreterComboBox;
-  private JRadioButton myUseSDKOfModuleRadioButton;
+  private JRadioButton myUseModuleSdkRadioButton;
   private JComboBox myModuleComboBox;
   private JPanel myMainPanel;
+  private JRadioButton myUseSpecifiiedSdkRadioButton;
 
   public PyCommonOptionsForm(AbstractPythonRunConfiguration configuration) {
-    PythonRunConfigurationFormUtil
-      .setupAbstractPythonRunConfigurationForm(configuration.getProject(), myInterpreterComboBox, myWorkingDirectoryTextField);
+    // setting modules
+    final List<Module> validModules = configuration.getValidModules();
+    Module selection = validModules.size() > 0 ? validModules.get(0) : null;
+    myModuleComboBox.setModel(new CollectionComboBoxModel(validModules, selection));
+    myModuleComboBox.setRenderer(new ColoredListCellRenderer() {
+      @Override
+      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        if (value == null) {
+          append("[none]", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+        else {
+          Module module = (Module)value;
+          setIcon(module.getModuleType().getNodeIcon(false));
+          append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+      }
+    });
+
+    myInterpreterComboBox.setRenderer(new SdkListCellRenderer("<Project Default>"));
+    myWorkingDirectoryTextField.addBrowseFolderListener("Select Working Directory", "", configuration.getProject(),
+                                                  new FileChooserDescriptor(false, true, false, false, false, false));
+
   }
 
   public JPanel getMainPanel() {
@@ -76,6 +102,27 @@ public class PyCommonOptionsForm implements AbstractPythonRunConfigurationParams
     sdkList.addAll(allSdks);
 
     myInterpreterComboBox.setModel(new CollectionComboBoxModel(sdkList, selection));
+  }
+
+  public Module getModule() {
+    return (Module)myModuleComboBox.getSelectedItem();
+  }
+
+  public void setModule(Module module) {
+    myModuleComboBox.setSelectedItem(module);
+  }
+
+  public boolean isUseModuleSdk() {
+    return myUseModuleSdkRadioButton.isSelected();
+  }
+
+  public void setUseModuleSdk(boolean useModuleSdk) {
+    if (useModuleSdk) {
+      myUseModuleSdkRadioButton.setSelected(true);
+    }
+    else {
+      myUseSpecifiiedSdkRadioButton.setSelected(true);
+    }
   }
 
   public boolean isPassParentEnvs() {

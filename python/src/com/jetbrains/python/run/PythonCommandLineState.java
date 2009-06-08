@@ -1,23 +1,22 @@
 package com.jetbrains.python.run;
 
-import com.intellij.execution.configurations.CommandLineState;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessTerminatedListener;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.DefaultExecutionResult;
+import com.intellij.execution.configurations.CommandLineState;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.filters.Filter;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessTerminatedListener;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -71,7 +70,7 @@ public class PythonCommandLineState extends CommandLineState {
   private GeneralCommandLine generateCommandLine() {
     GeneralCommandLine commandLine = new GeneralCommandLine();
 
-    commandLine.setExePath(PythonSdkType.getInterpreterPath(myConfig.getSdkHome()));
+    commandLine.setExePath(myConfig.getInterpreterPath());
 
     commandLine.getParametersList().addParametersString(myConfig.getInterpreterOptions());
 

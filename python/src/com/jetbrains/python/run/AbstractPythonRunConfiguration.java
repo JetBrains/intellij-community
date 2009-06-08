@@ -18,7 +18,10 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Leonid Shalupov
@@ -30,12 +33,13 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
   private String mySdkHome = "";
   private boolean myPassParentEnvs;
   private Map<String, String> myEnvs = new HashMap<String, String>();
+  private boolean myUseModuleSdk;
 
   public AbstractPythonRunConfiguration(final String name, final RunConfigurationModule module, final ConfigurationFactory factory) {
     super(name, module, factory);
   }
 
-  public Collection<Module> getValidModules() {
+  public List<Module> getValidModules() {
     final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
     List<Module> result = new ArrayList<Module>();
     for (Module module : modules) {
@@ -59,14 +63,22 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
 
-    if (StringUtil.isEmptyOrSpaces(getSdkHome())) {
-      final Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
-      if (projectSdk == null || !(projectSdk.getSdkType() instanceof PythonSdkType)) {
-        throw new RuntimeConfigurationException(PyBundle.message("runcfg.unittest.no_sdk"));
+    if (!myUseModuleSdk) {
+      if (StringUtil.isEmptyOrSpaces(getSdkHome())) {
+        final Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
+        if (projectSdk == null || !(projectSdk.getSdkType() instanceof PythonSdkType)) {
+          throw new RuntimeConfigurationException(PyBundle.message("runcfg.unittest.no_sdk"));
+        }
+      }
+      else if (!PythonSdkType.getInstance().isValidSdkHome(getSdkHome())) {
+        throw new RuntimeConfigurationException(PyBundle.message("runcfg.unittest.no_valid_sdk"));
       }
     }
-    else if (!PythonSdkType.getInstance().isValidSdkHome(getSdkHome())) {
-      throw new RuntimeConfigurationException(PyBundle.message("runcfg.unittest.no_valid_sdk"));
+    else {
+      Sdk sdk = PythonSdkType.findPythonSdk(getModule());
+      if (sdk == null) {
+        throw new RuntimeConfigurationException(PyBundle.message("runcfg.unittest.no_module_sdk"));
+      }
     }
   }
 
@@ -74,10 +86,23 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
     String sdkHome = mySdkHome;
     if (StringUtil.isEmptyOrSpaces(mySdkHome)) {
       final Sdk projectJdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
-      assert projectJdk != null;
-      sdkHome = projectJdk.getHomePath();
+      if (projectJdk != null) {
+        sdkHome = projectJdk.getHomePath();
+      }
     }
     return sdkHome;
+  }
+
+  public String getInterpreterPath() {
+    String sdkHome;
+    if (myUseModuleSdk) {
+      Sdk sdk = PythonSdkType.findPythonSdk(getModule());
+      sdkHome = sdk.getHomePath();
+    }
+    else {
+      sdkHome = getSdkHome();
+    }
+    return PythonSdkType.getInterpreterPath(sdkHome);
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -86,6 +111,8 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
     myPassParentEnvs = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "PASS_PARENT_ENVS"));
     mySdkHome = JDOMExternalizerUtil.readField(element, "SDK_HOME");
     myWorkingDirectory = JDOMExternalizerUtil.readField(element, "WORKING_DIRECTORY");
+    myUseModuleSdk = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "IS_MODULE_SDK"));
+    getConfigurationModule().readExternal(element);
     EnvironmentVariablesComponent.readExternal(element, getEnvs());
   }
 
@@ -95,7 +122,9 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
     JDOMExternalizerUtil.writeField(element, "PASS_PARENT_ENVS", Boolean.toString(myPassParentEnvs));
     JDOMExternalizerUtil.writeField(element, "SDK_HOME", mySdkHome);
     JDOMExternalizerUtil.writeField(element, "WORKING_DIRECTORY", myWorkingDirectory);
+    JDOMExternalizerUtil.writeField(element, "IS_MODULE_SDK", Boolean.toString(myUseModuleSdk));
     EnvironmentVariablesComponent.writeExternal(element, getEnvs());
+    getConfigurationModule().writeExternal(element);
   }
 
   public Map<String, String> getEnvs() {
@@ -126,6 +155,18 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
     mySdkHome = sdkHome;
   }
 
+  public Module getModule() {
+    return getConfigurationModule().getModule();
+  }
+
+  public boolean isUseModuleSdk() {
+    return myUseModuleSdk;
+  }
+
+  public void setUseModuleSdk(boolean useModuleSdk) {
+    myUseModuleSdk = useModuleSdk;
+  }
+
   public boolean isPassParentEnvs() {
     return myPassParentEnvs;
   }
@@ -140,5 +181,7 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
     target.setPassParentEnvs(source.isPassParentEnvs());
     target.setSdkHome(source.getSdkHome());
     target.setWorkingDirectory(source.getWorkingDirectory());
+    target.setModule(source.getModule());
+    target.setUseModuleSdk(source.isUseModuleSdk());
   }
 }

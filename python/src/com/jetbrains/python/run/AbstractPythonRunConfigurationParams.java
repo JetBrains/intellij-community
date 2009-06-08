@@ -1,5 +1,6 @@
 package com.jetbrains.python.run;
 
+import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -20,6 +21,14 @@ public interface AbstractPythonRunConfigurationParams {
   String getSdkHome();
 
   void setSdkHome(String sdkHome);
+
+  Module getModule();
+
+  void setModule(Module module);
+
+  boolean isUseModuleSdk();
+
+  void setUseModuleSdk(boolean useModuleSdk);
 
   boolean isPassParentEnvs();
 

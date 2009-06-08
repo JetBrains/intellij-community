@@ -3,7 +3,6 @@ package com.jetbrains.python.run;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -38,11 +37,6 @@ public class PythonRunConfigurationFormUtil {
     return fileChooserDescriptor;
   }
 
-  private static void setupWorkingDirectoryField(Project project, TextFieldWithBrowseButton workingDirectoryField) {
-    workingDirectoryField.addBrowseFolderListener("Select Working Directory", "", project,
-                                                  new FileChooserDescriptor(false, true, false, false, false, false));
-  }
-
   public static void setupScriptField(Project project,
                                       TextFieldWithBrowseButton scriptField,
                                       final TextFieldWithBrowseButton workingDirectoryField) {
@@ -66,14 +60,4 @@ public class PythonRunConfigurationFormUtil {
     scriptField.addActionListener(listener);
   }
 
-  private static void setupInterpreterCombobox(JComboBox interpreterCombobox) {
-    interpreterCombobox.setRenderer(new SdkListCellRenderer("<Project Default>"));
-  }
-
-  public static void setupAbstractPythonRunConfigurationForm(final @NotNull Project project,
-                                                             final @NotNull JComboBox interpreterCombobox,
-                                                             final @NotNull TextFieldWithBrowseButton workingDirectoryField) {
-    setupInterpreterCombobox(interpreterCombobox);
-    setupWorkingDirectoryField(project, workingDirectoryField);
-  }
 }

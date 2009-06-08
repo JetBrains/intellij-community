@@ -310,7 +310,7 @@ public class PythonSdkType extends SdkType {
     return version;
   }
 
-  public static String getInterpreterPath(final String sdkHome) {
+  public static String getInterpreterPath(final String sdkHome) { 
     if (isJythonSdkHome(sdkHome)) {
       return getJythonBinaryPath(sdkHome).getPath();
     }

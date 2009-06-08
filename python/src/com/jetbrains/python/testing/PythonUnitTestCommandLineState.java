@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -67,7 +66,7 @@ public class PythonUnitTestCommandLineState extends CommandLineState {
 
     final File helpersRoot = PythonHelpersLocator.getHelpersRoot();
 
-    cmd.setExePath(PythonSdkType.getInterpreterPath(myConfig.getSdkHome()));
+    cmd.setExePath(myConfig.getInterpreterPath());
     if (!StringUtil.isEmptyOrSpaces(myConfig.getWorkingDirectory())) {
       cmd.setWorkDirectory(myConfig.getWorkingDirectory());
     }

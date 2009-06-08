@@ -24,12 +24,12 @@ public class PythonFacetConfiguration extends PythonFacetSettings implements Fac
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    element.setAttribute(SDK_NAME, mySdk == null ? "" : mySdk.getName());
+    String sdkName = element.getAttributeValue(SDK_NAME);
+    mySdk = StringUtil.isEmpty(sdkName) ? null : ProjectJdkTable.getInstance().findJdk(sdkName, PythonSdkType.getInstance().getName());
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    String sdkName = element.getAttributeValue(SDK_NAME);
-    mySdk = StringUtil.isEmpty(sdkName) ? null : ProjectJdkTable.getInstance().findJdk(sdkName, PythonSdkType.getInstance().getName());
+    element.setAttribute(SDK_NAME, mySdk == null ? "" : mySdk.getName());
   }
 
 }
