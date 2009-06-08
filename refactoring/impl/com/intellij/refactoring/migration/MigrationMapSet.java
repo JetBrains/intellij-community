@@ -2,20 +2,17 @@
 package com.intellij.refactoring.migration;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.UniqueFileNamesProvider;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -24,7 +21,7 @@ import java.util.Iterator;
 /**
  *
  */
-public class MigrationMapSet implements ExportableApplicationComponent {
+public class MigrationMapSet {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.migration.MigrationMapSet");
 
   private ArrayList<MigrationMap> myMaps = null;
@@ -45,28 +42,6 @@ public class MigrationMapSet implements ExportableApplicationComponent {
   };
 
   public MigrationMapSet() {
-  }
-
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{getMapDirectory()};
-  }
-
-  @NotNull
-  public String getPresentableName() {
-    return RefactoringBundle.message("migration.map.set.migration.maps");
-  }
-
-  public String getComponentName() {
-    return "MigrationManager";
-  }
-
-  public void initComponent() {
-
-  }
-
-  public void disposeComponent() {
-
   }
 
   public void addMap(MigrationMap map) {
