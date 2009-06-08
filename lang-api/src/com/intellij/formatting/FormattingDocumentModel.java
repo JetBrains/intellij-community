@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 
 /**
@@ -51,4 +52,6 @@ public interface FormattingDocumentModel {
    * @return the document text length.
    */
   int getTextLength();
+
+  Document getDocument();
 }

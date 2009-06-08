@@ -190,6 +190,9 @@ class FormatProcessor {
     if (model instanceof DocumentBasedFormattingModel) {
       final Document document = ((DocumentBasedFormattingModel)model).getDocument();
       if (document instanceof DocumentEx) return (DocumentEx)document; 
+    } else {
+      Document document = model.getDocumentModel().getDocument();
+      if (document instanceof DocumentEx) return (DocumentEx)document;
     }
     return null;
   }
