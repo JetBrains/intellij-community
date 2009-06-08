@@ -131,7 +131,7 @@ public class JavacOutputParser extends OutputParser {
                 }
                 buf.append(m);
               }
-              addMessage(callback, category, buf.toString(), VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, filePath), lineNum, colNum);
+              addMessage(callback, category, buf.toString(), VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, filePath), lineNum, colNum + 1);
             }
             finally {
               StringBuilderSpinAllocator.dispose(buf);
