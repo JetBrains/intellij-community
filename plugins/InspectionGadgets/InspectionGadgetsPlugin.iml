@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="ExtendedApi" />
     <orderEntry type="module" module-name="inspections-openapi" />
     <orderEntry type="module" module-name="jsp-openapi" />
+    <orderEntry type="module" module-name="refactoring-impl" />
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ACTIVE_VCS_NAME" value="svn" />

@@ -15,10 +15,18 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +58,15 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
         return new BeforeClassOrAfterClassIsPublicStaticVoidNoArgVisitor();
     }
 
-    private static class BeforeClassOrAfterClassIsPublicStaticVoidNoArgVisitor
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    if (infos.length != 1) return null;
+    final Object name = infos[0];
+    if (!(name instanceof String)) return null;
+    return new MakePublicStaticVoidFix((String)name);
+  }
+
+  private static class BeforeClassOrAfterClassIsPublicStaticVoidNoArgVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitMethod(@NotNull PsiMethod method) {
@@ -68,15 +84,49 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
             }
 
             final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList.getParametersCount() != 0) {
-                registerMethodError(method);
-            } else if (!returnType.equals(PsiType.VOID)) {
-                registerMethodError(method);
-            } else if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
-                registerMethodError(method);
-            } else if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-                registerMethodError(method);
-            }
+          if (parameterList.getParametersCount() != 0 ||
+              !returnType.equals(PsiType.VOID) ||
+              !method.hasModifierProperty(PsiModifier.PUBLIC) ||
+              !method.hasModifierProperty(PsiModifier.STATIC)) {
+            registerMethodError(method, "Change signature of \'" +
+                                        PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
+                                                                   PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_MODIFIERS | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_TYPE,
+                                                                   PsiFormatUtil.SHOW_TYPE) +
+                                        "\' to \'public static void " +
+                                        method.getName() +
+                                        "()\'");
+          }
         }
     }
+
+  private static class MakePublicStaticVoidFix extends InspectionGadgetsFix {
+    private final String myName;
+
+    public MakePublicStaticVoidFix(String name) {
+      myName = name;
+    }
+
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      final PsiMethod method = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
+      if (method != null){
+        final PsiModifierList modifierList = method.getModifierList();
+        if (!modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
+          modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
+        }
+        if (!modifierList.hasModifierProperty(PsiModifier.STATIC)) {
+          modifierList.setModifierProperty(PsiModifier.STATIC, true);
+        }
+
+        if (method.getReturnType() != PsiType.VOID) {
+          ChangeSignatureProcessor csp = new ChangeSignatureProcessor(project, method, false, PsiModifier.PUBLIC, method.getName(), PsiType.VOID, new ParameterInfoImpl[0]);
+          csp.run();
+        }
+      }
+    }
+
+    @NotNull
+    public String getName() {
+      return myName;
+    }
+  }
 }
