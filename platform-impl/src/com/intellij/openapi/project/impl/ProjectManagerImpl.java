@@ -56,6 +56,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
+  private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = false;
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectManagerImpl");
   public static final int CURRENT_FORMAT_VERSION = 4;
 
@@ -169,8 +170,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public Project newProject(final String projectName, String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
     filePath = canonicalize(filePath);
 
-    /*
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (LOG_PROJECT_LEAKAGE_IN_TESTS && ApplicationManager.getApplication().isUnitTestMode()) {
       for (int i = 0; i < 42; i++) {
         if (myProjects.size() < MAX_LEAKY_PROJECTS) break;
         System.gc();
@@ -190,13 +190,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         throw new TooManyProjectLeakedException(copy);
       }
     }
-    */
 
     try {
       ProjectImpl project =
         createAndInitProject(projectName, filePath, false, isDummy, ApplicationManager.getApplication().isUnitTestMode(),
                              useDefaultProjectSettings ? getDefaultProject() : null, null);
-      myProjects.put(project, null);
+      if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
+        myProjects.put(project, null);
+      }
       return project;
     }
     catch (final Exception e) {
