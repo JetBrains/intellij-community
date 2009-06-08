@@ -706,6 +706,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       return;
     }
 
+    if (DumbService.getInstance(myProject).isDumb() && !myDumbAwareIds.contains(id)) {
+      return;
+    }
+
     toBeShownInfo.setVisible(true);
     final InternalDecorator decorator = getInternalDecorator(id);
 
