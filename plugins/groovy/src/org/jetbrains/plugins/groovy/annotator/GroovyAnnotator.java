@@ -743,6 +743,7 @@ public class GroovyAnnotator implements Annotator {
     }
 
     PsiElement resolved = resolveResult.getElement();
+    final PsiElement parent = refExpr.getParent();
     if (resolved != null) {
       if (resolved instanceof PsiMember) {
         highlightMemberResolved(holder, refExpr, ((PsiMember)resolved));
@@ -758,7 +759,7 @@ public class GroovyAnnotator implements Annotator {
         String message = GroovyBundle.message(key, refExpr.getReferenceName());
         holder.createWarningAnnotation(refExpr, message);
       }
-      else if (refExpr.getParent() instanceof GrCall) {
+      else if (parent instanceof GrCall) {
         if (resolved instanceof PsiMethod && resolved.getUserData(GrMethod.BUILDER_METHOD) == null) {
           checkMethodApplicability(resolveResult, refExpr, holder);
         }
@@ -771,6 +772,10 @@ public class GroovyAnnotator implements Annotator {
     else {
       GrExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier == null && isAssignmentLHS(refExpr)) return;
+
+      if (parent instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)parent).getReferenceName())) {
+        checkSingleResolvedElement(holder, refExpr, resolveResult);
+      }
     }
 
     final PsiType refExprType = refExpr.getType();
@@ -781,7 +786,7 @@ public class GroovyAnnotator implements Annotator {
     if (refExprType == null) {
       if (resolved == null) {
         if (refExpr.getQualifierExpression() == null) {
-          if (!(refExpr.getParent() instanceof GrCallExpression)) {
+          if (!(parent instanceof GrCallExpression)) {
             registerCreateClassByTypeFix(refExpr, annotation);
           }
           registerAddImportFixes(refExpr, annotation);
@@ -912,7 +917,7 @@ public class GroovyAnnotator implements Annotator {
 
   }
 
-  private static void checkSingleResolvedElement(AnnotationHolder holder, GrCodeReferenceElement refElement, GroovyResolveResult resolveResult) {
+  private static void checkSingleResolvedElement(AnnotationHolder holder, GrReferenceElement refElement, GroovyResolveResult resolveResult) {
     final PsiElement resolved = resolveResult.getElement();
     if (resolved == null) {
       String message = GroovyBundle.message("cannot.resolve", refElement.getReferenceName());
