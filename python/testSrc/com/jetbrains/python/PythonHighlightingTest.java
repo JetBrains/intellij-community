@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import java.awt.*;
 
 /**
+ * Test highlighting added by annotators.
  * @author yole
  */
 public class PythonHighlightingTest extends DaemonAnalyzerTestCase {
@@ -34,6 +35,19 @@ public class PythonHighlightingTest extends DaemonAnalyzerTestCase {
 
     xKey = TextAttributesKey.find("PY.PREDEFINED_DEFINITION");
     xAttributes = new TextAttributes(Color.green, Color.black, Color.white, EffectType.BOXED, Font.BOLD);
+    scheme.setAttributes(xKey, xAttributes);
+
+    doTest();
+  }
+
+  public void testDocStrings() throws Exception {
+    EditorColorsManager manager = EditorColorsManager.getInstance();
+    EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
+    manager.addColorsScheme(scheme);
+    EditorColorsManager.getInstance().setGlobalScheme(scheme);
+
+    TextAttributesKey xKey = TextAttributesKey.find("PY.DOC_COMMENT");
+    TextAttributes xAttributes = new TextAttributes(Color.blue, Color.black, Color.white, EffectType.BOXED, Font.BOLD);
     scheme.setAttributes(xKey, xAttributes);
 
     doTest();
