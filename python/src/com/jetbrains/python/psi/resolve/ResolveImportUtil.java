@@ -498,12 +498,16 @@ public class ResolveImportUtil {
         for (VirtualFile a_file : pdir.getChildren()) {
           if (a_file != pfile) {
             if (a_file.isDirectory()) {
-              if (a_file.findChild(INIT_PY) != null) variants.add(a_file.getName());
+              if (a_file.findChild(INIT_PY) != null) {
+                final String name = a_file.getName();
+                if (PyUtil.isIdentifier(name)) variants.add(name);
+              }
             }
             else { // plain file
               String fname = a_file.getName();
               if (fname.endsWith(PY_SUFFIX)) {
-                variants.add(fname.substring(0, fname.length() - PY_SUFFIX.length()));
+                final String name = fname.substring(0, fname.length() - PY_SUFFIX.length());
+                if (PyUtil.isIdentifier(name)) variants.add(name);
               }
             }
           }
@@ -515,7 +519,9 @@ public class ResolveImportUtil {
     final Module module = ModuleUtil.findModuleForPsiElement(partial_ref);
     if (module != null) {
       ModuleRootManager.getInstance(module).processOrder(new SdkRootVisitingPolicy(visitor), null);
-      variants.addAll(visitor.getResult());
+      for (String name : visitor.getResult()) {
+        if (PyUtil.isIdentifier(name)) variants.add(name); // to thwart stuff like "__phello__.foo"
+      }
     }
 
     return variants.toArray(new Object[variants.size()]);
