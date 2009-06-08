@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.extensions.debugger;
 
 import com.intellij.psi.PsiFile;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -12,6 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
  * @author ilyas
  */
 public interface ScriptPositionManagerHelper {
+  ExtensionPointName<ScriptPositionManagerHelper> EP_NAME = ExtensionPointName.create("org.intellij.groovy.positionManagerDelegate");
 
   boolean isAppropriateRuntimeName(@NotNull String runtimeName);
 

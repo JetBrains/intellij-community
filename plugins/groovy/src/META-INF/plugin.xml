@@ -31,6 +31,7 @@
     <extensionPoint name="grails.facetProvider" interface="org.jetbrains.plugins.grails.util.GrailsFacetProvider"/>
     <extensionPoint name="nonCodeProcessor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor"/>
     <extensionPoint name="libraryManager" interface="org.jetbrains.plugins.groovy.config.LibraryManager"/>
+    <extensionPoint name="positionManagerDelegate" interface="org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.grails.grailsProjectViewStructureProvider"
                         interface="org.jetbrains.plugins.grails.projectView.v2.providers.GrailsProjectViewStructureProvider"/>
   </extensionPoints>
@@ -44,6 +45,7 @@
     <libraryManager implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryManager"/>
     <libraryManager implementation="org.jetbrains.plugins.grails.config.GrailsLibraryManager"/>
     <libraryManager implementation="org.jetbrains.plugins.gant.config.GantLibraryManager"/>
+    <positionManagerDelegate implementation="org.jetbrains.plugins.gant.debugger.GantPositionManagerHelper"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -523,9 +525,6 @@
     <!-- Groovy-based framework specific extension points -->
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelperRegistry</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.extensions.script.ScriptDetectorRegistry</implementation-class>

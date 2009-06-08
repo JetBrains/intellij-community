@@ -4,13 +4,11 @@ import com.intellij.openapi.components.ApplicationComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gant.completion.GantPropertiesInsertHandler;
-import org.jetbrains.plugins.gant.debugger.GantPositionManagerHelper;
 import org.jetbrains.plugins.gant.psi.GantScriptMembersProvider;
 import org.jetbrains.plugins.gant.util.GantScriptDetector;
-import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
+import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 import org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry;
-import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelperRegistry;
 import org.jetbrains.plugins.groovy.extensions.resolve.ScriptMembersProviderRegistry;
 import org.jetbrains.plugins.groovy.extensions.script.ScriptDetectorRegistry;
 
@@ -30,9 +28,6 @@ public class GantLoader implements ApplicationComponent {
   }
 
   public void initComponent() {
-    // Register debugger position manager
-    ScriptPositionManagerHelperRegistry.getInstance().registerPositionManagerHelper(new GantPositionManagerHelper());
-
     //Register Gant detector
     ScriptDetectorRegistry.getInstance().registerDetector(new GantScriptDetector());
 

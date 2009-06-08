@@ -46,7 +46,6 @@ import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
-import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelperRegistry;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -60,13 +59,11 @@ public class GroovyPositionManager implements PositionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.PositionManagerImpl");
 
   private final DebugProcess myDebugProcess;
-  private final ScriptPositionManagerHelperRegistry myRegistry;
   @NotNull
   public static final Set<String> GROOVY_EXTENSIONS = new java.util.HashSet<String>(Arrays.asList("groovy", "gvy", "gy", "gsh"));
 
   public GroovyPositionManager(DebugProcess debugProcess) {
     myDebugProcess = debugProcess;
-    myRegistry = ScriptPositionManagerHelperRegistry.getInstance();
   }
 
   public DebugProcess getDebugProcess() {
@@ -88,6 +85,7 @@ public class GroovyPositionManager implements PositionManager {
     }
   }
 
+  @Nullable
   private static GroovyPsiElement findReferenceTypeSourceImage(SourcePosition position) {
     PsiFile file = position.getFile();
     if (!(file instanceof GroovyFileBase)) return null;
@@ -96,7 +94,8 @@ public class GroovyPositionManager implements PositionManager {
     return PsiTreeUtil.getParentOfType(element, GrClosableBlock.class, GrTypeDefinition.class);
   }
 
-  private GrTypeDefinition findEnclosingTypeDefinition(SourcePosition position) {
+  @Nullable
+  private static GrTypeDefinition findEnclosingTypeDefinition(SourcePosition position) {
     PsiFile file = position.getFile();
     if (!(file instanceof GroovyFileBase)) return null;
     PsiElement element = file.findElementAt(position.getOffset());
@@ -150,7 +149,7 @@ public class GroovyPositionManager implements PositionManager {
   }
 
   @Nullable
-  private String getScriptQualifiedName(SourcePosition position) {
+  private static String getScriptQualifiedName(SourcePosition position) {
     PsiFile file = position.getFile();
     if (file instanceof GroovyFile) {
       return getScriptFQName((GroovyFile)file);
@@ -193,7 +192,7 @@ public class GroovyPositionManager implements PositionManager {
     String qName = dollar >= 0 ? originalQName.substring(0, dollar) : originalQName;
 
     String runtimeName = qName;
-    for (ScriptPositionManagerHelper helper : myRegistry.getScriptHelpers()) {
+    for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
       if (helper.isAppropriateRuntimeName(runtimeName)) {
         qName = helper.getOriginalScriptName(runtimeName);
         break;
@@ -235,7 +234,7 @@ public class GroovyPositionManager implements PositionManager {
     if (res != null) {
       return res;
     }
-    for (ScriptPositionManagerHelper helper : myRegistry.getScriptHelpers()) {
+    for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
       if (helper.isAppropriateRuntimeName(runtimeName)) {
         PsiFile file = helper.getExtraScriptIfNotFound(runtimeName, project);
         if (file != null) return file;
@@ -284,14 +283,14 @@ public class GroovyPositionManager implements PositionManager {
     return result;
   }
 
-  private String getScriptFQName(GroovyFile groovyFile) {
+  private static String getScriptFQName(GroovyFile groovyFile) {
     String qName;
     VirtualFile vFile = groovyFile.getVirtualFile();
     assert vFile != null;
     String packageName = groovyFile.getPackageName();
     String plainName = vFile.getNameWithoutExtension();
     String fileName = plainName;
-    for (ScriptPositionManagerHelper helper : myRegistry.getScriptHelpers()) {
+    for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
       if (helper.isAppropriateScriptFile(groovyFile)) {
         fileName = helper.getRuntimeScriptName(plainName, groovyFile);
         break;
