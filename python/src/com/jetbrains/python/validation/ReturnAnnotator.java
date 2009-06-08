@@ -16,22 +16,24 @@
 
 package com.jetbrains.python.validation;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.openapi.util.TextRange;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.patterns.SyntaxMatchers;
+
+import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 12.06.2005
- * Time: 21:56:06
- * To change this template use File | Settings | File Templates.
+ * Highlights incorrect return statements: 'return' and 'yield' outside functions, returning values from generators;
  */
 public class ReturnAnnotator extends PyAnnotator {
   public void visitPyReturnStatement(final PyReturnStatement node) {
-    PyFunction function = node.getContainingElement(PyFunction.class);
-    if (function == null) {
+    List<? extends PsiElement> found = SyntaxMatchers.IN_FUNCTION.search(node);
+    if (found == null) {
       getHolder().createErrorAnnotation(node, "'return' outside of function");
       return;
     }
+    PyFunction function = (PyFunction)found.get(0);
     if (node.getExpression() != null) {
       YieldVisitor visitor = new YieldVisitor();
       function.acceptChildren(visitor);
@@ -39,11 +41,30 @@ public class ReturnAnnotator extends PyAnnotator {
         getHolder().createErrorAnnotation(node, "'return' with argument inside generator");
       }
     }
+    // TODO: add checks for predefined methods
+    // if something follows us, it's unreachable
+    // TODO: move to a separate inspection
+    PsiElement parent_elt = node.getParent();
+    if (parent_elt instanceof PyStatementList) { // check just in case
+      PsiElement first_after_us = PyUtil.getFirstNonCommentAfter(node.getNextSibling());
+      if (first_after_us != null) {
+        PsiElement last_after_us = first_after_us; // this assignment is redundant, but inspection fails to recognize it
+        PsiElement feeler = first_after_us;
+        while (feeler != null) {
+          last_after_us = feeler;
+          feeler = PyUtil.getFirstNonCommentAfter(feeler.getNextSibling());
+        }
+        TextRange the_wrong = new TextRange(
+          first_after_us.getTextOffset(),
+          last_after_us.getTextRange().getEndOffset()
+        );
+        getHolder().createWarningAnnotation(the_wrong, "Unreachable code");
+      }
+    }
   }
 
   public void visitPyYieldExpression(final PyYieldExpression node) {
-    PyFunction function = node.getContainingElement(PyFunction.class);
-    if (function == null) {
+    if (SyntaxMatchers.IN_FUNCTION.search(node) == null) {
       getHolder().createErrorAnnotation(node, "'yield' outside of function");
     }
     /* this is now allowed in python 2.5
@@ -52,6 +73,7 @@ public class ReturnAnnotator extends PyAnnotator {
     }
     */
   }
+
 
   private static class YieldVisitor extends PyElementVisitor {
     private boolean _haveYield = false;
