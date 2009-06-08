@@ -24,7 +24,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.rt.execution.junit.JUnitStarter;
 import org.jetbrains.annotations.NotNull;
 
 class TestMethod extends TestObject {
@@ -40,26 +39,12 @@ class TestMethod extends TestObject {
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     RunConfigurationModule module = myConfiguration.getConfigurationModule();
     configureModule(getJavaParameters(), module, data.getMainClassName());
-    addJUnit4Parameter(data, module.getProject());
-
+    
     getJavaParameters().getProgramParametersList().add(data.getMainClassName() + "," + data.getMethodName());
   }
 
   protected void defaultInitialize() throws ExecutionException {
     super.initialize();
-  }
-
-  protected void addJUnit4Parameter(final JUnitConfiguration.Data data, Project project) {
-    Location<PsiClass> classLocation = PsiClassLocationUtil.fromClassQualifiedName(project, data.getMainClassPsiName());
-    PsiClass aClass = classLocation.getPsiElement();
-    final String methodName = data.getMethodName();
-    PsiMethod[] methods = aClass.findMethodsByName(methodName, true);
-    for (PsiMethod method : methods) {
-      if (JUnitUtil.isTestAnnotated(method)) {
-        myJavaParameters.getProgramParametersList().add(JUnitStarter.JUNIT4_PARAMETER);
-        break;
-      }
-    }
   }
 
   public String suggestActionName() {

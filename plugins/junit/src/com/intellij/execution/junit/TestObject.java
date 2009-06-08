@@ -46,7 +46,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -179,12 +181,8 @@ public abstract class TestObject implements JavaCommandLine {
                               ? ModuleRootManager.getInstance(module).getSdk()
                               : ProjectRootManager.getInstance(myProject).getProjectJdk());
     }
-    final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);
-    for (Object patcher : patchers) {
-      ((JUnitPatcher)patcher).patchJavaParameters(module, myJavaParameters);
-    }
+
     JavaSdkUtil.addRtJar(myJavaParameters.getClassPath());
-    JavaSdkUtil.addJunit4RtJar(myJavaParameters.getClassPath());
     myJavaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
     if ((!(myRunnerSettings.getData() instanceof DebuggingRunnerData) || myConfiguration.getCoverageRunner() instanceof IDEACoverageRunner) && myConfiguration.isCoverageEnabled()) {
       myCurrentCoverageSuite = CoverageDataManager.getInstance(myProject).addCoverageSuite(myConfiguration);
@@ -196,6 +194,11 @@ public abstract class TestObject implements JavaCommandLine {
     if (myJavaParameters == null) {
       myJavaParameters = new JavaParameters();
       initialize();
+    }
+    final Module module = myConfiguration.getConfigurationModule().getModule();
+    final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);
+    for (Object patcher : patchers) {
+      ((JUnitPatcher)patcher).patchJavaParameters(module, myJavaParameters);
     }
     return myJavaParameters;
   }
@@ -232,7 +235,7 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
 
-  protected void addClassesListToJavaParameters(Collection<? extends PsiElement> elements, String packageName) {
+  protected void addClassesListToJavaParameters(Collection<? extends PsiElement> elements, Function<PsiElement, String> nameFunction, String packageName) {
     try {
       myTempFile = File.createTempFile("idea_junit", ".tmp");
       myTempFile.deleteOnExit();
@@ -242,15 +245,8 @@ public abstract class TestObject implements JavaCommandLine {
       try {
         writer.println(packageName);
         for (final PsiElement element : elements) {
-          final String name;
-          if (element instanceof PsiClass) {
-            name = JavaExecutionUtil.getRuntimeQualifiedName((PsiClass)element);
-          }
-          else if (element instanceof PsiMethod){
-            PsiMethod method = (PsiMethod)element;
-            name = JavaExecutionUtil.getRuntimeQualifiedName(method.getContainingClass()) + "," + method.getName();
-          }
-          else {
+          final String name = nameFunction.fun(element);
+          if (name == null) {
             LOG.error("invalid element " + element);
             return;
           }
@@ -264,6 +260,24 @@ public abstract class TestObject implements JavaCommandLine {
     catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  protected void addClassesListToJavaParameters(Collection<? extends PsiElement> elements, String packageName) {
+    addClassesListToJavaParameters(elements, new Function<PsiElement, String>() {
+      @Nullable
+      public String fun(PsiElement element) {
+          if (element instanceof PsiClass) {
+            return JavaExecutionUtil.getRuntimeQualifiedName((PsiClass)element);
+          }
+          else if (element instanceof PsiMethod){
+            PsiMethod method = (PsiMethod)element;
+            return JavaExecutionUtil.getRuntimeQualifiedName(method.getContainingClass()) + "," + method.getName();
+          }
+          else {
+            return null;
+          }
+      }
+    }, packageName);
   }
 
   public void clear() {

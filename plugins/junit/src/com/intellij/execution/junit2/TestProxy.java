@@ -160,7 +160,7 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
     if (myChildren.getList().contains(child))
       return;
     if (child.getParent() != null)
-      throw new RuntimeException("Test: "+child + " already has parent: " + child.getParent());
+      return;//todo throw new RuntimeException("Test: "+child + " already has parent: " + child.getParent());
     myChildren.add(child);
     child.myParent = this;
     if (myPrinter != Printer.DEAF) {

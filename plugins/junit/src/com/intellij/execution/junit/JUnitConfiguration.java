@@ -23,6 +23,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.junit.coverage.JUnitCoverageConfigurable;
 import com.intellij.execution.junit2.configuration.JUnitConfigurable;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -338,7 +339,7 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
       final PsiMethod method = methodLocation.getPsiElement();
       METHOD_NAME = method.getName();
       TEST_OBJECT = TEST_METHOD;
-      return setMainClass(method.getContainingClass());
+      return setMainClass(methodLocation instanceof MethodLocation ? ((MethodLocation)methodLocation).getContainingClass() : method.getContainingClass());
     }
 
     public String getProperty(final int property) {

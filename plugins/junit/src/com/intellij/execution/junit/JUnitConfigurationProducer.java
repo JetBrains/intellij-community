@@ -28,6 +28,7 @@ public abstract class JUnitConfigurationProducer extends JavaRuntimeConfiguratio
 
   
   public int compareTo(final Object o) {
+    if (o instanceof TestMethodConfigurationProducer) return -PREFERED;
     return PREFERED;
   }
 }

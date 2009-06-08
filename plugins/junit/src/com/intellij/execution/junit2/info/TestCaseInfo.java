@@ -46,8 +46,13 @@ class TestCaseInfo extends ClassBasedInfo {
   public Location getLocation(final Project project) {
     final Location<PsiClass> classLocation = (Location<PsiClass>)super.getLocation(project);
     if (classLocation == null) return getPsiFile(project);
+    String strippedMethodName = myMethod; //navigation to for parametr. methods
+    final int idx = myMethod.indexOf('[');
+    if (idx != -1) {
+      strippedMethodName = myMethod.substring(0, idx);
+    }
     final PsiMethod method = MethodSignatureUtil.findMethodBySignature(classLocation.getPsiElement(),
-        MethodSignatureUtil.createMethodSignature(myMethod, PsiType.EMPTY_ARRAY, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY), true);
+        MethodSignatureUtil.createMethodSignature(strippedMethodName, PsiType.EMPTY_ARRAY, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY), true);
     if (method != null)
       return new MethodLocation(project, method, classLocation);
     final Location<PsiFile> fileLocation = getPsiFile(project);

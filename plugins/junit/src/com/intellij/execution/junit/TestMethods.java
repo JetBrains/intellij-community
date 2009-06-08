@@ -18,11 +18,14 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.execution.junit2.info.TestInfo;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,11 +33,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.rt.execution.junit.JUnitStarter;
+import com.intellij.util.Function;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.LinkedHashMap;
 
 public class TestMethods extends TestMethod {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.TestMethods");
@@ -63,7 +65,6 @@ public class TestMethods extends TestMethod {
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     RunConfigurationModule module = myConfiguration.getConfigurationModule();
     final Project project = module.getProject();
-    addJUnit4Parameter(data, project);
     final ExecutionException[] exception = new ExecutionException[1];
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -76,28 +77,26 @@ public class TestMethods extends TestMethod {
       }
     });
     if (exception[0] != null) throw exception[0];
-    List<PsiMethod> methods = new ArrayList<PsiMethod>();
+    final LinkedHashMap<PsiMethod, TestInfo> methods = new LinkedHashMap<PsiMethod, TestInfo>();
     for (AbstractTestProxy failedTest : myFailedTests) {
       Location location = failedTest.getLocation(project);
       if (!(location instanceof MethodLocation)) continue;
       PsiElement psiElement = location.getPsiElement();
       LOG.assertTrue(psiElement instanceof PsiMethod);
       PsiMethod method = (PsiMethod)psiElement;
-      methods.add(method);
+      methods.put(method, ((TestProxy)failedTest).getInfo());
     }
-    addClassesListToJavaParameters(methods, data.getPackageName());
-
-  }
-  protected void addJUnit4Parameter(final JUnitConfiguration.Data data, Project project) {
-    for (AbstractTestProxy failedTest : myFailedTests) {
-      Location location = failedTest.getLocation(project);
-      if (!(location instanceof MethodLocation)) continue;
-      PsiMethod method = ((MethodLocation)location).getPsiElement();
-      if (JUnitUtil.isTestAnnotated(method)) {
-        myJavaParameters.getProgramParametersList().add(JUnitStarter.JUNIT4_PARAMETER);
-        break;
+    addClassesListToJavaParameters(methods.keySet(), new Function<PsiElement, String>() {
+      public String fun(PsiElement element) {
+        if (element instanceof PsiMethod) {
+          final PsiMethod method = (PsiMethod)element;
+          final TestInfo testInfo = methods.get(method);
+          return JavaExecutionUtil.getRuntimeQualifiedName(((MethodLocation)testInfo.getLocation(project)).getContainingClass()) + "," + testInfo.getName();
+        }
+        return null;
       }
-    }
+    }, data.getPackageName());
+
   }
 
   public String suggestActionName() {

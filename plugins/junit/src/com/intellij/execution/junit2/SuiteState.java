@@ -56,8 +56,8 @@ public class SuiteState extends TestState {
     }
   };
 
-  private static final CachedAcpect<TestState.StateInterval> STATE_INTERVAL = new CachedAcpect<TestState.StateInterval>() {
-    public TestState.StateInterval calculate(final SuiteState state) {
+  private static final CachedAcpect<StateInterval> STATE_INTERVAL = new CachedAcpect<StateInterval>() {
+    public StateInterval calculate(final SuiteState state) {
       return state.myTest.calculateInterval(state);
     }
   };
@@ -95,7 +95,7 @@ public class SuiteState extends TestState {
   public void printOn(final Printer printer) {
   }
 
-  public TestState.StateInterval getInterval() {
+  public StateInterval getInterval() {
     return myCache.get(STATE_INTERVAL);
   }
 
@@ -145,11 +145,11 @@ public class SuiteState extends TestState {
     }
   }
 
-  public static class SuiteStateInterval extends TestState.StateInterval {
+  public static class SuiteStateInterval extends StateInterval {
     private TestState myMin;
     private TestState myMax;
 
-    public SuiteStateInterval(final TestState state, final TestState.StateInterval interval) {
+    public SuiteStateInterval(final TestState state, final StateInterval interval) {
       super(state);
       myMin = interval.getMin();
       myMax = interval.getMax();
@@ -163,7 +163,7 @@ public class SuiteState extends TestState {
       return myMax;
     }
 
-    public void updateFrom(final TestState.StateInterval interval) {
+    public void updateFrom(final StateInterval interval) {
       final TestState otherMax = interval.getMax();
       if (myMax.getMagnitude() < otherMax.getMagnitude())
         myMax = otherMax;
