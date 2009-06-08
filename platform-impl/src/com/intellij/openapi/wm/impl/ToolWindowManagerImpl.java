@@ -830,16 +830,18 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     toolWindow.addPropertyChangeListener(myToolWindowPropertyChangeListener);
     myId2FocusWatcher.put(id, new ToolWindowFocusWatcher(toolWindow));
 
-    if (canWorkInDumbMode) {
-      myDumbAwareIds.add(id);
-    }
-
     // Create and show tool button
 
     final StripeButton button = new StripeButton(decorator, myToolWindowsPane);
     myId2StripeButton.put(id, button);
     final ArrayList<FinalizableCommand> commandsList = new ArrayList<FinalizableCommand>();
     appendAddButtonCmd(button, info, commandsList);
+
+    if (canWorkInDumbMode) {
+      myDumbAwareIds.add(id);
+    } else if (DumbService.getInstance(getProject()).isDumb()) {
+      button.setEnabled(false);
+    }
 
     // If preloaded info is visible or active then we have to show/activate the installed
     // tool window. This step has sense only for windows which are not in the autohide
