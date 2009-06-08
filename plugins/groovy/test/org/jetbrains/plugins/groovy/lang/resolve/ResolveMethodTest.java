@@ -52,6 +52,11 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(resolved instanceof PsiMethod);
   }
 
+  public void testImportStaticReverse() throws Throwable {
+    PsiReference ref = configureByFile(getTestName(true) + "/" + getTestName(false) + ".groovy");
+    assertNotNull(ref.resolve());
+  }
+
 
   public void testSimple() throws Exception {
     PsiReference ref = configureByFile("simple/A.groovy");
