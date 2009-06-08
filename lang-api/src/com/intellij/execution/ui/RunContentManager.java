@@ -18,10 +18,14 @@ package com.intellij.execution.ui;
 import com.intellij.execution.Executor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface RunContentManager {
+
+  DataKey<RunContentDescriptor> RUN_CONTENT_DESCRIPTOR = DataKey.create("RUN_CONTENT_DESCRIPTOR");
+
   @Nullable
   RunContentDescriptor getSelectedContent();
   @Nullable

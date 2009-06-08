@@ -16,10 +16,13 @@
 package com.intellij.execution.ui;
 
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -43,6 +46,16 @@ public class RunContentDescriptor {
     myProcessHandler = processHandler;
     myComponent = component;
     myDisplayName = displayName;
+    myComponent.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new DataProvider() {
+
+      public Object getData(@NonNls final String dataId) {
+        if (RunContentManager.RUN_CONTENT_DESCRIPTOR.getName().equals(dataId)) {
+          return RunContentDescriptor.this;
+        }
+        return null;
+      }
+    });
+
   }
 
   public ExecutionConsole getExecutionConsole() {

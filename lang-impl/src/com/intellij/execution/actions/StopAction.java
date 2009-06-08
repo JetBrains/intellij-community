@@ -1,12 +1,10 @@
 package com.intellij.execution.actions;
 
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.Project;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -15,41 +13,20 @@ import com.intellij.openapi.project.Project;
 
 public class StopAction extends AnAction{
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-
-    if(project == null) return;
-
-    final RunContentDescriptor selectedContent = ExecutionManager.getInstance(project).getContentManager().getSelectedContent();
-
-    if(selectedContent == null) return;
-
-    final ProcessHandler selectedProcessHandler = selectedContent.getProcessHandler();
-
-    if(selectedProcessHandler == null) return;
-
-    if(selectedProcessHandler.detachIsDefault()) {
-      selectedProcessHandler.detachProcess();
+    final RunContentDescriptor contentDescriptor = RunContentManager.RUN_CONTENT_DESCRIPTOR.getData(e.getDataContext());
+    final ProcessHandler processHandler = contentDescriptor == null ? null : contentDescriptor.getProcessHandler();
+    if(processHandler == null) return;
+    if(processHandler.detachIsDefault()) {
+      processHandler.detachProcess();
     } else {
-      selectedProcessHandler.destroyProcess();
+      processHandler.destroyProcess();
     }
   }
 
   public void update(final AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-
-    boolean enable = false;
-
-    if(project != null) {
-      final RunContentDescriptor selectedContent = ExecutionManager.getInstance(project).getContentManager().getSelectedContent();
-      if (selectedContent != null) {
-        final ProcessHandler selectedProcessHandler = selectedContent.getProcessHandler();
-
-        if(selectedProcessHandler != null) {
-          enable = !selectedProcessHandler.isProcessTerminating() && !selectedProcessHandler.isProcessTerminated();
-        }
-      }
-    }
-
+    final RunContentDescriptor contentDescriptor = RunContentManager.RUN_CONTENT_DESCRIPTOR.getData(e.getDataContext());
+    final ProcessHandler processHandler = contentDescriptor == null? null : contentDescriptor.getProcessHandler();
+    boolean enable = processHandler != null && !processHandler.isProcessTerminating() && !processHandler.isProcessTerminated();
     e.getPresentation().setEnabled(enable);
   }
 }
