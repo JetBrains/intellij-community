@@ -17,7 +17,6 @@
 package com.intellij.execution.junit2.ui;
 
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ColumnInfo;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -50,7 +49,4 @@ class TestTableRenderer implements TableCellRenderer {
     return renderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
   }
 
-  public static void installOn(final JTable table, final ColumnInfo[] columns) {
-    table.setDefaultRenderer(Object.class, new TestTableRenderer(columns));
-  }
 }
