@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -96,6 +97,12 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
       public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
         PsiElement resolved = referenceExpression.resolve();
+
+        if (resolved instanceof PsiMethod && "getDelegate".equals(((PsiMethod) resolved).getName()) && closure != null) {
+          replaceWithReference(referenceExpression, "owner");
+          return;
+        }
+
         if (resolved instanceof GrVariableBase && !(resolved instanceof GrField) && !PsiTreeUtil.isAncestor(toEval, resolved, false)) {
           final String name = ((GrVariableBase)resolved).getName();
           if (resolved instanceof ClosureSyntheticParameter && PsiTreeUtil.isAncestor(toEval, ((ClosureSyntheticParameter) resolved).getClosure(), false)) {
@@ -117,10 +124,12 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
       @Override
       public void visitThisExpression(final GrThisReferenceExpression thisExpression) {
         super.visitThisExpression(thisExpression);
-        if (closure != null && !(thisExpression.getParent() instanceof GrReferenceExpression)) {
-          final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(thisExpression.getProject());
-          thisExpression.replaceWithExpression(factory.createExpressionFromText("delegate"), false);
-        }
+        replaceWithReference(thisExpression, closure == null ? "delegate" : "owner");
+      }
+
+      private void replaceWithReference(GrExpression expr, final String exprText) {
+        final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expr.getProject());
+        visitReferenceExpression((GrReferenceExpression)expr.replaceWithExpression(factory.createExpressionFromText(exprText), false));
       }
 
       public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
