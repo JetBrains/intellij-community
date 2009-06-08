@@ -1,6 +1,7 @@
 package com.intellij.rt.execution.junit;
 
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
+import com.intellij.rt.junit3.JUnit3IdeaTestRunner;
 import junit.textui.TestRunner;
 
 import java.io.IOException;
@@ -16,7 +17,6 @@ import java.util.Vector;
 public class JUnitStarter {
   public static final int VERSION = 5;
   public static final String IDE_VERSION = "-ideVersion";
-  public static final String JUNIT4_PARAMETER = "-junit4";
 
   public static void main(String[] args) throws IOException {
     SegmentedOutputStream out = new SegmentedOutputStream(System.out);
@@ -29,40 +29,19 @@ public class JUnitStarter {
       err.flush();
       System.exit(-3);
     }
+
     Vector argList = new Vector();
-    for (int i = 0; i < args.length; i++) {
+    for (int i = 1; i < args.length; i++) {
       String arg = args[i];
       argList.addElement(arg);
     }
-    boolean isJUnit4 = removeVersionParameters(argList);
     String[] array = new String[argList.size()];
     argList.copyInto(array);
-    int exitCode = prepareStreamsAndStart(array, isJUnit4, out, err);
+    int exitCode = prepareStreamsAndStart(array, out, err);
     System.exit(exitCode);
   }
 
-  private static boolean removeVersionParameters(Vector args) {
-    boolean isJunit4 = false;
-    Vector result = new Vector(args.size());
-    for (int i = 0; i < args.size(); i++) {
-      String arg = (String)args.get(i);
-      if (arg.startsWith(IDE_VERSION)) {
-        //ignore
-      }
-      else if (arg.equals(JUNIT4_PARAMETER)){
-        isJunit4 = true;
-      }
-      else {
-        result.addElement(arg);
-      }
-    }
-    args.removeAllElements();
-    for (int i = 0; i < result.size(); i++) {
-      String arg = (String)result.get(i);
-      args.addElement(arg);
-    }
-    return isJunit4;
-  }
+
 
   public static boolean checkVersion(String[] args, SegmentedOutputStream notifications) {
     for (int i = 0; i < args.length; i++) {
@@ -100,10 +79,10 @@ public class JUnitStarter {
   private static void junitVersionChecks() throws ClassNotFoundException {
     Class.forName("junit.framework.ComparisonFailure");
     getAgentClass();
-    new TestRunner().setPrinter(new IdeaTestRunner.MockResultPrinter());
+    new TestRunner().setPrinter(new JUnit3IdeaTestRunner.MockResultPrinter());
   }
 
-  private static int prepareStreamsAndStart(String[] args, final boolean isJUnit4, SegmentedOutputStream out, SegmentedOutputStream err) {
+  private static int prepareStreamsAndStart(String[] args, SegmentedOutputStream out, SegmentedOutputStream err) {
     PrintStream oldOut = System.out;
     PrintStream oldErr = System.err;
     int result;
@@ -111,11 +90,8 @@ public class JUnitStarter {
       System.setOut(new PrintStream(out));
       System.setErr(new PrintStream(err));
       IdeaTestRunner testRunner = (IdeaTestRunner)getAgentClass().newInstance();
-      if (isJUnit4) {
-        testRunner.JUNIT4_API = (JUnit4API)Class.forName("com.intellij.rt.junit4.JUnit4Util").newInstance();
-      }
       testRunner.setStreams(out, err);
-      result = IdeaTestRunner.startRunnerWithArgs(testRunner, args);
+      result = testRunner.startRunnerWithArgs(args);
     }
     catch (Exception e) {
       e.printStackTrace(System.err);
@@ -129,6 +105,12 @@ public class JUnitStarter {
   }
 
   private static Class getAgentClass() throws ClassNotFoundException {
-    return Class.forName("com.intellij.rt.execution.junit.IdeaTestRunner");
+    try {
+      Class.forName("org.junit.runner.JUnitCore");
+      return Class.forName("com.intellij.rt.junit4.JUnit4IdeaTestRunner");
+    }
+    catch (ClassNotFoundException e) {
+      return Class.forName("com.intellij.rt.junit3.JUnit3IdeaTestRunner");
+    }
   }
 }

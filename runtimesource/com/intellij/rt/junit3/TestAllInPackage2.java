@@ -1,10 +1,10 @@
-package com.intellij.rt.execution.junit;
+package com.intellij.rt.junit3;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
 public class TestAllInPackage2 extends TestSuite {
-  public TestAllInPackage2(IdeaTestRunner runner, final String name, String[] classMethodNames) {
+  public TestAllInPackage2(JUnit3IdeaTestRunner runner, final String name, String[] classMethodNames) {
     super(name);
     int testClassCount = 0;
 

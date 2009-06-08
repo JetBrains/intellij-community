@@ -1,6 +1,5 @@
 package com.intellij.rt.execution.junit.segments;
 
-import junit.framework.Test;
 import junit.runner.BaseTestRunner;
 
 import java.io.*;
@@ -18,7 +17,7 @@ public class Packet extends PacketWriter {
     myRegistry = registry;
   }
 
-  public Packet addObject(Test test) {
+  public Packet addObject(Object test) {
     return addReference(myRegistry.referenceTo(test));
   }
 
@@ -27,7 +26,7 @@ public class Packet extends PacketWriter {
     return this;
   }
 
-  public Packet switchInputTo(Test test) {
+  public Packet switchInputTo(Object test) {
     appendString(PoolOfDelimiters.INPUT_COSUMER);
     return addObject(test);
   }
@@ -46,7 +45,7 @@ public class Packet extends PacketWriter {
     return this;
   }
 
-  public Packet setTestState(Test test, int state) {
+  public Packet setTestState(Object test, int state) {
     return addString(PoolOfDelimiters.CHANGE_STATE).addObject(test).addLong(state);
   }
 

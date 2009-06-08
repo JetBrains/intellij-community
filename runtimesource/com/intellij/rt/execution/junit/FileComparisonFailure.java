@@ -1,9 +1,8 @@
 package com.intellij.rt.execution.junit;
 
-import com.intellij.rt.execution.junit.segments.OutputObjectRegistryImpl;
+import com.intellij.rt.execution.junit.segments.OutputObjectRegistryEx;
 import com.intellij.rt.execution.junit.segments.Packet;
 import junit.framework.ComparisonFailure;
-import junit.framework.Test;
 
 public class FileComparisonFailure extends ComparisonFailure implements KnownException {
   private final String myExpected;
@@ -29,7 +28,7 @@ public class FileComparisonFailure extends ComparisonFailure implements KnownExc
       myFilePath = filePath;
     }
 
-    public Packet createPacket(OutputObjectRegistryImpl registry, Test test) {
+    public Packet createPacket(OutputObjectRegistryEx registry, Object test) {
       Packet packet = super.createPacket(registry, test);
       packet.addLimitedString(myFilePath);
       return packet;

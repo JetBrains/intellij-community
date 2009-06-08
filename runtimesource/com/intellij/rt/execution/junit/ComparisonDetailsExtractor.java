@@ -1,17 +1,16 @@
 package com.intellij.rt.execution.junit;
 
-import com.intellij.rt.execution.junit.segments.OutputObjectRegistryImpl;
+import com.intellij.rt.execution.junit.segments.OutputObjectRegistryEx;
 import com.intellij.rt.execution.junit.segments.Packet;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import junit.framework.ComparisonFailure;
-import junit.framework.Test;
 
 import java.lang.reflect.Field;
 
 /**
  * @noinspection HardCodedStringLiteral
  */
-class ComparisonDetailsExtractor extends ExceptionPacketFactory {
+public class ComparisonDetailsExtractor extends ExceptionPacketFactory {
   private static Field EXPECTED_FIELD = null;
   private static Field ACTUAL_FIELD = null;
   protected String myActual = "";
@@ -34,7 +33,7 @@ class ComparisonDetailsExtractor extends ExceptionPacketFactory {
     myExpected = expected;
   }
 
-  public static ExceptionPacketFactory create(Error assertion) {
+  public static ExceptionPacketFactory create(Throwable assertion) {
     try {
       String expected;
       if (assertion instanceof ComparisonFailure) {
@@ -61,7 +60,7 @@ class ComparisonDetailsExtractor extends ExceptionPacketFactory {
     }
   }
 
-  public Packet createPacket(OutputObjectRegistryImpl registry, Test test) {
+  public Packet createPacket(OutputObjectRegistryEx registry, Object test) {
     Packet packet = super.createPacket(registry, test);
     packet.
         addLimitedString(myExpected).

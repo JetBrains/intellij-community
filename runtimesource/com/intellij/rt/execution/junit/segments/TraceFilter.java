@@ -22,7 +22,7 @@ class TraceFilter {
     int traceFirstLine = firstJUnitLine(traceLastLine, false);
     StringWriter buffer = new StringWriter();
     PrintWriter writer = new PrintWriter(buffer);
-    for (int i = 0; i <= traceFirstLine; i++) writer.println(myLines.elementAt(i));
+    for (int i = 0; i < traceFirstLine; i++) writer.println(myLines.elementAt(i));
     for (int i = traceLastLine; i < myLines.size(); i++) writer.println(myLines.elementAt(i));
     writer.flush();
     return buffer.toString();
@@ -40,7 +40,7 @@ class TraceFilter {
    * @noinspection HardCodedStringLiteral
    */
   private boolean isIdeaJUnit(String line) {
-    return line.indexOf("com.intellij.rt.execution.junit") >= 0;
+    return line.indexOf("com.intellij.rt") >= 0;
   }
 
   private void readLines() throws IOException {

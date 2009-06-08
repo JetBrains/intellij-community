@@ -1,4 +1,4 @@
-package com.intellij.rt.execution.junit;
+package com.intellij.rt.junit3;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -19,7 +19,7 @@ public class TestRunnerUtil {
   /** @noinspection HardCodedStringLiteral*/
   private static final ResourceBundle ourBundle = ResourceBundle.getBundle("RuntimeBundle");
 
-  public static Test getTestSuite(IdeaTestRunner runner, String[] suiteClassNames){
+  public static Test getTestSuite(JUnit3IdeaTestRunner runner, String[] suiteClassNames){
     if (suiteClassNames.length == 0) {
       return null;
     }
@@ -77,7 +77,7 @@ public class TestRunnerUtil {
     }
   }
 
-  public static Test createClassOrMethodSuite(IdeaTestRunner runner, String suiteClassName) {
+  public static Test createClassOrMethodSuite(JUnit3IdeaTestRunner runner, String suiteClassName) {
     String methodName = null;
     int index = suiteClassName.indexOf(',');
     if (index != -1) {
@@ -89,9 +89,6 @@ public class TestRunnerUtil {
     if (testClass == null) return null;
     Test test = null;
     if (methodName == null) {
-      if (runner.JUNIT4_API != null) {
-        test = runner.JUNIT4_API.createClassSuite(testClass);
-      }
       if (test == null) {
         try {
           Method suiteMethod = testClass.getMethod(BaseTestRunner.SUITE_METHODNAME, new Class[0]);
@@ -131,7 +128,7 @@ public class TestRunnerUtil {
     return test;
   }
 
-  private static Class loadTestClass(IdeaTestRunner runner, String suiteClassName) {
+  private static Class loadTestClass(JUnit3IdeaTestRunner runner, String suiteClassName) {
     try {
       return Class.forName(suiteClassName);
     }
@@ -148,12 +145,8 @@ public class TestRunnerUtil {
     return null;
   }
 
-  private static Test createMethodSuite(IdeaTestRunner runner, Class testClass, String methodName) {
+  private static Test createMethodSuite(JUnit3IdeaTestRunner runner, Class testClass, String methodName) {
     runner.clearStatus();
-    if (runner.JUNIT4_API != null) {
-      Test test = runner.JUNIT4_API.createTestMethodSuite(testClass, methodName);
-      if (test != null) return test;
-    }
     try {
       Constructor constructor = testClass.getConstructor(new Class[]{String.class});
       return (Test)constructor.newInstance(new Object[]{methodName});

@@ -1,6 +1,6 @@
-package com.intellij.rt.execution.junit;
+package com.intellij.rt.junit3;
 
-import com.intellij.rt.execution.junit.segments.OutputObjectRegistryImpl;
+import com.intellij.rt.execution.junit.segments.OutputObjectRegistryEx;
 import com.intellij.rt.execution.junit.segments.Packet;
 import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
 import junit.framework.Test;
@@ -33,7 +33,7 @@ public class TreeSender {
     return testCases;
   }
 
-  public static void sendSuite(OutputObjectRegistryImpl registry, Test suite) {
+  public static void sendSuite(OutputObjectRegistryEx registry, Test suite) {
     Packet packet = registry.createPacket();
     packet.addString(PoolOfDelimiters.TREE_PREFIX);
     sendNode(suite, packet);

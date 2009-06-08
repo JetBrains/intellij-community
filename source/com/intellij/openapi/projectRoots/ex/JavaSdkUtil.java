@@ -1,10 +1,9 @@
 package com.intellij.openapi.projectRoots.ex;
 
-import org.jetbrains.annotations.NonNls;
-import com.intellij.util.PathsList;
-import com.intellij.util.PathUtil;
-import com.intellij.rt.junit4.JUnit4Util;
 import com.intellij.rt.compiler.JavacRunner;
+import com.intellij.util.PathUtil;
+import com.intellij.util.PathsList;
+import org.jetbrains.annotations.NonNls;
 
 public class JavaSdkUtil {
   @NonNls public static final String IDEA_PREPEND_RTJAR = "idea.prepend.rtjar";
@@ -19,20 +18,7 @@ public class JavaSdkUtil {
     }
   }
 
-  public static void addJunit4RtJar(PathsList pathsList) {
-    final String path = getIdeaJunit4RtJarPath();
-    if (Boolean.getBoolean(IDEA_PREPEND_RTJAR)) {
-      pathsList.addFirst(path);
-    }
-    else {
-      pathsList.addTail(path);
-    }
-  }
-
-  public static String getIdeaJunit4RtJarPath() {
-    return PathUtil.getJarPathForClass(JUnit4Util.class);
-  }
-
+  
   public static String getJunit4JarPath() {
     return PathUtil.getJarPathForClass(org.junit.Test.class);
   }

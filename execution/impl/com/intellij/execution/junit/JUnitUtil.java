@@ -1,5 +1,6 @@
 package com.intellij.execution.junit;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.*;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.SourceScope;
@@ -16,6 +17,7 @@ import gnu.trove.THashSet;
 import junit.runner.BaseTestRunner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.junit.runners.Parameterized;
 
 import java.util.*;
 
@@ -23,6 +25,7 @@ public class JUnitUtil {
   @NonNls private static final String TESTCASE_CLASS = "junit.framework.TestCase";
   @NonNls private static final String TEST_INTERFACE = "junit.framework.Test";
   @NonNls private static final String TESTSUITE_CLASS = "junit.framework.TestSuite";
+  private static final String RUN_WITH = "org.junit.runner.RunWith";
 
   public static boolean isSuiteMethod(final PsiMethod psiMethod) {
     if (psiMethod == null) return false;
@@ -45,7 +48,7 @@ public class JUnitUtil {
 
   public static boolean isTestMethod(final Location<? extends PsiMethod> location) {
     final PsiMethod psiMethod = location.getPsiElement();
-    final PsiClass aClass = psiMethod.getContainingClass();
+    final PsiClass aClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() : psiMethod.getContainingClass();
     if (aClass == null || !isTestClass(aClass)) return false;
     if (isTestAnnotated(psiMethod)) return true;
     if (psiMethod.isConstructor()) return false;
@@ -82,7 +85,7 @@ public class JUnitUtil {
     if (checkForTestCaseInheritance && isTestCaseInheritor(psiClass)) return true;
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
-    if (modifierList.findAnnotation("org.junit.runner.RunWith") != null) return true;
+    if (modifierList.findAnnotation(RUN_WITH) != null) return true;
 
     for (final PsiMethod method : psiClass.getMethods()) {
       if (isSuiteMethod(method)) return true;
@@ -111,7 +114,7 @@ public class JUnitUtil {
 
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
-    if (modifierList.findAnnotation("org.junit.runner.RunWith") != null) return true;
+    if (modifierList.findAnnotation(RUN_WITH) != null) return true;
     for (final PsiMethod method : psiClass.getMethods()) {
       if (isTestAnnotated(method)) return true;
     }
@@ -126,7 +129,23 @@ public class JUnitUtil {
   }
 
   public static boolean isTestAnnotated(final PsiMethod method) {
-    return method.getModifierList().findAnnotation("org.junit.Test") != null;
+    if (AnnotationUtil.isAnnotated(method, "org.junit.Test", false)) {
+      final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method.getContainingClass(), RUN_WITH);
+      if (annotation != null) {
+        final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
+        for (PsiNameValuePair attribute : attributes) {
+          final PsiAnnotationMemberValue value = attribute.getValue();
+          if (value instanceof PsiClassObjectAccessExpression ) {
+            final PsiTypeElement typeElement = ((PsiClassObjectAccessExpression)value).getOperand();
+            if (typeElement.getType().getCanonicalText().equals(Parameterized.class.getName())) {
+              return false;
+            }
+          }
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
   private static PsiClass getTestCaseClassOrNull(final Location<?> location) {
