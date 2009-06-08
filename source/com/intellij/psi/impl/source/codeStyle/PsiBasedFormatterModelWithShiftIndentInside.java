@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
@@ -20,7 +21,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormattingModel {
   private static final Logger LOG =
@@ -72,7 +72,7 @@ public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormatt
            final @NonNls String cdataStartMarker = "<![CDATA[";
            final int cdataPos = text.indexOf(cdataStartMarker);
            if (cdataPos != -1 && whiteSpace.indexOf(cdataStartMarker) == -1) {
-             whiteSpace = mergeWsWithCdataMarker(whiteSpace, text, cdataPos);
+             whiteSpace = DocumentBasedFormattingModel.mergeWsWithCdataMarker(whiteSpace, text, cdataPos);
              if (whiteSpace == null) return null;
            }
 
@@ -87,7 +87,7 @@ public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormatt
            if (at != null && at.getPsi() instanceof PsiWhiteSpace) {
              final String s = at.getText();
              final int cdataEndPos = s.indexOf(cdataEndMarker);
-             whiteSpace = mergeWsWithCdataMarker(whiteSpace, s, cdataEndPos);
+             whiteSpace = DocumentBasedFormattingModel.mergeWsWithCdataMarker(whiteSpace, s, cdataEndPos);
              leafElement = at;
            } else {
              whiteSpace = null;
@@ -97,23 +97,6 @@ public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormatt
        }
      }
      FormatterUtil.replaceWhiteSpace(whiteSpace, leafElement, TokenType.WHITE_SPACE, textRange);
-     return whiteSpace;
-   }
-
-   @Nullable
-   private static String mergeWsWithCdataMarker(String whiteSpace, final String s, final int cdataPos) {
-     final int firstCrInGeneratedWs = whiteSpace.indexOf('\n');
-     final int secondCrInGeneratedWs = firstCrInGeneratedWs != -1 ? whiteSpace.indexOf('\n', firstCrInGeneratedWs + 1):-1;
-     final int firstCrInPreviousWs = s.indexOf('\n');
-     final int secondCrInPreviousWs = firstCrInPreviousWs != -1 ? s.indexOf('\n', firstCrInPreviousWs + 1):-1;
-
-     boolean knowHowToModifyCData = false;
-
-     if (secondCrInPreviousWs != -1 && secondCrInGeneratedWs != -1 && cdataPos > firstCrInPreviousWs && cdataPos < secondCrInPreviousWs ) {
-       whiteSpace = whiteSpace.substring(0, secondCrInGeneratedWs) + s.substring(firstCrInPreviousWs + 1, secondCrInPreviousWs) + whiteSpace.substring(secondCrInGeneratedWs);
-       knowHowToModifyCData = true;
-     }
-     if (!knowHowToModifyCData) whiteSpace = null;
      return whiteSpace;
    }
 }

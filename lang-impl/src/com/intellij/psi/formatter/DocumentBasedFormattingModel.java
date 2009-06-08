@@ -13,13 +13,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lesya
- * Date: Jul 10, 2005
- * Time: 9:16:23 PM
- * To change this template use File | Settings | File Templates.
+ * @author lesya
  */
 public class DocumentBasedFormattingModel implements FormattingModel {
   private final Block myRootBlock;
@@ -66,21 +63,27 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     return myDocumentModel;
   }
 
-  //private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.DocumentBasedFormattingModel");
   public TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace) {
-    //if (textRange.getLength() > 0) {
-    //  final CharSequence current = myDocument.getCharsSequence().subSequence(textRange.getStartOffset(), textRange.getEndOffset());
-    //  final String ws = current.toString();
-    //  // whitespace element can contain non-white characters, e.g. in injected langs with CDATA
-    //  //if (ws.trim().length() > 0) {
-    //  //  LOG.assertTrue(false, "Document text:" + myDocument.getText() + "\nwsText:" + ws);
-    //  //}
-    //
-    //}
-    if (removesPattern(textRange, whiteSpace, "<![CDATA[") ||
-        removesPattern(textRange, whiteSpace, "]]>")
+    boolean removesStartMarker;
+    String marker;
+
+    // When processing injection in cdata / comment we need not remove start / end markers that present as whitespace during check in
+    // com.intellij.formatting.WhiteSpace and during building formatter model = blocks in e.g. com.intellij.psi.formatter.xml.XmlTagBlock
+    if ((removesStartMarker = (removesPattern(textRange, whiteSpace, marker = "<![CDATA[") ||
+        removesPattern(textRange, whiteSpace, marker ="<!--["))) ||
+        removesPattern(textRange, whiteSpace, marker = "]]>") ||
+        removesPattern(textRange, whiteSpace, marker = "]-->")
       ) {
-      return textRange;
+      String newWs = null;
+
+      if (removesStartMarker) {
+        int at = CharArrayUtil.indexOf(myDocument.getCharsSequence(), marker, textRange.getStartOffset(), textRange.getEndOffset() + 1);
+        String ws = myDocument.getCharsSequence().subSequence(textRange.getStartOffset(), textRange.getEndOffset()).toString();
+        newWs = mergeWsWithCdataMarker(whiteSpace, ws, at - textRange.getStartOffset());
+      }
+
+      if (newWs == null) return textRange;
+      whiteSpace = newWs;
     }
 
     myDocument.replaceString(textRange.getStartOffset(),
@@ -177,5 +180,24 @@ public class DocumentBasedFormattingModel implements FormattingModel {
 
   public Project getProject() {
     return myProject;
+  }
+
+  @Nullable
+  public static String mergeWsWithCdataMarker(String whiteSpace, final String s, final int cdataPos) {
+    final int firstCrInGeneratedWs = whiteSpace.indexOf('\n');
+    final int secondCrInGeneratedWs = firstCrInGeneratedWs != -1 ? whiteSpace.indexOf('\n', firstCrInGeneratedWs + 1) : -1;
+    final int firstCrInPreviousWs = s.indexOf('\n');
+    final int secondCrInPreviousWs = firstCrInPreviousWs != -1 ? s.indexOf('\n', firstCrInPreviousWs + 1) : -1;
+
+    boolean knowHowToModifyCData = false;
+
+    if (secondCrInPreviousWs != -1 && secondCrInGeneratedWs != -1 && cdataPos > firstCrInPreviousWs && cdataPos < secondCrInPreviousWs) {
+      whiteSpace = whiteSpace.substring(0, secondCrInGeneratedWs) +
+                   s.substring(firstCrInPreviousWs + 1, secondCrInPreviousWs) +
+                   whiteSpace.substring(secondCrInGeneratedWs);
+      knowHowToModifyCData = true;
+    }
+    if (!knowHowToModifyCData) whiteSpace = null;
+    return whiteSpace;
   }
 }
