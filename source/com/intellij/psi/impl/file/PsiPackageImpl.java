@@ -419,11 +419,15 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   @NotNull
   private PsiClass[] findClassesByName(String name, GlobalSearchScope scope, PsiMigrationImpl migration) {
-    if (NOT_IN_TESTS && migration == null && !getClassNamesCache().contains(name)) return PsiClass.EMPTY_ARRAY;
+    if (NOT_IN_TESTS && migration == null && !containsClassNamed(name)) return PsiClass.EMPTY_ARRAY;
 
     final String qName = getQualifiedName();
     final String classQName = qName.length() > 0 ? qName + "." + name : name;
     return getFacade().findClasses(classQName, scope);
+  }
+
+  public boolean containsClassNamed(String name) {
+    return getClassNamesCache().contains(name);
   }
 
   private PsiPackage findSubPackageByName(String name, GlobalSearchScope scope) {

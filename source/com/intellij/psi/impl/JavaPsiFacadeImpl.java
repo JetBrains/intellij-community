@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -144,8 +145,16 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     return findClass(qualifiedName, GlobalSearchScope.allScope(myProject));
   }
 
-  public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+  public PsiClass findClass(@NotNull final String qualifiedName, @NotNull GlobalSearchScope scope) {
     myProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
+
+    if (DumbService.getInstance(getProject()).isDumb()) {
+      final List<PsiClass> classes = findClassesInDumbMode(qualifiedName, scope);
+      if (classes.size() == 1) {
+        return classes.get(0);
+      }
+      return null;
+    }
 
     for (PsiElementFinder finder : myElementFinders) {
       PsiClass aClass = finder.findClass(qualifiedName, scope);
@@ -156,7 +165,43 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   }
 
   @NotNull
+  private List<PsiClass> findClassesInDumbMode(String qualifiedName, GlobalSearchScope scope) {
+    final String packageName = StringUtil.getPackageName(qualifiedName);
+    final PsiPackage pkg = findPackage(packageName);
+    final String className = StringUtil.getShortName(qualifiedName);
+    if (pkg == null) {
+      final List<PsiClass> containingClasses = findClassesInDumbMode(packageName, scope);
+      if (containingClasses.size() == 1) {
+        return filterByName(className, containingClasses.get(0).getInnerClasses());
+      }
+
+      return Collections.emptyList();
+    }
+
+    if (pkg instanceof PsiPackageImpl && !((PsiPackageImpl)pkg).containsClassNamed(className)) {
+      return Collections.emptyList();
+    }
+
+    return filterByName(className, pkg.getClasses(scope));
+  }
+
+  private static List<PsiClass> filterByName(String className, PsiClass[] classes) {
+    final List<PsiClass> foundClasses = new SmartList<PsiClass>();
+    for (PsiClass psiClass : classes) {
+      if (className.equals(psiClass.getName())) {
+        foundClasses.add(psiClass);
+      }
+    }
+    return foundClasses;
+  }
+
+  @NotNull
   public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+    if (DumbService.getInstance(getProject()).isDumb()) {
+      final List<PsiClass> classes = findClassesInDumbMode(qualifiedName, scope);
+      return classes.toArray(new PsiClass[classes.size()]);
+    }
+
     List<PsiClass> classes = new SmartList<PsiClass>();
     for (PsiElementFinder finder : myElementFinders) {
       PsiClass[] finderClasses = finder.findClasses(qualifiedName, scope);

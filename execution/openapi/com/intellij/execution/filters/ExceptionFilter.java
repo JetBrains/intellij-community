@@ -18,6 +18,7 @@ package com.intellij.execution.filters;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-public class ExceptionFilter implements Filter{
+public class ExceptionFilter implements Filter, DumbAware {
   private final Project myProject;
   @NonNls private static final String AT = "at";
   private static final String AT_PREFIX = AT + " ";
