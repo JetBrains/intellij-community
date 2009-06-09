@@ -8,10 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Test;
@@ -115,8 +112,7 @@ public class GeneratorTest extends SimpleGroovyFileSetTestCase {
   }
 
   protected IdeaProjectTestFixture createFixture() {
-    final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createFixtureBuilder();
+    TestFixtureBuilder<IdeaProjectTestFixture> builder = JavaTestFixtureFactory.createFixtureBuilder();
     JavaModuleFixtureBuilder fixtureBuilder = builder.addModule(JavaModuleFixtureBuilder.class).addJdk(TestUtils.getMockJdkHome());
     fixtureBuilder.addLibraryJars("GROOVY", TestUtils.getMockGroovyLibraryHome(), "groovy-all.jar");
     return builder.getFixture();
