@@ -91,7 +91,7 @@ public class ReflectionCache {
   }
 
   public static boolean isInstance(Object instance, Class clazz) {
-    return isAssignable(clazz, instance.getClass());
+    return clazz.isInstance(instance);
   }
 
   public static boolean isInterface(Class aClass) {
