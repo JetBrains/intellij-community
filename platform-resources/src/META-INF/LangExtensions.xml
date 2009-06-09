@@ -213,9 +213,6 @@
   <projectService serviceInterface="com.intellij.ide.util.TreeFileChooserFactory"
                   serviceImplementation="com.intellij.ide.util.TreeFileChooserFactoryImpl"/>
 
-  <projectService serviceInterface="com.intellij.openapi.roots.ProjectFileIndex"
-                  serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexImpl"/>
-
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage" id="custom"/>
 

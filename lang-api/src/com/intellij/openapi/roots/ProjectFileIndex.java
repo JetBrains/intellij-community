@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.roots;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,13 +125,4 @@ public interface ProjectFileIndex extends FileIndex {
    * @return true if <code>file</code> is ignored, false otherwise.
    */
   boolean isIgnored(@NotNull VirtualFile file);
-
-  class SERVICE {
-    private SERVICE() {
-    }
-
-    public static ProjectFileIndex getInstance(Project project) {
-      return ServiceManager.getService(project, ProjectFileIndex.class);
-    }
-  }
 }

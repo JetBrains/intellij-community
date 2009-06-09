@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -58,6 +59,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   @NonNls private static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
 
   private final ProjectEx myProject;
+  private final ProjectFileIndex myProjectFileIndex;
 
   private final EventDispatcher<ProjectJdkListener> myProjectJdkEventDispatcher = EventDispatcher.create(ProjectJdkListener.class);
 
@@ -170,7 +172,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     myRootsChangedEvents.push(new String(out.toByteArray()));
   }  */
 
-  public ProjectRootManagerImpl(Project project, StartupManager startupManager) {
+  public ProjectRootManagerImpl(Project project, FileTypeManager fileTypeManager, DirectoryIndex directoryIndex, StartupManager startupManager) {
     myProject = (ProjectEx)project;
     myConnection = project.getMessageBus().connect();
     myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
@@ -183,6 +185,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       }
     });
 
+    myProjectFileIndex = new ProjectFileIndexImpl(myProject, directoryIndex, fileTypeManager);
     startupManager.registerStartupActivity(new Runnable() {
       public void run() {
         myStartupActivityPerformed = true;
@@ -227,7 +230,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   @NotNull
   public ProjectFileIndex getFileIndex() {
-    return ProjectFileIndex.SERVICE.getInstance(myProject);
+    return myProjectFileIndex;
   }
 
   private final Map<ModuleRootListener, MessageBusConnection> myListenerAdapters = new HashMap<ModuleRootListener, MessageBusConnection>();
