@@ -14,6 +14,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <moduleType id="PYTHON_MODULE" implementationClass="com.jetbrains.python.module.PythonModuleType"/>
     <facetType implementation="com.jetbrains.python.facet.PythonFacetType"/>
+    <frameworkSupport implementation="com.jetbrains.python.facet.PythonFrameworkSupportProvider"/>
     <moduleConfigurationEditorProvider implementation="com.jetbrains.python.module.PythonModuleConfigurationEditorProvider"/>
   </extensions>
 

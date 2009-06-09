@@ -8,7 +8,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <component id="bd1cb" class="com.intellij.ui.ComboboxWithBrowseButton" binding="mySdkComboBox">
+      <component id="5b600" class="com.jetbrains.python.facet.PythonSdkComboBox" binding="mySdkComboBox">
         <constraints>
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
