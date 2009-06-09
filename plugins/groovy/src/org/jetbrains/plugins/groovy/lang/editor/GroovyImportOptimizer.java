@@ -22,13 +22,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -79,6 +78,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       final Set<String> importedClasses = new LinkedHashSet<String>();
       final Set<String> staticallyImportedMembers = new LinkedHashSet<String>();
       final Set<GrImportStatement> usedImports = new HashSet<GrImportStatement>();
+      final Set<String> implicitlyImported = new LinkedHashSet<String>();
       myFile.accept(new GroovyRecursiveElementVisitor() {
         public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
           visitRefElement(refElement);
@@ -120,11 +120,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
                       }
                     }
                   } else {
-                    if (element instanceof PsiClass) {
-                      importedName = ((PsiClass) element).getQualifiedName();
-                    } else if (element instanceof PsiMethod && ((PsiMethod) element).isConstructor()) {
-                      importedName = ((PsiMethod) element).getContainingClass().getQualifiedName();
-                    }
+                    importedName = getTargetQualifiedName(element);
                   }
                 } else {
                   final GrCodeReferenceElement importReference = importStatement.getImportReference();
@@ -141,16 +137,17 @@ public class GroovyImportOptimizer implements ImportOptimizer {
                   importedClasses.add(importedName);
                 }
               }
-            } else if (context == null && !(refElement.getParent() instanceof GrImportStatement) && element instanceof PsiClass) {
-              ContainerUtil.addIfNotNull(((PsiClass)element).getQualifiedName(), importedClasses);
+            } else if (context == null && !(refElement.getParent() instanceof GrImportStatement) && refElement.getQualifier() == null) {
+              final String qname = getTargetQualifiedName(element);
+              if (qname != null) {
+                implicitlyImported.add(qname);
+                importedClasses.add(qname);
+              }
             }
           }
         }
       });
 
-      for (final PsiClass psiClass : myFile.getClasses()) {
-        importedClasses.remove(psiClass.getQualifiedName());
-      }
 
       // remove ALL imports from file
       final GrImportStatement[] oldImports = myFile.getImportStatements();
@@ -163,30 +160,34 @@ public class GroovyImportOptimizer implements ImportOptimizer {
           aliased.add(factory.createImportStatementFromText(oldImport.getText()));
         }
       }
-      for (GrImportStatement importStatement : oldImports) {
-        try {
-          myFile.removeImport(importStatement);
-        } catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
 
       // Add new import statements
-      GrImportStatement[] newImports = prepare(importedClasses, staticallyImportedMembers);
-      try {
-        for (GrImportStatement aliasedImport : aliased) {
-          myFile.addImport(aliasedImport);
-        }
-        for (GrImportStatement newImport : newImports) {
-          myFile.addImport(newImport);
-        }
-      } catch (IncorrectOperationException e) {
-        LOG.error(e);
+      GrImportStatement[] newImports = prepare(importedClasses, staticallyImportedMembers, implicitlyImported);
+      for (GrImportStatement aliasedImport : aliased) {
+        myFile.addImport(aliasedImport);
+      }
+      for (GrImportStatement newImport : newImports) {
+        myFile.addImport(newImport);
       }
 
+      myFile.removeImport(myFile.addImport(factory.createImportStatementFromText("import xxxx"))); //to remove trailing whitespaces
+
+      for (GrImportStatement importStatement : oldImports) {
+        myFile.removeImport(importStatement);
+      }
     }
 
-    private GrImportStatement[] prepare(Set<String> importedClasses, Set<String> staticallyImportedMembers) {
+    @Nullable private String getTargetQualifiedName(PsiElement element) {
+      if (element instanceof PsiClass) {
+        return ((PsiClass) element).getQualifiedName();
+      }
+      if (element instanceof PsiMethod && ((PsiMethod) element).isConstructor()) {
+        return ((PsiMethod) element).getContainingClass().getQualifiedName();
+      }
+      return null;
+    }
+
+    private GrImportStatement[] prepare(Set<String> importedClasses, Set<String> staticallyImportedMembers, Set<String> implicitlyImported) {
       final Project project = myFile.getProject();
       final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
@@ -195,15 +196,14 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       TObjectIntHashMap<String> classCountMap = new TObjectIntHashMap<String>();
 
       for (String importedClass : importedClasses) {
-        final String packageName = getParentName(importedClass);
+        final String packageName = StringUtil.getPackageName(importedClass);
 
-        if (isPackageImplicitlyImported(packageName)) continue;
         if (!packageCountMap.containsKey(packageName)) packageCountMap.put(packageName, 0);
         packageCountMap.increment(packageName);
       }
 
       for (String importedMember : staticallyImportedMembers) {
-        final String className = getParentName(importedMember);
+        final String className = StringUtil.getPackageName(importedMember);
         if (!classCountMap.containsKey(className)) classCountMap.put(className, 0);
         classCountMap.increment(className);
       }
@@ -236,17 +236,17 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
       List<GrImportStatement> explicated = CollectionFactory.arrayList();
       for (String importedClass : importedClasses) {
-        final String parentName = getParentName(importedClass);
+        final String parentName = StringUtil.getPackageName(importedClass);
         if (packageCountMap.get(parentName) >= settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND) continue;
-        if (isClassImplicitlyImported(importedClass) && !onDemandImportedSimpleClassNames.contains(StringUtil.getShortName(importedClass)))
+        if (implicitlyImported.contains(importedClass) && !onDemandImportedSimpleClassNames.contains(StringUtil.getShortName(importedClass)))
           continue;
 
         explicated.add(factory.createImportStatementFromText(importedClass, false, false, null));
       }
 
       for (String importedMember : staticallyImportedMembers) {
-        final String parentName = getParentName(importedMember);
-        if (classCountMap.get(parentName) >= settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) continue;
+        final String className = StringUtil.getPackageName(importedMember);
+        if (classCountMap.get(className) >= settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) continue;
         result.add(factory.createImportStatementFromText(importedMember, true, false, null));
       }
 
@@ -255,25 +255,6 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
       explicated.addAll(result);
       return explicated.toArray(new GrImportStatement[explicated.size()]);
-    }
-
-    private boolean isClassImplicitlyImported(String importedClass) {
-      for (String implicitlyImportedClass : GroovyFileBase.IMPLICITLY_IMPORTED_CLASSES) {
-        if (importedClass.equals(implicitlyImportedClass)) return true;
-      }
-
-      return isPackageImplicitlyImported(getParentName(importedClass));
-    }
-
-    private boolean isPackageImplicitlyImported(String packageName) {
-      for (String implicitlyImportedPackage : GroovyFileBase.IMPLICITLY_IMPORTED_PACKAGES) {
-        if (packageName.equals(implicitlyImportedPackage)) return true;
-      }
-      return false;
-    }
-
-    private String getParentName(String qname) {
-      return StringUtil.getPackageName(qname);
     }
 
   }

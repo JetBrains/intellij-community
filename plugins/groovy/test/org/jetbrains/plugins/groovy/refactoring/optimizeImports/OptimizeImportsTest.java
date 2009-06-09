@@ -113,6 +113,22 @@ public class OptimizeImportsTest extends JavaCodeInsightFixtureTestCase {
     doTest("A.groovy");
   }
 
+  public void testSamePackage() throws Throwable {
+    myFixture.addClass("package foo; public class Bar {}");
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".groovy", "foo/Foo.groovy"));
+    doOptimizeImports();
+    myFixture.checkResultByFile("result.test");
+  }
+
+  public void testQualifiedUsage() throws Throwable {
+    myFixture.addClass("package foo; public class Bar {}");
+    doTest(getTestName(false) + ".groovy");
+  }
+
+  public void testFileHeader() throws Throwable {
+    doTest(getTestName(false) + ".groovy");
+  }
+
   private void doTest(@NonNls String filePath) throws Throwable {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);

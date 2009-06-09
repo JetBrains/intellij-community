@@ -19,21 +19,15 @@ import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -88,21 +82,33 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   }
 
   public void removeImport(GrImportStatement importStatement) throws IncorrectOperationException {
-    PsiElement next = PsiTreeUtil.skipSiblingsForward(importStatement, PsiWhiteSpace.class);
-    while (next != null && next.getNode() != null && next.getNode().getElementType() == GroovyTokenTypes.mSEMI) {
-      next = next.getNextSibling();
-      if (next instanceof PsiWhiteSpace) {
-        next = PsiTreeUtil.skipSiblingsForward(next, PsiWhiteSpace.class);
-      }
+    PsiElement before = importStatement.getPrevSibling();
+    while (before instanceof PsiWhiteSpace || hasElementType(before, GroovyTokenTypes.mNLS)) {
+      before = before.getPrevSibling();
     }
-    if (next != null) {
-      ASTNode astNode = next.getNode();
-      if (astNode != null && astNode.getElementType() == GroovyTokenTypes.mNLS) {
-        deleteChildRange(importStatement, next);
-      } else {
-        deleteChildRange(importStatement, importStatement);
-      }
+
+    PsiElement rangeStart = importStatement;
+    if (before != null && !(before instanceof PsiImportStatement) && before != importStatement.getPrevSibling()) {
+      rangeStart = before.getNextSibling();
+      addBefore(GroovyPsiElementFactory.getInstance(getProject()).createLineTerminator(2), rangeStart);
     }
+
+    PsiElement rangeEnd = importStatement.getNextSibling();
+    while (rangeEnd instanceof PsiWhiteSpace || hasElementType(rangeEnd, GroovyTokenTypes.mSEMI)) {
+      rangeEnd = rangeEnd.getNextSibling();
+    }
+    deleteChildRange(rangeStart, hasElementType(rangeEnd, GroovyTokenTypes.mNLS) ? rangeEnd : rangeEnd.getPrevSibling());
+  }
+
+  private static boolean hasElementType(PsiElement next, final IElementType type) {
+    if (next == null) {
+      return false;
+    }
+    final ASTNode astNode = next.getNode();
+    if (astNode != null && astNode.getElementType() == type) {
+      return true;
+    }
+    return false;
   }
 
   public void removeElements(PsiElement[] elements) throws IncorrectOperationException {
