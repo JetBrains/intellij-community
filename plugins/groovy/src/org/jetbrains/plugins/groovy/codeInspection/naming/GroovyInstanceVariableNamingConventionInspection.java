@@ -29,7 +29,7 @@ public class GroovyInstanceVariableNamingConventionInspection extends Convention
 
   @NotNull
   public String getDisplayName() {
-    return "Instance method naming convention";
+    return "Instance variable naming convention";
   }
 
   protected GroovyFix buildFix(PsiElement location) {
