@@ -194,11 +194,11 @@ public abstract class TestObject implements JavaCommandLine {
     if (myJavaParameters == null) {
       myJavaParameters = new JavaParameters();
       initialize();
-    }
-    final Module module = myConfiguration.getConfigurationModule().getModule();
-    final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);
-    for (Object patcher : patchers) {
-      ((JUnitPatcher)patcher).patchJavaParameters(module, myJavaParameters);
+      final Module module = myConfiguration.getConfigurationModule().getModule();
+      final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);
+      for (Object patcher : patchers) {
+        ((JUnitPatcher)patcher).patchJavaParameters(module, myJavaParameters);
+      }
     }
     return myJavaParameters;
   }
