@@ -99,9 +99,11 @@ public class ResolveClassTest extends GroovyResolveTestCase {
     assertNotNull(ref.resolve());
   }
 
-  public void testImportStaticFromJavaUtil() throws Throwable {
-    PsiReference ref = configureByFile(getTestName(true) + "/" + getTestName(false) + ".groovy");
-    assertNotNull(ref.resolve());
+  public void testImportStaticFromJavaUtil() throws Throwable { doTest(); }
+  public void testInnerEnum() throws Throwable { doTest(); }
+
+  private void doTest() throws Exception {
+    doTest(getTestName(true) + "/" + getTestName(false) + ".groovy");
   }
 
   private void doTest(String fileName) throws Exception {

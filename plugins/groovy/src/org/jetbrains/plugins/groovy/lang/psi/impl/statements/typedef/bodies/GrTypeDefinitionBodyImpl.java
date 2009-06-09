@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.NotNull;
@@ -110,6 +111,10 @@ public class GrTypeDefinitionBodyImpl extends GroovyPsiElementImpl implements Gr
   @NotNull
   public GrClassInitializer[] getInitializers() {
     return findChildrenByClass(GrClassInitializer.class);
+  }
+
+  public PsiClass[] getInnerClasses() {
+    return findChildrenByClass(PsiClass.class);
   }
 
 

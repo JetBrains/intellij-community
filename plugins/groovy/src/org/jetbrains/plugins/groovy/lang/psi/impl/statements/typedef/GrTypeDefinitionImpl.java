@@ -28,6 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.InheritanceImplUtil;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
@@ -316,6 +317,27 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
       }
     }
 
+    final GrTypeDefinitionBody body = getBody();
+    if (lastParent == body && body != null) {
+      if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.CLASS)) {
+        for (PsiClass innerClass : getAllInnerClasses()) {
+          final String innerClassName = innerClass.getName();
+          if (innerClassName == null) {
+            continue;
+          }
+
+          if (nameHint != null && !innerClassName.equals(nameHint.getName(state))) {
+            continue;
+          }
+
+          if (!processor.execute(innerClass, state)) {
+            return false;
+          }
+        }
+      }
+    }
+
+
     return true;
   }
 
@@ -532,6 +554,11 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @NotNull
   public PsiClass[] getInnerClasses() {
+    final GrTypeDefinitionBody body = getBody();
+    if (body != null) {
+      return body.getInnerClasses();
+    }
+
     return PsiClass.EMPTY_ARRAY;
   }
 
@@ -593,7 +620,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @NotNull
   public PsiClass[] getAllInnerClasses() {
-    return PsiClass.EMPTY_ARRAY;
+    return PsiClassImplUtil.getAllInnerClasses(this);
   }
 
   @Nullable
