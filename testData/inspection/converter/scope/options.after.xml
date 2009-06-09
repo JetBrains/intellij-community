@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
   <option name="PROJECT_PROFILE" value="p1" />
+  <option name="USE_PROJECT_PROFILE" value="true" />
   <version value="1.0" />
   <profiles>
     <profile version="1.0" is_locked="false">
