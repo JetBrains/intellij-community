@@ -69,7 +69,7 @@ public class ClassPresentationUtil {
       String methodName = method.getName();
       return PsiBundle.message("method.context.display", methodName, getContextName(method, qualified));
     }
-    else if (element instanceof PsiJavaFile){
+    else if (element instanceof PsiClassOwner){
       return null;
     }
     else if (element instanceof PsiFile){
@@ -99,9 +99,9 @@ public class ClassPresentationUtil {
 
       public String getLocationString() {
         PsiFile file = psiClass.getContainingFile();
-        if (file instanceof PsiJavaFile) {
-          PsiJavaFile javaFile = (PsiJavaFile)file;
-          String packageName = javaFile.getPackageName();
+        if (file instanceof PsiClassOwner) {
+          PsiClassOwner classOwner = (PsiClassOwner)file;
+          String packageName = classOwner.getPackageName();
           if (packageName.length() == 0) return null;
           return "(" + packageName + ")";
         }

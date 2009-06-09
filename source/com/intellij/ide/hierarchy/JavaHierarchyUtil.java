@@ -5,8 +5,8 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.SourceComparator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -21,8 +21,8 @@ public class JavaHierarchyUtil {
   @Nullable
   public static String getPackageName(final PsiClass psiClass) {
     final PsiFile file = psiClass.getContainingFile();
-    if (file instanceof PsiJavaFile){
-      return ((PsiJavaFile)file).getPackageName();
+    if (file instanceof PsiClassOwner){
+      return ((PsiClassOwner)file).getPackageName();
     }
     else{
       return null;
