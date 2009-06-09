@@ -136,17 +136,17 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   }
 
   /**
-   * @deprecated use {@link #getTemplatePresenation()} to set constant presentation right in node's constructor
+   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
   public final void setNodeText(String text, String tooltip, boolean hasError) {
     clearColoredText();
     SimpleTextAttributes attributes = hasError ? getErrorAttributes() : getPlainAttributes();
-    getTemplatePresenation().addText(new ColoredFragment(text, tooltip, attributes));
+    getTemplatePresentation().addText(new ColoredFragment(text, tooltip, attributes));
   }
 
   /**
-   * @deprecated use {@link #getTemplatePresenation()} to set constant presentation right in node's constructor
+   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
   public final void setPlainText(String aText) {
@@ -155,31 +155,31 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   }
 
   /**
-   * @deprecated use {@link #getTemplatePresenation()} to set constant presentation right in node's constructor
+   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
   public final void addPlainText(String aText) {
-    getTemplatePresenation().addText(new ColoredFragment(aText, getPlainAttributes()));
+    getTemplatePresentation().addText(new ColoredFragment(aText, getPlainAttributes()));
   }
 
   /**
-   * @deprecated use {@link #getTemplatePresenation()} to set constant presentation right in node's constructor
+   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
   public final void addErrorText(String aText, String errorTooltipText) {
-    getTemplatePresenation().addText(new ColoredFragment(aText, errorTooltipText, getErrorAttributes()));
+    getTemplatePresentation().addText(new ColoredFragment(aText, errorTooltipText, getErrorAttributes()));
   }
 
   /**
-   * @deprecated use {@link #getTemplatePresenation()} to set constant presentation right in node's constructor
+   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
   public final void clearColoredText() {
-    getTemplatePresenation().clearText();
+    getTemplatePresentation().clearText();
   }
 
   /**
-   * @deprecated use {@link #getTemplatePresenation()} to set constant presentation right in node's constructor
+   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
   public final void addColoredFragment(String aText, SimpleTextAttributes aAttributes) {
@@ -187,19 +187,19 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   }
 
   /**
-   * @deprecated use {@link #getTemplatePresenation()} to set constant presentation right in node's constructor
+   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
   public final void addColoredFragment(String aText, String toolTip, SimpleTextAttributes aAttributes) {
-    getTemplatePresenation().addText(new ColoredFragment(aText, toolTip, aAttributes));
+    getTemplatePresentation().addText(new ColoredFragment(aText, toolTip, aAttributes));
   }
 
   /**
-   * @deprecated use {@link #getTemplatePresenation()} to set constant presentation right in node's constructor
+   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
   public final void addColoredFragment(ColoredFragment fragment) {
-    getTemplatePresenation().addText(new ColoredFragment(fragment.getText(), fragment.getAttributes()));
+    getTemplatePresentation().addText(new ColoredFragment(fragment.getText(), fragment.getAttributes()));
   }
 
   protected void doUpdate() {
@@ -248,7 +248,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   }
 
   /**
-   * @deprecated use {@link #getTemplatePresenation()} to set constant presentation right in node's constructor
+   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
   public void setUniformIcon(Icon aIcon) {
@@ -256,7 +256,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   }
 
   /**
-   * @deprecated use {@link #getTemplatePresenation()} to set constant presentation right in node's constructor
+   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
   public final void setIcons(Icon aClosed, Icon aOpen) {
@@ -268,7 +268,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * @deprecated never called by Tree classes
    */
   public final ColoredFragment[] getColoredText() {
-    final List<ColoredFragment> list = getTemplatePresenation().getColoredText();
+    final List<ColoredFragment> list = getTemplatePresentation().getColoredText();
     return list.toArray(new ColoredFragment[list.size()]);
   }
 

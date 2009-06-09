@@ -72,14 +72,14 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
   public final PresentationData getPresentation() {
     PresentationData result;
     if (myUpdatedPresentation == null) {
-      result = getTemplatePresenation();
+      result = getTemplatePresentation();
     } else {
       result = myUpdatedPresentation;
     }
     return result;
   }
 
-  protected final PresentationData getTemplatePresenation() {
+  protected final PresentationData getTemplatePresentation() {
     if (myTemplatePresentation == null) {
       myTemplatePresentation = createPresentation();
     }
