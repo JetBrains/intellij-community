@@ -16,8 +16,8 @@
 
 package com.intellij.execution.junit2.configuration;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.structureView.impl.StructureNodeRenderer;
-import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
@@ -25,15 +25,16 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.ui.*;
-import com.intellij.execution.ExecutionBundle;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Comparator;
 
 // Author: dyoma
 
-public class MethodList extends JPanel {
+public class MethodListDlg extends DialogWrapper {
   private final PsiClass myClass;
   private static final Comparator<PsiMethod> METHOD_NAME_COMPARATOR = new Comparator<PsiMethod>() {
       public int compare(final PsiMethod psiMethod, final PsiMethod psiMethod1) {
@@ -42,12 +43,13 @@ public class MethodList extends JPanel {
     };
   private final SortedListModel<PsiMethod> myListModel = new SortedListModel<PsiMethod>(METHOD_NAME_COMPARATOR);
   private final JList myList = new JList(myListModel);
+  private final JPanel myWholePanel = new JPanel(new BorderLayout());
 
-  public MethodList(final PsiClass psiClass, final Condition<PsiMethod> filter) {
-    super(new BorderLayout());
+  public MethodListDlg(final PsiClass psiClass, final Condition<PsiMethod> filter, final JComponent parent) {
+    super(parent, false);
     myClass = psiClass;
     createList(psiClass.getAllMethods(), filter);
-    add(ScrollPaneFactory.createScrollPane(myList));
+    myWholePanel.add(ScrollPaneFactory.createScrollPane(myList));
     myList.setCellRenderer(new ColoredListCellRenderer() {
       protected void customizeCellRenderer(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
         final PsiMethod psiMethod = (PsiMethod)value;
@@ -60,7 +62,18 @@ public class MethodList extends JPanel {
       }
     });
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myList.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() == 2) {
+          MethodListDlg.this.close(OK_EXIT_CODE);
+          e.consume();
+        }
+      }
+    });
     ListScrollingUtil.ensureSelectionExists(myList);
+    setTitle(ExecutionBundle.message("choose.test.method.dialog.title"));
+    init();
   }
 
   private void createList(final PsiMethod[] allMethods, final Condition<PsiMethod> filter) {
@@ -70,16 +83,11 @@ public class MethodList extends JPanel {
     }
   }
 
-  public PsiMethod getSelected() {
-    return (PsiMethod)myList.getSelectedValue();
+  protected JComponent createCenterPanel() {
+    return myWholePanel;
   }
 
-  public static PsiMethod showDialog(final PsiClass psiClass, final Condition<PsiMethod> filter, final JComponent parent) {
-    final MethodList methodList = new MethodList(psiClass, filter);
-    final DialogBuilder builder = new DialogBuilder(parent);
-    builder.setCenterPanel(methodList);
-    builder.setPreferedFocusComponent(methodList.myList);
-    builder.setTitle(ExecutionBundle.message("choose.test.method.dialog.title"));
-    return builder.show() == DialogWrapper.OK_EXIT_CODE ? methodList.getSelected() : null;
+  public PsiMethod getSelected() {
+    return (PsiMethod)myList.getSelectedValue();
   }
 }

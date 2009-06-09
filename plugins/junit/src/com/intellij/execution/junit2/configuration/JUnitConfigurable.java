@@ -17,8 +17,8 @@
 package com.intellij.execution.junit2.configuration;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
+import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.execution.junit.JUnitUtil;
@@ -287,8 +287,15 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
                                    Messages.getInformationIcon());
         return null;
       }
-      final PsiMethod psiMethod = MethodList.showDialog(testClass, new JUnitUtil.TestMethodFilter(testClass), getField());
-      return psiMethod != null ? psiMethod.getName() : null;
+      final MethodListDlg dlg = new MethodListDlg(testClass, new JUnitUtil.TestMethodFilter(testClass), getField());
+      dlg.show();
+      if (dlg.isOK()) {
+        final PsiMethod method = dlg.getSelected();
+        if (method != null) {
+          return method.getName();
+        }
+      }
+      return null;
     }
   }
 
