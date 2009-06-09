@@ -16,7 +16,7 @@
 package com.intellij.util;
 
 public class LocalTimeCounter {
-  private static long ourCurrentTime = 0;
+  private static volatile long ourCurrentTime = 0;
 
   public static long currentTime() {
     return ++ourCurrentTime;
