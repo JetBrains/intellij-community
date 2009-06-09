@@ -14,6 +14,7 @@ import static com.jetbrains.python.testing.PythonUnitTestRunConfiguration.TestTy
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.*;
 
 /**
  * @author Leonid Shalupov
@@ -44,6 +45,8 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
 
     myConfiguration = configuration;
     myCommonOptionsForm = new PyCommonOptionsForm(configuration);
+    myCommonOptionsPlaceholder.add(myCommonOptionsForm.getMainPanel(), BorderLayout.CENTER);
+    
     initComponents();
   }
 
