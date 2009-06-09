@@ -50,7 +50,7 @@ public class JUnit4TestRunnerUtil {
                 methodNames.add(line.substring(idx + 1));
 
               }
-              result.addElement(loadTestClass(className));
+              appendTestClass(result, className);
             }
 
             final Request allClasses = Request.classes(new IdeaComputer(packageName), getArrayOfClasses(result));
@@ -82,11 +82,18 @@ public class JUnit4TestRunnerUtil {
         if (index != -1) {
           return Request.method(loadTestClass(suiteClassName.substring(0, index)), suiteClassName.substring(index + 1));
         }
-        result.addElement(loadTestClass(suiteClassName));
+        appendTestClass(result, suiteClassName);
       }
     }
 
     return result.size() == 1 ? Request.aClass((Class)result.get(0)) : Request.classes(getArrayOfClasses(result));
+  }
+
+  private static void appendTestClass(Vector result, String className) {
+    final Class aClass = loadTestClass(className);
+    if (!result.contains(aClass)) {  //do not append classes twice: rerun failed tests from one test suite
+      result.addElement(aClass);
+    }
   }
 
   private static Class[] getArrayOfClasses(Vector result) {
