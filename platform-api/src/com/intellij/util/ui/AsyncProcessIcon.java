@@ -25,29 +25,35 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class AsyncProcessIcon extends AnimatedIcon {
-
   public static final int COUNT = 12;
   public static final int CYCLE_LENGTH = 800;
+  private static final Icon[] SMALL_ICONS = findIcons("/process/step_");
+  private static final Icon SMALL_PASSIVE_ICON = IconLoader.getIcon("/process/step_passive.png");
 
   public AsyncProcessIcon(@NonNls String name) {
-    this(name, "/process/step_", "/process/step_passive.png");
+    this(name, SMALL_ICONS, SMALL_PASSIVE_ICON);
   }
 
-  protected AsyncProcessIcon(@NonNls String name, String prefix, String passivePath) {
+  private AsyncProcessIcon(@NonNls String name, Icon[] icons, Icon passive) {
     super(name);
-
-    Icon[] icons = new Icon[COUNT];
-    for (int i = 0; i <= COUNT - 1; i++) {
-      icons[i] = IconLoader.getIcon(prefix + (i + 1) + ".png");
-    }
-    Icon passive = passivePath != null ? IconLoader.getIcon(passivePath) : new EmptyIcon(icons[0]);
 
     init(icons, passive, CYCLE_LENGTH, 0, -1);
   }
 
+  private static Icon[] findIcons(String prefix) {
+    Icon[] icons = new Icon[COUNT];
+    for (int i = 0; i <= COUNT - 1; i++) {
+      icons[i] = IconLoader.getIcon(prefix + (i + 1) + ".png");
+    }
+    return icons;
+  }
+
   public static class Big extends AsyncProcessIcon {
+    private static final Icon[] BIG_ICONS = findIcons("/process/big/step_");
+    private static final Icon BIG_PASSIVE_ICON = IconLoader.getIcon("/process/big/step_passive.png");
+
     public Big(@NonNls final String name) {
-      super(name, "/process/big/step_", "/process/big/step_passive.png");
+      super(name, BIG_ICONS, BIG_PASSIVE_ICON);
     }
   }
 
