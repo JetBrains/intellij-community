@@ -191,8 +191,10 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
       if (aClass == null) {
-        LOG.assertTrue(classType instanceof PsiClassReferenceType, classType);
-        return new ClassReferenceTypePointer((PsiClassReferenceType)classType);
+        if (classType instanceof PsiClassReferenceType) {
+          return new ClassReferenceTypePointer((PsiClassReferenceType)classType);
+        }
+        return new SimpleTypePointer(classType);
       }
       if (classType instanceof PsiClassReferenceType) {
         classType = ((PsiClassReferenceType)classType).createImmediateCopy();
