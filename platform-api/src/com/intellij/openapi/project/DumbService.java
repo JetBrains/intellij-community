@@ -8,14 +8,16 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * A service managing IDEA's 'dumb' mode: when indices are updated in background and the functionality is very much limited.
@@ -78,8 +80,15 @@ public abstract class DumbService {
     }, modalityState);
   }
 
+  private static final NotNullLazyKey<DumbService, Project> INSTANCE_KEY = NotNullLazyKey.create("DumbService.Cache", new NotNullFunction<Project, DumbService>() {
+    @NotNull
+    public DumbService fun(final Project project) {
+      return ServiceManager.getService(project, DumbService.class);
+    }
+  });
+
   public static DumbService getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, DumbService.class);
+    return INSTANCE_KEY.getValue(project);
   }
 
   public <T> List<T> filterByDumbAwareness(Collection<T> collection) {
