@@ -23,6 +23,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -159,4 +161,9 @@ public class PsiPrimitiveType extends PsiType {
     ourQNameToUnboxed.put("java.lang.Double", DOUBLE);
     ourUnboxedToQName.put(DOUBLE, "java.lang.Double");
   }
+
+  public static Collection<String> getAllBoxedTypeNames() {
+    return Collections.unmodifiableCollection(ourQNameToUnboxed.keySet());
+  }
+  
 }

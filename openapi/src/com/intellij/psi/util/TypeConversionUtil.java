@@ -16,10 +16,16 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.Processor;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
@@ -726,12 +732,47 @@ public class TypeConversionUtil {
     }
   }
 
+  private static final Key<CachedValue<Set<String>>> POSSIBLE_BOXED_HOLDER_TYPES = Key.create("Types that may be possibly assigned from primitive ones");
+
   private static boolean isBoxable(final PsiClassType left, final PsiPrimitiveType right) {
     if (!left.getLanguageLevel().hasEnumKeywordAndAutoboxing()) return false;
     final PsiClass psiClass = left.resolve();
     if (psiClass == null) return false;
+
+    final String qname = psiClass.getQualifiedName();
+    if (qname == null || !getAllBoxedTypeSupers(psiClass).contains(qname)) {
+      return false;
+    }
+
     final PsiClassType rightBoxed = right.getBoxedType(psiClass.getManager(), left.getResolveScope());
     return rightBoxed != null && isAssignable(left, rightBoxed);
+  }
+
+  private static Set<String> getAllBoxedTypeSupers(PsiClass psiClass) {
+    PsiManager manager = psiClass.getManager();
+    final Project project = psiClass.getProject();
+    CachedValue<Set<String>> boxedHolderTypes = project.getUserData(POSSIBLE_BOXED_HOLDER_TYPES);
+    if (boxedHolderTypes == null) {
+      project.putUserData(POSSIBLE_BOXED_HOLDER_TYPES, boxedHolderTypes = manager.getCachedValuesManager().createCachedValue(new CachedValueProvider<Set<String>>() {
+        public Result<Set<String>> compute() {
+          final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+          final Set<String> set = new THashSet<String>();
+          for (final String qname : PsiPrimitiveType.getAllBoxedTypeNames()) {
+            final PsiClass boxedClass = facade.findClass(qname, GlobalSearchScope.allScope(project));
+            InheritanceUtil.processSupers(boxedClass, true, new Processor<PsiClass>() {
+              public boolean process(PsiClass psiClass) {
+                ContainerUtil.addIfNotNull(psiClass.getQualifiedName(), set);
+                return true;
+              }
+            });
+          }
+          return Result.create(set, ProjectRootManager.getInstance(project));
+        }
+      }, false));
+    }
+
+    final Set<String> boxedHolders = boxedHolderTypes.getValue();
+    return boxedHolders;
   }
 
   private static boolean isClassAssignable(PsiClassType.ClassResolveResult leftResult,
