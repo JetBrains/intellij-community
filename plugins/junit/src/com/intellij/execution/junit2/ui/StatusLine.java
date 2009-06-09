@@ -16,6 +16,7 @@
 
 package com.intellij.execution.junit2.ui;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.junit2.*;
 import com.intellij.execution.junit2.ui.model.CompletionEvent;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
@@ -24,7 +25,6 @@ import com.intellij.execution.junit2.ui.model.StateEvent;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 
@@ -93,23 +93,27 @@ class StatusLine extends JPanel {
     }
 
     public void updateLabel(final JLabel label) {
-      String testCount;
-      if (myDefects > 0)
-        testCount = ExecutionBundle.message("junit.runing.info.status.completed.from.total.failed", myCompleted, myTotal, myDefects); // += "    Failed: " + myDefects + "   ";
-      else
-        testCount = ExecutionBundle.message("junit.runing.info.status.completed.from.total", myCompleted, myTotal); // myCompleted + " of " + myTotal
       final StringBuffer buffer = new StringBuffer();
       if (myDoneEvent != null) {
-        String termMessage = generateTermMessage(testCount);
+        String termMessage = generateTermMessage(getTestCount(0));
         buffer.append(termMessage);
         final String comment = myDoneEvent.getComment();
         if (comment.length() > 0) {
           buffer.append("(" + comment + ")");
         }
       } else {
-        buffer.append(ExecutionBundle.message("junit.runing.info.status.running.number.with.name", testCount, myCurrentTestName));
+        buffer.append(ExecutionBundle.message("junit.runing.info.status.running.number.with.name", getTestCount(1), myCurrentTestName));
       }
       label.setText(buffer.toString());
+    }
+
+    private String getTestCount(int offset) {
+      String testCount;
+      if (myDefects > 0)
+        testCount = ExecutionBundle.message("junit.runing.info.status.completed.from.total.failed", myCompleted + offset, myTotal, myDefects); // += "    Failed: " + myDefects + "   ";
+      else
+        testCount = ExecutionBundle.message("junit.runing.info.status.completed.from.total", myCompleted + offset, myTotal); // myCompleted + " of " + myTotal
+      return testCount;
     }
 
     private String generateTermMessage(final String testCount) {
