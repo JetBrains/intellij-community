@@ -12,6 +12,11 @@ package com.intellij.openapi.project;
  * <li> Stacktrace {@link com.intellij.execution.filters.Filter}s
  * <li> {@link com.intellij.ide.SelectInTarget}s
  * <li> {@link com.intellij.ide.IconProvider}s
+ * <li> {@link com.intellij.codeInsight.completion.CompletionContributor}s
+ * <li> {@link com.intellij.lang.annotation.Annotator}s
+ * <li> {@link com.intellij.codeInsight.daemon.LineMarkerProvider}s
+ * <li> {@link com.intellij.codeHighlighting.TextEditorHighlightingPass}es
+ * <li> {@link com.intellij.codeInspection.LocalInspectionTool}s
  *
  * @see com.intellij.openapi.project.DumbService
  * @see com.intellij.openapi.project.DumbAwareRunnable
