@@ -63,7 +63,7 @@ public class AllClassesGetter {
           if (newOffset >= 0) {
             endOffset = newOffset;
           } else {
-            LOG.error(endOffset + " became invalid: " + context.getOffsetMap());
+            LOG.error(endOffset + " became invalid: " + context.getOffsetMap() + "; inserting " + qname);
           }
         }
       }
