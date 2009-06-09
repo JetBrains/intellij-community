@@ -114,8 +114,9 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   public void setLeftToolbar(ActionGroup group, String place) {
-    final JComponent tb = myActionManager.createActionToolbar(place, group, false).getComponent();
-    myToolbar.setContent(tb);
+    final ActionToolbar tb = myActionManager.createActionToolbar(place, group, false);
+    tb.setTargetComponent(myComponent);
+    myToolbar.setContent(tb.getComponent());
 
     myComponent.revalidate();
     myComponent.repaint();
