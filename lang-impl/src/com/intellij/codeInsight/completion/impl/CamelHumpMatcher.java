@@ -156,4 +156,9 @@ public class CamelHumpMatcher extends PrefixMatcher {
         return NameUtil.buildMatcher(myPrefix, 0, true, false);
     }
   }
+
+  @Override
+  public String toString() {
+    return myPrefix;
+  }
 }
