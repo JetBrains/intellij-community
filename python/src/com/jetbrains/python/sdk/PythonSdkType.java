@@ -30,10 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.util.Collections;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -248,15 +246,10 @@ public class PythonSdkType extends SdkType {
     @NonNls final String stubs_path =
         PathManager.getSystemPath() + File.separator + "python_stubs" + File.separator + sdk_path.hashCode() + File.separator;
     // we have a number of lib dirs, those listed in python's sys.path
-    @NonNls String script = // a script printing sys.path
-      "import sys\n"+
-      "for x in sys.path:\n"+
-      "  sys.stdout.write(x+chr(10))"
-    ;
     if (indicator != null) {
       indicator.setText("Adding library roots");
     }
-    final List<String> paths = SdkUtil.getProcessOutput(sdk_path, new String[] {bin_path, "-c", script}).getStdout();
+    final List<String> paths = getSysPath(sdk_path, bin_path);
     if ((paths != null) && paths.size() > 0) {
       // add every path as root.
       for (String path: paths) {
@@ -290,6 +283,36 @@ public class PythonSdkType extends SdkType {
 
     return sdkModificator;
     //sdkModificator.commitChanges() must happen outside, and probably in a different thread.
+  }
+
+  private static List<String> getSysPath(String sdk_path, String bin_path) {
+    @NonNls String script = // a script printing sys.path
+      "import sys\n"+
+      "import os.path\n" +
+      "for x in sys.path:\n"+
+      "  if x != os.path.dirname(sys.argv [0]): sys.stdout.write(x+chr(10))";
+
+    try {
+      final File scriptFile = File.createTempFile("script", ".py");
+      try {
+        PrintStream out = new PrintStream(scriptFile);
+        try {
+          out.print(script);
+        }
+        finally {
+          out.close();
+        }
+
+        return SdkUtil.getProcessOutput(sdk_path, new String[] {bin_path, scriptFile.getPath()}).getStdout();
+      }
+      finally {
+        FileUtil.delete(scriptFile);
+      }
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      return Collections.emptyList();
+    }
   }
 
   @Nullable
