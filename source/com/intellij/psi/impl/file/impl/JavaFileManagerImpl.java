@@ -116,10 +116,12 @@ public class JavaFileManagerImpl implements JavaFileManager {
     final Collection<? extends PsiElement> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
     if (classes.isEmpty()) return PsiClass.EMPTY_ARRAY;
     List<PsiClass> result = new ArrayList<PsiClass>(classes.size());
+    int count = 0;
+    PsiClass aClass = null;
     for (PsiElement found : classes) {
       if (notClass(found)) continue;
 
-      PsiClass aClass = (PsiClass)found;
+      aClass = (PsiClass)found;
       final String qualifiedName = aClass.getQualifiedName();
       if (qualifiedName == null || !qualifiedName.equals(qName)) continue;
 
@@ -127,17 +129,19 @@ public class JavaFileManagerImpl implements JavaFileManager {
       if (!fileIsInScope(scope, vFile)) continue;
 
       result.add(aClass);
+      count++;
     }
 
-    if (result.size() > 1) {
-      ContainerUtil.quickSort(result, new Comparator<PsiClass>() {
-        public int compare(PsiClass o1, PsiClass o2) {
-          return scope.compare(o2.getContainingFile().getVirtualFile(), o1.getContainingFile().getVirtualFile());
-        }
-      });
-    }
-    
-    return result.toArray(new PsiClass[result.size()]);
+    if (count == 0) return PsiClass.EMPTY_ARRAY;
+    if (count == 1) return new PsiClass[] {aClass};
+
+    ContainerUtil.quickSort(result, new Comparator<PsiClass>() {
+      public int compare(PsiClass o1, PsiClass o2) {
+        return scope.compare(o2.getContainingFile().getVirtualFile(), o1.getContainingFile().getVirtualFile());
+      }
+    });
+
+    return result.toArray(new PsiClass[count]);
   }
 
   private static boolean notClass(final PsiElement found) {
