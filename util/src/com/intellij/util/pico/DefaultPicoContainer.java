@@ -16,6 +16,7 @@
 package com.intellij.util.pico;
 
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.OrderedSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,11 +32,11 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   private final PicoContainer parent;
   private final Set<PicoContainer> children = new HashSet<PicoContainer>();
 
-  private final Map<Object, ComponentAdapter> componentKeyToAdapterCache = Collections.synchronizedMap(new HashMap<Object, ComponentAdapter>());
+  private final Map<Object, ComponentAdapter> componentKeyToAdapterCache = new ConcurrentHashMap<Object, ComponentAdapter>();
   private final Collection<ComponentAdapter> componentAdapters = Collections.synchronizedCollection(new OrderedSet<ComponentAdapter>());
   // Keeps track of instantiation order.
   private final List<ComponentAdapter> orderedComponentAdapters = Collections.synchronizedList(new OrderedSet<ComponentAdapter>());
-  private final Map<String, ComponentAdapter> classNameToAdapter = Collections.synchronizedMap(new HashMap<String, ComponentAdapter>());
+  private final Map<String, ComponentAdapter> classNameToAdapter = new ConcurrentHashMap<String, ComponentAdapter>();
   private final Collection<ComponentAdapter> nonAssignableComponentAdapters = Collections.synchronizedCollection(new OrderedSet<ComponentAdapter>());
 
   public DefaultPicoContainer(@NotNull ComponentAdapterFactory componentAdapterFactory, PicoContainer parent) {
