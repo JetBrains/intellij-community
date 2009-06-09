@@ -69,11 +69,15 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     // successfully process broken messages across several flushes
     // size of parts may tell us either \n was single in original flushed data or it was
     // separated by process handler
-    final boolean isTCLikeFakeOutput = myOutputPairs.size() == 1;
-    for (Pair<String, Key> textKeyPair : myOutputPairs) {
+    List<Pair<String, Key>> pairs;
+    synchronized (myOutputPairs) {
+      pairs = new ArrayList<Pair<String, Key>>(myOutputPairs);
+      myOutputPairs.clear();
+    }
+    final boolean isTCLikeFakeOutput = pairs.size() == 1;
+    for (Pair<String, Key> textKeyPair : pairs) {
       processConsistentText(textKeyPair.first, textKeyPair.second, isTCLikeFakeOutput);
     }
-    myOutputPairs.clear();
   }
 
   private void processStdOutConsistently(final String text, final Key outputType) {
@@ -82,7 +86,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       return;
     }
 
-    myOutputPairs.add(new Pair<String, Key>(text, outputType));
+    synchronized (myOutputPairs) {
+      myOutputPairs.add(new Pair<String, Key>(text, outputType));
+    }
 
     final char lastChar = text.charAt(textLength - 1);
     if (lastChar == '\n' || lastChar == '\r') {
