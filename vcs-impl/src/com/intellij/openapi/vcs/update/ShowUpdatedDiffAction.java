@@ -5,6 +5,7 @@ import com.intellij.history.Label;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
@@ -24,7 +25,7 @@ import java.io.File;
 import java.lang.ref.SoftReference;
 import java.util.Iterator;
 
-public class ShowUpdatedDiffAction extends AnAction {
+public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
   private static Icon ourIcon;
   private static String ourText;
   private static String ourDescription;

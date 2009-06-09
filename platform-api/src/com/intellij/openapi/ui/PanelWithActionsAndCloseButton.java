@@ -18,6 +18,7 @@ package com.intellij.openapi.ui;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
@@ -82,7 +83,7 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
 
   }
 
-  private class MyCloseAction extends AnAction {
+  private class MyCloseAction extends AnAction implements DumbAware {
     public MyCloseAction() {
       super(CommonBundle.message("close.action.name"), null, IconLoader.getIcon("/actions/cancel.png"));
     }

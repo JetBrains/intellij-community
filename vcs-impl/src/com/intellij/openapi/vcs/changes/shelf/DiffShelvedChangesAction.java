@@ -10,6 +10,7 @@ import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -25,7 +26,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class DiffShelvedChangesAction extends AnAction {
+public class DiffShelvedChangesAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     final ShelvedChangeList[] changeLists = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
