@@ -51,6 +51,8 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   private final String myProfileType;
 
   public String PROJECT_PROFILE;
+  public boolean USE_PROJECT_PROFILE = true;
+
   protected ApplicationProfileManager myApplicationProfileManager;
 
   protected Map<String, Profile> myProfiles = new HashMap<String, Profile>();
@@ -153,10 +155,12 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
 
   public void setProjectProfile(final String projectProfile) {
     PROJECT_PROFILE = projectProfile;
+    USE_PROJECT_PROFILE = projectProfile != null;
   }
 
   @NotNull
   public Profile getProjectProfileImpl(){
+    if (!USE_PROJECT_PROFILE) return myApplicationProfileManager.getRootProfile();
     if (PROJECT_PROFILE == null || myProfiles.isEmpty()){
       @NonNls final String projectProfileName = "Project Default";
       setProjectProfile(projectProfileName);

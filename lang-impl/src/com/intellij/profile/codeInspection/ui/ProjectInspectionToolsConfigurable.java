@@ -5,6 +5,7 @@
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -25,8 +26,16 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
     return (InspectionProfileImpl)((InspectionProjectProfileManager)myProjectProfileManager).getProjectProfileImpl();
   }
 
-  protected void setCurrentProfile(InspectionProfileImpl profile) {
-    myProjectProfileManager.setProjectProfile(getActiveProfile().getName());
+  @Override
+  public void apply() throws ConfigurationException {
+    super.apply();
+    final String activeProfileName = getActiveProfile().getName();
+    if (getSelectedPanel().isProfileShared()) {
+      myProjectProfileManager.setProjectProfile(activeProfileName);
+    } else {
+      myProfileManager.setRootProfile(activeProfileName);
+      myProjectProfileManager.setProjectProfile(null);
+    }
   }
 
   @Override
