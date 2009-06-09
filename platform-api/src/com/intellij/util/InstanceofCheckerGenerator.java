@@ -5,7 +5,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Condition;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -26,7 +26,7 @@ public abstract class InstanceofCheckerGenerator {
     return ourInstance;
   }
 
-  @Nullable
+  @NotNull 
   public abstract Condition<Object> getInstanceofChecker(Class<?> someClass);
 
 }
