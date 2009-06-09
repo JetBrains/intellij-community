@@ -20,8 +20,8 @@ import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 public class GroovyInjector implements ConcatenationAwareInjector {
@@ -34,7 +34,7 @@ public class GroovyInjector implements ConcatenationAwareInjector {
       if (!(operand instanceof PsiLanguageInjectionHost)) return;
     }
 
-    final PsiExpressionList argList = PsiTreeUtil.getParentOfType(operands[0], PsiExpressionList.class);
+    final PsiExpressionList argList = findExpressionListParent(operands[0]);
     if (argList != null) {
       final PsiExpression firstArg = argList.getExpressions()[0];
       if (contains(firstArg, operands)) {
@@ -65,7 +65,19 @@ public class GroovyInjector implements ConcatenationAwareInjector {
     }
   }
 
-  private boolean contains(PsiExpression arg, PsiElement[] operands) {
+  @Nullable
+  private static PsiExpressionList findExpressionListParent(PsiElement op) {
+    PsiElement cur = op;
+    while (cur != null) {
+      if (cur instanceof PsiExpressionList) return (PsiExpressionList)cur;
+      if (cur instanceof PsiFile) return null;
+      cur = cur.getParent();
+    }
+
+    return null;
+  }
+
+  private static boolean contains(PsiExpression arg, PsiElement[] operands) {
     if (operands.length == 1) return arg.equals(operands[0]);
     if (arg instanceof PsiBinaryExpression) {
       final PsiExpression lop = ((PsiBinaryExpression) arg).getLOperand();
