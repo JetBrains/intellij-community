@@ -13,7 +13,8 @@ public class PythonInspectionToolProvider implements InspectionToolProvider{
       PyArgumentListInspection.class,
       PyRedeclarationInspection.class,
       PyUnresolvedReferencesInspection.class,
-      PyMethodParametersInspection.class
+      PyMethodParametersInspection.class,
+      PyUnreachableCodeInspection.class,
     };
   }
 }

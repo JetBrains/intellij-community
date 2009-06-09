@@ -19,11 +19,7 @@ package com.jetbrains.python.psi;
 import com.intellij.psi.PsiElementVisitor;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 05.06.2005
- * Time: 13:45:21
- * To change this template use File | Settings | File Templates.
+ * Visitor for python-specific nodes.
  */
 public class PyElementVisitor extends PsiElementVisitor {
   public void visitPyElement(final PyElement node) {
@@ -95,6 +91,10 @@ public class PyElementVisitor extends PsiElementVisitor {
   }
 
   public void visitPyTryExceptStatement(final PyTryExceptStatement node) {
+    visitPyStatement(node);
+  }
+
+  public void visitPyRaiseStatement(final PyRaiseStatement node) {
     visitPyStatement(node);
   }
 

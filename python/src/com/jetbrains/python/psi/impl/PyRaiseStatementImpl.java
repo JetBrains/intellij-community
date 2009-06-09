@@ -18,16 +18,18 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyRaiseStatement;
+import com.jetbrains.python.psi.PyElementVisitor;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 29.05.2005
- * Time: 23:49:52
- * To change this template use File | Settings | File Templates.
+ * Describes 'raise' statement.
  */
 public class PyRaiseStatementImpl extends PyElementImpl implements PyRaiseStatement {
     public PyRaiseStatementImpl(ASTNode astNode) {
         super(astNode);
     }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyRaiseStatement(this);
+  }
 }

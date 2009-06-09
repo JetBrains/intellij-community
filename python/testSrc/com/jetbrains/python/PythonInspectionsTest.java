@@ -3,10 +3,7 @@ package com.jetbrains.python;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.InspectionTestCase;
-import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
-import com.jetbrains.python.inspections.PyArgumentListInspection;
-import com.jetbrains.python.inspections.PyRedeclarationInspection;
-import com.jetbrains.python.inspections.PythonPyInspectionToolProvider;
+import com.jetbrains.python.inspections.*;
 
 /**
  * @author yole
@@ -16,6 +13,11 @@ public class PythonInspectionsTest extends InspectionTestCase {
     final JythonManager manager = JythonManager.getInstance();
     manager.execScriptFromResource("inspections/inspections.py"); // could be moved to setUp() if more jython-based inspections existed
     doTest(getTestName(true), PythonPyInspectionToolProvider.getInstance().createLocalInspectionTool("ReturnValueFromInitInspection"));
+  }
+
+  public void testPyUnreachableCodeInspection() throws Exception {
+    LocalInspectionTool inspection = new PyUnreachableCodeInspection();
+    doTest(getTestName(false), inspection);
   }
 
   public void testPyUnresolvedReferencesInspection() throws Exception {

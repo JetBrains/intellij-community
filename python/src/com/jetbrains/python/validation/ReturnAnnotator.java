@@ -17,7 +17,6 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.openapi.util.TextRange;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 
@@ -41,26 +40,7 @@ public class ReturnAnnotator extends PyAnnotator {
         getHolder().createErrorAnnotation(node, "'return' with argument inside generator");
       }
     }
-    // TODO: add checks for predefined methods
-    // if something follows us, it's unreachable
-    // TODO: move to a separate inspection
-    PsiElement parent_elt = node.getParent();
-    if (parent_elt instanceof PyStatementList) { // check just in case
-      PsiElement first_after_us = PyUtil.getFirstNonCommentAfter(node.getNextSibling());
-      if (first_after_us != null) {
-        PsiElement last_after_us = first_after_us; // this assignment is redundant, but inspection fails to recognize it
-        PsiElement feeler = first_after_us;
-        while (feeler != null) {
-          last_after_us = feeler;
-          feeler = PyUtil.getFirstNonCommentAfter(feeler.getNextSibling());
-        }
-        TextRange the_wrong = new TextRange(
-          first_after_us.getTextOffset(),
-          last_after_us.getTextRange().getEndOffset()
-        );
-        getHolder().createWarningAnnotation(the_wrong, "Unreachable code");
-      }
-    }
+
   }
 
   public void visitPyYieldExpression(final PyYieldExpression node) {
