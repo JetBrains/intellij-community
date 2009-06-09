@@ -21,6 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -127,11 +128,15 @@ public class JavaFileManagerImpl implements JavaFileManager {
 
       result.add(aClass);
     }
-    Collections.sort(result, new Comparator<PsiClass>() {
-      public int compare(PsiClass o1, PsiClass o2) {
-        return scope.compare(o2.getContainingFile().getVirtualFile(), o1.getContainingFile().getVirtualFile());
-      }
-    });
+
+    if (result.size() > 1) {
+      ContainerUtil.quickSort(result, new Comparator<PsiClass>() {
+        public int compare(PsiClass o1, PsiClass o2) {
+          return scope.compare(o2.getContainingFile().getVirtualFile(), o1.getContainingFile().getVirtualFile());
+        }
+      });
+    }
+    
     return result.toArray(new PsiClass[result.size()]);
   }
 
