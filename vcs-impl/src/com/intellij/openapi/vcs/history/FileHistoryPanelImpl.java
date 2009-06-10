@@ -12,25 +12,27 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.CurrentContentRevision;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
+import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -989,29 +991,69 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
             IconLoader.getIcon("/actions/annotate.png"));
     }
 
+    private String key(final VirtualFile vf, final VcsFileRevision revision) {
+      return vf.getPath();
+    }
+
     public void update(AnActionEvent e) {
       VirtualFile revVFile = e.getData( VcsDataKeys.VCS_VIRTUAL_FILE );
       VcsFileRevision revision = e.getData( VcsDataKeys.VCS_FILE_REVISION );
       FileType fileType = revVFile == null ? null : revVFile.getFileType();
+      boolean enabled = revision != null && revVFile != null && !fileType.isBinary();
+
+      if (enabled) {
+        final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myProject);
+        enabled &= (! (((ProjectLevelVcsManagerImpl) plVcsManager).getBackgroundableActionHandler(
+          ProjectLevelVcsManagerImpl.MyBackgroundableActions.ANNOTATE).isInProgress(key(revVFile, revision))));
+      }
+
       e.getPresentation()
-        .setEnabled(revision != null && revVFile != null && !fileType.isBinary() &&
+        .setEnabled(enabled &&
                     myHistorySession.isContentAvailable(revision) &&
                     myAnnotationProvider != null && myAnnotationProvider.isAnnotationValid(revision));
     }
 
 
     public void actionPerformed(AnActionEvent e) {
-      VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
-      VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
+      final VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
+      final VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
       if ((revision == null) || (revisionVirtualFile == null)) return;
-      try {
-        final FileAnnotation annotation = myAnnotationProvider.annotate(revisionVirtualFile, revision);
-        AbstractVcsHelper.getInstance(myProject).showAnnotation(annotation, revisionVirtualFile);
-      }
-      catch (VcsException e1) {
-        AbstractVcsHelper.getInstance(myProject).showError(e1, VcsBundle.message("operation.name.annotate"));
-      }
 
+      final BackgroundableActionEnabledHandler handler = ((ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject)).
+        getBackgroundableActionHandler(ProjectLevelVcsManagerImpl.MyBackgroundableActions.ANNOTATE);
+      handler.register(key(revisionVirtualFile, revision));
+
+      final Ref<FileAnnotation> fileAnnotationRef = new Ref<FileAnnotation>();
+      final Ref<VcsException> exceptionRef = new Ref<VcsException>();
+
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, VcsBundle.message("retrieving.annotations"), true,
+          BackgroundFromStartOption.getInstance()) {
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            fileAnnotationRef.set(myAnnotationProvider.annotate(revisionVirtualFile, revision));
+          }
+          catch (VcsException e) {
+            exceptionRef.set(e);
+          }
+        }
+
+        @Override
+        public void onCancel() {
+          onSuccess();
+        }
+
+        @Override
+        public void onSuccess() {
+          handler.completed(key(revisionVirtualFile, revision));
+
+          if (! exceptionRef.isNull()) {
+            AbstractVcsHelper.getInstance(myProject).showError(exceptionRef.get(), VcsBundle.message("operation.name.annotate"));
+          }
+          if (fileAnnotationRef.isNull()) return;
+
+          AbstractVcsHelper.getInstance(myProject).showAnnotation(fileAnnotationRef.get(), revisionVirtualFile);
+        }
+      });
     }
   }
 

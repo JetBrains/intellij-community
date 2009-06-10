@@ -111,6 +111,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private volatile int myBackgroundOperationCounter = 0;
 
+  private final Map<MyBackgroundableActions, BackgroundableActionEnabledHandler> myBackgroundableActionHandlerMap;
+
   public ProjectLevelVcsManagerImpl(Project project) {
     myProject = project;
     mySerialization = new ProjectLevelVcsManagerSerialization();
@@ -121,6 +123,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myAllVcsesI = new AllVcsesCorrectlyInitProxy(myProject);
     myMappings = new NewMappings(myProject, myAllVcsesI, myEventDispatcher);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
+    myBackgroundableActionHandlerMap = new HashMap<MyBackgroundableActions, BackgroundableActionEnabledHandler>();
   }
 
   public void initComponent() {
@@ -615,5 +618,20 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public String haveDefaultMapping() {
     return myMappings.haveDefaultMapping();
+  }
+
+  public BackgroundableActionEnabledHandler getBackgroundableActionHandler(final MyBackgroundableActions action) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    BackgroundableActionEnabledHandler result = myBackgroundableActionHandlerMap.get(action);
+    if (result == null) {
+      result = new BackgroundableActionEnabledHandler();
+      myBackgroundableActionHandlerMap.put(action, result);
+    }
+    return result;
+  }
+
+  public static enum MyBackgroundableActions {
+    ANNOTATE
   }
 }

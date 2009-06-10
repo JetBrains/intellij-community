@@ -16,15 +16,21 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
+import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -52,7 +58,13 @@ public class AnnotateToggleAction extends ToggleAction {
     if (file.isDirectory()) return false;
     Project project = context.getProject();
     if (project == null || project.isDisposed()) return false;
-    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
+
+    final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(project);
+    final BackgroundableActionEnabledHandler handler = ((ProjectLevelVcsManagerImpl)plVcsManager)
+      .getBackgroundableActionHandler(ProjectLevelVcsManagerImpl.MyBackgroundableActions.ANNOTATE);
+    if (handler.isInProgress(file.getPath())) return false;
+
+    AbstractVcs vcs = plVcsManager.getVcsFor(file);
     if (vcs == null) return false;
     final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
     if (annotationProvider == null) return false;
@@ -106,14 +118,20 @@ public class AnnotateToggleAction extends ToggleAction {
   private static void doAnnotate(final Editor editor, final Project project) {
     final VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
     if (project == null) return;
-    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
+    final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(project);
+    AbstractVcs vcs = plVcsManager.getVcsFor(file);
     if (vcs == null) return;
     final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
 
     final Ref<FileAnnotation> fileAnnotationRef = new Ref<FileAnnotation>();
     final Ref<VcsException> exceptionRef = new Ref<VcsException>();
-    boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
+
+    final BackgroundableActionEnabledHandler handler = ((ProjectLevelVcsManagerImpl)plVcsManager).getBackgroundableActionHandler(ProjectLevelVcsManagerImpl.MyBackgroundableActions.ANNOTATE);
+    handler.register(file.getPath());
+
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, VcsBundle.message("retrieving.annotations"), true,
+        BackgroundFromStartOption.getInstance()) {
+      public void run(@NotNull ProgressIndicator indicator) {
         try {
           fileAnnotationRef.set(annotationProvider.annotate(file));
         }
@@ -121,18 +139,24 @@ public class AnnotateToggleAction extends ToggleAction {
           exceptionRef.set(e);
         }
       }
-    }, VcsBundle.message("retrieving.annotations"), true, project);
-    if (!result) {
-      return;
-    }
-    if (!exceptionRef.isNull()) {
-      AbstractVcsHelper.getInstance(project).showErrors(Arrays.asList(exceptionRef.get()), VcsBundle.message("message.title.annotate"));
-    }
-    if (fileAnnotationRef.isNull()) {
-      return;
-    }
 
-    doAnnotate(editor, project, file, fileAnnotationRef.get());
+      @Override
+      public void onCancel() {
+        onSuccess();
+      }
+
+      @Override
+      public void onSuccess() {
+        handler.completed(file.getPath());
+        
+        if (! exceptionRef.isNull()) {
+          AbstractVcsHelper.getInstance(project).showErrors(Arrays.asList(exceptionRef.get()), VcsBundle.message("message.title.annotate"));
+        }
+        if (fileAnnotationRef.isNull()) return;
+
+        doAnnotate(editor, project, file, fileAnnotationRef.get());
+      }
+    });
   }
 
   public static void doAnnotate(final Editor editor, final Project project, final VirtualFile file, final FileAnnotation fileAnnotation) {
