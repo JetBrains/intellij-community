@@ -315,10 +315,13 @@ public class NewMappings {
     protected boolean isAncestor(VcsDirectoryMapping parent, VcsDirectoryMapping child) {
       if (! parent.getVcs().equals(child.getVcs())) return false;
 
-      String parentPath = parent.systemIndependentPath();
-      parentPath = (parentPath.endsWith("/")) ? parentPath : (parentPath + "/");
+      final String parentPath = parent.systemIndependentPath();
+      final String fixedParentPath = (parentPath.endsWith("/")) ? parentPath : (parentPath + "/");
 
-      return child.systemIndependentPath().startsWith(parentPath);
+      if (child.systemIndependentPath().length() < fixedParentPath.length()) {
+        return child.systemIndependentPath().equals(parentPath);
+      }
+      return child.systemIndependentPath().startsWith(fixedParentPath);
     }
 
     public List<LocalFileSystem.WatchRequest> getRemovedRequests() {
@@ -341,8 +344,9 @@ public class NewMappings {
   }
 
   private boolean trySwitchVcs(final String path, final String activeVcsName) {
+    final String fixedPath = FileUtil.toSystemIndependentName(path);
     for (VcsDirectoryMapping mapping : mySortedMappings) {
-      if (mapping.getDirectory().equals(path)) {
+      if (mapping.systemIndependentPath().equals(fixedPath)) {
         final String oldVcs = mapping.getVcs();
         if (! oldVcs.equals(activeVcsName)) {
           migrateVcs(activeVcsName, mapping, oldVcs);
