@@ -85,6 +85,9 @@ public class SvnAnnotationProvider implements AnnotationProvider {
           client.doAnnotate(ioFile, SVNRevision.UNDEFINED,
                             SVNRevision.create(0), endRevision, true, new ISVNAnnotateHandler() {
             public void handleLine(Date date, long revision, String author, String line) {
+              if (progress != null) {
+                progress.checkCanceled();
+              }
               result.appendLineInfo(date, revision, author);
             }
 
@@ -97,12 +100,18 @@ public class SvnAnnotationProvider implements AnnotationProvider {
                                    final String mergedAuthor,
                                    final String mergedPath,
                                    final int lineNumber) throws SVNException {
+              if (progress != null) {
+                progress.checkCanceled();
+              }
               // todo merge info can be used
               handleLine(date, revision, author, line);
             }
 
             public boolean handleRevision(final Date date, final long revision, final String author, final File contents)
                 throws SVNException {
+              if (progress != null) {
+                progress.checkCanceled();
+              }
               // todo check that false is ok
               return false;
             }
@@ -116,6 +125,7 @@ public class SvnAnnotationProvider implements AnnotationProvider {
                        new ISVNLogEntryHandler() {
                          public void handleLogEntry(SVNLogEntry logEntry) {
                            if (progress != null) {
+                             progress.checkCanceled();
                              progress.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
                            }
                            result.setRevision(logEntry.getRevision(), new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, url, ""));
