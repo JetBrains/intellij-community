@@ -36,9 +36,7 @@ import java.util.*;
 
 public class CompilerAPICompiler implements BackendCompiler {
   private final Project myProject;
-  private int myExitCode;
   private static final Set<FileType> COMPILABLE_TYPES = Collections.<FileType>singleton(StdFileTypes.JAVA);
-  private final CompAPIDriver myCompAPIDriver = new CompAPIDriver();
 
   public CompilerAPICompiler(Project project) {
     myProject = project;
@@ -93,10 +91,10 @@ public class CompilerAPICompiler implements BackendCompiler {
   }
 
   @Nullable
-  public OutputParser createErrorParser(@NotNull final String outputDir) {
+  public OutputParser createErrorParser(@NotNull final String outputDir, final Process process) {
     return new OutputParser() {
       public boolean processMessageLine(Callback callback) {
-        return myCompAPIDriver.processAll(callback);
+        return ((MyProcess)process).myCompAPIDriver.processAll(callback);
       }
     };
   }
@@ -107,7 +105,6 @@ public class CompilerAPICompiler implements BackendCompiler {
   }
 
   public void compileFinished() {
-    myCompAPIDriver.finish();
   }
 
   @NotNull
@@ -134,49 +131,70 @@ public class CompilerAPICompiler implements BackendCompiler {
     if (ex[0] != null) {
       throw ex[0];
     }
-
-    return new Process() {
-      public OutputStream getOutputStream() {
-        throw new UnsupportedOperationException();
-      }
-
-      public InputStream getInputStream() {
-        return null;
-      }
-
-      public InputStream getErrorStream() {
-        return null;
-      }
-
-      public void destroy() {
-      }
-
-      public int waitFor() {
-        try {
-          //commandLine.remove("-verbose");
-          compile(commandLine, chunk, outputDir);
-          myExitCode = 0;
-          return myExitCode;
-        }
-        catch (Exception e) {
-          compileContext.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
-          myExitCode = -1;
-          return -1;
-        }
-      }
-
-      public int exitValue() {
-        return myExitCode;
-      }
-    };
+    return new MyProcess(commandLine, chunk, outputDir, compileContext);
   }
 
-  private void compile(List<String> commandLine, ModuleChunk chunk, String outputDir) {
-    VirtualFile[] filesToCompile = chunk.getFilesToCompile();
-    List<File> paths = new ArrayList<File>(filesToCompile.length);
+  private static void compile(List<String> commandLine, ModuleChunk chunk, String outputDir, CompAPIDriver myCompAPIDriver) {
+    List<VirtualFile> filesToCompile = chunk.getFilesToCompile();
+    List<File> paths = new ArrayList<File>(filesToCompile.size());
     for (VirtualFile file : filesToCompile) {
       paths.add(new File(file.getPresentableUrl()));
     }
     myCompAPIDriver.compile(commandLine, paths, outputDir);
+  }
+
+  private static class MyProcess extends Process {
+    private final List<String> myCommandLine;
+    private final ModuleChunk myChunk;
+    private final String myOutputDir;
+    private final CompileContext myCompileContext;
+    private final CompAPIDriver myCompAPIDriver = new CompAPIDriver();
+
+    private MyProcess(List<String> commandLine, ModuleChunk chunk, String outputDir, CompileContext compileContext) {
+      myCommandLine = commandLine;
+      myChunk = chunk;
+      myOutputDir = outputDir;
+      myCompileContext = compileContext;
+    }
+
+    public OutputStream getOutputStream() {
+      throw new UnsupportedOperationException();
+    }
+
+    public InputStream getInputStream() {
+      return null;
+    }
+
+    public InputStream getErrorStream() {
+      return null;
+    }
+
+    public void destroy() {
+      myCompAPIDriver.finish();
+    }
+
+    private int myExitCode;
+    public int waitFor() {
+      try {
+        myCommandLine.remove("-verbose");
+        compile(myCommandLine, myChunk, myOutputDir, myCompAPIDriver);
+        myExitCode = 0;
+        return myExitCode;
+      }
+      catch (Exception e) {
+        myCompileContext.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+        myExitCode = -1;
+        return -1;
+      }
+    }
+
+    public int exitValue() {
+      return myExitCode;
+    }
+
+    @Override
+    public String toString() {
+      return myChunk.toString();
+    }
   }
 }

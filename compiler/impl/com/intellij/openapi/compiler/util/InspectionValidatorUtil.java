@@ -62,7 +62,7 @@ public class InspectionValidatorUtil {
       }
     }
     if (!set.isEmpty()) {
-      ((CompileContextEx)context).addScope(new FileSetCompileScope(set.toArray(new VirtualFile[set.size()]), modules.toArray(new Module[modules.size()])));
+      ((CompileContextEx)context).addScope(new FileSetCompileScope(set, modules.toArray(new Module[modules.size()])));
     }
     return result;
   }

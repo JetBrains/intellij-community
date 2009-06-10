@@ -13,7 +13,6 @@ import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -37,16 +36,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class CompileContextImpl extends UserDataHolderBase implements CompileContextEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileContextImpl");
   private final Project myProject;
   private final CompilerTask myTask;
-  private final Map<CompilerMessageCategory, Collection<CompilerMessage>> myMessages = new HashMap<CompilerMessageCategory, Collection<CompilerMessage>>();
+  private final Map<CompilerMessageCategory, Collection<CompilerMessage>> myMessages = new EnumMap<CompilerMessageCategory, Collection<CompilerMessage>>(CompilerMessageCategory.class);
   private CompileScope myCompileScope;
   private final DependencyCache myDependencyCache;
   private final boolean myMake;
@@ -335,7 +330,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
 
     Set<VirtualFile> additionalRoots = myModuleToRootsMap.get(module);
     VirtualFile[] moduleRoots = ModuleRootManager.getInstance(module).getSourceRoots();
-    if (additionalRoots == null || additionalRoots.size() == 0) {
+    if (additionalRoots == null || additionalRoots.isEmpty()) {
       myModuleToRootsCache.put(module, moduleRoots);
       return moduleRoots;
     }
@@ -350,7 +345,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     return allRoots;
   }
 
-  private boolean areFilesValid(VirtualFile[] files) {
+  private static boolean areFilesValid(VirtualFile[] files) {
     for (VirtualFile file : files) {
       if (!file.isValid()) {
         return false;

@@ -9,7 +9,6 @@ import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -24,7 +23,9 @@ import com.intellij.util.Chunk;
 import com.intellij.util.PathUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.OrderedSet;
+import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
@@ -34,23 +35,20 @@ import java.util.*;
  *         Date: Sep 29, 2004
  */
 public class ModuleChunk extends Chunk<Module> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.ModuleChunk");
   private final CompileContextEx myContext;
-  private final Map<Module, VirtualFile[]> myModuleToFilesMap = new HashMap<Module, VirtualFile[]>();
-  private final Map<VirtualFile, VirtualFile> myTransformedToOriginalMap = new HashMap<VirtualFile, VirtualFile>();
+  private final Map<Module, List<VirtualFile>> myModuleToFilesMap = new THashMap<Module, List<VirtualFile>>();
+  private final Map<VirtualFile, VirtualFile> myTransformedToOriginalMap = new THashMap<VirtualFile, VirtualFile>();
   private int mySourcesFilter = ALL_SOURCES;
 
-  public ModuleChunk(CompileContextEx context, Chunk<Module> chunk, Map<Module, Set<VirtualFile>> moduleToFilesMap) {
+  public final List<File> myFilesToRefresh = new ArrayList<File>();
+  public final Map<String, Set<CompiledClass>> myFileNameToSourceMap=  new THashMap<String, Set<CompiledClass>>();
+
+  public ModuleChunk(CompileContextEx context, Chunk<Module> chunk, Map<Module, List<VirtualFile>> moduleToFilesMap) {
     super(chunk.getNodes());
     myContext = context;
     for (final Module module : chunk.getNodes()) {
-      final Set<VirtualFile> set = moduleToFilesMap.get(module);
-      if (set != null && !set.isEmpty()) {
-        myModuleToFilesMap.put(module, set.toArray(new VirtualFile[set.size()]));
-      }
-      else {
-        myModuleToFilesMap.put(module, VirtualFile.EMPTY_ARRAY);
-      }
+      final List<VirtualFile> set = moduleToFilesMap.get(module);
+      myModuleToFilesMap.put(module, set == null ? Collections.<VirtualFile>emptyList() : set);
     }
   }
 
@@ -63,9 +61,9 @@ public class ModuleChunk extends Chunk<Module> {
   }
 
   public void substituteWithTransformedVersion(Module module, int fileIndex, VirtualFile transformedFile) {
-    final VirtualFile[] moduleFiles = getFilesToCompile(module);
-    final VirtualFile currentFile = moduleFiles[fileIndex];
-    moduleFiles[fileIndex] = transformedFile;
+    final List<VirtualFile> moduleFiles = getFilesToCompile(module);
+    final VirtualFile currentFile = moduleFiles.get(fileIndex);
+    moduleFiles.set(fileIndex, transformedFile);
     VirtualFile originalFile = myTransformedToOriginalMap.remove(currentFile);
     if (originalFile == null) {
       originalFile = currentFile;
@@ -73,21 +71,23 @@ public class ModuleChunk extends Chunk<Module> {
     myTransformedToOriginalMap.put(transformedFile, originalFile);
   }
 
-  public VirtualFile[] getFilesToCompile(Module forModule) {
+  @NotNull
+  public List<VirtualFile> getFilesToCompile(Module forModule) {
     return myModuleToFilesMap.get(forModule);
   }
 
-  public VirtualFile[] getFilesToCompile() {
+  @NotNull
+  public List<VirtualFile> getFilesToCompile() {
     if (getModuleCount() == 0) {
-      return VirtualFile.EMPTY_ARRAY; // optimization
+      return Collections.emptyList();
     }
     final Set<Module> modules = getNodes();
 
     final List<VirtualFile> filesToCompile = new ArrayList<VirtualFile>();
     for (final Module module : modules) {
-      final VirtualFile[] moduleCompilableFiles = getFilesToCompile(module);
+      final List<VirtualFile> moduleCompilableFiles = getFilesToCompile(module);
       if (mySourcesFilter == ALL_SOURCES) {
-        filesToCompile.addAll(Arrays.asList(moduleCompilableFiles));
+        filesToCompile.addAll(moduleCompilableFiles);
       }
       else {
         for (final VirtualFile file : moduleCompilableFiles) {
@@ -108,7 +108,7 @@ public class ModuleChunk extends Chunk<Module> {
         }
       }
     }
-    return filesToCompile.toArray(new VirtualFile[filesToCompile.size()]);
+    return filesToCompile;
   }
 
   /**

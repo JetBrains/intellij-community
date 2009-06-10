@@ -70,7 +70,7 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
   }
 
   @Nullable
-  public OutputParser createErrorParser(@NotNull final String outputDir) {
+  public OutputParser createErrorParser(@NotNull final String outputDir, Process process) {
     return new OutputParser() {
       public boolean processMessageLine(Callback callback) {
         return myEclipseCompilerDriver.processMessageLine(callback, outputDir, myProject);

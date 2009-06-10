@@ -15,6 +15,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ArrayUtil;
@@ -27,6 +28,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 
 public class JikesCompiler extends ExternalCompiler {
@@ -99,7 +101,7 @@ public class JikesCompiler extends ExternalCompiler {
     return new JikesConfigurable(JikesSettings.getInstance(myProject));
   }
 
-  public OutputParser createErrorParser(@NotNull final String outputDir) {
+  public OutputParser createErrorParser(@NotNull final String outputDir, Process process) {
     return new JikesOutputParser(myProject);
   }
 
@@ -113,7 +115,7 @@ public class JikesCompiler extends ExternalCompiler {
     throws IOException {
 
     final ArrayList<String> commandLine = new ArrayList<String>();
-    final IOException[] ex = new IOException[]{null};
+    final IOException[] ex = {null};
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         try {
@@ -135,7 +137,7 @@ public class JikesCompiler extends ExternalCompiler {
     myTempFile = File.createTempFile("jikes", ".tmp");
     myTempFile.deleteOnExit();
 
-    final VirtualFile[] files = chunk.getFilesToCompile();
+    final List<VirtualFile> files = chunk.getFilesToCompile();
     PrintWriter writer = new PrintWriter(new FileWriter(myTempFile));
     try {
       for (VirtualFile file : files) {
@@ -201,7 +203,7 @@ public class JikesCompiler extends ExternalCompiler {
 
   public void compileFinished() {
     if (myTempFile != null) {
-      myTempFile.delete();
+      FileUtil.delete(myTempFile);
       myTempFile = null;
     }
   }

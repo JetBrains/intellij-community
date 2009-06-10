@@ -18,7 +18,6 @@ package com.intellij.compiler.impl.rmiCompiler;
 import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.CompilerParsingThread;
-import com.intellij.compiler.impl.javaCompiler.CompilerParsingThreadImpl;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacOutputParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
@@ -74,7 +73,7 @@ public class JavacOutputParserPool {
     });
     final Process setupProcess = Runtime.getRuntime().exec(setupCmdLine);
 
-    final CompilerParsingThread setupProcessParsingThread = new CompilerParsingThreadImpl(setupProcess, myContext, outputParser, true, true);
+    final CompilerParsingThread setupProcessParsingThread = new CompilerParsingThread(setupProcess, outputParser, true, true,myContext);
     final Future<?> parsingThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(setupProcessParsingThread);
     try {
       setupProcess.waitFor();
@@ -94,7 +93,7 @@ public class JavacOutputParserPool {
     return outputParser;
   }
 
-  private String[] createParserSetupCommand(final Sdk jdk) {
+  private static String[] createParserSetupCommand(final Sdk jdk) {
 
     final VirtualFile homeDirectory = jdk.getHomeDirectory();
     if (homeDirectory == null) {

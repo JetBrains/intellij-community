@@ -23,7 +23,7 @@ public class FileSetCompileScope extends UserDataHolderBase implements CompileSc
   private Set<String> myUrls = null; // urls caching
   private final Module[] myAffectedModules;
 
-  public FileSetCompileScope(final VirtualFile[] files, Module[] modules) {
+  public FileSetCompileScope(final Collection<VirtualFile> files, Module[] modules) {
     myAffectedModules = modules;
     ApplicationManager.getApplication().runReadAction(
       new Runnable() {

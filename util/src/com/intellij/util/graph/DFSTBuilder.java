@@ -90,7 +90,7 @@ public class DFSTBuilder<Node> {
       }
 
       nNumber--;
-      myNodeToNNumber.put(node, new Integer(nNumber));
+      myNodeToNNumber.put(node, Integer.valueOf(nNumber));
       myInvN[nNumber] = node;
 
       //Check for cycles
@@ -133,11 +133,11 @@ public class DFSTBuilder<Node> {
     myInvT = (Node[])new Object[myGraph.getNodes().size()];
     mySCCs = new TIntArrayList ();
 
-    int currT = 0;
     int size = myGraph.getNodes().size();
 
     myNodeToTNumber = new LinkedHashMap<Node, Integer>(size);
 
+    int currT = 0;
     for (int i = 0; i < size; i++) {
       Node v = myInvN[i];
       if (!myNodeToTNumber.containsKey(v)) {
@@ -145,12 +145,12 @@ public class DFSTBuilder<Node> {
 
         mySCCs.add(region.size());
 
-        myNodeToTNumber.put(v, new Integer(currT));
+        myNodeToTNumber.put(v, Integer.valueOf(currT));
         myInvT[currT++]=v;
 
         for (Node w : region) {
           if (w != v) {
-            myNodeToTNumber.put(w, new Integer(currT));
+            myNodeToTNumber.put(w, Integer.valueOf(currT));
             myInvT[currT++] = w;
           }
         }

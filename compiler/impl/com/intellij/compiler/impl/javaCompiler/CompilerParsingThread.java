@@ -4,6 +4,8 @@ import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.util.SpinAllocator;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
@@ -14,7 +16,7 @@ import java.io.*;
  * @author Eugene Zhuravlev
  *         Date: Mar 30, 2004
  */
-public abstract class CompilerParsingThread implements Runnable, OutputParser.Callback {
+public class CompilerParsingThread implements Runnable, OutputParser.Callback {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.JavaCompilerParsingThread");
   @NonNls public static final String TERMINATION_STRING = "__terminate_read__";
   private final Reader myCompilerOutStreamReader;
@@ -27,17 +29,21 @@ public abstract class CompilerParsingThread implements Runnable, OutputParser.Ca
   private FileObject myClassFileToProcess = null;
   private String myLastReadLine = null;
   private volatile boolean myProcessExited = false;
+  private final CompileContext myContext;
 
-  public CompilerParsingThread(Process process, OutputParser outputParser, final boolean readErrorStream, boolean trimLines) {
+  public CompilerParsingThread(Process process, OutputParser outputParser, final boolean readErrorStream, boolean trimLines, CompileContext context) {
     myProcess = process;
     myOutputParser = outputParser;
     myTrimLines = trimLines;
     InputStream stream = readErrorStream ? process.getErrorStream() : process.getInputStream();
     myCompilerOutStreamReader = stream == null ? null : new BufferedReader(new InputStreamReader(stream), 16384);
     myIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    myContext = context;
   }
 
+  volatile boolean processing;
   public void run() {
+    processing = true;
     try {
       while (true) {
         if (!myIsUnitTestMode && myProcess == null) {
@@ -61,6 +67,7 @@ public abstract class CompilerParsingThread implements Runnable, OutputParser.Ca
       LOG.info(e);
     }
     killProcess();
+    processing = false;
   }
 
   private void killProcess() {
@@ -106,9 +113,24 @@ public abstract class CompilerParsingThread implements Runnable, OutputParser.Ca
     }
   }
 
-  protected abstract boolean isCanceled();
+  protected boolean isCanceled() {
+    return myContext.getProgressIndicator().isCanceled();
+  }
 
-  protected abstract void processCompiledClass(final FileObject classFileToProcess) throws CacheCorruptedException;
+  public void setProgressText(String text) {
+    myContext.getProgressIndicator().setText(text);
+  }
+
+  public void fileProcessed(String path) {
+  }
+
+  public void message(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum) {
+    myContext.addMessage(category, message, url, lineNum, columnNum);
+  }
+
+  protected void processCompiledClass(final FileObject classFileToProcess) throws CacheCorruptedException {
+  }
+
 
   private String readLine(final Reader reader) {
     StringBuilder buffer;

@@ -24,6 +24,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.util.Chunk;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
@@ -44,7 +45,7 @@ public final class ModuleCompilerUtil {
     return ModuleRootManager.getInstance(module).getDependencies();
   }
 
-  private static Graph<Module> createModuleGraph(final Module[] modules) {
+  public static Graph<Module> createModuleGraph(final Module[] modules) {
     return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Module>() {
       public Collection<Module> getNodes() {
         return Arrays.asList(modules);
@@ -56,36 +57,23 @@ public final class ModuleCompilerUtil {
     }));
   }
 
-  public static List<Chunk<Module>> getSortedModuleChunks(Project project, Module[] modules) {
+  public static List<Chunk<Module>> getSortedModuleChunks(Project project, List<Module> modules) {
     final Module[] allModules = ModuleManager.getInstance(project).getModules();
-    return getSortedModuleChunks(modules, createModuleGraph(allModules));
-  }
+    final List<Chunk<Module>> chunks = getSortedChunks(createModuleGraph(allModules));
 
-  public static List<Chunk<Module>> getSortedModuleChunks(Module[] modules, Graph<Module> moduleGraph) {
-    final List<Chunk<Module>> chunks = getSortedChunks(moduleGraph);
-
-    final Set<Module> modulesSet = new HashSet<Module>(Arrays.asList(modules));
+    final Set<Module> modulesSet = new HashSet<Module>(modules);
     // leave only those chunks that contain at least one module from modules
     for (Iterator<Chunk<Module>> it = chunks.iterator(); it.hasNext();) {
       final Chunk<Module> chunk = it.next();
-      if (!intersects(chunk.getNodes(), modulesSet)) {
+      if (!ContainerUtil.intersects(chunk.getNodes(), modulesSet)) {
         it.remove();
       }
     }
     return chunks;
   }
 
-  public static boolean intersects(Set set1, Set set2) {
-    for (final Object item : set1) {
-      if (set2.contains(item)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public static <Node> List<Chunk<Node>> getSortedChunks(final Graph<Node> _graph) {
-    final Graph<Chunk<Node>> chunkGraph = toChunkGraph(_graph);
+  public static <Node> List<Chunk<Node>> getSortedChunks(final Graph<Node> graph) {
+    final Graph<Chunk<Node>> chunkGraph = toChunkGraph(graph);
     final List<Chunk<Node>> chunks = new ArrayList<Chunk<Node>>(chunkGraph.getNodes().size());
     for (final Chunk<Node> chunk : chunkGraph.getNodes()) {
       chunks.add(chunk);

@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Collection;
 
 public class JavaCompiler implements TranslatingCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.JavaCompiler");
@@ -57,7 +58,8 @@ public class JavaCompiler implements TranslatingCompiler {
       outputItems = Collections.emptyList();
     }
 
-    return new ExitStatusImpl(outputItems, wrapper.getFilesToRecompile());
+    Collection<VirtualFile> vf = wrapper.getFilesToRecompile();
+    return new ExitStatusImpl(outputItems, vf.toArray(new VirtualFile[vf.size()]));
   }
 
   public boolean validateConfiguration(CompileScope scope) {

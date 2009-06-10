@@ -88,7 +88,7 @@ public class EclipseCompiler extends ExternalCompiler {
     return new EclipseCompilerConfigurable(EclipseCompilerSettings.getInstance(myProject));
   }
 
-  public OutputParser createErrorParser(@NotNull final String outputDir) {
+  public OutputParser createErrorParser(@NotNull final String outputDir, Process process) {
     return new EclipseCompilerErrorParser();
   }
 
@@ -168,7 +168,7 @@ public class EclipseCompiler extends ExternalCompiler {
       commandLine.add(tokenizer.nextToken());
     }
 
-    final VirtualFile[] files = chunk.getFilesToCompile();
+    final List<VirtualFile> files = chunk.getFilesToCompile();
 
     if (useTempFile) {
       File sourcesFile = FileUtil.createTempFile("javac", ".tmp");

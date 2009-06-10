@@ -26,6 +26,7 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -45,12 +46,12 @@ public class GenerateAntBuildDialog extends DialogWrapper {
     private JPanel myChunksPanel;
     private JCheckBox myGenerateIdeaHomeProperty;
     private final Project myProject;
-    private static final @NonNls String SINGLE_FILE_PROPERTY = "GenerateAntBuildDialog.generateSingleFile";
-    private static final @NonNls String UI_FORM_PROPERTY = "GenerateAntBuildDialog.enableUiFormCompile";
-    private static final @NonNls String FORCE_TARGET_JDK_PROPERTY = "GenerateAntBuildDialog.forceTargetJdk";
-    private static final @NonNls String BACKUP_FILES_PROPERTY = "GenerateAntBuildDialog.backupFiles";
-    private static final @NonNls String INLINE_RUNTIME_CLASSPATH_PROPERTY = "GenerateAntBuildDialog.inclineRuntiemClasspath";
-    private static final @NonNls String GENERATE_IDEA_HOME_PROPERTY = "GenerateAntBuildDialog.generateIdeaHomeProperty";
+    @NonNls private static final String SINGLE_FILE_PROPERTY = "GenerateAntBuildDialog.generateSingleFile";
+    @NonNls private static final String UI_FORM_PROPERTY = "GenerateAntBuildDialog.enableUiFormCompile";
+    @NonNls private static final String FORCE_TARGET_JDK_PROPERTY = "GenerateAntBuildDialog.forceTargetJdk";
+    @NonNls private static final String BACKUP_FILES_PROPERTY = "GenerateAntBuildDialog.backupFiles";
+    @NonNls private static final String INLINE_RUNTIME_CLASSPATH_PROPERTY = "GenerateAntBuildDialog.inclineRuntiemClasspath";
+    @NonNls private static final String GENERATE_IDEA_HOME_PROPERTY = "GenerateAntBuildDialog.generateIdeaHomeProperty";
     private MyTableModel myTableModel;
     private Table myTable;
 
@@ -63,14 +64,15 @@ public class GenerateAntBuildDialog extends DialogWrapper {
     }
 
     private List<Chunk<Module>> getCycleChunks() {
-        List<Chunk<Module>> chunks = ModuleCompilerUtil.getSortedModuleChunks(myProject, ModuleManager.getInstance(myProject).getModules());
-        for (Iterator<Chunk<Module>> it = chunks.iterator(); it.hasNext();) {
-            final Chunk<Module> chunk = it.next();
-            if (chunk.getNodes().size() == 1) {
-                it.remove();
-            }
+      List<Chunk<Module>> chunks =
+        ModuleCompilerUtil.getSortedModuleChunks(myProject, Arrays.asList(ModuleManager.getInstance(myProject).getModules()));
+      for (Iterator<Chunk<Module>> it = chunks.iterator(); it.hasNext();) {
+        final Chunk<Module> chunk = it.next();
+        if (chunk.getNodes().size() == 1) {
+          it.remove();
         }
-        return chunks;
+      }
+      return chunks;
     }
 
     private void loadSettings() {
@@ -135,8 +137,8 @@ public class GenerateAntBuildDialog extends DialogWrapper {
     }
 
     private void initChunksPanel() {
-        java.util.List<Chunk<Module>> chunks = getCycleChunks();
-        if (chunks.size() == 0) {
+        List<Chunk<Module>> chunks = getCycleChunks();
+        if (chunks.isEmpty()) {
             return;
         }
         myChunksPanel.setLayout(new BorderLayout());
@@ -205,117 +207,117 @@ public class GenerateAntBuildDialog extends DialogWrapper {
         return myGenerateIdeaHomeProperty.isSelected();
     }
 
-    private static class MyTableModel extends AbstractTableModel {
-        private static final int NUMBER_COLUMN = 0;
-        private static final int NAME_COLUMN = 1;
+  private static class MyTableModel extends AbstractTableModel {
+    private static final int NUMBER_COLUMN = 0;
+    private static final int NAME_COLUMN = 1;
 
-        private final List<Pair<String, ListWithSelection>> myItems = new ArrayList<Pair<String, ListWithSelection>>();
+    private final List<Pair<String, ListWithSelection>> myItems = new ArrayList<Pair<String, ListWithSelection>>();
 
-        public MyTableModel(List<Chunk<Module>> chunks) {
-            for (final Chunk<Module> chunk : chunks) {
-                final ListWithSelection item = new ListWithSelection();
-                for (final Module module : chunk.getNodes()) {
-                    item.add(module.getName());
-                }
-                item.selectFirst();
-                myItems.add(new Pair<String, ListWithSelection>(createCycleName(chunk), item));
-            }
+    private MyTableModel(List<Chunk<Module>> chunks) {
+      for (final Chunk<Module> chunk : chunks) {
+        final ListWithSelection<String> item = new ListWithSelection<String>();
+        for (final Module module : chunk.getNodes()) {
+          item.add(module.getName());
         }
-
-        private String createCycleName(Chunk<Module> chunk) {
-            final StringBuffer buf = new StringBuffer();
-            for (Module module : chunk.getNodes()) {
-                if (buf.length() > 0) {
-                    buf.append(", ");
-                }
-                buf.append(module.getName());
-            }
-            buf.insert(0, "[");
-            buf.append("]");
-            return buf.toString();
-        }
-
-        public String[] getModuleRepresentatives() {
-            final String[] names = new String[myItems.size()];
-            int index = 0;
-            for (final Pair<String, ListWithSelection> pair : myItems) {
-                names[index++] = (String)pair.getSecond().getSelection();
-            }
-            return names;
-        }
-
-        public int getColumnCount() {
-            return 2;
-        }
-
-        public int getRowCount() {
-            return myItems.size();
-        }
-
-        public boolean isCellEditable(int rowIndex, int columnIndex) {
-            return columnIndex == 1;
-        }
-
-        public Class getColumnClass(int columnIndex) {
-            switch (columnIndex) {
-                case NUMBER_COLUMN:
-                    return String.class;
-                case NAME_COLUMN:
-                    return ListWithSelection.class;
-                default:
-                    return super.getColumnClass(columnIndex);
-            }
-        }
-
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            switch (columnIndex) {
-                case NUMBER_COLUMN:
-                    return myItems.get(rowIndex).getFirst();
-                case NAME_COLUMN:
-                    return myItems.get(rowIndex).getSecond();
-                default:
-                    return null;
-            }
-        }
-
-        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            if (columnIndex == NAME_COLUMN) {
-                myItems.get(rowIndex).getSecond().select(aValue);
-            }
-        }
-
-        public String getColumnName(int columnIndex) {
-            switch (columnIndex) {
-                case NUMBER_COLUMN:
-                    return CompilerBundle.message("generate.ant.build.dialog.cyclic.modules.table.number.column.header");
-                case NAME_COLUMN:
-                    return CompilerBundle.message("generate.ant.build.dialog.cyclic.modules.table.name.column.header");
-            }
-            return super.getColumnName(columnIndex);
-        }
+        item.selectFirst();
+        myItems.add(new Pair<String, ListWithSelection>(createCycleName(chunk), item));
+      }
     }
 
-    private static class MyTableCellRenderer extends DefaultTableCellRenderer {
-        public Component getTableCellRendererComponent(JTable table,
-                                                       Object value,
-                                                       boolean isSelected,
-                                                       boolean hasFocus,
-                                                       int row,
-                                                       int column) {
-            if (value instanceof ListWithSelection) {
-                value = ((ListWithSelection)value).getSelection();
-            }
-            final JLabel component = (JLabel)super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            component.setHorizontalAlignment(SwingConstants.CENTER);
-            return component;
+    private static String createCycleName(Chunk<Module> chunk) {
+      final StringBuilder buf = new StringBuilder();
+      for (Module module : chunk.getNodes()) {
+        if (buf.length() > 0) {
+          buf.append(", ");
         }
+        buf.append(module.getName());
+      }
+      buf.insert(0, "[");
+      buf.append("]");
+      return buf.toString();
     }
 
-    protected Action[] createActions() {
-        return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+    public String[] getModuleRepresentatives() {
+      final String[] names = new String[myItems.size()];
+      int index = 0;
+      for (final Pair<String, ListWithSelection> pair : myItems) {
+        names[index++] = (String)pair.getSecond().getSelection();
+      }
+      return names;
     }
 
-    protected void doHelpAction() {
-        HelpManager.getInstance().invokeHelp(HelpID.GENERATE_ANT_BUILD);
+    public int getColumnCount() {
+      return 2;
     }
+
+    public int getRowCount() {
+      return myItems.size();
+    }
+
+    public boolean isCellEditable(int rowIndex, int columnIndex) {
+      return columnIndex == 1;
+    }
+
+    public Class getColumnClass(int columnIndex) {
+      switch (columnIndex) {
+        case NUMBER_COLUMN:
+          return String.class;
+        case NAME_COLUMN:
+          return ListWithSelection.class;
+        default:
+          return super.getColumnClass(columnIndex);
+      }
+    }
+
+    public Object getValueAt(int rowIndex, int columnIndex) {
+      switch (columnIndex) {
+        case NUMBER_COLUMN:
+          return myItems.get(rowIndex).getFirst();
+        case NAME_COLUMN:
+          return myItems.get(rowIndex).getSecond();
+        default:
+          return null;
+      }
+    }
+
+    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+      if (columnIndex == NAME_COLUMN) {
+        myItems.get(rowIndex).getSecond().select(aValue);
+      }
+    }
+
+    public String getColumnName(int columnIndex) {
+      switch (columnIndex) {
+        case NUMBER_COLUMN:
+          return CompilerBundle.message("generate.ant.build.dialog.cyclic.modules.table.number.column.header");
+        case NAME_COLUMN:
+          return CompilerBundle.message("generate.ant.build.dialog.cyclic.modules.table.name.column.header");
+      }
+      return super.getColumnName(columnIndex);
+    }
+  }
+
+  private static class MyTableCellRenderer extends DefaultTableCellRenderer {
+    public Component getTableCellRendererComponent(JTable table,
+                                                   Object value,
+                                                   boolean isSelected,
+                                                   boolean hasFocus,
+                                                   int row,
+                                                   int column) {
+      if (value instanceof ListWithSelection) {
+        value = ((ListWithSelection)value).getSelection();
+      }
+      final JLabel component = (JLabel)super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      component.setHorizontalAlignment(SwingConstants.CENTER);
+      return component;
+    }
+  }
+
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HelpID.GENERATE_ANT_BUILD);
+  }
 }

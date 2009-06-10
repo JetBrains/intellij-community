@@ -4,19 +4,26 @@
  */
 package com.intellij.compiler.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class CompilerUtil {
   public static String quotePath(String path) {
@@ -27,22 +34,6 @@ public class CompilerUtil {
     return path;
   }
 
-  public static final FileFilter CLASS_FILES_FILTER = new FileFilter() {
-    public boolean accept(File pathname) {
-      if (pathname.isDirectory()) {
-        return true;
-      }
-      final int dotIndex = pathname.getName().lastIndexOf('.');
-      if (dotIndex > 0) {
-        String extension = pathname.getName().substring(dotIndex);
-        //noinspection HardCodedStringLiteral
-        if (extension.equalsIgnoreCase(".class")) {
-          return true;
-        }
-      }
-      return false;
-    }
-  };
   public static void collectFiles(Collection<File> container, File rootDir, FileFilter fileFilter) {
     final File[] files = rootDir.listFiles(fileFilter);
     if (files == null) {
@@ -58,30 +49,12 @@ public class CompilerUtil {
     }
   }
 
-  public static void refreshPaths(final String[] paths) {
-    if (paths.length == 0) {
-      return;
-    }
-
-    final LocalFileSystem fs = LocalFileSystem.getInstance();
-    for (String path : paths) {
-      final VirtualFile file = fs.refreshAndFindFileByPath(path.replace(File.separatorChar, '/'));
-      if (file != null) {
-        file.refresh(false, false);
-      }
-    }
-  }
-
 
   /**
    * must not be called inside ReadAction
    * @param files
    */
   public static void refreshIOFiles(@NotNull final Collection<File> files) {
-    if (files.isEmpty()) {
-      return;
-    }
-
     for (File file1 : files) {
       final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
       if (file != null) {
@@ -90,11 +63,52 @@ public class CompilerUtil {
     }
   }
 
-  public static void refreshIODirectories(@NotNull final Collection<File> files) {
-    if (files.isEmpty()) {
-      return;
+  public static void refreshIOFilesInterruptibly(@NotNull CompileContext context, @NotNull Collection<File> files, @Nullable String title) {
+    List<VirtualFile> virtualFiles = new ArrayList<VirtualFile>(files.size());
+    for (File file : files) {
+      context.getProgressIndicator().checkCanceled();
+      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      if (virtualFile == null) continue;
+      virtualFiles.add(virtualFile);
     }
+    refreshFilesInterruptibly(context, virtualFiles, title);
+  }
+  public static void refreshFilesInterruptibly(@NotNull final CompileContext context, @NotNull final Collection<VirtualFile> files, @Nullable String title) {
+    ThrowableRunnable<RuntimeException> runnable = new ThrowableRunnable<RuntimeException>() {
+      public void run() throws RuntimeException {
+        boolean async = !ApplicationManager.getApplication().isDispatchThread();
+        final CountDownLatch latch = new CountDownLatch(files.size());
+        final int[] i = {0};
+        for (final VirtualFile virtualFile : files) {
+          context.getProgressIndicator().checkCanceled();
+          virtualFile.refresh(async, true, new Runnable() {
+            public void run() {
+              latch.countDown();
+              context.getProgressIndicator().setFraction(++i[0] * 1.0 / files.size());
+              context.getProgressIndicator().setText2(virtualFile.getPath());
+            }
+          });
+        }
+        try {
+          while (true) {
+            latch.await(100, TimeUnit.MILLISECONDS);
+            if (latch.getCount() == 0) break;
+            context.getProgressIndicator().checkCanceled();
+          }
+        }
+        catch (InterruptedException ignored) {
+        }
+      }
+    };
+    if (title != null) {
+      CompileDriver.runInContext(context, title, runnable);
+    }
+    else {
+      runnable.run();
+    }
+  }
 
+  public static void refreshIODirectories(@NotNull final Collection<File> files) {
     for (File file1 : files) {
       final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
       if (file != null) {

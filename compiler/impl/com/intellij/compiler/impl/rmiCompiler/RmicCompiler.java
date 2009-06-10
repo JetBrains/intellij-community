@@ -4,7 +4,6 @@ import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.RmicSettings;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.CompilerParsingThread;
-import com.intellij.compiler.impl.javaCompiler.CompilerParsingThreadImpl;
 import com.intellij.compiler.impl.javaCompiler.FileObject;
 import com.intellij.compiler.make.Cache;
 import com.intellij.compiler.make.CacheCorruptedException;
@@ -226,7 +225,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
 
     final Process process = Runtime.getRuntime().exec(cmdLine);
     final Set<RmicProcessingItem> successfullyCompiledItems = new HashSet<RmicProcessingItem>();
-    final CompilerParsingThread parsingThread = new CompilerParsingThreadImpl(process, context, outputParser, false, true) {
+    final CompilerParsingThread parsingThread = new CompilerParsingThread(process, outputParser, false, true,context) {
       protected void processCompiledClass(FileObject classFileToProcess) {
         String key = classFileToProcess.getFile().getPath().replace(File.separatorChar, '/');
         final RmicProcessingItem item = pathToItemMap.get(key);

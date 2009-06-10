@@ -213,8 +213,7 @@ public final class PreviewFormAction extends AnAction{
           modules.add(ModuleUtil.findModuleForFile(propFile.getVirtualFile(), module.getProject()));
         }
       }
-      FileSetCompileScope scope = new FileSetCompileScope(virtualFiles.toArray(new VirtualFile[] {}),
-                                                          modules.toArray(new Module[] {}));
+      FileSetCompileScope scope = new FileSetCompileScope(virtualFiles, modules.toArray(new Module[]{}));
 
       CompilerManager.getInstance(module.getProject()).make(scope, new CompileStatusNotification() {
         public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {

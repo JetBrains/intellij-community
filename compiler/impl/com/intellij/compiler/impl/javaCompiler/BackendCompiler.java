@@ -17,7 +17,7 @@ public interface BackendCompiler {
   @NotNull String getPresentableName();
   @NotNull Configurable createConfigurable();
   @NotNull Set<FileType> getCompilableFileTypes();
-  @Nullable OutputParser createErrorParser(@NotNull String outputDir);
+  @Nullable OutputParser createErrorParser(@NotNull String outputDir, Process process);
   @Nullable OutputParser createOutputParser(@NotNull String outputDir);
 
   boolean checkCompiler(final CompileScope scope);

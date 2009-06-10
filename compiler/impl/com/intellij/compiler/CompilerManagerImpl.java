@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.impl.compiler.IncrementalArtifactsCompiler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Chunk;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
@@ -34,7 +35,7 @@ public class CompilerManagerImpl extends CompilerManager {
 
   private final List<Compiler> myCompilers = new ArrayList<Compiler>();
   private final List<TranslatingCompiler> myTranslators = new ArrayList<TranslatingCompiler>();
-  
+
   private final List<CompileTask> myBeforeTasks = new ArrayList<CompileTask>();
   private final List<CompileTask> myAfterTasks = new ArrayList<CompileTask>();
   private final Set<FileType> myCompilableTypes = new HashSet<FileType>();
@@ -78,13 +79,13 @@ public class CompilerManagerImpl extends CompilerManager {
           public void run() {
             FileTypeManager.getInstance().registerFileType(DummyTranslatingCompiler.INPUT_FILE_TYPE, DummyTranslatingCompiler.FILETYPE_EXTENSION);
             addTranslatingCompiler(
-              new DummyTranslatingCompiler(), 
-              new HashSet<FileType>(Arrays.asList(DummyTranslatingCompiler.INPUT_FILE_TYPE)), 
+              new DummyTranslatingCompiler(),
+              new HashSet<FileType>(Arrays.asList(DummyTranslatingCompiler.INPUT_FILE_TYPE)),
               new HashSet<FileType>(Arrays.asList( StdFileTypes.JAVA))
             );
           }
         });
-        
+
       }
     });
     */
@@ -102,9 +103,9 @@ public class CompilerManagerImpl extends CompilerManager {
     myTranslators.add(compiler);
     myCompilerToInputTypes.put(compiler, inputTypes);
     myCompilerToOutputTypes.put(compiler, outputTypes);
-    
-    final List<Chunk<Compiler>> chunks = ModuleCompilerUtil.getSortedChunks(createCompilerGraph(myTranslators.toArray(new Compiler[myTranslators.size()])));
-    
+
+    final List<Chunk<Compiler>> chunks = ModuleCompilerUtil.getSortedChunks(createCompilerGraph((List<Compiler>)(List)myTranslators));
+
     myTranslators.clear();
     for (Chunk<Compiler> chunk : chunks) {
       for (Compiler chunkCompiler : chunk.getNodes()) {
@@ -128,7 +129,7 @@ public class CompilerManagerImpl extends CompilerManager {
   public final void addCompiler(@NotNull Compiler compiler) {
     if (compiler instanceof TranslatingCompiler) {
       myTranslators.add((TranslatingCompiler)compiler);
-      
+
     }
     else {
       myCompilers.add(compiler);
@@ -341,10 +342,10 @@ public class CompilerManagerImpl extends CompilerManager {
     return new ProjectCompileScope(project);
   }
 
-  private Graph<Compiler> createCompilerGraph(final Compiler[] compilers) {
+  private Graph<Compiler> createCompilerGraph(final List<Compiler> compilers) {
     return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Compiler>() {
       public Collection<Compiler> getNodes() {
-        return Arrays.asList(compilers);
+        return compilers;
       }
 
       public Iterator<Compiler> getIn(Compiler compiler) {
@@ -352,13 +353,13 @@ public class CompilerManagerImpl extends CompilerManager {
         if (compilerInput == null || compilerInput.isEmpty()) {
           return Collections.<Compiler>emptySet().iterator();
         }
-        
+
         final Set<Compiler> inCompilers = new HashSet<Compiler>();
-        
+
         for (Map.Entry<Compiler, Set<FileType>> entry : myCompilerToOutputTypes.entrySet()) {
           final Set<FileType> outputs = entry.getValue();
           Compiler comp = entry.getKey();
-          if (outputs != null && ModuleCompilerUtil.intersects(compilerInput, outputs)) {
+          if (outputs != null && ContainerUtil.intersects(compilerInput, outputs)) {
             inCompilers.add(comp);
           }
         }

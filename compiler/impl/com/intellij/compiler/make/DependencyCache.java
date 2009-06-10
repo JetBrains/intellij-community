@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
@@ -132,7 +133,7 @@ public class DependencyCache {
   }
   */
 
-  public void update() throws CacheCorruptedException {
+  public void update(ProgressIndicator indicator) throws CacheCorruptedException {
     if (myToUpdate.isEmpty()) {
       return; // optimization
     }
@@ -145,8 +146,10 @@ public class DependencyCache {
     final Cache newCache = getNewClassesCache();
     final DependencyCacheNavigator navigator = getCacheNavigator();
 
+    int i = 0;
     // remove unnecesary dependencies
     for (final int qName : namesToUpdate) {
+      indicator.setFraction(i++*1.0/namesToUpdate.length/4);
       // process use-dependencies
       for (int referencedClassQName : cache.getReferencedClassQNames(qName)) {
         if (!cache.containsClass(referencedClassQName)) {
@@ -173,6 +176,7 @@ public class DependencyCache {
 
     // do update of classInfos
     for (final int qName : namesToUpdate) {
+      indicator.setFraction(i++*1.0/namesToUpdate.length/4);
       cache.importClassInfo(newCache, qName);
     }
 
@@ -181,6 +185,7 @@ public class DependencyCache {
     final SymbolTable symbolTable = getSymbolTable();
 
     for (final int qName : namesToUpdate) {
+      indicator.setFraction(i++*1.0/namesToUpdate.length/4);
       if (!newCache.containsClass(qName)) {
         continue;
       }
@@ -208,6 +213,7 @@ public class DependencyCache {
 
     // building subclass dependencies
     for (final int qName : namesToUpdate) {
+      indicator.setFraction(i++*1.0/namesToUpdate.length/4);
       final int classId = qName;
       buildSubclassDependencies(getCache(), qName, classId);
     }
@@ -215,7 +221,7 @@ public class DependencyCache {
     for (final int qName : myClassesWithSourceRemoved.toArray()) {
       cache.removeClass(qName);
     }
-     myToUpdate = new TIntHashSet();
+    myToUpdate = new TIntHashSet();
 
     //System.out.println("Dependency cache update took: " + (System.currentTimeMillis() - updateStart) + " ms");
     //pause();

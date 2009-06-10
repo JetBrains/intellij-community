@@ -16,6 +16,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.StringInterner;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,7 +162,7 @@ public class ModuleInsight {
         checkModules: for (File srcRoot: checkedModule.getSourceRoots()) {
           final Set<String> referencedBySourceRoot = mySourceRootToReferencedPackagesMap.get(srcRoot);
           for (File aSourceRoot : aModuleRoots) {
-            if (intersects(referencedBySourceRoot, mySourceRootToPackagesMap.get(aSourceRoot))) {
+            if (ContainerUtil.intersects(referencedBySourceRoot, mySourceRootToPackagesMap.get(aSourceRoot))) {
               checkedModule.addDependencyOn(aModule);
               break checkModules;
             }
@@ -175,7 +176,7 @@ public class ModuleInsight {
     for (File jarFile : myJarToPackagesMap.keySet()) {
       final Set<String> jarPackages = myJarToPackagesMap.get(jarFile);
       for (File srcRoot : module.getSourceRoots()) {
-        if (intersects(mySourceRootToReferencedPackagesMap.get(srcRoot), jarPackages)) {
+        if (ContainerUtil.intersects(mySourceRootToReferencedPackagesMap.get(srcRoot), jarPackages)) {
           module.addLibraryFile(jarFile);
           break;
         }
@@ -325,7 +326,7 @@ public class ModuleInsight {
   public Collection<LibraryDescriptor> getLibraryDependencies(ModuleDescriptor module) {
     final Set<LibraryDescriptor> libs = new HashSet<LibraryDescriptor>();
     for (LibraryDescriptor library : myLibraries) {
-      if (intersects(library.getJars(), module.getLibraryFiles())) {
+      if (ContainerUtil.intersects(library.getJars(), module.getLibraryFiles())) {
         libs.add(library);
       }
     }
@@ -371,15 +372,6 @@ public class ModuleInsight {
     return new ArrayList<LibraryDescriptor>(rootToLibraryMap.values());
   }
 
-  private static <T> boolean intersects(Collection<T> set1, Collection<T> set2) {
-    for (final T item : set1) {
-      if (set2.contains(item)) {
-        return true;
-      }
-    }
-    return false;
-  }
-  
   private void scanSources(final File fromRoot, final String parentPackageName, final Set<String> usedPackages, final Set<String> selfPackages) {
     if (myIgnoredNames.contains(fromRoot.getName())) {
       return;

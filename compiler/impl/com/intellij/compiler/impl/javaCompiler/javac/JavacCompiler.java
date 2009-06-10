@@ -113,7 +113,7 @@ public class JavacCompiler extends ExternalCompiler {
     return new JavacConfigurable(JavacSettings.getInstance(myProject));
   }
 
-  public OutputParser createErrorParser(@NotNull final String outputDir) {
+  public OutputParser createErrorParser(@NotNull final String outputDir, Process process) {
     return new JavacOutputParser(myProject);
   }
 
@@ -215,7 +215,7 @@ public class JavacCompiler extends ExternalCompiler {
 
     commandLine.addAll(additionalOptions);
 
-    final VirtualFile[] files = chunk.getFilesToCompile();
+    final List<VirtualFile> files = chunk.getFilesToCompile();
 
     if (isVersion1_0) {
       for (VirtualFile file : files) {

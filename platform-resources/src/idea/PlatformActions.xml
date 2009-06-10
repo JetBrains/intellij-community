@@ -383,6 +383,7 @@
       <separator/>
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <action internal="true" id="RestartInfo" class="com.intellij.internal.RestartInfoAction" text="Restart Info"/>
+      <action internal="true" id="CompilerTest" class="com.intellij.compiler.impl.javaCompiler.api.CompilerPerfTestAction" text="Test Rebuild Performance"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 

@@ -19,7 +19,7 @@ public class FieldInfo extends MemberInfo {
 
   public FieldInfo(int name, int descriptor, final int genericSignature, int flags, ConstantValue value, final AnnotationConstantValue[] runtimeVisibleAnnotations, final AnnotationConstantValue[] runtimeInvisibleAnnotations) {
     super(name, descriptor, genericSignature, flags, runtimeVisibleAnnotations, runtimeInvisibleAnnotations);
-    myConstantValue = (value != null)? value : ConstantValue.EMPTY_CONSTANT_VALUE;
+    myConstantValue = value == null ? ConstantValue.EMPTY_CONSTANT_VALUE : value;
   }
 
   public FieldInfo(DataInput in) throws IOException {
