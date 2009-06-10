@@ -48,6 +48,8 @@ public class AntPattern extends AntElementVisitor {
       convertToRegexPattern("**/vssver.scc", caseSensitive),
       convertToRegexPattern("**/.svn", caseSensitive),
       convertToRegexPattern("**/.svn/**", caseSensitive),
+      convertToRegexPattern("**/_svn", caseSensitive),
+      convertToRegexPattern("**/_svn/**", caseSensitive),
       convertToRegexPattern("**/.DS_Store", caseSensitive)
     );
   }
