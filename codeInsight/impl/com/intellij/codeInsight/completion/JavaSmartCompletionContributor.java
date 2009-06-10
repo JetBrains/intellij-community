@@ -5,25 +5,31 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.completion.scope.CompletionElement;
+import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiJavaPatterns;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import static com.intellij.patterns.StandardPatterns.*;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.*;
+import com.intellij.psi.filters.ElementExtractorFilter;
+import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.filters.GeneratorFilter;
+import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.filters.getters.*;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.filters.types.AssignableGroupFilter;
-import com.intellij.psi.filters.types.AssignableToFilter;
 import com.intellij.psi.filters.types.ReturnTypeFilter;
+import com.intellij.psi.filters.types.AssignableToFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.statistics.JavaStatisticsManager;
@@ -46,7 +52,6 @@ import java.util.*;
  * @author peter
  */
 public class JavaSmartCompletionContributor extends CompletionContributor {
-  private static final JavaAwareCompletionData SMART_DATA = new JavaAwareCompletionData();
   private static final ElementExtractorFilter THROWABLES_FILTER = new ElementExtractorFilter(new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE));
   @NonNls private static final String EXCEPTION_TAG = "exception";
   private static final ElementPattern<PsiElement> AFTER_NEW =
@@ -68,6 +73,9 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         psiElement().inside(PsiSuperExpression.class)
         );
   public static final Key<Boolean> TYPE_CAST = Key.create("TYPE_CAST");
+  private static final ElementPattern<PsiElement> INSIDE_TYPECAST = psiElement().withParent(
+    psiElement(PsiReferenceExpression.class).afterLeaf(
+      psiElement().withText(")").withParent(PsiTypeCastExpression.class)));
 
   @Nullable
   private static Pair<ElementFilter, TailType> getReferenceFilter(PsiElement element) {
@@ -89,12 +97,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         psiElement(PsiReferenceList.class).save("refList").withParent(
             psiMethod().withThrowsList(get("refList")))).accepts(element)) {
       return new Pair<ElementFilter, TailType>(THROWABLES_FILTER, TailType.NONE);
-    }
-
-    if (psiElement().withParent(
-        psiElement(PsiReferenceExpression.class).afterLeaf(
-            psiElement().withText(")").withParent(PsiTypeCastExpression.class))).accepts(element)) {
-      return new Pair<ElementFilter, TailType>(new ReturnTypeFilter(new GeneratorFilter(AssignableToFilter.class, new CastTypeGetter())), TailType.NONE);
     }
 
     return null;
@@ -150,7 +152,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
             if (expectedClassTypes.contains(type)) return;
 
-            result.addElement(TailTypeDecorator.createDecorator(new JavaPsiClassReferenceElement(psiClass), TailTypes.CAST_RPARENTH));
+            result.addElement(new JavaPsiClassReferenceElement(psiClass));
           }
         }, result.getPrefixMatcher());
       }
@@ -163,13 +165,19 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         if (reference != null) {
           final Pair<ElementFilter, TailType> pair = getReferenceFilter(element);
           if (pair != null) {
-            for (final LookupElement item : completeReference(element, reference, parameters.getOriginalFile(), pair.second, pair.first, result)) {
+            for (final LookupElement item : completeReference(element, reference, pair.second, pair.first, true)) {
               if (AFTER_THROW_NEW.accepts(element)) {
                 ((LookupItem)item).setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
                 if (item.getObject() instanceof PsiClass) {
                   JavaAwareCompletionData.setShowFQN((LookupItem)item);
                 }
               }
+              result.addElement(item);
+            }
+          }
+          else if (INSIDE_TYPECAST.accepts(element)) {
+            final ReturnTypeFilter filter = new ReturnTypeFilter(new GeneratorFilter(AssignableToFilter.class, new CastTypeGetter()));
+            for (final LookupElement item : completeReference(element, reference, TailType.NONE, filter, false)) {
               result.addElement(item);
             }
           }
@@ -543,11 +551,59 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     result.addElement(item);
   }
 
-  public static THashSet<LookupElement> completeReference(final PsiElement element, final PsiReference reference, final PsiFile originalFile,
-                                                        final TailType tailType, final ElementFilter filter, final CompletionResultSet result) {
-    final THashSet<LookupElement> set = new THashSet<LookupElement>();
-    SMART_DATA.completeReference(reference, element, set, tailType, originalFile, filter, new CompletionVariant());
-    return set;
+  static Set<LookupElement> completeReference(final PsiElement element, final PsiReference reference, final TailType tailType, final ElementFilter filter, final boolean acceptClasses) {
+    if (reference instanceof PsiJavaReference) {
+      final THashSet<LookupElement> set = new THashSet<LookupElement>();
+      final PsiJavaReference javaReference = (PsiJavaReference)reference;
+      final JavaCompletionProcessor processor = new JavaCompletionProcessor(element, new ElementFilter() {
+        public boolean isAcceptable(Object element, PsiElement context) {
+          return filter.isAcceptable(element, context);
+        }
+
+        public boolean isClassAcceptable(Class hintClass) {
+          if (acceptClasses) {
+            return ReflectionCache.isAssignable(PsiClass.class, hintClass);
+          }
+
+          return ReflectionCache.isAssignable(PsiVariable.class, hintClass) ||
+                 ReflectionCache.isAssignable(PsiMethod.class, hintClass) ||
+                 ReflectionCache.isAssignable(PsiExpression.class, hintClass) ||
+                 ReflectionCache.isAssignable(Template.class, hintClass) ||
+                 ReflectionCache.isAssignable(CandidateInfo.class, hintClass) ||
+                 ReflectionCache.isAssignable(PsiKeyword.class, hintClass);
+        }
+      }, true);
+      javaReference.processVariants(processor);
+
+      for (CompletionElement completionElement : processor.getResults()) {
+        addLookupItem(set, tailType, completionElement.getElement(), completionElement.getSubstitutor(), completionElement.getQualifier());
+      }
+      return set;
+    }
+
+    return Collections.emptySet();
+  }
+
+  private static void addLookupItem(Set<LookupElement> set, TailType tailType, @NotNull Object completion, @Nullable PsiSubstitutor substitutor,
+                                    @Nullable PsiType qualifier) {
+    assert !(completion instanceof LookupElement);
+
+    LookupItem<?> ret = LookupItemUtil.objectToLookupItem(completion);
+    if(ret == null) return;
+
+    if (tailType != TailType.NONE) {
+      ret.setTailType(tailType);
+    }
+
+    if (substitutor != null) {
+      ret.setAttribute(LookupItem.SUBSTITUTOR, substitutor);
+    }
+
+    if (qualifier != null) {
+      ret.setAttribute(JavaCompletionUtil.QUALIFIER_TYPE_ATTR, qualifier);
+    }
+
+    set.add(ret);
   }
 
 }

@@ -31,16 +31,17 @@ import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ExcludeSillyAssignment;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 /**
  * @author peter
@@ -103,7 +104,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
             final PsiFile originalFile = parameters.getOriginalFile();
             final TailType tailType = pair.second;
             final ElementFilter filter = pair.first;
-            final THashSet<LookupElement> set = JavaSmartCompletionContributor.completeReference(element, reference, originalFile, tailType, filter, result);
+            final Set<LookupElement> set = JavaSmartCompletionContributor.completeReference(element, reference, tailType, filter, false);
             for (final LookupElement item : set) {
               result.addElement(item);
             }
@@ -111,7 +112,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
             if (parameters.getInvocationCount() >= 2) {
               ElementFilter baseFilter = getReferenceFilter(element, true, false).first;
               final PsiClassType stringType = PsiType.getJavaLangString(element.getManager(), element.getResolveScope());
-              for (final LookupElement baseItem : JavaSmartCompletionContributor.completeReference(element, reference, originalFile, tailType, baseFilter, result)) {
+              for (final LookupElement baseItem : JavaSmartCompletionContributor.completeReference(element, reference, tailType, baseFilter, false)) {
                 final Object object = baseItem.getObject();
                 final String prefix = getItemText(object);
                 if (prefix == null) continue;
@@ -328,7 +329,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
     final PsiExpression ref = elementFactory.createExpressionFromText(getQualifierText(qualifier) + prefix + ".xxx", element);
     String beautifulPrefix = prefix.endsWith(" )") ? prefix.substring(0, prefix.length() - 2) + ")" : prefix;
-    for (final LookupElement item : JavaSmartCompletionContributor.completeReference(element, (PsiReferenceExpression)ref, originalFile, tailType, qualifierFilter, result)) {
+    for (final LookupElement item : JavaSmartCompletionContributor.completeReference(element, (PsiReferenceExpression)ref, tailType, qualifierFilter, false)) {
       if (item.getObject() instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)item.getObject();
         if (psiMethod().withName("toArray").withParameterCount(1)
