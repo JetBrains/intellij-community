@@ -12,6 +12,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -274,8 +275,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         continue;
       }
       JLabel label = new JLabel("Initializing toolwindow...");
-      final ToolWindow toolWindow = registerToolWindow(bean.id, label, toolWindowAnchor, myProject);
       final ToolWindowFactory factory = bean.getToolWindowFactory();
+      final ToolWindow toolWindow = registerToolWindow(bean.id, label, toolWindowAnchor, myProject, factory instanceof DumbAware);
       if (bean.icon != null) {
         Icon icon = IconLoader.findIcon(bean.icon, factory.getClass());
         if (icon == null) {
