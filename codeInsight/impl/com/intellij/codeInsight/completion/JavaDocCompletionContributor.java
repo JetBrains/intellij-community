@@ -1,7 +1,11 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.completion.scope.CompletionElement;
+import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.SuppressionUtil;
@@ -52,17 +56,20 @@ public class JavaDocCompletionContributor extends CompletionContributor {
     extend(CompletionType.BASIC, PsiJavaPatterns.psiElement().inside(PsiDocTagValue.class), new CompletionProvider<CompletionParameters>(
       true) {
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
-        result.stopHere();
-
         final PsiElement position = parameters.getPosition();
         boolean isArg = PsiJavaPatterns.psiElement().afterLeaf("(").accepts(position);
         PsiDocTag tag = PsiTreeUtil.getParentOfType(position, PsiDocTag.class);
         boolean onlyConstants = !isArg && tag != null && tag.getName().equals(VALUE_TAG);
 
         final PsiReference ref = position.getContainingFile().findReferenceAt(parameters.getOffset());
-        if (ref != null) {
-          for (final LookupElement item : JavaSmartCompletionContributor
-              .completeReference(position, ref, parameters.getOriginalFile(), TailType.NONE, TrueFilter.INSTANCE, result)) {
+        if (ref instanceof PsiJavaReference) {
+          result.stopHere();
+
+          final JavaCompletionProcessor processor = new JavaCompletionProcessor(position, TrueFilter.INSTANCE, false);
+          ((PsiJavaReference) ref).processVariants(processor);
+
+          for (final CompletionElement _item : processor.getResults()) {
+            LookupItem item = LookupItemUtil.objectToLookupItem(_item.getElement());
             if (onlyConstants) {
               Object o = item.getObject();
               if (!(o instanceof PsiField)) continue;
@@ -73,9 +80,9 @@ public class JavaDocCompletionContributor extends CompletionContributor {
 
             item.putUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR, Boolean.TRUE);
             if (isArg) {
-              ((LookupItem)item).setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
+              item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
             }
-            ((LookupItem)item).setInsertHandler(new MethodSignatureInsertHandler());
+            item.setInsertHandler(new MethodSignatureInsertHandler());
             result.addElement(item);
           }
         }

@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -12,6 +13,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CharTable;
@@ -78,14 +80,14 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         }
 
         return new MyReference(method) {
-          public Object[] getVariants() {
+          public PsiElement[] getVariants() {
             final List<PsiMethod> lst = new ArrayList<PsiMethod>();
             for (PsiMethod method : methods) {
               if (name.equals(method.getName())) {
                 lst.add(method);
               }
             }
-            return lst.toArray();
+            return lst.toArray(new PsiMethod[lst.size()]);
           }
         };
       }
@@ -175,7 +177,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     return JavaResolveUtil.getContextClass(this);
   }
 
-  private class MyReference implements PsiReference {
+  private class MyReference implements PsiJavaReference {
     private final PsiElement myReferencee;
 
     public MyReference(PsiElement referencee) {
@@ -186,14 +188,32 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       return myReferencee;
     }
 
-    public Object[] getVariants(){
+    public void processVariants(PsiScopeProcessor processor) {
+      for (final PsiElement element : getVariants()) {
+        if (!processor.execute(element, ResolveState.initial())) {
+          return;
+        }
+      }
+    }
+
+    @NotNull
+    public JavaResolveResult advancedResolve(boolean incompleteCode) {
+      return myReferencee == null ? JavaResolveResult.EMPTY : new CandidateInfo(myReferencee, PsiSubstitutor.EMPTY);
+    }
+
+    @NotNull
+    public JavaResolveResult[] multiResolve(boolean incompleteCode) {
+      return myReferencee == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[]{new CandidateInfo(myReferencee, PsiSubstitutor.EMPTY)};
+    }
+
+    public PsiElement[] getVariants(){
       final List<PsiModifierListOwner> vars = new ArrayList<PsiModifierListOwner>();
       final PsiElement scope = getScope();
       if (scope != null) {
         vars.addAll(Arrays.asList(getAllMethods(scope, PsiDocMethodOrFieldRef.this)));
         vars.addAll(Arrays.asList(getAllVariables(scope, PsiDocMethodOrFieldRef.this)));
       }
-      return vars.toArray();
+      return vars.toArray(new PsiModifierListOwner[vars.size()]);
     }
 
     public boolean isSoft(){

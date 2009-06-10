@@ -32,9 +32,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   public static final Object TAIL_TEXT_ATTR = Key.create("tailText");
   public static final Object TAIL_TEXT_SMALL_ATTR = Key.create("tailTextSmall");
   public static final Key<Object> FORCE_SHOW_SIGNATURE_ATTR = Key.create("forceShowSignature");
-  public static final Key<Object> FORCE_SHOW_FQN_ATTR = Key.create("forseFQNForClasses");
 
-  public static final Object DO_NOT_AUTOCOMPLETE_ATTR = Key.create("DO_NOT_AUTOCOMPLETE_ATTR");
   public static final Object DO_AUTOCOMPLETE_ATTR = Key.create("DO_AUTOCOMPLETE_ATTR");
 
   public static final Object GENERATE_ANONYMOUS_BODY_ATTR = Key.create("GENERATE_ANONYMOUS_BODY_ATTR");

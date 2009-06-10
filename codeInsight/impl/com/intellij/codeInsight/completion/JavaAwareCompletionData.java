@@ -188,20 +188,9 @@ public class JavaAwareCompletionData extends CompletionData{
       if (key == LookupItem.DO_AUTOCOMPLETE_ATTR) {
         ret.setAutoCompletionPolicy(AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE);
         continue;
-      } else if (key == LookupItem.DO_NOT_AUTOCOMPLETE_ATTR) {
-        ret.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-        continue;
       }
 
-      if (key == LookupItem.FORCE_SHOW_FQN_ATTR && ret.getObject() instanceof PsiClass) {
-        setShowFQN(ret);
-      }
-      else {
-        if (completion instanceof PsiMember && key == LookupItem.FORCE_QUALIFY) {
-          qualify(ret);
-        }
-        ret.setAttribute(key, itemProperties.get(key));
-      }
+      ret.setAttribute(key, itemProperties.get(key));
     }
     set.add(ret);
   }
