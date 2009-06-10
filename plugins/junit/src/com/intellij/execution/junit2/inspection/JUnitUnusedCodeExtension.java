@@ -35,6 +35,7 @@ import com.intellij.psi.PsiModifier;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
+import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 
@@ -68,7 +69,7 @@ public class JUnitUnusedCodeExtension extends UnusedCodeExtension {
             return true;
           }
           if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
-            if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(BeforeClass.class.getName(), AfterClass.class.getName()))) return true;
+            if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(BeforeClass.class.getName(), AfterClass.class.getName(), Parameterized.Parameters.class.getName().replace('$', '.')))) return true;
           } else {
             if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(Before.class.getName(), After.class.getName(), Test.class.getName()))) return true;
           }
