@@ -46,10 +46,10 @@ import java.io.File;
 import java.util.*;
 
 public class SvnUtil {
-  @NonNls public static final String SVN_ADMIN_DIR_NAME = ".svn";
+  @NonNls public static final String SVN_ADMIN_DIR_NAME = SVNFileUtil.getAdminDirectoryName();
   @NonNls public static final String ENTRIES_FILE_NAME = "entries";
   @NonNls public static final String DIR_PROPS_FILE_NAME = "dir-props";
-  @NonNls public static final String PATH_TO_LOCK_FILE = ".svn/lock";
+  @NonNls public static final String PATH_TO_LOCK_FILE = SVN_ADMIN_DIR_NAME + "/lock";
   @NonNls public static final String LOCK_FILE_NAME = "lock";
 
   private SvnUtil() {
@@ -539,18 +539,17 @@ public class SvnUtil {
   }
 
   public static boolean isAdminDirectory(VirtualFile parent, String name) {
-    final String adminName = SVNFileUtil.getAdminDirectoryName();
     // never allow to delete admin directories by themselves (this can happen during LVCS undo,
     // which deletes created directories from bottom to top)
-    if (name.equals(adminName)) {
+    if (name.equals(SVN_ADMIN_DIR_NAME)) {
       return true;
     }
     if (parent != null) {
-      if (parent.getName().equals(adminName)) {
+      if (parent.getName().equals(SVN_ADMIN_DIR_NAME)) {
         return true;
       }
       parent = parent.getParent();
-      if (parent != null && parent.getName().equals(adminName)) {
+      if (parent != null && parent.getName().equals(SVN_ADMIN_DIR_NAME)) {
         return true;
       }
     }
