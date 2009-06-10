@@ -1034,7 +1034,10 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       final PsiType returnType = substitutor.substitute(myChangeInfo.newTypeElement);
       // don't modify return type for non-Java overriders (EJB)
       if (method.getName().equals(myChangeInfo.newName)) {
-        method.getReturnTypeElement().replace(factory.createTypeElement(returnType));
+        final PsiTypeElement typeElement = method.getReturnTypeElement();
+        if (typeElement != null) {
+          typeElement.replace(factory.createTypeElement(returnType));
+        }
       }
     }
 
@@ -1084,6 +1087,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       conflictResolvers.add(new FieldConflictsResolver(parameter.getName(), method.getBody()));
     }
     ChangeSignatureUtil.synchronizeList(list, Arrays.asList(newParms), ParameterList.INSTANCE, toRemoveParm);
+    JavaCodeStyleManager.getInstance(list.getProject()).shortenClassReferences(list);
     for (FieldConflictsResolver fieldConflictsResolver : conflictResolvers) {
       fieldConflictsResolver.fix();
     }
