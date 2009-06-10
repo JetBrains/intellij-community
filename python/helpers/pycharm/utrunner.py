@@ -6,7 +6,7 @@ import types
 from pycharm.tcmessages import TeamcityServiceMessages
 from pycharm.tcunittest import TeamcityTestRunner
 
-ENABLE_DEBUG_LOGGING = True
+ENABLE_DEBUG_LOGGING = False
 if os.getenv("UTRUNNER_ENABLE_DEBUG_LOGGING"):
   ENABLE_DEBUG_LOGGING = True
 
