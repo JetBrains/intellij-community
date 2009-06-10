@@ -16,11 +16,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.impl.GrMethodStubImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex;
 
 import java.io.IOException;
+import java.util.*;
 
 /**
  * @author ilyas
@@ -51,7 +53,10 @@ public class GrMethodElementType extends GrStubElementType<GrMethodStub, GrMetho
       }
     }, new String[annotations.length]);
 
-    return new GrMethodStubImpl(parentStub, StringRef.fromString(psi.getName()), annNames);
+    Set<String>[] namedParametersArray;
+    namedParametersArray = psi.getNamedParametersArray();
+
+    return new GrMethodStubImpl(parentStub, StringRef.fromString(psi.getName()), annNames, namedParametersArray);
   }
 
   public void serialize(GrMethodStub stub, StubOutputStream dataStream) throws IOException {
@@ -61,8 +66,11 @@ public class GrMethodElementType extends GrStubElementType<GrMethodStub, GrMetho
     for (String s : annotations) {
       dataStream.writeName(s);
     }
-  }
+    final Set<String>[] namedParameters = stub.getNamedParameters();
 
+    GrStubUtils.serializeCollectionsArray(dataStream, namedParameters);
+  }
+    
   public GrMethodStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
     StringRef ref = dataStream.readName();
     final byte b = dataStream.readByte();
@@ -70,7 +78,9 @@ public class GrMethodElementType extends GrStubElementType<GrMethodStub, GrMetho
     for (int i = 0; i < b; i++) {
       annNames[i] = dataStream.readName().toString();
     }
-    return new GrMethodStubImpl(parentStub, ref, annNames);
+    final List<Set<String>> namedParametersSets = GrStubUtils.deserializeCollectionsArray(dataStream);
+
+    return new GrMethodStubImpl(parentStub, ref, annNames, namedParametersSets.toArray(new HashSet[0]));
   }
 
   public void indexStub(GrMethodStub stub, IndexSink sink) {

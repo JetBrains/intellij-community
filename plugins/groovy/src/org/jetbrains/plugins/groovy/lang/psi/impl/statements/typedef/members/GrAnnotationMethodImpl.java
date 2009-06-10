@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -37,5 +38,10 @@ public class GrAnnotationMethodImpl extends GrMethodBaseImpl<GrAnnotationMethodS
   @Nullable
   public Set<String> getNamedParameters(int paramNumber) {
     return null;
+  }
+
+  @NotNull
+  public Set<String>[] getNamedParametersArray() {
+    return new HashSet[0];
   }
 }

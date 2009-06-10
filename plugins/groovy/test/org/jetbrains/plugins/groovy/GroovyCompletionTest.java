@@ -37,7 +37,7 @@ public class GroovyCompletionTest extends JavaCodeInsightFixtureTestCase {
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
   }
-  
+
 
   public void testFinishMethodWithLParen() throws Throwable {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "getBar", "getFoo");
@@ -64,7 +64,7 @@ public class GroovyCompletionTest extends JavaCodeInsightFixtureTestCase {
   public void testCaretAfterSmartCompletionAfterNewInDeclaration() throws Throwable {
     doSmartTest();
   }
-  
+
   public void testSmartCompletionAfterNewInDeclarationWithAbstractClass() throws Throwable {
     doSmartTest();
   }
@@ -76,7 +76,7 @@ public class GroovyCompletionTest extends JavaCodeInsightFixtureTestCase {
   public void testSmartCompletionAfterNewInDeclarationWithIntArray() throws Throwable {
     doSmartTest();
   }
-  
+
   public void testShortenNamesInSmartCompletionAfterNewInDeclaration() throws Throwable {
     doSmartTest();
   }
@@ -131,5 +131,27 @@ public class GroovyCompletionTest extends JavaCodeInsightFixtureTestCase {
 
   public void testEachMethodForEnumRanges() throws Throwable {
     doBasicTest();
+  }
+
+  public void doVariantableTest(String... variants) throws Throwable {
+    myFixture.configureByFile(getTestName(false) + ".groovy");
+    myFixture.complete(CompletionType.BASIC);
+    assertOrderedEquals(myFixture.getLookupElementStrings(), variants);
+  }
+
+  public void testNamedParametersForApplication() throws Throwable {
+    doVariantableTest("abx", "aby");
+  }
+
+  public void testNamedParametersForMethodCall() throws Throwable {
+    doVariantableTest("abx", "aby");
+  }
+
+  public void testNamedParametersForNotMap() throws Throwable {    
+    doBasicTest();
+  }
+
+  public void testNamedParametersForConstructorCall() throws Throwable {
+    doVariantableTest("hahaha", "hohoho");
   }
 }

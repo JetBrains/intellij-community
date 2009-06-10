@@ -34,12 +34,11 @@ import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -289,7 +288,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     return rowIcon;
   }
 
-  @Nullable
+  @NotNull
   public Set<String>[] getNamedParametersArray() {
     final GrExpression initializerGroovy = getInitializerGroovy();
 
@@ -306,36 +305,9 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
         final HashSet<String> set = new HashSet<String>();
         namedParameters.add(i, set);
 
-        closure.accept(new GroovyRecursiveElementVisitor() {
-          @Override
-          public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
-            final GrExpression expression = referenceExpression.getQualifierExpression();
-            if (!(expression instanceof GrReferenceExpression)) {
-              super.visitReferenceExpression(referenceExpression);
-              return;
-            }
-
-            final GrReferenceExpression qualifierExpr = (GrReferenceExpression)expression;
-
-            if (paramName.equals(qualifierExpr.getName())) {
-              set.add(referenceExpression.getName());
-            }
-
-            super.visitReferenceExpression(referenceExpression);
-          }
-        });
+        closure.accept(new GrNamedArgumentSearchVisitor(paramName, set));
       }
     }
     return namedParameters.toArray(new HashSet[0]);
-  }
-
-  @Nullable
-  public Set<String> getNamedParameters(int paramNumber) {
-    final Set<String>[] namedParameters = getNamedParametersArray();
-    assert namedParameters != null;
-
-    if (namedParameters.length <= paramNumber) return null;
-
-    return namedParameters[paramNumber];
   }
 }

@@ -31,6 +31,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterListOwner;
 
+import java.util.Set;
+
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
@@ -61,6 +63,6 @@ public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMetho
   @NotNull
   GrModifierList getModifierList();
 
-  //@Nullable
-  //Set<String> getNamedParameters(int paramNumber);
+  @NotNull
+  Set<String>[] getNamedParametersArray();
 }

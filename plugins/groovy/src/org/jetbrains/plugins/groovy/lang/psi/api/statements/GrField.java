@@ -8,6 +8,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 
+import java.util.Set;
+
 /**
  * @author ven
  */
@@ -21,4 +23,7 @@ public interface GrField extends GrVariable, GrMember, PsiField, GrTopLevelDefin
 
   @NotNull
   GrAccessorMethod[] getGetters();
+
+  @NotNull
+  public Set<String>[] getNamedParametersArray();
 }

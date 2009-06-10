@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -46,10 +47,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ilyas
@@ -503,5 +501,29 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     throw new IncorrectOperationException("Invalid enclosing type definition");
   }
 
+  @NotNull
+  public Set<String>[] getNamedParametersArray() {
+    GrOpenBlock body = getBlock();
+    if (body == null) return new HashSet[0];
 
+    List<Set<String>> namedParameters = new LinkedList<Set<String>>();
+    GrParameter[] parameters = getParameters();
+    for (int i = 0, parametersLength = parameters.length; i < parametersLength; i++) {
+      GrParameter parameter = parameters[i];
+      PsiType type = parameter.getTypeGroovy();
+      GrTypeElement typeElement = parameter.getTypeElementGroovy();
+      //equalsToText can't be called here because of stub creating
+
+      if (type == null || type.getPresentableText() == null || type.getPresentableText().endsWith("Map") || typeElement == null) {
+        PsiElement expression = parameter.getNameIdentifierGroovy();
+
+        final String paramName = expression.getText();
+        final HashSet<String> set = new HashSet<String>();
+        namedParameters.add(set);
+
+        body.accept(new GrNamedArgumentSearchVisitor(paramName, set));
+      }
+    }
+    return namedParameters.toArray(new HashSet[0]);
+  }
 }

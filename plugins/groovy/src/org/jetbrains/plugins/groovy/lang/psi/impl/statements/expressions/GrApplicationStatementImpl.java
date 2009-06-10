@@ -19,12 +19,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 
 /**
  * @author ilyas
@@ -78,5 +79,10 @@ public class GrApplicationStatementImpl extends GrExpressionImpl implements GrAp
     }
 
     return null;
+  }
+
+  @NotNull
+  public GrReferenceElement getReferenceElement() {
+    return findChildByClass(GrReferenceElement.class);
   }
 }
