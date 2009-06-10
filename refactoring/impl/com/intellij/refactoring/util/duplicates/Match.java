@@ -401,12 +401,13 @@ public final class Match {
         final PsiExpression[] expressions = ((PsiExpressionList)parent).getExpressions();
         final PsiElement call = parent.getParent();
         if (call instanceof PsiMethodCallExpression) {
-          final PsiMethod method = ((PsiMethodCallExpression)call).resolveMethod();
+          final JavaResolveResult result = ((PsiMethodCallExpression)call).resolveMethodGenerics();
+          final PsiMethod method = (PsiMethod)result.getElement();
           if (method != null) {
             final int idx = ArrayUtil.find(expressions, getMatchEnd());
             final PsiParameter[] psiParameters = method.getParameterList().getParameters();
             if (idx >= 0 && idx < psiParameters.length) {
-              final PsiType type = psiParameters[idx].getType();
+              final PsiType type = result.getSubstitutor().substitute(psiParameters[idx].getType());
               if (weakerType(psiMethod, returnType, type)){
                 return type;
               }

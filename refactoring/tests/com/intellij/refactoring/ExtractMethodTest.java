@@ -168,6 +168,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testCodeDuplicatesWithStaticInitializer() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testExpressionDuplicates() throws Exception {
     doDuplicatesTest();
   }
