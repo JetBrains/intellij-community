@@ -14,8 +14,12 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PythonHelpersLocator;
 import org.jetbrains.annotations.NotNull;
@@ -71,12 +75,6 @@ public class PythonUnitTestCommandLineState extends CommandLineState {
       cmd.setWorkDirectory(myConfig.getWorkingDirectory());
     }
 
-    cmd.getParametersList().addParametersString(myConfig.getInterpreterOptions());
-    cmd.addParameter(new File(helpersRoot, UTRUNNER_PY).getAbsolutePath());
-    for (String testSpec : getTestSpecs()) {
-      cmd.addParameter(testSpec);
-    }
-
     Map<String, String> envs = myConfig.getEnvs();
     if (envs == null)
       envs = new HashMap<String, String>();
@@ -84,8 +82,29 @@ public class PythonUnitTestCommandLineState extends CommandLineState {
       envs = new HashMap<String, String>(envs);
 
     envs.put(PYTHONUNBUFFERED, "1");
-    insertToPythonPath(envs, helpersRoot);
-    // TODO[yole] use -Dpython.path for jython
+
+    List<String> pythonPathList = new ArrayList<String>();
+    pythonPathList.add(helpersRoot.getPath());
+    final Module module = myConfig.getModule();
+    if (module != null) {
+      final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+      for (VirtualFile contentRoot : contentRoots) {
+        pythonPathList.add(FileUtil.toSystemDependentName(contentRoot.getPath()));
+      }
+    }
+    String pythonPath = StringUtil.join(pythonPathList, File.pathSeparator);
+    if (new File(myConfig.getInterpreterPath()).getName().toLowerCase().startsWith("jython")) {  // HACK rewrite with cleaner API
+      cmd.getParametersList().add("-Dpython.path=" + pythonPath);
+    }
+    else {
+      insertToPythonPath(envs, pythonPath);
+    }
+
+    cmd.getParametersList().addParametersString(myConfig.getInterpreterOptions());
+    cmd.addParameter(new File(helpersRoot, UTRUNNER_PY).getAbsolutePath());
+    for (String testSpec : getTestSpecs()) {
+      cmd.addParameter(testSpec);
+    }
 
     cmd.setEnvParams(envs);
     cmd.setPassParentEnvs(myConfig.isPassParentEnvs());
@@ -116,11 +135,11 @@ public class PythonUnitTestCommandLineState extends CommandLineState {
     return specs;
   }
 
-  private static void insertToPythonPath(Map<String, String> envs, File path) {
+  private static void insertToPythonPath(Map<String, String> envs, String path) {
     if (envs.containsKey(PYTHONPATH)) {
-      envs.put(PYTHONPATH, path.getAbsolutePath() + ":" + envs.get(PYTHONPATH));
+      envs.put(PYTHONPATH, path + File.pathSeparatorChar + envs.get(PYTHONPATH));
     } else {
-      envs.put(PYTHONPATH, path.getAbsolutePath());
+      envs.put(PYTHONPATH, path);
     }
   }
 

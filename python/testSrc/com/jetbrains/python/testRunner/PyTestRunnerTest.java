@@ -68,6 +68,12 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     assertEquals(8, result.length);
   }
 
+  public void testDependent() throws ExecutionException {
+    final File testDir = new File(PathManager.getHomePath(), "plugins/python/testData/testRunner");
+    String[] result = runUTRunner(testDir.getPath(), new File(testDir, "dependentTests/my_class_test.py").getPath());
+    assertEquals(3, result.length);
+  }
+
   private static String[] runUTRunner(String workDir, String... args) throws ExecutionException {
     File helpersDir = new File(PathManager.getHomePath(), "plugins/python/helpers");
     File utRunner = new File(helpersDir, "pycharm/utrunner.py");
@@ -89,10 +95,9 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     File jythonJar = new File(PathManager.getHomePath(), "plugins/python/lib/jython.jar");
     parameters.getClassPath().add(jythonJar.getPath());
 
+    parameters.getProgramParametersList().add("-Dpython.path=" + pythonPath + ";" + workDir);
     parameters.getProgramParametersList().addAll(args);
-
     parameters.setWorkingDirectory(workDir);
-    parameters.getVMParametersList().add("-Dpython.path=" + pythonPath);
 
     final StringBuilder stdout = new StringBuilder();
     final StringBuilder stderr = new StringBuilder();
