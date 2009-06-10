@@ -36,11 +36,11 @@ public abstract class MappedBufferWrapper {
   @NonNls private static final String CLEANER_METHOD_NAME = "cleaner";
   @NonNls private static final String CLEAN_METHOD_NAME = "clean";
 
-  protected File myFile;
-  protected long myPosition;
-  protected long myLength;
+  protected final File myFile;
+  protected final long myPosition;
+  protected final long myLength;
 
-  private ByteBuffer myBuffer;
+  private volatile ByteBuffer myBuffer;
 
   public MappedBufferWrapper(final File file, final long pos, final long length) {
     myFile = file;
@@ -56,6 +56,7 @@ public abstract class MappedBufferWrapper {
     if (!unmapMappedByteBuffer142b19(this)) {
       LOG.error("Unmapping failed for: " + myFile);
     }
+    myBuffer = null;
   }
 
   public ByteBuffer getIfCached() {
