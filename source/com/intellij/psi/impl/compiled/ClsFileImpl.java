@@ -2,6 +2,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.ide.startup.FileContent;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -40,13 +41,13 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   static final Object MIRROR_LOCK = new String("Mirror Lock");
 
-  private volatile ClsPackageStatementImpl myPackageStatement = null;
   private static final Key<Document> DOCUMENT_IN_MIRROR_KEY = Key.create("DOCUMENT_IN_MIRROR_KEY");
   private final PsiManagerImpl myManager;
   private final boolean myIsForDecompiling;
   private final FileViewProvider myViewProvider;
   private volatile SoftReference<StubTree> myStub;
   private TreeElement myMirrorFileElement;
+  private volatile ClsPackageStatementImpl myPackageStatement = null;
 
   private ClsFileImpl(@NotNull PsiManagerImpl manager, @NotNull FileViewProvider viewProvider, boolean forDecompiling) {
     super(null);
@@ -112,10 +113,9 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   }
 
   public PsiPackageStatement getPackageStatement() {
+    getStub(); // Make sure myPackageStatement initializes.
+
     ClsPackageStatementImpl statement = myPackageStatement;
-    if (statement == null) {
-      myPackageStatement = statement = new ClsPackageStatementImpl(this);
-    }
     return statement.getPackageName() != null ? statement : null;
   }
 
@@ -369,6 +369,11 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
         }
         myStub = new SoftReference<StubTree>(stubHolder);
         ((PsiFileStubImpl)stubHolder.getRoot()).setPsi(this);
+
+        synchronized (MIRROR_LOCK) {
+          myMirrorFileElement = null;
+        }
+        myPackageStatement = new ClsPackageStatementImpl(this);
       }
     }
     return stubHolder;
@@ -389,6 +394,13 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       ((StubBase<?>)stubHolder.getRoot()).setPsi(null);
     }
     myStub = null;
+
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+
+    synchronized (MIRROR_LOCK) {
+      myMirrorFileElement = null;
+      myPackageStatement = null;
+    }
   }
 
   public PsiFile cacheCopy(final FileContent content) {
