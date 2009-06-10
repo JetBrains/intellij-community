@@ -33,6 +33,7 @@ public class VcsEventWatcher implements ProjectComponent {
       }
 
       public void rootsChanged(ModuleRootEvent event) {
+        if (event.isCausedByDumbnessChange()) return;
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             if (myProject.isDisposed() || !DirectoryIndex.getInstance(myProject).isInitialized()) return;
