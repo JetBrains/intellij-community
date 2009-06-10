@@ -86,8 +86,11 @@ public class FileContentQueue extends ArrayBlockingQueue<FileContent> {
       catch (IOException e) {
         content.setEmptyContent();
       }
-      catch(ProcessCanceledException e) {
+      catch (ProcessCanceledException e) {
         throw e;
+      }
+      catch (InterruptedException e) {
+        return;
       }
       catch (Throwable e) {
         LOG.error(e);
