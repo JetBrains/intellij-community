@@ -161,7 +161,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
         throw new IllegalStateException("Seems you haven't called addPlace()");
       }
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-      assert ArrayUtil.indexOf(documentManager.getUncommittedDocuments(), myHostDocument) == -1 : "document is uncommitted";
+      assert ArrayUtil.indexOf(documentManager.getUncommittedDocuments(), myHostDocument) == -1 : "document is uncommitted: "+myHostDocument;
       assert myHostPsiFile.getText().equals(myHostDocument.getText()) : "host text mismatch";
 
       Place place = new Place(shreds, null);
