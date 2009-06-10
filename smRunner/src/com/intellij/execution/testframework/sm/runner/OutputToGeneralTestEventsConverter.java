@@ -3,7 +3,6 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.messages.serviceMessages.*;
 import org.jetbrains.annotations.NonNls;
@@ -28,11 +27,33 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private final List<GeneralTestEventsProcessor> myProcessors = new ArrayList<GeneralTestEventsProcessor>();
   private final MyServiceMessageVisitor myServiceMessageVisitor;
 
-  private final List<Pair<String, Key>> myOutputPairs;
+  private static class OutputChunk {
+    private Key myKey;
+    private String myText;
+
+    private OutputChunk(Key key, String text) {
+      myKey = key;
+      myText = text;
+    }
+
+    public Key getKey() {
+      return myKey;
+    }
+
+    public String getText() {
+      return myText;
+    }
+
+    public void append(String text) {
+      myText += text;
+    }
+  }
+
+  private final List<OutputChunk> myOutputChunks;
 
   public OutputToGeneralTestEventsConverter() {
     myServiceMessageVisitor = new MyServiceMessageVisitor();
-    myOutputPairs = new ArrayList<Pair<String, Key>>();
+    myOutputChunks = new ArrayList<OutputChunk>();
   }
 
   public void addProcessor(final GeneralTestEventsProcessor processor) {
@@ -40,7 +61,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   public void process(final String text, final Key outputType) {
-    if (outputType != ProcessOutputTypes.STDERR || outputType != ProcessOutputTypes.SYSTEM) {
+    if (outputType != ProcessOutputTypes.STDERR && outputType != ProcessOutputTypes.SYSTEM) {
       // we check for consistensy only std output
       // because all events must be send to stdout
       processStdOutConsistently(text, outputType);
@@ -69,14 +90,24 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     // successfully process broken messages across several flushes
     // size of parts may tell us either \n was single in original flushed data or it was
     // separated by process handler
-    List<Pair<String, Key>> pairs;
-    synchronized (myOutputPairs) {
-      pairs = new ArrayList<Pair<String, Key>>(myOutputPairs);
-      myOutputPairs.clear();
+    List<OutputChunk> chunks = new ArrayList<OutputChunk>();
+    OutputChunk lastChunk = null;
+    synchronized (myOutputChunks) {
+      for (OutputChunk chunk : myOutputChunks) {
+        if (lastChunk != null && chunk.getKey() == lastChunk.getKey()) {
+          lastChunk.append(chunk.getText());
+        }
+        else {
+          lastChunk = chunk;
+          chunks.add(chunk);
+        }
+      }
+
+      myOutputChunks.clear();
     }
-    final boolean isTCLikeFakeOutput = pairs.size() == 1;
-    for (Pair<String, Key> textKeyPair : pairs) {
-      processConsistentText(textKeyPair.first, textKeyPair.second, isTCLikeFakeOutput);
+    final boolean isTCLikeFakeOutput = chunks.size() == 1;
+    for (OutputChunk chunk : chunks) {
+      processConsistentText(chunk.getText(), chunk.getKey(), isTCLikeFakeOutput);
     }
   }
 
@@ -86,8 +117,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       return;
     }
 
-    synchronized (myOutputPairs) {
-      myOutputPairs.add(new Pair<String, Key>(text, outputType));
+    synchronized (myOutputChunks) {
+      myOutputChunks.add(new OutputChunk(outputType, text));
     }
 
     final char lastChar = text.charAt(textLength - 1);
