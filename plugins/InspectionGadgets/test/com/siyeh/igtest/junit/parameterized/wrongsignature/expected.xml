@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+  <file>Test.java</file>
+  <line>4</line>
+  <entry_point TYPE="method" FQNAME="ParametricRegularExpressionTest java.util.Collection regExValues()">
+    <entry_point TYPE="class" FQNAME="ParametricRegularExpressionTest">
+      <entry_point TYPE="package" FQNAME="default package">
+        <entry_point TYPE="project" FQNAME="temp_testWrongsignature33424" />
+      </entry_point>
+    </entry_point>
+  </entry_point>
+  <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@RunWith(Parameterized.class) without data provider</problem_class>
+  <description>Method 'regExValues()' should be public static</description>
+</problem>
+</problems>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>2</line>
+    <entry_point TYPE="class" FQNAME="ParametricRegularExpressionTest">
+      <entry_point TYPE="package" FQNAME="default package">
+        <entry_point TYPE="project" FQNAME="temp_testCreatemethod16296" />
+      </entry_point>
+    </entry_point>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@RunWith(Parameterized.class) without data provider</problem_class>
+    <description>Class ParametricRegularExpressionTest annotated @RunWith(Parameterized.class) lacks data provider</description>
+  </problem>
+</problems>

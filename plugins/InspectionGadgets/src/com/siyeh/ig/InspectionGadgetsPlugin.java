@@ -85,7 +85,7 @@ import java.util.*;
 public class InspectionGadgetsPlugin implements ApplicationComponent,
         InspectionToolProvider {
 
-    private static final int NUM_INSPECTIONS = 614;
+    private static final int NUM_INSPECTIONS = 615;
     private final List<Class<? extends InspectionProfileEntry>> m_inspectionClasses =
             new ArrayList(NUM_INSPECTIONS);
     @NonNls private static final String DESCRIPTION_DIRECTORY_NAME =
@@ -1038,6 +1038,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(AssertsWithoutMessagesInspection.class);
         m_inspectionClasses.add(BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection.class);
         m_inspectionClasses.add(BeforeOrAfterIsPublicVoidNoArgInspection.class);
+        m_inspectionClasses.add(ParameterizedParametersStaticCollectionInspection.class);
         m_inspectionClasses.add(ConstantJUnitAssertArgumentInspection.class);
         m_inspectionClasses.add(JUnit4AnnotatedMethodInJUnit3TestCaseInspection.class);
         m_inspectionClasses.add(JUnitAbstractTestClassNamingConventionInspection.class);
