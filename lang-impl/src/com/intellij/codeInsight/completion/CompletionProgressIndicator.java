@@ -183,11 +183,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     if (!isAutocompleteOnInvocation()) return false;
 
-    if (myContextOriginal.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != myContextOriginal.getSelectionEndOffset()) return false;
+    if (isInsideIdentifier()) return false;
     if (policy == AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE) return true;
 
     if (StringUtil.isEmpty(matcher.getPrefix()) && myParameters.getCompletionType() != CompletionType.SMART) return false;
     return true;
+  }
+
+  private boolean isInsideIdentifier() {
+    return myContextOriginal.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != myContextOriginal.getSelectionEndOffset();
   }
 
   private boolean isAutocompleteOnInvocation() {
@@ -290,6 +294,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public boolean fillInCommonPrefix(final boolean explicit) {
+    if (isInsideIdentifier()) {
+      return false;
+    }
+
     final Boolean aBoolean = new WriteCommandAction<Boolean>(myEditor.getProject()) {
       protected void run(Result<Boolean> result) throws Throwable {
         if (!explicit) {

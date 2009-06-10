@@ -749,7 +749,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       if (!oldPrefix.equals(item.getPrefixMatcher().getPrefix())) return false;
 
       lookupString = item.getLookupString();
-      div = divideString(lookupString, item.getPrefixMatcher());
+      div = divideString(lookupString, item.getPrefixMatcher().cloneWithPrefix(presentPrefix));
       if (div < 0) return false;
 
       String _afterCaret = lookupString.substring(div);
