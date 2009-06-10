@@ -7,10 +7,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
@@ -22,6 +20,8 @@ import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PySuperClassIndex;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> {
   public PyClassElementType() {
@@ -38,17 +38,16 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
 
   public PyClassStub createStub(final PyClass psi, final StubElement parentStub) {
     final PyExpression[] exprs = psi.getSuperClassExpressions();
-    String[] superClasses = new String[exprs.length];
-    for(int i=0; i<exprs.length; i++) {
-      final PyExpression expression = exprs[i];
+    List<String> superClasses = new ArrayList<String>();
+    for (final PyExpression expression : exprs) {
       if (expression instanceof PyReferenceExpression) {
-        superClasses [i] = ((PyReferenceExpression) expression).getReferencedName();
-      }
-      else {
-        superClasses [i] = expression.getText();
+        final String referencedName = ((PyReferenceExpression)expression).getReferencedName();
+        if (referencedName != null) {
+          superClasses.add(referencedName);
+        }
       }
     }
-    return new PyClassStubImpl(psi.getName(), parentStub, superClasses);
+    return new PyClassStubImpl(psi.getName(), parentStub, superClasses.toArray(new String[superClasses.size()]));
   }
 
   public void serialize(final PyClassStub pyClassStub, final StubOutputStream dataStream) throws IOException {
