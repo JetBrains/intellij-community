@@ -31,7 +31,7 @@ public class PyCommonOptionsForm implements AbstractPythonRunConfigurationParams
   private JRadioButton myUseModuleSdkRadioButton;
   private JComboBox myModuleComboBox;
   private JPanel myMainPanel;
-  private JRadioButton myUseSpecifiiedSdkRadioButton;
+  private JRadioButton myUseSpecifiedSdkRadioButton;
 
   public PyCommonOptionsForm(AbstractPythonRunConfiguration configuration) {
     // setting modules
@@ -79,7 +79,7 @@ public class PyCommonOptionsForm implements AbstractPythonRunConfigurationParams
   }
 
   public void setWorkingDirectory(String workingDirectory) {
-    myWorkingDirectoryTextField.setText(workingDirectory);
+    myWorkingDirectoryTextField.setText(FileUtil.toSystemDependentName(workingDirectory));
   }
 
   @Nullable
@@ -121,7 +121,7 @@ public class PyCommonOptionsForm implements AbstractPythonRunConfigurationParams
       myUseModuleSdkRadioButton.setSelected(true);
     }
     else {
-      myUseSpecifiiedSdkRadioButton.setSelected(true);
+      myUseSpecifiedSdkRadioButton.setSelected(true);
     }
   }
 

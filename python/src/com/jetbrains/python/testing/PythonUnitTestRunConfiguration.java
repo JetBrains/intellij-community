@@ -9,6 +9,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
@@ -156,7 +157,7 @@ public class PythonUnitTestRunConfiguration extends AbstractPythonRunConfigurati
       case TEST_SCRIPT:
         return "Tests in " + myScriptName;
       case TEST_FOLDER:
-        return "Tests in " + myFolderName;
+        return "Tests in " + FileUtil.toSystemDependentName(myFolderName);
       default:
         throw new IllegalStateException("Unknown test type: " + myTestType);
     }

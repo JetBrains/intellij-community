@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
@@ -12,9 +13,9 @@ import com.jetbrains.python.run.PythonRunConfigurationFormUtil;
 import static com.jetbrains.python.testing.PythonUnitTestRunConfiguration.TestType;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.*;
 
 /**
  * @author Leonid Shalupov
@@ -37,13 +38,11 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
   private JTextField myTestClassTextField;
 
   private final Project myProject;
-  private final PythonUnitTestRunConfiguration myConfiguration;
   private PyCommonOptionsForm myCommonOptionsForm;
 
   public PythonUnitTestRunConfigurationForm(final Project project, final PythonUnitTestRunConfiguration configuration) {
     myProject = project;
 
-    myConfiguration = configuration;
     myCommonOptionsForm = new PyCommonOptionsForm(configuration);
     myCommonOptionsPlaceholder.add(myCommonOptionsForm.getMainPanel(), BorderLayout.CENTER);
     
@@ -81,7 +80,7 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
   }
 
   public void setFolderName(String folderName) {
-    myTestFolderTextField.setText(folderName);
+    myTestFolderTextField.setText(FileUtil.toSystemDependentName(folderName));
   }
 
   public String getScriptName() {
@@ -89,7 +88,7 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
   }
 
   public void setScriptName(String scriptName) {
-    myTestScriptTextField.setText(scriptName);
+    myTestScriptTextField.setText(FileUtil.toSystemDependentName(scriptName));
   }
 
   public String getMethodName() {
