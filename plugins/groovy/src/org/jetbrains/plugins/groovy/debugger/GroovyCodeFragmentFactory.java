@@ -31,9 +31,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSuperReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -125,6 +126,12 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
       public void visitThisExpression(final GrThisReferenceExpression thisExpression) {
         super.visitThisExpression(thisExpression);
         replaceWithReference(thisExpression, closure == null ? "delegate" : "owner");
+      }
+
+      @Override
+      public void visitSuperExpression(final GrSuperReferenceExpression superExpression) {
+        super.visitSuperExpression(superExpression);
+        replaceWithReference(superExpression, closure == null ? "delegate" : "owner");
       }
 
       private void replaceWithReference(GrExpression expr, final String exprText) {
