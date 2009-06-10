@@ -59,12 +59,12 @@ for arg in sys.argv[1:]:
       modules = [loadSource(a[0])]
 
     for module in modules:
-      all.addTests(testLoader.loadTestsFromModule(module))
+      all.addTests(testLoader.loadTestsFromModule(module)._tests)
   elif len(a) == 2:
     # From testcase
     debug("/ from testcase " + a[1] + " in " + a[0])
     module = loadSource(a[0])
-    all.addTests(testLoader.loadTestsFromTestCase(getattr(module, a[1])))
+    all.addTests(testLoader.loadTestsFromTestCase(getattr(module, a[1]))._tests)
   else:
     # From method in testcase
     debug("/ from method " + a[2] + " in testcase " +  a[1] + " in " + a[0])

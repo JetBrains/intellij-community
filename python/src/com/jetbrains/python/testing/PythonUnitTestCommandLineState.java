@@ -85,6 +85,7 @@ public class PythonUnitTestCommandLineState extends CommandLineState {
 
     envs.put(PYTHONUNBUFFERED, "1");
     insertToPythonPath(envs, helpersRoot);
+    // TODO[yole] use -Dpython.path for jython
 
     cmd.setEnvParams(envs);
     cmd.setPassParentEnvs(myConfig.isPassParentEnvs());
