@@ -32,12 +32,14 @@ def loadSource(fileName):
   modules[moduleName] = module
   return module
 
+def walkModules(modules, dirname, names):
+  for name in names:
+    if name.endswith(".py"):
+      modules.append(loadSource(os.path.join(dirname, name)))
+
 def loadModulesFromFolderRec(folder):
   modules = []
-  for root, dirs, files in os.walk(folder, topdown=False):
-    for name in files:
-      if name.endswith(".py"):
-        modules.append(loadSource(os.path.join(root, name)))
+  os.path.walk(folder, walkModules, modules)
   return modules
 
 testLoader = unittest.TestLoader()

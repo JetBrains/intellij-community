@@ -62,6 +62,12 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     assertEquals(3, result.length);
   }
 
+  public void testFolder() throws ExecutionException {
+    final File testDir = new File(PathManager.getHomePath(), "plugins/python/testData/testRunner/tests");
+    String[] result = runUTRunner(testDir.getPath(), testDir.getPath() + "/");
+    assertEquals(8, result.length);
+  }
+
   private static String[] runUTRunner(String workDir, String... args) throws ExecutionException {
     File helpersDir = new File(PathManager.getHomePath(), "plugins/python/helpers");
     File utRunner = new File(helpersDir, "pycharm/utrunner.py");
