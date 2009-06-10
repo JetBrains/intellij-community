@@ -48,6 +48,20 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     assertTrue(result [2], result[2].startsWith("##teamcity[testFailed name='test_fails (unittest1.BadTest)' details="));
   }
 
+  public void testClass() throws ExecutionException {
+    final File testDir = new File(PathManager.getHomePath(), "plugins/python/testData/testRunner/tests");
+    File testFile = new File(testDir, "unittest1.py");
+    String[] result = runUTRunner(testDir.getPath(), testFile.getPath() + "::GoodTest");
+    assertEquals(3, result.length);
+  }
+
+  public void testMethod() throws ExecutionException {
+    final File testDir = new File(PathManager.getHomePath(), "plugins/python/testData/testRunner/tests");
+    File testFile = new File(testDir, "unittest1.py");
+    String[] result = runUTRunner(testDir.getPath(), testFile.getPath() + "::GoodTest::test_passes");
+    assertEquals(3, result.length);
+  }
+
   private static String[] runUTRunner(String workDir, String... args) throws ExecutionException {
     File helpersDir = new File(PathManager.getHomePath(), "plugins/python/helpers");
     File utRunner = new File(helpersDir, "pycharm/utrunner.py");
