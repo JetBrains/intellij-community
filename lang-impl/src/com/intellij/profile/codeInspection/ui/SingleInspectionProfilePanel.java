@@ -393,22 +393,29 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   public void selectInspectionTool(String name) {
-    InspectionConfigTreeNode node = null;
-    for (int i = 0; i < myRoot.getChildCount(); i++) {
-      final InspectionConfigTreeNode child = (InspectionConfigTreeNode)myRoot.getChildAt(i);
-      for (int j = 0; j < child.getChildCount(); j++) {
-        final InspectionConfigTreeNode childChild = (InspectionConfigTreeNode)child.getChildAt(j);
-        final Descriptor descriptor = childChild.getDesriptor();
-        if (descriptor != null && descriptor.getKey().toString().equals(name)) {
-          node = childChild;
-          break;
-        }
-      }
-    }
+    final InspectionConfigTreeNode node = findNodeByKey(name, myRoot);
     if (node != null) {
       TreeUtil.showRowCentered(myTree, myTree.getRowForPath(new TreePath(node.getPath())) - 1, true);//myTree.isRootVisible ? 0 : 1;
       TreeUtil.selectNode(myTree, node);
     }
+  }
+
+  @Nullable
+  private static InspectionConfigTreeNode findNodeByKey(String name, InspectionConfigTreeNode root) {
+    for (int i = 0; i < root.getChildCount(); i++) {
+      final InspectionConfigTreeNode child = (InspectionConfigTreeNode)root.getChildAt(i);
+      final Descriptor descriptor = child.getDesriptor();
+      if (descriptor != null) {
+        if (descriptor.getKey().toString().equals(name)) {
+          return child;
+        }
+      }
+      else {
+        final InspectionConfigTreeNode node = findNodeByKey(name, child);
+        if (node != null) return node;
+      }
+    }
+    return null;
   }
 
   private JScrollPane initTreeScrollPane() {
