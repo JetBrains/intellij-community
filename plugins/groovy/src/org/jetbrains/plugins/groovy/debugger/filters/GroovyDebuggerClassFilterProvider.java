@@ -16,7 +16,10 @@ import java.util.List;
 public class GroovyDebuggerClassFilterProvider implements DebuggerClassFilterProvider {
 
   @NonNls private static final String[] PROHIBITED_CLASS_PATTERNS =
-    {"groovy.lang.Meta*", "org.codehaus.groovy.runtime.*", "org.codehaus.groovy.reflection.*, groovy.lang.GroovyObjectSupport"};
+    {"org.codehaus.groovy.*",
+     "groovy.lang.Meta*", "groovy.lang.GroovyObjectSupport", "groovy.lang.GroovySystem", "groovy.lang.Binding", "groovy.lang.GroovyShell", "groovy.lang.Script*",
+     "groovy.ui.GroovyMain",
+     "groovy.lang.MissingPropertyException", "groovy.lang.GroovyRuntimeException"};
 
   private static final ClassFilter[] FITERS = ContainerUtil.map(PROHIBITED_CLASS_PATTERNS, new Function<String, ClassFilter>() {
     public ClassFilter fun(final String s) {
