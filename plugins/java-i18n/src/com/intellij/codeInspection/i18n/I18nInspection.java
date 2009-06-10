@@ -514,7 +514,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       while (matcher.find(start)) {
         start = matcher.start();
         PsiElement element = file.findElementAt(lineStartOffset + start);
-        if (PsiTreeUtil.getParentOfType(element, PsiComment.class, false, true) != null) return false;
+        if (PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null) return false;
         if (start == lineText.length() - 1) break;
         start++;
       }

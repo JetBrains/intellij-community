@@ -32,7 +32,7 @@ public class AntMacroDefParameterReference extends AntGenericReference {
   public String getCanonicalText() {
     String text = super.getCanonicalText();
     if (text.indexOf("${") >= 0) {
-      final AntStructuredElement se = PsiTreeUtil.getParentOfType(getElement(), AntStructuredElement.class, true, true);
+      final AntStructuredElement se = PsiTreeUtil.getParentOfType(getElement(), AntStructuredElement.class, true);
       if (se != null) {
         text = se.computeAttributeValue(text);
       }
@@ -66,7 +66,7 @@ public class AntMacroDefParameterReference extends AntGenericReference {
   }
 
   public PsiElement resolveInner() {
-    final AntMacroDef macrodef = PsiTreeUtil.getParentOfType(getElement(), AntMacroDef.class, true, true);
+    final AntMacroDef macrodef = PsiTreeUtil.getParentOfType(getElement(), AntMacroDef.class, true);
     if (macrodef != null) {
       final String name = getCanonicalText();
       if (name != null) {
@@ -86,7 +86,7 @@ public class AntMacroDefParameterReference extends AntGenericReference {
   public Object[] getVariants() {
     final Set<String> variants = StringSetSpinAllocator.alloc();
     try {
-      AntMacroDef macrodef = PsiTreeUtil.getParentOfType(getElement(), AntMacroDef.class, true, true);
+      AntMacroDef macrodef = PsiTreeUtil.getParentOfType(getElement(), AntMacroDef.class, true);
       if (macrodef != null) {
         for (PsiElement child : macrodef.getChildren()) {
           if (child instanceof AntStructuredElement) {

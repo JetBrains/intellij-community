@@ -17,16 +17,19 @@ package com.intellij.psi.util;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.InstanceofCheckerGenerator;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class PsiTreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiTreeUtil");
@@ -239,18 +242,13 @@ public class PsiTreeUtil {
 
   @Nullable
   public static <T extends PsiElement> T getParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, boolean strict) {
-    return getParentOfType(element, aClass, strict, !ReflectionCache.isAssignable(PsiDirectory.class, aClass));
-  }
-
-  @Nullable
-  public static <T extends PsiElement> T getParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, boolean strict, boolean stopAtFileLevel) {
     if (element == null) return null;
     if (strict) {
       element = element.getParent();
     }
 
     while (element != null && !instanceOf(aClass, element)) {
-      if (stopAtFileLevel && element instanceof PsiFile) return null;
+      if (element instanceof PsiFile) return null;
       element = element.getParent();
     }
 
@@ -263,13 +261,12 @@ public class PsiTreeUtil {
     if (strict) {
       element = element.getParent();
     }
-    boolean stopAtFileLevel = !ReflectionCache.isAssignable(PsiDirectory.class, aClass);
 
     while (element != null && !instanceOf(aClass, element)) {
       for (Class<? extends PsiElement> stopClass : stopAt) {
         if (instanceOf(stopClass, element)) return null;
       }
-      if (stopAtFileLevel && element instanceof PsiFile) return null;
+      if (element instanceof PsiFile) return null;
       element = element.getParent();
     }
 
@@ -311,16 +308,12 @@ public class PsiTreeUtil {
 
   @Nullable
   public static <T extends PsiElement> T getNonStrictParentOfType(@NotNull PsiElement element, @NotNull Class<? extends T>... classes) {
-    boolean canRunOutOfTheFile = false;
-    for (Class<? extends T> aClass : classes) {
-      canRunOutOfTheFile |= ReflectionCache.isAssignable(PsiDirectory.class, aClass);
-    }
     PsiElement run = element;
     while (run != null) {
       for (Class<? extends T> aClass : classes) {
         if (instanceOf(aClass, run)) return (T)run;
       }
-      if (!canRunOutOfTheFile && run instanceof PsiFile) break;
+      if (run instanceof PsiFile) break;
       run = run.getParent();
     }
 

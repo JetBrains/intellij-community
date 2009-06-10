@@ -192,8 +192,8 @@ class StatementMover extends LineMover {
     }
     while (newGuard instanceof PsiAnonymousClass);
 
-    if (brace != null && PsiTreeUtil.getParentOfType(brace, PsiCodeBlock.class, false, true) !=
-        PsiTreeUtil.getParentOfType(elementAtInsertOffset, PsiCodeBlock.class, false, true)) {
+    if (brace != null && PsiTreeUtil.getParentOfType(brace, PsiCodeBlock.class, false) !=
+                         PsiTreeUtil.getParentOfType(elementAtInsertOffset, PsiCodeBlock.class, false)) {
       info.indentSource = true;
     }
     if (newGuard == guard && isInside(insertOffset, newGuard) == isInside(offset, guard)) return true;

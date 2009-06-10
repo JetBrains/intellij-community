@@ -668,7 +668,7 @@ public final class PsiUtil extends PsiUtilBase {
   }
 
   public static boolean isInsideJavadocComment(PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PsiDocComment.class, true, true) != null;
+    return PsiTreeUtil.getParentOfType(element, PsiDocComment.class, true) != null;
   }
 
   public static boolean isAssigned(final PsiParameter parameter) {

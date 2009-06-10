@@ -320,7 +320,7 @@ public class JVMNameUtil {
     if (qName != null)  {
       return qName;
     }
-    final PsiClass parent = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true, true);
+    final PsiClass parent = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
     if (parent == null) {
       return null;
     }

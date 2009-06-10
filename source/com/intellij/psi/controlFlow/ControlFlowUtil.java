@@ -326,7 +326,7 @@ public class ControlFlowUtil {
 
   private static PsiStatement findStatement(ControlFlow flow, int offset) {
     PsiElement element = flow.getElement(offset);
-    return PsiTreeUtil.getParentOfType(element, PsiStatement.class, false, true);
+    return PsiTreeUtil.getParentOfType(element, PsiStatement.class, false);
   }
 
   public static PsiElement findCodeFragment(PsiElement element) {
