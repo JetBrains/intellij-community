@@ -22,7 +22,15 @@ public class PythonSdkTableListener implements ApplicationComponent {
     ProjectJdkTable.Listener jdkTableListener = new ProjectJdkTable.Listener() {
       public void jdkAdded(final Sdk sdk) {
         if (sdk.getSdkType() instanceof PythonSdkType) {
-          addLibrary(sdk);
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                public void run() {
+                  addLibrary(sdk);
+                }
+              });
+            }
+          });
         }
       }
 
