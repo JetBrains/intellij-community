@@ -236,8 +236,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           for (TextRange editable : editables) {
             TextRange hostRange = documentWindow.injectedToHost(editable);
 
-            HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, hostRange, info.description, info.description, info.forcedTextAttributes);
-            patched.toolTip = info.toolTip;
+            HighlightInfo patched =
+            new HighlightInfo(info.forcedTextAttributes, info.type, hostRange.getStartOffset(), hostRange.getEndOffset(), info.description, info.toolTip,info.type.getSeverity(null), false, null,
+                              false);
             addHighlightInfo(hostRange, patched);
           }
         }
@@ -314,6 +315,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
         HighlightInfo info = DefaultHighlightVisitor.createErrorElementInfo(element);
         Annotation error = fixingOffsetsHolder.createErrorAnnotation(new ProperTextRange(info.startOffset, info.endOffset), info.description);
+        error.setAfterEndOfLine(info.isAfterEndOfLine);
         error.setTooltip(info.toolTip);
         if (info.quickFixActionRanges != null) {
           for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> o : info.quickFixActionRanges) {

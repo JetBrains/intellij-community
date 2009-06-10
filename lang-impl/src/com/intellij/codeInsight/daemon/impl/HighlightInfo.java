@@ -44,7 +44,7 @@ import java.util.List;
 public class HighlightInfo {
   public static final HighlightInfo[] EMPTY_ARRAY = new HighlightInfo[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.HighlightInfo");
-  private Boolean myNeedsUpdateOnTyping = null;
+  private final boolean myNeedsUpdateOnTyping;
   public JComponent fileLevelComponent;
   public final TextAttributes forcedTextAttributes;
 
@@ -106,32 +106,21 @@ public class HighlightInfo {
     return createHighlightInfo(type, element, start, end, description, toolTip);
   }
 
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type,
-                                                  @NotNull PsiElement element,
-                                                  String description,
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @Nullable PsiElement element, int start, int end, String description,
                                                   String toolTip,
-                                                  boolean isEndOfLine) {
-    if (isEndOfLine) {
-      TextRange range = element.getTextRange();
-      int end = range.getEndOffset();
-      final HighlightInfo highlightInfo = createHighlightInfo(type, element, end - 1, end, description, toolTip);
-      highlightInfo.isAfterEndOfLine = true;
-      return highlightInfo;
-    }
-    else {
-      return createHighlightInfo(type, element, description, toolTip);
-    }
-  }
-
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @Nullable PsiElement element, int start, int end, String description, String toolTip) {
+                                                  boolean isEndOfLine,
+                                                  TextAttributes forcedAttributes) {
     LOG.assertTrue(ArrayUtil.find(HighlightSeverity.DEFAULT_SEVERITIES, type.getSeverity(element)) != -1 || element != null, "Custom type demands element to detect text attributes");
-    HighlightInfo highlightInfo = new HighlightInfo(type, element, start, end, description, toolTip);
+    HighlightInfo highlightInfo = new HighlightInfo(forcedAttributes, type, start, end, description, toolTip, type.getSeverity(null), isEndOfLine, null, false);
     for (HighlightInfoFilter filter : getFilters()) {
       if (!filter.accept(highlightInfo, element != null ? element.getContainingFile() : null)) {
         return null;
       }
     }
     return highlightInfo;
+  }
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @Nullable PsiElement element, int start, int end, String description, String toolTip) {
+    return createHighlightInfo(type, element, start, end, description, toolTip, false, null);
   }
 
   @NotNull private static HighlightInfoFilter[] getFilters() {
@@ -145,16 +134,75 @@ public class HighlightInfo {
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange, String description) {
     return createHighlightInfo(type, textRange.getStartOffset(), textRange.getEndOffset(), description);
   }
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange, String description, String toolTip) {
-    return createHighlightInfo(type, null, textRange.getStartOffset(), textRange.getEndOffset(), description, toolTip);
-  }
+
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange, String description, String toolTip, TextAttributes textAttributes) {
     // do not use HighlightInfoFilter
-    return new HighlightInfo(textAttributes, type, textRange.getStartOffset(), textRange.getEndOffset(), description, htmlEscapeToolTip(toolTip),type.getSeverity(null), false, null);
+    return new HighlightInfo(textAttributes, type, textRange.getStartOffset(), textRange.getEndOffset(), description, htmlEscapeToolTip(toolTip),type.getSeverity(null), false, null,
+                             false);
   }
 
   public boolean needUpdateOnTyping() {
-    if (myNeedsUpdateOnTyping != null) return myNeedsUpdateOnTyping.booleanValue();
+    return myNeedsUpdateOnTyping;
+  }
+
+  public final HighlightInfoType type;
+  public int group;
+  public final int startOffset;
+  public final int endOffset;
+
+  public int fixStartOffset;
+  public int fixEndOffset;
+  public RangeMarker fixMarker;
+
+  public final String description;
+  public final String toolTip;
+  public final HighlightSeverity severity;
+
+  public final boolean isAfterEndOfLine;
+  public final boolean isFileLevelAnnotation;
+  public int navigationShift = 0;
+
+  public RangeHighlighterEx highlighter;
+  public String text;
+
+  public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
+  public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
+  private boolean hasHint;
+
+  private GutterIconRenderer gutterIconRenderer;
+
+  public HighlightInfo(HighlightInfoType type, int startOffset, int endOffset, String description, String toolTip) {
+    this(null, type, startOffset, endOffset, description, toolTip, type.getSeverity(null), false, null, false);
+  }
+
+  public HighlightInfo(@Nullable TextAttributes textAttributes,
+                       @NotNull HighlightInfoType type,
+                       int startOffset,
+                       int endOffset,
+                       @Nullable String description,
+                       @Nullable String toolTip,
+                       @NotNull HighlightSeverity severity,
+                       boolean afterEndOfLine,
+                       @Nullable Boolean needsUpdateOnTyping, boolean isFileLevelAnnotation) {
+    if (startOffset < 0 || startOffset > endOffset) {
+      LOG.error("Incorrect highlightInfo bounds. description="+description+"; startOffset="+startOffset+"; endOffset="+endOffset+";type="+type);
+    }
+    forcedTextAttributes = textAttributes;
+    this.type = type;
+    this.startOffset = startOffset;
+    this.endOffset = endOffset;
+    fixStartOffset = startOffset;
+    fixEndOffset = endOffset;
+    this.description = description;
+    this.toolTip = toolTip;
+    this.severity = severity;
+    isAfterEndOfLine = afterEndOfLine;
+    myNeedsUpdateOnTyping = calcNeedUpdateOnTyping(needsUpdateOnTyping, type);
+    this.isFileLevelAnnotation = isFileLevelAnnotation;
+  }
+
+  private static boolean calcNeedUpdateOnTyping(Boolean needsUpdateOnTyping, HighlightInfoType type) {
+    if (needsUpdateOnTyping != null) return needsUpdateOnTyping.booleanValue();
 
     if (type == HighlightInfoType.TODO) return false;
     if (type == HighlightInfoType.LOCAL_VARIABLE) return false;
@@ -170,64 +218,6 @@ public class HighlightInfo {
     if (type == HighlightInfoType.ABSTRACT_CLASS_NAME) return false;
     if (type == HighlightInfoType.CLASS_NAME) return false;
     return true;
-  }
-
-  public HighlightInfoType type;
-  public int group;
-  public final int startOffset;
-  public final int endOffset;
-
-  public int fixStartOffset;
-  public int fixEndOffset;
-  public RangeMarker fixMarker;
-
-  public final String description;
-  public String toolTip;
-  public final HighlightSeverity severity;
-
-  public boolean isAfterEndOfLine = false;
-  public boolean isFileLevelAnnotation = false; 
-  public int navigationShift = 0;
-
-  public RangeHighlighterEx highlighter;
-  public String text;
-
-  public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
-  public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
-  private boolean hasHint;
-
-  private GutterIconRenderer gutterIconRenderer;
-
-  public HighlightInfo(HighlightInfoType type, int startOffset, int endOffset, String description, String toolTip) {
-    this(type, null, startOffset, endOffset, description, toolTip);
-  }
-  public HighlightInfo(HighlightInfoType type, @Nullable PsiElement element, int startOffset, int endOffset, String description, String toolTip) {
-    this(null, type, startOffset, endOffset, description, toolTip, type.getSeverity(element), false, null);
-  }
-
-  public HighlightInfo(TextAttributes textAttributes,
-                       HighlightInfoType type,
-                       int startOffset,
-                       int endOffset,
-                       String description,
-                       String toolTip,
-                       HighlightSeverity severity,
-                       boolean afterEndOfLine,
-                       Boolean needsUpdateOnTyping) {
-    if (startOffset < 0 || startOffset > endOffset) {
-      LOG.error("Incorrect highlightInfo bounds. description="+description+"; startOffset="+startOffset+"; endOffset="+endOffset+";type="+type);
-    }
-    forcedTextAttributes = textAttributes;
-    this.type = type;
-    this.startOffset = startOffset;
-    this.endOffset = endOffset;
-    fixStartOffset = startOffset;
-    fixEndOffset = endOffset;
-    this.description = description;
-    this.toolTip = toolTip;
-    this.severity = severity;
-    isAfterEndOfLine = afterEndOfLine;
-    myNeedsUpdateOnTyping = needsUpdateOnTyping;
   }
 
   public boolean equals(Object obj) {
@@ -250,7 +240,7 @@ public class HighlightInfo {
 
   @NonNls
   public String toString() {
-    String s = "HighlightInfo(" + startOffset + "," + endOffset+")";
+    @NonNls String s = "HighlightInfo(" + startOffset + "," + endOffset+")";
     if (getActualStartOffset() != startOffset || getActualEndOffset() != endOffset) {
       s += "; actual: (" + getActualStartOffset() + "," + getActualEndOffset() + ")";
     }
@@ -280,7 +270,7 @@ public class HighlightInfo {
     TextRange textRange = element.getTextRange();
     // do not use HighlightInfoFilter
     return new HighlightInfo(attributes, type, textRange.getStartOffset(), textRange.getEndOffset(), message, htmlEscapeToolTip(message),
-                             type.getSeverity(element), false, Boolean.FALSE);
+                             type.getSeverity(element), false, Boolean.FALSE, false);
   }
 
 
@@ -298,9 +288,8 @@ public class HighlightInfo {
                                            fixedRange != null? fixedRange.getStartOffset() : annotation.getStartOffset(),
                                            fixedRange != null? fixedRange.getEndOffset() : annotation.getEndOffset(),
                                            annotation.getMessage(), annotation.getTooltip(),
-                                           annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping());
+                                           annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping(), annotation.isFileLevelAnnotation());
     info.setGutterIconRenderer(annotation.getGutterIconRenderer());
-    info.isFileLevelAnnotation = annotation.isFileLevelAnnotation();
     List<Annotation.QuickFixInfo> fixes = annotation.getQuickFixes();
     if (fixes != null) {
       for (final Annotation.QuickFixInfo quickFixInfo : fixes) {

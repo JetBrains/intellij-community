@@ -71,6 +71,7 @@ public class FoldingDescriptor {
     ProperTextRange.assertProperRange(range);
     myRange = range;
     myGroup = group;
+    assert getRange().getLength() >= 2 : "range:" + getRange();
   }
 
   /**
@@ -86,11 +87,14 @@ public class FoldingDescriptor {
    * @return the folded text range.
    */
   public TextRange getRange() {
-    PsiElement element = myElement.getPsi();
+    return getRange(myElement, myRange);
+  }
+
+  public static TextRange getRange(ASTNode node, TextRange range) {
+    PsiElement element = node.getPsi();
     PsiFile containingFile = element.getContainingFile();
     InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(containingFile.getProject());
     boolean isInjected = injectedManager.isInjectedFragment(containingFile);
-    TextRange range = myRange;
     if (isInjected) {
       range = injectedManager.injectedToHost(element, range);
     }

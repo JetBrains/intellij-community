@@ -12,13 +12,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.Function;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -55,7 +55,7 @@ public class ExpectedHighlightingData {
     final HighlightInfoType defaultErrorType;
     final HighlightSeverity severity;
 
-    public ExpectedHighlightingSet(HighlightInfoType defaultErrorType, HighlightSeverity severity, boolean endOfLine, boolean enabled) {
+    protected ExpectedHighlightingSet(HighlightInfoType defaultErrorType, HighlightSeverity severity, boolean endOfLine, boolean enabled) {
       this.endOfLine = endOfLine;
       this.enabled = enabled;
       infos = new THashSet<HighlightInfo>();
@@ -86,7 +86,7 @@ public class ExpectedHighlightingData {
     myFile = file;
     highlightingTypes = new THashMap<String,ExpectedHighlightingSet>();
     highlightingTypes.put(ERROR_MARKER, new ExpectedHighlightingSet(HighlightInfoType.ERROR, HighlightSeverity.ERROR, false, true));
-    highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(HighlightInfoType.UNUSED_SYMBOL, HighlightSeverity.WARNING, false, checkWarnings));
+    highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(HighlightInfoType.WARNING, HighlightSeverity.WARNING, false, checkWarnings));
     highlightingTypes.put(INFORMATION_MARKER, new ExpectedHighlightingSet(HighlightInfoType.INFO, HighlightSeverity.INFO, false, checkWeakWarnings));
     highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(HighlightInfoType.TODO, HighlightSeverity.INFORMATION, false, checkInfos));
     highlightingTypes.put(END_LINE_HIGHLIGHT_MARKER, new ExpectedHighlightingSet(HighlightInfoType.ERROR, HighlightSeverity.ERROR, true, true));
@@ -234,9 +234,8 @@ public class ExpectedHighlightingData {
       }
 
       TextRange textRange = new TextRange(startOffset, startOffset + content.length());
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(expectedHighlightingSet.defaultErrorType, textRange, descr, descr, forcedAttributes);
 
-      HighlightInfoType type = null;
+      HighlightInfoType type = WHATEVER;
 
       if (typeString != null) {
         try {
@@ -249,12 +248,16 @@ public class ExpectedHighlightingData {
         LOG.assertTrue(type != null, "Wrong highlight type: " + typeString);
       }
 
-      highlightInfo.type = type;
-      highlightInfo.isAfterEndOfLine = expectedHighlightingSet.endOfLine;
+
+      HighlightInfo highlightInfo = new HighlightInfo(forcedAttributes, type, textRange.getStartOffset(), textRange.getEndOffset(), descr,
+                                                       descr, expectedHighlightingSet.severity, expectedHighlightingSet.endOfLine, null,
+                                                      false);
       expectedHighlightingSet.infos.add(highlightInfo);
       text = document.getText();
     }
   }
+
+  private static final HighlightInfoType WHATEVER = new HighlightInfoType.HighlightInfoTypeImpl();
 
   public Collection<HighlightInfo> getExtractedHighlightInfos(){
     final Collection<HighlightInfo> result = new ArrayList<HighlightInfo>();
@@ -383,7 +386,9 @@ public class ExpectedHighlightingData {
       }
     }
 
-    if (failMessage.length() > 0) Assert.assertTrue(failMessage, false);
+    if (failMessage.length() > 0) {
+      Assert.fail(failMessage);
+    }
   }
 
   private static boolean infosContainsExpectedInfo(Collection<HighlightInfo> infos, HighlightInfo expectedInfo) {
@@ -415,10 +420,10 @@ public class ExpectedHighlightingData {
     if (expectedInfo == info) return true;
     return
       info.getSeverity() == expectedInfo.getSeverity() &&
-      info.startOffset + (info.isAfterEndOfLine ? 1 : 0) == expectedInfo.startOffset &&
+      info.startOffset /*+ (info.isAfterEndOfLine ? 1 : 0)*/ == expectedInfo.startOffset &&
       info.endOffset == expectedInfo.endOffset &&
       info.isAfterEndOfLine == expectedInfo.isAfterEndOfLine &&
-      (expectedInfo.type == null || expectedInfo.type.equals(info.type)) &&
+      (expectedInfo.type == WHATEVER || expectedInfo.type.equals(info.type)) &&
       (Comparing.strEqual(ANY_TEXT, expectedInfo.description) || Comparing.strEqual(info.description, expectedInfo.description))
       && (expectedInfo.forcedTextAttributes == null || expectedInfo.getTextAttributes(null).equals(info.getTextAttributes(null)))
       ;

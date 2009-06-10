@@ -118,9 +118,9 @@ public class DefaultHighlightVisitor extends PsiElementVisitor implements Highli
     if (offset < fileLength && text != null && !StringUtil.startsWithChar(text, '\n') && !StringUtil.startsWithChar(text, '\r')) {
       int start = offset;
       PsiElement prevElement = containingFile.findElementAt(offset - 1);
-      if (offset > 0 && prevElement != null && prevElement.getText().equals("(") && StringUtil.startsWithChar(text, ')')) {
-        start = offset - 1;
-      }
+      //if (offset > 0 && prevElement != null && prevElement.getText().equals("(") && StringUtil.startsWithChar(text, ')')) {
+      //  start = offset - 1;
+      //}
       int end = offset + 1;
       info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, start, end, element.getErrorDescription());
       info.navigationShift = offset - start;
@@ -129,15 +129,14 @@ public class DefaultHighlightVisitor extends PsiElementVisitor implements Highli
       int start;
       int end;
       if (offset > 0) {
-        start = offset - 1;
+        start = offset/* - 1*/;
         end = offset;
       }
       else {
         start = offset;
         end = offset < fileLength ? offset + 1 : offset;
       }
-      info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, start, end, element.getErrorDescription());
-      info.isAfterEndOfLine = true;
+      info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, start, end, element.getErrorDescription(),element.getErrorDescription(), true, null);
     }
     return info;
   }

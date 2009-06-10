@@ -194,10 +194,7 @@ public class UpdateHighlightersUtil {
       for (int i = 0; i < list.size(); i++) {
         HighlightInfo info = list.get(i);
         RangeHighlighter highlighter = info.highlighter;
-        boolean toRemove = !highlighter.isValid() ||
-                           info.group == group &&
-                           Collections.binarySearch(ranges, new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset()),
-                                                    BY_START_OFFSET_OR_CONTAINS) >= 0;
+        boolean toRemove = isRemoving(group, ranges, info, highlighter);
         if (toRemove) {
           infosToRemove.add(highlighter);
           changed = true;
@@ -233,7 +230,7 @@ public class UpdateHighlightersUtil {
         int infoEndOffset = info.endOffset;
         if (infoStartOffset < rangeStartOffset || infoEndOffset > rangeEndOffset) continue;
 
-        if (infoEndOffset == infoStartOffset) {
+        if (infoEndOffset == infoStartOffset && !info.isAfterEndOfLine) {
           infoEndOffset++; //show something in case of empty highlightinfo
         }
         final int docLength = document.getTextLength();
@@ -246,11 +243,11 @@ public class UpdateHighlightersUtil {
 
 
         RangeHighlighterEx highlighter = (RangeHighlighterEx)infosToRemove.reuseHighlighterAt(info.startOffset, info.endOffset);
-        if (highlighter != null) {
-          ((RangeHighlighterImpl)highlighter).setTextAttributes(info.getTextAttributes(psiFile));
+        if (highlighter == null) {
+          highlighter = createRangeHighlighter(project, psiFile, info, infoStartOffset, infoEndOffset, markup);
         }
         else {
-          highlighter = createRangeHighlighter(project, psiFile, info, infoStartOffset, infoEndOffset, markup);
+          ((RangeHighlighterImpl)highlighter).setTextAttributes(info.getTextAttributes(psiFile));
         }
         changed = true;
         info.highlighter = highlighter;
@@ -296,6 +293,16 @@ public class UpdateHighlightersUtil {
       clearWhiteSpaceOptimizationFlag(document);
     }
     assertMarkupConsistent(markup, result, toRemoveInAnotherPass);
+  }
+
+  private static boolean isRemoving(int group, List<TextRange> ranges, HighlightInfo info, RangeHighlighter highlighter) {
+    if (!highlighter.isValid()) return true;
+    if (info.group != group) return false;
+    TextRange toFind = new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset());
+    int i = Collections.binarySearch(ranges, toFind, BY_START_OFFSET_OR_CONTAINS);
+    if (i<0) return false;
+    TextRange containing = ranges.get(i);
+    return containing.contains(toFind.getStartOffset());
   }
 
   private static RangeHighlighterEx createRangeHighlighter(Project project,
@@ -385,28 +392,29 @@ public class UpdateHighlightersUtil {
       }
 
       TextRange textRange = element.getTextRange();
-      LOG.assertTrue(textRange != null, element);
+      if (textRange == null) continue;
       TextRange elementRange = InjectedLanguageManager.getInstance(project).injectedToHost(element, textRange);
-      if (startOffset <= elementRange.getStartOffset() && elementRange.getEndOffset() <= endOffset) {
-        RangeHighlighter marker = toReuse.reuseHighlighterAt(info.startOffset, info.endOffset);
-        if (marker == null) {
-          TextAttributes attributes = info.textAttributesKey == null ? null : colorsScheme.getAttributes(info.textAttributesKey);
-          marker = markupModel.addRangeHighlighter(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX, attributes, HighlighterTargetArea.EXACT_RANGE);
-        }
-        LineMarkerInfo.LineMarkerGutterIconRenderer renderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)info.createGutterRenderer();
-        LineMarkerInfo.LineMarkerGutterIconRenderer oldRenderer = marker.getGutterIconRenderer() instanceof LineMarkerInfo.LineMarkerGutterIconRenderer ? (LineMarkerInfo.LineMarkerGutterIconRenderer)marker.getGutterIconRenderer() : null;
-        if (oldRenderer == null || renderer == null || !renderer.looksTheSameAs(oldRenderer)) {
-          marker.setGutterIconRenderer(renderer);
-        }
-        if (!Comparing.equal(marker.getLineSeparatorColor(), info.separatorColor)) {
-          marker.setLineSeparatorColor(info.separatorColor);
-        }
-        if (!Comparing.equal(marker.getLineSeparatorPlacement(), info.separatorPlacement)) {
-          marker.setLineSeparatorPlacement(info.separatorPlacement);
-        }
-        info.highlighter = marker;
-        array.add(info);
+      if (startOffset > elementRange.getStartOffset() || elementRange.getEndOffset() > endOffset) {
+        continue;
       }
+      RangeHighlighter marker = toReuse.reuseHighlighterAt(info.startOffset, info.endOffset);
+      if (marker == null) {
+        TextAttributes attributes = info.textAttributesKey == null ? null : colorsScheme.getAttributes(info.textAttributesKey);
+        marker = markupModel.addRangeHighlighter(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX, attributes, HighlighterTargetArea.EXACT_RANGE);
+      }
+      LineMarkerInfo.LineMarkerGutterIconRenderer renderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)info.createGutterRenderer();
+      LineMarkerInfo.LineMarkerGutterIconRenderer oldRenderer = marker.getGutterIconRenderer() instanceof LineMarkerInfo.LineMarkerGutterIconRenderer ? (LineMarkerInfo.LineMarkerGutterIconRenderer)marker.getGutterIconRenderer() : null;
+      if (oldRenderer == null || renderer == null || !renderer.looksTheSameAs(oldRenderer)) {
+        marker.setGutterIconRenderer(renderer);
+      }
+      if (!Comparing.equal(marker.getLineSeparatorColor(), info.separatorColor)) {
+        marker.setLineSeparatorColor(info.separatorColor);
+      }
+      if (!Comparing.equal(marker.getLineSeparatorPlacement(), info.separatorPlacement)) {
+        marker.setLineSeparatorPlacement(info.separatorPlacement);
+      }
+      info.highlighter = marker;
+      array.add(info);
     }
 
     for (RangeHighlighter highlighter : toReuse.forAll()) {

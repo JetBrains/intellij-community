@@ -1235,11 +1235,10 @@ public class HighlightUtil {
     if (!(lastChild instanceof PsiJavaToken && ((PsiJavaToken)lastChild).getTokenType() == JavaTokenType.COLON)) {
       int start = statement.getTextRange().getEndOffset();
       int end = statement.getTextRange().getEndOffset() + 1;
-      HighlightInfo highlightInfo = HighlightInfo
-        .createHighlightInfo(HighlightInfoType.ERROR, start, end, JavaErrorMessages.message("switch.colon.expected.after.case.label"));
+      String description = JavaErrorMessages.message("switch.colon.expected.after.case.label");
       CharSequence chars = statement.getContainingFile().getViewProvider().getContents();
-      highlightInfo.isAfterEndOfLine = end >= chars.length() || chars.charAt(start) == '\n' || chars.charAt(start) == '\r';
-      return highlightInfo;
+      boolean isAfterEndOfLine = end >= chars.length() || chars.charAt(start) == '\n' || chars.charAt(start) == '\r';
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, null,start, end, description, description,isAfterEndOfLine, null);
     }
     return null;
   }
@@ -1769,7 +1768,8 @@ public class HighlightUtil {
 
     String description = JavaErrorMessages.message("incompatible.types", formatType(lType1), formatType(rType1));
 
-    return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description, toolTip);
+    return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, null, textRange.getStartOffset(), textRange.getEndOffset(),
+                                             description, toolTip);
   }
 
   @Nullable

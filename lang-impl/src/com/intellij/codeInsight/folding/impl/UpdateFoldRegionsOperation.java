@@ -51,7 +51,8 @@ class UpdateFoldRegionsOperation implements Runnable {
       final FoldingGroup group = region.getGroup();
       if (group != null) {
         expanded = groupExpand.get(group);
-      } else {
+      }
+      else {
         expanded = shouldExpand.get(region);
       }
 
@@ -114,7 +115,9 @@ class UpdateFoldRegionsOperation implements Runnable {
             descriptor.getGroup() != null ||
             region.getStartOffset() != range.getStartOffset() ||
             region.getEndOffset() != range.getEndOffset() ||
-            !region.getPlaceholderText().equals(descriptor.getPlaceholderText())) {
+            !region.getPlaceholderText().equals(descriptor.getPlaceholderText()) ||
+            range.getLength() < 2
+          ) {
           rangeToExpandStatusMap.put(range, region.isExpanded());
           toRemove.add(region);
         }
