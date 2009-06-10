@@ -51,7 +51,6 @@ public class IndexInfrastructure {
       FileUtil.delete(file);
     }
     file.getParentFile().mkdirs();
-    file.createNewFile();
     final DataOutputStream os = new DataOutputStream(new FileOutputStream(file));
     try {
       os.writeInt(version);
