@@ -121,9 +121,10 @@ public class EditLocationDialog extends DialogWrapper {
   /**
    * Initializes editor with the passed data.
    */
-  public void init(String name, String location) {
-    myTfUrl.setText(name);
-    myTfPath.setText(location);
+  public void init(NameLocationPair origin) {
+    myTfUrl.setText(origin.myName);
+    myTfPath.setText(origin.myLocation);
+    myTfShared = origin.myShared;
   }
 
   public static class NameLocationPair implements Comparable {

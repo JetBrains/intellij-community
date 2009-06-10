@@ -164,6 +164,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     return getId();
   }
 
+  @Nullable
   private EditLocationDialog.NameLocationPair addExtLocation() {
     EditLocationDialog dialog = new EditLocationDialog(null, true);
     dialog.show();
@@ -172,16 +173,20 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     return dialog.getPair();
   }
 
+  @Nullable
   private EditLocationDialog.NameLocationPair editExtLocation(Object o) {
     EditLocationDialog dialog = new EditLocationDialog(null, true);
     final EditLocationDialog.NameLocationPair pair = (EditLocationDialog.NameLocationPair)o;
-    dialog.init(pair.myName, pair.myLocation);
+    dialog.init(pair);
     dialog.show();
-    if (!dialog.isOK()) return null;
+    if (!dialog.isOK()) {
+      return null;
+    }
     setModified(true);
     return dialog.getPair();
   }
 
+  @Nullable
   private String addIgnoreLocation() {
     EditLocationDialog dialog = new EditLocationDialog(null, false);
     dialog.show();
@@ -190,9 +195,10 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     return dialog.getPair().myName;
   }
 
+  @Nullable
   private String editIgnoreLocation(Object o) {
     EditLocationDialog dialog = new EditLocationDialog(null, false);
-    dialog.init(o.toString(), o.toString());
+    dialog.init(new EditLocationDialog.NameLocationPair(o.toString(), null, false));
     dialog.show();
     if (!dialog.isOK()) return null;
     setModified(true);
