@@ -33,6 +33,8 @@ public class MoveInstanceMethodTest extends LightCodeInsightTestCase {
 
   public void testNoThisParam() throws Exception { doTest(false, 0); }
 
+  public void testNoGenerics() throws Exception { doTest(false, 0); }
+
   public void testQualifierToArg1() throws Exception { doTest(true, 0); }
 
   public void testQualifierToArg2() throws Exception { doTest(true, 0); }
@@ -47,7 +49,7 @@ public class MoveInstanceMethodTest extends LightCodeInsightTestCase {
     final PsiElement targetElement = TargetElementUtilBase.findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     PsiMethod method = (PsiMethod) targetElement;
-    final PsiVariable targetVariable = isTargetParameter ? ((PsiVariable)method.getParameterList().getParameters()[targetIndex]) :
+    final PsiVariable targetVariable = isTargetParameter ? method.getParameterList().getParameters()[targetIndex] :
                                        method.getContainingClass().getFields()[targetIndex];
     new MoveInstanceMethodProcessor(getProject(),
                                     method, targetVariable, null, MoveInstanceMethodHandler.suggestParameterNames (method, targetVariable)).run();

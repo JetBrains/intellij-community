@@ -58,7 +58,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     if (method.isConstructor()) {
       message = RefactoringBundle.message("move.method.is.not.supported.for.constructors");
     }
-    else if (PsiUtil.typeParametersIterator(method.getContainingClass()).hasNext()) {
+    else if (PsiUtil.typeParametersIterator(method.getContainingClass()).hasNext() && TypeParametersSearcher.hasTypeParameters(method)) {
       message = RefactoringBundle.message("move.method.is.not.supported.for.generic.classes");
     }
     else if (method.findSuperMethods().length > 0 ||
@@ -143,5 +143,43 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
       result.put(aClass, suggestParameterNameForThisClass(aClass));
     }
     return result;
+  }
+
+  private static class TypeParametersSearcher extends PsiTypeVisitor<Boolean> {
+    public static boolean hasTypeParameters(PsiElement element) {
+      final TypeParametersSearcher searcher = new TypeParametersSearcher();
+      final boolean[] hasParameters = new boolean[]{false};
+      element.accept(new JavaRecursiveElementWalkingVisitor(){
+        @Override
+        public void visitTypeElement(PsiTypeElement type) {
+          super.visitTypeElement(type);
+          hasParameters[0] |= type.getType().accept(searcher);
+        }
+      });
+      return hasParameters[0];
+    }
+
+    @Override
+    public Boolean visitClassType(PsiClassType classType) {
+      final PsiClass psiClass = PsiUtil.resolveClassInType(classType);
+      if (psiClass instanceof PsiTypeParameter) {
+        return Boolean.TRUE;
+      }
+      return super.visitClassType(classType);
+    }
+
+    @Override
+    public Boolean visitWildcardType(PsiWildcardType wildcardType) {
+      final PsiType bound = wildcardType.getBound();
+      if (PsiUtil.resolveClassInType(bound) instanceof PsiTypeParameter) {
+        return Boolean.TRUE;
+      }
+      return super.visitWildcardType(wildcardType);
+    }
+
+    @Override
+    public Boolean visitType(PsiType type) {
+      return Boolean.FALSE;
+    }
   }
 }
