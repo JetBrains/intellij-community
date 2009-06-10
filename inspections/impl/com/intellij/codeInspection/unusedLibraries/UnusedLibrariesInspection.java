@@ -61,7 +61,10 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
           if (!(file instanceof PsiCompiledElement)) {
             final VirtualFile virtualFile = file.getVirtualFile();
             if (virtualFile != null) {
-              modules.add(ModuleUtil.findModuleForFile(virtualFile, project));
+              final Module module = ModuleUtil.findModuleForFile(virtualFile, project);
+              if (module != null) {
+                modules.add(module);
+              }
             }
           }
         }
