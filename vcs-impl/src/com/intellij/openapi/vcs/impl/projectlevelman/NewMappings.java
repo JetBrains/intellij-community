@@ -327,7 +327,8 @@ public class NewMappings {
   }
 
   private List<LocalFileSystem.WatchRequest> removeRedundantMappings() {
-    final List<VcsDirectoryMapping> items = Arrays.asList(mySortedMappings);
+    final List<VcsDirectoryMapping> items = new ArrayList<VcsDirectoryMapping>(mySortedMappings.length);
+    Collections.addAll(items, mySortedMappings);
     final MyMappingsFilter filter = new MyMappingsFilter();
     filter.doFilter(items);
     for (VcsDirectoryMapping mapping : items) {
