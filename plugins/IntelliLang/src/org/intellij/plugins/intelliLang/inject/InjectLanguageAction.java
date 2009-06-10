@@ -84,8 +84,7 @@ public class InjectLanguageAction implements IntentionAction {
   @Nullable
   protected static PsiLanguageInjectionHost findInjectionHost(Editor editor, PsiFile file) {
     final int offset = editor.getCaretModel().getOffset();
-    final PsiLanguageInjectionHost host =
-        PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiLanguageInjectionHost.class, false, true);
+    final PsiLanguageInjectionHost host = PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiLanguageInjectionHost.class, false);
     if (host == null) {
       return null;
     }

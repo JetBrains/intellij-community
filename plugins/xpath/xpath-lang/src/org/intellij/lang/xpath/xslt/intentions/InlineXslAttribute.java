@@ -54,7 +54,7 @@ public class InlineXslAttribute implements IntentionAction {
 
         final int offset = editor.getCaretModel().getOffset();
         final PsiElement element = file.findElementAt(offset);
-        final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false, true);
+      final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
         if (tag == null) {
             return false;
         }
@@ -113,7 +113,7 @@ public class InlineXslAttribute implements IntentionAction {
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
         final int offset = editor.getCaretModel().getOffset();
         final PsiElement element = file.findElementAt(offset);
-        final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false, true);
+      final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
         assert tag != null;
 
         final StringBuilder sb = new StringBuilder();

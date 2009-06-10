@@ -70,7 +70,7 @@ public class GroovyInjector implements ConcatenationAwareInjector {
     PsiElement cur = op;
     while (cur != null) {
       if (cur instanceof PsiExpressionList) return (PsiExpressionList)cur;
-      if (cur instanceof PsiFile) return null;
+      if (!(cur instanceof PsiExpression)) return null;
       cur = cur.getParent();
     }
 

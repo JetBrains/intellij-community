@@ -60,7 +60,7 @@ public class ReplaceWithXslAttribute implements IntentionAction {
 
         final int offset = editor.getCaretModel().getOffset();
         final PsiElement element = file.findElementAt(offset);
-        final XmlAttribute attr = PsiTreeUtil.getParentOfType(element, XmlAttribute.class, false, true);
+      final XmlAttribute attr = PsiTreeUtil.getParentOfType(element, XmlAttribute.class, false);
         if (attr == null || attr.getValueElement() == null) {
             return false;
         }
@@ -82,7 +82,7 @@ public class ReplaceWithXslAttribute implements IntentionAction {
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
         final int offset = editor.getCaretModel().getOffset();
         final PsiElement element = file.findElementAt(offset);
-        final XmlAttribute attr = PsiTreeUtil.getParentOfType(element, XmlAttribute.class, false, true);
+      final XmlAttribute attr = PsiTreeUtil.getParentOfType(element, XmlAttribute.class, false);
         assert attr != null;
 
         final XmlAttributeValue valueElement = attr.getValueElement();
