@@ -18,18 +18,20 @@ import com.intellij.facet.impl.ui.FacetTypeFrameworkSupportProvider;
 import com.intellij.facet.impl.ui.VersionConfigurable;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.facet.ui.libraries.LibraryInfo;
+import com.intellij.ide.util.newProjectWizard.FrameworkSupportModel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.ide.util.newProjectWizard.FrameworkSupportModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.config.ui.CreateLibraryDialog;
 import org.jetbrains.plugins.groovy.config.ui.GroovyFacetEditor;
@@ -127,21 +129,34 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
       return GroovyFacetSupportProvider.this.getLibraryName(lib != null ? lib.getName() : null);
     }
 
+    @Nullable
+    private AbstractConfigUtils getFrameworkCreatorByPath(String path) {
+      if (StringUtil.isEmpty(path)) {
+        return null;
+      }
+
+      if (GrailsConfigUtils.getInstance().isSDKHome(path) == ValidationResult.OK) {
+        return GrailsConfigUtils.getInstance();
+      }
+      if (GroovyConfigUtils.getInstance().isSDKHome(path) == ValidationResult.OK) {
+        return GroovyConfigUtils.getInstance();
+      }
+
+      return null;
+    }
+
     public void addSupport(final Module module, final ModifiableRootModel rootModel, @Nullable Library library) {
-      String selectedName = null;
-      Library selectedLibrary = myFacetEditor.getSelectedLibrary();
+      final Library selectedLibrary = myFacetEditor.getSelectedLibrary();
       if (selectedLibrary != null && !myFacetEditor.addNewSdk()) {
-        selectedName = selectedLibrary.getName();
+        final String selectedName = selectedLibrary.getName();
         LibrariesUtil.placeEntryToCorrectPlace(rootModel, rootModel.addLibraryEntry(selectedLibrary));
         GroovyFacetSupportProvider.this.addSupport(module, rootModel, selectedName, selectedLibrary);
       } else if (myFacetEditor.getNewSdkPath() != null) {
         final String path = myFacetEditor.getNewSdkPath();
-        ValidationResult result = GroovyConfigUtils.getInstance().isSDKHome(path);
-        if (path != null && ValidationResult.OK == result) {
+        final AbstractConfigUtils configUtils = getFrameworkCreatorByPath(path);
+        if (configUtils != null && path != null) {
           final Project project = module.getProject();
-          selectedName =
-            GroovyConfigUtils.getInstance().generateNewSDKLibName(GroovyConfigUtils.getInstance().getSDKVersion(path), project);
-          final String selected = selectedName;
+          final String selectedName = configUtils.generateNewSDKLibName(configUtils.getSDKVersion(path), project);
           //Delayed modal dialog to add Groovy library
           final CreateLibraryDialog dialog = new CreateLibraryDialog(project, GroovyBundle.message("facet.create.lib.title"),
                                                                      GroovyBundle.message("facet.create.project.lib", selectedName),
@@ -152,12 +167,12 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
                 public void run() {
                   ModuleRootManager manager = ModuleRootManager.getInstance(module);
                   ModifiableRootModel rootModel = manager.getModifiableModel();
-                  final Library lib = GroovyConfigUtils.getInstance().createSDKLibrary(path, selected, project, false, isInProject());
+                  final Library lib = configUtils.createSDKLibrary(path, selectedName, project, false, isInProject());
                   LibrariesUtil.placeEntryToCorrectPlace(rootModel, rootModel.addLibraryEntry(lib));
                   if (lib != null) {
-                    GroovyConfigUtils.getInstance().saveSDKDefaultLibName(selected);
+                    configUtils.saveSDKDefaultLibName(selectedName);
                   }
-                  GroovyFacetSupportProvider.this.addSupport(module, rootModel, selected, lib);
+                  GroovyFacetSupportProvider.this.addSupport(module, rootModel, selectedName, lib);
                   rootModel.commit();
                 }
               });
@@ -166,7 +181,11 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
 
             @Override
             public void doCancelAction() {
-              GroovyFacetSupportProvider.this.addSupport(module, rootModel, "unknown", null);
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                public void run() {
+                  GroovyFacetSupportProvider.this.addSupport(module, rootModel, "unknown", null);
+                }
+              });
               super.doCancelAction();
             }
           };
