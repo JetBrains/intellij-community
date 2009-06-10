@@ -558,7 +558,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     if (haveNonEmptyMappings || !defaultProject) {
       myMappingsLoaded = true;
     }
-    myMappings.setDirectoryMappings(mappingsList);
+    StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
+      public void run() {
+        myMappings.setDirectoryMappings(mappingsList);
+      }
+    });
   }
 
   public void writeDirectoryMappings(final Element element) {
