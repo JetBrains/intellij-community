@@ -17,7 +17,6 @@
 package com.intellij.ide.startup;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -25,25 +24,20 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
 
 /**
  * @author max
  */
 public class FileSystemSynchronizer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.FileSystemSynchronizer");
-
-  protected final ArrayList<CacheUpdater> myUpdaters = new ArrayList<CacheUpdater>();
-  private LinkedHashSet<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
-  protected CacheUpdateSets myIndexingSets;
-  protected CacheUpdateSets myContentSets;
-
-  private boolean myIsCancelable = false;
+  private volatile ArrayList<CacheUpdater> myUpdaters = new ArrayList<CacheUpdater>();
+  private volatile boolean myIsCancelable = false;
 
   public void registerCacheUpdater(@NotNull CacheUpdater cacheUpdater) {
-    myUpdaters.add(cacheUpdater);
+    final ArrayList<CacheUpdater> updaters = myUpdaters;
+    if (updaters == null) {
+      throw new AssertionError("Cannot add cache updater during synchronization session, all updaters should be added before it");
+    }
+    updaters.add(cacheUpdater);
   }
 
   public void setCancelable(boolean isCancelable) {
@@ -53,83 +47,78 @@ public class FileSystemSynchronizer {
   public void executeFileUpdate() {
     //final long l = System.currentTimeMillis();
 
+    final SyncSession syncSession = collectFilesToUpdate();
+    if (syncSession.getFilesToUpdate().size() != 0) {
+      executeFileUpdate(syncSession);
+    }
+    /*System.out.println("FileSystemSynchronizerImpl.executeFileUpdate");
+System.out.println("modal indexing took " + (System.currentTimeMillis() - l));*/
+
+  }
+
+  public void executeFileUpdate(SyncSession syncSession) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (!myIsCancelable && indicator != null) {
       indicator.startNonCancelableSection();
     }
 
     try {
-      if (myIndexingSets == null) { // collectFilesToUpdate() was not executed before
-        if (collectFilesToUpdate() == 0) return;
-      }
-
-      updateFiles();
+      updateFiles(syncSession);
     }
     catch (ProcessCanceledException e) {
-      for (CacheUpdater updater : myUpdaters) {
-        if (updater != null) {
-          updater.canceled();
-        }
-      }
+      syncSession.canceled();
       throw e;
     }
     finally {
       if (!myIsCancelable && indicator != null) {
         indicator.finishNonCancelableSection();
       }
-      /*System.out.println("FileSystemSynchronizerImpl.executeFileUpdate");
-      System.out.println("modal indexing took " + (System.currentTimeMillis() - l));*/
     }
   }
 
-  public int collectFilesToUpdate() {
+  public SyncSession collectFilesToUpdate() {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.pushState();
       indicator.setText(IdeBundle.message("progress.scanning.files"));
-    }
-
-    List<List<VirtualFile>> updateSets = new ArrayList<List<VirtualFile>>();
-    for (CacheUpdater updater : myUpdaters) {
-      try {
-        List<VirtualFile> updaterFiles = Arrays.asList(updater.queryNeededFiles());
-        updateSets.add(updaterFiles);
-        myFilesToUpdate.addAll(updaterFiles);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Throwable e) {
-        LOG.error(e);
+      if (!myIsCancelable) {
+        indicator.startNonCancelableSection();
       }
     }
-    myContentSets = new CacheUpdateSets(updateSets);
-    myIndexingSets = new CacheUpdateSets(updateSets);
 
-    if (indicator != null) {
-      indicator.popState();
+    try {
+      final SyncSession syncSession = new SyncSession(myUpdaters);
+      myUpdaters = null;
+
+      if (indicator != null) {
+        indicator.popState();
+      }
+
+      if (syncSession.getFilesToUpdate().size() == 0) {
+        syncSession.updatingDone();
+      }
+      return syncSession;
+    }
+    finally {
+      if (indicator != null && !myIsCancelable) {
+        indicator.finishNonCancelableSection();
+      }
     }
 
-    if (myFilesToUpdate.isEmpty()) {
-      updatingDone();
-    }
-
-    return myFilesToUpdate.size();
   }
 
-  protected void updateFiles() {
+  protected void updateFiles(final SyncSession syncSession) {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.pushState();
       indicator.setText(IdeBundle.message("progress.parsing.files"));
     }
 
-    final int updaterCount = myUpdaters.size();
-    int totalFiles = myFilesToUpdate.size();
+    int totalFiles = syncSession.getFilesToUpdate().size();
     final FileContentQueue contentQueue = new FileContentQueue() {
       @Override
       protected void addLast(VirtualFile file) throws InterruptedException {
-        if (!myIndexingSets.contains(file)) {
+        if (!syncSession.shouldIndex(file)) {
           return;
         }
 
@@ -137,7 +126,7 @@ public class FileSystemSynchronizer {
       }
     };
 
-    contentQueue.queue(myFilesToUpdate, indicator);
+    contentQueue.queue(syncSession.getFilesToUpdate(), indicator);
 
     int count = 0;
     while (true) {
@@ -151,61 +140,16 @@ public class FileSystemSynchronizer {
         indicator.setFraction((double)++count / totalFiles);
         indicator.setText2(file.getPresentableUrl());
       }
-      for (int i = 0; i < updaterCount; i++) {
-        CacheUpdater updater = myUpdaters.get(i);
-        if (updater != null && myIndexingSets.remove(i, file)) {
-          try {
-            updater.processFile(content);
-          }
-          catch (ProcessCanceledException e) {
-            throw e;
-          }
-          catch (Throwable e) {
-            LOG.error(e);
-          }
-          if (myIndexingSets.isDoneForegroundly(i)) {
-            try {
-              updater.updatingDone();
-            }
-            catch (ProcessCanceledException e) {
-              throw e;
-            }
-            catch (Throwable e) {
-              LOG.error(e);
-            }
-            myUpdaters.set(i, null); //not to call updatingDone second time below
-          }
-        }
-      }
+
+      syncSession.processFile(content);
     }
 
-    updatingDone();
+    syncSession.updatingDone();
 
     if (indicator != null) {
       indicator.popState();
     }
   }
 
-  private void updatingDone() {
-    for (int i = 0, myUpdatersSize = myUpdaters.size(); i < myUpdatersSize; i++) {
-      CacheUpdater updater = myUpdaters.get(i);
-      try {
-        if (updater != null && myIndexingSets.isDoneForegroundly(i)) {
-          updater.updatingDone();
-        }
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-
-    myUpdaters.clear();
-    myFilesToUpdate.clear();
-    myIndexingSets = null;
-    myContentSets = null;
-  }
 
 }

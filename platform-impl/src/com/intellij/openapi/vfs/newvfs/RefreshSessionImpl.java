@@ -4,6 +4,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.ide.startup.SyncSession;
 import com.intellij.ide.startup.impl.FileSystemSynchronizerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -132,29 +133,23 @@ public class RefreshSessionImpl extends RefreshSession {
       synchronizer.registerCacheUpdater(participant);
     }
 
-    int filesCount = synchronizer.collectFilesToUpdate();
+    final SyncSession syncSession = synchronizer.collectFilesToUpdate();
+    int filesCount = syncSession.getFilesToUpdate().size();
     if (filesCount > 0) {
       boolean runWithProgress = !ApplicationManager.getApplication().isUnitTestMode() && filesCount > 5;
       if (runWithProgress) {
         Runnable process = new Runnable() {
           public void run() {
-            synchronizer.executeFileUpdate();
+            synchronizer.executeFileUpdate(syncSession);
           }
         };
         ProgressManager.getInstance()
           .runProcessWithProgressSynchronously(process, VfsBundle.message("file.update.modified.progress"), false, null);
       }
       else {
-        synchronizer.executeFileUpdate();
+        synchronizer.executeFileUpdate(syncSession);
       }
     }
   }
 
-  public Runnable getFinishRunnable() {
-    return myFinishRunnable;
-  }
-
-  public void setFinishRunnable(final Runnable finishRunnable) {
-    myFinishRunnable = finishRunnable;
-  }
 }
