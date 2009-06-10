@@ -22,6 +22,7 @@ public class PlatformFileTypeFactory extends FileTypeFactory {
                      new ExtensionFileNameMatcher("sql"),
                      new ExtensionFileNameMatcher("jad"),
                      new ExtensionFileNameMatcher("jam"),
+                     new ExtensionFileNameMatcher("htaccess"),
                      new ExactFileNameMatcher("readme", true));
     consumer.consume(UnknownFileType.INSTANCE);
   }
