@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.encapsulation;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -24,34 +25,53 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveClassFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class PackageVisibleInnerClassInspection extends BaseInspection {
 
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreEnums = false;
+
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "package.visible.inner.class.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "package.visible.inner.class.problem.descriptor");
     }
 
+    @Override
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "package.visible.inner.class.ignore.enum.option"),
+                this, "ignoreEnums");
+    }
+
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new MoveClassFix();
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new PackageVisibleInnerClassVisitor();
     }
 
-    private static class PackageVisibleInnerClassVisitor
+    private class PackageVisibleInnerClassVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitClass(@NotNull PsiClass aClass) {
@@ -63,8 +83,7 @@ public class PackageVisibleInnerClassInspection extends BaseInspection {
             if (!ClassUtils.isInnerClass(aClass)) {
                 return;
             }
-            if(!(aClass.getParent() instanceof PsiClass))
-            {
+            if (ignoreEnums && aClass.isEnum()) {
                 return;
             }
             registerClassError(aClass);

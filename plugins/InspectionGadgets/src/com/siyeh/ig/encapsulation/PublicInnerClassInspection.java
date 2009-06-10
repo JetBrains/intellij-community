@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,32 +34,39 @@ public class PublicInnerClassInspection extends BaseInspection {
     @SuppressWarnings({"PublicField"})
     public boolean ignoreEnums = false;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "public.inner.class.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "public.inner.class.problem.descriptor");
     }
 
+    @Override
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "public.inner.class.ignore.enum.option"), this, "ignoreEnums");
+                "public.inner.class.ignore.enum.option"),
+                this, "ignoreEnums");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new MoveClassFix();
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new PublicInnerClassVisitor();
     }
