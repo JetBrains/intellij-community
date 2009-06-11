@@ -12,7 +12,7 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Searc
   private TemplateListPanel myPanel;
 
   public boolean isModified() {
-    return myPanel.isModified();
+    return myPanel != null && myPanel.isModified();
   }
 
   public JComponent createComponent() {
