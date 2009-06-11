@@ -25,7 +25,6 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
@@ -98,10 +97,6 @@ public class GitRootTracker implements VcsListener {
    * The multicaster for root events
    */
   private GitRootsListener myMulticaster;
-  /**
-   * If true, the tracker is enabled, false if project has not yet been intialized.
-   */
-  private AtomicBoolean myIsEnabled = new AtomicBoolean(false);
 
   /**
    * The constructor
@@ -142,12 +137,7 @@ public class GitRootTracker implements VcsListener {
       }
     };
     fileManager.addVirtualFileManagerListener(myVirtualFileManagerListener);
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        myIsEnabled.set(true);
-        checkRoots(true);
-      }
-    });
+    checkRoots(true);
   }
 
   /**
@@ -177,7 +167,7 @@ public class GitRootTracker implements VcsListener {
    * @param rootsChanged
    */
   private void checkRoots(boolean rootsChanged) {
-    if (!myIsEnabled.get() || (!rootsChanged && !myHasGitRoots.get())) {
+    if (!rootsChanged && !myHasGitRoots.get()) {
       return;
     }
     ApplicationManager.getApplication().runReadAction(new Runnable() {
