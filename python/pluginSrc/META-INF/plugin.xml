@@ -8,6 +8,11 @@
   <description>Smart editing for Python scripts</description>
   <version>2.1</version>
   <vendor url="http://www.jetbrains.com/idea/" logo="/com/jetbrains/python/python.png">JetBrains, Keith Lea</vendor>
+  <change-notes>
+    <![CDATA[
+    <a href="http://www.jetbrains.net/confluence/display/PYH/Version+2.1+Release+Notes">Version 2.1 Release Notes</a>
+    ]]>
+    </change-notes>
 
   <xi:include href="/META-INF/python-plugin-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
