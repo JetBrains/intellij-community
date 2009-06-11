@@ -13,6 +13,10 @@ public interface PomRenameableTarget<T> extends PomNamedTarget{
 
   boolean isWritable();
 
+  /**
+   * @param newName new name
+   * @return will be ignored unless you use it yourself
+   */
   T setName(@NotNull String newName);
   
 }
