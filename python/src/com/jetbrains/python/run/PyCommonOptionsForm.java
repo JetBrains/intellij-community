@@ -94,12 +94,11 @@ public class PyCommonOptionsForm implements AbstractPythonRunConfigurationParams
     final List<Sdk> allSdks = PythonSdkType.getAllSdks();
     Sdk selection = null;
     for (Sdk sdk : allSdks) {
-      if (FileUtil.pathsEqual(sdk.getHomePath(), sdkHome)) {
-        selection = sdk;
-        break;
+      if (sdk.getSdkType() instanceof PythonSdkType) {
+        if (FileUtil.pathsEqual(sdk.getHomePath(), sdkHome)) selection = sdk;
+        sdkList.add(sdk);
       }
     }
-    sdkList.addAll(allSdks);
 
     myInterpreterComboBox.setModel(new CollectionComboBoxModel(sdkList, selection));
   }
