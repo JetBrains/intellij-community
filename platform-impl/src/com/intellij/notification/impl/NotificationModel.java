@@ -7,7 +7,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * @author spleaner
@@ -75,7 +78,7 @@ public class NotificationModel<T extends Notification> {
 
     if (tbr.size() > 0) {
       for (NotificationModelListener<T> listener : myListeners) {
-        listener.notificationsRemoved(tbr.toArray((T[]) Array.newInstance(tbr.get(0).getClass(), tbr.size())));
+        listener.notificationsRemoved(tbr.toArray((T[])Array.newInstance(tbr.get(0).getClass(), tbr.size())));
       }
     }
   }
@@ -127,7 +130,7 @@ public class NotificationModel<T extends Notification> {
         myNotifications.remove(notification);
       }
 
-      final T[] removed = result.toArray((T[]) Array.newInstance(result.get(0).getClass(), result.size()));
+      final T[] removed = result.toArray((T[])Array.newInstance(result.get(0).getClass(), result.size()));
       for (NotificationModelListener<T> listener : myListeners) {
         listener.notificationsRemoved(removed);
       }
@@ -137,7 +140,8 @@ public class NotificationModel<T extends Notification> {
   public List<T> getAll(@Nullable final String id, @NotNull NotNullFunction<T, Boolean> filter) {
     if (id == null) {
       return Collections.unmodifiableList(filterNotifications(filter));
-    } else {
+    }
+    else {
       final List<T> result = new ArrayList<T>();
       final LinkedList<T> filtered = filterNotifications(filter);
       for (T notification : filtered) {
@@ -154,7 +158,8 @@ public class NotificationModel<T extends Notification> {
   public List<T> getByType(@Nullable final NotificationType type, @NotNull NotNullFunction<T, Boolean> filter) {
     if (type == null) {
       return Collections.unmodifiableList(filterNotifications(filter));
-    } else {
+    }
+    else {
       final List<T> result = new ArrayList<T>();
       final LinkedList<T> filtered = filterNotifications(filter);
       for (T notification : filtered) {
@@ -171,7 +176,8 @@ public class NotificationModel<T extends Notification> {
     if (id != null) {
       final List<T> all = getAll(id, filter);
       if (all.size() > 0) {
-        remove((T[]) Array.newInstance(all.get(0).getClass(), all.size()));
+        T[] a = (T[])Array.newInstance(all.get(0).getClass(), all.size());
+        remove(all.toArray(a));
       }
     }
   }
