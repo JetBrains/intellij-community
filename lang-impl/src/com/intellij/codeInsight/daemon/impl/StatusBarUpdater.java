@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
@@ -20,7 +21,6 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 
 public class StatusBarUpdater {
   private final Project myProject;
-  private String myLastStatusText;
   private final CaretListener myCaretListener;
   private final UpdateStatusRunnable myUpdateStatusRunnable = new UpdateStatusRunnable();
 
@@ -34,13 +34,12 @@ public class StatusBarUpdater {
     };
     EditorFactory.getInstance().getEventMulticaster().addCaretListener(myCaretListener);
 
-    FileEditorManager.getInstance(myProject).addFileEditorManagerListener(
-      new FileEditorManagerAdapter() {
-        public void selectionChanged(FileEditorManagerEvent e) {
-          ApplicationManager.getApplication().invokeLater(myUpdateStatusRunnable);
-        }
+    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+      @Override
+      public void selectionChanged(FileEditorManagerEvent event) {
+        ApplicationManager.getApplication().invokeLater(myUpdateStatusRunnable);
       }
-    );
+    });
   }
 
   public void dispose() {
@@ -62,12 +61,12 @@ public class StatusBarUpdater {
     String text = info != null && info.description != null ? info.description : "";
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    if (!text.equals(myLastStatusText)){
-      statusBar.setInfo(text);
-      myLastStatusText = text;
-    }
     if (statusBar instanceof StatusBarEx) {
-      ((StatusBarEx)statusBar).update(editor);
+      StatusBarEx barEx = (StatusBarEx)statusBar;
+      if (!text.equals(barEx.getInfo())){
+        statusBar.setInfo(text);
+      }
+      barEx.update(editor);
     }
   }
 
