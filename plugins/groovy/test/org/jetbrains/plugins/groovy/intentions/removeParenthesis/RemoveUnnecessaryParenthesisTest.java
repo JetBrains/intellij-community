@@ -16,39 +16,40 @@
 
 package org.jetbrains.plugins.groovy.intentions.removeParenthesis;
 
-import com.intellij.idea.Bombed;
-import junit.framework.Test;
-import org.jetbrains.plugins.groovy.intentions.conversions.RemoveParenthesesFromMethodCallIntention;
-import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
-import org.jetbrains.plugins.groovy.util.PathUtil;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
-import java.util.Calendar;
+import java.util.List;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 30.01.2009
  */
-@Bombed(month = Calendar.JUNE, day = 30)
-public class RemoveUnnecessaryParenthesisTest extends SimpleGroovyFileSetTestCase {
-  protected static final String DATA_PATH = PathUtil.getDataPath(RemoveUnnecessaryParenthesisTest.class);
+//@Bombed(month = Calendar.JUNE, day = 30)
+public class RemoveUnnecessaryParenthesisTest extends JavaCodeInsightFixtureTestCase {
+  //protected static final String DATA_PATH = PathUtil.getDataPath(RemoveUnnecessaryParenthesisTest.class);
 
-  public RemoveUnnecessaryParenthesisTest() {
-    super(System.getProperty("path") != null ?
-        System.getProperty("path") :
-        DATA_PATH
-    );
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/intentions/removeParenth/";
   }
 
-  public String transform(String testName, String[] data) throws Exception {
-    RemoveParenthesesFromMethodCallIntention intention = new RemoveParenthesesFromMethodCallIntention();
+  public void testRemoveUnnecessaryParenthesis() throws Exception {
+    String fileBefore = getTestName(false) + ".groovy";
 
-    //intention.invoke(myProject, );
+    try {
+      List<IntentionAction> intentions = myFixture.getAvailableIntentions(fileBefore);
+      IntentionAction action = CodeInsightTestUtil.findIntentionByText(intentions, "Remove Unnecessary Parentheses");
+      myFixture.copyFileToProject(fileBefore);
 
+      assert action != null;
+      myFixture.launchAction(action);
 
-    return null;
-  }
-
-  public static Test suite(){
-    return new RemoveUnnecessaryParenthesisTest();
+      myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    }
+    catch (Throwable throwable) {
+      throwable.printStackTrace();
+    }
   }
 }
