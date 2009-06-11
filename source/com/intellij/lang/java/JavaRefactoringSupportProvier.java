@@ -3,6 +3,7 @@ package com.intellij.lang.java;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
@@ -39,5 +40,9 @@ public class JavaRefactoringSupportProvier implements RefactoringSupportProvider
   @Nullable
   public RefactoringActionHandler getExtractMethodHandler() {
     return new ExtractMethodHandler();
+  }
+
+  public RefactoringActionHandler getIntroduceParameterHandler() {
+    return new IntroduceParameterHandler();
   }
 }

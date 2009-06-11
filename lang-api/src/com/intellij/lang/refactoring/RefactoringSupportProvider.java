@@ -61,5 +61,11 @@ public interface RefactoringSupportProvider {
    */
   @Nullable RefactoringActionHandler getIntroduceFieldHandler();
 
+  /**
+   * @return  handler for introducing parameters in this language
+   * @see com.intellij.refactoring.RefactoringActionHandler
+   */
+  @Nullable RefactoringActionHandler getIntroduceParameterHandler();
+
   boolean doInplaceRenameFor(PsiElement element, PsiElement context);
 }

@@ -46,6 +46,10 @@ public class DefaultRefactoringSupportProvider implements RefactoringSupportProv
     return null;
   }
 
+  public RefactoringActionHandler getIntroduceParameterHandler() {
+    return null;
+  }
+
   public boolean doInplaceRenameFor(final PsiElement element, final PsiElement context) {
     return false;
   }

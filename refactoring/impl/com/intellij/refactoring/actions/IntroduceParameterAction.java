@@ -9,9 +9,11 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageRefactoringSupport;
 
 public class IntroduceParameterAction extends BaseRefactoringAction {
   protected boolean isAvailableInEditorOnly() {
@@ -23,6 +25,15 @@ public class IntroduceParameterAction extends BaseRefactoringAction {
   }
 
   protected RefactoringActionHandler getHandler(DataContext dataContext) {
-    return new IntroduceParameterHandler();
+    final Language language = LangDataKeys.LANGUAGE.getData(dataContext);
+    if (language != null) {
+      return LanguageRefactoringSupport.INSTANCE.forLanguage(language).getIntroduceParameterHandler();
+    }
+
+    return null;
+  }
+
+  protected boolean isAvailableForLanguage(Language language) {
+    return LanguageRefactoringSupport.INSTANCE.forLanguage(language).getIntroduceParameterHandler() != null;
   }
 }
