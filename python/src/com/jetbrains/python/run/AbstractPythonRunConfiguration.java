@@ -31,7 +31,7 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
   private String myInterpreterOptions = "";
   private String myWorkingDirectory = "";
   private String mySdkHome = "";
-  private boolean myPassParentEnvs;
+  private boolean myPassParentEnvs = true;
   private Map<String, String> myEnvs = new HashMap<String, String>();
   private boolean myUseModuleSdk;
 
