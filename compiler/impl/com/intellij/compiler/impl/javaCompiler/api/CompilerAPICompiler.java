@@ -82,7 +82,7 @@ public class CompilerAPICompiler implements BackendCompiler {
 
   @NotNull
   public Configurable createConfigurable() {
-    return new JavacConfigurable(JavacSettings.getInstance(myProject));
+    return new JavacConfigurable(CompilerAPISettings.getInstance(myProject));
   }
 
   @NotNull
@@ -114,7 +114,7 @@ public class CompilerAPICompiler implements BackendCompiler {
       public List<String> compute() {
         try {
           List<String> commandLine = new ArrayList<String>();
-          JavacSettings javacSettings = JavacSettings.getInstance(myProject);
+          JavacSettings javacSettings = CompilerAPISettings.getInstance(myProject);
           final List<String> additionalOptions =
             JavacCompiler.addAdditionalSettings(commandLine, javacSettings, false, false, false, false, false);
 
