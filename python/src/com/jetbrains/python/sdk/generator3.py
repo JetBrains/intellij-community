@@ -747,10 +747,10 @@ class ModuleRedeclarator(object):
 if __name__ == "__main__":
   from getopt import getopt
   import os
-  try:
+  if sys.version_info[0] > 2:
     import io  # in 3.0
     fopen = io.open
-  except ImportError:
+  else:
     fopen = open
   
   # handle cmdline
