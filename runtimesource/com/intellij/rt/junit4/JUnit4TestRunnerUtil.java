@@ -53,7 +53,7 @@ public class JUnit4TestRunnerUtil {
               appendTestClass(result, className);
             }
 
-            final Request allClasses = Request.classes(new IdeaComputer(packageName), getArrayOfClasses(result));
+            final Request allClasses = Request.classes(new IdeaComputer(packageName.length() == 0 ? "<default package>": packageName), getArrayOfClasses(result));
             return classMethods.isEmpty() ? allClasses : allClasses.filterWith(new Filter() {
               public boolean shouldRun(Description description) {
                 if (description.isTest()) {
