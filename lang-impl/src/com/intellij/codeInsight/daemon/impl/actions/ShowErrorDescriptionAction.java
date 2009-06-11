@@ -10,11 +10,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 
-public class ShowErrorDescriptionAction extends BaseCodeInsightAction{
+public class ShowErrorDescriptionAction extends BaseCodeInsightAction implements DumbAware {
   private static int width;
   private static boolean shouldShowDescription = false;
   private static boolean descriptionShown = true;
