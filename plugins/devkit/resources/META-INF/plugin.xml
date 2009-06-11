@@ -21,13 +21,10 @@
     <fileTemplateGroup implementation="org.jetbrains.idea.devkit.DevKitFileTemplatesFactory"/>
     <inspectionToolProvider implementation="org.jetbrains.idea.devkit.DevKitInspectionToolProvider"/>
     <iconProvider implementation="org.jetbrains.idea.devkit.DevKitIconProvider"/>
+    <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
   </extensions>
 
   <module-components>
-    <component>
-      <implementation-class>org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider</implementation-class>
-      <option name="type" value="PLUGIN_MODULE"/>
-    </component>
     <component>
       <implementation-class>org.jetbrains.idea.devkit.build.PluginBuildConfiguration</implementation-class>
       <option name="type" value="PLUGIN_MODULE"/>

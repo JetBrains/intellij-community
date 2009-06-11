@@ -15,25 +15,22 @@
  */
 package org.jetbrains.idea.devkit.module;
 
-import com.intellij.openapi.module.ModuleComponent;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.build.PluginModuleBuildConfEditor;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PluginModuleEditorsProvider implements ModuleComponent, ModuleConfigurationEditorProvider{
-  @NotNull
-  public String getComponentName() {
-    return "DevKit.PluginModuleEditorsProvider";
-  }
-
+public class PluginModuleEditorsProvider implements ModuleConfigurationEditorProvider{
 
   public ModuleConfigurationEditor[] createEditors(ModuleConfigurationState state) {
+    final Module module = state.getRootModel().getModule();
+    if (module.getModuleType() != PluginModuleType.getInstance()) return ModuleConfigurationEditor.EMPTY;
+
     final DefaultModuleConfigurationEditorFactory editorFactory = DefaultModuleConfigurationEditorFactory.getInstance();
     List<ModuleConfigurationEditor> editors = new ArrayList<ModuleConfigurationEditor>();
     editors.add(editorFactory.createModuleContentRootsEditor(state));
@@ -42,10 +39,4 @@ public class PluginModuleEditorsProvider implements ModuleComponent, ModuleConfi
     editors.add(new PluginModuleBuildConfEditor(state));
     return editors.toArray(new ModuleConfigurationEditor[editors.size()]);
   }
-
-  public void projectOpened() {}
-  public void projectClosed() {}
-  public void moduleAdded() {}
-  public void initComponent() {}
-  public void disposeComponent() {}
 }
