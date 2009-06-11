@@ -6,7 +6,7 @@
   <name>Python</name>
   <idea-version since-build="9013" until-build="9999"/>
   <description>Smart editing for Python scripts</description>
-  <version>2.0</version>
+  <version>2.1</version>
   <vendor url="http://www.jetbrains.com/idea/" logo="/com/jetbrains/python/python.png">JetBrains, Keith Lea</vendor>
 
   <xi:include href="/META-INF/python-plugin-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
