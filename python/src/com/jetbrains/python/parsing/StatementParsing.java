@@ -317,12 +317,16 @@ public class StatementParsing
     assertCurrentToken(PyTokenTypes.ASSERT_KEYWORD);
     final PsiBuilder.Marker assertStatement = myBuilder.mark();
     myBuilder.advanceLexer();
-    getExpressionParser().parseSingleExpression(false);
-    if (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
-      myBuilder.advanceLexer();
-      getExpressionParser().parseSingleExpression(false);
+    if (getExpressionParser().parseSingleExpression(false)) {
+      if (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
+        myBuilder.advanceLexer();
+        if (!getExpressionParser().parseSingleExpression(false)) {
+          myContext.getBuilder().error("Expression expected");
+        }
+      }
+      checkEndOfStatement(inSuite);
     }
-    checkEndOfStatement(inSuite);
+    else myContext.getBuilder().error("Expression expected");
     assertStatement.done(PyElementTypes.ASSERT_STATEMENT);
   }
 
