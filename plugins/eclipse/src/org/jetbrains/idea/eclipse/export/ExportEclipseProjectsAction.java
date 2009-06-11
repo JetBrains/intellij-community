@@ -7,14 +7,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -92,17 +93,13 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
             final EclipseClasspathWriter classpathWriter = new EclipseClasspathWriter(model);
             classpathWriter.writeClasspath(classpathEleemnt, null);
             final File classpathFile = new File(storageRoot, EclipseXml.CLASSPATH_FILE);
-            if (!classpathFile.exists()) {
-              if (!classpathFile.createNewFile()) continue;
-            }
+            if (!FileUtil.createIfDoesntExist(classpathFile)) continue;
             EclipseJDOMUtil.output(new Document(classpathEleemnt), classpathFile, project);
 
             final Element ideaSpecific = new Element(IdeaXml.COMPONENT_TAG);
             if (classpathWriter.writeIDEASpecificClasspath(ideaSpecific)) {
               final File emlFile = new File(storageRoot, module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX);
-              if (!emlFile.exists()) {
-                if (!emlFile.createNewFile()) continue;
-              }
+              if (!FileUtil.createIfDoesntExist(emlFile)) continue;
               EclipseJDOMUtil.output(new Document(ideaSpecific), emlFile, project);
             }
 

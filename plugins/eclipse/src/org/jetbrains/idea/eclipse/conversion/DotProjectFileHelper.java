@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -52,9 +53,7 @@ public class DotProjectFileHelper {
       nameElement.setText(module.getName());
 
       final File projectFile = new File(storageRoot, EclipseXml.PROJECT_FILE);
-      if (!projectFile.exists()) {
-        if (!projectFile.createNewFile()) return true;
-      }
+      if (!FileUtil.createIfDoesntExist(projectFile)) return true;
       EclipseJDOMUtil.output(doc, projectFile, module.getProject());
     }
     catch (JDOMException e) {

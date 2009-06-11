@@ -192,7 +192,7 @@ public class PrepareToDeployAction extends AnAction {
                                 final String pluginName,
                                 final Set<Library> libs,
                                 final ProgressIndicator progressIndicator) throws IOException {
-    if (zipFile.exists() || zipFile.createNewFile()) {
+    if (FileUtil.ensureCanCreateFile(zipFile)) {
       ZipOutputStream zos = null;
       try {
         zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
