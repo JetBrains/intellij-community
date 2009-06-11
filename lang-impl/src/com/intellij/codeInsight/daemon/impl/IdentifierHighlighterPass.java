@@ -18,7 +18,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
@@ -79,14 +78,13 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
         }
       });
 
-      PsiElement identifier;
-      if (PsiUtilBase.isUnderPsiRoot(myFile, myTarget) &&  // prevent expanding stubs
-          (identifier = HighlightUsagesHandler.getNameIdentifier(myTarget)) != null) {
+      final TextRange declRange = HighlightUsagesHandler.getNameIdentifierRange(myFile, myTarget);
+      if (declRange != null) {
         if (detector != null && detector.isDeclarationWriteAccess(myTarget)) {
-          myWriteAccessRanges.add(identifier.getTextRange());
+          myWriteAccessRanges.add(declRange);
         }
         else {
-          myReadAccessRanges.add(identifier.getTextRange());
+          myReadAccessRanges.add(declRange);
         }
       }
     }

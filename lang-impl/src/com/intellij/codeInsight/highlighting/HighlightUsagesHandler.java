@@ -27,15 +27,15 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.pom.PomTarget;
+import com.intellij.pom.PomTargetPsiElement;
+import com.intellij.pom.PsiDeclaredTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.impl.PomTargetPsiElementImpl;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.pom.PomTarget;
-import com.intellij.pom.PsiDeclaredTarget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -256,10 +256,10 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   }
 
   @Nullable
-  private static TextRange getNameIdentifierRange(PsiFile file, PsiElement element) {
+  public static TextRange getNameIdentifierRange(PsiFile file, PsiElement element) {
     final InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(element.getProject());
-    if (element instanceof PomTargetPsiElementImpl) {
-      final PomTarget target = ((PomTargetPsiElementImpl)element).getTarget();
+    if (element instanceof PomTargetPsiElement) {
+      final PomTarget target = ((PomTargetPsiElement)element).getTarget();
       if (target instanceof PsiDeclaredTarget) {
         final PsiDeclaredTarget declaredTarget = (PsiDeclaredTarget)target;
         final TextRange range = declaredTarget.getNameIdentifierRange();
@@ -270,6 +270,10 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
           }
         }
       }
+    }
+
+    if (!PsiUtilBase.isUnderPsiRoot(file, element)) {
+      return null;
     }
 
     PsiElement identifier = getNameIdentifier(element);
