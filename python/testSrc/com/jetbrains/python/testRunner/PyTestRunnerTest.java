@@ -82,7 +82,14 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     Collections.addAll(allArgs, args);
     final Output output = runJython(workDir, helpersDir.getPath(), allArgs.toArray(new String[allArgs.size()]));
     assertEquals("", output.stderr);
-    return output.stdout.split("\n");
+    List<String> result = new ArrayList<String>();
+    final String[] lines = output.stdout.split("\n");
+    for (String line : lines) {
+      if (!line.contains("*sys-package-mgr*")) {
+        result.add(line);
+      }
+    }
+    return result.toArray(new String[result.size()]);
   }
 
   private static Output runJython(String workDir, String pythonPath, String... args) throws ExecutionException {
