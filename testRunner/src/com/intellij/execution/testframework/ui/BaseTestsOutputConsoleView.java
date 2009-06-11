@@ -105,8 +105,8 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   }
 
   @NotNull
-  public AnAction[] createUpDownStacktraceActions() {
-    return getConsole().createUpDownStacktraceActions();
+  public AnAction[] createConsoleActions() {
+    return getConsole().createConsoleActions();
   }
 
   protected ConsoleView getConsole() {

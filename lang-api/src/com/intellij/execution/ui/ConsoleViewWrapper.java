@@ -87,8 +87,8 @@ public class ConsoleViewWrapper implements ConsoleView {
   }
 
   @NotNull
-  public AnAction[] createUpDownStacktraceActions() {
-    return myDelegate.createUpDownStacktraceActions();
+  public AnAction[] createConsoleActions() {
+    return myDelegate.createConsoleActions();
   }
 
 }

@@ -117,6 +117,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
 
   private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
   private final Set<ConsoleViewContentType> myDeferredTypes = new HashSet<ConsoleViewContentType>();
+  private final ArrayList<AnAction> customActions = new ArrayList<AnAction>();
 
   @TestOnly
   public Editor getEditor() {
@@ -1169,16 +1170,26 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     return ExecutionBundle.message("up.the.stack.trace");
   }
 
+  public void addCustomConsoleAction(@NotNull AnAction action) {
+    customActions.add(action);
+  }
+
   @NotNull
-  public AnAction[] createUpDownStacktraceActions() {
+  public AnAction[] createConsoleActions() {
+    //Initializing prev and next occurrences actions
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     AnAction prevAction = actionsManager.createPrevOccurenceAction(this);
     prevAction.getTemplatePresentation().setText(getPreviousOccurenceActionName());
     AnAction nextAction = actionsManager.createNextOccurenceAction(this);
     nextAction.getTemplatePresentation().setText(getNextOccurenceActionName());
-    return new AnAction[]{
-      prevAction, nextAction
-    };
+    //Initializing custom actions
+    AnAction[] consoleActions = new AnAction[2 + customActions.size()];
+    consoleActions[0] = prevAction;
+    consoleActions[1] = nextAction;
+    for (int i = 0; i < customActions.size(); ++i) {
+      consoleActions[i + 2] = customActions.get(i);
+    }
+    return consoleActions;
   }
 
   public void setEditorEnabled(boolean enabled) {

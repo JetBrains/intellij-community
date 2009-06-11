@@ -262,7 +262,7 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
 
     final DefaultActionGroup consoleActions = new DefaultActionGroup();
     if (myConsole instanceof ConsoleView) {
-      AnAction[] actions = ((ConsoleView)myConsole).createUpDownStacktraceActions();
+      AnAction[] actions = ((ConsoleView)myConsole).createConsoleActions();
       for (AnAction goaction : actions) {
         consoleActions.add(goaction);
       }

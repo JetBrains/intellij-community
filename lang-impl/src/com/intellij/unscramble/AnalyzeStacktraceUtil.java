@@ -80,7 +80,7 @@ public class AnalyzeStacktraceUtil {
 
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     toolbarActions.add(new CloseAction(executor, descriptor, project));
-    for (AnAction action: consoleView.createUpDownStacktraceActions()) {
+    for (AnAction action: consoleView.createConsoleActions()) {
       toolbarActions.add(action);
     }
     ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);

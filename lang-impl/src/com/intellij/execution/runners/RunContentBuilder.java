@@ -133,7 +133,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
   private void buildConsoleUiDefault(final ExecutionConsole console) {
     DefaultActionGroup consoleActions = new DefaultActionGroup();
     if (console instanceof ConsoleView) {
-      AnAction[] actions = ((ConsoleView)console).createUpDownStacktraceActions();
+      AnAction[] actions = ((ConsoleView)console).createConsoleActions();
       for (AnAction goaction: actions) {
         consoleActions.add(goaction);
       }

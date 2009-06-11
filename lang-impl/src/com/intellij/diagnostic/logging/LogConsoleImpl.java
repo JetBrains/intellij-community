@@ -127,7 +127,7 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
 
     DefaultActionGroup group = new DefaultActionGroup();
 
-    final AnAction[] actions = myConsole.createUpDownStacktraceActions();
+    final AnAction[] actions = myConsole.createConsoleActions();
     for (AnAction action : actions) {
       group.add(action);
     }

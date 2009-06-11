@@ -46,5 +46,5 @@ public interface ConsoleView extends ExecutionConsole{
   boolean canPause();
 
   @NotNull
-  AnAction[] createUpDownStacktraceActions();
+  AnAction[] createConsoleActions();
 }
