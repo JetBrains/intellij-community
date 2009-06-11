@@ -752,6 +752,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     private void registerDataFlowInspections() {
         m_inspectionClasses.add(ConstantValueVariableUseInspection .class);
         m_inspectionClasses.add(LawOfDemeterInspection.class);
+        m_inspectionClasses.add(OrredNotEqualExpressionInspection.class);
         m_inspectionClasses.add(ReuseOfLocalVariableInspection.class);
         m_inspectionClasses.add(TooBroadScopeInspection.class);
         m_inspectionClasses.add(UnnecessaryLocalVariableInspection.class);
@@ -935,6 +936,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(CollectionContainsUrlInspection.class);
         m_inspectionClasses.add(CollectionsMustHaveInitialCapacityInspection.class);
         m_inspectionClasses.add(ConstantStringInternInspection.class);
+        //m_inspectionClasses.add(DynamicRegexReplaceableByCompiledPatternInspection.class);
         m_inspectionClasses.add(EqualsHashCodeCalledOnUrlInspection.class);
         m_inspectionClasses.add(FieldMayBeStaticInspection.class);
         m_inspectionClasses.add(InnerClassMayBeStaticInspection.class);
