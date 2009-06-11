@@ -59,6 +59,7 @@ import java.util.*;
 )
 public class ModuleManagerImpl extends ModuleManager implements ProjectComponent, PersistentStateComponent<Element>, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
+  public static final Key<String> DISPOSED_MODULE_NAME = Key.create("DisposedNeverAddedModuleName");
   private final Project myProject;
   private ModuleModelImpl myModuleModel = new ModuleModelImpl();
 
@@ -926,6 +927,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       neverAddedModules.removeAll(myModuleModel.myPathToModule.values());
       for (final Module neverAddedModule : neverAddedModules) {
         ModuleImpl module = (ModuleImpl)neverAddedModule;
+        module.putUserData(DISPOSED_MODULE_NAME, module.getName());
         Disposer.dispose(module);
       }
 

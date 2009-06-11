@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -72,7 +73,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
         myModule = thatModule;
       } else { 
         myModule = null;
-        myModuleName = thatModule.getName();
+        myModuleName = thatModule.getUserData(ModuleManagerImpl.DISPOSED_MODULE_NAME);
       }
     }
     else {
