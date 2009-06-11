@@ -190,7 +190,7 @@ class FormatProcessor {
     if (model instanceof DocumentBasedFormattingModel) {
       final Document document = ((DocumentBasedFormattingModel)model).getDocument();
       if (document instanceof DocumentEx) return (DocumentEx)document; 
-    } else {
+    } else if (false) { // till issue with persistent range markers dropped fixed
       Document document = model.getDocumentModel().getDocument();
       if (document instanceof DocumentEx) return (DocumentEx)document;
     }
