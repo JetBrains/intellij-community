@@ -23,8 +23,6 @@ public abstract class XsltConfig {
         return ApplicationManager.getApplication().getComponent(XsltConfig.class);
     }
 
-    public abstract boolean isEnabled();
-
     public abstract boolean isRegisterSchema();
 
     public abstract UI createConfigUI();

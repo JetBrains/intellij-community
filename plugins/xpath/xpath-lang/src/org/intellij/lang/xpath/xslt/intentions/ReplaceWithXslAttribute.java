@@ -30,11 +30,9 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-
 import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.XsltConfig;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +54,7 @@ public class ReplaceWithXslAttribute implements IntentionAction {
     }
 
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        if (!XsltConfig.getInstance().isEnabled() || !XsltSupport.isXsltFile(file)) return false;
+        if (!XsltSupport.isXsltFile(file)) return false;
 
         final int offset = editor.getCaretModel().getOffset();
         final PsiElement element = file.findElementAt(offset);

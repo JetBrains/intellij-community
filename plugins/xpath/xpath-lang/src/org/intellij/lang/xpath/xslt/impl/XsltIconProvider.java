@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import gnu.trove.TIntObjectHashMap;
-import org.intellij.lang.xpath.xslt.XsltConfig;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 
 import javax.swing.*;
@@ -21,38 +20,33 @@ import javax.swing.*;
  */
 public class XsltIconProvider implements FileIconPatcher {
 
-    private static final Key<TIntObjectHashMap<Icon>> ICON_KEY = Key.create("XSLT_ICON");
-    private final XsltConfig myConfig;
+  private static final Key<TIntObjectHashMap<Icon>> ICON_KEY = Key.create("XSLT_ICON");
 
-    public XsltIconProvider(XsltConfig config) {
-        myConfig = config;
-    }
+  public Icon patchIcon(Icon baseIcon, VirtualFile file, int flags, Project project) {
+    if (project == null) return baseIcon;
 
-    public Icon patchIcon(Icon baseIcon, VirtualFile file, int flags, Project project) {
-        if (!myConfig.isEnabled() || project == null) return baseIcon;
-
-        final TIntObjectHashMap<Icon> icons = file.getUserData(ICON_KEY);
-        if (icons != null) {
-            final Icon icon = icons.get(flags);
-            if (icon != null) {
-                return icon;
-            }
-        }
-
-        final PsiFile element = PsiManager.getInstance(project).findFile(file);
-        if (element != null) {
-            if (XsltSupport.isXsltFile(element)) {
-                return cacheIcon(file, flags, icons, XsltSupport.createXsltIcon(baseIcon));
-            }
-        }
-        return baseIcon;
-    }
-
-    private static Icon cacheIcon(VirtualFile file, int flags, TIntObjectHashMap<Icon> icons, Icon icon) {
-        if (icons == null) {
-            file.putUserData(ICON_KEY, icons = new TIntObjectHashMap<Icon>(3));
-        }
-        icons.put(flags, icon);
+    final TIntObjectHashMap<Icon> icons = file.getUserData(ICON_KEY);
+    if (icons != null) {
+      final Icon icon = icons.get(flags);
+      if (icon != null) {
         return icon;
+      }
     }
+
+    final PsiFile element = PsiManager.getInstance(project).findFile(file);
+    if (element != null) {
+      if (XsltSupport.isXsltFile(element)) {
+        return cacheIcon(file, flags, icons, XsltSupport.createXsltIcon(baseIcon));
+      }
+    }
+    return baseIcon;
+  }
+
+  private static Icon cacheIcon(VirtualFile file, int flags, TIntObjectHashMap<Icon> icons, Icon icon) {
+    if (icons == null) {
+      file.putUserData(ICON_KEY, icons = new TIntObjectHashMap<Icon>(3));
+    }
+    icons.put(flags, icon);
+    return icon;
+  }
 }

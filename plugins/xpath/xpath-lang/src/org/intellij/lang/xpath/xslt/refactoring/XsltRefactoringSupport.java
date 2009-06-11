@@ -15,15 +15,13 @@
  */
 package org.intellij.lang.xpath.xslt.refactoring;
 
-import org.intellij.lang.xpath.xslt.XsltConfig;
-import org.intellij.lang.xpath.xslt.refactoring.extractTemplate.XsltExtractTemplateAction;
-import org.intellij.lang.xpath.xslt.refactoring.introduceParameter.XsltIntroduceParameterAction;
-
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import org.intellij.lang.xpath.xslt.refactoring.extractTemplate.XsltExtractTemplateAction;
+import org.intellij.lang.xpath.xslt.refactoring.introduceParameter.XsltIntroduceParameterAction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -39,12 +37,10 @@ public class XsltRefactoringSupport implements ApplicationComponent {
     private static final String EXTRACT_METHOD = "ExtractMethod";
     private static final String INLINE = "Inline";
 
-    private final XsltConfig myConfig;
     private final Map<String, HookedAction> myActions = new HashMap<String, HookedAction>();
     private boolean myInstalled;
 
-    public XsltRefactoringSupport(XsltConfig config) {
-        myConfig = config;
+    public XsltRefactoringSupport() {
     }
 
     @NotNull
@@ -53,9 +49,7 @@ public class XsltRefactoringSupport implements ApplicationComponent {
     }
 
     public void initComponent() {
-        if (myConfig.isEnabled()) {
-            install(false);
-        }
+        install(false);
     }
 
     public void disposeComponent() {

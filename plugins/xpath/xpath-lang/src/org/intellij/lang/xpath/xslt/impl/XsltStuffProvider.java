@@ -66,7 +66,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider, InspectionT
 
     @NotNull
     public UsageGroupingRule[] getActiveRules(Project project) {
-        return myConfig.isEnabled() ? myUsageGroupingRules : UsageGroupingRule.EMPTY_ARRAY;
+        return myUsageGroupingRules;
     }
 
     @NotNull
