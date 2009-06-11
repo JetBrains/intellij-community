@@ -264,7 +264,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           composite.cleanScope(scope);
         }
         actualUpdate(wasEverythingDirty, composite, builder, scope, vcs, changeListWorker, gate);
+        if (myUpdateException != null) break;
       }
+
+      final boolean takeChanges = (myUpdateException == null);
       
       synchronized (myDataLock) {
         // do same modifications to change lists as was done during update + do delayed notifications
@@ -272,12 +275,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           changeListWorker.notifyDoneProcessingChanges(myDelayedNotificator.getProxyDispatcher());
         }
         myModifier.exitUpdate();
+        // should be applied for notifications to be delivered (they were delayed)
         myModifier.apply(changeListWorker);
         myModifier.clearQueue();
         // update member from copy
-        myWorker.takeData(changeListWorker);
+        if (takeChanges) {
+          myWorker.takeData(changeListWorker);
+        }
 
-        if (updateUnversionedFiles) {
+        if (takeChanges && updateUnversionedFiles) {
           boolean statusChanged = !myComposite.equals(composite);
           myComposite = composite;
           if (statusChanged) {
@@ -285,7 +291,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           }
         }
 
-        updateIgnoredFiles(false);
+        if (takeChanges) {
+          updateIgnoredFiles(false);
+        }
         myShowLocalChangesInvalidated = false;
       }
       myChangesViewManager.scheduleRefresh();
