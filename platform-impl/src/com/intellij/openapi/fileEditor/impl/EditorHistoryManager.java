@@ -14,6 +14,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -68,6 +69,9 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
                 myEntriesList.add(new HistoryEntry(myProject, e));
               }
               catch (InvalidDataException e1) {
+                // OK here
+              }
+              catch (ProcessCanceledException e1) {
                 // OK here
               }
               catch (Exception anyException) {
