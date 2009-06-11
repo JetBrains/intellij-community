@@ -4,7 +4,6 @@
  */
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.meta.PsiMetaData;
@@ -39,14 +38,13 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
 
     Object o = item.getObject();
 
-    final boolean withVisibility = CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS;
-    int flags = withVisibility ? Iconable.ICON_FLAG_VISIBILITY : 0;
+    int flags = Iconable.ICON_FLAG_VISIBILITY;
     if (!real) {
       if (item.getObject() instanceof String) {
         return new EmptyIcon(0, 0);
       }
 
-      return new EmptyIcon(withVisibility ? SAMPLE_ICON.getIconWidth() * 2 : SAMPLE_ICON.getIconWidth(), SAMPLE_ICON.getIconHeight());
+      return new EmptyIcon(SAMPLE_ICON.getIconWidth() * 2, SAMPLE_ICON.getIconHeight());
     }
 
     if (o instanceof Iconable && !(o instanceof PsiElement)) {

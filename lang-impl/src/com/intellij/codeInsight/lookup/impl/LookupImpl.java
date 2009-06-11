@@ -90,6 +90,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private final JLabel myAdComponent;
   private volatile String myAdText;
   private volatile int myLookupWidth = 50;
+  private static final int LOOKUP_HEIGHT = 11;
 
   public LookupImpl(Project project, Editor editor, LookupElement[] items, @Nullable LookupItemPreferencePolicy itemPreferencePolicy){
     super(new JPanel(new BorderLayout()));
@@ -321,7 +322,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       }
       myList.setFixedCellHeight(myCellRenderer.getListCellRendererComponent(myList, myList.getModel().getElementAt(0), 0, false, false).getPreferredSize().height);
 
-      myList.setVisibleRowCount(Math.min(myList.getModel().getSize(), CodeInsightSettings.getInstance().LOOKUP_HEIGHT));
+      myList.setVisibleRowCount(Math.min(myList.getModel().getSize(), LOOKUP_HEIGHT));
 
       myAdComponent.setText(myAdText);
 

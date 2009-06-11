@@ -19,19 +19,17 @@ public class InsertionContext {
 
   private final OffsetMap myOffsetMap;
   private final char myCompletionChar;
-  private final boolean mySignatureSelected;
   private final LookupElement[] myElements;
   private final PsiFile myFile;
   private final Editor myEditor;
   private Runnable myLaterRunnable;
   private boolean myAddCompletionChar = true;
 
-  public InsertionContext(final OffsetMap offsetMap, final char completionChar, final boolean signatureSelected, final LookupElement[] elements,
+  public InsertionContext(final OffsetMap offsetMap, final char completionChar, final LookupElement[] elements,
                           @NotNull final PsiFile file,
                           @NotNull final Editor editor) {
     myOffsetMap = offsetMap;
     myCompletionChar = completionChar;
-    mySignatureSelected = signatureSelected;
     myElements = elements;
     myFile = file;
     myEditor = editor;
@@ -44,10 +42,6 @@ public class InsertionContext {
 
   public int getTailOffset() {
     return myOffsetMap.getOffset(TAIL_OFFSET);
-  }
-
-  public boolean isSignatureSelected() {
-    return mySignatureSelected;
   }
 
   @NotNull

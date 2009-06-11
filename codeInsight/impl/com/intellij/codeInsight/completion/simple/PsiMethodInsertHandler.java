@@ -45,8 +45,7 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
     final PsiFile file = context.getFile();
 
     final LookupElement[] allItems = context.getElements();
-    boolean signatureSelected = allItems.length > 1 && CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS ||
-                                item.getUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null;
+    boolean signatureSelected = allItems.length > 1 || item.getUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null;
 
     int offset = editor.getCaretModel().getOffset();
     final boolean needLeftParenth = isToInsertParenth(file.findElementAt(context.getStartOffset()));

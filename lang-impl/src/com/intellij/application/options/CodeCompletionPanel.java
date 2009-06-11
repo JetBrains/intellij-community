@@ -21,8 +21,6 @@ public class CodeCompletionPanel {
   private JTextField myFldJavadocAutocompletionDelayField;
   private JCheckBox myCbAutopopupJavaDoc;
   private JTextField myAutopopupJavaDocField;
-  private JTextField myFldLookupHeight;
-  private JCheckBox myCbShowSignaturesInLookup;
   private JCheckBox myCbAutocompleteCommonPrefix;
   private JCheckBox myCbShowStaticAfterInstance;
 
@@ -118,7 +116,6 @@ public class CodeCompletionPanel {
       break;
     }
     myCaseSensitiveCombo.setSelectedItem(value);
-    myCbShowSignaturesInLookup.setSelected(codeInsightSettings.SHOW_SIGNATURES_IN_LOOKUPS);
 
     myCbOnCodeCompletion.setSelected(codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION);
     myCbOnSmartTypeCompletion.setSelected(codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION);
@@ -142,8 +139,6 @@ public class CodeCompletionPanel {
     myAutopopupJavaDocField.setEnabled(codeInsightSettings.AUTO_POPUP_JAVADOC_INFO);
     myAutopopupJavaDocField.setText(String.valueOf(codeInsightSettings.JAVADOC_INFO_DELAY));
 
-    myFldLookupHeight.setText(String.valueOf(codeInsightSettings.LOOKUP_HEIGHT));
-
     myCbParameterInfoPopup.setSelected(codeInsightSettings.AUTO_POPUP_PARAMETER_INFO);
     myParameterInfoDelayField.setEnabled(codeInsightSettings.AUTO_POPUP_PARAMETER_INFO);
     myParameterInfoDelayField.setText(String.valueOf(codeInsightSettings.PARAMETER_INFO_DELAY));
@@ -158,7 +153,6 @@ public class CodeCompletionPanel {
 
     codeInsightSettings.COMPLETION_CASE_SENSITIVE = getCaseSensitiveValue();
 
-    codeInsightSettings.SHOW_SIGNATURES_IN_LOOKUPS = myCbShowSignaturesInLookup.isSelected();
     codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION = myCbOnCodeCompletion.isSelected();
     codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = myCbOnSmartTypeCompletion.isSelected();
     codeInsightSettings.AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION = myCbOnClassNameCompletion.isSelected();
@@ -177,7 +171,6 @@ public class CodeCompletionPanel {
     codeInsightSettings.JAVADOC_LOOKUP_DELAY = getIntegerValue(myFldJavadocAutocompletionDelayField.getText(), 0);
     codeInsightSettings.PARAMETER_INFO_DELAY = getIntegerValue(myParameterInfoDelayField.getText(), 0);
     codeInsightSettings.JAVADOC_INFO_DELAY = getIntegerValue(myAutopopupJavaDocField.getText(), 0);
-    codeInsightSettings.LOOKUP_HEIGHT = getIntegerValue(myFldLookupHeight.getText(), 0);
 
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
     if (project != null){
@@ -191,7 +184,6 @@ public class CodeCompletionPanel {
 
     isModified |= (getCaseSensitiveValue() != codeInsightSettings.COMPLETION_CASE_SENSITIVE);
 
-    isModified |= isModified(myCbShowSignaturesInLookup, codeInsightSettings.SHOW_SIGNATURES_IN_LOOKUPS);
     isModified |= isModified(myCbOnCodeCompletion, codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION);
     isModified |= isModified(myCbOnSmartTypeCompletion, codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION);
     isModified |= isModified(myCbOnClassNameCompletion, codeInsightSettings.AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION);
@@ -209,7 +201,6 @@ public class CodeCompletionPanel {
     isModified |= isModified(myFldJavadocAutocompletionDelayField, codeInsightSettings.JAVADOC_LOOKUP_DELAY, 0);
     isModified |= isModified(myParameterInfoDelayField, codeInsightSettings.PARAMETER_INFO_DELAY, 0);
     isModified |= isModified(myAutopopupJavaDocField, codeInsightSettings.JAVADOC_INFO_DELAY, 0);
-    isModified |= isModified(myFldLookupHeight, codeInsightSettings.LOOKUP_HEIGHT, 11);
 
     return isModified;
   }

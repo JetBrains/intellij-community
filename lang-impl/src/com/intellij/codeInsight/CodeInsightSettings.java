@@ -78,9 +78,6 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean AUTOCOMPLETE_COMMON_PREFIX = true;
   public boolean SHOW_STATIC_AFTER_INSTANCE = false;
 
-  public boolean SHOW_SIGNATURES_IN_LOOKUPS = true;
-  public int LOOKUP_HEIGHT = 11;
-
   public boolean SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO = false;
 
   public boolean SMART_INDENT_ON_ENTER = true;

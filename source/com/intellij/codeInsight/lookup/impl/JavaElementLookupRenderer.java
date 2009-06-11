@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -95,17 +94,15 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
   @Nullable
   private static String getTailText(final Object o, final LookupItem item) {
     String text = null;
-    if (showSignature(item)){
-      if (o instanceof PsiElement) {
-        final PsiElement element = (PsiElement)o;
-        if (element.isValid() && element instanceof PsiMethod){
-          PsiMethod method = (PsiMethod)element;
-          final PsiSubstitutor substitutor = (PsiSubstitutor) item.getAttribute(LookupItem.SUBSTITUTOR);
-          text = PsiFormatUtil.formatMethod(method,
-                                            substitutor != null ? substitutor : PsiSubstitutor.EMPTY,
-                                            PsiFormatUtil.SHOW_PARAMETERS,
-                                            PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
-        }
+    if (o instanceof PsiElement) {
+      final PsiElement element = (PsiElement)o;
+      if (element.isValid() && element instanceof PsiMethod){
+        PsiMethod method = (PsiMethod)element;
+        final PsiSubstitutor substitutor = (PsiSubstitutor) item.getAttribute(LookupItem.SUBSTITUTOR);
+        text = PsiFormatUtil.formatMethod(method,
+                                          substitutor != null ? substitutor : PsiSubstitutor.EMPTY,
+                                          PsiFormatUtil.SHOW_PARAMETERS,
+                                          PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
       }
     }
 
@@ -132,34 +129,30 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
   @Nullable
   private static String getTypeText(final Object o, final LookupItem item) {
     String text = null;
-    if (showSignature(item)) {
-      PsiType typeAttr = (PsiType)item.getAttribute(LookupItem.TYPE_ATTR);
-      if (typeAttr != null){
-        text = typeAttr.getPresentableText();
-      }
-      else {
-        if (o instanceof PsiElement) {
-          final PsiElement element = (PsiElement)o;
-          if (element.isValid()) {
-            if (element instanceof PsiMethod){
-              text = getTypeText(item, ((PsiMethod)element).getReturnType());
+    PsiType typeAttr = (PsiType)item.getAttribute(LookupItem.TYPE_ATTR);
+    if (typeAttr != null){
+      text = typeAttr.getPresentableText();
+    }
+    else {
+      if (o instanceof PsiElement) {
+        final PsiElement element = (PsiElement)o;
+        if (element.isValid()) {
+          if (element instanceof PsiMethod){
+            text = getTypeText(item, ((PsiMethod)element).getReturnType());
+          }
+          else if (element instanceof PsiVariable){
+            PsiVariable variable = (PsiVariable)element;
+            text = variable.getType().getPresentableText();
+          }
+          else if (element instanceof PsiExpression){
+            PsiExpression expression = (PsiExpression)element;
+            PsiType type = expression.getType();
+            if (type != null){
+              text = type.getPresentableText();
             }
-            else if (element instanceof PsiVariable){
-              PsiVariable variable = (PsiVariable)element;
-              text = variable.getType().getPresentableText();
-            }
-            else if (element instanceof PsiExpression){
-              PsiExpression expression = (PsiExpression)element;
-              PsiType type = expression.getType();
-              if (type != null){
-                text = type.getPresentableText();
-              }
-            }
-            else if (element instanceof BeanPropertyElement) {
-              if (showSignature(item)) {
-                return getTypeText(item, ((BeanPropertyElement)element).getPropertyType());
-              }
-            }
+          }
+          else if (element instanceof BeanPropertyElement) {
+            return getTypeText(item, ((BeanPropertyElement)element).getPropertyType());
           }
         }
       }
@@ -230,11 +223,6 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
       }
     }
     return false;
-  }
-
-  private static boolean showSignature(LookupItem item) {
-    return CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS ||
-           item.getUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null;
   }
 
   private static boolean isDeprecated(PsiElement element) {

@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,6 +41,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 
 public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
@@ -252,7 +254,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         insertLookupString(context, offset2, uniqueText);
         context.editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
-        lookupItemSelected(context, item, Lookup.AUTO_INSERT_SELECT_CHAR, false, items);
+        lookupItemSelected(context, item, Lookup.AUTO_INSERT_SELECT_CHAR, items);
       }
     }.execute();
   }
@@ -264,8 +266,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     editor.getSelectionModel().removeSelection();
   }
 
-  protected static void selectLookupItem(final LookupElement item, final boolean signatureSelected, final char completionChar, final CompletionContext context,
-                                        final LookupElement[] items) {
+  protected static void selectLookupItem(final LookupElement item, final char completionChar, final CompletionContext context, final LookupElement[] items) {
     final int caretOffset = context.editor.getCaretModel().getOffset();
 
     context.setSelectionEndOffset(caretOffset);
@@ -275,7 +276,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         caretOffset :
         Math.max(caretOffset, idEnd);
     context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, identifierEndOffset);
-    lookupItemSelected(context, item, completionChar, signatureSelected, items);
+    lookupItemSelected(context, item, completionChar, items);
   }
 
   private Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context, final FileCopyPatcher patcher) {
@@ -388,10 +389,11 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  private static void lookupItemSelected(final CompletionContext context, @NotNull final LookupElement item, final char completionChar, final boolean signatuireSelected, final LookupElement[] items) {
+  private static void lookupItemSelected(final CompletionContext context, @NotNull final LookupElement item, final char completionChar,
+                                         final LookupElement[] items) {
     final Editor editor = context.editor;
     final PsiFile file = context.file;
-    final InsertionContext context1 = new InsertionContext(context.getOffsetMap(), completionChar, signatuireSelected, items, file, editor);
+    final InsertionContext context1 = new InsertionContext(context.getOffsetMap(), completionChar, items, file, editor);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         final int idEndOffset = context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
@@ -432,7 +434,23 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return false;
   }
 
+  public static final Key<SoftReference<PsiFile>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
+
   protected PsiFile createFileCopy(PsiFile file) {
-    return (PsiFile)file.copy();
+    final SoftReference<PsiFile> reference = file.getUserData(FILE_COPY_KEY);
+    if (reference != null) {
+      final PsiFile copy = reference.get();
+      if (copy != null && copy.isValid() && copy.getClass().equals(file.getClass())) {
+        final Document document = copy.getViewProvider().getDocument();
+        assert document != null;
+        document.setText(file.getText());
+        PsiDocumentManager.getInstance(copy.getProject()).commitDocument(document);
+        return copy;
+      }
+    }
+
+    final PsiFile copy = (PsiFile)file.copy();
+    file.putUserData(FILE_COPY_KEY, new SoftReference<PsiFile>(copy));
+    return copy;
   }
 }

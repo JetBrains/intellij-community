@@ -4,7 +4,6 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -65,7 +64,7 @@ public class JavaMethodMergingContributor extends CompletionContributor {
         });
 
     final boolean justOneMethodName = !wereNonGrouped.get() && methodNameToItem.size() == 1;
-    if (!CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS || justOneMethodName) {
+    if (justOneMethodName) {
       for (final LookupElement item : methodNameToItem.values()) {
         result.addElement(item);
       }
