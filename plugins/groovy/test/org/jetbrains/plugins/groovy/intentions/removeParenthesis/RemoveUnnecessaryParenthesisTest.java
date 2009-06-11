@@ -26,10 +26,7 @@ import java.util.List;
  * User: Dmitry.Krasilschikov
  * Date: 30.01.2009
  */
-//@Bombed(month = Calendar.JUNE, day = 30)
 public class RemoveUnnecessaryParenthesisTest extends JavaCodeInsightFixtureTestCase {
-  //protected static final String DATA_PATH = PathUtil.getDataPath(RemoveUnnecessaryParenthesisTest.class);
-
   @Override
   protected String getBasePath() {
     return "/svnPlugins/groovy/testdata/intentions/removeParenth/";
