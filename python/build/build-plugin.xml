@@ -174,7 +174,7 @@
 
         <mkdir dir="${plugindir}/helpers"/>
         <copy todir="${plugindir}/helpers">
-          <fileset dir="${plugin.home}/helpers" includes="*.py"/>
+          <fileset dir="${plugin.home}/helpers" includes="**/*.py"/>
         </copy>
 
         <zip basedir="${zipdir}" destfile="${output}/${zipname}"/>
