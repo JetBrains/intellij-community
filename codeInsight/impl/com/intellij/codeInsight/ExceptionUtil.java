@@ -54,6 +54,12 @@ public class ExceptionUtil {
   @NotNull
   private static List<PsiClassType> getThrownExceptions(@NotNull PsiElement element) {
     if (element instanceof PsiClass) {
+      if (element instanceof PsiAnonymousClass) {
+        final PsiExpressionList argumentList = ((PsiAnonymousClass)element).getArgumentList();
+        if (argumentList != null){
+          return getThrownExceptions(argumentList);
+        }
+      }
       // filter class declaration in code
       return Collections.emptyList();
     }
