@@ -20,7 +20,7 @@
   </target>
 
   <target name="main" depends="clean,unzip">
-    <java failonerror="true" classname="org.apache.tools.ant.Main" fork="true">
+    <java failonerror="true" classname="org.apache.tools.ant.Main" fork="true" jvm="${jdk15.home}/bin/java">
 
       <jvmarg line="-Xms64m -Xmx512m"/>
       <jvmarg line="-Dbuild.number=${build.number}"/>
