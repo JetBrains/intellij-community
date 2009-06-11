@@ -141,6 +141,14 @@
             </fileset>
         </copy>
 
+        <mkdir dir="${classes.dir}/helpers"/>
+        <copy todir="${classes.dir}/helpers">
+          <fileset dir="${plugin.home}/helpers">
+              <patternset refid="resources.pt"/>
+              <type type="file"/>
+          </fileset>
+        </copy>
+
         <!-- copy plugin.xml -->
         <mkdir dir="${classes.dir}/META-INF"/>
         <copy todir="${classes.dir}/META-INF">

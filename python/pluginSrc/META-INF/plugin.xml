@@ -6,7 +6,7 @@
   <name>Python</name>
   <idea-version since-build="10338" until-build="10500"/>
   <description>Smart editing for Python scripts</description>
-  <version>2.1-Maia</version>
+  <version>2.1.1-Maia</version>
   <vendor url="http://www.jetbrains.com/idea/" logo="/com/jetbrains/python/python.png">JetBrains, Keith Lea</vendor>
   <change-notes>
     <![CDATA[
