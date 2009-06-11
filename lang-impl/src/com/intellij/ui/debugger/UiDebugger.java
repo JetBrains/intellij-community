@@ -2,7 +2,7 @@ package com.intellij.ui.debugger;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -33,7 +33,7 @@ public class UiDebugger extends JPanel implements Disposable {
       }
     });
 
-    myExtensions = ApplicationManager.getApplication().getComponents(UiDebuggerExtension.class);
+    myExtensions = Extensions.getExtensions(UiDebuggerExtension.EP_NAME);
     addToUi(myExtensions);
 
     myDialog = new DialogWrapper((Project)null, true) {

@@ -481,4 +481,7 @@
   <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper"/>
   <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JarFileReferenceHelper"/>
   <projectConfigurable implementation="com.intellij.openapi.vfs.encoding.FileEncodingConfigurable"/>
+
+  <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.PlaybackDebugger"/>
+  <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.DisposerDebugger"/>
 </extensions>
