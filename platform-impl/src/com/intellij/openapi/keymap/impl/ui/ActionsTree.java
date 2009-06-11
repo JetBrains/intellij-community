@@ -180,11 +180,11 @@ public class ActionsTree {
 
     ActionManager actionManager = ActionManager.getInstance();
     Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    Group mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists, filter, true, filter != null ?
+    Group mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists, filter, true, filter != null && filter.length() > 0 ?
                                                                                                       ActionsTreeUtil.isActionFiltered(filter, true) :
                                                                                                       (shortcut != null ? ActionsTreeUtil.isActionFiltered(actionManager, myKeymap, shortcut) : null));
-    if ((filter != null || shortcut != null) && mainGroup.initIds().isEmpty()){
-      mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists, filter, false, filter != null ?
+    if ((filter != null && filter.length() > 0 || shortcut != null) && mainGroup.initIds().isEmpty()){
+      mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists, filter, false, filter != null && filter.length() > 0 ?
                                                                                                    ActionsTreeUtil.isActionFiltered(filter, false) :
                                                                                                    ActionsTreeUtil.isActionFiltered(actionManager, myKeymap, shortcut));
     }
