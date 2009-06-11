@@ -415,12 +415,12 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
   private static final OurResolver RESOLVER = new OurResolver();
 
   public GroovyResolveResult advancedResolve() {
-    ResolveResult[] results = getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
+    ResolveResult[] results = getManager().getResolveCache().resolveWithCaching(this, RESOLVER, true, false);
     return results.length == 1 ? (GroovyResolveResult) results[0] : GroovyResolveResult.EMPTY_RESULT;
   }
 
   @NotNull
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    return (GroovyResolveResult[]) getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, incompleteCode);
+    return (GroovyResolveResult[]) getManager().getResolveCache().resolveWithCaching(this, RESOLVER, true, incompleteCode);
   }
 }
