@@ -15,25 +15,6 @@
  */
 package org.intellij.lang.xpath.xslt.context;
 
-import org.intellij.lang.xpath.XPathFile;
-import org.intellij.lang.xpath.context.ContextProvider;
-import org.intellij.lang.xpath.context.ContextType;
-import org.intellij.lang.xpath.context.NamespaceContext;
-import org.intellij.lang.xpath.context.VariableContext;
-import org.intellij.lang.xpath.context.functions.FunctionContext;
-import org.intellij.lang.xpath.psi.XPathExpression;
-import org.intellij.lang.xpath.psi.XPathType;
-import org.intellij.lang.xpath.validation.inspections.quickfix.XPathQuickFixFactory;
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
-import org.intellij.lang.xpath.xslt.psi.XsltElement;
-import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
-import org.intellij.lang.xpath.xslt.psi.XsltVariable;
-import org.intellij.lang.xpath.xslt.psi.XsltWithParam;
-import org.intellij.lang.xpath.xslt.psi.impl.XsltLanguage;
-import org.intellij.lang.xpath.xslt.util.NSDeclTracker;
-import org.intellij.lang.xpath.xslt.util.QNameUtil;
-
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
@@ -52,10 +33,27 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
+import gnu.trove.THashSet;
+import org.intellij.lang.xpath.XPathFile;
+import org.intellij.lang.xpath.context.ContextProvider;
+import org.intellij.lang.xpath.context.ContextType;
+import org.intellij.lang.xpath.context.NamespaceContext;
+import org.intellij.lang.xpath.context.VariableContext;
+import org.intellij.lang.xpath.context.functions.FunctionContext;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathType;
+import org.intellij.lang.xpath.validation.inspections.quickfix.XPathQuickFixFactory;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
+import org.intellij.lang.xpath.xslt.psi.XsltElement;
+import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
+import org.intellij.lang.xpath.xslt.psi.XsltVariable;
+import org.intellij.lang.xpath.xslt.psi.XsltWithParam;
+import org.intellij.lang.xpath.xslt.psi.impl.XsltLanguage;
+import org.intellij.lang.xpath.xslt.util.NSDeclTracker;
+import org.intellij.lang.xpath.xslt.util.QNameUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import gnu.trove.THashSet;
 
 import javax.xml.namespace.QName;
 import java.util.*;
@@ -102,8 +100,6 @@ public class XsltContextProvider extends ContextProvider {
 
     public PsiFile[] getRelatedFiles(final XPathFile file) {
 
-        final XsltSupport xsltSupport = XsltSupport.getInstance(file.getProject());
-
         final XmlAttribute attribute = PsiTreeUtil.getContextOfType(file, XmlAttribute.class, false);
         assert attribute != null;
 
@@ -115,7 +111,7 @@ public class XsltContextProvider extends ContextProvider {
         psiFile.accept(new XmlRecursiveElementVisitor() {
             @Override
             public void visitXmlAttribute(XmlAttribute attribute) {
-                final PsiFile[] _files = xsltSupport.getFiles(attribute);
+                final PsiFile[] _files = XsltSupport.getFiles(attribute);
                 for (PsiFile _file : _files) {
                     if (_file != file) files.add(_file);
                 }

@@ -16,15 +16,10 @@
 
 package org.intellij.lang.xpath.xslt.util;
 
-import org.intellij.lang.xpath.psi.XPathExpression;
-import org.intellij.lang.xpath.psi.XPathElement;
-import org.intellij.lang.xpath.psi.XPathVariableReference;
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.psi.XsltElement;
-import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
-import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
-
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -33,11 +28,15 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nullable;
+import org.intellij.lang.xpath.psi.XPathElement;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathVariableReference;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.psi.XsltElement;
+import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
+import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -98,7 +97,7 @@ public class XsltCodeInsightUtil {
     public static XPathExpression getXPathExpression(XsltElement xsltElement, String attributeName) {
         final XmlAttribute attribute = xsltElement.getTag().getAttribute(attributeName, null);
         if (attribute != null) {
-            final PsiFile[] files = XsltSupport.getInstance(xsltElement.getProject()).getFiles(attribute);
+            final PsiFile[] files = XsltSupport.getFiles(attribute);
             if (files.length > 0) {
                 assert files.length == 1 : "Unexpected number of XPathFiles in @" + attributeName + ": " + Arrays.toString(files);
                 return PsiTreeUtil.getChildOfType(files[0], XPathExpression.class);
@@ -178,7 +177,6 @@ public class XsltCodeInsightUtil {
 
         // collect all other possible unresolved references with the same name in the current template
         final Project project = currentUsageTag.getProject();
-        final XsltSupport xsltSupport = XsltSupport.getInstance(project);
         usageBlock.accept(new PsiRecursiveElementVisitor() {
             public void visitElement(PsiElement element) {
                 if (element instanceof XPathVariableReference) {
@@ -198,7 +196,7 @@ public class XsltCodeInsightUtil {
 
             public void visitXmlAttribute(XmlAttribute attribute) {
                 if (XsltSupport.isXPathAttribute(attribute)) {
-                    final PsiFile[] xpathFiles = xsltSupport.getFiles(attribute);
+                    final PsiFile[] xpathFiles = XsltSupport.getFiles(attribute);
                     for (PsiFile xpathFile : xpathFiles) {
                         xpathFile.accept(this);
                     }

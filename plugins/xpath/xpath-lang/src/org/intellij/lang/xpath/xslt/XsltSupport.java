@@ -15,34 +15,34 @@
  */
 package org.intellij.lang.xpath.xslt;
 
-import org.intellij.lang.xpath.xslt.impl.XsltChecker;
-
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.SmartList;
 import com.intellij.util.xml.NanoXmlUtil;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import org.intellij.lang.xpath.XPathFile;
+import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class XsltSupport implements ProjectComponent {
+public class XsltSupport {
 
     public static final String XALAN_EXTENSION_PREFIX = "http://xml.apache.org/xalan/";
     public static final String XSLT_NS = "http://www.w3.org/1999/XSL/Transform";
@@ -71,7 +71,21 @@ public abstract class XsltSupport implements ProjectComponent {
     }
 
     @NotNull
-    public abstract PsiFile[] getFiles(XmlAttribute attribute);
+    public static PsiFile[] getFiles(XmlAttribute attribute) {
+      final XmlAttributeValue value = attribute.getValueElement();
+      if (value != null) {
+        final List<PsiFile> files = new SmartList<PsiFile>();
+        ((PsiLanguageInjectionHost)value).processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+          public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+            if (injectedPsi instanceof XPathFile) {
+              files.add(injectedPsi);
+            }
+          }
+        });
+        return files.isEmpty() ? PsiFile.EMPTY_ARRAY : files.toArray(new PsiFile[files.size()]);
+      }
+      return PsiFile.EMPTY_ARRAY;
+    }
 
     public static boolean isXsltAttribute(@NotNull XmlAttribute attribute) {
         return isXsltTag(attribute.getParent());
@@ -277,10 +291,6 @@ public abstract class XsltSupport implements ProjectComponent {
     private static boolean isExtensionAvtAttribute(XmlAttribute attribute) {
         final String namespace = attribute.getParent().getNamespace();
         return namespace.startsWith(XALAN_EXTENSION_PREFIX) && "file".equals(attribute.getName());
-    }
-
-    public static XsltSupport getInstance(Project project) {
-        return project.getComponent(XsltSupport.class);
     }
 
     public static Icon createXsltIcon(Icon icon) {

@@ -90,8 +90,7 @@ public class ReplaceWithXslAttribute implements IntentionAction {
         final List<Pair<String, Boolean>> chunks = new ArrayList<Pair<String, Boolean>>();
         final StringBuilder builder = new StringBuilder(s.length());
 
-        final XsltSupport support = XsltSupport.getInstance(project);
-        final PsiFile[] files = support.getFiles(attr);
+        final PsiFile[] files = XsltSupport.getFiles(attr);
         int i=0, j=0;
         while (i < s.length()) {
             final char c = s.charAt(i++);

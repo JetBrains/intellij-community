@@ -5,7 +5,6 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
 import junit.framework.TestCase;
-import org.intellij.lang.xpath.xslt.XsltSupport;
 
 /*
 * Created by IntelliJ IDEA.
@@ -24,8 +23,6 @@ public abstract class TestBase extends TestCase {
         myFixture.setTestDataPath(getTestDataPath());
 
         myFixture.setUp();
-
-        myFixture.getProject().getComponent(XsltSupport.class).projectOpened();
     }
 
     private String getTestDataPath() {
@@ -38,7 +35,6 @@ public abstract class TestBase extends TestCase {
 
     @Override
     protected void tearDown() throws Exception {
-        myFixture.getProject().getComponent(XsltSupport.class).projectClosed();
         myFixture.tearDown();
     }
 

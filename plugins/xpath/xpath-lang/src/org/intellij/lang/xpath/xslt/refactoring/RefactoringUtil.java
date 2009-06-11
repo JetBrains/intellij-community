@@ -23,10 +23,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-
+import org.intellij.lang.xpath.psi.XPathElement;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
-import org.intellij.lang.xpath.psi.XPathElement;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 
@@ -90,10 +89,7 @@ public class RefactoringUtil {
 
     // TODO: verify
     static abstract class DeepXPathVistor extends XmlRecursiveElementVisitor {
-        private final XsltSupport myXsltSupport;
-
         protected DeepXPathVistor(Project project) {
-            myXsltSupport = XsltSupport.getInstance(project);
         }
 
         protected void superVisitElement(PsiElement element) {
@@ -116,7 +112,7 @@ public class RefactoringUtil {
 
         public void visitXmlAttribute(XmlAttribute attribute) {
             if (XsltSupport.isXPathAttribute(attribute)) {
-                final PsiFile[] xpathFiles = myXsltSupport.getFiles(attribute);
+                final PsiFile[] xpathFiles = XsltSupport.getFiles(attribute);
                 for (PsiFile xpathFile : xpathFiles) {
                     xpathFile.accept(this);
                 }

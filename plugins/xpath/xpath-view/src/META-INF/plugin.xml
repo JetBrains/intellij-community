@@ -121,6 +121,8 @@
     <multiHostInjector implementation="org.intellij.lang.xpath.xslt.impl.XPathLanguageInjector"/>
 
     <treeStructureProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltTreeStructureProvider"/>
+
+    <psi.referenceContributor implementation="org.intellij.lang.xpath.xslt.impl.XsltReferenceContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="XPathView">
@@ -153,10 +155,6 @@
     <component>
       <interface-class>org.intellij.lang.xpath.xslt.associations.FileAssociationsManager</interface-class>
       <implementation-class>org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsManagerImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>org.intellij.lang.xpath.xslt.XsltSupport</interface-class>
-      <implementation-class>org.intellij.lang.xpath.xslt.impl.XsltSupportImpl</implementation-class>
     </component>
   </project-components>
 
