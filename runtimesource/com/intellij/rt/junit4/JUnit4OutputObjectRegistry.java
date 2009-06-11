@@ -9,6 +9,9 @@ import com.intellij.rt.execution.junit.segments.Packet;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import org.junit.runner.Description;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 
 public class JUnit4OutputObjectRegistry extends OutputObjectRegistryEx {
   public JUnit4OutputObjectRegistry(PacketProcessor mainTransport, PacketProcessor auxilaryTransport) {
@@ -22,10 +25,10 @@ public class JUnit4OutputObjectRegistry extends OutputObjectRegistryEx {
   protected void addStringRepresentation(Object obj, Packet packet) {
     Description test = (Description)obj;
     if (test.isTest()) {
-      addTestMethod(packet, test.getMethodName(), test.getClassName());
+      addTestMethod(packet, getMethodName(test), getClassName(test));
     }
     else if (test.isSuite()) {
-      String fullName = test.getClassName();
+      String fullName = getClassName(test);
       if (fullName == null) {
         addUnknownTest(packet, test);
         return;
@@ -34,6 +37,29 @@ public class JUnit4OutputObjectRegistry extends OutputObjectRegistryEx {
     }
     else {
       addUnknownTest(packet, test);
+    }
+  }
+
+  public static String getClassName(Description description) {
+    try {
+      return description.getClassName();
+    }
+    catch (NoSuchMethodError e) {
+      final String displayName = description.getDisplayName();
+      Matcher matcher = Pattern.compile("(.*)\\((.*)\\)").matcher(displayName);
+      return matcher.matches() ? matcher.group(2) : displayName;
+    }
+  }
+
+  public static String getMethodName(Description description) {
+    try {
+      return description.getMethodName();
+    }
+    catch (NoSuchMethodError e) {
+      final String displayName = description.getDisplayName();
+      Matcher matcher = Pattern.compile("(.*)\\((.*)\\)").matcher(displayName);
+      if (matcher.matches()) return matcher.group(1);
+      return null;
     }
   }
 }

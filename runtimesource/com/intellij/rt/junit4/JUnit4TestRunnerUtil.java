@@ -1,13 +1,8 @@
 package com.intellij.rt.junit4;
 
-import org.junit.runner.Computer;
 import org.junit.runner.Description;
 import org.junit.runner.Request;
-import org.junit.runner.Runner;
 import org.junit.runner.manipulation.Filter;
-import org.junit.runners.Suite;
-import org.junit.runners.model.InitializationError;
-import org.junit.runners.model.RunnerBuilder;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -52,8 +47,23 @@ public class JUnit4TestRunnerUtil {
               }
               appendTestClass(result, className);
             }
+            String suiteName = packageName.length() == 0 ? "<default package>": packageName;
+            Class[] classes = getArrayOfClasses(result);
+            Request allClasses;
+            try {
+              Class.forName("org.junit.runner.Computer");
+              allClasses = JUnit46ClassesRequestBuilder.getClassesRequest(suiteName, classes);
+            }
+            catch (ClassNotFoundException e) {
+              try {
+                Class.forName("org.junit.internal.requests.ClassesRequest");
+                allClasses = JUnit4ClassesRequestBuilder.getClassesRequest(suiteName, classes);
+              }
+              catch (ClassNotFoundException e1) {
+                allClasses  = JUnit45ClassesRequestBuilder.getClassesRequest(suiteName, classes);
+              }
+            }
 
-            final Request allClasses = Request.classes(new IdeaComputer(packageName.length() == 0 ? "<default package>": packageName), getArrayOfClasses(result));
             return classMethods.isEmpty() ? allClasses : allClasses.filterWith(new Filter() {
               public boolean shouldRun(Description description) {
                 if (description.isTest()) {
@@ -128,29 +138,4 @@ public class JUnit4TestRunnerUtil {
   }
 
 
-  private static class IdeaComputer extends Computer {
-    private String myName;
-
-    public IdeaComputer(String name) {
-      myName = name;
-    }
-
-    public Suite getSuite(final RunnerBuilder builder, Class[] classes) throws InitializationError {
-      return new Suite(new RunnerBuilder() {
-        public Runner runnerForClass(Class testClass) throws Throwable {
-          return getRunner(builder, testClass);
-        }
-      }, classes) {
-        public Description getDescription() {
-          Description description = Description.createSuiteDescription(myName, getTestClass().getAnnotations());
-          List filteredChildren = getFilteredChildren();
-          for (int i = 0, filteredChildrenSize = filteredChildren.size(); i < filteredChildrenSize; i++) {
-            Object child = filteredChildren.get(i);
-            description.addChild(describeChild((Runner)child));
-          }
-          return description;
-        }
-      };
-    }
-  }
 }
