@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUMap;
@@ -126,10 +127,8 @@ public class PersistentEnumerator<Data> implements Forceable {
   public PersistentEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
     myDataDescriptor = dataDescriptor;
     myFile = file;
-    if (!file.exists()) {
-      if (!file.createNewFile()) {
-        throw new IOException("Cannot create empty file: " + file);
-      }
+    if (!FileUtil.createIfDoesntExist(file)) {
+      throw new IOException("Cannot create empty file: " + file);
     }
 
     myStorage = new ResizeableMappedFile(myFile, initialSize);

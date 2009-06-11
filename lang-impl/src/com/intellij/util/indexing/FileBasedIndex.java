@@ -31,9 +31,9 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -228,7 +228,7 @@ public class FileBasedIndex implements ApplicationComponent {
           performShutdown();
         }
       });
-      workInProgressFile.createNewFile();
+      FileUtil.createIfDoesntExist(workInProgressFile);
       saveRegisteredIndices(myIndices.keySet());
     }
   }
@@ -279,8 +279,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private static void saveRegisteredIndices(Collection<ID<?, ?>> ids) {
     final File file = getRegisteredIndicesFile();
     try {
-      file.getParentFile().mkdirs();
-      file.createNewFile();
+      FileUtil.createIfDoesntExist(file);
       final DataOutputStream os = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
       try {
         os.writeInt(ids.size());

@@ -217,12 +217,7 @@ public class FSRecords implements Disposable, Forceable {
     }
 
     private static void invalidateIndex() {
-      try {
-        new File(PathManager.getIndexRoot(), "corruption.marker").createNewFile();
-      }
-      catch (IOException e) {
-        // OK, index root probably doesn't exist
-      }
+      FileUtil.createIfDoesntExist(new File(PathManager.getIndexRoot(), "corruption.marker"));
     }
 
     private static File basePath() {

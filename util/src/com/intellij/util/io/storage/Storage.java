@@ -75,12 +75,8 @@ public class Storage implements Disposable, Forceable {
       deleteFiles(storageFilePath);
     }
 
-    if (!recordsFile.exists()) {
-      recordsFile.getParentFile().mkdirs();
-
-      recordsFile.createNewFile();
-      dataFile.createNewFile();
-    }
+    FileUtil.createIfDoesntExist(recordsFile);
+    FileUtil.createIfDoesntExist(dataFile);
 
     RecordsTable recordsTable = null;
     DataTable dataTable;
@@ -122,7 +118,7 @@ public class Storage implements Disposable, Forceable {
       try {
         File newDataFile = new File(path + ".storageData.backup");
         FileUtil.delete(newDataFile);
-        newDataFile.createNewFile();
+        FileUtil.createIfDoesntExist(newDataFile);
 
         File oldDataFile = new File(path + DATA_EXTENSION);
         DataTable newDataTable = new DataTable(newDataFile, myPool);

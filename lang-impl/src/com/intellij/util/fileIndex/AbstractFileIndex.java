@@ -105,7 +105,6 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
     FileUtil.createParentDirs(cacheFile);
     DataOutputStream output = null;
     try {
-      cacheFile.createNewFile();
       output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(cacheFile)));
       output.writeByte(getCurrentVersion());
       writeHeader(output);

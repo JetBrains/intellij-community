@@ -664,7 +664,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
   public VirtualFile createChildFile(final Object requestor, final VirtualFile parent, final String file) throws IOException {
     final File ioFile = new File(convertToIOFile(parent), file);
-    final boolean succ = auxCreateFile(parent, file) || ioFile.createNewFile();
+    final boolean succ = auxCreateFile(parent, file) || FileUtil.createIfDoesntExist(ioFile);
     auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
       public void consume(LocalFileOperationsHandler handler) throws IOException {
         handler.createFile(parent, file);
@@ -809,7 +809,6 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
             FileUtil.copyDir(physicalFile, physicalCopy);
           }
           else {
-            physicalCopy.createNewFile();
             FileUtil.copy(physicalFile, physicalCopy);
           }
         }
