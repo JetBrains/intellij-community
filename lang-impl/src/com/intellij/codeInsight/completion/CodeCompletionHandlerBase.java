@@ -26,6 +26,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -37,11 +39,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 
 public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
@@ -109,6 +111,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         result.setResult(initializationContext);
 
         for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
+          if (DumbService.getInstance(project).isDumb() && !(contributor instanceof DumbAware)) {
+            continue;
+          }
+
           contributor.beforeCompletion(initializationContext);
           assert !documentManager.isUncommited(document) : "Contributor " + contributor + " left the document uncommitted";
         }
