@@ -59,8 +59,7 @@ public class FunctionLookup extends AbstractLookup implements Iconable {
 
     public static Lookup newFunctionLookup(String name, Function functionDecl) {
         final CodeInsightSettings codeinsightsettings = CodeInsightSettings.getInstance();
-        final boolean b = codeinsightsettings.SHOW_SIGNATURES_IN_LOOKUPS;
-        final String presentation = b ? functionDecl.buildSignature(name) : name;
+        final String presentation = functionDecl.buildSignature(name);
         final String returnType = functionDecl.returnType.getName();
         final boolean hasParams = functionDecl.parameters.length > 0;
         return new FunctionLookup(name, presentation, returnType, hasParams);

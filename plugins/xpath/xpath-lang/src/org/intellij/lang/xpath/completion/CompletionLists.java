@@ -15,6 +15,11 @@
  */
 package org.intellij.lang.xpath.completion;
 
+import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.Icons;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.context.ContextProvider;
@@ -22,13 +27,6 @@ import org.intellij.lang.xpath.context.NamespaceContext;
 import org.intellij.lang.xpath.context.VariableContext;
 import org.intellij.lang.xpath.context.functions.Function;
 import org.intellij.lang.xpath.psi.*;
-
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.util.Icons;
 
 import javax.xml.namespace.QName;
 import java.util.*;
@@ -277,14 +275,12 @@ public class CompletionLists {
     }
 
     public static Collection<Lookup> getNodeTypeCompletions() {
-        final boolean b = CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS;
-
         final List<Lookup> lookups = new ArrayList<Lookup>(NODE_TYPE_FUNCS.size());
         for (String f : NODE_TYPE_FUNCS) {
             if (f.equals("processing-instruction")) {
-                lookups.add(new FunctionLookup(f, b ? f + "(pi-target?)" : f, null));
+                lookups.add(new FunctionLookup(f, f + "(pi-target?)", null));
             } else {
-                lookups.add(new FunctionLookup(f, b ? f + "()" : f, null));
+                lookups.add(new FunctionLookup(f, f + "()", null));
             }
         }
         return lookups;
