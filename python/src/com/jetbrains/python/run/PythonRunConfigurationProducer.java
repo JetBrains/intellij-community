@@ -4,9 +4,11 @@ import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PythonFileType;
 
 /**
@@ -34,6 +36,11 @@ public class PythonRunConfigurationProducer extends RuntimeConfigurationProducer
     PythonRunConfiguration configuration = (PythonRunConfiguration) settings.getConfiguration();
     configuration.setScriptName(mySourceFile.getVirtualFile().getPath());
     configuration.setName(configuration.suggestedName());
+    Module module = ModuleUtil.findModuleForPsiElement(location.getPsiElement());
+    if (module != null) {
+      configuration.setUseModuleSdk(true);
+      configuration.setModule(module);
+    }
     copyStepsBeforeRun(project, configuration);
     return settings;
   }
