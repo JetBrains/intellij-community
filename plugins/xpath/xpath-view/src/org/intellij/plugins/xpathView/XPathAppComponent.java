@@ -15,9 +15,6 @@
  */
 package org.intellij.plugins.xpathView;
 
-import org.intellij.plugins.xpathView.ui.ConfigUI;
-import org.intellij.plugins.xpathView.util.HighlighterUtil;
-
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,18 +23,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.LightweightHint;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
+import org.intellij.plugins.xpathView.util.HighlighterUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -51,7 +44,7 @@ import java.util.List;
  * <p/>
  * Also used to manage highlighters.
  */
-public class XPathAppComponent implements ApplicationComponent, JDOMExternalizable, Configurable {
+public class XPathAppComponent implements ApplicationComponent, JDOMExternalizable {
 
     private static final String ACTION_FIND_NEXT = "FindNext";
     private static final String ACTION_FIND_PREVIOUS = "FindPrevious";
@@ -60,7 +53,6 @@ public class XPathAppComponent implements ApplicationComponent, JDOMExternalizab
     private AnAction prevAction;
 
     private Config configuration = new Config();
-    private ConfigUI configUI;
 
     @NotNull
     public String getComponentName() {
@@ -96,44 +88,6 @@ public class XPathAppComponent implements ApplicationComponent, JDOMExternalizab
         configuration.writeExternal(element);
     }
 
-    public String getDisplayName() {
-        return "XPath Viewer";
-    }
-
-    public Icon getIcon() {
-        return IconLoader.findIcon("/icons/xml_big.png");
-    }
-
-    @Nullable
-    public String getHelpTopic() {
-      return "xpath.settings";
-    }
-
-    public JComponent createComponent() {
-        configUI = new ConfigUI(configuration);
-
-        return configUI;
-    }
-
-    public boolean isModified() {
-        if (!configUI.getConfig().equals(configuration)) {
-            return true;
-        }
-        return false;
-    }
-
-    public void apply() throws ConfigurationException {
-        configuration = configUI.getConfig();
-    }
-
-    public void reset() {
-        configUI.setConfig(configuration);
-    }
-
-    public void disposeUIResources() {
-        configUI = null;
-    }
-
     /**
      * Returns the configuration of this plugin
      *
@@ -144,7 +98,11 @@ public class XPathAppComponent implements ApplicationComponent, JDOMExternalizab
         return configuration;
     }
 
-    public static XPathAppComponent getInstance() {
+  public void setConfig(Config configuration) {
+    this.configuration = configuration;
+  }
+
+  public static XPathAppComponent getInstance() {
         return ApplicationManager.getApplication().getComponent(XPathAppComponent.class);
     }
 

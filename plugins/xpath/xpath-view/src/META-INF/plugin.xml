@@ -108,6 +108,7 @@
       <category>XSLT</category>
     </intentionAction>
 
+    <applicationConfigurable implementation="org.intellij.plugins.xpathView.XPathConfigurable"/>
     <applicationConfigurable implementation="org.intellij.lang.xpath.xslt.impl.XsltConfigImpl$UIImpl" />
 
     <fileIconPatcher implementation="org.intellij.lang.xpath.xslt.impl.XsltIconProvider"/>
