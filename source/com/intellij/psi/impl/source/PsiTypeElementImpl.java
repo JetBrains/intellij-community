@@ -132,6 +132,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
   public PsiJavaCodeReferenceElement getInnermostComponentReferenceElement() {
     TreeElement firstChildNode = getFirstChildNode();
+    if (firstChildNode == null) return null;
     if (firstChildNode.getElementType() == JavaElementType.TYPE) {
       return ((PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(firstChildNode)).getInnermostComponentReferenceElement();
     }
