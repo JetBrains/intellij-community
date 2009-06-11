@@ -54,19 +54,17 @@ class ClassPath {
   private static void printOrder(Loader loader, String resource) {
     if (ourOrder == null) {
       final File orderFile = new File(PathManager.getBinPath() + File.separator + "order.txt");
-      if (!orderFile.isFile()) {
-        try {
-          if (!orderFile.createNewFile()) return;
-          ourOrder = new PrintStream(new FileOutputStream(orderFile));
-          ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-            public void run() {
-              ourOrder.close();
-            }
-          });
-        }
-        catch (IOException e) {
-          return;
-        }
+      try {
+        if (!FileUtil.ensureCanCreateFile(orderFile)) return;
+        ourOrder = new PrintStream(new FileOutputStream(orderFile));
+        ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+          public void run() {
+            ourOrder.close();
+          }
+        });
+      }
+      catch (IOException e) {
+        return;
       }
     }
 

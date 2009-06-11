@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -357,8 +358,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
 
     File file = new File(dir, qname.replace('.', '/') + ".java");
-    file.getParentFile().mkdirs();
-    file.createNewFile();
+    FileUtil.createIfDoesntExist(file);
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getCanonicalPath().replace(File.separatorChar, '/'));
     VfsUtil.saveText(vFile, text);
     return ((PsiJavaFile)myPsiManager.findFile(vFile)).getClasses()[0];

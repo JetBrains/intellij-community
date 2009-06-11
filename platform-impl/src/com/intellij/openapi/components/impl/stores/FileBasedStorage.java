@@ -10,8 +10,8 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
@@ -206,18 +206,10 @@ public class FileBasedStorage extends XmlElementStorage {
 
   private VirtualFile ensureVirtualFile() {
     if (!myFile.exists()) {
-      try {
-        File ioFile = new File(myFile.getPath());
-        File parentFile = ioFile.getParentFile();
-        if (parentFile != null) {
-          parentFile.mkdirs();
-          ioFile.createNewFile();
-        }
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+      File ioFile = new File(myFile.getPath());
+      FileUtil.createIfDoesntExist(ioFile);
     }
+
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile);
 
     /*

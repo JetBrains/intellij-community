@@ -94,7 +94,7 @@ public class RepositoryHelper {
     if (temp.exists()) {
       FileUtil.delete(temp);
     }
-    temp.createNewFile();
+    FileUtil.createIfDoesntExist(temp);
     return temp;
   }
 

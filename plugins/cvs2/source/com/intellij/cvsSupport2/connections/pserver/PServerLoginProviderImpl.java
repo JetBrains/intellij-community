@@ -9,6 +9,7 @@ import com.intellij.cvsSupport2.util.CvsFileUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.PasswordPromptDialog;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
@@ -150,7 +151,7 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
 
   private static void storePassword(String stringConfiguration, String scrambledPassword) throws IOException {
     File passFile = getPassFile();
-    if (!passFile.exists()) passFile.createNewFile();
+    FileUtil.createIfDoesntExist(passFile);
     List<String> lines = CvsFileUtil.readLinesFrom(passFile);
     lines.add(stringConfiguration + " " + scrambledPassword);
     CvsFileUtil.storeLines(lines, passFile);

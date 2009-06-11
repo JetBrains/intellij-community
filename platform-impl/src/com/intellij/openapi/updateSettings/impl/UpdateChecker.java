@@ -472,9 +472,8 @@ public final class UpdateChecker {
   public static void saveDisabledToUpdatePlugins() {
     try {
       File plugins = new File(PathManager.getConfigPath(), DISABLED_UPDATE);
-      if (!plugins.isFile()) {
-        plugins.createNewFile();
-      }
+      FileUtil.ensureCanCreateFile(plugins);
+
       PrintWriter printWriter = null;
       try {
         printWriter = new PrintWriter(new BufferedWriter(new FileWriter(plugins)));

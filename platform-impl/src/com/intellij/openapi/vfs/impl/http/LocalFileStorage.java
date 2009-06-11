@@ -39,7 +39,7 @@ public class LocalFileStorage {
     prefix = PathUtil.suggestFileName(prefix);
     suffix = PathUtil.suggestFileName(suffix);
     File file = FileUtil.findSequentNonexistentFile(myStorageIODirectory, prefix, suffix);
-    file.createNewFile();
+    FileUtil.createIfDoesntExist(file);
     return file;
   }
 

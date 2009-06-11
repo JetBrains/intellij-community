@@ -84,15 +84,9 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     final File file = createTempDirectory();
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {
-        try {
-          final File file1 = new File(file, name);
-          file1.getParentFile().mkdirs();
-          file1.createNewFile();
-          return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+        final File file1 = new File(file, name);
+        FileUtil.createIfDoesntExist(file1);
+        return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
       }
     });
   }

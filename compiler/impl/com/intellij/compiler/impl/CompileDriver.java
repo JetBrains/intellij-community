@@ -229,8 +229,7 @@ public class CompileDriver {
 
     final File lockFile = getLockFile();
     try {
-      FileUtil.createParentDirs(statusFile);
-      statusFile.createNewFile();
+      FileUtil.createIfDoesntExist(statusFile);
       DataOutputStream out = new DataOutputStream(new FileOutputStream(statusFile));
       try {
         out.writeInt(status.CACHE_FORMAT_VERSION);
@@ -239,8 +238,7 @@ public class CompileDriver {
         out.close();
       }
       if (status.COMPILATION_IN_PROGRESS) {
-        FileUtil.createParentDirs(lockFile);
-        lockFile.createNewFile();
+        FileUtil.createIfDoesntExist(lockFile);
       }
       else {
         deleteFile(lockFile);

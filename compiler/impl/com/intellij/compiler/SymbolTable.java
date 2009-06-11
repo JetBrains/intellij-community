@@ -7,6 +7,7 @@ package com.intellij.compiler;
 
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NotNull;
@@ -48,8 +49,7 @@ public class SymbolTable {
   public SymbolTable(File file) throws CacheCorruptedException {
     try {
       if (!file.exists()) {
-        file.getParentFile().mkdirs();
-        file.createNewFile();
+        FileUtil.createIfDoesntExist(file);
       }
       myTrie = new PersistentStringEnumerator(file);
     }

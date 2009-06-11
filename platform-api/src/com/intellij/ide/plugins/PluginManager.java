@@ -944,7 +944,7 @@ public class PluginManager {
   public static void saveDisabledPlugins(Collection<String> ids, boolean append) throws IOException {
     File plugins = new File(PathManager.getConfigPath(), PluginManager.DISABLED_PLUGINS_FILENAME);
     if (!plugins.isFile()) {
-      plugins.createNewFile();
+      FileUtil.ensureCanCreateFile(plugins);
     }
     PrintWriter printWriter = null;
     try {

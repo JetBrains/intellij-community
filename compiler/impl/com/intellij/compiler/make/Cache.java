@@ -65,7 +65,7 @@ public class Cache {
   private File getOrCreateFile(final String fileName) throws IOException {
     final File file = new File(myStorePath, fileName);
     if (!file.exists()) {
-      file.createNewFile();
+      FileUtil.createIfDoesntExist(file);
     }
     return file;
   }

@@ -150,8 +150,7 @@ public class Storage {
   private void store(String fileName, Storer storer) {
     File f = new File(myDir, fileName);
     try {
-      myDir.mkdirs();
-      f.createNewFile();
+      FileUtil.createParentDirs(f);
       OutputStream fs = new BufferedOutputStream(new FileOutputStream(f));
       try {
         storer.store(new Stream(fs));
@@ -192,13 +191,7 @@ public class Storage {
   private void markAsBroken(BrokenStorageException cause) {
     LOG.warn("Local History storage is broken. It will be rebuilt on project reopen.", cause);
     isBroken = true;
-    try {
-      myDir.mkdirs();
-      new File(myDir, BROKEN_MARK_FILE).createNewFile();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    FileUtil.createIfDoesntExist(new File(myDir, BROKEN_MARK_FILE));
   }
 
   public void purgeContents(List<Content> contents) {

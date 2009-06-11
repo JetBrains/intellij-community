@@ -220,12 +220,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     assertNotNull(baseDir);
     final File moduleFile = new File(baseDir.getPath().replace('/', File.separatorChar),
                                      moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-    try {
-      moduleFile.createNewFile();
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+    FileUtil.createIfDoesntExist(moduleFile);
     myFilesToDelete.add(moduleFile);
     final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
     Module module = ModuleManager.getInstance(myProject).newModule(virtualFile.getPath(), getModuleType());

@@ -297,18 +297,7 @@ public class FileTemplateConfigurable implements Configurable {
       return false;
     }
     final File tempFile = new File (FileUtil.getTempDirectory() + File.separator + filename);
-    if (!tempFile.exists ()) {
-      try {
-        if (!tempFile.createNewFile()) {
-          return false;
-        }
-        FileUtil.delete(tempFile);
-      }
-      catch (IOException e) {
-        return false;
-      }
-    }
-    return true;
+    return FileUtil.ensureCanCreateFile(tempFile);
   }
 
   public void reset() {

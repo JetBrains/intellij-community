@@ -3,6 +3,7 @@ package com.intellij.cvsSupport2.util;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.javacvsImpl.FileReadOnlyHandler;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
@@ -18,9 +19,10 @@ public class CvsFileUtil {
   }
 
   public static List<String> readLinesFrom(File file) throws IOException {
-    if (!file.exists()) file.createNewFile();
+    FileUtil.createIfDoesntExist(file);
     ArrayList<String> result = new ArrayList<String>();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), CvsApplicationLevelConfiguration.getCharset()));
+    BufferedReader reader =
+      new BufferedReader(new InputStreamReader(new FileInputStream(file), CvsApplicationLevelConfiguration.getCharset()));
     try {
       String line;
       while ((line = reader.readLine()) != null) result.add(line);
@@ -45,16 +47,14 @@ public class CvsFileUtil {
 
     String separator = getLineSeparatorFor(file);
 
-    if (!file.exists()) file.createNewFile();
+    FileUtil.createIfDoesntExist(file);
 
-    Writer writer;
-    if (!file.exists()) {
-      file.createNewFile();
-    }
     if (!file.canWrite()) {
       new FileReadOnlyHandler().setFileReadOnly(file, false);
     }
-    writer = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(file)), CvsApplicationLevelConfiguration.getCharset());
+
+    Writer writer =
+      new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(file)), CvsApplicationLevelConfiguration.getCharset());
 
     try {
       for (final String line : lines) {
@@ -69,7 +69,7 @@ public class CvsFileUtil {
   }
 
   public static void appendLineToFile(String line, File file) throws IOException {
-    if (!file.exists()) file.createNewFile();
+    FileUtil.createIfDoesntExist(file);
     List<String> lines = readLinesFrom(file);
     lines.add(line);
     storeLines(lines, file);

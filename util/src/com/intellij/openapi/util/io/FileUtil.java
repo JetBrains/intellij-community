@@ -466,6 +466,26 @@ public class FileUtil {
     return false;
   }
 
+  public static boolean createIfDoesntExist(File file) {
+    if (file.exists()) return true;
+    try {
+      if (!createParentDirs(file)) return false;
+
+      OutputStream s = new FileOutputStream(file);
+      s.close();
+      return true;
+    }
+    catch (IOException e) {
+      return false;
+    }
+  }
+
+  public static boolean ensureCanCreateFile(File file) {
+    if (file.exists()) return file.canWrite();
+    if (!createIfDoesntExist(file)) return false;
+    return delete(file);
+  }
+
   public static void copy(File fromFile, File toFile) throws IOException {
     FileOutputStream fos;
     try {
@@ -478,8 +498,7 @@ public class FileUtil {
         ioException.initCause(e);
         throw ioException;
       }
-      parentFile.mkdirs();
-      toFile.createNewFile();
+      createParentDirs(toFile);
       fos = new FileOutputStream(toFile);
     }
 
@@ -882,6 +901,7 @@ public class FileUtil {
   }
 
   public static void writeToFile(final File file, final byte[] text) throws IOException {
+    createParentDirs(file);
     OutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
     try {
       stream.write(text);

@@ -13,6 +13,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,15 +70,10 @@ public class DummySourceGeneratingCompiler implements SourceGeneratingCompiler{
     });
     final List<GenerationItem> success = new ArrayList<GenerationItem>();
     for (GenerationItem item1 : items) {
-      try {
-        GenerationItem item = item1;
-        File file = new File(rootPath + File.separator + item.getPath());
-        file.getParentFile().mkdirs();
-        file.createNewFile();
-        success.add(item);
-      }
-      catch (IOException e) {
-      }
+      GenerationItem item = item1;
+      File file = new File(rootPath + File.separator + item.getPath());
+      FileUtil.createIfDoesntExist(file);
+      success.add(item);
     }
     return success.toArray(new GenerationItem[success.size()]);
   }

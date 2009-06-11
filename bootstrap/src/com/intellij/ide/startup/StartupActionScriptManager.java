@@ -93,19 +93,7 @@ public class StartupActionScriptManager {
   }
 
   private static boolean canCreateFile(File file) {
-    if (file.exists()) {
-      return file.canWrite();
-    }
-    else {
-      try {
-        file.createNewFile();
-        file.delete();
-        return true;
-      }
-      catch (IOException e) {
-        return false;
-      }
-    }
+    return FileUtil.ensureCanCreateFile(file);
   }
 
   public interface ActionCommand {

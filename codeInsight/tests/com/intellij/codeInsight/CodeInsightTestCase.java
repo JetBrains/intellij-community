@@ -2,6 +2,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.DataManager;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -32,7 +33,6 @@ import com.intellij.testFramework.PsiTestData;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.injected.editor.EditorWindow;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -261,8 +261,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       VirtualFile toFile = toDir.findFileByRelativePath(relativePath);
       if (toFile == null) {
         final File file = new File(toDir.getPath(), relativePath);
-        file.getParentFile().mkdirs();
-        file.createNewFile();
+        FileUtil.createIfDoesntExist(file);
         toFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
         assertNotNull(file.getCanonicalPath(), toFile);
       }

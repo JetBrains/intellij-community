@@ -396,8 +396,7 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
           }
         }
         catch (FileNotFoundException e) {
-          FileUtil.createParentDirs(file);
-          if (!file.createNewFile()) return;
+          if (!FileUtil.createIfDoesntExist(file)) return;
           myFileStream = new BufferedReader(new FileReader(file));
         }
       }
