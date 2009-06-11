@@ -119,6 +119,8 @@
     <lang.documentationProvider language="XPath" implementationClass="org.intellij.lang.xpath.xslt.impl.XsltDocumentationProvider"/>
 
     <multiHostInjector implementation="org.intellij.lang.xpath.xslt.impl.XPathLanguageInjector"/>
+
+    <treeStructureProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltTreeStructureProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="XPathView">
