@@ -108,7 +108,10 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     myInterpreterOptions = JDOMExternalizerUtil.readField(element, "INTERPRETER_OPTIONS");
-    myPassParentEnvs = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "PARENT_ENVS"));
+    final String parentEnvs = JDOMExternalizerUtil.readField(element, "PARENT_ENVS");
+    if (parentEnvs != null) {
+      myPassParentEnvs = Boolean.parseBoolean(parentEnvs);
+    }
     mySdkHome = JDOMExternalizerUtil.readField(element, "SDK_HOME");
     myWorkingDirectory = JDOMExternalizerUtil.readField(element, "WORKING_DIRECTORY");
     myUseModuleSdk = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "IS_MODULE_SDK"));
