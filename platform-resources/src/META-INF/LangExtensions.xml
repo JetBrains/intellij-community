@@ -72,6 +72,9 @@
   <applicationService serviceInterface="com.intellij.pom.references.PomReferenceService"
                   serviceImplementation="com.intellij.pom.references.PomReferenceServiceImpl"/>
 
+  <projectService serviceInterface="com.intellij.pom.references.PomService"
+                  serviceImplementation="com.intellij.pom.references.PomServiceImpl"/>
+
   <applicationService serviceInterface="com.intellij.psi.meta.MetaDataRegistrar"
                       serviceImplementation="com.intellij.psi.impl.meta.MetaRegistry"/>
 

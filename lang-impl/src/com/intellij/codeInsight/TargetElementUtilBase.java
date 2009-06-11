@@ -22,8 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.PomDeclarationSearcher;
 import com.intellij.pom.PomTarget;
+import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PomTargetPsiElementImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.CollectionFactory;
@@ -194,12 +194,7 @@ public class TargetElementUtilBase {
       for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
         searcher.findDeclarationsAt(parent, offset, consumer);
         if (!targets.isEmpty()) {
-          PomTarget target = targets.get(0);
-          if (target instanceof PsiElement) {
-            return (PsiElement)target;
-          }
-
-          return new PomTargetPsiElementImpl(element.getProject(), target);
+          return PomService.convertToPsi(element.getProject(), targets.get(0));
         }
       }
       offset -= parent.getStartOffsetInParent();
