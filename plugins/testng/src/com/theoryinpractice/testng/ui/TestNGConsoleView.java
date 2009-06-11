@@ -272,8 +272,8 @@ public class TestNGConsoleView implements ConsoleView
     }
 
   @NotNull
-  public AnAction[] createUpDownStacktraceActions() {
-    return console.createUpDownStacktraceActions();
+  public AnAction[] createConsoleActions() {
+    return console.createConsoleActions();
   }
 
   public void setView(final List<Printable> output, final int i) {
@@ -298,7 +298,7 @@ public class TestNGConsoleView implements ConsoleView
         }
     }
 
-    public static class Chunk implements Printable
+  public static class Chunk implements Printable
     {
         public String text;
         public ConsoleViewContentType contentType;
