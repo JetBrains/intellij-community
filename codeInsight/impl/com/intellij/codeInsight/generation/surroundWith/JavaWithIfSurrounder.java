@@ -40,6 +40,10 @@ public class JavaWithIfSurrounder extends JavaStatementsSurrounder{
     }
 
     ifStatement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(ifStatement);
+    if (ifStatement == null) {
+      return null;
+    }
+
     final PsiExpression condition = ifStatement.getCondition();
     if (condition != null) {
       TextRange range = condition.getTextRange();
