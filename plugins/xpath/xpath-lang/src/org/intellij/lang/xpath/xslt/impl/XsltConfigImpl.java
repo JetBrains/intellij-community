@@ -17,8 +17,9 @@ package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.lang.*;
-import com.intellij.navigation.ChooseByNameRegistry;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageFormatting;
+import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -37,7 +38,6 @@ import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.xslt.XsltConfig;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.psi.impl.XsltLanguage;
-import org.intellij.lang.xpath.xslt.validation.XsltAnnotator;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -66,18 +66,7 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
 
     @SuppressWarnings({ "StringEquality" })
     public void initComponent() {
-      ChooseByNameRegistry.getInstance().contributeToSymbols(new XsltChooseByNameContributor());
-
       final Language xmlLang = StdFileTypes.XML.getLanguage();
-      final Language xpathLang = XPathFileType.XPATH.getLanguage();
-
-      final XsltAnnotator annotator = new XsltAnnotator();
-      LanguageAnnotators.INSTANCE.addExplicitExtension(xpathLang, annotator);
-//            xmlLang.injectAnnotator(annotator);
-
-      final XsltDocumentationProvider provider = new XsltDocumentationProvider();
-      LanguageDocumentation.INSTANCE.addExplicitExtension(xmlLang, provider);
-      LanguageDocumentation.INSTANCE.addExplicitExtension(xpathLang, provider);
 
       RenameInputValidatorRegistry.getInstance()
         .registerInputValidator(psiElement().withLanguage(XsltLanguage.INSTANCE), new RenameInputValidator() {

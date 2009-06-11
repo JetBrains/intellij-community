@@ -112,6 +112,13 @@
     <applicationConfigurable implementation="org.intellij.lang.xpath.xslt.impl.XsltConfigImpl$UIImpl" />
 
     <fileIconPatcher implementation="org.intellij.lang.xpath.xslt.impl.XsltIconProvider"/>
+    <gotoSymbolContributor implementation="org.intellij.lang.xpath.xslt.impl.XsltChooseByNameContributor"/>
+    <annotator language="XPath" implementationClass="org.intellij.lang.xpath.xslt.validation.XsltAnnotator"/>
+
+    <lang.documentationProvider language="XML" implementationClass="org.intellij.lang.xpath.xslt.impl.XsltDocumentationProvider"/>
+    <lang.documentationProvider language="XPath" implementationClass="org.intellij.lang.xpath.xslt.impl.XsltDocumentationProvider"/>
+
+    <multiHostInjector implementation="org.intellij.lang.xpath.xslt.impl.XPathLanguageInjector"/>
   </extensions>
 
   <extensions defaultExtensionNs="XPathView">
@@ -135,9 +142,6 @@
     </component>
     <component>
       <implementation-class>org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringSupport</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.intellij.lang.xpath.xslt.impl.XsltIconProvider</implementation-class>
     </component>
   </application-components>
 
