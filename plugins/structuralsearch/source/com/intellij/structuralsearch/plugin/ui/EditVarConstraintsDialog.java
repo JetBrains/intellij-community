@@ -26,7 +26,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.impl.matcher.predicates.ScriptPredicate;
+import com.intellij.structuralsearch.ReplacementVariableDefinition;
+import com.intellij.structuralsearch.NamedScriptableDefinition;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.EditorTextField;
 
@@ -43,11 +47,9 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
+ * @author Maxim.Mossienko
  * Date: Mar 25, 2004
  * Time: 1:52:18 PM
- * To change this template use File | Settings | File Templates.
  */
 class EditVarConstraintsDialog extends DialogWrapper {
   private JTextField maxoccurs;
@@ -79,22 +81,14 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private ComboboxWithBrowseButton withinCombo;
   private JPanel containedInConstraints;
   private JCheckBox invertWithinIn;
-  private JPanel variableConstraints;
   private JPanel expressionConstraints;
   private JPanel occurencePanel;
+  private JPanel textConstraintsPanel;
 
   private static Project myProject;
 
   EditVarConstraintsDialog(final Project project,SearchModel _model,List<Variable> _variables, boolean replaceContext, FileType fileType) {
     super(project,false);
-
-    //regexp.getDocument().addDocumentListener(
-    //  new DocumentAdapter() {
-    //    public void documentChanged(DocumentEvent event) {
-    //      doProcessing(applyWithinTypeHierarchy, regexp);
-    //    }
-    //  }
-    //);
 
     variables = _variables;
     model = _model;
@@ -227,6 +221,9 @@ class EditVarConstraintsDialog extends DialogWrapper {
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
           String name = ((Variable)value).getName();
           if (Configuration.CONTEXT_VAR_NAME.equals(name)) name = SSRBundle.message("complete.match.variable.name");
+          if (isReplacementVariable(name)) {
+            name = stripReplacementVarDecoration(name);
+          }
           return super.getListCellRendererComponent(list, name, index, isSelected, cellHasFocus);
         }
       }
@@ -248,6 +245,15 @@ class EditVarConstraintsDialog extends DialogWrapper {
     init();
 
     if (variables.size() > 0) parameterList.setSelectedIndex(0);
+  }
+
+  private static String stripReplacementVarDecoration(String name) {
+    name = name.substring(0, name.length() - ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX.length());
+    return name;
+  }
+
+  private static boolean isReplacementVariable(String name) {
+    return name.endsWith(ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX);
   }
 
   private static void doProcessing(JCheckBox checkBox, EditorTextField editor) {
@@ -274,13 +280,15 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   void copyValuesFromUI(Variable var) {
-    MatchVariableConstraint varInfo = (var!=null)?model.getConfig().getMatchOptions().getVariableConstraint(var.getName()):null;
+    String varName = var.getName();
+    Configuration configuration = model.getConfig();
 
-    if (varInfo == null) {
-      varInfo = new MatchVariableConstraint();
-      varInfo.setName(var.getName());
-      model.getConfig().getMatchOptions().addVariableConstraint(varInfo);
+    if (isReplacementVariable(varName)) {
+      saveScriptInfo(getOrAddReplacementVariableDefinition(varName, configuration));
+      return;
     }
+
+    MatchVariableConstraint varInfo = getOrAddVariableConstraint(varName, configuration);
 
     varInfo.setInvertReadAccess(notRead.isSelected());
     varInfo.setReadAccess(read.isSelected());
@@ -309,15 +317,58 @@ class EditVarConstraintsDialog extends DialogWrapper {
     varInfo.setInvertFormalType(invertFormalArgType.isSelected());
     varInfo.setFormalArgTypeWithinHierarchy(formalArgTypeWithinHierarchy.isSelected());
     varInfo.setNameOfFormalArgType(formalArgType.getDocument().getText());
-    varInfo.setScriptCodeConstraint("\"" + customScriptCode.getTextField().getText() + "\"");
+    saveScriptInfo(varInfo);
 
     final String withinConstraint = (String)withinCombo.getComboBox().getEditor().getItem();
     varInfo.setWithinConstraint(withinConstraint.length() > 0 ? "\"" + withinConstraint +"\"":"");
     varInfo.setInvertWithinConstraint(invertWithinIn.isSelected());
   }
 
+  private static MatchVariableConstraint getOrAddVariableConstraint(String varName, Configuration configuration) {
+    MatchVariableConstraint varInfo = configuration.getMatchOptions().getVariableConstraint(varName);
+
+    if (varInfo == null) {
+      varInfo = new MatchVariableConstraint();
+      varInfo.setName(varName);
+      configuration.getMatchOptions().addVariableConstraint(varInfo);
+    }
+    return varInfo;
+  }
+
+  private static ReplacementVariableDefinition getOrAddReplacementVariableDefinition(String varName, Configuration configuration) {
+    ReplaceOptions replaceOptions = ((ReplaceConfiguration)configuration).getOptions();
+    String realVariableName = stripReplacementVarDecoration(varName);
+    ReplacementVariableDefinition variableDefinition = replaceOptions.getVariableDefinition(realVariableName);
+
+    if (variableDefinition == null) {
+      variableDefinition = new ReplacementVariableDefinition();
+      variableDefinition.setName(realVariableName);
+      replaceOptions.addVariableDefinition(variableDefinition);
+    }
+    return variableDefinition;
+  }
+
+  private void saveScriptInfo(NamedScriptableDefinition varInfo) {
+    varInfo.setScriptCodeConstraint("\"" + customScriptCode.getTextField().getText() + "\"");
+  }
+
   private void copyValuesToUI(Variable var) {
-    MatchVariableConstraint varInfo = (var!=null)?model.getConfig().getMatchOptions().getVariableConstraint(var.getName()):null;
+    Configuration configuration = model.getConfig();
+    String varName = var.getName();
+
+    if (isReplacementVariable(varName)) {
+      ReplacementVariableDefinition definition = ((ReplaceConfiguration)configuration).getOptions().getVariableDefinition(
+        stripReplacementVarDecoration(varName)
+      );
+
+      restoreScriptCode(definition);
+      setSearchConstraintsVisible(false);
+      return;
+    } else {
+      setSearchConstraintsVisible(true);
+    }
+
+    MatchVariableConstraint varInfo = configuration.getMatchOptions().getVariableConstraint(varName);
 
     if (varInfo == null) {
       notRead.setSelected(false);
@@ -379,7 +430,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       formalArgTypeWithinHierarchy.setSelected( varInfo.isFormalArgTypeWithinHierarchy() );
       formalArgType.getDocument().setText( varInfo.getNameOfFormalArgType() );
       doProcessing(formalArgTypeWithinHierarchy,formalArgType);
-      customScriptCode.setText( StringUtil.stripQuotesAroundValue(varInfo.getScriptCodeConstraint()) );
+      restoreScriptCode(varInfo);
 
       withinCombo.getComboBox().getEditor().setItem(StringUtil.stripQuotesAroundValue(varInfo.getWithinConstraint()));
       invertWithinIn.setSelected(varInfo.isInvertWithinConstraint());
@@ -393,6 +444,19 @@ class EditVarConstraintsDialog extends DialogWrapper {
     partOfSearchResults.setEnabled(!contextVar); //?
 
     occurencePanel.setVisible(!contextVar);
+  }
+
+  private void setSearchConstraintsVisible(boolean b) {
+    textConstraintsPanel.setVisible(b);
+    occurencePanel.setVisible(b);
+    expressionConstraints.setVisible(b);
+    partOfSearchResults.setVisible(b);
+    containedInConstraints.setVisible(b);
+    pack();
+  }
+
+  private void restoreScriptCode(NamedScriptableDefinition varInfo) {
+    customScriptCode.setText( varInfo != null ? StringUtil.stripQuotesAroundValue(varInfo.getScriptCodeConstraint()) : "" );
   }
 
   protected String getDimensionServiceKey() {
@@ -417,7 +481,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     final String text = field.getText();
 
     if (text.length() > 0) {
-      final String s = ScriptPredicate.checkValidScript(text);
+      final String s = ScriptSupport.checkValidScript(text);
 
       if (s != null) {
         Messages.showErrorDialog(SSRBundle.message("invalid.groovy.script"), SSRBundle.message("invalid.groovy.script"));

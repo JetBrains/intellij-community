@@ -6,21 +6,16 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.MatchOptions;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
+ * @author Maxim.Mossienko
  * Date: Apr 14, 2004
  * Time: 4:41:37 PM
- * To change this template use File | Settings | File Templates.
  */
 public class ReplaceConfiguration extends Configuration {
   private ReplaceOptions options = new ReplaceOptions();
+  public static final String REPLACEMENT_VARIABLE_SUFFIX = "$replacement";
 
   public ReplaceOptions getOptions() {
     return options;
-  }
-
-  public void setOptions(ReplaceOptions options) {
-    this.options = options;
   }
 
   public MatchOptions getMatchOptions() {

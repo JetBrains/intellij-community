@@ -39,7 +39,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   @NonNls private static final String CASESENSITIVE_ATTRIBUTE_NAME = "caseInsensitive";
   @NonNls private static final String MAXMATCHES_ATTRIBUTE_NAME = "maxMatches";
   //private static final String SCOPE_ATTRIBUTE_NAME = "scope";
-  @NonNls private static final String CONSTRAINT_ATTR_NAME = "constraint";
+  @NonNls private static final String CONSTRAINT_TAG_NAME = "constraint";
   @NonNls private static final String FILE_TYPE_ATTR_NAME = "type";
   @NonNls private static final String XML = "xml";
   @NonNls public static final String INSTANCE_MODIFIER_NAME = "Instance";
@@ -185,7 +185,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
 
     if (variableConstraints!=null) {
       for (final MatchVariableConstraint matchVariableConstraint : variableConstraints.values()) {
-        final Element infoElement = new Element(CONSTRAINT_ATTR_NAME);
+        final Element infoElement = new Element(CONSTRAINT_TAG_NAME);
         element.addContent(infoElement);
         matchVariableConstraint.writeExternal(infoElement);
       }
@@ -235,7 +235,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
 
     // @TODO deserialize scope
 
-    List elements = element.getChildren(CONSTRAINT_ATTR_NAME);
+    List elements = element.getChildren(CONSTRAINT_TAG_NAME);
     if (elements!=null && elements.size()>0) {
       for (final Object element1 : elements) {
         final MatchVariableConstraint constraint = new MatchVariableConstraint();

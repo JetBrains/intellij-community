@@ -183,7 +183,7 @@ public class PatternCompiler {
 
         if (constraint.getScriptCodeConstraint()!= null && constraint.getScriptCodeConstraint().length() > 2) {
           final String script = StringUtil.stripQuotesAroundValue(constraint.getScriptCodeConstraint());
-          final String s = ScriptPredicate.checkValidScript(script);
+          final String s = ScriptSupport.checkValidScript(script);
           if (s != null) throw new MalformedPatternException("Script constraint for " + constraint.getName() + " has problem "+s);
           predicate = new ScriptPredicate(name, script);
           addPredicate(handler,predicate);

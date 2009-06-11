@@ -1,20 +1,16 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.openapi.util.JDOMExternalizable;
 import org.jdom.Element;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
+ * @author Maxim.Mossienko
  * Date: Mar 19, 2004
  * Time: 5:36:32 PM
- * To change this template use File | Settings | File Templates.
  */
-public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
-  private String name;
+public class MatchVariableConstraint extends NamedScriptableDefinition {
   private String regExp = "";
   private boolean invertRegExp;
   private boolean withinHierarchy;
@@ -39,7 +35,6 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
   private boolean invertFormalType;
   private boolean formalArgTypeWithinHierarchy;
 
-  private String scriptCodeConstraint = "";
   private String withinConstraint = "";
   private String containsConstraint = "";
   private boolean invertContainsConstraint;
@@ -69,7 +64,7 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
   @NonNls private static final String READ = "readAccess";
   @NonNls private static final String WRITE = "writeAccess";
   @NonNls private static final String TARGET = "target";
-  @NonNls private static final String SCRIPT = "script";
+
   @NonNls private static final String WHOLE_WORDS_ONLY = "wholeWordsOnly";
   @NonNls private static final String TRUE = Boolean.TRUE.toString();
 
@@ -79,14 +74,6 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
 
   public void setGreedy(boolean greedy) {
     this.greedy = greedy;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
   }
 
   public String getRegExp() {
@@ -257,17 +244,10 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
     this.formalArgTypeWithinHierarchy = formalArgTypeWithinHierarchy;
   }
 
-  public String getScriptCodeConstraint() {
-    return scriptCodeConstraint;
-  }
-
-  public void setScriptCodeConstraint(String scriptCodeConstraint) {
-    this.scriptCodeConstraint = scriptCodeConstraint;
-  }
-
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof MatchVariableConstraint)) return false;
+    if (!(super.equals(o))) return false;
 
     final MatchVariableConstraint matchVariableConstraint = (MatchVariableConstraint)o;
 
@@ -289,12 +269,10 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
     if (wholeWordsOnly != matchVariableConstraint.wholeWordsOnly) return false;
     if (withinHierarchy != matchVariableConstraint.withinHierarchy) return false;
     if (writeAccess != matchVariableConstraint.writeAccess) return false;
-    if (!name.equals(matchVariableConstraint.name)) return false;
     if (!nameOfExprType.equals(matchVariableConstraint.nameOfExprType)) return false;
     if (!nameOfFormalArgType.equals(matchVariableConstraint.nameOfFormalArgType)) return false;
     if (!nameOfReferenceVar.equals(matchVariableConstraint.nameOfReferenceVar)) return false;
     if (!regExp.equals(matchVariableConstraint.regExp)) return false;
-    if (!scriptCodeConstraint.equals(matchVariableConstraint.scriptCodeConstraint)) return false;
     if (!withinConstraint.equals(matchVariableConstraint.withinConstraint)) return false;
     if (!containsConstraint.equals(matchVariableConstraint.containsConstraint)) return false;
     if (invertWithinConstraint != matchVariableConstraint.invertWithinConstraint) return false;
@@ -305,7 +283,7 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
 
   public int hashCode() {
     int result;
-    result = name.hashCode();
+    result = super.hashCode();
     result = 29 * result + regExp.hashCode();
     result = 29 * result + (invertRegExp ? 1 : 0);
     result = 29 * result + (withinHierarchy ? 1 : 0);
@@ -328,7 +306,6 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
     result = 29 * result + nameOfFormalArgType.hashCode();
     result = 29 * result + (invertFormalType ? 1 : 0);
     result = 29 * result + (formalArgTypeWithinHierarchy ? 1 : 0);
-    result = 29 * result + scriptCodeConstraint.hashCode();
     result = 29 * result + withinConstraint.hashCode();
     result = 29 * result + containsConstraint.hashCode();
     
@@ -338,10 +315,8 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
   }
 
   public void readExternal(Element element) {
-    Attribute attribute = element.getAttribute(NAME);
-    if (attribute != null) {
-      name = attribute.getValue();
-    }
+    super.readExternal(element);
+    Attribute attribute;
 
     attribute = element.getAttribute(REGEXP);
     if (attribute != null) {
@@ -361,11 +336,6 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
     attribute = element.getAttribute(NAME_OF_REFEENCE_VAR);
     if (attribute != null) {
       nameOfReferenceVar = attribute.getValue();
-    }
-
-    attribute = element.getAttribute(SCRIPT);
-    if (attribute != null) {
-      scriptCodeConstraint = attribute.getValue();
     }
 
     attribute = element.getAttribute(WITHIN_HIERARCHY);
@@ -516,14 +486,14 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
   }
 
   public void writeExternal(Element element) {
-    element.setAttribute(NAME,name);
+    super.writeExternal(element);
 
     if (regExp.length() > 0) element.setAttribute(REGEXP,regExp);
     if (nameOfExprType.length() > 0) element.setAttribute(NAME_OF_EXPRTYPE,nameOfExprType);
     if (nameOfReferenceVar.length() > 0) element.setAttribute(NAME_OF_REFEENCE_VAR,nameOfReferenceVar);
     if (nameOfFormalArgType.length() > 0) element.setAttribute(NAME_OF_FORMALTYPE,nameOfFormalArgType);
 
-    if (scriptCodeConstraint.length() > 0) element.setAttribute(SCRIPT,scriptCodeConstraint);
+
     if (withinHierarchy) element.setAttribute(WITHIN_HIERARCHY,TRUE);
     if (exprTypeWithinHierarchy) element.setAttribute(EXPRTYPE_WITHIN_HIERARCHY,TRUE);
     if (formalArgTypeWithinHierarchy) element.setAttribute(FORMALTYPE_WITHIN_HIERARCHY,TRUE);
@@ -545,14 +515,6 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
     if (invertWithinConstraint) element.setAttribute(NEGATE_WITHIN_CONDITION,TRUE);
     element.setAttribute(WITHIN_CONDITION, withinConstraint);
     element.setAttribute(CONTAINS_CONDITION, containsConstraint);
-  }
-
-  public Object clone() {
-    try {
-      return super.clone();
-    } catch(CloneNotSupportedException ex) {
-      return null;
-    }
   }
 
   public String getWithinConstraint() {

@@ -20,12 +20,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.structuralsearch.MatchOptions;
-import com.intellij.structuralsearch.MatchResult;
-import com.intellij.structuralsearch.MatchVariableConstraint;
-import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.plugin.StructuralReplaceAction;
 import com.intellij.structuralsearch.plugin.StructuralSearchAction;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import org.jetbrains.annotations.NonNls;
 
@@ -33,11 +31,9 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
+ * @author Maxim.Mossienko
  * Date: Apr 21, 2004
  * Time: 7:50:48 PM
- * To change this template use File | Settings | File Templates.
  */
 public class UIUtil {
   static Key<SubstitutionShortInfoHandler> LISTENER_KEY = Key.create("sslistener.key");
@@ -103,17 +99,6 @@ public class UIUtil {
 
   public static JComponent createOptionLine(JComponent option) {
     return createOptionLine(new JComponent[]{option});
-  }
-
-  public static JComponent createAlignedLineWithTextAndComponent(String text, JComponent component) {
-    JPanel tmp = new JPanel();
-
-    tmp.setLayout(new BoxLayout(tmp, BoxLayout.X_AXIS));
-    tmp.add(new JLabel(text));
-    tmp.add(component);
-    tmp.add(Box.createHorizontalGlue());
-
-    return tmp;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -200,35 +185,47 @@ public class UIUtil {
   static String getShortParamString(Configuration config, String varname) {
     final MatchOptions options = config.getMatchOptions();
 
+
     MatchVariableConstraint constraint = options == null ? null : options.getVariableConstraint(varname);
-    if (constraint == null) return SSRBundle.message("no.constraints.specified.tooltip.message");
+    NamedScriptableDefinition namedScriptableDefinition = constraint;
+
+    ReplacementVariableDefinition replacementVariableDefinition = config instanceof ReplaceConfiguration ?
+                                               ((ReplaceConfiguration)config).getOptions().getVariableDefinition(varname) : null;
+    if (replacementVariableDefinition != null) namedScriptableDefinition = replacementVariableDefinition;
+
+    if (constraint == null && replacementVariableDefinition == null) {
+      return SSRBundle.message("no.constraints.specified.tooltip.message");
+    }
+
     StringBuffer buf = new StringBuffer();
 
-    if (constraint.getRegExp() != null && constraint.getRegExp().length() > 0) {
-      append(buf, SSRBundle.message("text.tooltip.message", constraint.isInvertRegExp() ? SSRBundle.message("not.tooltip.message") : "",
-                                   constraint.getRegExp(),
-                                   constraint.isWithinHierarchy() || constraint.isStrictlyWithinHierarchy() ? SSRBundle
-                                       .message("within.hierarchy.tooltip.message") : ""));
+    if (constraint != null) {
+      if (constraint.getRegExp() != null && constraint.getRegExp().length() > 0) {
+        append(buf, SSRBundle.message("text.tooltip.message", constraint.isInvertRegExp() ? SSRBundle.message("not.tooltip.message") : "",
+                                     constraint.getRegExp(),
+                                     constraint.isWithinHierarchy() || constraint.isStrictlyWithinHierarchy() ? SSRBundle
+                                         .message("within.hierarchy.tooltip.message") : ""));
+      }
+
+      if (constraint.getNameOfExprType() != null && constraint.getNameOfExprType().length() > 0) {
+        append(buf, SSRBundle.message("exprtype.tooltip.message",
+                                     constraint.isInvertExprType() ? SSRBundle.message("not.tooltip.message") : "",
+                                     constraint.getNameOfExprType(),
+                                     constraint.isExprTypeWithinHierarchy() ? SSRBundle.message("within.hierarchy.tooltip.message") : ""));
+      }
+
+      if (constraint.getMinCount() == constraint.getMaxCount()) {
+        append(buf, SSRBundle.message("occurs.tooltip.message", constraint.getMinCount()));
+      }
+      else {
+        append(buf, SSRBundle.message("min.occurs.tooltip.message", constraint.getMinCount(),
+                                     constraint.getMaxCount() == Integer.MAX_VALUE ? StringUtil
+                                         .decapitalize(SSRBundle.message("editvarcontraints.unlimited")) : constraint.getMaxCount()));
+      }
     }
 
-    if (constraint.getNameOfExprType() != null && constraint.getNameOfExprType().length() > 0) {
-      append(buf, SSRBundle.message("exprtype.tooltip.message",
-                                   constraint.isInvertExprType() ? SSRBundle.message("not.tooltip.message") : "",
-                                   constraint.getNameOfExprType(),
-                                   constraint.isExprTypeWithinHierarchy() ? SSRBundle.message("within.hierarchy.tooltip.message") : ""));
-    }
-
-    if (constraint.getMinCount() == constraint.getMaxCount()) {
-      append(buf, SSRBundle.message("occurs.tooltip.message", constraint.getMinCount()));
-    }
-    else {
-      append(buf, SSRBundle.message("min.occurs.tooltip.message", constraint.getMinCount(),
-                                   constraint.getMaxCount() == Integer.MAX_VALUE ? StringUtil
-                                       .decapitalize(SSRBundle.message("editvarcontraints.unlimited")) : constraint.getMaxCount()));
-    }
-
-    final String script = constraint.getScriptCodeConstraint();
-    if (script != null && script.length() > 0) {
+    final String script = namedScriptableDefinition.getScriptCodeConstraint();
+    if (script != null && script.length() > 2) {
       final String str = SSRBundle.message("script.tooltip.message", StringUtil.stripQuotesAroundValue(script));
       append(buf, str);
     }

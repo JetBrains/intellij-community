@@ -4,27 +4,30 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
+import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: maxim
+ * @author maxim
  * Date: 24.02.2004
  * Time: 15:34:57
- * To change this template use File | Settings | File Templates.
  */
 final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
   private String replacement;
   private List<ParameterInfo> parameterizations;
-  private HashMap<String,MatchResult> map;
-  private Map<TextRange,ParameterInfo> scopedParameterizations;
+  private HashMap<String,MatchResult> matchMap;
+  private Map<String, ScriptSupport> replacementVarsMap;
+  private final ReplaceOptions options;
+  //private Map<TextRange,ParameterInfo> scopedParameterizations;
 
   private static final class ParameterInfo {
     String name;
@@ -40,12 +43,17 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
     boolean hasCommaAfter;
 
     boolean scopeParameterization;
+    boolean replacementVariable;
     
     PsiElement myElement;
   }
 
-  ReplacementBuilder(final Project project,final String _replacement, final FileType fileType) {
-    //this.project = project;
+  ReplacementBuilder(final Project project,final ReplaceOptions options) {
+    replacementVarsMap = new HashMap<String, ScriptSupport>();
+    this.options = options;
+    String _replacement = options.getReplacement();
+    FileType fileType = options.getMatchOptions().getFileType();
+
     final Template template = TemplateManager.getInstance(project).createTemplate("","",_replacement);
 
     final int segmentsCount = template.getSegmentsCount();
@@ -58,6 +66,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
       final ParameterInfo info = new ParameterInfo();
       info.startIndex = offset;
       info.name = name;
+      info.replacementVariable = options.getVariableDefinition(name) != null;
 
       // find delimiter
       int pos;
@@ -115,7 +124,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
     }
   }
 
-  private void fill(MatchResult r,HashMap<String,MatchResult> m) {
+  private void fill(MatchResult r,Map<String,MatchResult> m) {
     if (r.getName()!=null) {
       if (m.get(r.getName()) == null) {
         m.put(r.getName(), r);
@@ -140,13 +149,16 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
     }
 
     final StringBuilder result = new StringBuilder(replacement);
-    map = new HashMap<String,MatchResult>();
-    fill(match,map);
+    matchMap = new HashMap<String,MatchResult>();
+    fill(match, matchMap);
 
     int offset = 0;
 
     for (final ParameterInfo info : parameterizations) {
-      MatchResult r = map.get(info.name);
+      MatchResult r = matchMap.get(info.name);
+      if (info.replacementVariable) {
+        offset = insertSubstitution(result, offset, info, generateReplacement(info, match));
+      } else
       if (r != null) {
         offset = handleSubstitution(info, r, result, offset);
       }
@@ -172,9 +184,20 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
 
     }
 
-    replacementInfo.variableMap = (Map<String, MatchResult>)map.clone();
-    map.clear();
+    replacementInfo.variableMap = (HashMap<String, MatchResult>)matchMap.clone();
+    matchMap.clear();
     return result.toString();
+  }
+
+  private String generateReplacement(ParameterInfo info, MatchResult match) {
+    ScriptSupport scriptSupport = replacementVarsMap.get(info.name);
+
+    if (scriptSupport == null) {
+      String constraint = options.getVariableDefinition(info.name).getScriptCodeConstraint();
+      scriptSupport = new ScriptSupport(StringUtil.stripQuotesAroundValue(constraint));
+      replacementVarsMap.put(info.name, scriptSupport);
+    }
+    return scriptSupport.evaluate((MatchResultImpl)match, null);
   }
 
   private int insertSubstitution(StringBuilder result, int offset, final ParameterInfo info, String image) {
@@ -337,7 +360,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
     String name = ((PsiParameter)info.myElement.getParent()).getName();
     name = isTypedVariable(name) ? stripTypedVariableDecoration(name):name;
 
-    final MatchResult matchResult = map.get(name);
+    final MatchResult matchResult = matchMap.get(name);
     if (matchResult == null) return;
 
     if (matchResult.isMultipleMatch()) {
@@ -409,7 +432,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
 
       ParameterInfo methodInfo = findParameterization(name);
       methodInfo.scopeParameterization = true;
-      if (scopedParameterizations != null) scopedParameterizations.put(method.getTextRange(), methodInfo);
+      //if (scopedParameterizations != null) scopedParameterizations.put(method.getTextRange(), methodInfo);
     }
   }
 

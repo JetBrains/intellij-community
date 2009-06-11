@@ -614,14 +614,10 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
           }
 
           public void actionPerformed(ActionEvent e) {
-            SubstitutionShortInfoHandler handler = searchCriteriaEdit.getUserData(UIUtil.LISTENER_KEY);
-            ArrayList<Variable> variables = new ArrayList<Variable>(handler.getVariables());
-
             EditVarConstraintsDialog.setProject(searchContext.getProject());
             new EditVarConstraintsDialog(
               searchContext.getProject(),
-              model,
-              variables,
+              model, getVariablesFromListeners(),
               isReplaceDialog(),
               getFileTypeByString((String)fileTypes.getSelectedItem())
             ).show();
@@ -687,6 +683,15 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     );
 
     return panel;
+  }
+
+  protected java.util.List<Variable> getVariablesFromListeners() {
+    return getVarsFrom(searchCriteriaEdit);
+  }
+
+  protected static ArrayList<Variable> getVarsFrom(Editor searchCriteriaEdit) {
+    SubstitutionShortInfoHandler handler = searchCriteriaEdit.getUserData(UIUtil.LISTENER_KEY);
+    return new ArrayList<Variable>(handler.getVariables());
   }
 
   public final Project getProject() {

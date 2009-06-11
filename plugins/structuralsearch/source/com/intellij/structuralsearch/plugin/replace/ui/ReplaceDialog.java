@@ -1,5 +1,7 @@
 package com.intellij.structuralsearch.plugin.replace.ui;
 
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.editor.Editor;
@@ -8,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.structuralsearch.ReplacementVariableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.UnsupportedPatternException;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
@@ -21,8 +24,9 @@ import com.intellij.usages.UsageInfo2UsageAdapter;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Set;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 // Class to show the user the request for search
 
@@ -253,6 +257,13 @@ public class ReplaceDialog extends SearchDialog {
 
       shortenFQN.setSelected(options.isToShortenFQN());
       formatAccordingToStyle.setSelected(options.isToReformatAccordingToStyle());
+
+      ReplaceOptions newReplaceOptions = ((ReplaceConfiguration)model.getConfig()).getOptions();
+      newReplaceOptions.clearVariableDefinitions();
+      
+      for (ReplacementVariableDefinition def : options.getReplacementVariableDefinitions()) {
+        newReplaceOptions.addVariableDefinition((ReplacementVariableDefinition)def.clone());
+      }
     }
     else {
       super.setValuesFromConfig(configuration);
@@ -282,14 +293,28 @@ public class ReplaceDialog extends SearchDialog {
     return false;
   }
 
+  protected java.util.List<Variable> getVariablesFromListeners() {
+    ArrayList<Variable> vars = getVarsFrom(replaceCriteriaEdit);
+    List<Variable> searchVars = super.getVariablesFromListeners();
+    Map<String, Variable> varsMap = new com.intellij.util.containers.hash.LinkedHashMap<String, Variable>(searchVars.size());
+
+    for(Variable var:searchVars) varsMap.put(var.getName(), var);
+    for(Variable var:vars) {
+      if (!varsMap.containsKey(var.getName())) {
+        String newVarName = var.getName() + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX;
+        varsMap.put(newVarName, new Variable(newVarName, (Expression)null, null, false));
+      }
+    }
+    return new ArrayList<Variable>(varsMap.values());
+  }
+
   protected boolean doValidate() {
     if (!super.doValidate()) return false;
 
     boolean result = true;
 
     try {
-      Replacer.checkSupportedReplacementPattern(searchContext.getProject(), searchCriteriaEdit.getDocument().getText(),
-                                                replaceCriteriaEdit.getDocument().getText(), getCurrentFileType());
+      Replacer.checkSupportedReplacementPattern(searchContext.getProject(), ((ReplaceConfiguration)model.getConfig()).getOptions());
     }
     catch (UnsupportedPatternException ex) {
       reportMessage("unsupported.replacement.pattern.message", replaceCriteriaEdit, ex.getPattern());

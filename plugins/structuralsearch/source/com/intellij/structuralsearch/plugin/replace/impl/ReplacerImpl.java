@@ -17,11 +17,9 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.structuralsearch.MatchResult;
-import com.intellij.structuralsearch.Matcher;
-import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.UnsupportedPatternException;
+import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
+import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
@@ -30,11 +28,9 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
+ * @author Maxim.Mossienko
  * Date: Mar 4, 2004
  * Time: 9:19:34 PM
- * To change this template use File | Settings | File Templates.
  */
 public class ReplacerImpl {
   private final Project project;
@@ -57,12 +53,7 @@ public class ReplacerImpl {
     this.options.getMatchOptions().clearVariableConstraints();
     MatcherImplUtil.transform(this.options.getMatchOptions());
 
-    checkSupportedReplacementPattern(
-      project,
-      this.options.getMatchOptions().getSearchPattern(),
-      by,
-      this.options.getMatchOptions().getFileType()
-    );
+    checkSupportedReplacementPattern(project, options);
 
     Matcher matcher = new Matcher(project);
     try {
@@ -683,9 +674,11 @@ public class ReplacerImpl {
     return text.getFirstChild();
   }
 
-  public static void checkSupportedReplacementPattern(Project project, String search,
-                                                      String replacement, FileType fileType) throws UnsupportedPatternException {
+  public static void checkSupportedReplacementPattern(Project project, ReplaceOptions options) throws UnsupportedPatternException {
     try {
+      String search = options.getMatchOptions().getSearchPattern();
+      String replacement = options.getReplacement();
+      FileType fileType = options.getMatchOptions().getFileType();
       Template template = TemplateManager.getInstance(project).createTemplate("","",search);
       Template template2 = TemplateManager.getInstance(project).createTemplate("","",replacement);
 
@@ -712,9 +705,20 @@ public class ReplacerImpl {
         }
 
         if (j==segmentCount2) {
-          throw new UnsupportedPatternException(
-            SSRBundle.message("replacement.variable.is.not.defined.in.search.segmen.error.message", replacementSegmentName)
-          );
+          ReplacementVariableDefinition definition = options.getVariableDefinition(replacementSegmentName);
+
+          if (definition == null || definition.getScriptCodeConstraint().length() <= 2 /*empty quotes*/) {
+            throw new UnsupportedPatternException(
+              SSRBundle.message("replacement.variable.is.not.defined.message", replacementSegmentName)
+            );
+          } else {
+            String message = ScriptSupport.checkValidScript(StringUtil.stripQuotesAroundValue(definition.getScriptCodeConstraint()));
+            if (message != null) {
+              throw new UnsupportedPatternException(
+                SSRBundle.message("replacement.variable.is.not.valid", replacementSegmentName, message)
+              );
+            }
+          }
         }
       }
 
@@ -861,11 +865,7 @@ public class ReplacerImpl {
 
     replacementInfo.matchesPtrList = l;
     if (replacementBuilder==null) {
-      replacementBuilder = new ReplacementBuilder(
-        project,
-        options.getReplacement(),
-        options.getMatchOptions().getFileType()
-      );
+      replacementBuilder = new ReplacementBuilder(project,options);
     }
     replacementInfo.result = replacementBuilder.process(result,replacementInfo);
     replacementInfo.matchResult = result;

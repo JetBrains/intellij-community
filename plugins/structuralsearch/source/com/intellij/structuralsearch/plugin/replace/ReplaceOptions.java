@@ -1,23 +1,28 @@
 package com.intellij.structuralsearch.plugin.replace;
 
-import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.Key;
-import org.jdom.Element;
-import org.jdom.DataConversionException;
-import org.jdom.Attribute;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.ReplacementVariableDefinition;
 import gnu.trove.THashMap;
+import org.jdom.Attribute;
+import org.jdom.DataConversionException;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Collections;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
+ * @author Maxim.Mossienko
  * Date: Mar 5, 2004
  * Time: 7:51:38 PM
- * To change this template use File | Settings | File Templates.
  */
 public class ReplaceOptions implements JDOMExternalizable, Cloneable, UserDataHolder {
+  private Map<String, ReplacementVariableDefinition> variableDefs;
   private String replacement = "";
   private boolean toShortenFQN;
   private boolean myToReformatAccordingToStyle;
@@ -28,6 +33,7 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable, UserDataHo
   @NonNls private static final String SHORTEN_FQN_ATTR_NAME = "shortenFQN";
 
   private THashMap myUserMap = null;
+  @NonNls private static final String VARIABLE_DEFINITION_TAG_NAME = "variableDefinition";
 
   public String getReplacement() {
     return replacement;
@@ -76,6 +82,16 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable, UserDataHo
     } catch(DataConversionException ex) {}
     
     replacement = element.getAttributeValue(REPLACEMENT_ATTR_NAME);
+
+    List elements = element.getChildren(VARIABLE_DEFINITION_TAG_NAME);
+
+    if (elements!=null && elements.size() > 0) {
+      for (final Object element1 : elements) {
+        final ReplacementVariableDefinition variableDefinition = new ReplacementVariableDefinition();
+        variableDefinition.readExternal((Element)element1);
+        addVariableDefinition(variableDefinition);
+      }
+    }
   }
 
   public void writeExternal(Element element) {
@@ -84,6 +100,14 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable, UserDataHo
     element.setAttribute(REFORMAT_ATTR_NAME,String.valueOf(myToReformatAccordingToStyle));
     element.setAttribute(SHORTEN_FQN_ATTR_NAME,String.valueOf(toShortenFQN));
     element.setAttribute(REPLACEMENT_ATTR_NAME,replacement);
+
+    if (variableDefs!=null) {
+      for (final ReplacementVariableDefinition variableDefinition : variableDefs.values()) {
+        final Element infoElement = new Element(VARIABLE_DEFINITION_TAG_NAME);
+        element.addContent(infoElement);
+        variableDefinition.writeExternal(infoElement);
+      }
+    }
   }
 
   public boolean equals(Object o) {
@@ -96,6 +120,9 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable, UserDataHo
     if (toShortenFQN != replaceOptions.toShortenFQN) return false;
     if (matchOptions != null ? !matchOptions.equals(replaceOptions.matchOptions) : replaceOptions.matchOptions != null) return false;
     if (replacement != null ? !replacement.equals(replaceOptions.replacement) : replaceOptions.replacement != null) return false;
+    if (variableDefs != null ? !variableDefs.equals(replaceOptions.variableDefs) : replaceOptions.variableDefs != null) {
+      return false;
+    }
 
     return true;
   }
@@ -106,6 +133,7 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable, UserDataHo
     result = 29 * result + (toShortenFQN ? 1 : 0);
     result = 29 * result + (myToReformatAccordingToStyle ? 1 : 0);
     result = 29 * result + (matchOptions != null ? matchOptions.hashCode() : 0);
+    result = 29 * result + (variableDefs != null ? variableDefs.hashCode() : 0);
     return result;
   }
 
@@ -128,5 +156,24 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable, UserDataHo
   public <T> void putUserData(Key<T> key, T value) {
     if (myUserMap==null) myUserMap = new THashMap(1);
     myUserMap.put(key,value);
+  }
+
+  public ReplacementVariableDefinition getVariableDefinition(String name) {
+    return variableDefs != null ? variableDefs.get(name): null;
+  }
+
+  public void addVariableDefinition(ReplacementVariableDefinition definition) {
+    if (variableDefs==null) {
+      variableDefs = new java.util.LinkedHashMap<String, ReplacementVariableDefinition>();
+    }
+    variableDefs.put( definition.getName(), definition );
+  }
+
+  public Collection<ReplacementVariableDefinition> getReplacementVariableDefinitions() {
+    return variableDefs != null ? variableDefs.values() : Collections.<ReplacementVariableDefinition>emptyList();
+  }
+
+  public void clearVariableDefinitions() {
+    variableDefs = null;
   }
 }
