@@ -290,9 +290,8 @@ public class FindInProjectUtil {
   private static int processUsagesInFile(final PsiFile psiFile, final FindModel findModel, final Processor<UsageInfo> consumer) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
       public Integer compute() {
-        VirtualFile virtualFile = psiFile.getVirtualFile();
-
-        if (virtualFile.isValid()) {
+        if (psiFile.isValid()) {
+          VirtualFile virtualFile = psiFile.getVirtualFile();
           // Check once more if valid and text since we're in new read action and things might have been changed.
           if (FileTypeManager.getInstance().getFileTypeByFile(virtualFile).isBinary()) return 0; // do not decompile .class files
           final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
