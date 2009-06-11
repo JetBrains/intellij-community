@@ -19,14 +19,11 @@
         </intentionAction>
         <testFrameworkDescriptor implementation="com.theoryinpractice.testng.TestNGFrameworkDescriptor"/>
       <overrideImplementsAnnotationsHandler implementation="com.theoryinpractice.testng.intention.OverrideImplementsTestNGAnnotationsHandler"/>
+      <configurationType implementation="com.theoryinpractice.testng.configuration.TestNGConfigurationType"/>
     </extensions>
 
 
     <application-components>
-        <component>
-            <implementation-class>com.theoryinpractice.testng.configuration.TestNGConfigurationType
-            </implementation-class>
-        </component>
       <component>
         <implementation-class>com.theoryinpractice.testng.TestNGPlugin</implementation-class>
       </component>

@@ -40,6 +40,7 @@
     <orderEntry type="module" module-name="idea_rt" />
     <orderEntry type="module" module-name="coverage" />
     <orderEntry type="module" module-name="testng_rt" />
+    <orderEntry type="module" module-name="java-i18n" />
   </component>
   <component name="copyright">
     <Base>
