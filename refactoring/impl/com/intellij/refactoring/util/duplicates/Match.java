@@ -294,8 +294,10 @@ public final class Match {
   }
 
   private PsiElement replaceWithExpression(final PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException {
-    LOG.assertTrue(getMatchStart() == getMatchEnd());
-    return getMatchStart().replace(methodCallExpression);
+    final PsiElement matchStart = getMatchStart();
+    LOG.assertTrue(matchStart == getMatchEnd());
+    if (matchStart instanceof PsiReferenceExpression && matchStart.getParent() instanceof PsiMethodCallExpression) return matchStart.replace(methodCallExpression.getMethodExpression());
+    return matchStart.replace(methodCallExpression);
   }
 
   TextRange getTextRange() {
@@ -376,14 +378,21 @@ public final class Match {
     if (returnType != null) {
       final PsiElement parent = getMatchEnd().getParent();
       if (parent instanceof PsiExpression) {
-        JavaResolveResult result = null;
         if (parent instanceof PsiMethodCallExpression) {
-          result = ((PsiMethodCallExpression)parent).resolveMethodGenerics();
+          JavaResolveResult result = ((PsiMethodCallExpression)parent).resolveMethodGenerics();
+          final PsiMethod method = (PsiMethod)result.getElement();
+          if (method != null) {
+            PsiType type = method.getReturnType();
+            if (type != null) {
+              type = result.getSubstitutor().substitute(type);
+              if (weakerType(psiMethod, returnType, type)) {
+                return type;
+              }
+            }
+          }
         }
         else if (parent instanceof PsiReferenceExpression) {
-          result = ((PsiReferenceExpression)parent).advancedResolve(false);
-        }
-        if (result != null) {
+          final JavaResolveResult result = ((PsiReferenceExpression)parent).advancedResolve(false);
           final PsiElement element = result.getElement();
           if (element instanceof PsiMember) {
             final PsiClass psiClass = ((PsiMember)element).getContainingClass();
