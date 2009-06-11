@@ -5,14 +5,12 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.PomNamedTarget;
-import com.intellij.pom.PomRenameableTarget;
-import com.intellij.pom.PomTarget;
-import com.intellij.pom.PomTargetPsiElement;
+import com.intellij.pom.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiTarget;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.ide.IconProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +60,15 @@ public class PomTargetPsiElementImpl extends RenameableFakePsiElement implements
   }
 
   public Icon getIcon() {
+    for (IconProvider iconProvider : IconProvider.EXTENSION_POINT_NAME.getExtensions()) {
+      if (iconProvider instanceof PomIconProvider) {
+        final Icon icon = ((PomIconProvider)iconProvider).getIcon(myTarget, 0);
+        if (icon != null) {
+          return icon;
+        }
+      }
+    }
+
     if (myTarget instanceof PsiTarget) {
       return ((PsiTarget)myTarget).getNavigationElement().getIcon(0);
     }
