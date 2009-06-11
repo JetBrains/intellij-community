@@ -1311,7 +1311,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiElement then = signTokenType == JavaTokenType.OROR ? myStartStatementStack.peekElement() : rOperand;
       myStartStatementStack.pushStatement(then, true);
       PsiElement elseS = signTokenType == JavaTokenType.ANDAND ? myEndStatementStack.peekElement() : rOperand;
-      myEndStatementStack.pushStatement(elseS, true);
+      myEndStatementStack.pushStatement(elseS, false);
     }
     lOperand.accept(this);
     if (rOperand != null) {
