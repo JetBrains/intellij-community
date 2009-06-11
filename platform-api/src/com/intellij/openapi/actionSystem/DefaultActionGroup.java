@@ -16,10 +16,11 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.Pair;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A default implementation of {@link ActionGroup}. Provides the ability
@@ -35,11 +36,11 @@ public class DefaultActionGroup extends ActionGroup {
   /**
    * Contains instances of AnAction
    */
-  private ArrayList<AnAction> mySortedChildren;
+  private final List<AnAction> mySortedChildren;
   /**
    * Contains instances of Pair
    */
-  private ArrayList<Pair<AnAction,Constraints>> myPairs;
+  private final List<Pair<AnAction,Constraints>> myPairs;
 
   public DefaultActionGroup(){
     this(null, false);
@@ -134,16 +135,12 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   private void actionAdded(AnAction addedAction, ActionManager actionManager){
-    String addedActionId;
-    if(addedAction instanceof ActionStub){
-      addedActionId=((ActionStub)addedAction).getId();
-    }else{
-      addedActionId=actionManager.getId(addedAction);
-    }
+    String addedActionId = addedAction instanceof ActionStub ? ((ActionStub)addedAction).getId() : actionManager.getId(addedAction);
     if (addedActionId == null){
       return;
     }
-    outer: while(myPairs.size() > 0){
+    outer:
+    while(!myPairs.isEmpty()){
       for(int i = 0; i < myPairs.size(); i++){
         Pair<AnAction, Constraints> pair = myPairs.get(i);
         if (addToSortedList(pair.first, pair.second, actionManager)){
@@ -169,7 +166,7 @@ public class DefaultActionGroup extends ActionGroup {
     return true;
   }
 
-  private static int findIndex(String actionId, ArrayList<AnAction> actions, ActionManager actionManager) {
+  private static int findIndex(String actionId, List<AnAction> actions, ActionManager actionManager) {
     for (int i = 0; i < actions.size(); i++) {
       AnAction action = actions.get(i);
       if (action instanceof ActionStub) {
