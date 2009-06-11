@@ -46,12 +46,15 @@ public abstract class GenerateDomElementProvider<T extends DomElement> {
   public void navigate(final DomElement element) {
     if (element != null && element.isValid()) {
       final DomElement copy = element.createStableCopy();
-      final DomElementNavigationProvider navigateProvider = getNavigationProviderName(element.getManager().getProject());
+      final Project project = element.getManager().getProject();
+      final DomElementNavigationProvider navigateProvider = getNavigationProviderName(project);
 
       if (navigateProvider != null && navigateProvider.canNavigate(copy)) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            doNavigate(navigateProvider, copy);
+            if (!project.isDisposed()) {
+              doNavigate(navigateProvider, copy);
+            }
           }
         });
       }

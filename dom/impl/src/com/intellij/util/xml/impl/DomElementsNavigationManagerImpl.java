@@ -55,6 +55,8 @@ public class DomElementsNavigationManagerImpl extends DomElementsNavigationManag
     }
 
     public void navigate(DomElement domElement, boolean requestFocus) {
+      if (!domElement.isValid()) return;
+
       final DomFileElement<DomElement> fileElement = DomUtil.getFileElement(domElement);
       if (fileElement == null) return;
 
