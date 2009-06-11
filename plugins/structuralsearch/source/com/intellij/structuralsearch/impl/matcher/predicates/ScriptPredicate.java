@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
+import com.intellij.idea.LoggerFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.structuralsearch.MatchResult;
@@ -11,6 +12,8 @@ import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 import org.codehaus.groovy.control.CompilationFailedException;
 
+import java.io.File;
+
 /**
  * @author Maxim.Mossienko
  */
@@ -19,7 +22,14 @@ public class ScriptPredicate extends AbstractStringBasedPredicate {
 
   public ScriptPredicate(String name, String within) {
     super(name, within);
-    script = new GroovyShell().parse(within);
+    File scriptFile = new File(within);
+    GroovyShell shell = new GroovyShell();
+    try {
+      script = scriptFile.exists() ? shell.parse(scriptFile):shell.parse(within);
+    } catch (Exception ex) {
+      LoggerFactory.getInstance().getLoggerInstance(getClass().getName()).error(ex);
+      throw new RuntimeException(ex);
+    }
   }
 
   public boolean match(PsiElement node, PsiElement match, int start, int end, MatchContext context) {
