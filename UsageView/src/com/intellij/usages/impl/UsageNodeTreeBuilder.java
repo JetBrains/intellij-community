@@ -30,7 +30,7 @@ class UsageNodeTreeBuilder {
   private UsageGroupingRule[] myGroupingRules;
   private UsageFilteringRule[] myFilteringRules;
 
-  public UsageNodeTreeBuilder(@NotNull UsageGroupingRule[] groupingRules, @NotNull UsageFilteringRule[] filteringRules, @NotNull GroupNode root) {
+  UsageNodeTreeBuilder(@NotNull UsageGroupingRule[] groupingRules, @NotNull UsageFilteringRule[] filteringRules, @NotNull GroupNode root) {
     myGroupingRules = groupingRules;
     myFilteringRules = filteringRules;
     myRoot = root;

@@ -103,7 +103,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
     boolean useUncommitedFiles = false;
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    final boolean hasVCS = changeListManager.getAffectedFiles().size() > 0;
+    final boolean hasVCS = !changeListManager.getAffectedFiles().isEmpty();
     if (hasVCS){
       useUncommitedFiles = uiOptions.SCOPE_TYPE == AnalysisScope.UNCOMMITED_FILES;
       myUncommitedFilesButton.setSelected(myRememberScope && useUncommitedFiles);

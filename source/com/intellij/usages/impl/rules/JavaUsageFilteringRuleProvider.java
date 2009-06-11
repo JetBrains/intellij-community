@@ -38,8 +38,7 @@ public class JavaUsageFilteringRuleProvider implements UsageFilteringRuleProvide
     if (view.getPresentation().isCodeUsages()) {
       final JComponent component = view.getComponent();
       final ShowImportsAction showImportsAction = new ShowImportsAction(impl);
-      showImportsAction
-          .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK)), component);
+      showImportsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK)), component);
 
       impl.scheduleDisposeOnClose(new Disposable() {
         public void dispose() {
@@ -54,7 +53,7 @@ public class JavaUsageFilteringRuleProvider implements UsageFilteringRuleProvide
   }
 
   private static class ShowImportsAction extends RuleAction {
-    public ShowImportsAction(UsageViewImpl view) {
+    private ShowImportsAction(UsageViewImpl view) {
       super(view, UsageViewBundle.message("action.show.import.statements"), IconLoader.getIcon("/actions/showImportStatements.png"));
     }
 

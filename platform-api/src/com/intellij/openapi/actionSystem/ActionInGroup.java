@@ -2,8 +2,8 @@ package com.intellij.openapi.actionSystem;
 
 public class ActionInGroup {
 
-  private DefaultActionGroup myGroup;
-  private AnAction myAction;
+  private final DefaultActionGroup myGroup;
+  private final AnAction myAction;
 
   ActionInGroup(DefaultActionGroup group, AnAction action) {
     myGroup = group;

@@ -69,9 +69,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   private Rectangle myAutoPopupRec;
 
-  private final Icon myAutoPopupIcon = IconLoader.getIcon("/ide/link.png");
-  private final Icon mySecondaryGroupIcon = IconLoader.getIcon("/general/secondaryGroup.png");
-  private DefaultActionGroup mySecondaryActions = new DefaultActionGroup();
+  private static final Icon myAutoPopupIcon = IconLoader.getIcon("/ide/link.png");
+  private static final Icon mySecondaryGroupIcon = IconLoader.getIcon("/general/secondaryGroup.png");
+  private final DefaultActionGroup mySecondaryActions = new DefaultActionGroup();
   private ActionButton mySecondaryActionsButton;
 
   private final KeymapManagerEx myKeymapManager;
@@ -923,7 +923,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     myReservePlaceAutoPopupIcon = reserve;
   }
 
-  private class SecondaryButton extends ActionButton {
+  private static class SecondaryButton extends ActionButton {
     private SecondaryButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
       super(action, presentation, place, minimumSize);
     }

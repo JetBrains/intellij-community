@@ -38,7 +38,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   public abstract String getDisplayName();
   public abstract Icon getIcon();
 
-  public static interface ScopeListener {
+  public interface ScopeListener {
     void scopesChanged();
   }
   private List<ScopeListener> myScopeListeners;

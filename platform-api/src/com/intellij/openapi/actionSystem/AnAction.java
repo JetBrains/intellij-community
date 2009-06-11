@@ -126,7 +126,7 @@ public abstract class AnAction {
    * @param shortcutSet the shortcuts for the action.
    * @param component   the component for which the shortcuts will be active.
    */
-  public final void registerCustomShortcutSet(ShortcutSet shortcutSet, JComponent component){
+  public final void registerCustomShortcutSet(@NotNull ShortcutSet shortcutSet, JComponent component){
     myShortcutSet = shortcutSet;
     if (component != null){
       ArrayList<AnAction> actionList = (ArrayList<AnAction>)component.getClientProperty(ourClientProperty);

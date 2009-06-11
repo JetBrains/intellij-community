@@ -83,7 +83,8 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     clearCaches();
   }
 
-  public @NonNls String toString() {
+  @NonNls
+  public String toString() {
     //noinspection HardCodedStringLiteral
     @NonNls String threadRefString;
     try {
@@ -195,7 +196,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   private void checkFrames(@NotNull final ThreadReference threadRef) throws EvaluateException {
     if (myFramesFromBottom.size() < frameCount()) {
       int count = frameCount();
-      List<StackFrame> frames = null;
+      List<StackFrame> frames;
       try {
         frames = threadRef.frames(0, count - myFramesFromBottom.size());
       }
@@ -226,6 +227,9 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       return myFramesFromBottom.get(frameCount() - i  - 1);
     }
     catch (ObjectCollectedException e) {
+      return null;
+    }
+    catch (IllegalThreadStateException e) {
       return null;
     }
   }

@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import org.jetbrains.annotations.NotNull;
@@ -22,17 +23,10 @@ public class ProjectScope {
 
   public static GlobalSearchScope getAllScope(final Project project) {
     GlobalSearchScope allScope = project.getUserData(ALL_SCOPE_KEY);
-
     if (allScope == null) {
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-      if (projectRootManager == null) {
-        allScope = new EverythingGlobalScope(project);
-      }
-      else {
-        allScope = new ProjectAndLibrariesScope(project);
-      }
-
-      project.putUserData(ALL_SCOPE_KEY, allScope);
+      allScope = projectRootManager == null ? new EverythingGlobalScope(project) : new ProjectAndLibrariesScope(project);
+      allScope = ((UserDataHolderEx)project).putUserDataIfAbsent(ALL_SCOPE_KEY, allScope);
     }
     return allScope;
   }
@@ -77,9 +71,8 @@ public class ProjectScope {
           }
         };
       }
-      project.putUserData(PROJECT_SCOPE_KEY, projectScope);
+      projectScope = ((UserDataHolderEx)project).putUserDataIfAbsent(PROJECT_SCOPE_KEY, projectScope);
     }
     return projectScope;
   }
-
 }

@@ -24,10 +24,9 @@ import java.awt.*;
  * @author max
  */
 public class TitlePanel extends CaptionPanel {
-
-  private JLabel myLabel;
-  private Icon myRegular;
-  private Icon myInactive;
+  private final JLabel myLabel;
+  private final Icon myRegular;
+  private final Icon myInactive;
 
   public TitlePanel() {
     this(null, null);
@@ -67,26 +66,6 @@ public class TitlePanel extends CaptionPanel {
   public Dimension getPreferredSize() {
     final String text = myLabel.getText();
     return text != null && text.trim().length() > 0 ? super.getPreferredSize() : new Dimension(0, 0);
-  }
-
-  public static void main(String[] args) {
-    final JFrame jFrame = new JFrame();
-
-    jFrame.getContentPane().setLayout(new BorderLayout());
-    jFrame.getContentPane().setBackground(Color.white);
-
-    final JPanel jPanel = new JPanel(new BorderLayout());
-    jPanel.setBackground(Color.white);
-    jPanel.setOpaque(true);
-
-    jPanel.setBorder(PopupBorder.Factory.create(true));
-
-    jFrame.getContentPane().add(jPanel);
-
-    jFrame.setBounds(100, 100, 200, 200);
-
-
-    jFrame.setVisible(true);
   }
 }
 

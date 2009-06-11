@@ -112,7 +112,7 @@ public abstract class DialogWrapper {
   private ErrorText myErrorText;
   private int myMaxErrorTextLength;
 
-  private Alarm myErrorTextAlarm = new Alarm();
+  private final Alarm myErrorTextAlarm = new Alarm();
 
   /**
    * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.

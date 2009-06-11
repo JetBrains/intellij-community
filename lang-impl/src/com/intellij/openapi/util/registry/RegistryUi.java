@@ -133,7 +133,7 @@ public class RegistryUi implements Disposable {
 
   private class EditAction extends AnAction {
     private EditAction() {
-      new ShadowAction(this, ActionManager.getInstance().getAction("EditSource"), myTable);
+      new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE), myTable);
     }
 
     @Override

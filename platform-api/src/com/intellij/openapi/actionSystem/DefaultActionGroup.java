@@ -231,35 +231,36 @@ public class DefaultActionGroup extends ActionGroup {
       children[i + sortedSize] = myPairs.get(i).first;
     }
     // Replace ActionStubs with real actions
-    outer: for(int i=0;i<children.length;i++){
-      AnAction action=children[i];
-      if(!(action instanceof ActionStub)){
+    outer:
+    for (int i = 0; i < children.length; i++) {
+      AnAction action = children[i];
+      if (!(action instanceof ActionStub)) {
         continue;
       }
-      ActionStub stub=(ActionStub)action;
+      ActionStub stub = (ActionStub)action;
       // resolve action
-             ActionManager actionManager = e != null ? e.getActionManager() : ActionManager.getInstance();
-             AnAction actualAction = actionManager.getAction(stub.getId());
+      ActionManager actionManager = e != null ? e.getActionManager() : ActionManager.getInstance();
+      AnAction actualAction = actionManager.getAction(stub.getId());
 
       replace(stub, actualAction);
 
       // Find in sorted children first
-      int index=mySortedChildren.indexOf(stub);
-      if(index!=-1){
-        children[i]=actualAction;
-        mySortedChildren.set(index,actualAction);
+      int index = mySortedChildren.indexOf(stub);
+      if (index != -1) {
+        children[i] = actualAction;
+        mySortedChildren.set(index, actualAction);
         continue;
       }
       // Try to find action within pairs
-      for(int j=0;j<myPairs.size();j++){
-        Pair<AnAction, Constraints> pair=myPairs.get(j);
-        if(pair.first.equals(stub)){
-          children[i]=actualAction;
-          myPairs.set(j,new Pair<AnAction, Constraints>(actualAction,pair.second));
+      for (int j = 0; j < myPairs.size(); j++) {
+        Pair<AnAction, Constraints> pair = myPairs.get(j);
+        if (pair.first.equals(stub)) {
+          children[i] = actualAction;
+          myPairs.set(j, new Pair<AnAction, Constraints>(actualAction, pair.second));
           continue outer;
         }
       }
-      throw new IllegalStateException("unknown stub: "+stub.getId());
+      throw new IllegalStateException("unknown stub: " + stub.getId());
     }
     return children;
   }

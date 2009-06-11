@@ -55,26 +55,24 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
   @NotNull
   public AnAction[] createFilteringActions(UsageView view) {
     final UsageViewImpl impl = (UsageViewImpl)view;
-    if(view.getPresentation().isCodeUsages()) {
-      final JComponent component = view.getComponent();
-
-      final ShowReadAccessUsagesAction showReadAccessUsagesAction = new ShowReadAccessUsagesAction();
-      showReadAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK)), component);
-
-      final ShowWriteAccessUsagesAction showWriteAccessUsagesAction = new ShowWriteAccessUsagesAction();
-      showWriteAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK)), component);
-
-      impl.scheduleDisposeOnClose(new Disposable() {
-        public void dispose() {
-          showReadAccessUsagesAction.unregisterCustomShortcutSet(component);
-          showWriteAccessUsagesAction.unregisterCustomShortcutSet(component);
-        }
-      });
-      return new AnAction[] {showReadAccessUsagesAction, showWriteAccessUsagesAction};
-    }
-    else {
+    if (!view.getPresentation().isCodeUsages()) {
       return AnAction.EMPTY_ARRAY;
     }
+    final JComponent component = view.getComponent();
+
+    final ShowReadAccessUsagesAction read = new ShowReadAccessUsagesAction();
+    read.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK)), component);
+
+    final ShowWriteAccessUsagesAction write = new ShowWriteAccessUsagesAction();
+    write.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK)), component);
+
+    impl.scheduleDisposeOnClose(new Disposable() {
+      public void dispose() {
+        read.unregisterCustomShortcutSet(component);
+        write.unregisterCustomShortcutSet(component);
+      }
+    });
+    return new AnAction[] {read, write};
   }
 
   private static final class ReadWriteState {
@@ -105,7 +103,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
   }
 
   private class ShowReadAccessUsagesAction extends ToggleAction implements DumbAware {
-    public ShowReadAccessUsagesAction() {
+    private ShowReadAccessUsagesAction() {
       super(UsageViewBundle.message("action.show.read.access"), null, IconLoader.getIcon("/actions/showReadAccess.png"));
     }
 
@@ -122,7 +120,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
   }
 
   private class ShowWriteAccessUsagesAction extends ToggleAction implements DumbAware {
-    public ShowWriteAccessUsagesAction() {
+    private ShowWriteAccessUsagesAction() {
       super(UsageViewBundle.message("action.show.write.access"), null, IconLoader.getIcon("/actions/showWriteAccess.png"));
     }
 

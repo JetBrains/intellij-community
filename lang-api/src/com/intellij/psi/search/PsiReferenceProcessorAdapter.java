@@ -5,9 +5,8 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.Processor;
 
-public class PsiReferenceProcessorAdapter extends ReadActionProcessor<PsiReference> implements Processor<PsiReference> {
+public class PsiReferenceProcessorAdapter extends ReadActionProcessor<PsiReference> {
   private final PsiReferenceProcessor myProcessor;
 
   public PsiReferenceProcessorAdapter(final PsiReferenceProcessor processor) {
