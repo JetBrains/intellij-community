@@ -21,18 +21,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlComment;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
-
+import com.intellij.xml.util.XmlUtil;
 import org.intellij.lang.xpath.completion.ElementProvider;
 import org.intellij.lang.xpath.completion.FunctionLookup;
 import org.intellij.lang.xpath.psi.XPathFunction;
@@ -45,6 +36,9 @@ import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jdom.transform.JDOMSource;
 import org.jdom.xpath.XPath;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
@@ -59,7 +53,7 @@ import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class XsltDocumentationProvider implements DocumentationProvider {
+public class XsltDocumentationProvider implements DocumentationProvider {
     private SoftReference<Templates> myTemplates;
     private SoftReference<Document> myDocument;
 
