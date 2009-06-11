@@ -108,7 +108,7 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     myInterpreterOptions = JDOMExternalizerUtil.readField(element, "INTERPRETER_OPTIONS");
-    myPassParentEnvs = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "PASS_PARENT_ENVS"));
+    myPassParentEnvs = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "PARENT_ENVS"));
     mySdkHome = JDOMExternalizerUtil.readField(element, "SDK_HOME");
     myWorkingDirectory = JDOMExternalizerUtil.readField(element, "WORKING_DIRECTORY");
     myUseModuleSdk = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "IS_MODULE_SDK"));
@@ -119,7 +119,7 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     JDOMExternalizerUtil.writeField(element, "INTERPRETER_OPTIONS", myInterpreterOptions);
-    JDOMExternalizerUtil.writeField(element, "PASS_PARENT_ENVS", Boolean.toString(myPassParentEnvs));
+    JDOMExternalizerUtil.writeField(element, "PARENT_ENVS", Boolean.toString(myPassParentEnvs));
     JDOMExternalizerUtil.writeField(element, "SDK_HOME", mySdkHome);
     JDOMExternalizerUtil.writeField(element, "WORKING_DIRECTORY", myWorkingDirectory);
     JDOMExternalizerUtil.writeField(element, "IS_MODULE_SDK", Boolean.toString(myUseModuleSdk));
