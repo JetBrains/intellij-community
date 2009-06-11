@@ -6,6 +6,7 @@ package com.intellij.ui;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.Function;
 import com.intellij.util.ui.EmptyIcon;
 
@@ -84,6 +85,9 @@ public class DeferredIconImpl<T> implements DeferredIcon {
       public void run() {
         try {
           evaluated[0] = nonNull(myEvaluator.fun(myParam));
+        }
+        catch (ProcessCanceledException e) {
+          evaluated[0] = EMPTY_ICON;
         }
         catch (IndexNotReadyException e) {
           evaluated[0] = EMPTY_ICON;
