@@ -11,6 +11,7 @@ import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -41,13 +42,18 @@ public class GroovyScriptMacro implements Macro {
     try {
       Result result = params[0].calculateResult(context);
       if (result == null) return result;
-      Script script = new GroovyShell().parse(result.toString());
+      String text = result.toString();
+      GroovyShell shell = new GroovyShell();
+      File possibleFile = new File(text);
+      Script script = possibleFile.exists() ? shell.parse(possibleFile) :  shell.parse(text);
       Binding binding = new Binding();
 
       for(int i = 1; i < params.length; ++i) {
         Result paramResult = params[i].calculateResult(context);
         binding.setVariable("_"+i, paramResult != null ? paramResult.toString():null);
       }
+
+      binding.setVariable("_editor", context.getEditor());
 
       script.setBinding(binding);
 
