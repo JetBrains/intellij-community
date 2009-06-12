@@ -92,7 +92,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   public boolean MERGE_DIFF_USE_ANCESTRY = true;
   public boolean UPDATE_LOCK_ON_DEMAND = false;
   public boolean IGNORE_SPACES_IN_MERGE = false;
-  public boolean DETECT_NESTED_COPIES = true;
+  public boolean DETECT_NESTED_COPIES = false;
 
   private final Map<File, MergeRootInfo> myMergeRootInfos = new HashMap<File, MergeRootInfo>();
   private final Map<File, UpdateRootInfo> myUpdateRootInfos = new HashMap<File, UpdateRootInfo>();
