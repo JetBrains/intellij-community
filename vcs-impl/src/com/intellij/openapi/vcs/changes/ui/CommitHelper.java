@@ -412,7 +412,6 @@ public class CommitHelper {
       }
 
       processor.afterSuccessfulCheckIn();
-
     }
     else {
       for (CheckinHandler handler : myHandlers) {
@@ -420,33 +419,31 @@ public class CommitHelper {
       }
     }
 
-    if (errorsSize == 0 || warningsSize == 0) {
+    if ((errorsSize == 0) && (warningsSize == 0)) {
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       if (indicator != null) {
         indicator.setText(VcsBundle.message("commit.dialog.completed.successfully"));
       }
+    } else {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          final String message;
+          if (errorsSize > 0 && warningsSize > 0) {
+            message = VcsBundle.message("message.text.commit.failed.with.errors.and.warnings");
+          } else if (errorsSize > 0) {
+            message = VcsBundle.message("message.text.commit.failed.with.errors");
+          } else {
+            message = VcsBundle.message("message.text.commit.finished.with.warnings");
+          }
+          //new ChangesViewBalloonProblemNotifier(myProject, message, MessageType.ERROR).run();
+          Messages.showErrorDialog(message, VcsBundle.message("message.title.commit"));
+
+          if (errorsSize > 0) {
+            processor.afterFailedCheckIn();
+          }
+        }
+      }, ModalityState.NON_MODAL);
     }
-
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (errorsSize > 0 && warningsSize > 0) {
-          Messages.showErrorDialog(VcsBundle.message("message.text.commit.failed.with.errors.and.warnings"),
-                                   VcsBundle.message("message.title.commit"));
-        }
-        else if (errorsSize > 0) {
-          Messages.showErrorDialog(VcsBundle.message("message.text.commit.failed.with.errors"), VcsBundle.message("message.title.commit"));
-        }
-        else if (warningsSize > 0) {
-          Messages
-            .showErrorDialog(VcsBundle.message("message.text.commit.finished.with.warnings"), VcsBundle.message("message.title.commit"));
-        }
-
-        if (errorsSize > 0) {
-          processor.afterFailedCheckIn();
-        }
-      }
-    }, ModalityState.NON_MODAL);
-
   }
 
   public static void moveToFailedList(final ChangeList changeList,
