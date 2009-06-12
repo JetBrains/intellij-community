@@ -586,6 +586,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     final List<VirtualFile> toRefreshFiles = new ArrayList<VirtualFile>();
     final List<VirtualFile> toRefreshDirs = new ArrayList<VirtualFile>();
     for (VirtualFile file : myFilesToRefresh) {
+      if (file == null) continue;
       if (file.isDirectory()) {
         toRefreshDirs.add(file);
       } else {
