@@ -482,6 +482,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ConstantAssertConditionInspection.class);
         m_inspectionClasses.add(CastConflictsWithInstanceofInspection.class);
         m_inspectionClasses.add(CastToIncompatibleInterfaceInspection.class);
+        m_inspectionClasses.add(ClassNewInstanceInspection.class);
         m_inspectionClasses.add(CollectionAddedToSelfInspection.class);
         m_inspectionClasses.add(ComparableImplementedButEqualsNotOverriddenInspection.class);
         m_inspectionClasses.add(ComparatorMethodParameterNotUsedInspection.class);
