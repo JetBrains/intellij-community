@@ -45,6 +45,11 @@ public class OrredNotEqualExpressionInspection extends BaseInspection {
     }
 
     @Override
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new OrredNotEqualExpressionFix();
     }
