@@ -1,9 +1,6 @@
-package com.siyeh.igtest.encapsulation;
+package com.siyeh.igtest.encapsulation.package_visible_inner_class;
 
-import java.util.Set;
-import java.util.HashSet;
-
-public class PackageVisibleInnerClassInspection
+public class PackageVisibleInnerClassInspection<T>
 {
     class Barangus
     {
