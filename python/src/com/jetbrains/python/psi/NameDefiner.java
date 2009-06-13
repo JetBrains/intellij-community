@@ -8,7 +8,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- * PSI element that (re)defnies names in following namespace, e.g. assignment statement does.
+ * PSI element that (re)defnies names in following namespace, e.g. as assignment statement does.
  * User: dcheryasov
  * Date: Jul 3, 2008
  */
@@ -28,9 +28,9 @@ public interface NameDefiner extends PsiElement {
   PsiElement getElementNamed(String the_name);
 
   /**
-   * @return true if names found inside its children cannot be resolved to names defined by this statement..
-   * E.g. name <tt>a</tt> is defined in statement <tt>a = a + 1</tt> but the <tt>a</tt> on the left hand side
-   * must not resolve to the <tt>a</tt> on the right hand side.
+   * @return true if names found inside its children cannot be resolved to names defined by this statement.
+   * E.g. name <tt>a</tt> is defined in statement <tt>a = a + 1</tt> but the <tt>a</tt> on the right hand side
+   * must not resolve to the <tt>a</tt> on the left hand side.
    */
   boolean mustResolveOutside();
 
