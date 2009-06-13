@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
@@ -73,6 +74,7 @@ public class SvnAnnotationProvider implements AnnotationProvider {
           final String url = info.getURL() == null ? null : info.getURL().toString();
 
           SVNLogClient client = myVcs.createLogClient();
+          setLogClientOptions(client);
           SVNRevision endRevision = ((SvnFileRevision) revision).getRevision();
           if (SVNRevision.WORKING.equals(endRevision)) {
             endRevision = info.getRevision();
@@ -153,5 +155,11 @@ public class SvnAnnotationProvider implements AnnotationProvider {
 
   public boolean isAnnotationValid( VcsFileRevision rev ){
     return true;
+  }
+
+  private void setLogClientOptions(final SVNLogClient client) {
+    if (SvnConfiguration.getInstance(myVcs.getProject()).IGNORE_SPACES_IN_ANNOTATE) {
+      client.setDiffOptions(new SVNDiffOptions(true, true, true));
+    }
   }
 }

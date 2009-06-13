@@ -69,6 +69,7 @@ public class SvnConfigurable implements Configurable {
   private JLabel myEditProxyLabel;
   private JCheckBox myLockOnDemand;
   private JCheckBox myDetectNestedWorkingCopiesCheckBox;
+  private JCheckBox myIgnoreWhitespaceDifferenciesInCheckBox;
 
   @NonNls private static final String HELP_ID = "project.propSubversion";
 
@@ -177,6 +178,9 @@ public class SvnConfigurable implements Configurable {
     if (configuration.DETECT_NESTED_COPIES != myDetectNestedWorkingCopiesCheckBox.isSelected()) {
       return true;
     }
+    if (configuration.IGNORE_SPACES_IN_ANNOTATE != myIgnoreWhitespaceDifferenciesInCheckBox.isSelected()) {
+      return true;
+    }
     return !configuration.getConfigurationDirectory().equals(myConfigurationDirectoryText.getText().trim());
   }
 
@@ -187,6 +191,7 @@ public class SvnConfigurable implements Configurable {
     configuration.setIsUseDefaultProxy(myUseCommonProxy.isSelected());
     configuration.DETECT_NESTED_COPIES = myDetectNestedWorkingCopiesCheckBox.isSelected(); 
     configuration.UPDATE_LOCK_ON_DEMAND = myLockOnDemand.isSelected();
+    configuration.IGNORE_SPACES_IN_ANNOTATE = myIgnoreWhitespaceDifferenciesInCheckBox.isSelected();
   }
 
   public void reset() {
@@ -204,6 +209,7 @@ public class SvnConfigurable implements Configurable {
     myConfigurationDirectoryText.setEnabled(enabled);
     myConfigurationDirectoryLabel.setEnabled(enabled);
     myLockOnDemand.setSelected(configuration.UPDATE_LOCK_ON_DEMAND);
+    myIgnoreWhitespaceDifferenciesInCheckBox.setSelected(configuration.IGNORE_SPACES_IN_ANNOTATE);
   }
 
   public void disposeUIResources() {
