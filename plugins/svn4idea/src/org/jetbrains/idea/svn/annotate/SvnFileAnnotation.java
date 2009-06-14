@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.SyncDateFormat;
+import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnEntriesListener;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ShowAllSubmittedFilesAction;
@@ -74,6 +75,7 @@ public class SvnFileAnnotation implements FileAnnotation {
       }
     }
   };
+  private final SvnConfiguration myConfiguration;
 
   public void setRevision(final long revision, final SvnFileRevision svnRevision) {
     myRevisionMap.put(revision, svnRevision);
@@ -109,14 +111,17 @@ public class SvnFileAnnotation implements FileAnnotation {
     myFile = file;
     myContents = contents;
     myVcs.getSvnEntriesFileListener().addListener(myListener);
+    myConfiguration = SvnConfiguration.getInstance(vcs.getProject());
   }
 
   public void addListener(AnnotationListener listener) {
     myListeners.add(listener);
+    myConfiguration.addAnnotationListener(listener);
   }
 
   public void removeListener(AnnotationListener listener) {
     myListeners.remove(listener);
+    myConfiguration.removeAnnotationListener(listener);
   }
 
   public void dispose() {

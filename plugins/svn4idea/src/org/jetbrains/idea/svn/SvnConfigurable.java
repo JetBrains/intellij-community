@@ -191,7 +191,7 @@ public class SvnConfigurable implements Configurable {
     configuration.setIsUseDefaultProxy(myUseCommonProxy.isSelected());
     configuration.DETECT_NESTED_COPIES = myDetectNestedWorkingCopiesCheckBox.isSelected(); 
     configuration.UPDATE_LOCK_ON_DEMAND = myLockOnDemand.isSelected();
-    configuration.IGNORE_SPACES_IN_ANNOTATE = myIgnoreWhitespaceDifferenciesInCheckBox.isSelected();
+    configuration.setIgnoreSpacesInAnnotate(myIgnoreWhitespaceDifferenciesInCheckBox.isSelected());
   }
 
   public void reset() {
