@@ -2,11 +2,12 @@ package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.actions.CompareWithSelectedRevisionAction;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 
@@ -17,10 +18,13 @@ public class HighlightAnnotationsActions {
   private final HightlightAction myBefore;
   private final HightlightAction myAfter;
   private final RemoveHighlightingAction myRemove;
+  private final EditorGutterComponentEx myGutter;
 
-  public HighlightAnnotationsActions(final Project project, final VirtualFile virtualFile, final FileAnnotation fileAnnotation) {
-    myBefore = new HightlightAction(true, project, virtualFile, fileAnnotation);
-    myAfter = new HightlightAction(false, project, virtualFile, fileAnnotation);
+  public HighlightAnnotationsActions(final Project project, final VirtualFile virtualFile, final FileAnnotation fileAnnotation,
+                                     final EditorGutterComponentEx gutter) {
+    myGutter = gutter;
+    myBefore = new HightlightAction(true, project, virtualFile, fileAnnotation, myGutter);
+    myAfter = new HightlightAction(false, project, virtualFile, fileAnnotation, myGutter);
     myRemove = new RemoveHighlightingAction();
   }
 
@@ -55,6 +59,7 @@ public class HighlightAnnotationsActions {
     public void actionPerformed(final AnActionEvent e) {
       myBefore.clear();
       myAfter.clear();
+      myGutter.revalidateMarkup();
     }
   }
 
@@ -62,15 +67,18 @@ public class HighlightAnnotationsActions {
     private final Project myProject;
     private final VirtualFile myVirtualFile;
     private final FileAnnotation myFileAnnotation;
+    private final EditorGutterComponentEx myGutter;
     private final boolean myBefore;
     private VcsFileRevision mySelectedRevision;
     private Boolean myShowComments;
 
-    private HightlightAction(final boolean before, final Project project, final VirtualFile virtualFile, final FileAnnotation fileAnnotation) {
+    private HightlightAction(final boolean before, final Project project, final VirtualFile virtualFile, final FileAnnotation fileAnnotation,
+                             final EditorGutterComponentEx gutter) {
       myBefore = before;
       myProject = project;
       myVirtualFile = virtualFile;
       myFileAnnotation = fileAnnotation;
+      myGutter = gutter;
       myShowComments = null;
     }
 
@@ -104,6 +112,7 @@ public class HighlightAnnotationsActions {
                                                         new Consumer<VcsFileRevision>() {
                                                           public void consume(final VcsFileRevision vcsFileRevision) {
                                                             mySelectedRevision = vcsFileRevision;
+                                                            myGutter.revalidateMarkup();
                                                           }
                                                         }, myShowComments.booleanValue());
       }

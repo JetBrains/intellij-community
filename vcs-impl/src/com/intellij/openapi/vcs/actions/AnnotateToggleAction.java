@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -25,9 +26,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
+import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
-import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -175,7 +176,8 @@ public class AnnotateToggleAction extends ToggleAction {
       editor.putUserData(KEY_IN_EDITOR, annotations);
     }
 
-    final HighlightAnnotationsActions highlighting = new HighlightAnnotationsActions(project, file, fileAnnotation);
+    final HighlightAnnotationsActions highlighting = new HighlightAnnotationsActions(project, file, fileAnnotation,
+                                                                                     ((EditorGutterComponentEx) editor.getGutter()));
     final LineAnnotationAspect[] aspects = fileAnnotation.getAspects();
     for (LineAnnotationAspect aspect : aspects) {
       final AnnotationFieldGutter gutter = new AnnotationFieldGutter(getUpToDateLineNumber, fileAnnotation, editor, aspect, highlighting);
