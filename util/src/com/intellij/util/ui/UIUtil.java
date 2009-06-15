@@ -18,8 +18,10 @@ package com.intellij.util.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.SideBorder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
@@ -28,10 +30,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.tree.TreePath;
 import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import javax.swing.plaf.ProgressBarUI;
 import javax.swing.plaf.basic.BasicTreeUI;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.Field;
@@ -62,6 +65,8 @@ public class UIUtil {
   public static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
 
   @NonNls public static final String FOCUS_PROXY_KEY = "isFocusProxy";
+
+  public static Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
 
   private UIUtil() {
   }
@@ -901,7 +906,15 @@ public class UIUtil {
       public boolean visit(final Component component) {
         if (component instanceof JScrollPane) {
           if (!hasNonPrimitiveParents(c, component)) {
-            ((JScrollPane)component).setBorder(null);
+            final JScrollPane scrollPane = (JScrollPane)component;
+            Integer keepBorderSides = (Integer) scrollPane.getClientProperty(KEEP_BORDER_SIDES);
+            if (keepBorderSides != null && scrollPane.getBorder() instanceof LineBorder) {
+              Color color = ((LineBorder) scrollPane.getBorder()).getLineColor();
+              scrollPane.setBorder(new SideBorder(color, keepBorderSides.intValue()));
+            }
+            else {
+              scrollPane.setBorder(null);
+            }
           }
         }
         return false;
