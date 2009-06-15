@@ -23,15 +23,15 @@ import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit2.ui.JUnitTreeConsoleView;
+import com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.SourceScope;
-import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.util.JavaParametersUtil;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -41,6 +41,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Getter;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -205,17 +206,24 @@ public abstract class TestObject implements JavaCommandLine {
 
   public ExecutionResult execute(final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
     final ProcessHandler handler = startProcess();
-    final ConsoleView consoleView;
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      consoleView = null;
-    }
-    else {
-      consoleView = new JUnitTreeConsoleView(new JUnitConsoleProperties(myConfiguration),getRunnerSettings(), getConfigurationSettings());
-      consoleView.attachToProcess(handler);
+      return new DefaultExecutionResult(null, handler);
     }
 
-    return new DefaultExecutionResult(consoleView, handler, AnAction.EMPTY_ARRAY);
+    final JUnitConsoleProperties consoleProperties = new JUnitConsoleProperties(myConfiguration);
+    final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, getRunnerSettings(), getConfigurationSettings());
+    consoleView.attachToProcess(handler);
+
+    RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView.getComponent());
+    rerunFailedTestsAction.init(consoleProperties, myRunnerSettings, myConfigurationSettings);
+    rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
+      public TestFrameworkRunningModel get() {
+        return consoleView.getModel();
+      }
+    });
+
+    return new DefaultExecutionResult(consoleView, handler, rerunFailedTestsAction);
   }
 
   private ProcessHandler startProcess() throws ExecutionException {

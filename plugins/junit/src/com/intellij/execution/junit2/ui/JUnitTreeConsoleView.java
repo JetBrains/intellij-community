@@ -138,6 +138,10 @@ public class JUnitTreeConsoleView extends WrappingConsoleView {
     return AnAction.EMPTY_ARRAY;
   }
 
+  public JUnitRunningModel getModel() {
+    return myModel;
+  }
+
   private static class SystemOutput implements InputConsumer {
     private final Printer myPrinter;
 

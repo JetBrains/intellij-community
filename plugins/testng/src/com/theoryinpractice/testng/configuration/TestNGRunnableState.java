@@ -136,7 +136,7 @@ public class TestNGRunnableState extends JavaCommandLineState
       }
     });
     console.attachToProcess(processHandler);
-    return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
+    return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler, executor));
   }
 
   @Override

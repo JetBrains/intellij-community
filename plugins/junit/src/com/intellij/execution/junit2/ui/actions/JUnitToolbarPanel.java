@@ -40,7 +40,6 @@ import javax.swing.*;
 
 public class JUnitToolbarPanel extends ToolbarPanel {
   @NonNls protected static final String TEST_SUITE_CLASS_NAME = "junit.framework.TestSuite";
-  private RerunFailedTestsAction myRerunFailedTestsAction;
   private TrackCoverageAction myTrackCoverageAction;
 
   public JUnitToolbarPanel(final TestConsoleProperties properties,
@@ -57,16 +56,12 @@ public class JUnitToolbarPanel extends ToolbarPanel {
     
     myTrackCoverageAction = new TrackCoverageAction(properties);
     actionGroup.addAction(myTrackCoverageAction).setAsSecondary(true);
-    myRerunFailedTestsAction = new RerunFailedTestsAction(parent);
-    myRerunFailedTestsAction.init(properties, runnerSettings, configurationSettings);
-    actionGroup.add(myRerunFailedTestsAction);
   }
 
 
   public void setModel(final TestFrameworkRunningModel model) {
     super.setModel(model);
     final JUnitRunningModel jUnitModel = (JUnitRunningModel)model;
-    myRerunFailedTestsAction.setModel(jUnitModel);
     myTrackCoverageAction.setModel(jUnitModel);
     JUnitActions.installAutoscrollToFirstDefect(jUnitModel);
     RunningTestTracker.install(jUnitModel);
