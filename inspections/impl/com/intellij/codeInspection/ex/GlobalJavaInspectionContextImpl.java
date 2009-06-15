@@ -190,9 +190,10 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     };
 
     if (myDerivedClassesRequests != null) {
-      List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myDerivedClassesRequests);
+      final List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myDerivedClassesRequests);
       for (SmartPsiElementPointer sortedID : sortedIDs) {
         final PsiClass psiClass = (PsiClass)sortedID.getElement();
+        if (psiClass == null) continue;
         ((GlobalInspectionContextImpl)context).incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, ApplicationManager.getApplication().runReadAction(
             new Computable<String>() {
               public String compute() {
@@ -203,25 +204,14 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
 
         final List<DerivedClassesProcessor> processors = myDerivedClassesRequests.get(sortedID);
         ClassInheritorsSearch.search(psiClass, searchScope, false)
-          .forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
-            public boolean execute(PsiClass inheritor) {
-              if (scope.contains(inheritor)) return true;
-              DerivedClassesProcessor[] processorsArrayed = processors.toArray(new DerivedClassesProcessor[processors.size()]);
-              for (DerivedClassesProcessor processor : processorsArrayed) {
-                if (!processor.process(inheritor)) {
-                  processors.remove(processor);
-                }
-              }
-              return !processors.isEmpty();
-            }
-          }));
+          .forEach(createMembersProcessor(processors, scope));
       }
 
       myDerivedClassesRequests = null;
     }
 
     if (myDerivedMethodsRequests != null) {
-      List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myDerivedMethodsRequests);
+      final List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myDerivedMethodsRequests);
       for (SmartPsiElementPointer sortedID : sortedIDs) {
         final PsiMethod psiMethod = (PsiMethod)sortedID.getElement();
         final RefMethod refMethod = (RefMethod)refManager.getReference(psiMethod);
@@ -231,28 +221,17 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
 
         final List<DerivedMethodsProcessor> processors = myDerivedMethodsRequests.get(sortedID);
         OverridingMethodsSearch.search(psiMethod, searchScope, true)
-          .forEach(new PsiElementProcessorAdapter<PsiMethod>(new PsiElementProcessor<PsiMethod>() {
-            public boolean execute(PsiMethod derivedMethod) {
-              if (scope.contains(derivedMethod)) return true;
-              DerivedMethodsProcessor[] processorsArrayed = processors.toArray(new DerivedMethodsProcessor[processors.size()]);
-              for (DerivedMethodsProcessor processor : processorsArrayed) {
-                if (!processor.process(derivedMethod)) {
-                  processors.remove(processor);
-                }
-              }
-
-              return !processors.isEmpty();
-            }
-          }));
+          .forEach(createMembersProcessor(processors, scope));
       }
 
       myDerivedMethodsRequests = null;
     }
 
     if (myFieldUsagesRequests != null) {
-      List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myFieldUsagesRequests);
+      final List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myFieldUsagesRequests);
       for (SmartPsiElementPointer sortedID : sortedIDs) {
         final PsiField psiField = (PsiField)sortedID.getElement();
+        if (psiField == null) continue;
         final List<UsagesProcessor> processors = myFieldUsagesRequests.get(sortedID);
 
         ((GlobalInspectionContextImpl)context)
@@ -266,9 +245,10 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     }
 
     if (myClassUsagesRequests != null) {
-      List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myClassUsagesRequests);
+      final List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myClassUsagesRequests);
       for (SmartPsiElementPointer sortedID : sortedIDs) {
         final PsiClass psiClass = (PsiClass)sortedID.getElement();
+        if (psiClass == null) continue;
         final List<UsagesProcessor> processors = myClassUsagesRequests.get(sortedID);
 
         ((GlobalInspectionContextImpl)context).incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, ApplicationManager.getApplication().runReadAction(
@@ -290,6 +270,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
       List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myMethodUsagesRequests);
       for (SmartPsiElementPointer sortedID : sortedIDs) {
         final PsiMethod psiMethod = (PsiMethod)sortedID.getElement();
+        if (psiMethod == null) continue;
         final List<UsagesProcessor> processors = myMethodUsagesRequests.get(sortedID);
 
         ((GlobalInspectionContextImpl)context)
@@ -303,6 +284,22 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     }
   }
 
+
+  private static <Member extends PsiMember, P extends Processor<Member>> PsiElementProcessorAdapter<Member> createMembersProcessor(final List<P> processors,
+                                                                                                                                   final AnalysisScope scope) {
+    return new PsiElementProcessorAdapter<Member>(new PsiElementProcessor<Member>() {
+      public boolean execute(Member member) {
+        if (scope.contains(member)) return true;
+        final List<P> processorsArrayed = new ArrayList<P>(processors);
+        for (P processor : processorsArrayed) {
+          if (!processor.process(member)) {
+            processors.remove(processor);
+          }
+        }
+        return !processors.isEmpty();
+      }
+    });
+  }
 
   private int getRequestCount() {
     int sum = 0;
@@ -351,7 +348,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     return result;
   }
 
-  private static PsiReferenceProcessor createReferenceProcessor(final List<UsagesProcessor> processors,
+  private static PsiReferenceProcessor createReferenceProcessor(@NotNull final List<UsagesProcessor> processors,
                                                                 final GlobalInspectionContext context) {
     return new PsiReferenceProcessor() {
       public boolean execute(PsiReference reference) {
