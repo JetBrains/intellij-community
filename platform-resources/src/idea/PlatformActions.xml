@@ -3,7 +3,6 @@
     <action id="CaptureMemorySnapShot" class="com.intellij.util.CaptureMemorySnapshotAction" icon="/actions/profileMemory.png"/>
     <action id="CaptureCPUUsageData" class="com.intellij.util.CaptureCPUUsageDataAction" icon="/actions/profuleCPU.png"/>
     <action id="ContextHelp" class="com.intellij.ide.actions.ContextHelpAction"/>
-    <action id="ToggleReadOnlyAttribute" class="com.intellij.ide.actions.ToggleReadOnlyAttributeAction"/>
     <action id="RunGc" class="com.intellij.ide.actions.RunGcAction"/>
     <action id="ShowPopupMenu" class="com.intellij.ide.actions.ShowPopupMenuAction"/>
     <action id="CloseWindow" class="com.intellij.ide.actions.CloseWindowAction"/>
@@ -121,6 +120,7 @@
         <group id="ChangeFileEncodingGroup" popup="true" class="com.intellij.openapi.vfs.encoding.ChangeEncodingUpdateGroup">
           <action id="ChangeFileEncodingGroupAction" class="com.intellij.openapi.vfs.encoding.ChangeFileEncodingGroup" text=""/>
         </group>
+        <action id="ToggleReadOnlyAttribute" class="com.intellij.ide.actions.ToggleReadOnlyAttributeAction"/>
         <separator/>
         <action id="Exit" class="com.intellij.ide.actions.ExitAction"/>
       </group>

@@ -10,8 +10,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
@@ -35,6 +35,28 @@ public class ToggleReadOnlyAttributeAction extends AnAction implements DumbAware
   public void update(AnActionEvent e){
     VirtualFile[] files=getFiles(e.getDataContext());
     e.getPresentation().setEnabled(files.length>0);
+    if (files.length > 0) {
+      boolean allReadOnly = true;
+      boolean allWritable = true;
+      for (VirtualFile file : files) {
+        if (file.isWritable()) {
+          allReadOnly = false;
+        }
+        else {
+          allWritable = false;
+        }
+      }
+      if (allReadOnly) {
+        e.getPresentation().setText(files.length > 1 ? "Make Files Writable" : "Make File Writable");
+      }
+      else if (allWritable) {
+        e.getPresentation().setText(files.length > 1 ? "Make Files Read-only" : "Make File Read-only");
+      }
+      else {
+        e.getPresentation().setText("Toggle Read-only Attribute");
+      }
+    }
+
   }
 
   public void actionPerformed(final AnActionEvent e){
@@ -44,13 +66,13 @@ public class ToggleReadOnlyAttributeAction extends AnAction implements DumbAware
           // Save all documents. We won't be able to save changes to the files that became read-only afterwards.
           FileDocumentManager.getInstance().saveAllDocuments();
 
-          try{
+          try {
             VirtualFile[] files=getFiles(e.getDataContext());
-            for(int i=0;i<files.length;i++){
-              VirtualFile file=files[i];
-              ReadOnlyAttributeUtil.setReadOnlyAttribute(file,file.isWritable());
+            for (VirtualFile file : files) {
+              ReadOnlyAttributeUtil.setReadOnlyAttribute(file, file.isWritable());
             }
-          }catch(IOException exc){
+          }
+          catch(IOException exc){
             Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
             Messages.showMessageDialog(
               project,
