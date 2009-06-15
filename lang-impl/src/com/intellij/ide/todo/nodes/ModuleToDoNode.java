@@ -6,12 +6,14 @@ import com.intellij.ide.todo.HighlightedRegionProvider;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.HighlightedRegion;
@@ -106,10 +108,14 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
   public int getTodoItemCount(final Module val) {
     Iterator<PsiFile> iterator = myBuilder.getFiles(val);
     int count = 0;
-    while(iterator.hasNext()){
-        PsiFile psiFile = iterator.next();
-        count+=getTreeStructure().getTodoItemCount(psiFile);
-      }
+    while (iterator.hasNext()) {
+      final PsiFile psiFile = iterator.next();
+      count += ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
+        public Integer compute() {
+          return getTreeStructure().getTodoItemCount(psiFile);
+        }
+      });
+    }
     return count;
   }
 
