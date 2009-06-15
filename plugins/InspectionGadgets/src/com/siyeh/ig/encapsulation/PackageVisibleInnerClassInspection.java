@@ -16,10 +16,7 @@
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -89,7 +86,8 @@ public class PackageVisibleInnerClassInspection extends BaseInspection {
                 return;
             }
             final PsiElement parent = aClass.getParent();
-            if (parent instanceof PsiTypeParameterList) {
+            if (parent instanceof PsiTypeParameterList ||
+                    parent instanceof PsiNewExpression) {
                 return;
             }
             registerClassError(aClass);
