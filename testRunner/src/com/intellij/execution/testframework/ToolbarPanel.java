@@ -31,12 +31,13 @@ public abstract class ToolbarPanel extends JPanel implements OccurenceNavigator 
                       final RunnerSettings runnerSettings,
                       final ConfigurationPerRunnerSettings configurationSettings, JComponent parent) {
     super (new BorderLayout());
-    //add(new JLabel(IconLoader.getIcon("/general/inactiveSeparator.png")), BorderLayout.WEST);
     final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
     actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.run.hide.passed.action.name"),
                                                     ExecutionBundle.message("junit.run.hide.passed.action.description"),
                                                     TestsUIUtil.loadIcon("hidePassed"),
-                                                    properties, TestConsoleProperties.HIDE_PASSED_TESTS))/*.setAsSecondary(true)*/;
+                                                    properties, TestConsoleProperties.HIDE_PASSED_TESTS));
+    actionGroup.addSeparator();
+    
     actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.track.test.action.name"),
                                                     ExecutionBundle.message("junit.runing.info.track.test.action.description"),
                                                     TestsUIUtil.loadIcon("trackTests"),
