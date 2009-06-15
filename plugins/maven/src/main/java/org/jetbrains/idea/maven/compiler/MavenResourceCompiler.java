@@ -6,7 +6,6 @@ import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -21,7 +20,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
@@ -36,7 +34,6 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -377,7 +374,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         outputFile.getParentFile().mkdirs();
 
         if (eachItem.isFiltered()) {
-          String charset = getCharsetName(sourceVirtualFile);
+          String charset = sourceVirtualFile.getCharset().name();
           String text = new String(FileUtil.loadFileBytes(sourceFile), charset);
           String escapedCharacters = "properties".equals(sourceVirtualFile.getExtension()) ? "\\" : null;
           text = PropertyResolver.resolve(eachItem.getModule(),
@@ -414,19 +411,6 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         filesToRefresh.add(file);
       }
     }
-  }
-
-  private String getCharsetName(VirtualFile sourceFile) {
-    EncodingManager manager = EncodingManager.getInstance();
-    Charset charset;
-    if (StdFileTypes.PROPERTIES.equals(sourceFile.getFileType())) {
-      charset = manager.getDefaultCharsetForPropertiesFiles(sourceFile);
-    }
-    else {
-      charset = manager.getEncoding(sourceFile, true);
-    }
-    if (charset == null) charset = manager.getDefaultCharset();
-    return charset.name();
   }
 
   @NotNull
