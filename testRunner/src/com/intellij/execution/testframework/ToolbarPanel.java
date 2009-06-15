@@ -31,19 +31,17 @@ public abstract class ToolbarPanel extends JPanel implements OccurenceNavigator 
                       final RunnerSettings runnerSettings,
                       final ConfigurationPerRunnerSettings configurationSettings, JComponent parent) {
     super (new BorderLayout());
-    add(new JLabel(IconLoader.getIcon("/general/inactiveSeparator.png")), BorderLayout.WEST);
+    //add(new JLabel(IconLoader.getIcon("/general/inactiveSeparator.png")), BorderLayout.WEST);
     final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
-    actionGroup.addSeparator();
-    actionGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.run.hide.passed.action.name"),
-                                              ExecutionBundle.message("junit.run.hide.passed.action.description"),
-                                              TestsUIUtil.loadIcon("hidePassed"),
-                                              properties, TestConsoleProperties.HIDE_PASSED_TESTS));
-    actionGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.track.test.action.name"),
-                                              ExecutionBundle.message("junit.runing.info.track.test.action.description"),
-                                              TestsUIUtil.loadIcon("trackTests"),
-                                              properties, TestConsoleProperties.TRACK_RUNNING_TEST));
+    actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.run.hide.passed.action.name"),
+                                                    ExecutionBundle.message("junit.run.hide.passed.action.description"),
+                                                    TestsUIUtil.loadIcon("hidePassed"),
+                                                    properties, TestConsoleProperties.HIDE_PASSED_TESTS))/*.setAsSecondary(true)*/;
+    actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.track.test.action.name"),
+                                                    ExecutionBundle.message("junit.runing.info.track.test.action.description"),
+                                                    TestsUIUtil.loadIcon("trackTests"),
+                                                    properties, TestConsoleProperties.TRACK_RUNNING_TEST)).setAsSecondary(true);
 
-    actionGroup.addSeparator();
     AnAction action = CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, parent);
     action.getTemplatePresentation().setDescription(ExecutionBundle.message("junit.runing.info.collapse.test.action.name"));
     actionGroup.add(action);
@@ -58,20 +56,20 @@ public abstract class ToolbarPanel extends JPanel implements OccurenceNavigator 
     actionGroup.add(actionsManager.createPrevOccurenceAction(myOccurenceNavigator));
     actionGroup.add(actionsManager.createNextOccurenceAction(myOccurenceNavigator));
     actionGroup.addSeparator();
-    actionGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.select.first.failed.action.name"),
-                                              null,
-                                              TestsUIUtil.loadIcon("selectFirstDefect"),
-                                              properties, TestConsoleProperties.SELECT_FIRST_DEFECT));
-    actionGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.name"),
-                                              ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.description"),
-                                              IconLoader.getIcon("/runConfigurations/scrollToStackTrace.png"),
-                                              properties, TestConsoleProperties.SCROLL_TO_STACK_TRACE));
+    actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.select.first.failed.action.name"),
+                                                    null,
+                                                    TestsUIUtil.loadIcon("selectFirstDefect"),
+                                                    properties, TestConsoleProperties.SELECT_FIRST_DEFECT)).setAsSecondary(true);
+    actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.name"),
+                                                    ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.description"),
+                                                    IconLoader.getIcon("/runConfigurations/scrollToStackTrace.png"),
+                                                    properties, TestConsoleProperties.SCROLL_TO_STACK_TRACE)).setAsSecondary(true);
     myScrollToSource = new ScrollToTestSourceAction(properties);
-    actionGroup.add(myScrollToSource);
-    actionGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.name"),
-                                              ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.description"),
-                                              IconLoader.getIcon("/runConfigurations/sourceAtException.png"),
-                                              properties, TestConsoleProperties.OPEN_FAILURE_LINE));
+    actionGroup.addAction(myScrollToSource).setAsSecondary(true);
+    actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.name"),
+                                                    ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.description"),
+                                                    IconLoader.getIcon("/runConfigurations/sourceAtException.png"),
+                                                    properties, TestConsoleProperties.OPEN_FAILURE_LINE)).setAsSecondary(true);
     appendAdditionalActions(actionGroup, properties, runnerSettings, configurationSettings, parent);
 
     add(ActionManager.getInstance().

@@ -46,6 +46,19 @@ public class DefaultActionGroup extends ActionGroup {
     this(null, false);
   }
 
+  /**
+   * Creates an action group containing the specified actions.
+   *
+   * @param actions the actions to add to the group
+   * @since 9.0
+   */
+  public DefaultActionGroup(AnAction... actions) {
+    this(null, false);
+    for (AnAction action : actions) {
+      add(action);
+    }
+  }
+
   public DefaultActionGroup(String shortName, boolean popup){
     super(shortName, popup);
     mySortedChildren = new ArrayList<AnAction>();
