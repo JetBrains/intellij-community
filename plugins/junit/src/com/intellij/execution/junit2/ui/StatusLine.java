@@ -99,7 +99,7 @@ class StatusLine extends JPanel {
         buffer.append(termMessage);
         final String comment = myDoneEvent.getComment();
         if (comment.length() > 0) {
-          buffer.append("(" + comment + ")");
+          buffer.append(" (" + comment + ")");
         }
       } else {
         buffer.append(ExecutionBundle.message("junit.runing.info.status.running.number.with.name", getTestCount(1), myCurrentTestName));
