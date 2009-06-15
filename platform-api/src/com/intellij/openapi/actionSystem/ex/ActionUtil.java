@@ -47,13 +47,13 @@ public class ActionUtil {
     }
 
     String message;
-    final String beAvailableUntil = " be available until IntelliJ IDEA updates the indices";
+    final String beAvailableUntil = " available while IntelliJ IDEA is updating indices";
     if (actionNames.isEmpty()) {
-      message = "This action won't" + beAvailableUntil;
+      message = "This action is not" + beAvailableUntil;
     } else if (actionNames.size() == 1) {
-      message = "'" + actionNames.get(0) + "' action won't" + beAvailableUntil;
+      message = "'" + actionNames.get(0) + "' action is not" + beAvailableUntil;
     } else {
-      message = "None of the following actions will" + beAvailableUntil + ": " + StringUtil.join(actionNames, ", ");
+      message = "None of the following actions are" + beAvailableUntil + ": " + StringUtil.join(actionNames, ", ");
     }
 
     bus.syncPublisher(Notifications.TOPIC).notify("dumb", message, "", NotificationType.INFORMATION, NotificationListener.REMOVE);
