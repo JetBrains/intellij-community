@@ -34,7 +34,7 @@ public class XmlUsageViewDescriptionProvider implements ElementDescriptionProvid
 
     if (location instanceof HighlightUsagesDescriptionLocation) {
       if (element instanceof PsiPresentableMetaData) {
-        return ((PsiPresentableMetaData)element).getTypeName();
+        return null;
       }
       if (element instanceof PsiFile) {
         return "File";
