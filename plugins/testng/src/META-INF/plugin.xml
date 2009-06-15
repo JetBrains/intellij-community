@@ -19,7 +19,6 @@
         </intentionAction>
         <testFrameworkDescriptor implementation="com.theoryinpractice.testng.TestNGFrameworkDescriptor"/>
       <overrideImplementsAnnotationsHandler implementation="com.theoryinpractice.testng.intention.OverrideImplementsTestNGAnnotationsHandler"/>
-      <configurationType implementation="com.theoryinpractice.testng.configuration.TestNGConfigurationType"/>
     </extensions>
 
 
