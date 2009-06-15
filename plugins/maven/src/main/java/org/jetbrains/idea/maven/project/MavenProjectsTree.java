@@ -620,6 +620,7 @@ public class MavenProjectsTree {
       else {
         myRootProjects.remove(project);
       }
+      myTimestamps.remove(project);
       myVirtualFileToProjectMapping.remove(project.getFile());
       myMavenIdToProjectMapping.remove(project.getMavenId());
       myAggregatorToModuleMapping.remove(project);
