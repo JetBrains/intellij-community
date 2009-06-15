@@ -60,7 +60,6 @@ public class JUnitTreeConsoleView extends WrappingConsoleView {
     final TestingStatus testingStatus = new TestingStatus(queue);
     testingStatus.setInputConsumer(new SystemOutput(myConsolePanel.getPrinter()));
     myConsolePanel.onProcessStarted(process);
-    myConsolePanel.attachStopLogConsoleTrackingListeners(process);
     final TestStateUpdater testStateUpdater = new TestStateUpdater();
     final TreeConsumer treeConsumer = createTreeConsumer(testingStatus, outPacketExtractor, testStateUpdater);
     connectOperators(process, outPacketExtractor, errPacketExtractor, testingStatus, treeConsumer, testStateUpdater);

@@ -16,14 +16,9 @@
 
 package com.intellij.execution.junit2.ui;
 
-import com.intellij.diagnostic.logging.AdditionalTabComponent;
-import com.intellij.diagnostic.logging.LogConsoleImpl;
-import com.intellij.diagnostic.logging.LogConsoleManager;
-import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.actions.JUnitToolbarPanel;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
@@ -43,7 +38,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
@@ -60,11 +54,8 @@ import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
-class ConsolePanel extends JPanel implements LogConsoleManager, Disposable {
+class ConsolePanel extends JPanel implements Disposable {
   @NonNls private static final String PROPORTION_PROPERTY = "test_tree_console_proprtion";
   private static final float DEFAULT_PROPORTION = 0.2f;
 
@@ -80,19 +71,12 @@ class ConsolePanel extends JPanel implements LogConsoleManager, Disposable {
   private StartingProgress myStartingProgress;
   private final TabbedPaneWrapper myTabs;
 
-  private final LogFilesManager myLogFilesManager;
-  private ProcessHandler myRunProcess = null;
-  private final JUnitConfiguration myConfiguration;
-  private final Map<AdditionalTabComponent, Integer> myAdditionalComponents = new HashMap<AdditionalTabComponent, Integer>();
-
   public ConsolePanel(final JComponent console,
                       final TestsOutputConsolePrinter printer,
                       final JUnitConsoleProperties properties,
                       final RunnerSettings runnerSettings,
                       final ConfigurationPerRunnerSettings configurationSettings, AnAction[] consoleActions) {
     super(new BorderLayout(0,1));
-    myConfiguration = properties.getConfiguration();
-    myLogFilesManager = new LogFilesManager(properties.getProject(), this);
     myPrinter = printer;
     myLeftPane = ScrollPaneFactory.createScrollPane();
     myStatisticsPanel = new StatisticsPanel();
@@ -117,7 +101,6 @@ class ConsolePanel extends JPanel implements LogConsoleManager, Disposable {
     myTabs = new TabbedPaneWrapper(this);
     myTabs.addTab(ExecutionBundle.message("output.tab.title"), OUTPUT_TAB_ICON, createOutputTab(console, consoleActions), null);
     myTabs.addTab(ExecutionBundle.message("statistics.tab.title"), STATISTICS_TAB_ICON, myStatisticsPanel, null);
-    initAdditionalTabs();
     rightPanel.add(myTabs.getComponent(), BorderLayout.CENTER);
     splitter.setSecondComponent(rightPanel);
     myStartingProgress = new StartingProgress(myTreeView);
@@ -137,56 +120,6 @@ class ConsolePanel extends JPanel implements LogConsoleManager, Disposable {
     myStatusLine.onProcessStarted(process);
     if (myStartingProgress == null) return;
     myStartingProgress.start(process);
-  }
-
-  private void initAdditionalTabs(){
-    myLogFilesManager.registerFileMatcher(myConfiguration);
-    myLogFilesManager.initLogConsoles(myConfiguration, myRunProcess);
-  }
-
-  public void addLogConsole(final String name, final String path, final long skippedContent){
-    final LogConsoleImpl log = new LogConsoleImpl(myConfiguration.getProject(), new File(path), skippedContent, name, true) {
-      public boolean isActive() {
-        return myTabs.getSelectedComponent() == this;
-      }
-    };
-
-    if (myRunProcess != null) {
-      log.attachStopLogConsoleTrackingListener(myRunProcess);
-    }
-    addAdditionalTabComponent(log, path);
-    myTabs.addChangeListener(log);
-    Disposer.register(this, new Disposable() {
-      public void dispose() {
-        myTabs.removeChangeListener(log);
-      }
-    });
-  }
-
-  public void removeLogConsole(final String path) {
-    LogConsoleImpl componentToRemove = null;
-    for (AdditionalTabComponent tabComponent : myAdditionalComponents.keySet()) {
-      if (tabComponent instanceof LogConsoleImpl) {
-        final LogConsoleImpl console = (LogConsoleImpl)tabComponent;
-        if (Comparing.strEqual(console.getPath(), path)) {
-          componentToRemove = console;
-          break;
-        }
-      }
-    }
-    if (componentToRemove != null) {
-      myTabs.removeChangeListener(componentToRemove);
-      removeAdditionalTabComponent(componentToRemove);
-    }
-  }
-
-  public void attachStopLogConsoleTrackingListeners(ProcessHandler process) {
-    myRunProcess = process;
-    for (AdditionalTabComponent component: myAdditionalComponents.keySet()) {
-      if (component instanceof LogConsoleImpl){
-        ((LogConsoleImpl)component).attachStopLogConsoleTrackingListener(process);
-      }
-    }
   }
 
   public void setModel(final JUnitRunningModel model) {
@@ -255,30 +188,11 @@ class ConsolePanel extends JPanel implements LogConsoleManager, Disposable {
 
   public void dispose() {
     stopStartingProgress();
-    myLogFilesManager.unregisterFileMatcher();
     myPrinter = null;
   }
 
   public void attachToModel(final JUnitRunningModel model) {
     getTreeView().attachToModel(model);
-  }
-
-  public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent, final String id) {
-    myAdditionalComponents.put(tabComponent, myTabs.getTabCount());
-    myTabs.addTab(tabComponent.getTabTitle(), null, tabComponent.getComponent(), tabComponent.getTooltip());
-    Disposer.register(this, new Disposable() {
-      public void dispose() {
-        removeAdditionalTabComponent(tabComponent);
-      }
-    });
-  }
-
-  public void removeAdditionalTabComponent(AdditionalTabComponent component) {
-    final Integer tabIdx = myAdditionalComponents.remove(component);
-    if (tabIdx != null) {
-      myTabs.removeTabAt(tabIdx.intValue());
-    }
-    component.dispose();
   }
 
   private static class StartingProgress implements Runnable {

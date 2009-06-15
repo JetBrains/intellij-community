@@ -267,10 +267,6 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
     }
   }
 
-  public boolean needAdditionalConsole() {
-    return false;
-  }
-
   public static class Data implements Cloneable {
     public String PACKAGE_NAME;
     public String MAIN_CLASS_NAME;
