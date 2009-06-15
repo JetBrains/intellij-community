@@ -177,7 +177,11 @@ public class MavenProjectsManagerWatcher {
   }
 
   private void scheduleUpdateAll() {
-    myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(false, myProjectsTree, myGeneralSettings));
+    scheduleUpdateAll(false);
+  }
+
+  private void scheduleUpdateAll(boolean force) {
+    myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(force, myProjectsTree, myGeneralSettings));
   }
 
   private void scheduleUpdate(List<VirtualFile> filesToUpdate, List<VirtualFile> filesToDelete) {
@@ -190,7 +194,7 @@ public class MavenProjectsManagerWatcher {
 
   private void onSettingsChange() {
     myEmbeddersManager.reset();
-    scheduleUpdateAll();
+    scheduleUpdateAll(true);
   }
 
   private class MyRootChangesListener implements ModuleRootListener {
