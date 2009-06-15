@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -430,12 +431,27 @@ public class EclipseClasspathReader {
       for (Object o : entriesElements) {
         final Element contentEntryElement = (Element)o;
         final ContentEntry contentEntry = model.addContentEntry(contentEntryElement.getAttributeValue(IdeaXml.URL_ATTR));
-        readContentFolders(contentEntryElement, contentEntry);
+        readSourceFolders(root, contentEntry);
+        for (Object excludeElement : contentEntryElement.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)) {
+          contentEntry.addExcludeFolder(((Element)excludeElement).getAttributeValue(IdeaXml.URL_ATTR));
+        }
       }
     } else {
       final ContentEntry[] entries = model.getContentEntries();
       if (entries.length > 0) {
-        readContentFolders(root, entries[0]);
+        readSourceFolders(root, entries[0]);
+        final String url = entries[0].getUrl();
+        for (Object o : root.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)) {
+          final String excludeUrl = ((Element)o).getAttributeValue(IdeaXml.URL_ATTR);
+          try {
+            if (FileUtil.isAncestor(new File(url), new File(excludeUrl), false)) {
+              entries[0].addExcludeFolder(excludeUrl);
+            }
+          }
+          catch (IOException e) {
+            //ignore
+          }
+        }
       }
     }
 
@@ -453,7 +469,7 @@ public class EclipseClasspathReader {
     }
   }
 
-  private static void readContentFolders(Element root, ContentEntry entry) {
+  private static void readSourceFolders(Element root, ContentEntry entry) {
     for (Object o : root.getChildren(IdeaXml.TEST_FOLDER_TAG)) {
       final String url = ((Element)o).getAttributeValue(IdeaXml.URL_ATTR);
       SourceFolder folderToBeTest = null;
@@ -467,10 +483,6 @@ public class EclipseClasspathReader {
         entry.removeSourceFolder(folderToBeTest);
       }
       entry.addSourceFolder(url, true);
-    }
-
-    for (Object o : root.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)) {
-      entry.addExcludeFolder(((Element)o).getAttributeValue(IdeaXml.URL_ATTR));
     }
   }
 }
