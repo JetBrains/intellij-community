@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.util.xmlb.annotations.Attribute;
 
 /**
@@ -31,6 +32,14 @@ public class VcsEP extends AbstractExtensionPointBean {
   public AbstractVcs getVcs(Project project) {
     if (myVcs == null) {
       try {
+        final Class<? extends AbstractVcs> foundClass = findClass(vcsClass);
+        final Class<?>[] interfaces = foundClass.getInterfaces();
+        for (Class<?> anInterface : interfaces) {
+          if (BaseComponent.class.isAssignableFrom(anInterface)) {
+            myVcs = project.getComponent(foundClass);
+            return myVcs;
+          }
+        }
         myVcs = instantiate(vcsClass, project.getPicoContainer());
       }
       catch(Exception e) {
