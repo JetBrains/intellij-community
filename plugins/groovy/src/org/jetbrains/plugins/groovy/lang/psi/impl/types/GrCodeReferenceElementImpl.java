@@ -421,6 +421,11 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
 
   @NotNull
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    return (GroovyResolveResult[]) getManager().getResolveCache().resolveWithCaching(this, RESOLVER, true, incompleteCode);
+    final ResolveResult[] results = getManager().getResolveCache().resolveWithCaching(this, RESOLVER, true, incompleteCode);
+    if (results.length == 0) {
+      return GroovyResolveResult.EMPTY_ARRAY;
+    }
+    
+    return (GroovyResolveResult[])results;
   }
 }
