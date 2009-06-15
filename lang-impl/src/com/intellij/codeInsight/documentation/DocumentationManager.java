@@ -16,9 +16,9 @@ import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -293,7 +293,7 @@ public class DocumentationManager {
   }
 
   @Nullable
-  public PsiElement getElementFromLookup(final Editor editor, final PsiFile file) {
+  public PsiElement getElementFromLookup(final Editor editor, @Nullable final PsiFile file) {
 
     final Lookup activeLookup = LookupManager.getInstance(myProject).getActiveLookup();
 
@@ -301,7 +301,7 @@ public class DocumentationManager {
       LookupElement item = activeLookup.getCurrentItem();
       if (item != null) {
 
-        final PsiElement contextElement = file.findElementAt(editor.getCaretModel().getOffset());
+        final PsiElement contextElement = file != null ? file.findElementAt(editor.getCaretModel().getOffset()) : null;
         final PsiReference ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
 
         final DocumentationProvider documentationProvider = getProviderFromElement(file);
