@@ -55,7 +55,7 @@
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
 
-    <action id="SaveInNewFormat" class="com.intellij.ide.actions.OpenInNewFormatAction" text="Open in New (Directory Based) Format">
+    <action id="SaveInNewFormat" class="com.intellij.ide.actions.OpenInNewFormatAction" text="Convert to Directory-Based Format">
       <add-to-group group-id="ExportImportGroup" anchor="last"/>
     </action>
 
