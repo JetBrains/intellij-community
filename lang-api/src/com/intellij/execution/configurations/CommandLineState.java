@@ -16,6 +16,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.*;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
@@ -56,13 +57,17 @@ public abstract class CommandLineState implements RunnableState {
     if (console != null) {
       console.attachToProcess(processHandler);
     }
-    return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
+    return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler, executor));
   }
 
   protected abstract OSProcessHandler startProcess() throws ExecutionException;
 
   protected AnAction[] createActions(final ConsoleView console, final ProcessHandler processHandler) {
-    if (console == null || !console.canPause()) {
+    return createActions(console, processHandler, null);
+  }
+
+  protected AnAction[] createActions(final ConsoleView console, final ProcessHandler processHandler, Executor executor) {
+    if (console == null || !console.canPause() || (executor != null && !DefaultRunExecutor.EXECUTOR_ID.equals(executor.getId()))) {
       return new AnAction[0];
     }
     return new AnAction[]{new PauseOutputAction(console, processHandler)};

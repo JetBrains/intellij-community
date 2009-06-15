@@ -34,7 +34,7 @@ public class DefaultExecutionResult implements ExecutionResult {
     this(console, processHandler, AnAction.EMPTY_ARRAY);
   }
 
-  public DefaultExecutionResult(final ExecutionConsole console, final ProcessHandler processHandler, final AnAction[] actions) {
+  public DefaultExecutionResult(final ExecutionConsole console, final ProcessHandler processHandler, final AnAction... actions) {
     myConsole = console;
     myProcessHandler = processHandler;
     myActions = actions;

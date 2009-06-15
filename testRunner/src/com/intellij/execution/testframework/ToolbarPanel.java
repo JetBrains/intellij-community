@@ -56,7 +56,7 @@ public abstract class ToolbarPanel extends JPanel implements OccurenceNavigator 
     myOccurenceNavigator = new FailedTestsNavigator();
     actionGroup.add(actionsManager.createPrevOccurenceAction(myOccurenceNavigator));
     actionGroup.add(actionsManager.createNextOccurenceAction(myOccurenceNavigator));
-    actionGroup.addSeparator();
+
     actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.select.first.failed.action.name"),
                                                     null,
                                                     TestsUIUtil.loadIcon("selectFirstDefect"),

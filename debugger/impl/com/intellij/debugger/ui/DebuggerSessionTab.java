@@ -30,6 +30,7 @@ import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -47,7 +48,6 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.DebuggerLogConsoleManagerBase;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
-import com.intellij.idea.ActionsBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -278,6 +278,11 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
                                                    myRunContentDescriptor, myEnvironment);
     group.add(restarAction);
     restarAction.registerShortcut(myUi.getComponent());
+
+    final AnAction[] profileActions = executionResult.getActions();
+    for (final AnAction profileAction : profileActions) {
+      group.add(profileAction);
+    }
 
     addActionToGroup(group, XDebuggerActions.RESUME);
     addActionToGroup(group, XDebuggerActions.PAUSE);

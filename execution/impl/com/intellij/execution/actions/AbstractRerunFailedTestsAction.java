@@ -38,6 +38,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -49,6 +50,7 @@ import java.util.List;
 public class AbstractRerunFailedTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction");
   private TestFrameworkRunningModel myModel;
+  private Getter<TestFrameworkRunningModel> myModelProvider;
   protected TestConsoleProperties myConsoleProperties;
   protected RunnerSettings myRunnerSettings;
   protected ConfigurationPerRunnerSettings myConfigurationPerRunnerSettings;
@@ -65,6 +67,10 @@ public class AbstractRerunFailedTestsAction extends AnAction {
     myModel = model;
   }
 
+  public void setModelProvider(Getter<TestFrameworkRunningModel> modelProvider) {
+    myModelProvider = modelProvider;
+  }
+
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(isActive(e));
   }
@@ -73,14 +79,15 @@ public class AbstractRerunFailedTestsAction extends AnAction {
     DataContext dataContext = e.getDataContext();
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
-    if (myModel == null || myModel.getRoot() == null) return false;
+    TestFrameworkRunningModel model = getModel();
+    if (model == null || model.getRoot() == null) return false;
     List<AbstractTestProxy> failed = getFailedTests(project);
     return !failed.isEmpty();
   }
 
   @NotNull
   protected List<AbstractTestProxy> getFailedTests(Project project) {
-    List<? extends AbstractTestProxy> myAllTests = myModel.getRoot().getAllTests();
+    List<? extends AbstractTestProxy> myAllTests = getModel().getRoot().getAllTests();
     return Filter.DEFECTIVE_LEAF.and(JavaAwareFilter.METHOD(project)).select(myAllTests);
   }
 
@@ -107,7 +114,13 @@ public class AbstractRerunFailedTestsAction extends AnAction {
   }
 
   public TestFrameworkRunningModel getModel() {
-    return myModel;
+    if (myModel != null) {
+      return myModel;
+    }
+    if (myModelProvider != null) {
+      return myModelProvider.get();
+    }
+    return null;
   }
 
   protected static abstract class MyRunProfile implements ModuleRunProfile, RunConfiguration {
