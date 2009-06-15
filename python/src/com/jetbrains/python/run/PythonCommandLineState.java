@@ -44,7 +44,7 @@ public class PythonCommandLineState extends CommandLineState {
     final ConsoleView console = createAndAttachConsole(getConfig().getProject(), processHandler);
 
     return new DefaultExecutionResult(console, processHandler,
-                                      createActions(console, processHandler));
+                                      createActions(console, processHandler, executor));
   }
 
   @NotNull
