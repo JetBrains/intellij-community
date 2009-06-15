@@ -5,8 +5,9 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 
@@ -15,6 +16,7 @@ import java.awt.*;
  * @author yole
  */
 public class PythonHighlightingTest extends DaemonAnalyzerTestCase {
+  @NonNls
   protected String getTestDataPath() {
     return PathManager.getHomePath() + "/plugins/python/testData/highlighting/";
   }
@@ -50,6 +52,10 @@ public class PythonHighlightingTest extends DaemonAnalyzerTestCase {
     TextAttributes xAttributes = new TextAttributes(Color.blue, Color.black, Color.white, EffectType.BOXED, Font.BOLD);
     scheme.setAttributes(xKey, xAttributes);
 
+    doTest();
+  }
+
+  public void testAssignmentTargets() throws Exception {
     doTest();
   }
 
@@ -96,11 +102,11 @@ public class PythonHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   private void doTest() throws Exception {
-    doTest(getTestName(true) + ".py", true, true);
+    doTest(getTestName(true) + PyNames.DOT_PY, true, true);
   }
 
   private void doTest(boolean checkWarnings, boolean checkInfos) throws Exception {
-    doTest(getTestName(true) + ".py", checkWarnings, checkInfos);
+    doTest(getTestName(true) + PyNames.DOT_PY, checkWarnings, checkInfos);
   }
 
 }

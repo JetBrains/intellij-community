@@ -15,6 +15,7 @@ public class PythonInspectionToolProvider implements InspectionToolProvider{
       PyUnresolvedReferencesInspection.class,
       PyMethodParametersInspection.class,
       PyUnreachableCodeInspection.class,
+      PyMethodFirstArgAssignmentInspection.class
     };
   }
 }

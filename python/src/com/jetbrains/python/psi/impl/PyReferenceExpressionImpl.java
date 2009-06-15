@@ -339,7 +339,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   /**
    * Resolves reference to possible referred elements.
    * First element is always what resolve() would return.
-   * Imported module names: to module file, or {directory, '___init__.py}' for a qualifier.
+   * Imported module names: to module file, or {directory, '__init__.py}' for a qualifier.
    * @todo Local identifiers: a list of definitions in the most recent compound statement 
    * (e.g. <code>if X: a = 1; else: a = 2</code> has two definitions of <code>a</code>.).
    * @todo Identifiers not found locally: similar definitions in imported files and builtins.
