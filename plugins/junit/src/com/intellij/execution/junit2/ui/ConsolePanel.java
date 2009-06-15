@@ -27,10 +27,7 @@ import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.testframework.PoolOfTestIcons;
-import com.intellij.execution.testframework.Printer;
-import com.intellij.execution.testframework.TestTreeView;
-import com.intellij.execution.testframework.TestsUIUtil;
+import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
@@ -40,11 +37,13 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.AwtVisitor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -59,9 +58,6 @@ class ConsolePanel extends JPanel implements Disposable {
   @NonNls private static final String PROPORTION_PROPERTY = "test_tree_console_proprtion";
   private static final float DEFAULT_PROPORTION = 0.2f;
 
-  private static final Icon OUTPUT_TAB_ICON = TestsUIUtil.loadIcon("testOuput");
-  private static final Icon STATISTICS_TAB_ICON = TestsUIUtil.loadIcon("testStatistics");
-
   private final StatusLine myStatusLine;
   private final JScrollPane myLeftPane;
   private final JUnitToolbarPanel myToolbarPanel;
@@ -69,7 +65,7 @@ class ConsolePanel extends JPanel implements Disposable {
   private final TestTreeView myTreeView;
   private TestsOutputConsolePrinter myPrinter;
   private StartingProgress myStartingProgress;
-  private final TabbedPaneWrapper myTabs;
+  private final Splitter mySplitter;
 
   public ConsolePanel(final JComponent console,
                       final TestsOutputConsolePrinter printer,
@@ -79,6 +75,7 @@ class ConsolePanel extends JPanel implements Disposable {
     super(new BorderLayout(0,1));
     myPrinter = printer;
     myLeftPane = ScrollPaneFactory.createScrollPane();
+    myLeftPane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP | SideBorder.RIGHT);
     myStatisticsPanel = new StatisticsPanel();
     myToolbarPanel = new JUnitToolbarPanel(properties, runnerSettings, configurationSettings, this);
     myStatusLine = new StatusLine();
@@ -98,10 +95,31 @@ class ConsolePanel extends JPanel implements Disposable {
     myStatusLine.setMinimumSize(new Dimension(0, myStatusLine.getMinimumSize().height));
     final JPanel rightPanel = new JPanel(new BorderLayout());
     rightPanel.add(SameHeightPanel.wrap(myStatusLine, myToolbarPanel), BorderLayout.NORTH);
-    myTabs = new TabbedPaneWrapper(this);
-    myTabs.addTab(ExecutionBundle.message("output.tab.title"), OUTPUT_TAB_ICON, createOutputTab(console, consoleActions), null);
-    myTabs.addTab(ExecutionBundle.message("statistics.tab.title"), STATISTICS_TAB_ICON, myStatisticsPanel, null);
-    rightPanel.add(myTabs.getComponent(), BorderLayout.CENTER);
+    mySplitter = new Splitter();
+    new AwtVisitor(console) {
+      public boolean visit(Component component) {
+        if (component instanceof JScrollPane) {
+          ((JScrollPane) component).putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP | SideBorder.LEFT);
+          return true;
+        }
+        return false;
+      }
+    };
+    mySplitter.setFirstComponent(createOutputTab(console, consoleActions));
+    if (TestConsoleProperties.SHOW_STATISTICS.value(properties)) {
+      mySplitter.setSecondComponent(myStatisticsPanel);
+    }
+    properties.addListener(TestConsoleProperties.SHOW_STATISTICS, new TestFrameworkPropertyListener<Boolean>() {
+      public void onChanged(Boolean value) {
+        if (value.booleanValue()) {
+          mySplitter.setSecondComponent(myStatisticsPanel);
+        }
+        else {
+          mySplitter.setSecondComponent(null);
+        }
+      }
+    });
+    rightPanel.add(mySplitter, BorderLayout.CENTER);
     splitter.setSecondComponent(rightPanel);
     myStartingProgress = new StartingProgress(myTreeView);
     setLeftComponent(myTreeView);

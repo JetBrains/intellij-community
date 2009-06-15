@@ -28,6 +28,7 @@ import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.ToolbarPanel;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
+import com.intellij.execution.testframework.actions.ShowStatisticsAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
@@ -52,6 +53,8 @@ public class JUnitToolbarPanel extends ToolbarPanel {
   protected void appendAdditionalActions(final DefaultActionGroup actionGroup, final TestConsoleProperties properties, final RunnerSettings runnerSettings,
                                          final ConfigurationPerRunnerSettings configurationSettings,
                                          JComponent parent) {
+    actionGroup.addAction(new ShowStatisticsAction(properties)).setAsSecondary(true);
+    
     myTrackCoverageAction = new TrackCoverageAction(properties);
     actionGroup.addAction(myTrackCoverageAction).setAsSecondary(true);
     myRerunFailedTestsAction = new RerunFailedTestsAction(parent);
