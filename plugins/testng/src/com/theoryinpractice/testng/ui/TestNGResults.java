@@ -354,21 +354,27 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
     }
 
     public void finish() {
-        if (end > 0) return;
-        end = System.currentTimeMillis();
-        animator.stopMovie();
-        updateLabel(statusLabel);
-        if (total > count) {
-          progress.setColor(ColorProgressBar.YELLOW);
-        }
-        rootNode.setInProgress(false);
-        if (TestNGConsoleProperties.SELECT_FIRST_DEFECT.value(consoleProperties)) {
+      if (end > 0) return;
+      end = System.currentTimeMillis();
+      LvcsHelper.addLabel(this);
+
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          animator.stopMovie();
+          updateLabel(statusLabel);
+          if (total > count) {
+            progress.setColor(ColorProgressBar.YELLOW);
+          }
+          rootNode.setInProgress(false);
+          if (TestNGConsoleProperties.SELECT_FIRST_DEFECT.value(consoleProperties)) {
             selectTest(rootNode.getFirstDefect());
-        } else {
+          }
+          else {
             tree.getSelectionModel().setSelectionPath(new TreePath(treeBuilder.getNodeForElement(rootNode)));
+          }
+          tree.repaint();
         }
-        tree.repaint();
-        LvcsHelper.addLabel(this);
+      });
     }
 
     public TestNGConsoleProperties getProperties() {
