@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,26 +30,31 @@ import org.jetbrains.annotations.Nullable;
 
 public class UnnecessarySemicolonInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.semicolon.display.name");
     }
 
+    @Override
     public boolean isEnabledByDefault(){
         return true;
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "unnecessary.semicolon.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new UnnecessarySemicolonVisitor();
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos){
         return new UnnecessarySemicolonFix();
     }
@@ -62,6 +67,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection {
                     "unnecessary.semicolon.remove.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiElement semicolonElement = descriptor.getPsiElement();
@@ -109,15 +115,17 @@ public class UnnecessarySemicolonInspection extends BaseInspection {
                 return;
             }
             final PsiField[] fields = aClass.getFields();
-            if(fields.length <= 0){
-                return;
+            final PsiElement element;
+            if(fields.length > 0){
+                final PsiField lastField = fields[fields.length - 1];
+                if(!(lastField instanceof PsiEnumConstant)){
+                    return;
+                }
+                element = skipForwardWhiteSpacesAndComments(lastField);
+            } else {
+                final PsiJavaToken lBrace = aClass.getLBrace();
+                element = skipForwardWhiteSpacesAndComments(lBrace);
             }
-            final PsiField lastField = fields[fields.length - 1];
-            if(!(lastField instanceof PsiEnumConstant)){
-                return;
-            }
-            final PsiElement element =
-                    skipForwardWhiteSpacesAndComments(lastField);
             if(!(element instanceof PsiJavaToken)){
                 return;
             }
@@ -143,12 +151,15 @@ public class UnnecessarySemicolonInspection extends BaseInspection {
                     if(tokenType.equals(JavaTokenType.SEMICOLON)){
                         final PsiElement prevSibling =
                                 skipBackwardWhiteSpacesAndComments(child);
-                        if(!(prevSibling instanceof PsiEnumConstant)){
+                        if(!(prevSibling instanceof PsiEnumConstant)) {
                             if (prevSibling instanceof PsiJavaToken) {
                                 final PsiJavaToken javaToken =
                                         (PsiJavaToken)prevSibling;
-                                if (!JavaTokenType.COMMA.equals(
-                                        javaToken.getTokenType())) {
+                                final IElementType prevTokenType =
+                                        javaToken.getTokenType();
+                                if (!JavaTokenType.COMMA.equals(prevTokenType)
+                                        && !JavaTokenType.LBRACE.equals(
+                                        prevTokenType)) {
                                     registerError(child);
                                 }
                             } else {
