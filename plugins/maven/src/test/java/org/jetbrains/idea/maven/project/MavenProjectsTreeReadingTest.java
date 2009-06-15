@@ -1849,6 +1849,100 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertUnorderedElementsAreEqual(myTree.getAvailableProfiles(), "one", "two", "three");
   }
 
+  public void testDeletingAndRestoringActiveProfilesWhenAvailableProfilesChange() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    createProfilesXmlNewStyle("<profile>" +
+                              "  <id>two</id>" +
+                              "</profile>");
+
+    updateAll(Arrays.asList("one", "two"), myProjectPom);
+    assertUnorderedElementsAreEqual(myTree.getActiveProfiles(), "one", "two");
+
+    deleteProfilesXml();
+    update(myProjectPom);
+    assertUnorderedElementsAreEqual(myTree.getActiveProfiles(), "one");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+
+    update(myProjectPom);
+    assertUnorderedElementsAreEqual(myTree.getActiveProfiles());
+
+    createProfilesXmlNewStyle("<profile>" +
+                              "  <id>two</id>" +
+                              "</profile>");
+    update(myProjectPom);
+    assertUnorderedElementsAreEqual(myTree.getActiveProfiles(), "two");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "  </profile>" +
+                     "</profiles>");
+    update(myProjectPom);
+    assertUnorderedElementsAreEqual(myTree.getActiveProfiles(), "one", "two");
+  }
+
+  public void testDeletingAndRestoringActiveProfilesWhenProjectDeletes() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "  </profile>" +
+                     "</profiles>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>");
+
+    VirtualFile m = createModulePom("m",
+                                    "<groupId>test</groupId>" +
+                                    "<artifactId>m</artifactId>" +
+                                    "<version>1</version>" +
+
+                                    "<profiles>" +
+                                    "  <profile>" +
+                                    "    <id>two</id>" +
+                                    "  </profile>" +
+                                    "</profiles>");
+
+    updateAll(Arrays.asList("one", "two"), myProjectPom);
+    assertUnorderedElementsAreEqual(myTree.getActiveProfiles(), "one", "two");
+
+    m.delete(this);
+    deleteProject(m);
+    assertUnorderedElementsAreEqual(myTree.getActiveProfiles(), "one");
+
+    m = createModulePom("m",
+                        "<groupId>test</groupId>" +
+                        "<artifactId>m</artifactId>" +
+                        "<version>1</version>" +
+
+                        "<profiles>" +
+                        "  <profile>" +
+                        "    <id>two</id>" +
+                        "  </profile>" +
+                        "</profiles>");
+    update(m);
+    assertUnorderedElementsAreEqual(myTree.getActiveProfiles(), "one", "two");
+  }
+
   private static class MyLoggingListener extends MavenProjectsTree.ListenerAdapter {
     String log = "";
 
