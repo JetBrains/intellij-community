@@ -53,7 +53,7 @@ public class JUnitToolbarPanel extends ToolbarPanel {
                                          final ConfigurationPerRunnerSettings configurationSettings,
                                          JComponent parent) {
     myTrackCoverageAction = new TrackCoverageAction(properties);
-    actionGroup.add(myTrackCoverageAction);
+    actionGroup.addAction(myTrackCoverageAction).setAsSecondary(true);
     myRerunFailedTestsAction = new RerunFailedTestsAction(parent);
     myRerunFailedTestsAction.init(properties, runnerSettings, configurationSettings);
     actionGroup.add(myRerunFailedTestsAction);

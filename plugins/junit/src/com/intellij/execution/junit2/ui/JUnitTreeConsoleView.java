@@ -31,8 +31,10 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.ExternalOutput;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ProfilingUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -48,7 +50,8 @@ public class JUnitTreeConsoleView extends WrappingConsoleView {
     myProperties = properties;
     myProperties.setConsole(this);
     getPrinter().setCollectOutput(true);
-    myConsolePanel = new ConsolePanel(getConsole().getComponent(), getPrinter(), myProperties, runnerSettings, configurationSettings);
+    myConsolePanel = new ConsolePanel(getConsole().getComponent(), getPrinter(), myProperties, runnerSettings, configurationSettings,
+                                      getConsole().createConsoleActions());
     Disposer.register(this, myConsolePanel);
   }
 
@@ -110,10 +113,6 @@ public class JUnitTreeConsoleView extends WrappingConsoleView {
   }
 
 
-  public JUnitRunningModel getModel() {
-    return myModel;
-  }
-
   private static PacketsDispatcher installDispatcher(final InputObjectRegistry registry,
                                                      final PacketExtractorBase packetExtractor,
                                                      final ProcessHandler process, final InputRouter inputRouter, final InputConsumer defaultConsumer) {
@@ -132,6 +131,12 @@ public class JUnitTreeConsoleView extends WrappingConsoleView {
   @Override
   public JComponent getPreferredFocusableComponent() {
     return myConsolePanel.getTreeView();
+  }
+
+  @NotNull
+  @Override
+  public AnAction[] createConsoleActions() {
+    return AnAction.EMPTY_ARRAY;
   }
 
   private static class SystemOutput implements InputConsumer {

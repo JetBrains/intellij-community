@@ -39,6 +39,7 @@ import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.Splitter;
@@ -48,8 +49,8 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.util.Alarm;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -88,7 +89,7 @@ class ConsolePanel extends JPanel implements LogConsoleManager, Disposable {
                       final TestsOutputConsolePrinter printer,
                       final JUnitConsoleProperties properties,
                       final RunnerSettings runnerSettings,
-                      final ConfigurationPerRunnerSettings configurationSettings) {
+                      final ConfigurationPerRunnerSettings configurationSettings, AnAction[] consoleActions) {
     super(new BorderLayout(0,1));
     myConfiguration = properties.getConfiguration();
     myLogFilesManager = new LogFilesManager(properties.getProject(), this);
@@ -114,13 +115,22 @@ class ConsolePanel extends JPanel implements LogConsoleManager, Disposable {
     final JPanel rightPanel = new JPanel(new BorderLayout());
     rightPanel.add(SameHeightPanel.wrap(myStatusLine, myToolbarPanel), BorderLayout.NORTH);
     myTabs = new TabbedPaneWrapper(this);
-    myTabs.addTab(ExecutionBundle.message("output.tab.title"), OUTPUT_TAB_ICON, console, null);
+    myTabs.addTab(ExecutionBundle.message("output.tab.title"), OUTPUT_TAB_ICON, createOutputTab(console, consoleActions), null);
     myTabs.addTab(ExecutionBundle.message("statistics.tab.title"), STATISTICS_TAB_ICON, myStatisticsPanel, null);
     initAdditionalTabs();
     rightPanel.add(myTabs.getComponent(), BorderLayout.CENTER);
     splitter.setSecondComponent(rightPanel);
     myStartingProgress = new StartingProgress(myTreeView);
     setLeftComponent(myTreeView);
+  }
+
+  private static JComponent createOutputTab(JComponent console, AnAction[] consoleActions) {
+    JPanel outputTab = new JPanel(new BorderLayout());
+    outputTab.add(console, BorderLayout.CENTER);
+    final DefaultActionGroup actionGroup = new DefaultActionGroup(consoleActions);
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);
+    outputTab.add(toolbar.getComponent(), BorderLayout.WEST);
+    return outputTab;
   }
 
   public void onProcessStarted(final ProcessHandler process) {
