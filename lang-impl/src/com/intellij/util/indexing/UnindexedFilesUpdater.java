@@ -178,9 +178,6 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
               queue.pushback(fileContent);
               return;
             }
-            catch (NoProjectForFileException ignored) {
-              return;
-            }
             catch (Throwable e) {
               LOG.error("Error while indexing " + file.getPresentableUrl() + "\n" + "To reindex this file IDEA has to be restarted",
                         e);

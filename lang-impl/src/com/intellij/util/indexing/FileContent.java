@@ -1,6 +1,5 @@
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -47,12 +46,7 @@ public final class FileContent extends UserDataHolderBase {
     if (psi == null) {
       Project project = getProject();
       if (project == null) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          project = ProjectManager.getInstance().getDefaultProject();
-        }
-        else {
-          throw new NoProjectForFileException();
-        }
+        project = ProjectManager.getInstance().getDefaultProject();
       }
       psi = PsiFileFactory.getInstance(project).createFileFromText(
         getFileName(),
