@@ -203,29 +203,63 @@ public class MavenRootModelAdapter {
     Library library = provider.getLibraryByName(libraryName);
     if (library == null) {
       library = provider.createLibrary(libraryName);
-      Library.ModifiableModel libraryModel = provider.getModifiableModel(library);
-
-      String artifactPath = artifact.getFile().getPath();
-
-      setUrl(libraryModel, makeUrl(artifactPath, null), OrderRootType.CLASSES);
-      setUrl(libraryModel, makeUrl(artifactPath, MavenConstants.SOURCES_CLASSIFIER), OrderRootType.SOURCES);
-      setUrl(libraryModel, makeUrl(artifactPath, MavenConstants.JAVADOC_CLASSIFIER), JavadocOrderRootType.getInstance());
-
-      provider.commit(libraryModel);
     }
+
+    Library.ModifiableModel libraryModel = provider.getModifiableModel(library);
+
+    setUrl(libraryModel, OrderRootType.CLASSES, artifact, null);
+    setUrl(libraryModel, OrderRootType.SOURCES, artifact, MavenConstants.SOURCES_CLASSIFIER);
+    setUrl(libraryModel, JavadocOrderRootType.getInstance(), artifact, MavenConstants.JAVADOC_CLASSIFIER);
+
+    provider.commit(libraryModel);
 
     myRootModel.addLibraryEntry(library).setExported(isExportable);
 
     removeOldLibraryDependency(artifact);
   }
 
+  private void setUrl(Library.ModifiableModel libraryModel,
+                      OrderRootType type,
+                      MavenArtifact artifact,
+                      String classifier) {
+    for (String url : libraryModel.getUrls(type)) {
+      if (isRepositoryUrl(artifact, url, classifier)) {
+        libraryModel.removeRoot(url, type);
+      }
+    }
+
+    String newUrl = makeUrl(artifact, classifier);
+    if (newUrl != null) {
+      libraryModel.addRoot(newUrl, type);
+    }
+  }
+
+  private boolean isRepositoryUrl(MavenArtifact artifact, String url, String classifier) {
+    StringBuilder relPath = new StringBuilder();
+    relPath.append(artifact.getGroupId().replace('.', '/'));
+    relPath.append('/');
+    relPath.append(artifact.getArtifactId());
+    relPath.append('/');
+    relPath.append(artifact.getVersion());
+    relPath.append('/');
+    relPath.append(artifact.getArtifactId());
+    relPath.append('-');
+    relPath.append(artifact.getVersion());
+    if (classifier != null) {
+      relPath.append('-');
+      relPath.append(classifier);
+    }
+    relPath.append(".jar!/");
+    return url.endsWith(relPath.toString());
+  }
+
   @Nullable
-  private String makeUrl(String artifactPath, String classifier) {
-    String path = artifactPath;
+  private String makeUrl(MavenArtifact artifact, String classifier) {
+    String path = artifact.getPath();
 
     if (classifier != null) {
       int dotPos = path.lastIndexOf(".");
-      if (dotPos == -1) return null; // somethimes path doesn't contain '.'; but i can't make up any reason.
+      if (dotPos == -1) return null; // somethimes path doesn't contain '.'; but i can't find any sensible reason.
 
       String withoutExtension = path.substring(0, dotPos);
       path = MessageFormat.format("{0}-{1}.jar", withoutExtension, classifier);
@@ -265,15 +299,6 @@ public class MavenRootModelAdapter {
     if (entry == null) return;
 
     myRootModel.removeOrderEntry(entry);
-  }
-
-  private void setUrl(Library.ModifiableModel libraryModel, @Nullable String newUrl, OrderRootType type) {
-    for (String url : libraryModel.getUrls(type)) {
-      libraryModel.removeRoot(url, type);
-    }
-    if (newUrl != null) {
-      libraryModel.addRoot(newUrl, type);
-    }
   }
 
   public Library findLibrary(MavenArtifact artifact) {

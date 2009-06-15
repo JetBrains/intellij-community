@@ -120,6 +120,10 @@ public class MavenArtifact implements Serializable {
     return myFile;
   }
 
+  public String getPath() {
+    return myFile.getPath();
+  }
+
   public void setResolved(File file) {
     myFile = file;
     myResolved = true;

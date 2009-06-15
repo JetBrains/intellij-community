@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -159,6 +160,96 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
     assertTrue(new File(getRepositoryFile(), "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar").exists());
   }
 
+  public void testCorrectlryUpdateRootEntriesWithActualPathForSnapshotDependencies() throws Exception {
+    deployArtifact("test", "foo", "1-SNAPSHOT",
+                   "<build>" +
+                   "  <plugins>" +
+                   "    <plugin>" +
+                   "      <artifactId>maven-source-plugin</artifactId>" +
+                   "      <executions>" +
+                   "        <execution>" +
+                   "          <goals>" +
+                   "            <goal>jar</goal>" +
+                   "          </goals>" +
+                   "        </execution>" +
+                   "      </executions>" +
+                   "    </plugin>" +
+                   "    <plugin>" +
+                   "      <artifactId>maven-javadoc-plugin</artifactId>" +
+                   "      <executions>" +
+                   "        <execution>" +
+                   "          <goals>" +
+                   "            <goal>jar</goal>" +
+                   "          </goals>" +
+                   "        </execution>" +
+                   "      </executions>" +
+                   "    </plugin>" +
+                   "  </plugins>" +
+                   "</build>");
+    removeFromLocalRepository("test");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  repositoriesSection() +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>test</groupId>" +
+                  "    <artifactId>foo</artifactId>" +
+                  "    <version>1-SNAPSHOT</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+    assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT");
+
+    resolveDependenciesAndImport();
+    downloadArtifacts();
+
+    assertModuleLibDep("project",
+                       "Maven: test:foo:1-SNAPSHOT",
+                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
+                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/");
+
+
+    deployArtifact("test", "foo", "1-SNAPSHOT",
+                   "<build>" +
+                   "  <plugins>" +
+                   "    <plugin>" +
+                   "      <artifactId>maven-source-plugin</artifactId>" +
+                   "      <executions>" +
+                   "        <execution>" +
+                   "          <goals>" +
+                   "            <goal>jar</goal>" +
+                   "          </goals>" +
+                   "        </execution>" +
+                   "      </executions>" +
+                   "    </plugin>" +
+                   "    <plugin>" +
+                   "      <artifactId>maven-javadoc-plugin</artifactId>" +
+                   "      <executions>" +
+                   "        <execution>" +
+                   "          <goals>" +
+                   "            <goal>jar</goal>" +
+                   "          </goals>" +
+                   "        </execution>" +
+                   "      </executions>" +
+                   "    </plugin>" +
+                   "  </plugins>" +
+                   "</build>");
+    removeFromLocalRepository("test");
+
+    myProjectsManager.scheduleResolveAllInTests();
+    resolveDependenciesAndImport();
+
+    assertModuleLibDep("project",
+                       "Maven: test:foo:1-SNAPSHOT",
+                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
+                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/");
+  }
+
   private void deployArtifact(String groupId, String artifactId, String version) throws IOException {
     deployArtifact(groupId, artifactId, version, "");
   }
@@ -172,16 +263,17 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
                          " */\n" +
                          "public class Foo { }");
 
-    createModulePom(moduleName,
-                    "<groupId>" + groupId + "</groupId>" +
-                    "<artifactId>" + artifactId + "</artifactId>" +
-                    "<version>" + version + "</version>" +
+    VirtualFile m = createModulePom(moduleName,
+                                    "<groupId>" + groupId + "</groupId>" +
+                                    "<artifactId>" + artifactId + "</artifactId>" +
+                                    "<version>" + version + "</version>" +
 
-                    distributionManagementSection() +
+                                    distributionManagementSection() +
 
-                    tail);
+                                    tail);
 
     deploy(moduleName);
+    FileUtil.delete(new File(m.getParent().getPath()));
   }
 
   private void deploy(String modulePath) {

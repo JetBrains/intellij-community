@@ -150,24 +150,33 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     assertModuleLibDep(moduleName, depName, null);
   }
 
-  protected void assertModuleLibDep(String moduleName, String depName, String path) {
-    assertModuleLibDep(moduleName, depName, path, null, null);
+  protected void assertModuleLibDep(String moduleName, String depName, String classesPath) {
+    assertModuleLibDep(moduleName, depName, classesPath, null, null);
   }
 
-  protected void assertModuleLibDep(String moduleName, String depName, String path, String sourcePath, String javadocPath) {
+  protected void assertModuleLibDep(String moduleName, String depName, String classesPath, String sourcePath, String javadocPath) {
     LibraryOrderEntry lib = getModuleLibDep(moduleName, depName);
 
-    assertModuleLibDepPath(lib, OrderRootType.CLASSES, path);
-    assertModuleLibDepPath(lib, OrderRootType.SOURCES, sourcePath);
-    assertModuleLibDepPath(lib, JavadocOrderRootType.getInstance(), javadocPath);
+    assertModuleLibDepPath(lib, OrderRootType.CLASSES, classesPath == null ? null : Collections.singletonList(classesPath));
+    assertModuleLibDepPath(lib, OrderRootType.SOURCES, sourcePath == null ? null : Collections.singletonList(sourcePath));
+    assertModuleLibDepPath(lib, JavadocOrderRootType.getInstance(), javadocPath == null ? null : Collections.singletonList(javadocPath));
   }
 
-  private void assertModuleLibDepPath(LibraryOrderEntry lib, OrderRootType type, String path) {
-    if (path == null) return;
+  protected void assertModuleLibDep(String moduleName,
+                                    String depName,
+                                    List<String> classesPaths,
+                                    List<String> sourcePaths,
+                                    List<String> javadocPaths) {
+    LibraryOrderEntry lib = getModuleLibDep(moduleName, depName);
 
-    String[] urls = lib.getUrls(type);
-    assertEquals(1, urls.length);
-    assertEquals(path, urls[0]);
+    assertModuleLibDepPath(lib, OrderRootType.CLASSES, classesPaths);
+    assertModuleLibDepPath(lib, OrderRootType.SOURCES, sourcePaths);
+    assertModuleLibDepPath(lib, JavadocOrderRootType.getInstance(), javadocPaths);
+  }
+
+  private void assertModuleLibDepPath(LibraryOrderEntry lib, OrderRootType type, List<String> paths) {
+    if (paths == null) return;
+    assertUnorderedElementsAreEqual(lib.getUrls(type), paths.toArray(new String[paths.size()]));
   }
 
   protected void assertModuleLibDepClassesValidity(String moduleName, String depName, boolean areValid) {

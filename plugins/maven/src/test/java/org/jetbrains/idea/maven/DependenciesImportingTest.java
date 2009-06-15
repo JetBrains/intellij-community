@@ -15,6 +15,7 @@ import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 public class DependenciesImportingTest extends MavenImportingTestCase {
@@ -1155,7 +1156,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m1");
   }
 
-  public void testDoNotResetCustomJavadocsAndSources() throws Exception {
+  public void testDoNotResetCustomRootEntries() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -1171,21 +1172,55 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertProjectLibraries("Maven: junit:junit:4.0");
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
 
-    clearLibraryRoots("Maven: junit:junit:4.0", OrderRootType.SOURCES, JavadocOrderRootType.getInstance());
+    addLibraryRoot("Maven: junit:junit:4.0", OrderRootType.CLASSES, "file://foo.classes");
     addLibraryRoot("Maven: junit:junit:4.0", OrderRootType.SOURCES, "file://foo.sources");
     addLibraryRoot("Maven: junit:junit:4.0", JavadocOrderRootType.getInstance(), "file://foo.javadoc");
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
-                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
-                       "file://foo.sources",
-                       "file://foo.javadoc");
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/", "file://foo.classes"),
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/", "file://foo.sources"),
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/", "file://foo.javadoc"));
 
-    importProject();
+    myProjectsManager.scheduleResolveAllInTests();
+    resolveDependenciesAndImport();
+
+    assertModuleLibDep("project", "Maven: junit:junit:4.0",
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/", "file://foo.classes"),
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/", "file://foo.sources"),
+                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/", "file://foo.javadoc"));
+  }
+
+  public void testUpdateRootEntriesWithActualPath() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>4.0</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertProjectLibraries("Maven: junit:junit:4.0");
+    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
-                       "file://foo.sources",
-                       "file://foo.javadoc");
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
+
+    myProjectsManager.listenForExternalChanges(); // to recognize repository change
+    setRepositoryPath(new File(myDir, "__repo").getPath());
+
+    myProjectsManager.scheduleResolveAllInTests();
+    resolveDependenciesAndImport();
+
+    assertModuleLibDep("project", "Maven: junit:junit:4.0",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
   }
 
   public void testRemovingUnusedLibraries() throws Exception {
