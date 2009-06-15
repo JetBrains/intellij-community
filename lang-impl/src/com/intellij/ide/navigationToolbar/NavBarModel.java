@@ -124,7 +124,13 @@ public class NavBarModel {
     addElement(myProject);
     final Set<VirtualFile> roots = new HashSet<VirtualFile>();
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
-    Module module = ModuleUtil.findModuleForPsiElement(psiElement);
+    Module module = ApplicationManager.getApplication().runReadAction(
+        new Computable<Module>() {
+          public Module compute() {
+            return ModuleUtil.findModuleForPsiElement(psiElement);
+          }
+        }
+    );
     final ProjectFileIndex projectFileIndex = projectRootManager.getFileIndex();
     if (module != null) {
       VirtualFile vFile = PsiUtilBase.getVirtualFile(psiElement);
