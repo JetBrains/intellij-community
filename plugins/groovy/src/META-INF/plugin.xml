@@ -217,7 +217,6 @@
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.grails.editor.selection.GrailsTagBodySelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.grails.editor.selection.GrailsHtmlTagBodySelectioner"/>
 
-    <frameworkSupport implementation="org.jetbrains.plugins.gant.config.GantSupportProvider"/>
     <!--Gant filetype-->
     <quoteHandler fileType="Gant" className="org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler"/>
     <!--Gant Run/debug-->
