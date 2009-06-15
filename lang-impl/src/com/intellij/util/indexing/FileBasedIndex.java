@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -30,7 +29,10 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLock;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -470,7 +472,7 @@ public class FileBasedIndex implements ApplicationComponent {
       if (isUpToDateCheckEnabled()) {
         try {
           checkRebuild(indexId, false);
-          indexUnsavedDocuments(indexId);
+          indexUnsavedDocuments(indexId, project);
         }
         catch (StorageException e) {
           scheduleRebuild(indexId, e);
@@ -746,7 +748,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return docs;
   }
 
-  private void indexUnsavedDocuments(ID<?, ?> indexId) throws StorageException {
+  private void indexUnsavedDocuments(ID<?, ?> indexId, Project project) throws StorageException {
     myChangedFilesUpdater.forceUpdate();
 
     if (myUpToDateIndices.contains(indexId)) {
@@ -762,7 +764,7 @@ public class FileBasedIndex implements ApplicationComponent {
         semaphore.down();
         try {
           for (Document document : documents) {
-            indexUnsavedDocument(document, indexId);
+            indexUnsavedDocument(document, indexId, project);
           }
         }
         finally {
@@ -826,13 +828,13 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private void indexUnsavedDocument(final Document document, final ID<?, ?> requestedIndexId) throws StorageException {
+  private void indexUnsavedDocument(final Document document, final ID<?, ?> requestedIndexId, Project project) throws StorageException {
     final VirtualFile vFile = myFileDocumentManager.getFile(document);
     if (!(vFile instanceof VirtualFileWithId) || !vFile.isValid()) {
       return;
     }
 
-    final PsiFile dominantContentFile = findDominantPsiForDocument(document);
+    final PsiFile dominantContentFile = findDominantPsiForDocument(document, project);
 
     DocumentContent content;
     if (dominantContentFile != null && dominantContentFile.getModificationStamp() != document.getModificationStamp()) {
@@ -859,7 +861,6 @@ public class FileBasedIndex implements ApplicationComponent {
       CharSequence lastIndexed = myLastIndexedUnsavedContent.get(document, requestedIndexId);
       final FileContent oldFc = new FileContent(vFile, lastIndexed, vFile.getCharset());
       if (getInputFilter(requestedIndexId).acceptInput(vFile)) {
-        final Project project = (dominantContentFile != null)? dominantContentFile.getProject() : ProjectUtil.guessProjectForFile(vFile);
         oldFc.putUserData(PROJECT, project);
         newFc.putUserData(PROJECT, project);
         final int inputId = Math.abs(getFileId(vFile));
@@ -880,12 +881,12 @@ public class FileBasedIndex implements ApplicationComponent {
   public static final Key<VirtualFile> VIRTUAL_FILE = new Key<VirtualFile>("Context virtual file");
 
   @Nullable
-  private PsiFile findDominantPsiForDocument(final Document document) {
+  private PsiFile findDominantPsiForDocument(final Document document, Project project) {
     if (myTransactionMap.containsKey(document)) {
       return myTransactionMap.get(document);
     }
 
-    return findLatestKnownPsiForUncomittedDocument(document);
+    return findLatestKnownPsiForUncomittedDocument(document, project);
   }
 
   private final StorageGuard myStorageLock = new StorageGuard();
@@ -1453,33 +1454,12 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   @Nullable
-  private static PsiFile findLatestKnownPsiForUncomittedDocument(Document doc) {
-    PsiFile target = null;
-    long modStamp = -1L;
-
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      if (isDumb(project)) {
-        continue;
-      }
-
-      final PsiDocumentManager pdm = PsiDocumentManager.getInstance(project);
-      final PsiFile file = pdm.getCachedPsiFile(doc);
-      if (file != null && file.getModificationStamp() > modStamp) {
-        final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-        final VirtualFile vFile = file.getVirtualFile();
-        if (vFile != null && (index.isInContent(vFile) || index.isInLibrarySource(vFile))) {
-          target = file;
-          modStamp = file.getModificationStamp();
-        }
-      }
-      else if (file != null && file.getModificationStamp() == modStamp) {
-        if (target instanceof PsiPlainTextFile && !(file instanceof PsiPlainTextFile)) {
-          target = file;
-        }
-      }
+  private static PsiFile findLatestKnownPsiForUncomittedDocument(Document doc, Project project) {
+    if (isDumb(project)) {
+      return null;
     }
 
-    return target;
+    return PsiDocumentManager.getInstance(project).getCachedPsiFile(doc);
   }
   
   private static class IndexableFilesFilter implements InputFilter {
