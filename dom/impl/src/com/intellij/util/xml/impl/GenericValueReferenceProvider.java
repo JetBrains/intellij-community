@@ -33,7 +33,7 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
     myProviders.put(clazz, provider);
   }
 
-  private static boolean hasInjections(PsiLanguageInjectionHost host) {
+  static boolean hasInjections(PsiLanguageInjectionHost host) {
     final Ref<Boolean> result = Ref.create(false);
     host.processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {

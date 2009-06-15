@@ -54,5 +54,9 @@
     <completion.contributor implementation="com.intellij.util.xml.impl.DomCompletionContributor" id="dom" order="first, before xml"/>
 
     <nameSuggestionProvider implementation="com.intellij.util.xml.DomNameSuggestionProvider" id="dom" order="first, before java"/>
+
+    <pom.declarationSearcher implementation="com.intellij.util.xml.impl.DomDeclarationSearcher"/>
+    <elementDescriptionProvider implementation="com.intellij.util.xml.impl.DefaultDomTargetDescriptionProvider" id="domDefault" order="last, before pomDefault"/>
+    <iconProvider implementation="com.intellij.util.xml.impl.DefaultDomTargetIconProvider" id="domDefault" order="last"/>
   </extensions>
 </idea-plugin>
