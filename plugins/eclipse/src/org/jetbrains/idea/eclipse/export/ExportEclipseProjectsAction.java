@@ -51,12 +51,15 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
     final List<Module> incompatibleModules = new ArrayList<Module>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       if (!EclipseClasspathStorageProvider.ID.equals(ClasspathStorage.getStorageType(module))) {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
         try {
-          ClasspathStorage.getProvider(EclipseClasspathStorageProvider.ID).assertCompatible(ModuleRootManager.getInstance(module).getModifiableModel());
+          ClasspathStorage.getProvider(EclipseClasspathStorageProvider.ID).assertCompatible(model);
           modules.add(module);
         }
         catch (ConfigurationException e1) {
           incompatibleModules.add(module);
+        } finally {
+          model.dispose();
         }
       }
     }
