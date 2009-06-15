@@ -16,11 +16,11 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.codeInspection.LocalQuickFix;
 
 import java.util.List;
 
@@ -89,6 +89,8 @@ public abstract class IntentionManager  {
   public abstract void registerIntentionAndMetaData(IntentionAction action, String[] category,
                                                     String description, String exampleFileExtension,
                                                     String[] exampleTextBefore, String[] exampleTextAfter);
+
+  public abstract void unregisterIntention(IntentionAction intentionAction);
 
   /**
    * @return actions used as additional options for the given problem.

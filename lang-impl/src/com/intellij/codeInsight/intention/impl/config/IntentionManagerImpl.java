@@ -113,6 +113,12 @@ public class IntentionManagerImpl extends IntentionManager {
     mySettings.registerMetaData(metaData);
   }
 
+  @Override
+  public void unregisterIntention(IntentionAction intentionAction) {
+    myActions.remove(intentionAction);
+    mySettings.unregisterMetaData(intentionAction);
+  }
+
   private static TextDescriptor[] mapToDescriptors(String[] texts, String fileName) {
     TextDescriptor[] result = new TextDescriptor[texts.length];
     for (int i = 0; i < texts.length; i++) {

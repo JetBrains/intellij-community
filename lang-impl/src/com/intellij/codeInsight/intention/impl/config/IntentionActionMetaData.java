@@ -165,4 +165,9 @@ public final class IntentionActionMetaData {
   public String getFamily() {
     return myAction.getFamilyName();
   }
+
+  @NotNull
+  public IntentionAction getAction() {
+    return myAction;
+  }
 }

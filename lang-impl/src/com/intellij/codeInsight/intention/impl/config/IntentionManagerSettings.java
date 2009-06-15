@@ -199,4 +199,13 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
       });
     }
   }
+
+  public void unregisterMetaData(IntentionAction intentionAction) {
+    for (Map.Entry<MetaDataKey, IntentionActionMetaData> entry : myMetaData.entrySet()) {
+      if (entry.getValue().getAction() == intentionAction) {
+        myMetaData.remove(entry.getKey());
+        break;
+      }
+    }
+  }
 }
