@@ -20,12 +20,15 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.ide.IconProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,7 +88,6 @@ public abstract class ElementPresentationManager {
 
   private static final List<Function<Object, String>> ourNameProviders = new ArrayList<Function<Object, String>>();
   private static final List<Function<Object, String>> ourDocumentationProviders = new ArrayList<Function<Object, String>>();
-  private static final List<Function<Object, String>> ourHintProviders = new ArrayList<Function<Object, String>>();
   private static final List<Function<Object, Icon>> ourIconProviders = new ArrayList<Function<Object, Icon>>();
 
   static {
@@ -98,11 +100,9 @@ public abstract class ElementPresentationManager {
 
   public static void registerNameProvider(Function<Object, String> function) { ourNameProviders.add(function); }
   public static void registerDocumentationProvider(Function<Object, String> function) { ourDocumentationProviders.add(function); }
-  public static void registerHintProvider(Function<Object, String> function) { ourHintProviders.add(function); }
   public static void registerIconProvider(Function<Object, Icon> function) { ourIconProviders.add(function); }
 
   public static void unregisterNameProvider(Function<Object, String> function) { ourNameProviders.remove(function); }
-  public static void unregisterIconProvider(Function<Object, Icon> function) { ourIconProviders.remove(function); }
 
   public static void registerIcon(Class aClass, Icon icon) { registerIcons(aClass, icon); }
   public static void registerIcons(Class aClass, Icon... icon) { ourIcons.put(aClass, icon); }
@@ -134,17 +134,6 @@ public abstract class ElementPresentationManager {
         }
       }
       return s;
-    }
-    return null;
-  }
-
-  @Nullable
-  public static String getHintForElement(Object element) {
-    for (final Function<Object, String> function : ourHintProviders) {
-      final String s = function.fun(element);
-      if (s != null) {
-        return s;
-      }
     }
     return null;
   }
@@ -188,7 +177,49 @@ public abstract class ElementPresentationManager {
 
   @Nullable
   public static Icon getIcon(Object o) {
-    return getFirst(getIcons(o));
+    for (final Function<Object, Icon> function : ourIconProviders) {
+      final Icon icon = function.fun(o);
+      if (icon != null) {
+        return icon;
+      }
+    }
+    if (o instanceof DomElement) {
+      final DomElement domElement = (DomElement)o;
+      final boolean dumb = DumbService.getInstance(domElement.getManager().getProject()).isDumb();
+
+      for (final IconProvider provider : IconProvider.EXTENSION_POINT_NAME.getExtensions()) {
+        if (provider instanceof DomIconProvider) {
+          if (dumb && !(provider instanceof DumbAware)) {
+            continue;
+          }
+
+          final Icon icon = ((DomIconProvider)provider).getIcon(domElement, 0);
+          if (icon != null) {
+            return icon;
+          }
+        }
+      }
+    }
+    final Icon[] icons = getIconsForClass(o.getClass());
+    if (icons != null && icons.length > 0) {
+      return icons[0];
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Icon getIconOld(Object o) {
+    for (final Function<Object, Icon> function : ourIconProviders) {
+      final Icon icon = function.fun(o);
+      if (icon != null) {
+        return icon;
+      }
+    }
+    final Icon[] icons = getIconsForClass(o.getClass());
+    if (icons != null && icons.length > 0) {
+      return icons[0];
+    }
+    return null;
   }
 
   @Nullable
@@ -196,48 +227,6 @@ public abstract class ElementPresentationManager {
     return array == null || array.length == 0 ? null : array[0];
   }
 
-  @Nullable
-  public static Icon getLargeIcon(@Nullable Icon[] icons) {
-    if (icons == null || icons.length == 0) return null;
-    Icon largest = icons[0];
-    for (int i = 1; i < icons.length; i++) {
-      Icon icon = icons[i];
-      if (icon.getIconWidth() > largest.getIconWidth()) {
-        largest = icon;
-      }
-    }
-    return largest;
-  }
-
-
-  @Nullable
-  public static Icon getSmallIcon(@Nullable Icon[] icons) {
-    if (icons == null || icons.length == 0) return null;
-    Icon smallest = icons[0];
-    for (int i = 1; i < icons.length; i++) {
-      Icon icon = icons[i];
-      if (icon.getIconWidth() < smallest.getIconWidth()) {
-        smallest = icon;
-      }
-    }
-    return smallest;
-  }
-
-  @NotNull
-  public static Icon[] getIcons(final Object o) {
-    List<Icon> result = new ArrayList<Icon>();
-    for (final Function<Object, Icon> function : ourIconProviders) {
-      final Icon icon = function.fun(o);
-      if (icon != null) {
-        result.add(icon);
-      }
-    }
-    final Icon[] icons = getIconsForClass(o.getClass());
-    if (icons != null) {
-      result.addAll(Arrays.asList(icons));
-    }
-    return result.toArray(new Icon[result.size()]);
-  }
 
   @Nullable
   public static Icon getIconForClass(Class clazz) {
