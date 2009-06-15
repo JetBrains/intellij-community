@@ -19,13 +19,28 @@ package com.jetbrains.python.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 29.05.2005
- * Time: 13:05:17
- * To change this template use File | Settings | File Templates.
+ * Describes an assignment statement.
  */
 public interface PyAssignmentStatement extends PyStatement, NameDefiner {
-    PyExpression[] getTargets();
-    @Nullable PyExpression getAssignedValue();
+
+  /**
+   * @return the left-hand side of the statement; each item may consist of many elements.
+   */
+  PyExpression[] getTargets();
+
+
+  /**
+   * @return right-hand side of the statement; may as well consist of many elements.
+   */
+  @Nullable
+  PyExpression getAssignedValue();
+
+  /**
+   * Applies a visitor to every element of left-hand side. Tuple elements are flattened down to their most nested
+   * parts. E.g. if the target is <tt>a, b[1], (c(2).d, e.f)</tt>, then expressions
+   * <tt>a</tt>, <tt>b[1]</tt>, <tt>c(2).d</tt>, <tt>e.f</tt> will be visited.
+   * Order of visiting is not guaranteed.
+   * @param visitor its {@link PyElementVisitor#visitPyExpression} method will be called for each elementary target expression
+   */
+  //void visitElementaryTargets(PyElementVisitor visitor);
 }

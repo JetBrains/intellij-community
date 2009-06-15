@@ -17,11 +17,7 @@
 package com.jetbrains.python.psi;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 01.06.2005
- * Time: 23:39:11
- * To change this template use File | Settings | File Templates.
+ * Represents a literal dict expression, e.g. <tt>{'a': 1}</tt>
  */
 public interface PyDictLiteralExpression extends PyExpression {
 }

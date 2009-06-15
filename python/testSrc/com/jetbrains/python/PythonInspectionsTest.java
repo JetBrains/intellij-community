@@ -15,6 +15,11 @@ public class PythonInspectionsTest extends InspectionTestCase {
     doTest(getTestName(true), PythonPyInspectionToolProvider.getInstance().createLocalInspectionTool("ReturnValueFromInitInspection"));
   }
 
+  public void testPyMethodFirstArgAssignmentInspection() throws Exception {
+    LocalInspectionTool inspection = new PyMethodFirstArgAssignmentInspection();
+    doTest(getTestName(false), inspection);
+  }
+
   public void testPyUnreachableCodeInspection() throws Exception {
     LocalInspectionTool inspection = new PyUnreachableCodeInspection();
     doTest(getTestName(false), inspection);

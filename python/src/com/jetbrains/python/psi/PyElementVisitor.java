@@ -58,6 +58,10 @@ public class PyElementVisitor extends PsiElementVisitor {
     visitPyExpression(node);
   }
 
+  public void visitPyDictLiteralExpression(final PyDictLiteralExpression node) {
+    visitPyExpression(node);
+  }
+
   public void visitPyListLiteralExpression(final PyListLiteralExpression node) {
     visitPyExpression(node);
   }
