@@ -63,7 +63,7 @@ public class ElementPresentationManagerImpl extends ElementPresentationManager {
 
     @Nullable
     public String getTypeHint() {
-      return ElementPresentationManager.getHintForElement(myVariant);
+      return null;
     }
 
     @Nullable
