@@ -76,7 +76,7 @@ public class MavenProject {
     myFile = file;
   }
 
-  private void set(MavenProjectReaderResult readerResult, boolean updateLastReadStamp, boolean resetArtifacts) {
+  private void set(MavenProjectReaderResult readerResult, boolean updateLastReadStamp, boolean resetArtifacts, boolean resetProfiles) {
     State newState = myState.clone();
 
     if (updateLastReadStamp) newState.myLastReadStamp++;
@@ -118,7 +118,13 @@ public class MavenProject {
     doSetResolvedAttributes(newState, readerResult, resetArtifacts);
 
     newState.myModulesPathsAndNames = collectModulePathsAndNames(model, getDirectory(), newState.myActiveProfilesIds);
-    newState.myProfilesIds = collectProfilesIds(model);
+    List<String> newProfiles = collectProfilesIds(model);
+    if (resetProfiles || newState.myProfilesIds == null) newState.myProfilesIds = newProfiles;
+    else {
+      Set<String> mergedProfiles = new THashSet<String>(newState.myProfilesIds);
+      mergedProfiles.addAll(newProfiles);
+      newState.myProfilesIds = new ArrayList<String>(mergedProfiles);
+    }
 
     newState.myStrippedMavenModel = MavenUtil.cloneObject(model);
     MavenUtil.stripDown(newState.myStrippedMavenModel);
@@ -381,7 +387,7 @@ public class MavenProject {
                    List<String> profiles,
                    MavenProjectReader reader,
                    MavenProjectReaderProjectLocator locator) {
-    set(reader.readProject(generalSettings, myFile, profiles, locator), true, false);
+    set(reader.readProject(generalSettings, myFile, profiles, locator), true, false, true);
   }
 
   public org.apache.maven.project.MavenProject resolve(MavenGeneralSettings generalSettings,
@@ -395,7 +401,7 @@ public class MavenProject {
                                                             getActiveProfilesIds(),
                                                             locator,
                                                             process);
-    set(result, false, result.isValid);
+    set(result, false, result.isValid, false);
     return result.isValid ? result.nativeMavenProject : null;
   }
 

@@ -374,11 +374,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   public List<String> getAvailableProfiles() {
-    Set<String> result = new THashSet<String>();
-    for (MavenProject each : getProjects()) {
-      result.addAll(each.getProfilesIds());
-    }
-    return new ArrayList<String>(result);
+    if (!isInitialized()) return Collections.emptyList();
+    return myProjectsTree.getAvailableProfiles();
   }
 
   public void setActiveProfiles(List<String> profiles) {

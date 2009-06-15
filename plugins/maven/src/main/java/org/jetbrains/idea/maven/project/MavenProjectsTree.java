@@ -676,6 +676,14 @@ public class MavenProjectsTree {
     return true;
   }
 
+  public List<String> getAvailableProfiles() {
+    Set<String> result = new THashSet<String>();
+    for (MavenProject each : getProjects()) {
+      result.addAll(each.getProfilesIds());
+    }
+    return new ArrayList<String>(result);
+  }
+
   public boolean hasProjects() {
     readLock();
     try {

@@ -55,7 +55,7 @@ public class MavenEmbedderFactory {
       }
     }
 
-    final String userHome = System.getProperty(PROP_USER_HOME);
+    String userHome = System.getProperty(PROP_USER_HOME);
     if (!StringUtil.isEmptyOrSpaces(userHome)) {
       final File underUserHome = new File(userHome, M2_DIR);
       if (isValidMavenHome(underUserHome)) {
@@ -76,29 +76,20 @@ public class MavenEmbedderFactory {
 
   @Nullable
   public static File resolveGlobalSettingsFile(@Nullable String overrideMavenHome) {
-    final File directory = resolveMavenHomeDirectory(overrideMavenHome);
-    if (directory != null) {
-      final File file = new File(new File(directory, CONF_DIR), MavenConstants.SETTINGS_XML);
-      if (file.exists()) {
-        return file;
-      }
-    }
-    return null;
+    File directory = resolveMavenHomeDirectory(overrideMavenHome);
+    if (directory == null) return null;
+
+    return new File(new File(directory, CONF_DIR), MavenConstants.SETTINGS_XML);
   }
 
   @Nullable
   public static File resolveUserSettingsFile(@Nullable String overrideSettingsFile) {
-    if (!StringUtil.isEmptyOrSpaces(overrideSettingsFile)) {
-      return new File(overrideSettingsFile);
-    }
-    final String userHome = System.getProperty(PROP_USER_HOME);
-    if (!StringUtil.isEmptyOrSpaces(userHome)) {
-      final File file = new File(new File(userHome, DOT_M2_DIR), MavenConstants.SETTINGS_XML);
-      if (file.exists()) {
-        return file;
-      }
-    }
-    return null;
+    if (!StringUtil.isEmptyOrSpaces(overrideSettingsFile)) return new File(overrideSettingsFile);
+
+    String userHome = System.getProperty(PROP_USER_HOME);
+    if (StringUtil.isEmptyOrSpaces(userHome)) return null;
+
+    return new File(new File(userHome, DOT_M2_DIR), MavenConstants.SETTINGS_XML);
   }
 
   @Nullable

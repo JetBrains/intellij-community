@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -47,6 +48,7 @@ public class MavenProjectsManagerWatcher {
   private DocumentAdapter myDocumentListener;
   private MavenGeneralSettings.Listener mySettingsPathsChangesListener;
   private List<VirtualFilePointer> mySettingsFilesPointers = new ArrayList<VirtualFilePointer>();
+  private List<LocalFileSystem.WatchRequest> myWatchedRoots = new ArrayList<LocalFileSystem.WatchRequest>();
 
   private final Set<Document> myChangedDocuments = new THashSet<Document>();
   private final MavenMergingUpdateQueue myChangedDocumentsQueue = new MavenMergingUpdateQueue(getClass() + ": Document changes queue",
@@ -117,6 +119,7 @@ public class MavenProjectsManagerWatcher {
   }
 
   private void updateSettingsFilePointers() {
+    LocalFileSystem.getInstance().removeWatchedRoots(myWatchedRoots);
     mySettingsFilesPointers.clear();
     addFilePointer(MavenEmbedderFactory.resolveGlobalSettingsFile(myGeneralSettings.getMavenHome()));
     addFilePointer(MavenEmbedderFactory.resolveUserSettingsFile(myGeneralSettings.getMavenSettingsFile()));
@@ -124,7 +127,10 @@ public class MavenProjectsManagerWatcher {
 
   private void addFilePointer(File settingsFile) {
     if (settingsFile == null) return;
-    String url = VfsUtil.pathToUrl(FileUtil.toSystemIndependentName((PathUtil.getCanonicalPath(settingsFile.getAbsolutePath()))));
+
+    myWatchedRoots.add(LocalFileSystem.getInstance().addRootToWatch(getNormalizedPath(settingsFile.getParentFile()), false));
+
+    String url = VfsUtil.pathToUrl(getNormalizedPath(settingsFile));
     mySettingsFilesPointers.add(VirtualFilePointerManager.getInstance().create(url, myProject, new VirtualFilePointerListener() {
       public void beforeValidityChanged(VirtualFilePointer[] pointers) {
       }
@@ -132,6 +138,10 @@ public class MavenProjectsManagerWatcher {
       public void validityChanged(VirtualFilePointer[] pointers) {
       }
     }));
+  }
+
+  private String getNormalizedPath(File settingsFile) {
+    return FileUtil.toSystemIndependentName(PathUtil.getCanonicalPath(settingsFile.getAbsolutePath()));
   }
 
   public synchronized void stop() {

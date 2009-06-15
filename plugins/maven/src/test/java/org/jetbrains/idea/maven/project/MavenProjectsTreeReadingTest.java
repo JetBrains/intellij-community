@@ -1788,6 +1788,67 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(rootProject, read.findAggregator(read.findProject(m2)));
   }
 
+  public void testCollectingProfilesFromSettingsXmlAndPluginsXml() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    createProfilesXmlNewStyle("<profile>" +
+                              "  <id>two</id>" +
+                              "</profile>");
+
+    updateSettingsXml("<profiles>" +
+                      "  <profile>" +
+                      "    <id>three</id>" +
+                      "  </profile>" +
+                      "</profiles>");
+
+    updateAll(myProjectPom);
+    assertUnorderedElementsAreEqual(myTree.getAvailableProfiles(), "one", "two", "three");
+  }
+
+  public void testCollectingProfilesFromSettingsXmlAndPluginsXmlAfterResolve() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    createProfilesXmlNewStyle("<profile>" +
+                              "  <id>two</id>" +
+                              "</profile>");
+
+    updateSettingsXml("<profiles>" +
+                      "  <profile>" +
+                      "    <id>three</id>" +
+                      "  </profile>" +
+                      "</profiles>");
+
+    updateAll(myProjectPom);
+
+    MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(getMavenGeneralSettings());
+    try {
+      myTree.resolve(myTree.getRootProjects().get(0),
+                     getMavenGeneralSettings(),
+                     embeddersManager,
+                     NULL_MAVEN_CONSOLE,
+                     EMPTY_MAVEN_PROCESS);
+    }
+    finally {
+      embeddersManager.release();
+    }
+
+    assertUnorderedElementsAreEqual(myTree.getAvailableProfiles(), "one", "two", "three");
+  }
+
   private static class MyLoggingListener extends MavenProjectsTree.ListenerAdapter {
     String log = "";
 
