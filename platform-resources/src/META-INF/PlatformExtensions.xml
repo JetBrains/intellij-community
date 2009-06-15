@@ -160,6 +160,4 @@
 
   <progressFunComponentProvider implementation="com.intellij.featureStatistics.ProgressFunProvider"/>
   <projectConfigurable implementation="com.intellij.javaee.ExternalResourceConfigurable"/>
-
-  <ideRootPaneNorth implementation="com.intellij.openapi.project.DumbModeIndicator"/>
 </extensions>

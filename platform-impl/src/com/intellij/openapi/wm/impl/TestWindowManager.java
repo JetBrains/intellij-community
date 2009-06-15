@@ -11,11 +11,14 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.notification.impl.IdeNotificationArea;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
 
@@ -97,6 +100,23 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     }
 
     public void setProcessWindowOpen(final boolean open) {
+    }
+
+    public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody) {
+      return new BalloonHandler() {
+        public void hide() {
+        }
+      };
+    }
+
+    public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type,
+                                                  @NotNull String htmlBody,
+                                                  @Nullable Icon icon,
+                                                  @Nullable HyperlinkListener listener) {
+      return new BalloonHandler() {
+        public void hide() {
+        }
+      };
     }
 
     public void update(final Editor editor) {

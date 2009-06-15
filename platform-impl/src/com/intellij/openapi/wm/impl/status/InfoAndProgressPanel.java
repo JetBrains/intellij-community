@@ -4,9 +4,14 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.TaskInfo;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonHandler;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.Wrapper;
@@ -23,6 +28,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -36,8 +42,10 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
 
   private final ArrayList<ProgressIndicatorEx> myOriginals = new ArrayList<ProgressIndicatorEx>();
   private final ArrayList<TaskInfo> myInfos = new ArrayList<TaskInfo>();
-  private final Map<InlineProgressIndicator, ProgressIndicatorEx> myInline2Original = new HashMap<InlineProgressIndicator, ProgressIndicatorEx>();
-  private final MultiValuesMap<ProgressIndicatorEx, InlineProgressIndicator> myOriginal2Inlines = new MultiValuesMap<ProgressIndicatorEx, InlineProgressIndicator>();
+  private final Map<InlineProgressIndicator, ProgressIndicatorEx> myInline2Original
+    = new HashMap<InlineProgressIndicator, ProgressIndicatorEx>();
+  private final MultiValuesMap<ProgressIndicatorEx, InlineProgressIndicator> myOriginal2Inlines
+    = new MultiValuesMap<ProgressIndicatorEx, InlineProgressIndicator>();
 
   private final MergingUpdateQueue myUpdateQueue;
   private final AsyncProcessIcon myProgressIcon;
@@ -178,7 +186,7 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
   }
 
   void hideProcessPopup() {
-    synchronized(myOriginals) {
+    synchronized (myOriginals) {
       if (!myPopup.isShowing()) return;
 
       if (myOriginals.size() == 1) {
@@ -248,6 +256,32 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     myInfoPanel.setText(text);
   }
 
+  public BalloonHandler notifyByBalloon(MessageType type, String htmlBody, Icon icon, HyperlinkListener listener) {
+    final Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
+      htmlBody.replace("\n", "<br>"),
+      icon != null ? icon : type.getDefaultIcon(),
+      type.getPopupBackground(),
+      listener).createBalloon();
+
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        AsyncProcessIcon comp = myProgressIcon;
+        Point point = new Point(comp.getBounds().width / 2, comp.getHeight() / 2 - 2);
+        balloon.show(new RelativePoint(comp, point), Balloon.Position.above);
+      }
+    });
+
+    return new BalloonHandler() {
+      public void hide() {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            balloon.hide();
+          }
+        });
+      }
+    };
+  }
+
   private static class InlineLayout extends AbstractLayoutManager {
 
     public Dimension preferredLayoutSize(final Container parent) {
@@ -274,7 +308,6 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
       }
     }
   }
-
 
   private InlineProgressIndicator createInlineDelegate(final TaskInfo info, final ProgressIndicatorEx original, final boolean compact) {
     final Collection<InlineProgressIndicator> inlines = myOriginal2Inlines.get(original);
@@ -333,7 +366,8 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
   public void setProcessWindowOpen(final boolean open) {
     if (open) {
       openProcessPopup();
-    } else {
+    }
+    else {
       hideProcessPopup();
     }
   }

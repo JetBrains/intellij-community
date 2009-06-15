@@ -14,6 +14,8 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.wm.StatusBarCustomComponentFactory;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -29,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -196,6 +199,17 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
 
   public void setProcessWindowOpen(final boolean open) {
     myInfoAndProgressPanel.setProcessWindowOpen(open);
+  }
+
+  public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody) {
+    return notifyProgressByBalloon(type, htmlBody, null, null);
+  }
+
+  public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type,
+                                      @NotNull String htmlBody,
+                                      @Nullable Icon icon,
+                                      @Nullable HyperlinkListener listener) {
+    return myInfoAndProgressPanel.notifyByBalloon(type, htmlBody, icon, listener);
   }
 
   public void update(final Editor editor) {
