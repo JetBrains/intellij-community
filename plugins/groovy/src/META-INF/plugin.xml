@@ -67,7 +67,6 @@
     <treeStructureProvider implementation="org.jetbrains.plugins.grails.projectView.v2.GrailsProjectViewDataProvider"/>
 
     <!-- Groovy language -->
-    <treeStructureProvider implementation="org.jetbrains.plugins.groovy.projectView.GroovyTreeStructureProvider"/>
     <syntaxHighlighter key="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.grails.perspectives.DomainClassesRelationsEditorProvider"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GroovyAnnotator"/>
