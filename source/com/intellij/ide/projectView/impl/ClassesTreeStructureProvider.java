@@ -29,7 +29,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
         final ViewSettings settings1 = ((ProjectViewNode)parent).getSettings();
         final PsiClassOwner classOwner = (PsiClassOwner)o;
         PsiClass[] classes = classOwner.getClasses();
-        if (classes.length == 1) {
+        if (classes.length == 1 && !(classes[0] instanceof SyntheticElement)) {
           result.add(new ClassTreeNode(myProject, classes[0], settings1));
         } else {
           result.add(new PsiClassOwnerTreeNode(classOwner, settings1));
@@ -98,7 +98,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
       final ViewSettings settings = getSettings();
       final ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
       for (PsiClass aClass : ((PsiClassOwner)getValue()).getClasses()) {
-        if (aClass.isPhysical()) {
+        if (!(aClass instanceof SyntheticElement)) {
           result.add(new ClassTreeNode(myProject, aClass, settings));
         }
       }
@@ -107,6 +107,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
     
     protected void updateImpl(PresentationData data) {
       super.updateImpl(data);
+      data.setPresentableText(getValue().getName());
       data.setIcons(getValue().getViewProvider().getVirtualFile().getIcon());
     }
 
