@@ -1,13 +1,13 @@
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
+import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,20 +25,16 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     for (final AbstractTreeNode child : children) {
       Object o = child.getValue();
-      if (o instanceof PsiJavaFile) {
-        PsiJavaFile psiJavaFile = (PsiJavaFile)o;
-        final VirtualFile virtualFile = psiJavaFile.getVirtualFile();
-        if (virtualFile.getFileType() == StdFileTypes.JAVA || virtualFile.getFileType() == StdFileTypes.CLASS) {
-          PsiClass[] classes = psiJavaFile.getClasses();
-          if (classes.length != 0) {
-            for (PsiClass aClass : classes) {
-              if (aClass.isValid()) {
-                result.add(new ClassTreeNode(myProject, aClass, ((ProjectViewNode)parent).getSettings()));
-              }
-            }
-            continue;
-          }
+      if (o instanceof PsiClassOwner) {
+        final ViewSettings settings1 = ((ProjectViewNode)parent).getSettings();
+        final PsiClassOwner classOwner = (PsiClassOwner)o;
+        PsiClass[] classes = classOwner.getClasses();
+        if (classes.length == 1) {
+          result.add(new ClassTreeNode(myProject, classes[0], settings1));
+        } else {
+          result.add(new PsiClassOwnerTreeNode(classOwner, settings1));
         }
+        continue;
       }
       result.add(child);
     }
@@ -89,5 +85,30 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
     final PsiElement parent = element.getParent();
                                         // do not select JspClass
     return parent instanceof PsiFile && parent.getLanguage() == baseRootFile.getLanguage();
+  }
+
+  private static class PsiClassOwnerTreeNode extends PsiFileNode {
+
+    public PsiClassOwnerTreeNode(PsiClassOwner classOwner, ViewSettings settings) {
+      super(classOwner.getProject(), classOwner, settings);
+    }
+
+    @Override
+    public Collection<AbstractTreeNode> getChildrenImpl() {
+      final ViewSettings settings = getSettings();
+      final ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      for (PsiClass aClass : ((PsiClassOwner)getValue()).getClasses()) {
+        if (aClass.isPhysical()) {
+          result.add(new ClassTreeNode(myProject, aClass, settings));
+        }
+      }
+      return result;
+    }
+    
+    protected void updateImpl(PresentationData data) {
+      super.updateImpl(data);
+      data.setIcons(getValue().getViewProvider().getVirtualFile().getIcon());
+    }
+
   }
 }

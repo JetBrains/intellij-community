@@ -21,9 +21,10 @@ public class FormMergerTreeStructureProviderTest extends BaseProjectViewTestCase
                                                 "  PsiClass:Form1\n" +
                                                 "  PsiFile(plain text):Form1.form\n" +
                                                 " PsiClass:Class1\n" +
-                                                " PsiClass:Class2\n" +
-                                                " PsiClass:Class3\n" +
                                                 " PsiFile(plain text):Form2.form\n" +
+                                                " PsiJavaFile:Class2.java\n" +
+                                                "  PsiClass:Class2\n" +
+                                                "  PsiClass:Class3\n" +
                                                 " PsiJavaFile:Class4.java\n");
 
     PsiClass psiClass = ((PsiJavaFile)getPackageDirectory().findFile("Form1.java")).getClasses()[0];
