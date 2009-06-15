@@ -8,8 +8,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -144,16 +142,9 @@ public class ToolsImpl implements Tools {
         final String scopeName = scopeElement.getAttributeValue(InspectionProfileImpl.NAME);
         if (scopeName != null) {
           final NamedScopesHolder scopesHolder = profileManager.getScopesManager();
-          final NamedScope namedScope;
+          NamedScope namedScope = null;
           if (scopesHolder != null) {
             namedScope = scopesHolder.getScope(scopeName);
-          } else {
-            final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-            if (projects.length > 0) {
-              namedScope = NamedScopesHolder.getScope(projects[0], scopeName);
-            } else {
-              namedScope = NamedScopesHolder.getScope(ProjectManager.getInstance().getDefaultProject(), scopeName);
-            }
           }
           final String errorLevel = scopeElement.getAttributeValue(InspectionProfileImpl.LEVEL_TAG);
           final String enabledInScope = scopeElement.getAttributeValue(InspectionProfileImpl.ENABLED_TAG);
@@ -172,7 +163,7 @@ public class ToolsImpl implements Tools {
     }
   }
 
-  private ScopeToolState addTool(String scopeName, InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
+  public ScopeToolState addTool(String scopeName, InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
      if (myTools == null) {
       myTools = new ArrayList<ScopeToolState>();
     }
