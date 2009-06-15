@@ -16,6 +16,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -52,7 +53,12 @@ public abstract class AbstractConvertContext extends ConvertContext {
   }
 
   public Module getModule() {
-    return DomUtil.getFileElement(getInvocationElement()).getRootElement().getModule();
+    final DomFileElement<DomElement> fileElement = DomUtil.getFileElement(getInvocationElement());
+    if (fileElement == null) {
+      final XmlElement xmlElement = getInvocationElement().getXmlElement();
+      return xmlElement == null? null : ModuleUtil.findModuleForPsiElement(xmlElement);
+    }
+    return fileElement.getRootElement().getModule();
   }
 
   public PsiManager getPsiManager() {
