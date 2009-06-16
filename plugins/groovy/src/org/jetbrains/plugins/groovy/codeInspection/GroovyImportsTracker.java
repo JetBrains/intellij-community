@@ -31,7 +31,7 @@ public class GroovyImportsTracker {
   private final Map<GroovyFile, Set<GrImportStatement>> myUsedImportStatements = new HashMap<GroovyFile, Set<GrImportStatement>>();
   private final Map<GroovyFile, Set<GrImportStatement>> myUnusedImportStatements = new HashMap<GroovyFile, Set<GrImportStatement>>();
 
-  public void registerImportUsed(GrImportStatement importStatement) {
+  public synchronized void registerImportUsed(GrImportStatement importStatement) {
     if (importStatement.getParent() == null) return;
     PsiFile file = importStatement.getContainingFile();
     if (file == null || !(file instanceof GroovyFile)) return;
@@ -64,7 +64,7 @@ public class GroovyImportsTracker {
     return ServiceManager.getService(project, GroovyImportsTracker.class);
   }
 
-  public void markFileAnnotated(GroovyFile file) {
+  public synchronized void markFileAnnotated(GroovyFile file) {
     myUnusedImportStatements.remove(file);
   }
 }
