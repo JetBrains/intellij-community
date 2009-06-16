@@ -34,10 +34,8 @@ import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ProfilingUtil;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -152,12 +150,6 @@ public class JUnitTreeConsoleView extends BaseTestsOutputConsoleView {
   @Override
   public JComponent getPreferredFocusableComponent() {
     return myConsolePanel.getTreeView();
-  }
-
-  @NotNull
-  @Override
-  public AnAction[] createConsoleActions() {
-    return AnAction.EMPTY_ARRAY;
   }
 
   public JUnitRunningModel getModel() {

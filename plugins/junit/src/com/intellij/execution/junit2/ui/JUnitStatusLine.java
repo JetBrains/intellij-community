@@ -25,25 +25,15 @@ import com.intellij.execution.junit2.ui.model.StateEvent;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.testframework.ui.TestStatusLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 
 import javax.swing.*;
-import java.awt.*;
 
-class StatusLine extends JPanel {
-  private final ColorProgressBar myProgressBar = new ColorProgressBar();
-  private final JLabel myState = new JLabel(ExecutionBundle.message("junit.runing.info.starting.label"));
+class JUnitStatusLine extends TestStatusLine {
   private final StateInfo myStateInfo = new StateInfo();
   private boolean myTestsBuilt = false;
-
-  public StatusLine() {
-    super(new GridLayout(1, 2));
-    add(myState);
-    final JPanel progressPanel = new JPanel(new GridBagLayout());
-    add(progressPanel);
-    progressPanel.add(myProgressBar, new GridBagConstraints(0, 0, 0, 0, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-  }
 
   public void setModel(final JUnitRunningModel model) {
     myTestsBuilt = true;

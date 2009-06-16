@@ -27,24 +27,21 @@ import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.PoolOfTestIcons;
+import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.TestTreeView;
+import com.intellij.execution.testframework.ToolbarPanel;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
+import com.intellij.execution.testframework.ui.TestStatusLine;
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.AwtVisitor;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -59,92 +56,47 @@ class ConsolePanel extends TestResultsPanel implements Disposable {
   @NonNls private static final String PROPORTION_PROPERTY = "test_tree_console_proprtion";
   private static final float DEFAULT_PROPORTION = 0.2f;
 
-  private StatusLine myStatusLine;
-  private JScrollPane myLeftPane;
-  private JUnitToolbarPanel myToolbarPanel;
+  private JUnitStatusLine myStatusLine;
   private StatisticsPanel myStatisticsPanel;
   private TestTreeView myTreeView;
-  private final JComponent myConsole;
   private TestsOutputConsolePrinter myPrinter;
-  private final JUnitConsoleProperties myProperties;
   private final RunnerSettings myRunnerSettings;
   private final ConfigurationPerRunnerSettings myConfigurationSettings;
-  private final AnAction[] myConsoleActions;
   private StartingProgress myStartingProgress;
-  private Splitter mySplitter;
 
   public ConsolePanel(final JComponent console,
                       final TestsOutputConsolePrinter printer,
                       final JUnitConsoleProperties properties,
                       final RunnerSettings runnerSettings,
                       final ConfigurationPerRunnerSettings configurationSettings, AnAction[] consoleActions) {
-    myConsole = console;
+    super(console, consoleActions, properties, PROPORTION_PROPERTY, DEFAULT_PROPORTION);
     myPrinter = printer;
-    myProperties = properties;
     myRunnerSettings = runnerSettings;
     myConfigurationSettings = configurationSettings;
-    myConsoleActions = consoleActions;
   }
 
   public void initUI() {
-    myLeftPane = ScrollPaneFactory.createScrollPane();
-    myLeftPane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP | SideBorder.RIGHT);
-    myStatisticsPanel = new StatisticsPanel();
-    myToolbarPanel = new JUnitToolbarPanel(myProperties, myRunnerSettings, myConfigurationSettings, this);
-    myStatusLine = new StatusLine();
-    myTreeView = new JUnitTestTreeView();
-    final Splitter splitter = createSplitter(PROPORTION_PROPERTY, DEFAULT_PROPORTION);
-    Disposer.register(this, new Disposable(){
-      public void dispose() {
-        remove(splitter);
-        splitter.dispose();
-      }
-    });
-    add(splitter);
-    final JPanel leftPanel = new JPanel(new BorderLayout());
-    leftPanel.add(myLeftPane, BorderLayout.CENTER);
-    leftPanel.add(myToolbarPanel, BorderLayout.NORTH);
-    splitter.setFirstComponent(leftPanel);
-    myStatusLine.setMinimumSize(new Dimension(0, myStatusLine.getMinimumSize().height));
-    final JPanel rightPanel = new JPanel(new BorderLayout());
-    rightPanel.add(SameHeightPanel.wrap(myStatusLine, myToolbarPanel), BorderLayout.NORTH);
-    mySplitter = new Splitter();
-    new AwtVisitor(myConsole) {
-      public boolean visit(Component component) {
-        if (component instanceof JScrollPane) {
-          ((JScrollPane) component).putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP | SideBorder.LEFT);
-          return true;
-        }
-        return false;
-      }
-    };
-    mySplitter.setFirstComponent(createOutputTab(myConsole, myConsoleActions));
-    if (TestConsoleProperties.SHOW_STATISTICS.value(myProperties)) {
-      mySplitter.setSecondComponent(myStatisticsPanel);
-    }
-    myProperties.addListener(TestConsoleProperties.SHOW_STATISTICS, new TestFrameworkPropertyListener<Boolean>() {
-      public void onChanged(Boolean value) {
-        if (value.booleanValue()) {
-          mySplitter.setSecondComponent(myStatisticsPanel);
-        }
-        else {
-          mySplitter.setSecondComponent(null);
-        }
-      }
-    });
-    rightPanel.add(mySplitter, BorderLayout.CENTER);
-    splitter.setSecondComponent(rightPanel);
+    super.initUI();
     myStartingProgress = new StartingProgress(myTreeView);
-    setLeftComponent(myTreeView);
   }
 
-  private static JComponent createOutputTab(JComponent console, AnAction[] consoleActions) {
-    JPanel outputTab = new JPanel(new BorderLayout());
-    outputTab.add(console, BorderLayout.CENTER);
-    final DefaultActionGroup actionGroup = new DefaultActionGroup(consoleActions);
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);
-    outputTab.add(toolbar.getComponent(), BorderLayout.WEST);
-    return outputTab;
+  protected JComponent createStatisticsPanel() {
+    myStatisticsPanel = new StatisticsPanel();
+    return myStatisticsPanel;
+  }
+
+  protected ToolbarPanel createToolbarPanel() {
+    return new JUnitToolbarPanel(myProperties, myRunnerSettings, myConfigurationSettings, this);
+  }
+
+  protected TestStatusLine createStatusLine() {
+    myStatusLine = new JUnitStatusLine();
+    return myStatusLine;
+  }
+
+  protected JComponent createTestTreeView() {
+    myTreeView = new JUnitTestTreeView();
+    return myTreeView;
   }
 
   public void onProcessStarted(final ProcessHandler process) {
@@ -181,40 +133,6 @@ class ConsolePanel extends TestResultsPanel implements Disposable {
 
   public Printer getPrinter() {
     return myPrinter;
-  }
-
-  private void setLeftComponent(final JComponent component) {
-    if (component != myLeftPane.getViewport().getView()) myLeftPane.setViewportView(component);
-  }
-
-  private static Splitter createSplitter(final String proportionProperty, final float defaultProportion) {
-    final Splitter splitter = new Splitter(false);
-    splitter.setHonorComponentsMinimumSize(true);
-    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
-    float proportion;
-    final String value = propertiesComponent.getValue(proportionProperty);
-    if (value != null) {
-      try {
-        proportion = Float.parseFloat(value);
-      }
-      catch (NumberFormatException e) {
-        proportion = defaultProportion;
-      }
-    }
-    else {
-      proportion = defaultProportion;
-    }
-
-    splitter.addPropertyChangeListener(new PropertyChangeListener() {
-      public void propertyChange(final PropertyChangeEvent evt) {
-        if (propertiesComponent == null) return;
-        if (evt.getPropertyName().equals(Splitter.PROP_PROPORTION)) {
-          propertiesComponent.setValue(proportionProperty, String.valueOf(splitter.getProportion()));
-        }
-      }
-    });
-    splitter.setProportion(proportion);
-    return splitter;
   }
 
   public void dispose() {
