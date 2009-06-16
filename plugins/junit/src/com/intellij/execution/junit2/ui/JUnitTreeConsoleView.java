@@ -149,10 +149,6 @@ public class JUnitTreeConsoleView extends BaseTestsOutputConsoleView {
     return packetsDispatcher;
   }
 
-  public JComponent getComponent() {
-    return myConsolePanel;
-  }
-
   @Override
   public JComponent getPreferredFocusableComponent() {
     return myConsolePanel.getTreeView();
