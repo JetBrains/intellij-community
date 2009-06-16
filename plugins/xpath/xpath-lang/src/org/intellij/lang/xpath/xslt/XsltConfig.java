@@ -23,9 +23,7 @@ public abstract class XsltConfig {
         return ApplicationManager.getApplication().getComponent(XsltConfig.class);
     }
 
-    public abstract boolean isRegisterSchema();
-
-    public abstract UI createConfigUI();
+  public abstract UI createConfigUI();
 
     public abstract boolean isShowLinkedFiles();
 

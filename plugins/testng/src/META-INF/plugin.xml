@@ -18,15 +18,11 @@
           <className>com.theoryinpractice.testng.intention.TestNGOrderEntryFix</className>
         </intentionAction>
         <testFrameworkDescriptor implementation="com.theoryinpractice.testng.TestNGFrameworkDescriptor"/>
+      <standardResourceProvider implementation="com.theoryinpractice.testng.TestNGPlugin"/>
       <overrideImplementsAnnotationsHandler implementation="com.theoryinpractice.testng.intention.OverrideImplementsTestNGAnnotationsHandler"/>
     </extensions>
 
 
-    <application-components>
-      <component>
-        <implementation-class>com.theoryinpractice.testng.TestNGPlugin</implementation-class>
-      </component>
-    </application-components>
     <change-notes>
         <![CDATA[
             <li>TESTNG-151 Final passing test result is not properly hidden

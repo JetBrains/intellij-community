@@ -21,7 +21,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -46,14 +45,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.net.URL;
 
 class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, ApplicationComponent {
-    private static final Logger LOG = Logger.getInstance(XsltConfigImpl.class.getName());
 
-    private static final String XSLT_SCHEMA_LOCATION = "resources/xslt-schema.xsd";
-
-    public boolean REGISTER_SCHEMA = true;
     public boolean SHOW_LINKED_FILES = true;
 
     public void readExternal(Element element) throws InvalidDataException {
@@ -83,19 +77,6 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
 
       final ExternalResourceManagerEx erm = ExternalResourceManagerEx.getInstanceEx();
       erm.addIgnoredResource(XsltSupport.PLUGIN_EXTENSIONS_NS);
-
-      if (REGISTER_SCHEMA) {
-        final String resourceLocation = erm.getResourceLocation(XsltSupport.XSLT_NS);
-        final Class<?> clazz = XsltConfig.class;
-        final URL resource = clazz.getResource(XSLT_SCHEMA_LOCATION);
-        LOG.info("Adding resource for '" + XsltSupport.XSLT_NS + "': " + resource);
-        if (resourceLocation != XsltSupport.XSLT_NS && !resourceLocation.equals(resource.toExternalForm())) {
-          LOG.info("Warning: Resource for '" + XsltSupport.XSLT_NS + "' is already registered to: " + resourceLocation);
-        }
-        else {
-          erm.addStdResource(XsltSupport.XSLT_NS, XSLT_SCHEMA_LOCATION, clazz);
-        }
-      }
     }
 
     public void disposeComponent() {
@@ -107,11 +88,7 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
         return "XSLT-Support.Configuration";
     }
 
-    public boolean isRegisterSchema() {
-        return REGISTER_SCHEMA;
-    }
-
-    public boolean isShowLinkedFiles() {
+  public boolean isShowLinkedFiles() {
         return SHOW_LINKED_FILES;
     }
 
@@ -120,7 +97,6 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
     }
 
     public static class UIImpl extends JPanel implements UI {
-        private final JCheckBox myRegisterSchema;
         private final JCheckBox myShowLinkedFiles;
 
         private final XsltConfigImpl myConfig;
@@ -129,16 +105,10 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
             myConfig = config;
             setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-            myRegisterSchema = new JCheckBox("Register XSLT Schema");
-            myRegisterSchema.setMnemonic('R');
-            myRegisterSchema.setToolTipText("Registers the bundled XML Schema with the XSLT namespace. Requires to restart IDEA to take effect.");
-            myRegisterSchema.setSelected(myConfig.REGISTER_SCHEMA);
-
             myShowLinkedFiles = new JCheckBox("Show Associated Files in Project View");
             myShowLinkedFiles.setMnemonic('A');
             myShowLinkedFiles.setSelected(myConfig.SHOW_LINKED_FILES);
 
-            add(myRegisterSchema);
             add(myShowLinkedFiles);
 
             final JPanel jPanel = new JPanel(new BorderLayout());
@@ -174,14 +144,12 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
         }
 
         public boolean isModified() {
-            return myConfig.REGISTER_SCHEMA != myRegisterSchema.isSelected() ||
-                    myConfig.SHOW_LINKED_FILES != myShowLinkedFiles.isSelected();
+            return myConfig.SHOW_LINKED_FILES != myShowLinkedFiles.isSelected();
         }
 
         public void apply() {
             boolean oldValue = myConfig.SHOW_LINKED_FILES;
 
-            myConfig.REGISTER_SCHEMA = myRegisterSchema.isSelected();
             myConfig.SHOW_LINKED_FILES = myShowLinkedFiles.isSelected();
 
             // TODO: make this a ConfigListener
@@ -194,7 +162,6 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
         }
 
         public void reset() {
-            myRegisterSchema.setSelected(myConfig.REGISTER_SCHEMA);
             myShowLinkedFiles.setSelected(myConfig.SHOW_LINKED_FILES);
         }
     }
