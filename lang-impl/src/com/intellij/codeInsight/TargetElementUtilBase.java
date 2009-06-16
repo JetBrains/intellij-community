@@ -19,9 +19,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.PomDeclarationSearcher;
 import com.intellij.pom.PomTarget;
+import com.intellij.pom.PsiDeclaredTarget;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -156,7 +158,7 @@ public class TargetElementUtilBase {
 
     if ((flags & ELEMENT_NAME_ACCEPTED) != 0) {
       if (element instanceof PsiNamedElement) return element;
-      return getNamedElement(element, offset);
+      return getNamedElement(element, offset - element.getTextRange().getStartOffset());
     }
     return null;
   }
@@ -177,12 +179,21 @@ public class TargetElementUtilBase {
   }
 
   @Nullable
-  public PsiElement getNamedElement(@Nullable final PsiElement element, int offsetInElement) {
+  public PsiElement getNamedElement(@Nullable final PsiElement element, final int offsetInElement) {
     if (element == null) return null;
 
     final List<PomTarget> targets = CollectionFactory.arrayList();
     final Consumer<PomTarget> consumer = new Consumer<PomTarget>() {
       public void consume(PomTarget target) {
+        if (target instanceof PsiDeclaredTarget) {
+          final PsiDeclaredTarget declaredTarget = (PsiDeclaredTarget)target;
+          final PsiElement navigationElement = declaredTarget.getNavigationElement();
+          final TextRange range = declaredTarget.getNameIdentifierRange();
+          if (range != null && !range.shiftRight(navigationElement.getTextRange().getStartOffset())
+            .contains(element.getTextRange().getStartOffset() + offsetInElement)) {
+            return;
+          }
+        }
         targets.add(target);
       }
     };
@@ -197,7 +208,7 @@ public class TargetElementUtilBase {
           return PomService.convertToPsi(element.getProject(), targets.get(0));
         }
       }
-      offset -= parent.getStartOffsetInParent();
+      offset += parent.getStartOffsetInParent();
       parent = parent.getParent();
     }
 
