@@ -1309,9 +1309,11 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       myStartJumpRoles.push(BranchingInstruction.Role.END);
       myEndJumpRoles.push(BranchingInstruction.Role.END);
       PsiElement then = signTokenType == JavaTokenType.OROR ? myStartStatementStack.peekElement() : rOperand;
-      myStartStatementStack.pushStatement(then, true);
+      boolean thenAtStart = signTokenType == JavaTokenType.OROR ? myStartStatementStack.peekAtStart() : true;
+      myStartStatementStack.pushStatement(then, thenAtStart);
       PsiElement elseS = signTokenType == JavaTokenType.ANDAND ? myEndStatementStack.peekElement() : rOperand;
-      myEndStatementStack.pushStatement(elseS, false);
+      boolean elseAtStart = signTokenType == JavaTokenType.ANDAND ? myEndStatementStack.peekAtStart() : false;
+      myEndStatementStack.pushStatement(elseS, elseAtStart);
     }
     lOperand.accept(this);
     if (rOperand != null) {
