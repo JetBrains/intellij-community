@@ -18,6 +18,7 @@ package com.intellij.execution.junit2.ui;
 
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.junit.JUnitProcessHandler;
 import com.intellij.execution.junit2.InputRouter;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.TestingStatus;
@@ -30,6 +31,7 @@ import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.ExternalOutput;
 import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.Disposer;
@@ -38,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class JUnitTreeConsoleView extends WrappingConsoleView {
+public class JUnitTreeConsoleView extends BaseTestsOutputConsoleView {
   private ConsolePanel myConsolePanel;
   private JUnitRunningModel myModel;
   private final JUnitConsoleProperties myProperties;
@@ -55,7 +57,23 @@ public class JUnitTreeConsoleView extends WrappingConsoleView {
     Disposer.register(this, myConsolePanel);
   }
 
-  protected void attachTo(final PacketExtractorBase outPacketExtractor, final PacketExtractorBase errPacketExtractor, final ProcessHandler process, final DeferedActionsQueue queue) {
+  public void attachToProcess(final ProcessHandler processHandler) {
+    final JUnitProcessHandler jUnitProcessHandler = (JUnitProcessHandler)processHandler;
+    final PacketExtractorBase out = jUnitProcessHandler.getOut();
+    final PacketExtractorBase err = jUnitProcessHandler.getErr();
+    final DeferedActionsQueue queue = attachPacketExtractors(out, err);
+    attachTo(out, err, processHandler, queue);
+  }
+
+  private static DeferedActionsQueue attachPacketExtractors(final PacketExtractorBase myOutPacketExtractor,
+                                                           final PacketExtractorBase myErrPacketExtractor) {
+    final DeferedActionsQueue fulfilledWorkGate = new DeferedActionsQueueImpl();
+    myOutPacketExtractor.setFulfilledWorkGate(fulfilledWorkGate);
+    myErrPacketExtractor.setFulfilledWorkGate(fulfilledWorkGate);
+    return fulfilledWorkGate;
+  }
+
+  private void attachTo(final PacketExtractorBase outPacketExtractor, final PacketExtractorBase errPacketExtractor, final ProcessHandler process, final DeferedActionsQueue queue) {
     ProfilingUtil.operationStarted("junitInit");
     final TestingStatus testingStatus = new TestingStatus(queue);
     testingStatus.setInputConsumer(new SystemOutput(myConsolePanel.getPrinter()));
