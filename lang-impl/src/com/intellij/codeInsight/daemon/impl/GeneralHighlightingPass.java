@@ -231,15 +231,17 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           addHighlightInfo(textRange, highlightInfo);
         }
 
-        for (HighlightInfo info : highlightTodos(injectedPsi, injectedPsi.getText(), 0, injectedPsi.getTextLength())) {
-          List<TextRange> editables = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, new ProperTextRange(info.startOffset, info.endOffset));
-          for (TextRange editable : editables) {
-            TextRange hostRange = documentWindow.injectedToHost(editable);
+        if (!isDumbMode()) {
+          for (HighlightInfo info : highlightTodos(injectedPsi, injectedPsi.getText(), 0, injectedPsi.getTextLength())) {
+            List<TextRange> editables = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, new ProperTextRange(info.startOffset, info.endOffset));
+            for (TextRange editable : editables) {
+              TextRange hostRange = documentWindow.injectedToHost(editable);
 
-            HighlightInfo patched =
-            new HighlightInfo(info.forcedTextAttributes, info.type, hostRange.getStartOffset(), hostRange.getEndOffset(), info.description, info.toolTip,info.type.getSeverity(null), false, null,
-                              false);
-            addHighlightInfo(hostRange, patched);
+              HighlightInfo patched =
+              new HighlightInfo(info.forcedTextAttributes, info.type, hostRange.getStartOffset(), hostRange.getEndOffset(), info.description, info.toolTip,info.type.getSeverity(null), false, null,
+                                false);
+              addHighlightInfo(hostRange, patched);
+            }
           }
         }
         return true;
