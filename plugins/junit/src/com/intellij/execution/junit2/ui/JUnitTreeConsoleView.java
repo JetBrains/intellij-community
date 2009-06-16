@@ -32,6 +32,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.ExternalOutput;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
+import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.Disposer;
@@ -44,17 +45,24 @@ public class JUnitTreeConsoleView extends BaseTestsOutputConsoleView {
   private ConsolePanel myConsolePanel;
   private JUnitRunningModel myModel;
   private final JUnitConsoleProperties myProperties;
+  private final RunnerSettings myRunnerSettings;
+  private final ConfigurationPerRunnerSettings myConfigurationSettings;
 
   public JUnitTreeConsoleView(final JUnitConsoleProperties properties,
                               final RunnerSettings runnerSettings,
                               final ConfigurationPerRunnerSettings configurationSettings) {
     super(properties);
     myProperties = properties;
+    myRunnerSettings = runnerSettings;
+    myConfigurationSettings = configurationSettings;
     myProperties.setConsole(this);
     getPrinter().setCollectOutput(true);
-    myConsolePanel = new ConsolePanel(getConsole().getComponent(), getPrinter(), myProperties, runnerSettings, configurationSettings,
+  }
+
+  protected TestResultsPanel createTestResultsPanel() {
+    myConsolePanel = new ConsolePanel(getConsole().getComponent(), getPrinter(), myProperties, myRunnerSettings, myConfigurationSettings,
                                       getConsole().createConsoleActions());
-    Disposer.register(this, myConsolePanel);
+    return myConsolePanel;
   }
 
   public void attachToProcess(final ProcessHandler processHandler) {

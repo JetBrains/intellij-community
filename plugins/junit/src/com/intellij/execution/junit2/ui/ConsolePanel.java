@@ -28,6 +28,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
@@ -54,30 +55,42 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-class ConsolePanel extends JPanel implements Disposable {
+class ConsolePanel extends TestResultsPanel implements Disposable {
   @NonNls private static final String PROPORTION_PROPERTY = "test_tree_console_proprtion";
   private static final float DEFAULT_PROPORTION = 0.2f;
 
-  private final StatusLine myStatusLine;
-  private final JScrollPane myLeftPane;
-  private final JUnitToolbarPanel myToolbarPanel;
-  private final StatisticsPanel myStatisticsPanel;
-  private final TestTreeView myTreeView;
+  private StatusLine myStatusLine;
+  private JScrollPane myLeftPane;
+  private JUnitToolbarPanel myToolbarPanel;
+  private StatisticsPanel myStatisticsPanel;
+  private TestTreeView myTreeView;
+  private final JComponent myConsole;
   private TestsOutputConsolePrinter myPrinter;
+  private final JUnitConsoleProperties myProperties;
+  private final RunnerSettings myRunnerSettings;
+  private final ConfigurationPerRunnerSettings myConfigurationSettings;
+  private final AnAction[] myConsoleActions;
   private StartingProgress myStartingProgress;
-  private final Splitter mySplitter;
+  private Splitter mySplitter;
 
   public ConsolePanel(final JComponent console,
                       final TestsOutputConsolePrinter printer,
                       final JUnitConsoleProperties properties,
                       final RunnerSettings runnerSettings,
                       final ConfigurationPerRunnerSettings configurationSettings, AnAction[] consoleActions) {
-    super(new BorderLayout(0,1));
+    myConsole = console;
     myPrinter = printer;
+    myProperties = properties;
+    myRunnerSettings = runnerSettings;
+    myConfigurationSettings = configurationSettings;
+    myConsoleActions = consoleActions;
+  }
+
+  public void initUI() {
     myLeftPane = ScrollPaneFactory.createScrollPane();
     myLeftPane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP | SideBorder.RIGHT);
     myStatisticsPanel = new StatisticsPanel();
-    myToolbarPanel = new JUnitToolbarPanel(properties, runnerSettings, configurationSettings, this);
+    myToolbarPanel = new JUnitToolbarPanel(myProperties, myRunnerSettings, myConfigurationSettings, this);
     myStatusLine = new StatusLine();
     myTreeView = new JUnitTestTreeView();
     final Splitter splitter = createSplitter(PROPORTION_PROPERTY, DEFAULT_PROPORTION);
@@ -96,7 +109,7 @@ class ConsolePanel extends JPanel implements Disposable {
     final JPanel rightPanel = new JPanel(new BorderLayout());
     rightPanel.add(SameHeightPanel.wrap(myStatusLine, myToolbarPanel), BorderLayout.NORTH);
     mySplitter = new Splitter();
-    new AwtVisitor(console) {
+    new AwtVisitor(myConsole) {
       public boolean visit(Component component) {
         if (component instanceof JScrollPane) {
           ((JScrollPane) component).putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP | SideBorder.LEFT);
@@ -105,11 +118,11 @@ class ConsolePanel extends JPanel implements Disposable {
         return false;
       }
     };
-    mySplitter.setFirstComponent(createOutputTab(console, consoleActions));
-    if (TestConsoleProperties.SHOW_STATISTICS.value(properties)) {
+    mySplitter.setFirstComponent(createOutputTab(myConsole, myConsoleActions));
+    if (TestConsoleProperties.SHOW_STATISTICS.value(myProperties)) {
       mySplitter.setSecondComponent(myStatisticsPanel);
     }
-    properties.addListener(TestConsoleProperties.SHOW_STATISTICS, new TestFrameworkPropertyListener<Boolean>() {
+    myProperties.addListener(TestConsoleProperties.SHOW_STATISTICS, new TestFrameworkPropertyListener<Boolean>() {
       public void onChanged(Boolean value) {
         if (value.booleanValue()) {
           mySplitter.setSecondComponent(myStatisticsPanel);

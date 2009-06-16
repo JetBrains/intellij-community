@@ -213,6 +213,7 @@ public abstract class TestObject implements JavaCommandLine {
 
     final JUnitConsoleProperties consoleProperties = new JUnitConsoleProperties(myConfiguration);
     final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, getRunnerSettings(), getConfigurationSettings());
+    consoleView.initUI();
     consoleView.attachToProcess(handler);
 
     RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView.getComponent());
