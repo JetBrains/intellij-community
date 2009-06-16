@@ -67,7 +67,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected final PsiManagerEx myManager;
   private volatile Object myTreeElementPointer; // SoftReference/WeakReference to RepositoryTreeElement when has repository id, RepositoryTreeElement otherwise
   public static final Key<Boolean> BUILDING_STUB = new Key<Boolean>("Don't use stubs mark!");
-  public ArrayList<String> myLog;
 
   protected PsiFileImpl(@NotNull IElementType elementType, IElementType contentElementType, @NotNull FileViewProvider provider) {
     this(provider);
@@ -180,9 +179,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     synchronized (myStubLock) {
       treeElement = (FileElement)_getTreeElement();
       if (treeElement != null) {
-        if (myLog != null) {
-          myLog.add("had treeElement before:" + treeElement);
-        }
         return treeElement;
       }
 
@@ -199,9 +195,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       treeElement.setPsi(this);
 
       StubTree stub = derefStub();
-      if (myLog != null) {
-        myLog.add("do we have a stub?: " + stub);
-      }
 
       if (stub != null) {
         final Iterator<StubElement<?>> stubs = stub.getPlainList().iterator();
@@ -252,23 +245,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
 
   private void switchFromStubToAST(ASTNode root, final Iterator<StubElement<?>> stubs) {
-    if (myLog != null) {
-      myLog.add("switching...");
-    }
-
     ((TreeElement)root).acceptTree(new RecursiveTreeElementWalkingVisitor() {
       @Override
       protected boolean visitNode(TreeElement tree) {
         final IElementType type = tree.getElementType();
 
-        if (myLog != null) {
-          myLog.add("visit node: " + tree);
-        }
-
         if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(tree)) {
-          if (myLog != null) {
-            myLog.add("it's a stub node!");
-          }
           final StubElement stub = stubs.next();
           if (stub.getStubType() != tree.getElementType()) {
             rebuildStub();
@@ -283,15 +265,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
           }
           final PsiElement psi = stub.getPsi();
           ((CompositeElement)tree).setPsi(psi);
-          if (myLog != null) {
-            myLog.add("psi is " + psi.getClass().getName());
-          }
           final StubBasedPsiElementBase<?> base = (StubBasedPsiElementBase)psi;
           base.setNode(tree);
           base.setStub(null);
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Bound " + base + " to " + stub);
-          }
         }
         return true;
       }

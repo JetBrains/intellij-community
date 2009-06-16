@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
 
 public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegatePsiElement {
   private volatile T myStub;
@@ -55,12 +54,9 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
           try {
             if (!file.isValid()) throw new PsiInvalidElementAccessException(this);
             assert file.getTreeElement() == null;
-            file.myLog = new ArrayList<String>();
             StubTree stubTree = file.getStubTree();
             final FileElement fileElement = file.loadTreeElement();
             node = myNode;
-            final ArrayList<String> log = file.myLog;
-            file.myLog = null;
             if (node == null) {
               String message = new StringBuilder().
                 append("failed to bind stub to AST for element ").
@@ -71,8 +67,6 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
                 append(stubTree != null ? ((PsiFileStubImpl)stubTree.getRoot()).printTree() : " is null").
                 append("\nLoaded file AST:\n").
                 append(DebugUtil.treeToString(fileElement, true)).
-                append("Log:\n").
-                append(log.toString().replace(',', '\n')).
                 toString();
               throw new IllegalArgumentException(message);
             }
