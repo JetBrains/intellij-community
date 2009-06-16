@@ -92,7 +92,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   }
 
   public JComponent getComponent() {
-    return myConsole.getComponent();
+    return myTestResultsPanel;
   }
 
   public JComponent getPreferredFocusableComponent() {

@@ -13,7 +13,6 @@ import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,18 +93,5 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
 
   public void attachToProcess(final ProcessHandler processHandler) {
     getPrinter().setCollectOutput(false);
-  }
-
-  public JComponent getComponent() {
-    return myResultsViewer.getContentPane();
-  }
-
-  public void dispose() {
-    if (myResultsViewer != null) {
-      Disposer.dispose(myResultsViewer);
-      myResultsViewer = null;
-    }
-
-    super.dispose();
   }
 }
