@@ -54,7 +54,7 @@ public class PythonUnitTestCommandLineState extends CommandLineState {
     final ProcessHandler processHandler = startProcess();
     final ConsoleView console = createAndAttachConsole(getConfig().getProject(), processHandler);
 
-    return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler, executor));
+    return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
   }
 
   protected OSProcessHandler startProcess() throws ExecutionException {
