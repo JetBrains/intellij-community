@@ -51,7 +51,7 @@ public class PyUnreachableCodeInspection extends LocalInspectionTool {
     private void markFollowingStatementAsWrong(PsiElement node) {
       //if (node.getParent() instanceof PyStatementList) { // check just in case?
       PsiElement first_after_us = PyUtil.getFirstNonCommentAfter(node.getNextSibling());
-      if (first_after_us != null) {
+      if (first_after_us instanceof PyElement && first_after_us.getTextLength() > 0) {
         getHolder().registerProblem(
           first_after_us, PyBundle.message("INSP.unreachable.code"),
           ProblemHighlightType.GENERIC_ERROR_OR_WARNING
