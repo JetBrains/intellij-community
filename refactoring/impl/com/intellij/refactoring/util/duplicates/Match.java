@@ -10,10 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.ArrayUtil;
@@ -376,7 +373,8 @@ public final class Match {
   private PsiType getChangedReturnType(final PsiMethod psiMethod) {
     final PsiType returnType = psiMethod.getReturnType();
     if (returnType != null) {
-      final PsiElement parent = getMatchEnd().getParent();
+      PsiElement parent = getMatchEnd().getParent();
+
       if (parent instanceof PsiExpression) {
         if (parent instanceof PsiMethodCallExpression) {
           JavaResolveResult result = ((PsiMethodCallExpression)parent).resolveMethodGenerics();
@@ -428,6 +426,15 @@ public final class Match {
         final PsiType localVariableType = ((PsiLocalVariable)parent).getType();
         if (weakerType(psiMethod, returnType, localVariableType)) return localVariableType;
       }
+      else if (parent instanceof PsiReturnStatement) {
+        final PsiMethod replacedMethod = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+        LOG.assertTrue(replacedMethod != null);
+        final PsiType replacedMethodReturnType = replacedMethod.getReturnType();
+        if (weakerType(psiMethod, returnType, replacedMethodReturnType)) {
+          return replacedMethodReturnType;
+        }
+      }
+
     }
     return null;
   }
