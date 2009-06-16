@@ -99,18 +99,15 @@ public class PsiSuperMethodImplUtil {
         if (!MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.equals(o1, o2)) return false;
         List<PsiMethod> list = sameParameterErasureMethods.get(o1);
         boolean toCheckReturnType = list != null && list.size() > 1;
-        if (toCheckReturnType) {
-          PsiType returnType1 = ((MethodSignatureBackedByPsiMethod)o1).getMethod().getReturnType();
-          PsiType returnType2 = ((MethodSignatureBackedByPsiMethod)o2).getMethod().getReturnType();
-          if (returnType1 == null && returnType2 == null) return true;
-          if (returnType1 == null || returnType2 == null) return false;
-          final PsiType type1 = returnType1 instanceof PsiPrimitiveType ? returnType1 : PsiType.VOID;
-          final PsiType type2 = returnType2 instanceof PsiPrimitiveType ? returnType2 : PsiType.VOID;
-          return type1.equals(type2);
-        }
-        else {
-          return true;
-        }
+        if (!toCheckReturnType) return true;
+        PsiType returnType1 = ((MethodSignatureBackedByPsiMethod)o1).getMethod().getReturnType();
+        PsiType returnType2 = ((MethodSignatureBackedByPsiMethod)o2).getMethod().getReturnType();
+        if (returnType1 == null && returnType2 == null) return true;
+        if (returnType1 == null || returnType2 == null) return false;
+
+        PsiType erasure1 = TypeConversionUtil.erasure(o1.getSubstitutor().substitute(returnType1));
+        PsiType erasure2 = TypeConversionUtil.erasure(o2.getSubstitutor().substitute(returnType2));
+        return erasure1.equals(erasure2);
       }
     });
 

@@ -310,38 +310,38 @@ public class GenericsHighlightUtil {
                                                                           final PsiClass aClass,
                                                                           final PsiMethod superMethod) {
     final PsiMethod checkMethod = signatureToCheck.getMethod();
+    if (superMethod.equals(checkMethod)) return null;
     PsiClass checkContainingClass = checkMethod.getContainingClass();
+    LOG.assertTrue(checkContainingClass != null);
     PsiClass superContainingClass = superMethod.getContainingClass();
+    boolean checkEqualsSuper = checkContainingClass.equals(superContainingClass);
     if (checkMethod.isConstructor()) {
-      if (!superMethod.isConstructor() || !checkContainingClass.equals(superContainingClass)) return null;
+      if (!superMethod.isConstructor() || !checkEqualsSuper) return null;
     }
     else if (superMethod.isConstructor()) return null;
 
-    if (checkMethod.hasModifierProperty(PsiModifier.STATIC) && !checkContainingClass.equals(superContainingClass)) {
+    if (checkMethod.hasModifierProperty(PsiModifier.STATIC) && !checkEqualsSuper) {
       return null;
     }
 
-    final PsiType returnType1 = TypeConversionUtil.erasure(checkMethod.getReturnType());
-    final PsiType returnType2 = TypeConversionUtil.erasure(superMethod.getReturnType());
-    if (!Comparing.equal(returnType1, returnType2) &&
-        !TypeConversionUtil.isVoidType(returnType1) &&
-        !TypeConversionUtil.isVoidType(returnType2) &&
-        !(checkContainingClass.equals(superContainingClass) &&
-          Arrays.equals(superSignature.getParameterTypes(), signatureToCheck.getParameterTypes()))) {
+    final PsiType retErasure1 = TypeConversionUtil.erasure(checkMethod.getReturnType());
+    final PsiType retErasure2 = TypeConversionUtil.erasure(superMethod.getReturnType());
+    if (!Comparing.equal(retErasure1, retErasure2) &&
+        !TypeConversionUtil.isVoidType(retErasure1) &&
+        !TypeConversionUtil.isVoidType(retErasure2) &&
+        !(checkEqualsSuper && Arrays.equals(superSignature.getParameterTypes(), signatureToCheck.getParameterTypes()))) {
       return null;
     }
 
-    if (!checkContainingClass.equals(superContainingClass) && MethodSignatureUtil.isSubsignature(superSignature, signatureToCheck)) {
+    if (!checkEqualsSuper && MethodSignatureUtil.isSubsignature(superSignature, signatureToCheck)) {
       return null;
     }
-    PsiMethod method1 = signatureToCheck.getMethod();
-    if (superMethod.equals(method1)) return null;
-    if (aClass.equals(method1.getContainingClass())) {
+    if (aClass.equals(checkContainingClass)) {
       boolean sameClass = aClass.equals(superContainingClass);
-      return getSameErasureMessage(sameClass, method1, superMethod, HighlightNamesUtil.getMethodDeclarationTextRange(method1));
+      return getSameErasureMessage(sameClass, checkMethod, superMethod, HighlightNamesUtil.getMethodDeclarationTextRange(checkMethod));
     }
     else {
-      return getSameErasureMessage(false, method1, superMethod, HighlightNamesUtil.getClassDeclarationTextRange(aClass));
+      return getSameErasureMessage(false, checkMethod, superMethod, HighlightNamesUtil.getClassDeclarationTextRange(aClass));
     }
   }
 
