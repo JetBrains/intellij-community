@@ -54,6 +54,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
     myMockResetablePrinter = new MockPrinter(true);
     myConsole = new MyConsoleView(consoleProperties, environment.getRunnerSettings(), environment.getConfigurationSettings());
+    myConsole.initUI();
     myResultsViewer = myConsole.getResultsViewer();
     myRootSuite = myResultsViewer.getTestsRootNode();
     myEventsProcessor = new GeneralToSMTRunnerEventsConvertor(myResultsViewer.getTestsRootNode());

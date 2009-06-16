@@ -11,6 +11,7 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerTreeStructure;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
 import com.intellij.execution.testframework.ui.PrintableTestProxy;
+import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.Disposable;
@@ -44,7 +45,7 @@ import java.util.List;
 /**
  * @author: Roman Chernyatchik
  */
-public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, TestResultsViewer, SMTRunnerEventsListener {
+public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFrameworkRunningModel, TestResultsViewer, SMTRunnerEventsListener {
   @NonNls private static final String DEFAULT_SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
 
   private JPanel myContentPane;
@@ -143,6 +144,12 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, TestR
     components.add(myTabs.getComponent());
     myContentPane.setFocusTraversalPolicy(new MyFocusTraversalPolicy(components));
     myContentPane.setFocusCycleRoot(true);
+  }
+
+  @Override
+  public void initUI() {
+    super.initUI();
+    add(myContentPane, BorderLayout.CENTER);
   }
 
   public void addTestsTreeSelectionListener(final TreeSelectionListener listener) {

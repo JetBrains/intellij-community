@@ -11,6 +11,7 @@ import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.PrintableTestProxy;
+import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +26,9 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   private static final Icon OUTPUT_TAB_ICON = TestsUIUtil.loadIcon("testOuput");
 
   private SMTestRunnerResultsForm myResultsViewer;
+  private final RunnerSettings myRunnerSettings;
+  private final ConfigurationPerRunnerSettings myConfigurationPerRunnerSettings;
+  @Nullable private final String mySplitterProperty;
 
   public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties, final RunnerSettings runnerSettings,
                               final ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
@@ -35,13 +39,24 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
                               final ConfigurationPerRunnerSettings configurationPerRunnerSettings,
                               @Nullable final String splitterProperty) {
     super(consoleProperties);
+    myRunnerSettings = runnerSettings;
+    myConfigurationPerRunnerSettings = configurationPerRunnerSettings;
+    mySplitterProperty = splitterProperty;
     consoleProperties.setConsole(this);
+  }
 
+  protected TestResultsPanel createTestResultsPanel() {
     // Results View
-    myResultsViewer = new SMTestRunnerResultsForm(consoleProperties.getConfiguration(),
-                                                  consoleProperties,
-                                                  runnerSettings, configurationPerRunnerSettings,
-                                                  splitterProperty);
+    myResultsViewer = new SMTestRunnerResultsForm(myProperties.getConfiguration(),
+                                                  myProperties,
+                                                  myRunnerSettings, myConfigurationPerRunnerSettings,
+                                                  mySplitterProperty);
+    return myResultsViewer;
+  }
+
+  @Override
+  public void initUI() {
+    super.initUI();
 
     // Console
     myResultsViewer.addTab(ExecutionBundle.message("output.tab.title"), null,

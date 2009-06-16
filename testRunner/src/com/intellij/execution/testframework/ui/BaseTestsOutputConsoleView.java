@@ -20,7 +20,8 @@ import javax.swing.*;
 public abstract class BaseTestsOutputConsoleView implements ConsoleView, ObservableConsoleView {
   private ConsoleView myConsole;
   private TestsOutputConsolePrinter myPrinter;
-  private TestConsoleProperties myProperties;
+  protected TestConsoleProperties myProperties;
+  protected TestResultsPanel myTestResultsPanel;
 
   public BaseTestsOutputConsoleView(final TestConsoleProperties properties) {
     myProperties = properties;
@@ -30,6 +31,14 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
     Disposer.register(this, myProperties);
     Disposer.register(this, myConsole);
   }
+
+  public void initUI() {
+    myTestResultsPanel = createTestResultsPanel();
+    myTestResultsPanel.initUI();
+    Disposer.register(this, myTestResultsPanel);
+  }
+
+  protected abstract TestResultsPanel createTestResultsPanel();
 
   public void print(final String s, final ConsoleViewContentType contentType) {
     printNew(new ExternalOutput(s, contentType));

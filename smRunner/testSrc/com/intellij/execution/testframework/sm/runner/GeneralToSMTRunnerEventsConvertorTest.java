@@ -21,21 +21,21 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   private GeneralToSMTRunnerEventsConvertor myEventsProcessor;
   private TreeModel myTreeModel;
   private SMTestRunnerResultsForm myResultsViewer;
-  private TestConsoleProperties myConsoleProperties;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    myConsoleProperties = createConsoleProperties();
-    TestConsoleProperties.HIDE_PASSED_TESTS.set(myConsoleProperties, false);
-    TestConsoleProperties.OPEN_FAILURE_LINE.set(myConsoleProperties, false);
-    TestConsoleProperties.SCROLL_TO_SOURCE.set(myConsoleProperties, false);
-    TestConsoleProperties.SELECT_FIRST_DEFECT.set(myConsoleProperties, false);
-    TestConsoleProperties.TRACK_RUNNING_TEST.set(myConsoleProperties, false);
+    TestConsoleProperties consoleProperties = createConsoleProperties();
+    TestConsoleProperties.HIDE_PASSED_TESTS.set(consoleProperties, false);
+    TestConsoleProperties.OPEN_FAILURE_LINE.set(consoleProperties, false);
+    TestConsoleProperties.SCROLL_TO_SOURCE.set(consoleProperties, false);
+    TestConsoleProperties.SELECT_FIRST_DEFECT.set(consoleProperties, false);
+    TestConsoleProperties.TRACK_RUNNING_TEST.set(consoleProperties, false);
 
     final ExecutionEnvironment environment = new ExecutionEnvironment();
-    myConsole = new SMTRunnerConsoleView(myConsoleProperties, environment.getRunnerSettings(), environment.getConfigurationSettings());
+    myConsole = new SMTRunnerConsoleView(consoleProperties, environment.getRunnerSettings(), environment.getConfigurationSettings());
+    myConsole.initUI();
     myResultsViewer = myConsole.getResultsViewer();
     myEventsProcessor = new GeneralToSMTRunnerEventsConvertor(myResultsViewer.getTestsRootNode());
     myEventsProcessor.addEventsListener(myResultsViewer);

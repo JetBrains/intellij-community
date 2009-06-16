@@ -58,6 +58,7 @@ public class SMTestRunnerConnectionUtil {
 
     // Console
     final SMTRunnerConsoleView testRunnerConsole = new SMTRunnerConsoleView(consoleProperties, runnerSettings, configurationSettings, splitterPropertyName);
+    testRunnerConsole.initUI();
     final SMTestRunnerResultsForm resultsViewer = testRunnerConsole.getResultsViewer();
 
     // Statistics tab
