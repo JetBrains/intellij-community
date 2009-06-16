@@ -249,11 +249,11 @@ public class ReflectionUtil {
       return field.get(object);
     }
     catch (NoSuchFieldException e) {
-      LOG.info(e);
+      LOG.debug(e);
       return null;
     }
     catch (IllegalAccessException e) {
-      LOG.info(e);
+      LOG.debug(e);
       return null;
     }
   }
