@@ -113,6 +113,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private final Map<MyBackgroundableActions, BackgroundableActionEnabledHandler> myBackgroundableActionHandlerMap;
 
+  private List<Pair<String, TextAttributes>> myPendingOutput = new ArrayList<Pair<String, TextAttributes>>();
+
   public ProjectLevelVcsManagerImpl(Project project) {
     myProject = project;
     mySerialization = new ProjectLevelVcsManagerSerialization();
@@ -300,8 +302,14 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       public void run() {
         // for default and disposed projects the ContentManager is not available.
         if (myProject.isDisposed() || myProject.isDefault()) return;
-        getOrCreateConsoleContent(getContentManager());
-        myEditorAdapter.appendString(message, attributes);
+        final ContentManager contentManager = getContentManager();
+        if (contentManager == null) {
+          myPendingOutput.add(new Pair<String, TextAttributes>(message, attributes));
+        }
+        else {
+          getOrCreateConsoleContent(contentManager);
+          myEditorAdapter.appendString(message, attributes);
+        }
       }
     }, ModalityState.defaultModalityState());
   }
@@ -320,6 +328,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       myEditorAdapter = new EditorAdapter(editor, myProject);
       content = ContentFactory.SERVICE.getInstance().createContent(new DisposableEditorPanel(editor), displayName, true);
       contentManager.addContent(content);
+
+      for (Pair<String, TextAttributes> pair : myPendingOutput) {
+        myEditorAdapter.appendString(pair.first, pair.second);
+      }
+      myPendingOutput.clear();
     }
     return content;
   }
