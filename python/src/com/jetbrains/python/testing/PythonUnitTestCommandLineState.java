@@ -145,7 +145,7 @@ public class PythonUnitTestCommandLineState extends CommandLineState {
 
   @NotNull
   protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler) throws ExecutionException {
-    final ConsoleView consoleView = SMTestRunnerConnectionUtil.attachRunner(project, processHandler, this, getConfig(), "PythonUnitTestRunner.Splitter.Proportion");
+    final ConsoleView consoleView = SMTestRunnerConnectionUtil.attachRunner(processHandler, this, getConfig(), "PythonUnitTestRunner.Splitter.Proportion");
     for (Filter filter : myFilters) {
       consoleView.addMessageFilter(filter);
     }
