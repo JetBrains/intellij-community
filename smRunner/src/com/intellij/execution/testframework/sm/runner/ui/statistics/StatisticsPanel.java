@@ -7,7 +7,7 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.PropagateSelectionHandler;
-import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -17,9 +17,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.TableView;
-import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ide.DataManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -174,14 +171,6 @@ public class StatisticsPanel implements DataProvider {
       public void run() {
         // Select tab if focus was requested
         if (requestFocus) {
-          final JBTabs myTabs = ((TestResultsViewer)sender).getTabs();
-          final List<TabInfo> tabs = myTabs.getTabs();
-          for (TabInfo tab : tabs) {
-            if (tab.getComponent() == getContentPane()) {
-              myTabs.select(tab, true);
-              break;
-            }
-          }
           IdeFocusManager.getInstance(myProject).requestFocus(myStatisticsTableView, true);
         }
 

@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.Marker;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -32,9 +33,11 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
 
     final TestConsoleProperties consoleProperties = createConsoleProperties();
     final ExecutionEnvironment environment = new ExecutionEnvironment();
-    myResultsForm = (SMTestRunnerResultsForm)new SMTestRunnerResultsForm(consoleProperties.getConfiguration(), consoleProperties,
-                                                                         environment.getRunnerSettings(),
-                                                                         environment.getConfigurationSettings());
+    myResultsForm = new SMTestRunnerResultsForm(consoleProperties.getConfiguration(),
+                                                new JLabel(),
+                                                consoleProperties,
+                                                environment.getRunnerSettings(),
+                                                environment.getConfigurationSettings());
     myStatisticsPanel = new StatisticsPanel(getProject(), myResultsForm);
     myTestEventsListener = myStatisticsPanel.createTestEventsListener();
   }

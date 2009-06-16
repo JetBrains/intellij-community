@@ -8,6 +8,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
+import com.intellij.execution.testframework.actions.ShowStatisticsAction;
 import com.intellij.execution.testframework.actions.TestFrameworkActions;
 import com.intellij.execution.testframework.actions.TestTreeExpander;
 import com.intellij.ide.CommonActionsManager;
@@ -71,6 +72,9 @@ public abstract class ToolbarPanel extends JPanel implements OccurenceNavigator 
                                                     ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.description"),
                                                     IconLoader.getIcon("/runConfigurations/sourceAtException.png"),
                                                     properties, TestConsoleProperties.OPEN_FAILURE_LINE)).setAsSecondary(true);
+
+    actionGroup.addAction(new ShowStatisticsAction(properties)).setAsSecondary(true);
+
     appendAdditionalActions(actionGroup, properties, runnerSettings, configurationSettings, parent);
 
     add(ActionManager.getInstance().

@@ -1,6 +1,5 @@
 package com.intellij.execution.testframework.sm;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
@@ -19,7 +18,6 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
@@ -41,16 +39,13 @@ public class SMTestRunnerConnectionUtil {
    * just override "execute" method of your custom command line state and return
    * test runner's console.
    *
-   * @param project Project
    * @param processHandler Process handler
    * @param consoleProperties Console properties for test console actions
-   * @param resultsViewer Customized tests runner console container
    * @return Console view
    * @throws ExecutionException If IDEA cannot execute process this Exception will
    * be catched and shown in error message box
    */
-  public static BaseTestsOutputConsoleView attachRunner(@NotNull final Project project,
-                                                        @NotNull final ProcessHandler processHandler,
+  public static BaseTestsOutputConsoleView attachRunner(@NotNull final ProcessHandler processHandler,
                                                         final TestConsoleProperties consoleProperties,
                                                         final RunnerSettings runnerSettings,
                                                         final ConfigurationPerRunnerSettings configurationSettings,
@@ -61,18 +56,8 @@ public class SMTestRunnerConnectionUtil {
     testRunnerConsole.initUI();
     final SMTestRunnerResultsForm resultsViewer = testRunnerConsole.getResultsViewer();
 
-    // Statistics tab
-    final StatisticsPanel statisticsPane = new StatisticsPanel(project, resultsViewer);
-    resultsViewer.addTab(ExecutionBundle.message("statistics.tab.title"), null,
-                         StatisticsPanel.STATISTICS_TAB_ICON,
-                         statisticsPane.getContentPane());
-    // handler to select in results viewer by statistics pane events
-    statisticsPane.addPropagateSelectionListener(resultsViewer.createSelectMeListener());
-    // handler to select test statistics pane by result viewer events
-    resultsViewer.setShowStatisticForProxyHandler(statisticsPane.createSelectMeListener());
-
     // attach listeners
-    attachEventsProcessors(consoleProperties, resultsViewer, statisticsPane, processHandler);
+    attachEventsProcessors(consoleProperties, resultsViewer, resultsViewer.getStatisticsPane(), processHandler);
     testRunnerConsole.attachToProcess(processHandler);
 
     return testRunnerConsole;
@@ -110,7 +95,6 @@ public class SMTestRunnerConnectionUtil {
    * }
    * </code>
    *
-   * @param project Project
    * @param processHandler Process handler
    * @param commandLineState  Command line state
    * @param config User run configuration settings
@@ -119,14 +103,13 @@ public class SMTestRunnerConnectionUtil {
    * @throws ExecutionException If IDEA cannot execute process this Exception will
    * be catched and shown in error message box
    */
-  public static ConsoleView attachRunner(@NotNull final Project project,
-                                         @NotNull final ProcessHandler processHandler,
+  public static ConsoleView attachRunner(@NotNull final ProcessHandler processHandler,
                                          @NotNull final CommandLineState commandLineState,
                                          @NotNull final RuntimeConfiguration config,
                                          @Nullable final String splitterPropertyName) throws ExecutionException {
     final TestConsoleProperties consoleProperties = new SMTRunnerConsoleProperties(config);
 
-    return attachRunner(project, processHandler, consoleProperties,
+    return attachRunner(processHandler, consoleProperties,
                         commandLineState.getRunnerSettings(), commandLineState.getConfigurationSettings(), splitterPropertyName);
   }
 

@@ -1,12 +1,10 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
-import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
@@ -16,14 +14,10 @@ import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 /**
  * @author: Roman Chernyatchik
  */
 public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
-  private static final Icon OUTPUT_TAB_ICON = TestsUIUtil.loadIcon("testOuput");
-
   private SMTestRunnerResultsForm myResultsViewer;
   private final RunnerSettings myRunnerSettings;
   private final ConfigurationPerRunnerSettings myConfigurationPerRunnerSettings;
@@ -47,6 +41,8 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   protected TestResultsPanel createTestResultsPanel() {
     // Results View
     myResultsViewer = new SMTestRunnerResultsForm(myProperties.getConfiguration(),
+                                                  getConsole().getComponent(),
+                                                  getConsole().createConsoleActions(),
                                                   myProperties,
                                                   myRunnerSettings, myConfigurationPerRunnerSettings,
                                                   mySplitterProperty);
@@ -58,9 +54,6 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
     super.initUI();
 
     // Console
-    myResultsViewer.addTab(ExecutionBundle.message("output.tab.title"), null,
-                           OUTPUT_TAB_ICON,
-                           getConsole().getComponent());
     myResultsViewer.addEventsListener(new TestResultsViewer.EventsListener() {
       public void onTestNodeAdded(TestResultsViewer sender, SMTestProxy test) {
         // Do nothing

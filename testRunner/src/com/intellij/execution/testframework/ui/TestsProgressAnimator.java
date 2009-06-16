@@ -2,11 +2,12 @@ package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestsUIUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
 
-public abstract class TestsProgressAnimator implements Runnable {
+public abstract class TestsProgressAnimator implements Runnable, Disposable {
   private static final int FRAMES_COUNT = 8;
   private static final int MOVIE_TIME = 800;
   private static final int FRAME_TIME = MOVIE_TIME / FRAMES_COUNT;

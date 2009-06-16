@@ -9,24 +9,17 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerTreeBuilder;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerTreeStructure;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
 import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
 import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
-import com.intellij.ide.ui.SplitterProportionsDataImpl;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.GuiUtils;
-import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,8 +30,6 @@ import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,24 +39,18 @@ import java.util.List;
 public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFrameworkRunningModel, TestResultsViewer, SMTRunnerEventsListener {
   @NonNls private static final String DEFAULT_SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
 
-  private JPanel myContentPane;
-  private JSplitPane splitPane;
-  private ColorProgressBar myProgressLine;
-  private JLabel myStatusLabel;
-  private JPanel toolbarPanel;
   private SMTRunnerTestTreeView myTreeView;
-  private JPanel myTabbedPaneConatiner;
 
-  private final TestsProgressAnimator myAnimator;
-  private final SMTRunnerToolbarPanel myToolbar;
-  private JBTabs myTabs;
+  private TestsProgressAnimator myAnimator;
 
   /**
    * Fake parent suite for all tests and suites
    */
   private final SMTestProxy myTestsRootNode;
-  private final SMTRunnerTreeBuilder myTreeBuilder;
+  private SMTRunnerTreeBuilder myTreeBuilder;
   private final TestConsoleProperties myConsoleProperties;
+  private final RunnerSettings myRunnerSettings;
+  private final ConfigurationPerRunnerSettings myConfigurationSettings;
 
   private final List<ModelListener> myListeners = new ArrayList<ModelListener>();
   private final List<EventsListener> myEventListeners = new ArrayList<EventsListener>();
@@ -79,57 +64,54 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
   private int myTestsFailuresCount;
   private long myStartTime;
   private long myEndTime;
-  private final String mySplitterPropertyName;
+  private StatisticsPanel myStatisticsPane;
 
 
   public SMTestRunnerResultsForm(final RunConfigurationBase runConfiguration,
-                              final TestConsoleProperties consoleProperties,
-                              final RunnerSettings runnerSettings,
-                              final ConfigurationPerRunnerSettings configurationSettings) {
-    this(runConfiguration, consoleProperties, runnerSettings, configurationSettings, null);
+                                 @NotNull final JComponent console,
+                                 final TestConsoleProperties consoleProperties,
+                                 final RunnerSettings runnerSettings,
+                                 final ConfigurationPerRunnerSettings configurationSettings) {
+    this(runConfiguration, console, AnAction.EMPTY_ARRAY, consoleProperties, runnerSettings, configurationSettings, null);
   }
 
   public SMTestRunnerResultsForm(final RunConfigurationBase runConfiguration,
-                              final TestConsoleProperties consoleProperties,
-                              final RunnerSettings runnerSettings,
-                              final ConfigurationPerRunnerSettings configurationSettings,
-                              final String splitterPropertyName) {
+                                 @NotNull final JComponent console,
+                                 AnAction[] consoleActions,
+                                 final TestConsoleProperties consoleProperties,
+                                 final RunnerSettings runnerSettings,
+                                 final ConfigurationPerRunnerSettings configurationSettings,
+                                 final String splitterPropertyName) {
+    super(console, consoleActions, consoleProperties, splitterPropertyName != null ? DEFAULT_SM_RUNNER_SPLITTER_PROPERTY : splitterPropertyName, 0.5f);
     myConsoleProperties = consoleProperties;
-    mySplitterPropertyName = splitterPropertyName == null
-                             ? DEFAULT_SM_RUNNER_SPLITTER_PROPERTY
-                             : splitterPropertyName;
+    myRunnerSettings = runnerSettings;
+    myConfigurationSettings = configurationSettings;
 
-    final Project project = runConfiguration.getProject();
-    myProject = project;
+    myProject = runConfiguration.getProject();
 
     //Create tests common suite root
     //noinspection HardCodedStringLiteral
     myTestsRootNode = new SMTestProxy("[root]", true, null);
 
-    //Adds tabs view component
-    myTabs = new JBTabsImpl(project,
-                            ActionManager.getInstance(),
-                            IdeFocusManager.getInstance(myProject),
-                            this);
     //TODO: popup menu
     //myTabs.setPopupGroup(, ViewContext.CELL_POPUP_PLACE);
-    myTabbedPaneConatiner.setLayout(new BorderLayout());
-    myTabbedPaneConatiner.add(myTabs.getComponent());
 
-    // Setup tests tree
-    myTreeView.setLargeModel(true);
-    myTreeView.attachToModel(this);
-    myTreeView.setTestResultsViewer(this);
-
-    final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(project, myTestsRootNode);
-    myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
-    myAnimator = new MyAnimator(myTreeBuilder);
-
-    myToolbar = initToolbarPanel(consoleProperties, runnerSettings, configurationSettings);
-
-    makeSplitterSettingsExternalizable(splitPane);
 
     // Fire selection changed and move focus on SHIFT+ENTER
+    //TODO[romeo] improve
+    /*
+    final ArrayList<Component> components = new ArrayList<Component>();
+    components.add(myTreeView);
+    components.add(myTabs.getComponent());
+    myContentPane.setFocusTraversalPolicy(new MyFocusTraversalPolicy(components));
+    myContentPane.setFocusCycleRoot(true);
+    */
+  }
+
+  @Override
+  public void initUI() {
+    super.initUI();
+
     final KeyStroke shiftEnterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK);
     SMRunnerUtil.registerAsAction(shiftEnterKey, "show-statistics-for-test-proxy",
                             new Runnable() {
@@ -138,18 +120,42 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
                               }
                             },
                             myTreeView);
-    //TODO[romeo] improve
-    final ArrayList<Component> components = new ArrayList<Component>();
-    components.add(myTreeView);
-    components.add(myTabs.getComponent());
-    myContentPane.setFocusTraversalPolicy(new MyFocusTraversalPolicy(components));
-    myContentPane.setFocusCycleRoot(true);
   }
 
-  @Override
-  public void initUI() {
-    super.initUI();
-    add(myContentPane, BorderLayout.CENTER);
+  protected ToolbarPanel createToolbarPanel() {
+    return new SMTRunnerToolbarPanel(myConsoleProperties, myRunnerSettings, myConfigurationSettings, this, this);
+  }
+
+  protected JComponent createTestTreeView() {
+    myTreeView = new SMTRunnerTestTreeView();
+
+    myTreeView.setLargeModel(true);
+    myTreeView.attachToModel(this);
+    myTreeView.setTestResultsViewer(this);
+
+    final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(myProject, myTestsRootNode);
+    myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
+    Disposer.register(this, myTreeBuilder);
+    myAnimator = new MyAnimator(myTreeBuilder);
+    Disposer.register(this, myAnimator);
+
+    return myTreeView;
+  }
+
+  protected JComponent createStatisticsPanel() {
+    // Statistics tab
+    final StatisticsPanel statisticsPane = new StatisticsPanel(myProject, this);
+    // handler to select in results viewer by statistics pane events
+    statisticsPane.addPropagateSelectionListener(createSelectMeListener());
+    // handler to select test statistics pane by result viewer events
+    setShowStatisticForProxyHandler(statisticsPane.createSelectMeListener());
+
+    myStatisticsPane = statisticsPane;
+    return myStatisticsPane.getContentPane();
+  }
+
+  public StatisticsPanel getStatisticsPane() {
+    return myStatisticsPane;
   }
 
   public void addTestsTreeSelectionListener(final TreeSelectionListener listener) {
@@ -164,25 +170,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     myShowStatisticForProxyHandler = handler;
   }
 
-  public JComponent getContentPane() {
-    return myContentPane;
-  }
-
-  public void addTab(@NotNull final String tabTitle, @Nullable final String tooltip,
-                     @Nullable final Icon icon,
-                     @NotNull final JComponent component) {
-    final TabInfo tabInfo = new TabInfo(component);
-    tabInfo.setTooltipText(tooltip);
-    tabInfo.setText(tabTitle);
-    tabInfo.setIcon(icon);
-
-    myTabs.addTab(tabInfo);
-  }
-
-  public JBTabs getTabs() {
-    return myTabs;
-  }
-
   /**
    * Returns root node, fake parent suite for all tests and suites
    * @return
@@ -191,7 +178,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     myAnimator.setCurrentTestCase(myTestsRootNode);
     
     // Status line
-    myProgressLine.setColor(ColorProgressBar.GREEN);
+    myStatusLine.setStatusColor(ColorProgressBar.GREEN);
 
     // Tests tree
     selectAndNotify(myTestsRootNode);
@@ -234,7 +221,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     }
 
     // update progress if total is set
-    myProgressLine.setFraction(myTestsTotal != 0 ? (double)myTestsCurrentCount / myTestsTotal : 0);
+    myStatusLine.setFraction(myTestsTotal != 0 ? (double)myTestsCurrentCount / myTestsTotal : 0);
 
     _addTestOrSuite(testProxy);
 
@@ -346,13 +333,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     }
     myShowStatisticForProxyHandler = null;
     myEventListeners.clear();
-
-    myAnimator.dispose();
-    myToolbar.dispose();
-    Disposer.dispose(myTreeBuilder);
   }
 
   public void showStatisticsForSelectedProxy() {
+    TestConsoleProperties.SHOW_STATISTICS.set(myProperties, true);
     final AbstractTestProxy selectedProxy = myTreeView.getSelectedTest();
     showStatisticsForSelectedProxy(selectedProxy, true);
   }
@@ -392,17 +376,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     myAnimator.setCurrentTestCase(newTestOrSuite);
   }
 
-  private SMTRunnerToolbarPanel initToolbarPanel(final TestConsoleProperties consoleProperties,
-                                                 final RunnerSettings runnerSettings,
-                                                 final ConfigurationPerRunnerSettings configurationSettings) {
-    toolbarPanel.setLayout(new BorderLayout());
-    final SMTRunnerToolbarPanel toolbar =
-        new SMTRunnerToolbarPanel(consoleProperties, runnerSettings, configurationSettings, this,myContentPane);
-    toolbarPanel.add(toolbar);
-
-    return toolbar;
-  }
-
   private void fireOnTestNodeAdded(final SMTestProxy test) {
     for (EventsListener eventListener : myEventListeners) {
       eventListener.onTestNodeAdded(this, test);
@@ -430,43 +403,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     }, ModalityState.NON_MODAL);
   }
 
-  private void makeSplitterSettingsExternalizable(final JSplitPane splitPane) {
-    final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
-    //PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
-
-    splitterProportions.externalizeFromDimensionService(getSplitterPropertyName());
-    final Container container = splitPane.getParent();
-    GuiUtils.replaceJSplitPaneWithIDEASplitter(splitPane);
-    final Splitter splitter = (Splitter)container.getComponent(0);
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        splitterProportions.restoreSplitterProportions(container);
-        splitter.addPropertyChangeListener(new PropertyChangeListener() {
-          public void propertyChange(final PropertyChangeEvent evt) {
-            if (evt.getPropertyName().equals(Splitter.PROP_PROPORTION)) {
-              splitterProportions.saveSplitterProportions(container);
-              splitterProportions.externalizeToDimensionService(getSplitterPropertyName());
-            }
-          }
-        });
-      }
-    });
-    Disposer.register(this, new Disposable() {
-      public void dispose() {
-        splitter.dispose();
-      }
-    });
-  }
-
-  protected String getSplitterPropertyName() {
-    return mySplitterPropertyName;
-  }
-
   private void updateStatusLabel() {
     if (myTestsFailuresCount > 0) {
-      myProgressLine.setColor(ColorProgressBar.RED);
+      myStatusLine.setStatusColor(ColorProgressBar.RED);
     }
-    myStatusLabel.setText(TestsPresentationUtil.getProgressStatus_Text(myStartTime, myEndTime,
+    myStatusLine.setText(TestsPresentationUtil.getProgressStatus_Text(myStartTime, myEndTime,
                                                                        myTestsTotal, myTestsCurrentCount,
                                                                        myTestsFailuresCount));
   }
