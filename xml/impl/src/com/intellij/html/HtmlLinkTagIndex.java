@@ -11,7 +11,6 @@ import com.intellij.lexer.XHtmlHighlightingLexer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +26,6 @@ import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NonNls;
@@ -133,12 +131,6 @@ public class HtmlLinkTagIndex extends SingleEntryFileBasedIndexExtension<HtmlLin
     String getMediaValue();
 
     @Nullable
-    String getTypeValue();
-
-    @Nullable
-    String getHrefValue();
-
-    @Nullable
     String getRelValue();
 
     @Nullable
@@ -201,7 +193,7 @@ public class HtmlLinkTagIndex extends SingleEntryFileBasedIndexExtension<HtmlLin
           mapHtml(inputData, language, result);
         }
         else {
-          mapJsp(inputData, language, result);
+          mapJsp(inputData, result);
         }
 
         return new InfoHolder<LinkInfo>(result.toArray(new LinkInfo[result.size()]));
@@ -209,19 +201,10 @@ public class HtmlLinkTagIndex extends SingleEntryFileBasedIndexExtension<HtmlLin
     };
   }
 
-  private static void mapJsp(FileContent inputData, Language language, final List<LinkInfo> result) {
-    Project project = ProjectManager.getInstance().getDefaultProject(); // TODO
-    final LightVirtualFile lightVirtualFile = new LightVirtualFile(inputData.getFileName(), inputData.getContentAsText());
+  private static void mapJsp(FileContent inputData, final List<LinkInfo> result) {
+    final FileViewProvider viewProvider = inputData.getPsiFile().getViewProvider();
+
     PsiFile psiFile = null;
-
-    final FileViewProviderFactory viewProviderFactory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
-    if (viewProviderFactory == null) {
-      return;
-    }
-
-    final FileViewProvider viewProvider =
-      viewProviderFactory.createFileViewProvider(lightVirtualFile, language, PsiManager.getInstance(project), false);
-
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
       final Language dataLanguage = ((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage();
       if (dataLanguage == HTMLLanguage.INSTANCE || dataLanguage == XHTMLLanguage.INSTANCE) {
@@ -508,14 +491,6 @@ public class HtmlLinkTagIndex extends SingleEntryFileBasedIndexExtension<HtmlLin
 
     public String getMediaValue() {
       return myLinkInfo.media;
-    }
-
-    public String getTypeValue() {
-      return myLinkInfo.type;
-    }
-
-    public String getHrefValue() {
-      return myLinkInfo.value;
     }
 
     public String getRelValue() {
