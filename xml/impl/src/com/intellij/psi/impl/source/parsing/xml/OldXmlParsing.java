@@ -325,7 +325,7 @@ public class OldXmlParsing implements XmlElementType {
         names.remove(openedName);
       }
 
-      final LexerPosition pos = lexer.getCurrentPosition();
+      final int pos = lexer.getTokenStart();
 
       if (lexer.getTokenType() != XML_END_TAG_START) {
         tagEnd.rawInsertAfterMe(Factory.createErrorElement(XmlErrorMessages.message("element.is.not.closed")));
@@ -344,7 +344,7 @@ public class OldXmlParsing implements XmlElementType {
                                                                          lexer.getTokenEnd()).toString();
 
       if (!closingName.equals(openedName) && names.contains(closingName)) {
-        lexer.restore(pos);
+        lexer.start(lexer.getBufferSequence(), pos, lexer.getBufferEnd(), 0);
         if (tagEnd != null) {
           final TreeElement start = tagEnd.getTreeNext();
           tagEnd.setTreeNext(null);
