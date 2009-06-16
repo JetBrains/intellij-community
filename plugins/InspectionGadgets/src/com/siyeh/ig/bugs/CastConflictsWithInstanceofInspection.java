@@ -15,12 +15,15 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.InstanceOfUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,18 +45,74 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
         return new CastConflictsWithInstanceofVisitor();
     }
 
-    private static class CastConflictsWithInstanceofVisitor
+
+  @NotNull
+  @Override
+  protected InspectionGadgetsFix[] buildFixes(final Object... infos) {
+    final PsiInstanceOfExpression conflictingInstanceof = (PsiInstanceOfExpression)infos[2];
+    return new InspectionGadgetsFix[] {new ReplaceFix(conflictingInstanceof, (PsiType)infos[0]){
+      protected void replace(PsiTypeElement castTypeElement, PsiTypeElement instanceofTypeElement, Project project) {
+        castTypeElement.replace(JavaPsiFacade.getElementFactory(project).createTypeElement(instanceofTypeElement.getType()));
+      }
+
+      @NotNull
+      public String getName() {
+        return "Replace cast to \'" + myCastType.getPresentableText() + "\' with \'" + myConflictingInstanceof.getCheckType().getType().getPresentableText() + "\'";
+      }
+    }, new ReplaceFix(conflictingInstanceof, (PsiType)infos[0]) {
+      protected void replace(PsiTypeElement castTypeElement, PsiTypeElement instanceofTypeElement, Project project) {
+        instanceofTypeElement.replace(JavaPsiFacade.getElementFactory(project).createTypeElement(castTypeElement.getType()));
+      }
+
+      @NotNull
+      public String getName() {
+        return "Replace instanceof \'" + myConflictingInstanceof.getCheckType().getType().getPresentableText() + "\' with \'" + myCastType.getPresentableText() + "\'";
+      }
+    }};
+  }
+
+  private static class CastConflictsWithInstanceofVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitTypeCastExpression(
                 @NotNull PsiTypeCastExpression expression) {
             super.visitTypeCastExpression(expression);
             final PsiType castType = expression.getType();
-            final PsiExpression operand = expression.getOperand();
-            if (!InstanceOfUtils.hasConflictingInstanceof(expression)) {
+            if (castType != null) {
+              final PsiExpression operand = expression.getOperand();
+              final PsiInstanceOfExpression conflictingInstanceof = InstanceOfUtils.getConflictingInstanceof(expression);
+              if (conflictingInstanceof == null) {
                 return;
+              }
+              registerError(expression, castType, operand, conflictingInstanceof);
             }
-            registerError(expression, castType, operand);
         }
     }
+
+  private static abstract class ReplaceFix extends InspectionGadgetsFix {
+    protected final PsiInstanceOfExpression myConflictingInstanceof;
+    protected final PsiType myCastType;
+
+    public ReplaceFix(PsiInstanceOfExpression conflictingInstanceof, PsiType castType) {
+      myConflictingInstanceof = conflictingInstanceof;
+      myCastType = castType;
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)descriptor.getPsiElement();
+      final PsiTypeElement castTypeElement = typeCastExpression.getCastType();
+      final PsiTypeElement typeElement = myConflictingInstanceof.getCheckType();
+      if (castTypeElement != null && typeElement != null) {
+        replace(castTypeElement, typeElement, project);
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(myConflictingInstanceof);
+      }
+    }
+
+    protected abstract void replace(PsiTypeElement castTypeElement, PsiTypeElement instanceofTypeElement, Project project);
+
+
+  }
+
+
 }

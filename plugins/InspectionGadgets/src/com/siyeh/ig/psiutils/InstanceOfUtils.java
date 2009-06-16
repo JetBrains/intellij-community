@@ -25,12 +25,12 @@ public class InstanceOfUtils {
 
     private InstanceOfUtils() {}
 
-    public static boolean hasConflictingInstanceof(
+    public static PsiInstanceOfExpression getConflictingInstanceof(
             @NotNull PsiTypeCastExpression expression) {
         final PsiType castType = expression.getType();
         final PsiExpression operand = expression.getOperand();
         if (!(operand instanceof PsiReferenceExpression)) {
-            return false;
+            return null;
         }
         final PsiReferenceExpression referenceExpression =
                 (PsiReferenceExpression)operand;
@@ -42,14 +42,18 @@ public class InstanceOfUtils {
         while (parent != null) {
             parent.accept(checker);
             if (checker.hasAgreeingInstanceof()) {
-                return false;
+                return null;
             }
             parent = PsiTreeUtil.getParentOfType(parent,
                     PsiBinaryExpression.class, PsiIfStatement.class,
                     PsiConditionalExpression.class);
         }
-        return checker.hasConflictingInstanceof();
+        return checker.getConflictingInstanceof();
     }
+
+  public static boolean hasConflictingInstanceof(@NotNull PsiTypeCastExpression expression) {
+    return getConflictingInstanceof(expression) != null;
+  }
 
     public static boolean hasAgreeingInstanceof(
             @NotNull PsiTypeCastExpression expression) {
@@ -83,7 +87,7 @@ public class InstanceOfUtils {
         private final PsiType castType;
         private final boolean strict;
         private boolean inElse = false;
-        private boolean conflictingInstanceof = false;
+        private PsiInstanceOfExpression conflictingInstanceof = null;
         private boolean agreeingInstanceof = false;
 
 
@@ -202,7 +206,7 @@ public class InstanceOfUtils {
                 if (isAgreeing(instanceOfExpression)) {
                     agreeingInstanceof = true;
                 } else if (isConflicting(instanceOfExpression)) {
-                    conflictingInstanceof = true;
+                    conflictingInstanceof = instanceOfExpression;
                 }
             }
         }
@@ -248,7 +252,11 @@ public class InstanceOfUtils {
         }
 
         public boolean hasConflictingInstanceof() {
-            return conflictingInstanceof;
+            return conflictingInstanceof != null;
+        }
+
+        public PsiInstanceOfExpression getConflictingInstanceof() {
+          return conflictingInstanceof;
         }
     }
 }
