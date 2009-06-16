@@ -8,10 +8,10 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.net.URL;
 import java.util.*;
 
 /**
@@ -36,7 +35,7 @@ import java.util.*;
 @State(name = "ExternalResourceManagerImpl",
        storages = {@Storage(id = "other", file = "$APP_CONFIG$/other.xml")})
 public class ExternalResourceManagerImpl extends ExternalResourceManagerEx implements JDOMExternalizable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl");
+  static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl");
 
   @NonNls public static final String J2EE_1_3 = "http://java.sun.com/dtd/";
   @NonNls public static final String J2EE_1_2 = "http://java.sun.com/j2ee/dtds/";
@@ -49,7 +48,23 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
   private final Map<String, XmlNSDescriptorImpl> myImplicitNamespaces = new THashMap<String, XmlNSDescriptorImpl>();
   private final Set<String> myIgnoredResources = new HashSet<String>();
-  private final Map<String, Map<String,String>> myStdResources = new HashMap<String, Map<String,String>>();
+
+  private final NotNullLazyValue<Map<String, Map<String,String>>> myStdResources = new NotNullLazyValue<Map<String, Map<String, String>>>() {
+    @NotNull
+    @Override
+    protected Map<String, Map<String, String>> compute() {
+      return computeStdResources();
+    }
+  };
+
+  protected Map<String, Map<String, String>> computeStdResources() {
+    ResourceRegistrarImpl registrar = new ResourceRegistrarImpl();
+    for (StandardResourceProvider provider : Extensions.getExtensions(StandardResourceProvider.EP_NAME)) {
+      provider.registerResources(registrar);
+    }
+    myIgnoredResources.addAll(registrar.getIgnored());
+    return registrar.getResources();
+  }
 
   private final List<ExternalResourceListener> myListeners = new ArrayList<ExternalResourceListener>();
   private long myModificationCount = 0;
@@ -62,62 +77,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   @NonNls public static final String STANDARD_SCHEMAS = "/standardSchemas/";
 
   public ExternalResourceManagerImpl(PathMacrosImpl pathMacros) {
-    addInternals();
-
     myPathMacros = pathMacros;
-  }
-
-  protected void addInternals() {
-    addInternalResource(XmlUtil.XSLT_URI,"xslt-1_0.xsd");
-    addInternalResource(XmlUtil.XSLT_URI,"2.0", "xslt-2_0.xsd");
-    addInternalResource(XmlUtil.XINCLUDE_URI,"xinclude.xsd");
-    addInternalResource(XmlUtil.XML_SCHEMA_URI, "XMLSchema.xsd");
-    addInternalResource(XmlUtil.XML_SCHEMA_URI + ".xsd", "XMLSchema.xsd");
-    addInternalResource("http://www.w3.org/2001/XMLSchema.dtd", "XMLSchema.dtd");
-    addInternalResource(XmlUtil.XML_SCHEMA_INSTANCE_URI, "XMLSchema-instance.xsd");
-    addInternalResource("http://www.w3.org/2001/xml.xsd","xml.xsd");
-    addInternalResource(XmlUtil.XML_NAMESPACE_URI,"xml.xsd");
-    addInternalResource(XmlUtil.XHTML_URI,"xhtml1-transitional.xsd");
-    addInternalResource("http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd","xhtml1-strict.xsd");
-
-    addInternalResource("http://www.w3.org/TR/html4/strict.dtd","xhtml1-strict.dtd");
-    addInternalResource("http://www.w3.org/TR/html4/loose.dtd","xhtml1-transitional.dtd");
-    addInternalResource("http://www.w3.org/TR/html4/frameset.dtd","xhtml1-frameset.dtd");
-    addInternalResource("http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd","xhtml1-strict.dtd");
-    addInternalResource("http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd","xhtml1-transitional.dtd");
-    addInternalResource("http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd","xhtml1-frameset.dtd");
-    addInternalResource("http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd","xhtml11/xhtml11.dtd");
-
-    // Plugins DTDs // stathik
-    addInternalResource("http://plugins.intellij.net/plugin.dtd", "plugin.dtd");
-    addInternalResource("http://plugins.intellij.net/plugin-repository.dtd", "plugin-repository.dtd");
-  }
-
-  @Nullable
-  private static String getFile(String name, Class klass) {
-    final URL resource = klass.getResource(name);
-    if (resource == null) return null;
-
-    String path = FileUtil.unquote(resource.toString());
-    // this is done by FileUtil for windows
-    path = path.replace('\\','/');
-    return path;
-  }
-
-  public void addInternalResource(@NonNls String resource, @NonNls String fileName) {
-    addStdResource(resource, STANDARD_SCHEMAS + fileName);
-  }
-
-  public void addInternalResource(@NonNls String resource, @NonNls String fileName, Class clazz) {
-    addStdResource(resource, STANDARD_SCHEMAS + fileName, clazz);
-  }
-
-  public void addInternalResource(@NonNls String resource, @NonNls String version, @NonNls String fileName) {
-    addInternalResource(resource, version, fileName, getClass());
-  }
-
-  public void addInternalResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, Class clazz) {
-    addStdResource(resource, version, STANDARD_SCHEMAS + fileName, clazz);
   }
 
   public static boolean isStandardResource(VirtualFile file) {
@@ -129,28 +89,8 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     return myResourceLocations.contains(file.getUrl()); 
   }
 
-  public void addStdResource(@NonNls String resource, @NonNls String fileName){
-    addStdResource(resource, fileName, getClass());
-  }
-
-  public void addStdResource(String resource, String fileName, Class klass) {
-    addStdResource(resource, DEFAULT_VERSION, fileName, klass);
-  }
-
-  public void addStdResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, Class klass) {
-    final String file = getFile(fileName, klass);
-    if (file != null) {
-      final Map<String, String> map = getMap(myStdResources, version, true);
-      assert map != null;
-      map.put(resource, file);
-    }
-    else {
-      LOG.info("Cannot find standard resource. filename:" + fileName + " klass=" + klass);
-    }
-  }
-
   @Nullable
-  private static Map<String, String> getMap(@NotNull final Map<String, Map<String, String>> resources, @Nullable final String version,
+  static Map<String, String> getMap(@NotNull final Map<String, Map<String, String>> resources, @Nullable final String version,
                                             final boolean create) {
     Map<String, String> map = resources.get(version);
     if (map == null) {
@@ -174,7 +114,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     String result = map != null ? map.get(url):null;
 
     if (result == null) {
-      map = getMap(myStdResources, version, false);
+      map = getMap(myStdResources.getValue(), version, false);
       result = map != null ? map.get(url):null;
     }
 
@@ -214,7 +154,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     addResourcesFromMap(fileType, result,version, myResources);
 
     if (includeStandard) {
-      addResourcesFromMap(fileType, result,version, myStdResources);
+      addResourcesFromMap(fileType, result,version, myStdResources.getValue());
     }
 
     return ArrayUtil.toStringArray(result);

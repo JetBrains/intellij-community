@@ -39,10 +39,6 @@ public abstract class ExternalResourceManager implements ModificationTracker {
   public abstract void removeResource(String url);
   public abstract void removeResource(String url, String version);
 
-  public abstract void addStdResource(@NonNls String resource, @NonNls String fileName);
-  public abstract void addStdResource(@NonNls String resource, @NonNls String fileName, Class klass);
-  public abstract void addStdResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, Class klass);
-
   /** @see #getResourceLocation(String, com.intellij.openapi.project.Project) */
   @Deprecated
   public abstract String getResourceLocation(@NonNls String url);

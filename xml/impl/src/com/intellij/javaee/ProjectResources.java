@@ -7,6 +7,9 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.JDOMExternalizableAdapter;
 import org.jdom.Element;
 
+import java.util.Map;
+import java.util.Collections;
+
 /**
 * @author Dmitry Avdeev
 */
@@ -21,8 +24,8 @@ public class ProjectResources extends ExternalResourceManagerImpl implements Per
   }
 
   @Override
-  protected void addInternals() {
-    
+  protected Map<String, Map<String, String>> computeStdResources() {
+    return Collections.emptyMap();   
   }
 
   public Element getState() {

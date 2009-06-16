@@ -28,6 +28,8 @@
     <extensionPoint name="webBrowserUrlProvider"
                     interface="com.intellij.ide.browsers.WebBrowserUrlProvider"/>
 
+    <extensionPoint name="standardResourceProvider" interface="com.intellij.javaee.StandardResourceProvider"/>
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -58,8 +60,12 @@
 
     <applicationService serviceInterface="com.intellij.javaee.ExternalResourceManager"
                         serviceImplementation="com.intellij.javaee.ExternalResourceManagerImpl"/>
+
+    <standardResourceProvider implementation="com.intellij.javaee.InternalResourceProvider"/>
+    
     <projectService serviceInterface="com.intellij.javaee.ProjectResources"
                         serviceImplementation="com.intellij.javaee.ProjectResources"/>
+
     <roots.watchedRootsProvider implementation="com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction"/>
 
     <fileBasedIndex implementation="com.intellij.xml.index.XmlTagNamesIndex"/>
