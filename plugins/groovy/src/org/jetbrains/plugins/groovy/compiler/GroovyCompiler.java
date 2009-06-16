@@ -94,7 +94,7 @@ public class GroovyCompiler implements TranslatingCompiler {
       final Module module = entry.getKey();
       final GroovyFacet facet = GroovyFacet.getInstance(module);
       final Set<VirtualFile> moduleFiles = entry.getValue();
-      if (facet == null || facet.getConfiguration().isCompileGroovyFiles()) {
+      if (module.getModuleType() instanceof JavaModuleType && (facet == null || facet.getConfiguration().isCompileGroovyFiles())) {
         doCompile(compileContext, successfullyCompiled, toRecompile, module, moduleFiles);
       }
       else {
@@ -378,6 +378,14 @@ public class GroovyCompiler implements TranslatingCompiler {
   public boolean validateConfiguration(CompileScope compileScope) {
     VirtualFile[] files = compileScope.getFiles(GroovyFileType.GROOVY_FILE_TYPE, true);
     if (files.length == 0) return true;
+
+    Set<Module> nojdkModules = new HashSet<Module>();
+    for (Module module : compileScope.getAffectedModules()) {
+      if(!(module.getModuleType() instanceof JavaModuleType)) return true;
+      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+      if (sdk == null || !(sdk.getSdkType() instanceof JavaSdkType)) nojdkModules.add(module);
+    }
+
     Set<Module> modules = new HashSet<Module>();
     for (VirtualFile file : files) {
       ProjectRootManager rootManager = ProjectRootManager.getInstance(myProject);
@@ -398,13 +406,6 @@ public class GroovyCompiler implements TranslatingCompiler {
         }
         return false;
       }
-    }
-
-    Set<Module> nojdkModules = new HashSet<Module>();
-    for (Module module : compileScope.getAffectedModules()) {
-      if(!(module.getModuleType() instanceof JavaModuleType)) continue;
-      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-      if (sdk == null || !(sdk.getSdkType() instanceof JavaSdkType)) nojdkModules.add(module);
     }
 
     if (!nojdkModules.isEmpty()) {

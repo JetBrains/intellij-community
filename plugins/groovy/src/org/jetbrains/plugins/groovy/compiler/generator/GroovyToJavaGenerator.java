@@ -1,8 +1,10 @@
 package org.jetbrains.plugins.groovy.compiler.generator;
 
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -15,7 +17,6 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.compiler.CompilerConfiguration;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -102,9 +103,20 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       if (CompilerManager.getInstance(myProject).isExcludedFromCompilation(file)) continue;
       if (CompilerConfiguration.getInstance(myProject).isResourceFile(file.getName())) continue;
 
-      final GroovyFileBase psiFile = findPsiFile(file);
-      boolean isInTestSources = ModuleRootManager.getInstance(getModuleByFile(context, file)).getFileIndex().isInTestSourceContent(file);
+      final Module module = getModuleByFile(context, file);
+      if (module == null || !(module.getModuleType() instanceof JavaModuleType)) {
+        continue;
+      }
 
+      final GroovyFacet facet = GroovyFacet.getInstance(module);
+      if (facet != null && !facet.getConfiguration().isCompileGroovyFiles()) {
+        continue;
+      }
+
+
+      boolean isInTestSources = ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(file);
+
+      final GroovyFileBase psiFile = findPsiFile(file);
       GrTopStatement[] statements = getTopStatementsInReadAction(psiFile);
 
       boolean needCreateTopLevelClass = !needsCreateClassFromFileName(statements);
@@ -112,15 +124,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       String prefix = "";
       if (statements.length > 0 && statements[0] instanceof GrPackageDefinition) {
         prefix = getJavaClassPackage((GrPackageDefinition) statements[0]);
-      }
-
-      final Module module = getModuleByFile(context, file);
-
-      if (module != null) {
-        final GroovyFacet facet = GroovyFacet.getInstance(module);
-        if (facet != null && !facet.getConfiguration().isCompileGroovyFiles()) {
-          continue;
-        }
       }
 
       //top level class
