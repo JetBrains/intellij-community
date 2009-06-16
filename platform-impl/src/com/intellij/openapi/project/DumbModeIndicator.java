@@ -52,7 +52,7 @@ public class DumbModeIndicator implements ProjectComponent {
         myHandler = statusBar.notifyProgressByBalloon(MessageType.WARNING,
                                                       "Index update is in progress...<br>" +
                                                       "During this process some actions that require these indices won't be available.<br>" +
-                                                      "<a href=\'help\'>Click here for more info.</a>",
+                                                      "<a href=\'help\'>Click here for more info</a>",
                                                       null,
                                                       listener);
       }
