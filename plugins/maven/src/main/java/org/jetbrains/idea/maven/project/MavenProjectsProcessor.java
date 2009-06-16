@@ -7,9 +7,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.runner.SoutMavenConsole;
-import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.utils.*;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -19,19 +17,23 @@ public class MavenProjectsProcessor {
   private static final int WAIT_TIMEOUT = 2000;
 
   private final Project myProject;
+  private final String myTitle;
+  private final boolean mySystem;
   private final MavenEmbeddersManager myEmbeddersManager;
 
   private final Thread myThread;
   private final BlockingQueue<MavenProjectsProcessorTask> myQueue = new LinkedBlockingQueue<MavenProjectsProcessorTask>();
   private volatile int myQueueSize;
   private volatile boolean isStopped;
-  private volatile MavenProgressIndicator myCurrentProgressIndicator;
+  private volatile MavenUtil.MavenTaskHandler myCurrentTaskHandler;
 
   private final Handler myHandler = new Handler();
   private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
 
-  public MavenProjectsProcessor(Project project, String title, MavenEmbeddersManager embeddersManager) {
+  public MavenProjectsProcessor(Project project, String title, boolean isSystem, MavenEmbeddersManager embeddersManager) {
     myProject = project;
+    myTitle = title;
+    mySystem = isSystem;
     myEmbeddersManager = embeddersManager;
     myThread = new Thread(new Runnable() {
       public void run() {
@@ -98,8 +100,8 @@ public class MavenProjectsProcessor {
     }
     fireQueueChanged(myQueueSize);
 
-    MavenProgressIndicator indicator = myCurrentProgressIndicator;
-    if (indicator != null) indicator.getIndicator().cancel();
+    MavenUtil.MavenTaskHandler handler = myCurrentTaskHandler;
+    if (handler != null) handler.stop();
   }
 
   public void cancelAndStop() {
@@ -122,7 +124,7 @@ public class MavenProjectsProcessor {
     MavenProjectsProcessorTask task;
     try {
       synchronized (myQueue) {
-        while(myQueue.isEmpty()) {
+        while (myQueue.isEmpty()) {
           myQueue.wait(WAIT_TIMEOUT);
           if (isStopped) return false;
         }
@@ -147,14 +149,25 @@ public class MavenProjectsProcessor {
     return true;
   }
 
-  private void doPerform(MavenProjectsProcessorTask task) {
-    try {
-      // todo console
-      myCurrentProgressIndicator = new MavenProgressIndicator(new EmptyProgressIndicator());
-      task.perform(myProject, myEmbeddersManager, new SoutMavenConsole(), myCurrentProgressIndicator);
-      myCurrentProgressIndicator = null;
+  private void doPerform(final MavenProjectsProcessorTask task) {
+    if (mySystem) {
+      try {
+        task.perform(myProject, myEmbeddersManager, new SoutMavenConsole(), new MavenProgressIndicator(new EmptyProgressIndicator()));
+      }
+      catch (MavenProcessCanceledException ignore) {
+      }
     }
-    catch (MavenProcessCanceledException ignore) {
+    else {
+      // todo console
+      MavenTask mavenTask = new MavenTask() {
+        public void run(MavenProgressIndicator process) throws MavenProcessCanceledException {
+          task.perform(myProject, myEmbeddersManager, new SoutMavenConsole(), process);
+        }
+      };
+      String title = myTitle;
+      if (myQueueSize > 0) title += " (" + myQueueSize + " in queue)";
+      myCurrentTaskHandler = MavenUtil.runInBackground(myProject, title, mavenTask);
+      myCurrentTaskHandler.waitFor();
     }
   }
 

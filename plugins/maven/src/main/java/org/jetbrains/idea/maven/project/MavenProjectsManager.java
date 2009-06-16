@@ -211,16 +211,30 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   private void initWorkers() {
     myEmbeddersManager = new MavenEmbeddersManager(getGeneralSettings());
 
-    myReadingProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.reading"), myEmbeddersManager);
-    myResolvingProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.resolving"), myEmbeddersManager);
+    myReadingProcessor = new MavenProjectsProcessor(myProject,
+                                                    ProjectBundle.message("maven.reading"),
+                                                    true,
+                                                    myEmbeddersManager);
+    myResolvingProcessor = new MavenProjectsProcessor(myProject,
+                                                      ProjectBundle.message("maven.resolving"),
+                                                      false,
+                                                      myEmbeddersManager);
     myPluginsResolvingProcessor = new MavenProjectsProcessor(myProject,
                                                              ProjectBundle.message("maven.downloading.plugins"),
+                                                             false,
                                                              myEmbeddersManager);
     myFoldersResolvingProcessor = new MavenProjectsProcessor(myProject,
                                                              ProjectBundle.message("maven.updating.folders"),
+                                                             false,
                                                              myEmbeddersManager);
-    myArtifactsDownloadingProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.downloading"), myEmbeddersManager);
-    myPostProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.post.processing"), myEmbeddersManager);
+    myArtifactsDownloadingProcessor = new MavenProjectsProcessor(myProject,
+                                                                 ProjectBundle.message("maven.downloading"),
+                                                                 false,
+                                                                 myEmbeddersManager);
+    myPostProcessor = new MavenProjectsProcessor(myProject,
+                                                 ProjectBundle.message("maven.post.processing"),
+                                                 false,
+                                                 myEmbeddersManager);
 
     myWatcher = new MavenProjectsManagerWatcher(myProject, myProjectsTree, getGeneralSettings(), myReadingProcessor, myEmbeddersManager);
 

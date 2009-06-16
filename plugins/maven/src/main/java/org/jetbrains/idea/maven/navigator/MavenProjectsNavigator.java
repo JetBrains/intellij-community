@@ -46,7 +46,6 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
   private final MavenShortcutsManager myShortcutsManager;
 
   private SimpleTree myTree;
-  private MavenStatusPanel myStatusPanel;
   private MavenProjectsStructure myStructure;
 
   public static MavenProjectsNavigator getInstance(Project project) {
@@ -170,9 +169,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     };
 
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
-
     myStructure = new MavenProjectsStructure(myProject, myProjectsManager, myTasksManager, myShortcutsManager, this, myTree);
-    myStatusPanel = new MavenStatusPanel(myProject, myProjectsManager);
   }
 
   private void listenForActivation() {
@@ -213,7 +210,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
   }
 
   private void initToolWindow() {
-    JPanel panel = new MavenProjectsNavigatorPanel(myProject, myTree, myStatusPanel);
+    JPanel panel = new MavenProjectsNavigatorPanel(myProject, myTree);
 
     ToolWindowManager manager = ToolWindowManager.getInstance(myProject);
     ToolWindow toolWindow = manager.registerToolWindow(TOOL_WINDOW_ID, panel, ToolWindowAnchor.RIGHT, myProject, true);

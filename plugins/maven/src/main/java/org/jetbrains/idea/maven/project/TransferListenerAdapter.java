@@ -54,13 +54,11 @@ public class TransferListenerAdapter implements TransferListener {
   public void transferCompleted(TransferEvent event) {
     addArtifactToIndex(event);
     myIndicator.checkCanceled();
-    myIndicator.setText2("");
     updateTiming(true);
   }
 
   public void transferError(TransferEvent event) {
     myIndicator.checkCanceled();
-    myIndicator.setText2("");
     updateTiming(false);
   }
 

@@ -936,7 +936,7 @@ public class MavenProjectsTree {
     try {
       for (MavenPlugin each : mavenProject.getPlugins()) {
         process.checkCanceled();
-        process.setText(ProjectBundle.message("maven.downloading.artifact", each + " plugin"));
+        process.setText(ProjectBundle.message("maven.downloading.pom.plugins", mavenProject));
         embedder.resolvePlugin(each, nativeMavenProject, process);
       }
       firePluginsResolved(mavenProject);

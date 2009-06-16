@@ -28,7 +28,6 @@ import java.util.List;
 public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implements DataProvider {
   private final Project myProject;
   private final SimpleTree myTree;
-  private final JPanel myStatusPanel;
 
   private Map<String, Integer> standardGoalOrder;
 
@@ -38,23 +37,18 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     }
   };
 
-  public MavenProjectsNavigatorPanel(Project project, SimpleTree tree, JPanel statusPanel) {
+  public MavenProjectsNavigatorPanel(Project project, SimpleTree tree) {
     super(true, true);
     myProject = project;
     myTree = tree;
-    myStatusPanel = statusPanel;
 
     final ActionManager actionManager = ActionManager.getInstance();
     JComponent toolbar = actionManager.createActionToolbar("New Maven Toolbar",
                                                            (ActionGroup)actionManager.getAction("Maven.NavigatorToolbar"),
                                                            true).getComponent();
 
-    JPanel content = new JPanel(new BorderLayout());
-    content.add(new JScrollPane(myTree), BorderLayout.CENTER);
-    content.add(myStatusPanel, BorderLayout.SOUTH);
-
     setToolbar(toolbar);
-    setContent(content);
+    setContent(new JScrollPane(myTree));
 
     myTree.addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {

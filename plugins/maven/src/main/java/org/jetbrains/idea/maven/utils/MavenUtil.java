@@ -18,6 +18,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
@@ -43,7 +44,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class MavenUtil {
-  public static void invokeInDispatchThread(final Project p, final Runnable r) {
+  public static void invokeInDispatchThread(Project p, Runnable r) {
     invokeInDispatchThread(p, ModalityState.defaultModalityState(), r);
   }
 
@@ -237,5 +238,72 @@ public class MavenUtil {
     });
     if (canceledEx[0] instanceof MavenProcessCanceledException) throw (MavenProcessCanceledException)canceledEx[0];
     if (canceledEx[0] instanceof ProcessCanceledException) throw new MavenProcessCanceledException();
+  }
+
+  public static MavenTaskHandler runInBackground(final Project project,
+                                                 final String title,
+                                                 MavenTask task) {
+    final Semaphore startSemaphore = new Semaphore();
+    final Semaphore finishSemaphore = new Semaphore();
+    final ProgressIndicator[] indicator = new ProgressIndicator[1];
+
+    startSemaphore.down();
+    finishSemaphore.down();
+
+    final MavenTask[] taskHolder = new MavenTask[]{task};
+
+    invokeInDispatchThread(project, new Runnable() {
+      public void run() {
+        ProgressManager.getInstance().run(new Task.Backgroundable(project, title, true) {
+          public void run(@NotNull ProgressIndicator i) {
+            try {
+              indicator[0] = i;
+              startSemaphore.up();
+              taskHolder[0].run(new MavenProgressIndicator(i));
+            }
+            catch (MavenProcessCanceledException ignore) {
+            }
+            finally {
+              finishSemaphore.up();
+              taskHolder[0] = null; // memory leaks prevention
+            }
+          }
+
+          @Override
+          public boolean shouldStartInBackground() {
+            return true;
+          }
+        });
+      }
+    });
+
+    return new MavenTaskHandler(startSemaphore, finishSemaphore, indicator);
+  }
+
+  public static class MavenTaskHandler {
+    private Semaphore myStartSemaphore;
+    private Semaphore myFinishSemaphore;
+    private ProgressIndicator[] myIndicator;
+
+    private MavenTaskHandler(Semaphore startSemaphore,
+                             Semaphore finishSemaphore,
+                             ProgressIndicator[] indicator) {
+      myStartSemaphore = startSemaphore;
+      myFinishSemaphore = finishSemaphore;
+      myIndicator = indicator;
+    }
+
+    public void stop() {
+      myStartSemaphore.waitFor();
+      myIndicator[0].cancel();
+    }
+
+    public void waitFor() {
+      myFinishSemaphore.waitFor();
+    }
+
+    public boolean waitFor(long timeout) {
+      return myFinishSemaphore.waitFor(timeout);
+    }
   }
 }
