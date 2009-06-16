@@ -1,5 +1,6 @@
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView;
@@ -33,9 +34,9 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     TestConsoleProperties.SELECT_FIRST_DEFECT.set(myConsoleProperties, false);
     TestConsoleProperties.TRACK_RUNNING_TEST.set(myConsoleProperties, false);
 
-    myResultsViewer = (SMTestRunnerResultsForm)createResultsViewer(myConsoleProperties);
-
-    myConsole = new SMTRunnerConsoleView(myConsoleProperties, myResultsViewer);
+    final ExecutionEnvironment environment = new ExecutionEnvironment();
+    myConsole = new SMTRunnerConsoleView(myConsoleProperties, environment.getRunnerSettings(), environment.getConfigurationSettings());
+    myResultsViewer = myConsole.getResultsViewer();
     myEventsProcessor = new GeneralToSMTRunnerEventsConvertor(myResultsViewer.getTestsRootNode());
     myEventsProcessor.addEventsListener(myResultsViewer);
     myTreeModel = myResultsViewer.getTreeView().getModel();

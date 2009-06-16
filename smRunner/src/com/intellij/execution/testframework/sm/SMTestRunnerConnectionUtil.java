@@ -3,25 +3,27 @@ package com.intellij.execution.testframework.sm;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.CommandLineState;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerEventsConvertor;
+import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerUIActionsHandler;
+import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
+import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerEventsConvertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
-import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
-import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
-import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
-import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerUIActionsHandler;
-import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 
 /**
  * @author Roman Chernyatchik
@@ -50,10 +52,13 @@ public class SMTestRunnerConnectionUtil {
   public static BaseTestsOutputConsoleView attachRunner(@NotNull final Project project,
                                                         @NotNull final ProcessHandler processHandler,
                                                         final TestConsoleProperties consoleProperties,
-                                                        final SMTestRunnerResultsForm resultsViewer) throws ExecutionException {
+                                                        final RunnerSettings runnerSettings,
+                                                        final ConfigurationPerRunnerSettings configurationSettings,
+                                                        final String splitterPropertyName) throws ExecutionException {
 
     // Console
-    final SMTRunnerConsoleView testRunnerConsole = new SMTRunnerConsoleView(consoleProperties, resultsViewer);
+    final SMTRunnerConsoleView testRunnerConsole = new SMTRunnerConsoleView(consoleProperties, runnerSettings, configurationSettings, splitterPropertyName);
+    final SMTestRunnerResultsForm resultsViewer = testRunnerConsole.getResultsViewer();
 
     // Statistics tab
     final StatisticsPanel statisticsPane = new StatisticsPanel(project, resultsViewer);
@@ -120,14 +125,8 @@ public class SMTestRunnerConnectionUtil {
                                          @Nullable final String splitterPropertyName) throws ExecutionException {
     final TestConsoleProperties consoleProperties = new SMTRunnerConsoleProperties(config);
 
-    // Results viewer component
-    final SMTestRunnerResultsForm resultsViewer =
-      new SMTestRunnerResultsForm(config, consoleProperties,
-                                  commandLineState.getRunnerSettings(),
-                                  commandLineState.getConfigurationSettings(),
-                                  splitterPropertyName);
-
-    return attachRunner(project, processHandler, consoleProperties, resultsViewer);
+    return attachRunner(project, processHandler, consoleProperties,
+                        commandLineState.getRunnerSettings(), commandLineState.getConfigurationSettings(), splitterPropertyName);
   }
 
   private static ProcessHandler attachEventsProcessors(final TestConsoleProperties consoleProperties,

@@ -1,6 +1,8 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
@@ -22,15 +24,24 @@ import javax.swing.*;
 public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   private static final Icon OUTPUT_TAB_ICON = TestsUIUtil.loadIcon("testOuput");
 
-  private TestResultsViewer myResultsViewer;
+  private SMTestRunnerResultsForm myResultsViewer;
 
-  public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties,
-                              final TestResultsViewer resultsViewer) {
+  public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties, final RunnerSettings runnerSettings,
+                              final ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
+    this(consoleProperties, runnerSettings, configurationPerRunnerSettings, null);
+  }
+
+  public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties, final RunnerSettings runnerSettings,
+                              final ConfigurationPerRunnerSettings configurationPerRunnerSettings,
+                              @Nullable final String splitterProperty) {
     super(consoleProperties);
     consoleProperties.setConsole(this);
 
     // Results View
-    myResultsViewer = resultsViewer;
+    myResultsViewer = new SMTestRunnerResultsForm(consoleProperties.getConfiguration(),
+                                                  consoleProperties,
+                                                  runnerSettings, configurationPerRunnerSettings,
+                                                  splitterProperty);
 
     // Console
     myResultsViewer.addTab(ExecutionBundle.message("output.tab.title"), null,
@@ -60,6 +71,10 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
         }, ModalityState.NON_MODAL);
       }
     });
+  }
+
+  public SMTestRunnerResultsForm getResultsViewer() {
+    return myResultsViewer;
   }
 
   public void attachToProcess(final ProcessHandler processHandler) {

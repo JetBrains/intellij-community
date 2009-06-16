@@ -1,12 +1,15 @@
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
-import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer;
+import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Disposer;
@@ -19,13 +22,14 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   private GeneralToSMTRunnerEventsConvertor myEventsProcessor;
   private MockPrinter myMockResetablePrinter;
   private SMTestProxy myRootSuite;
-  private TestResultsViewer myResultsViewer;
+  private SMTestRunnerResultsForm myResultsViewer;
 
   private class MyConsoleView extends SMTRunnerConsoleView {
     private final TestsOutputConsolePrinter myTestsOutputConsolePrinter;
 
-    private MyConsoleView(final TestConsoleProperties consoleProperties, final TestResultsViewer resultsViewer) {
-      super(consoleProperties, resultsViewer);
+    private MyConsoleView(final TestConsoleProperties consoleProperties, final RunnerSettings runnerSettings,
+                          final ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
+      super(consoleProperties, runnerSettings, configurationPerRunnerSettings);
 
       myTestsOutputConsolePrinter = new TestsOutputConsolePrinter(MyConsoleView.this, consoleProperties) {
         @Override
@@ -46,11 +50,12 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     super.setUp();
 
     final TestConsoleProperties consoleProperties = createConsoleProperties();
-    myResultsViewer = createResultsViewer(consoleProperties);
+    final ExecutionEnvironment environment = new ExecutionEnvironment();
 
     myMockResetablePrinter = new MockPrinter(true);
+    myConsole = new MyConsoleView(consoleProperties, environment.getRunnerSettings(), environment.getConfigurationSettings());
+    myResultsViewer = myConsole.getResultsViewer();
     myRootSuite = myResultsViewer.getTestsRootNode();
-    myConsole = new MyConsoleView(consoleProperties, myResultsViewer);
     myEventsProcessor = new GeneralToSMTRunnerEventsConvertor(myResultsViewer.getTestsRootNode());
 
     myEventsProcessor.onStartTesting();

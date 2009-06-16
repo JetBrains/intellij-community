@@ -1,10 +1,12 @@
 package com.intellij.execution.testframework.sm.runner.ui.statistics;
 
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.sm.runner.ui.PropagateSelectionHandler;
+import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +30,11 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
 
     myRootSuite = createSuiteProxy("root");
 
-    myResultsForm = (SMTestRunnerResultsForm)createResultsViewer(createConsoleProperties());
+    final TestConsoleProperties consoleProperties = createConsoleProperties();
+    final ExecutionEnvironment environment = new ExecutionEnvironment();
+    myResultsForm = (SMTestRunnerResultsForm)new SMTestRunnerResultsForm(consoleProperties.getConfiguration(), consoleProperties,
+                                                                         environment.getRunnerSettings(),
+                                                                         environment.getConfigurationSettings());
     myStatisticsPanel = new StatisticsPanel(getProject(), myResultsForm);
     myTestEventsListener = myStatisticsPanel.createTestEventsListener();
   }

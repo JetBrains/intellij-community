@@ -1,10 +1,7 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.configurations.RuntimeConfiguration;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
-import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer;
 import com.intellij.testFramework.LightPlatformTestCase;
 
 /**
@@ -73,14 +70,6 @@ public abstract class BaseSMTRunnerTestCase extends LightPlatformTestCase {
     TestConsoleProperties.HIDE_PASSED_TESTS.set(consoleProperties, false);
     
     return consoleProperties;
-  }
-
-  protected TestResultsViewer createResultsViewer(final TestConsoleProperties consoleProperties) {
-    final ExecutionEnvironment environment = new ExecutionEnvironment();
-    return new SMTestRunnerResultsForm(consoleProperties.getConfiguration(),
-                                    consoleProperties,
-                                    environment.getRunnerSettings(),
-                                    environment.getConfigurationSettings());
   }
 
   protected void doPassTest(final SMTestProxy test) {
