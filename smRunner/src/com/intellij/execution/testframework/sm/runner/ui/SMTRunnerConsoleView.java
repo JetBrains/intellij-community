@@ -3,17 +3,16 @@ package com.intellij.execution.testframework.sm.runner.ui;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.PrintableTestProxy;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -61,18 +60,9 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
         }, ModalityState.NON_MODAL);
       }
     });
-
-    // init
-    myResultsViewer.initLogFilesManager();
   }
 
   public void attachToProcess(final ProcessHandler processHandler) {
-    // Process handler may be null only in JUnit test's mocks
-    if (processHandler != null) {
-      myResultsViewer.attachToProcess(processHandler);
-    } else {
-      assert ApplicationManager.getApplication().isUnitTestMode();
-    }
     getPrinter().setCollectOutput(false);
   }
 

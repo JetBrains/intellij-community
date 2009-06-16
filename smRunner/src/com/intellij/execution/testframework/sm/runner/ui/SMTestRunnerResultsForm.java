@@ -1,13 +1,8 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
-import com.intellij.diagnostic.logging.AdditionalTabComponent;
-import com.intellij.diagnostic.logging.LogConsoleImpl;
-import com.intellij.diagnostic.logging.LogConsoleManager;
-import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
@@ -25,20 +20,17 @@ import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
@@ -46,16 +38,13 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author: Roman Chernyatchik
  */
-public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogConsoleManager, TestResultsViewer, SMTRunnerEventsListener {
+public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, TestResultsViewer, SMTRunnerEventsListener {
   @NonNls private static final String DEFAULT_SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
 
   private JPanel myContentPane;
@@ -78,22 +67,11 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
   private final TestConsoleProperties myConsoleProperties;
 
   private final List<ModelListener> myListeners = new ArrayList<ModelListener>();
-  private final Map<LogConsoleImpl, TabsListener> myLogToListenerMap = new HashMap<LogConsoleImpl, TabsListener>();
   private final List<EventsListener> myEventListeners = new ArrayList<EventsListener>();
 
   private PropagateSelectionHandler myShowStatisticForProxyHandler;
 
-  // Manages console tabs for runConfigurations's log files
-  private final LogFilesManager myLogFilesManager;
-
-  // Additional tabs of LogFilesManager
-  private final Map<AdditionalTabComponent, Integer> myAdditionalComponents = new HashMap<AdditionalTabComponent, Integer>();
-
   private final Project myProject;
-  private ProcessHandler myRunProcess;
-
-  // Run configuration for Test::Unit
-  private final RunConfigurationBase myRunConfiguration;
 
   private int myTestsCurrentCount;
   private int myTestsTotal;
@@ -116,15 +94,12 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
                               final ConfigurationPerRunnerSettings configurationSettings,
                               final String splitterPropertyName) {
     myConsoleProperties = consoleProperties;
-    myRunConfiguration = runConfiguration;
     mySplitterPropertyName = splitterPropertyName == null
                              ? DEFAULT_SM_RUNNER_SPLITTER_PROPERTY
                              : splitterPropertyName;
 
     final Project project = runConfiguration.getProject();
     myProject = project;
-
-    myLogFilesManager = new LogFilesManager(project, this);
 
     //Create tests common suite root
     //noinspection HardCodedStringLiteral
@@ -182,17 +157,6 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
     myShowStatisticForProxyHandler = handler;
   }
 
-  public void attachToProcess(final ProcessHandler processHandler) {
-    myRunProcess = processHandler;
-    
-    //attachStopLogConsoleTrackingListener
-    for (AdditionalTabComponent component: myAdditionalComponents.keySet()) {
-      if (component instanceof LogConsoleImpl){
-        ((LogConsoleImpl)component).attachStopLogConsoleTrackingListener(null);
-      }
-    }
-  }
-
   public JComponent getContentPane() {
     return myContentPane;
   }
@@ -208,83 +172,8 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
     myTabs.addTab(tabInfo);
   }
 
-  public void addLogConsole(@NotNull final String name, @NotNull final String path,
-                            final long skippedContent){
-    final LogConsoleImpl log = new LogConsoleImpl(myProject,
-                                          new File(path),
-                                          skippedContent, name, true) {
-      public boolean isActive() {
-        final TabInfo info = myTabs.getSelectedInfo();
-        return info != null && info.getComponent() == this;
-      }
-    };
-
-    if (myRunProcess != null) {
-      log.attachStopLogConsoleTrackingListener(myRunProcess);
-    }
-    addAdditionalTabComponent(log, path);
-    final TabsListener listener = new TabsListener.Adapter() {
-      public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
-        log.stateChanged(new ChangeEvent(myTabs));
-      }
-    };
-    myTabs.addListener(listener);
-    myLogToListenerMap.put(log, listener);
-  }
-
-
-  public void addAdditionalTabComponent(@NotNull final AdditionalTabComponent tabComponent,
-                                        @NotNull final String id) {
-    myAdditionalComponents.put(tabComponent, myTabs.getTabCount());
-    addTab(tabComponent.getTabTitle(), tabComponent.getTooltip(), null, tabComponent.getComponent());
-    Disposer.register(this, new Disposable() {
-      public void dispose() {
-        removeAdditionalTabComponent(tabComponent);
-      }
-    });
-  }
-
   public JBTabs getTabs() {
     return myTabs;
-  }
-
-  public void initLogFilesManager() {
-    myLogFilesManager.registerFileMatcher(myRunConfiguration);
-    myLogFilesManager.initLogConsoles(myRunConfiguration, myRunProcess);
-  }
-
-  public void removeLogConsole(@NotNull final String path) {
-    LogConsoleImpl logConsoleToRemove = null;
-    for (AdditionalTabComponent tabComponent : myAdditionalComponents.keySet()) {
-      if (tabComponent instanceof LogConsoleImpl) {
-        final LogConsoleImpl console = (LogConsoleImpl)tabComponent;
-        if (Comparing.strEqual(console.getPath(), path)) {
-          logConsoleToRemove = console;
-          break;
-        }
-      }
-    }
-    if (logConsoleToRemove != null) {
-      myTabs.removeListener(myLogToListenerMap.get(logConsoleToRemove));
-      myLogToListenerMap.remove(logConsoleToRemove);
-
-      removeAdditionalTabComponent(logConsoleToRemove);
-    }
-  }
-
-  public void removeAdditionalTabComponent(final AdditionalTabComponent component) {
-
-    TabInfo tabInfoFoComponent = null;
-    final List<TabInfo> tabs = myTabs.getTabs();
-    for (TabInfo tab : tabs) {
-      if (tab.getComponent() == component) {
-        tabInfoFoComponent = tab;
-        break;
-      }
-    }
-    myTabs.removeTab(tabInfoFoComponent);
-    myAdditionalComponents.remove(component);
-    Disposer.dispose(component);
   }
 
   /**
@@ -454,7 +343,6 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
     myAnimator.dispose();
     myToolbar.dispose();
     Disposer.dispose(myTreeBuilder);
-    myLogFilesManager.unregisterFileMatcher();
   }
 
   public void showStatisticsForSelectedProxy() {

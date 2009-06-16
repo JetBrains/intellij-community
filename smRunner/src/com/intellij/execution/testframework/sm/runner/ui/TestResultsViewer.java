@@ -1,6 +1,5 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.Disposable;
@@ -23,20 +22,9 @@ public interface TestResultsViewer extends Disposable {
   void addTab(final String name, @Nullable String tooltip, @Nullable Icon icon, JComponent contentPane);
 
   /**
-   * On attach to process
-   * @param processHandler Process handler
-   */
-  void attachToProcess(ProcessHandler processHandler);
-
-  /**
    * @return Content Pane of viewe
    */
   JComponent getContentPane();
-
-  /**
-   * Setups Log Files Manager and init log consoles
-   */
-  void initLogFilesManager();
 
   /**
    * Fake Root for toplevel test suits/tests

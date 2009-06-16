@@ -1,6 +1,5 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
@@ -24,14 +23,10 @@ public class MockTestResultsViewer implements TestResultsViewer {
 
   public void addTab(final String name, @Nullable final String tooltip, final Icon icon, final JComponent contentPane) {}
 
-  public void attachToProcess(final ProcessHandler processHandler) {}
-
   @Nullable
   public JComponent getContentPane() {
     return null;
   }
-
-  public void initLogFilesManager() {}
 
   public SMTestProxy getTestsRootNode() {
     return myRootSuite;
