@@ -6,13 +6,12 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author peter
  */
-public class CodeCompletionAction extends BaseCodeCompletionAction implements DumbAware {
+public class CodeCompletionAction extends BaseCodeCompletionAction {
 
   public void actionPerformedImpl(@NotNull Project project, Editor editor) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_BASIC);

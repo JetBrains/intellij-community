@@ -1455,10 +1455,6 @@ public class FileBasedIndex implements ApplicationComponent {
 
   @Nullable
   private static PsiFile findLatestKnownPsiForUncomittedDocument(Document doc, Project project) {
-    if (isDumb(project)) {
-      return null;
-    }
-
     return PsiDocumentManager.getInstance(project).getCachedPsiFile(doc);
   }
   

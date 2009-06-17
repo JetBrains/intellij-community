@@ -100,7 +100,15 @@ public class FileManagerImpl implements FileManager {
   private void recalcAllViewProviders() {
     handleFileTypesChange(new FileTypesChanged() {
       protected void updateMaps() {
-        myVFileToViewProviderMap.clear();
+        for (final FileViewProvider provider : myVFileToViewProviderMap.values()) {
+          for (Language language : provider.getLanguages()) {
+            final PsiFile psi = provider.getPsi(language);
+            if (psi != null) {
+              psi.subtreeChanged();
+            }
+          }
+        }
+        removeInvalidFilesAndDirs(false);
       }
     });
   }
@@ -151,10 +159,6 @@ public class FileManagerImpl implements FileManager {
   }
 
   public FileViewProvider createFileViewProvider(final VirtualFile file, boolean physical) {
-    if (DumbService.getInstance(myManager.getProject()).isDumb()) {
-      return new SingleRootFileViewProvider(myManager, file, true, PlainTextLanguage.INSTANCE) {};
-    }
-
     FileViewProvider viewProvider;
     Language language = getLanguage(file);
     if (language != null) {

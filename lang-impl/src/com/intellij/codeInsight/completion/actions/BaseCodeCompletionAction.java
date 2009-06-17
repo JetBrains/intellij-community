@@ -8,6 +8,7 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public abstract class BaseCodeCompletionAction extends BaseCodeInsightAction implements HintManagerImpl.ActionToIgnore {
+public abstract class BaseCodeCompletionAction extends BaseCodeInsightAction implements HintManagerImpl.ActionToIgnore, DumbAware{
   protected BaseCodeCompletionAction() {
     setEnabledInModalContext(true);
   }
