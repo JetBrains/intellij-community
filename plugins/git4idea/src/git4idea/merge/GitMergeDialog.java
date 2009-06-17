@@ -151,7 +151,7 @@ public class GitMergeDialog extends DialogWrapper {
       GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitHandler.BRANCH);
       handler.setNoSSH(true);
       handler.setSilent(true);
-      handler.addParameters("-a", "--no-merged");
+      handler.addParameters("--no-color", "-a", "--no-merged");
       String output = handler.run();
       myBranchChooser.clear();
       for (StringTokenizer lines = new StringTokenizer(output, "\n", false); lines.hasMoreTokens();) {

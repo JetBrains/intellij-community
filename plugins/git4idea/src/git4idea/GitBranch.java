@@ -97,6 +97,7 @@ public class GitBranch extends GitReference {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.BRANCH);
     h.setNoSSH(true);
     h.setSilent(true);
+    h.addParameters("--no-color");
     for (StringTokenizer lines = new StringTokenizer(h.run(), "\n"); lines.hasMoreTokens();) {
       String line = lines.nextToken();
       if (line != null && line.startsWith("*")) {
@@ -134,6 +135,7 @@ public class GitBranch extends GitReference {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.BRANCH);
     handler.setNoSSH(true);
     handler.setSilent(true);
+    handler.addParameters("--no-color");
     if (remote && local) {
       handler.addParameters("-a");
     }
@@ -255,6 +257,7 @@ public class GitBranch extends GitReference {
    * @return the tracked branch
    * @throws VcsException if there is a problem with accessing configuration file
    */
+  @Nullable
   public GitBranch tracked(Project project, VirtualFile root) throws VcsException {
     String remote = getTrackedRemoteName(project, root);
     if (remote == null) {
