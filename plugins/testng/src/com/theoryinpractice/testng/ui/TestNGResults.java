@@ -6,30 +6,21 @@
  */
 package com.theoryinpractice.testng.ui;
 
-import com.intellij.diagnostic.logging.AdditionalTabComponent;
-import com.intellij.diagnostic.logging.LogConsoleImpl;
-import com.intellij.diagnostic.logging.LogConsoleManager;
-import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
-import com.intellij.openapi.Disposable;
+import com.intellij.execution.testframework.ui.TestResultsPanel;
+import com.intellij.execution.testframework.ui.TestStatusLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.SplitterProportionsData;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.peer.PeerFactory;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -45,32 +36,20 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.text.NumberFormat;
 import java.util.*;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class TestNGResults implements TestFrameworkRunningModel, LogConsoleManager {
+public class TestNGResults extends TestResultsPanel implements TestFrameworkRunningModel {
   @NonNls private static final String TESTNG_SPLITTER_PROPERTY = "TestNG.Splitter.Proportion";
 
-  private final SplitterProportionsData splitterProportions = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
-
-  private final Map<AdditionalTabComponent, Integer> myAdditionalComponents = new HashMap<AdditionalTabComponent, Integer>();
-
   private final TableView resultsTable;
-  private JPanel main;
-  private ColorProgressBar progress;
 
   private final TestNGResultsTableModel model;
   private TestNGTestTreeView tree;
-  private JTabbedPane tabbedPane;
 
   private final Project project;
   private int count;
@@ -80,34 +59,27 @@ public class TestNGResults implements TestFrameworkRunningModel, LogConsoleManag
   private TestProxy failedToStart = null;
   private long start;
   private long end;
-  private JLabel statusLabel;
-  private final TestTreeBuilder treeBuilder;
-  private final Animator animator;
+  private TestTreeBuilder treeBuilder;
+  private Animator animator;
 
   private final Pattern packagePattern = Pattern.compile("(.*)\\.(.*)");
   private final TreeRootNode rootNode;
-  private final TestNGConsoleProperties consoleProperties;
-  private JPanel toolbarPanel;
-  private JSplitPane splitPane;
   private static final String NO_PACKAGE = "No Package";
-  private final TestNGToolbarPanel toolbar;
-  private final LogFilesManager myLogFilesManager;
-  private final TestNGResults.OpenSourceSelectionListener openSourceListener;
+  private TestNGResults.OpenSourceSelectionListener openSourceListener;
   private final List<ModelListener> myListeners = new ArrayList<ModelListener>();
-  private final TestNGConfiguration myConfiguration;
-  private ProcessHandler myRunProcess;
+  private final TestNGConsoleView myConsole;
 
-  public TestNGResults(final TestNGConfiguration configuration,
+  public TestNGResults(final JComponent component,
+                       final TestNGConfiguration configuration,
                        final TestNGConsoleView console,
                        final RunnerSettings runnerSettings,
                        final ConfigurationPerRunnerSettings configurationSettings) {
-    myConfiguration = configuration;
-    this.project = myConfiguration.getProject();
-
-    myLogFilesManager = new LogFilesManager(project, this);
+    super(component, console.createConsoleActions(), console.getProperties(),
+          runnerSettings, configurationSettings, TESTNG_SPLITTER_PROPERTY, 0.5f);
+    myConsole = console;
+    this.project = configuration.getProject();
 
     model = new TestNGResultsTableModel();
-    consoleProperties = console.getConsoleProperties();
     resultsTable = new TableView(model);
     resultsTable.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
@@ -132,46 +104,38 @@ public class TestNGResults implements TestFrameworkRunningModel, LogConsoleManag
       }
     });
     rootNode = new TreeRootNode();
+  }
+
+  protected JComponent createTestTreeView() {
+    tree = new TestNGTestTreeView();
+
     final TestTreeStructure structure = new TestTreeStructure(project, rootNode);
     tree.attachToModel(this);
     treeBuilder = new TestTreeBuilder(tree, structure);
-    toolbarPanel.setLayout(new BorderLayout());
-    toolbar = new TestNGToolbarPanel(console.getConsoleProperties(), this, runnerSettings, configurationSettings);
-    toolbarPanel.add(toolbar);
-    animator = new Animator(treeBuilder);
-    openSourceListener = new OpenSourceSelectionListener(structure, console);
+    Disposer.register(this, treeBuilder);
+
+    animator = new Animator(this, treeBuilder);
+
+    openSourceListener = new OpenSourceSelectionListener(structure, myConsole);
     tree.getSelectionModel().addTreeSelectionListener(openSourceListener);
-    progress.setColor(ColorProgressBar.GREEN);
-    splitterProportions.externalizeFromDimensionService(TESTNG_SPLITTER_PROPERTY);
-    final Container container = splitPane.getParent();
-    GuiUtils.replaceJSplitPaneWithIDEASplitter(splitPane);
-    final Splitter splitter = (Splitter)container.getComponent(0);
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        splitterProportions.restoreSplitterProportions(container);
-        splitter.addPropertyChangeListener(new PropertyChangeListener() {
-          public void propertyChange(final PropertyChangeEvent evt) {
-            if (evt.getPropertyName().equals(Splitter.PROP_PROPORTION)) {
-              splitterProportions.saveSplitterProportions(container);
-              splitterProportions.externalizeToDimensionService(TESTNG_SPLITTER_PROPERTY);
-            }
-          }
-        });
-      }
-    });
-    Disposer.register(this, new Disposable() {
-      public void dispose() {
-        splitter.dispose();
-      }
-    });
+
+    return tree;
   }
 
-  public void initLogConsole() {
-    myLogFilesManager.registerFileMatcher(myConfiguration);
-    myLogFilesManager.initLogConsoles(myConfiguration, myRunProcess);
+  @Override
+  protected ToolbarPanel createToolbarPanel() {
+    return new TestNGToolbarPanel(getProperties(), this, myRunnerSettings, myConfigurationSettings);
   }
 
-  private void updateLabel(JLabel label) {
+  public TestConsoleProperties getProperties() {
+    return myProperties;
+  }
+
+  protected JComponent createStatisticsPanel() {
+    return resultsTable;
+  }
+
+  private void updateLabel(TestStatusLine label) {
     StringBuffer sb = new StringBuffer();
     if (end == 0) {
       sb.append("Running: ");
@@ -186,15 +150,6 @@ public class TestNGResults implements TestFrameworkRunningModel, LogConsoleManag
       sb.append(" (").append(time == 0 ? "0.0 s" : NumberFormat.getInstance().format((double)time / 1000.0) + " s").append(")  ");
     }
     label.setText(sb.toString());
-  }
-
-  public void attachStopLogConsoleTrackingListeners(ProcessHandler process) {
-    myRunProcess = process;
-    for (AdditionalTabComponent component : myAdditionalComponents.keySet()) {
-      if (component instanceof LogConsoleImpl) {
-        ((LogConsoleImpl)component).attachStopLogConsoleTrackingListener(process);
-      }
-    }
   }
 
   public void testStarted(TestResultMessage result) {
@@ -216,7 +171,7 @@ public class TestNGResults implements TestFrameworkRunningModel, LogConsoleManag
     treeBuilder.repaintWithParents(proxy);
     count++;
     if (count > total) total = count;
-    if (TestNGConsoleProperties.TRACK_RUNNING_TEST.value(consoleProperties)) {
+    if (TestNGConsoleProperties.TRACK_RUNNING_TEST.value(myProperties)) {
       selectTest(proxy);
     }
   }
@@ -250,10 +205,10 @@ public class TestNGResults implements TestFrameworkRunningModel, LogConsoleManag
 
     if (result.getResult() == MessageHelper.FAILED_TEST) {
       failed.add(testCase);
-      progress.setColor(ColorProgressBar.RED);
+      myStatusLine.setStatusColor(ColorProgressBar.RED);
     }
-    progress.setFraction((double)count / total);
-    updateLabel(statusLabel);
+    myStatusLine.setFraction((double)count / total);
+    updateLabel(myStatusLine);
   }
 
   private String packageNameFor(String fqnClassName) {
@@ -329,23 +284,6 @@ public class TestNGResults implements TestFrameworkRunningModel, LogConsoleManag
     tree.scrollPathToVisible(path);
   }
 
-  public JTable getResultsTable() {
-    return resultsTable;
-  }
-
-  public JPanel getMain() {
-    return main;
-  }
-
-  public ColorProgressBar getProgress() {
-    return progress;
-  }
-
-  public JTabbedPane getTabbedPane() {
-    return tabbedPane;
-  }
-
-
   public void setTotal(int total) {
     this.total = total;
   }
@@ -365,12 +303,12 @@ public class TestNGResults implements TestFrameworkRunningModel, LogConsoleManag
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         animator.stopMovie();
-        updateLabel(statusLabel);
+        updateLabel(myStatusLine);
         if (total > count) {
-          progress.setColor(ColorProgressBar.YELLOW);
+          myStatusLine.setStatusColor(ColorProgressBar.YELLOW);
         }
         rootNode.setInProgress(false);
-        if (TestNGConsoleProperties.SELECT_FIRST_DEFECT.value(consoleProperties)) {
+        if (TestNGConsoleProperties.SELECT_FIRST_DEFECT.value(myProperties)) {
           selectTest(rootNode.getFirstDefect());
         }
         else {
@@ -379,10 +317,6 @@ public class TestNGResults implements TestFrameworkRunningModel, LogConsoleManag
         tree.repaint();
       }
     });
-  }
-
-  public TestNGConsoleProperties getProperties() {
-    return consoleProperties;
   }
 
   public void setFilter(final Filter filter) {
@@ -427,65 +361,9 @@ public class TestNGResults implements TestFrameworkRunningModel, LogConsoleManag
     for (ModelListener listener : myListeners) {
       listener.onDispose();
     }
-    Disposer.dispose(treeBuilder);
-    animator.dispose();
-    toolbar.dispose();
     openSourceListener.structure = null;
     openSourceListener.console = null;
     tree.getSelectionModel().removeTreeSelectionListener(openSourceListener);
-    myLogFilesManager.unregisterFileMatcher();
-  }
-
-  public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent, final String id) {
-    myAdditionalComponents.put(tabComponent, tabbedPane.getTabCount());
-    tabbedPane.addTab(tabComponent.getTabTitle(), null, tabComponent.getComponent(), tabComponent.getTooltip());
-    Disposer.register(this, new Disposable() {
-      public void dispose() {
-        removeAdditionalTabComponent(tabComponent);
-      }
-    });
-  }
-
-  public void removeAdditionalTabComponent(AdditionalTabComponent component) {
-    tabbedPane.removeTabAt(myAdditionalComponents.get(component).intValue());
-    myAdditionalComponents.remove(component);
-    component.dispose();
-  }
-
-  public void addLogConsole(final String name, final String path, final long skippedContent) {
-    final LogConsoleImpl log = new LogConsoleImpl(project, new File(path), skippedContent, name, true) {
-      public boolean isActive() {
-        return tabbedPane.getSelectedComponent() == this;
-      }
-    };
-
-    if (myRunProcess != null) {
-      log.attachStopLogConsoleTrackingListener(myRunProcess);
-    }
-    addAdditionalTabComponent(log, path);
-    tabbedPane.addChangeListener(log);
-    Disposer.register(this, new Disposable() {
-      public void dispose() {
-        tabbedPane.removeChangeListener(log);
-      }
-    });
-  }
-
-  public void removeLogConsole(final String path) {
-    LogConsoleImpl componentToRemove = null;
-    for (AdditionalTabComponent tabComponent : myAdditionalComponents.keySet()) {
-      if (tabComponent instanceof LogConsoleImpl) {
-        final LogConsoleImpl console = (LogConsoleImpl)tabComponent;
-        if (Comparing.strEqual(console.getPath(), path)) {
-          componentToRemove = console;
-          break;
-        }
-      }
-    }
-    if (componentToRemove != null) {
-      tabbedPane.removeChangeListener(componentToRemove);
-      removeAdditionalTabComponent(componentToRemove);
-    }
   }
 
   public TestProxy getFailedToStart() {

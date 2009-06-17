@@ -74,7 +74,7 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
   }
 
   private void fireOnNewPrintable(final Printable printable) {
-    myPrinter.onNewAvaliable(printable);
+    myPrinter.onNewAvailable(printable);
   }
 
   public void printOn(final Printer printer) {

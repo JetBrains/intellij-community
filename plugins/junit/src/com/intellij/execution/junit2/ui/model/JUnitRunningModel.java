@@ -56,7 +56,7 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
   private TestTreeBuilder myTreeBuilder;
 
   private final JUnitListenersNotifier myNotifier = new JUnitListenersNotifier();
-  private final Animator myAnimator = new Animator();
+  private final Animator myAnimator;
   private PacketExtractorBase myPacketExtractor;
   private final List<ModelListener> myListeners = new ArrayList<ModelListener>();
 
@@ -76,6 +76,7 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
         myNotifier.onDispose(JUnitRunningModel.this);
       }
     });
+    myAnimator = new Animator(this);
   }
 
   public TestTreeBuilder getTreeBuilder() {

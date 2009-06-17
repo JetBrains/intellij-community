@@ -8,21 +8,16 @@ package com.theoryinpractice.testng.ui;
 
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.filters.Filter;
-import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
+import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;
 import com.theoryinpractice.testng.model.TestProxy;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.testng.remote.strprotocol.TestResultMessage;
 
 import javax.swing.*;
@@ -31,48 +26,42 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class TestNGConsoleView implements ConsoleView {
+public class TestNGConsoleView extends BaseTestsOutputConsoleView {
   @NonNls private static final Pattern COMPARISION_PATTERN =
     Pattern.compile("([^\\<\\>]*)expected[^\\<\\>]*\\<([^\\<\\>]*)\\>[^\\<\\>]*\\<([^\\<\\>]*)\\>[^\\<\\>]*");
   @NonNls private static final Pattern EXPECTED_BUT_WAS_PATTERN =
     Pattern.compile("(.*)expected:\\<(.*)\\> but was:\\<(.*)\\>.*", Pattern.DOTALL);
   @NonNls private static final Pattern EXPECTED_NOT_SAME_BUT_WAS_PATTERN =
     Pattern.compile("(.*)expected not same with:\\<(.*)\\> but was:\\<(.*)\\>.*", Pattern.DOTALL);
-  private ConsoleView console;
   private TestNGResults testNGResults;
   private final List<Printable> currentTestOutput = new ArrayList<Printable>();
-  private TestNGConsoleProperties consoleProperties;
   private final List<Printable> nonTestOutput = new ArrayList<Printable>();
 
   private int myExceptionalMark = -1;
+  private final TestNGConfiguration myConfiguration;
+  private final RunnerSettings myRunnerSettings;
+  private final ConfigurationPerRunnerSettings myConfigurationPerRunnerSettings;
 
   public TestNGConsoleView(TestNGConfiguration config,
                            final RunnerSettings runnerSettings,
                            final ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
-    consoleProperties = new TestNGConsoleProperties(config);
-    final Project project = config.getProject();
-    console = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
-    consoleProperties.setConsole(this);
-    testNGResults = new TestNGResults(config, this, runnerSettings, configurationPerRunnerSettings);
-    testNGResults.getTabbedPane().add("Output", console.getComponent());
-    testNGResults.getTabbedPane().add("Statistics", new JScrollPane(testNGResults.getResultsTable()));
-    testNGResults.initLogConsole();
+    super(new TestNGConsoleProperties(config));
+    myConfiguration = config;
+    myRunnerSettings = runnerSettings;
+    myConfigurationPerRunnerSettings = configurationPerRunnerSettings;
+  }
+
+  protected TestResultsPanel createTestResultsPanel() {
+    testNGResults = new TestNGResults(getConsole().getComponent(), myConfiguration, this, myRunnerSettings, myConfigurationPerRunnerSettings);
+    return testNGResults;
   }
 
   public TestNGResults getResultsView() {
     return testNGResults;
   }
 
-  public JComponent getComponent() {
-    return testNGResults.getMain();
-  }
-
   public void rebuildTree() {
     testNGResults.rebuildTree();
-  }
-
-  public TestNGConsoleProperties getConsoleProperties() {
-    return consoleProperties;
   }
 
   public void addTestResult(TestResultMessage result) {
@@ -87,7 +76,7 @@ public class TestNGConsoleView implements ConsoleView {
         String trimmed = trimStackTrace(stackTrace);
         List<Printable> printables = getPrintables(result, trimmed);
         for (Printable printable : printables) {
-          printable.print(console); //enable for root element
+          printable.print(getConsole()); //enable for root element
         }
         synchronized (currentTestOutput) {
           exceptionMark = currentTestOutput.size();
@@ -161,21 +150,6 @@ public class TestNGConsoleView implements ConsoleView {
     return builder.toString();
   }
 
-  public void dispose() {
-    if (console != null) {
-      Disposer.dispose(console);
-      console = null;
-    }
-    if (testNGResults != null) {
-      Disposer.dispose(testNGResults);
-      testNGResults = null;
-    }
-    if (consoleProperties != null) {
-      Disposer.dispose(consoleProperties);
-      consoleProperties = null;
-    }
-  }
-
   private List<Printable> getPrintables(final TestResultMessage result, String s) {
     List<Printable> printables = new ArrayList<Printable>();
     //figure out if we have a diff we need to hyperlink
@@ -189,7 +163,7 @@ public class TestNGConsoleView implements ConsoleView {
     if (matcher.matches()) {
       printables.add(new Chunk(matcher.group(1), ConsoleViewContentType.ERROR_OUTPUT));
       //we have an assert with expected/actual, so we parse it out and create a diff hyperlink
-      TestNGDiffHyperLink link = new TestNGDiffHyperLink(matcher.group(2), matcher.group(3), null, consoleProperties) {
+      TestNGDiffHyperLink link = new TestNGDiffHyperLink(matcher.group(2), matcher.group(3), null, (TestNGConsoleProperties) myProperties) {
         protected String getTitle() {
           //TODO should do some more farting about to find the equality assertion that failed and show that as title
           return result.getTestClass() + '#' + result.getMethod() + "() failed";
@@ -223,62 +197,8 @@ public class TestNGConsoleView implements ConsoleView {
     setView(printables, 0);
   }
 
-  public void clear() {
-    console.clear();
-  }
-
-  public void scrollTo(int offset) {
-    console.scrollTo(offset);
-  }
-
   public void attachToProcess(ProcessHandler processHandler) {
-    console.attachToProcess(processHandler);
-    testNGResults.attachStopLogConsoleTrackingListeners(processHandler);
-  }
-
-  public void setOutputPaused(boolean value) {
-    console.setOutputPaused(value);
-  }
-
-  public boolean isOutputPaused() {
-    return console != null && console.isOutputPaused();
-  }
-
-  public boolean hasDeferredOutput() {
-    return console.hasDeferredOutput();
-  }
-
-  public void performWhenNoDeferredOutput(Runnable runnable) {
-    console.performWhenNoDeferredOutput(runnable);
-  }
-
-  public void setHelpId(String helpId) {
-    console.setHelpId(helpId);
-  }
-
-  public void addMessageFilter(Filter filter) {
-    console.addMessageFilter(filter);
-  }
-
-  public JComponent getPreferredFocusableComponent() {
-    return console.getComponent();
-  }
-
-  public void printHyperlink(String hyperlinkText, HyperlinkInfo info) {
-    console.printHyperlink(hyperlinkText, info);
-  }
-
-  public int getContentSize() {
-    return console.getContentSize();
-  }
-
-  public boolean canPause() {
-    return console != null && console.canPause();
-  }
-
-  @NotNull
-  public AnAction[] createConsoleActions() {
-    return console.createConsoleActions();
+    getConsole().attachToProcess(processHandler);
   }
 
   public void setView(final List<Printable> output, final int i) {
@@ -290,16 +210,16 @@ public class TestNGConsoleView implements ConsoleView {
       });
     }
     else {
-      console.clear();
+      getConsole().clear();
       int idx = 0;
       int offset = 0;
       for (Printable chunk : new ArrayList<Printable>(output)) {
-        chunk.print(console);
+        chunk.print(getConsole());
         if (idx++ < i) {
-          offset = console.getContentSize();
+          offset = getConsole().getContentSize();
         }
       }
-      console.scrollTo(offset);
+      getConsole().scrollTo(offset);
     }
   }
 

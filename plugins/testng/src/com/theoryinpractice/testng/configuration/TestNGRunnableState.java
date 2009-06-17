@@ -104,6 +104,7 @@ public class TestNGRunnableState extends JavaCommandLineState
   @Override
   public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
     final TestNGConsoleView console = new TestNGConsoleView(config, runnerSettings, myConfigurationPerRunnerSettings);
+    console.initUI();
     ProcessHandler processHandler = startProcess();
     processHandler.addProcessListener(new ProcessAdapter()
     {

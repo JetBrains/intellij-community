@@ -26,7 +26,7 @@ public class TestNGDiffHyperLink extends DiffHyperlink implements Printable {
         printer.printHyperlink(text, info);
       }
 
-      public void onNewAvaliable(final com.intellij.execution.testframework.Printable printable) {}
+      public void onNewAvailable(final com.intellij.execution.testframework.Printable printable) {}
       public void mark() {}
     });
   }

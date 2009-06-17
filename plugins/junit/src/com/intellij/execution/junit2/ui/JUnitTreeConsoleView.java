@@ -53,7 +53,6 @@ public class JUnitTreeConsoleView extends BaseTestsOutputConsoleView {
     myProperties = properties;
     myRunnerSettings = runnerSettings;
     myConfigurationSettings = configurationSettings;
-    myProperties.setConsole(this);
     getPrinter().setCollectOutput(true);
   }
 
@@ -164,7 +163,7 @@ public class JUnitTreeConsoleView extends BaseTestsOutputConsoleView {
     }
 
     public void onOutput(final String text, final ConsoleViewContentType contentType) {
-      myPrinter.onNewAvaliable(new ExternalOutput(text, contentType));
+      myPrinter.onNewAvailable(new ExternalOutput(text, contentType));
     }
   }
 }

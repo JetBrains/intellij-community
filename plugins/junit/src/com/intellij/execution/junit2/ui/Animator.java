@@ -23,9 +23,13 @@ import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.model.StateEvent;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
+import com.intellij.openapi.Disposable;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 
 public class Animator extends TestsProgressAnimator {
+  public Animator(Disposable parentDisposable) {
+    super(parentDisposable);
+  }
 
   public void setModel(final JUnitRunningModel model) {
     init(model.getTreeBuilder());
