@@ -15,19 +15,12 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 
-public abstract class DefaultModuleConfigurationEditorFactory implements ApplicationComponent {
+public abstract class DefaultModuleConfigurationEditorFactory {
 
   public abstract ModuleConfigurationEditor createModuleContentRootsEditor(ModuleConfigurationState state);
-
-  @Deprecated public abstract ModuleConfigurationEditor createLibrariesEditor(ModuleConfigurationState state);
-
-  @Deprecated public abstract ModuleConfigurationEditor createDependenciesEditor(ModuleConfigurationState state);
-
-  @Deprecated public abstract ModuleConfigurationEditor createOrderEntriesEditor(ModuleConfigurationState state);
 
   public abstract ModuleConfigurationEditor createClasspathEditor(ModuleConfigurationState state);
 
