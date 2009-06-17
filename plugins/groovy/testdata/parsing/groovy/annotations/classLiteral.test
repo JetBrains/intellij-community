@@ -1,0 +1,30 @@
+@notnull (foo.class)
+def class b {}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      Annotation
+        PsiElement(@)('@')
+        Reference element
+          PsiElement(identifier)('notnull')
+        PsiWhiteSpace(' ')
+        Annotation arguments
+          PsiElement(()('(')
+          Annotation member value pair
+            Reference expression
+              Reference expression
+                PsiElement(identifier)('foo')
+              PsiElement(.)('.')
+              PsiElement(class)('class')
+          PsiElement())(')')
+      PsiElement(new line)('\n')
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('b')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiElement(})('}')
