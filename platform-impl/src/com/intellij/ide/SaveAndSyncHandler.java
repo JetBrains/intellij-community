@@ -26,8 +26,8 @@ import java.beans.PropertyChangeListener;
  */
 public class SaveAndSyncHandler implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.SaveAndSyncHandler");
-  private Runnable myIdleListener;
-  private PropertyChangeListener myGeneralSettingsListener;
+  private final Runnable myIdleListener;
+  private final PropertyChangeListener myGeneralSettingsListener;
 
   public SaveAndSyncHandler(final FrameStateManager frameStateManager,
                             final FileDocumentManager fileDocumentManager,
