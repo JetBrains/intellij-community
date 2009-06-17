@@ -24,7 +24,7 @@ import java.util.List;
  */
 public class JavaUsageFilteringRuleProvider implements UsageFilteringRuleProvider {
   @NotNull
-  public UsageFilteringRule[] getActiveRules(final Project project) {
+  public UsageFilteringRule[] getActiveRules(@NotNull final Project project) {
     final List<UsageFilteringRule> rules = new ArrayList<UsageFilteringRule>();
     if (!JavaUsageViewSettings.getInstance().SHOW_IMPORTS) {
       rules.add(new ImportFilteringRule());
@@ -33,7 +33,7 @@ public class JavaUsageFilteringRuleProvider implements UsageFilteringRuleProvide
   }
 
   @NotNull
-  public AnAction[] createFilteringActions(final UsageView view) {
+  public AnAction[] createFilteringActions(@NotNull final UsageView view) {
     final UsageViewImpl impl = (UsageViewImpl)view;
     if (view.getPresentation().isCodeUsages()) {
       final JComponent component = view.getComponent();

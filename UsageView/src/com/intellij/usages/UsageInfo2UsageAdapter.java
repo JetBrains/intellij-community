@@ -201,7 +201,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
   @Nullable
   private OpenFileDescriptor getDescriptor() {
     if (markersValid()) {
-      return new OpenFileDescriptor(getProject(), getFile(), myRangeMarkers.size() > 0 ? getRangeMarker().getStartOffset() : myOffset);
+      return new OpenFileDescriptor(getProject(), getFile(), !myRangeMarkers.isEmpty() ? getRangeMarker().getStartOffset() : myOffset);
     }
     else if (getFile().isValid()) {
       final Document doc = FileDocumentManager.getInstance().getDocument(getFile());
@@ -331,7 +331,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
   private class MyUsagePresentation implements UsagePresentation {
     private long myModificationStamp;
 
-    public MyUsagePresentation() {
+    private MyUsagePresentation() {
       myModificationStamp = getCurrentModificationStamp();
     }
 
@@ -355,7 +355,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
 
     @NotNull
     public String getPlainText() {
-      if (myRangeMarkers.size() == 0) { // element over light virtual file
+      if (myRangeMarkers.isEmpty()) { // element over light virtual file
         return myTextChunks[0].getText();
       }
 

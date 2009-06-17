@@ -13,6 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.usageView.UsageViewManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,8 +45,8 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
 
   private ScopeChooserCombo myScopeCombo;
 
-  protected AbstractFindUsagesDialog(Project project,
-                                     FindUsagesOptions findUsagesOptions,
+  protected AbstractFindUsagesDialog(@NotNull Project project,
+                                     @NotNull FindUsagesOptions findUsagesOptions,
                                      boolean toShowInNewTab,
                                      boolean mustOpenInNewTab,
                                      boolean isSingleFile,
@@ -71,7 +72,6 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     setOKButtonText(FindBundle.message("find.dialog.find.button"));
     setOKButtonIcon(IconLoader.getIcon("/actions/find.png"));
     setTitle(isSingleFile ? FindBundle.message("find.usages.in.file.dialog.title") : FindBundle.message("find.usages.dialog.title"));
-
   }
 
   protected Action[] createActions() {
@@ -133,12 +133,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   }
 
   public void calcFindUsagesOptions(FindUsagesOptions options) {
-    if (myScopeCombo != null) {
-      options.searchScope = myScopeCombo.getSelectedScope();
-    }
-    else {
-      options.searchScope = GlobalSearchScope.allScope(myProject);
-    }
+    options.searchScope = myScopeCombo == null ? GlobalSearchScope.allScope(myProject) : myScopeCombo.getSelectedScope();
 
     options.isSearchForTextOccurences = isToChange(myCbToSearchForTextOccurences) && isSelected(myCbToSearchForTextOccurences);
   }
@@ -260,7 +255,8 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     JPanel optionsPanel = new JPanel(new BorderLayout());
     JLabel label = new JLabel(FindBundle.message("find.scope.label"));
     optionsPanel.add(label, BorderLayout.WEST);
-    myScopeCombo = new ScopeChooserCombo(myProject, mySearchInLibrariesAvailable, true, FindSettings.getInstance().getDefaultScopeName());
+    String scope = myFindUsagesOptions.searchScope.getDisplayName();
+    myScopeCombo = new ScopeChooserCombo(myProject, mySearchInLibrariesAvailable, true, scope);
     optionsPanel.add(myScopeCombo, BorderLayout.CENTER);
     label.setLabelFor(myScopeCombo.getComboBox());
     return optionsPanel;

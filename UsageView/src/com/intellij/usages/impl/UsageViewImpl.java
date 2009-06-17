@@ -127,8 +127,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   @NonNls private static final String HELP_ID = "ideaInterface.find";
   private UsagePreviewPanel myUsagePreviewPanel;
   private JPanel myCentralPanel;
-  private static final Icon PREVIEW_ICON = IconLoader.getIcon("/actions/preview.png");
   private final GroupNode myRoot;
+  private final UsageViewTreeModelBuilder myModel;
 
   public UsageViewImpl(@NotNull Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -160,8 +160,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     myRootPanel = new MyPanel(myTree);
     myModelTracker = new UsageModelTracker(project, this);
 
-    final UsageViewTreeModelBuilder model = new UsageViewTreeModelBuilder(myPresentation, targets);
-    myRoot = (GroupNode)model.getRoot();
+    myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
+    myRoot = (GroupNode)myModel.getRoot();
     myBuilder = new UsageNodeTreeBuilder(getActiveGroupingRules(project), getActiveFilteringRules(project), myRoot);
 
     final MessageBusConnection messageBusConnection = myProject.getMessageBus().connect(this);
@@ -175,7 +175,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           if (isDisposed) return;
-          myTree.setModel(model);
+          myTree.setModel(myModel);
 
           myRootPanel.setLayout(new BorderLayout());
 
@@ -338,12 +338,16 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private static JComponent toUsageViewToolbar(final DefaultActionGroup group) {
-    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR,
-                                                                                  group, false);
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR, group, false);
     return actionToolbar.getComponent();
   }
 
   private JComponent createFiltersToolbar() {
+    final DefaultActionGroup group = createFilteringActionsGroup();
+    return toUsageViewToolbar(group);
+  }
+
+  private DefaultActionGroup createFilteringActionsGroup() {
     final DefaultActionGroup group = new DefaultActionGroup();
 
     final AnAction[] groupingActions = createGroupingActions();
@@ -351,6 +355,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       group.add(groupingAction);
     }
 
+    addFilteringActions(group);
+    group.add(new PreviewUsageAction(this));
+    return group;
+  }
+
+  public void addFilteringActions(DefaultActionGroup group) {
     final JComponent component = getComponent();
     final MergeDupLines mergeDupLines = new MergeDupLines();
     mergeDupLines.registerCustomShortcutSet(mergeDupLines.getShortcutSet(), component);
@@ -361,22 +371,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     });
     group.add(mergeDupLines);
 
-
-    final AnAction[] filteringActions = createFilteringActions();
-    for (AnAction filteringAction : filteringActions) {
-      group.add(filteringAction);
+    final UsageFilteringRuleProvider[] providers = Extensions.getExtensions(UsageFilteringRuleProvider.EP_NAME);
+    for (UsageFilteringRuleProvider provider : providers) {
+      AnAction[] actions = provider.createFilteringActions(this);
+      for (AnAction action : actions) {
+        group.add(action);
+      }
     }
-    group.add(new RuleAction(this, UsageViewBundle.message("preview.usages.action.text"), PREVIEW_ICON) {
-      protected boolean getOptionValue() {
-        return UsageViewSettings.getInstance().IS_PREVIEW_USAGES;
-      }
-
-      protected void setOptionValue(final boolean value) {
-        UsageViewSettings.getInstance().IS_PREVIEW_USAGES = value;
-      }
-    });
-
-    return toUsageViewToolbar(group);
   }
 
   public void scheduleDisposeOnClose(@NotNull Disposable disposable) {
@@ -443,15 +444,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     List<AnAction> list = new ArrayList<AnAction>(providers.length);
     for (UsageGroupingRuleProvider provider : providers) {
       list.addAll(Arrays.asList(provider.createGroupingActions(this)));
-    }
-    return list.toArray(new AnAction[list.size()]);
-  }
-
-  private AnAction[] createFilteringActions() {
-    final UsageFilteringRuleProvider[] providers = Extensions.getExtensions(UsageFilteringRuleProvider.EP_NAME); 
-    List<AnAction> list = new ArrayList<AnAction>(providers.length);
-    for (UsageFilteringRuleProvider provider : providers) {
-      list.addAll(Arrays.asList(provider.createFilteringActions(this)));
     }
     return list.toArray(new AnAction[list.size()]);
   }
@@ -622,8 +614,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private void reset() {
     myUsageNodes.clear();
     myIsFirstVisibleUsageFound = false;
+
+    myModel.reset();
     if (!myPresentation.isDetachedMode()) {
-      ((UsageViewTreeModelBuilder)myTree.getModel()).reset();
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           if (isDisposed) return;
@@ -798,7 +791,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           if (isDisposed) return;
-          final UsageNode firstUsageNode = ((UsageViewTreeModelBuilder)myTree.getModel()).getFirstUsageNode();
+          final UsageNode firstUsageNode = myModel.getFirstUsageNode();
           if (firstUsageNode != null) { //first usage;
             showNode(firstUsageNode);
           }
@@ -1041,7 +1034,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   public boolean areTargetsValid() {
-    return ((UsageViewTreeModelBuilder)myTree.getModel()).areTargetsValid();
+    return myModel.areTargetsValid();
   }
 
   private class MyPanel extends JPanel implements TypeSafeDataProvider, OccurenceNavigator {
@@ -1317,4 +1310,5 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public boolean isVisible(Usage usage) {
     return myBuilder != null && myBuilder.isVisible(usage);
   }
+
 }

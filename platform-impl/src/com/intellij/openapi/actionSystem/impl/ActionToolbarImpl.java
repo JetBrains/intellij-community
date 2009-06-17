@@ -563,9 +563,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   public Dimension getPreferredSize() {
     final ArrayList<Rectangle> bounds = new ArrayList<Rectangle>();
-    for (int i = 0; i < getComponentCount(); i++) {
-      bounds.add(new Rectangle());
-    }
     calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds);
 
     int xLeft = Integer.MAX_VALUE;

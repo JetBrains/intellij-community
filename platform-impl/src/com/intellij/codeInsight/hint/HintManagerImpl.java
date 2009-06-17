@@ -502,9 +502,14 @@ public class HintManagerImpl extends HintManager implements Disposable {
     showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false);
   }
 
-  public void showInformationHint(@NotNull Editor editor, String text) {
+  public void showInformationHint(@NotNull Editor editor, @NotNull String text) {
     JLabel label = HintUtil.createInformationLabel(text);
-    LightweightHint hint = new LightweightHint(label);
+    showInformationHint(editor, label);
+  }
+
+  @Override
+  public void showInformationHint(@NotNull Editor editor, @NotNull JComponent component) {
+    LightweightHint hint = new LightweightHint(component);
     Point p = getHintPosition(hint, editor, ABOVE);
     showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false);
   }
@@ -700,7 +705,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     return false;
   }
 
-  protected boolean hideHints(int mask, boolean onlyOne, boolean editorChanged) {
+  public boolean hideHints(int mask, boolean onlyOne, boolean editorChanged) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     try {
       boolean done = false;

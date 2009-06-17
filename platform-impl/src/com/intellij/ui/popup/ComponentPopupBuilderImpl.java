@@ -10,15 +10,17 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.ui.InplaceButton;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.awt.event.ActionListener;
+import java.util.*;
+import java.util.List;
 
 /**
  * User: anna
@@ -58,6 +60,9 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private String myAd;
   private boolean myFocusable = true;
   private boolean myHeaderAlwaysFocusable;
+  private InplaceButton myCommandButton;
+  private List<Pair<ActionListener, KeyStroke>> myKeyboardActions = Collections.emptyList();
+  private Component mySettingsButtons;
 
   public ComponentPopupBuilderImpl(final JComponent component,
                                    final JComponent prefferedFocusedComponent) {
@@ -134,8 +139,25 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   }
 
   @NotNull
-  public ComponentPopupBuilder setCancelButton(final IconButton cancelButton) {
+  public ComponentPopupBuilder setCancelButton(@NotNull final IconButton cancelButton) {
     myCancelButton = cancelButton;
+    return this;
+  }
+  @NotNull
+  public ComponentPopupBuilder setCommandButton(@NotNull InplaceButton button) {
+    myCommandButton = button;
+    return this;
+  }
+
+  @NotNull
+  public ComponentPopupBuilder setKeyboardActions(@NotNull List<Pair<ActionListener, KeyStroke>> keyboardActions) {
+    myKeyboardActions = keyboardActions;
+    return this;
+  }
+
+  @NotNull
+  public ComponentPopupBuilder setSettingButtons(@NotNull Component button) {
+    mySettingsButtons = button;
     return this;
   }
 
@@ -154,11 +176,12 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @NotNull
   public JBPopup createPopup() {
     final AbstractPopup popup = new AbstractPopup().init(myProject, myComponent, myPrefferedFocusedComponent, myRequestFocus, myFocusable, myForceHeavyweight,
-                                              myDimensionServiceKey, myResizable, myMovable ? (myTitle != null ? myTitle : "") : null,
-                                              myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCancelButton,
+                                              myDimensionServiceKey, myResizable, myMovable ? myTitle != null ? myTitle : "" : null,
+                                              myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCommandButton,
+                                              myCancelButton,
                                               myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
                                               myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd,
-                                              myHeaderAlwaysFocusable);
+                                              myHeaderAlwaysFocusable, myKeyboardActions, mySettingsButtons);
     if (myProject != null) {
       popup.setProject(myProject);
     }

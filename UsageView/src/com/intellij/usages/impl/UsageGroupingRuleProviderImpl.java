@@ -118,7 +118,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
   }
 
   private static class GroupByUsageTypeAction extends RuleAction {
-    public GroupByUsageTypeAction(UsageViewImpl view) {
+    private GroupByUsageTypeAction(UsageViewImpl view) {
       super(view, UsageViewBundle.message("action.group.by.usage.type"), IconLoader.getIcon("/ant/filter.png")); //TODO: special icon
     }
     protected boolean getOptionValue() {
@@ -130,7 +130,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
   }
 
   private static class GroupByModuleTypeAction extends RuleAction {
-    public GroupByModuleTypeAction(UsageViewImpl view) {
+    private GroupByModuleTypeAction(UsageViewImpl view) {
       super(view, UsageViewBundle.message("action.group.by.module"), IconLoader.getIcon("/objectBrowser/showModules.png"));
     }
 
@@ -144,7 +144,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
   }
 
   private static class GroupByPackageAction extends RuleAction {
-    public GroupByPackageAction(UsageViewImpl view) {
+    private GroupByPackageAction(UsageViewImpl view) {
       super(view, UsageViewBundle.message("action.group.by.package"), Icons.GROUP_BY_PACKAGES);
     }
     protected boolean getOptionValue() {
@@ -156,7 +156,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
   }
 
   private static class GroupByFileStructureAction extends RuleAction {
-    public GroupByFileStructureAction(UsageViewImpl view) {
+    private GroupByFileStructureAction(UsageViewImpl view) {
       super(view, UsageViewBundle.message("action.group.by.file.structure"), IconLoader.getIcon("/actions/groupByMethod.png"));
     }
     protected boolean getOptionValue() {

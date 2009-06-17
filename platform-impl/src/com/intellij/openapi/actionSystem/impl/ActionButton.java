@@ -34,7 +34,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
   private boolean myRollover;
   private static boolean ourGlobalMouseDown = false;
 
-  private Icon myDropdownIcon = IconLoader.getIcon("/general/dropdown.png");
+  private static final Icon myDropdownIcon = IconLoader.getIcon("/general/dropdown.png");
 
   private boolean myNoIconsInPopup = false;
 

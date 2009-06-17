@@ -26,10 +26,10 @@ public interface UsageFilteringRuleProvider {
   ExtensionPointName<UsageFilteringRuleProvider> EP_NAME = ExtensionPointName.create("com.intellij.usageFilteringRuleProvider");
 
   @NotNull
-  UsageFilteringRule[] getActiveRules(Project project);
+  UsageFilteringRule[] getActiveRules(@NotNull Project project);
 
   @NotNull
-  AnAction[] createFilteringActions(UsageView view);
+  AnAction[] createFilteringActions(@NotNull UsageView view);
 
   Topic<Runnable> RULES_CHANGED = new Topic<Runnable>("usave view rules changed", Runnable.class);
 }

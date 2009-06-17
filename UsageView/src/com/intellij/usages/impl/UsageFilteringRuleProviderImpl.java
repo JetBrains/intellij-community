@@ -17,8 +17,8 @@ package com.intellij.usages.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageView;
@@ -41,8 +41,9 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
   private final ReadWriteState myReadWriteState = new ReadWriteState();
 
   @NotNull
-  public UsageFilteringRule[] getActiveRules(Project project) {
+  public UsageFilteringRule[] getActiveRules(@NotNull Project project) {
     final List<UsageFilteringRule> rules = new ArrayList<UsageFilteringRule>();
+
     if (!myReadWriteState.isShowReadAccess()) {
       rules.add(new ReadAccessFilteringRule());
     }
@@ -53,7 +54,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
   }
 
   @NotNull
-  public AnAction[] createFilteringActions(UsageView view) {
+  public AnAction[] createFilteringActions(@NotNull UsageView view) {
     final UsageViewImpl impl = (UsageViewImpl)view;
     if (!view.getPresentation().isCodeUsages()) {
       return AnAction.EMPTY_ARRAY;

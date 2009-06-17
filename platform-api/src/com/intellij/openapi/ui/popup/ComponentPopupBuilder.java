@@ -19,11 +19,16 @@ package com.intellij.openapi.ui.popup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
+import com.intellij.ui.InplaceButton;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.util.List;
 
 /**
  * @author max
@@ -100,4 +105,13 @@ public interface ComponentPopupBuilder {
 
   @NotNull
   ComponentPopupBuilder setAdText(@Nullable String text);
+
+  @NotNull
+  ComponentPopupBuilder setCommandButton(@NotNull InplaceButton commandButton);
+
+  @NotNull
+  ComponentPopupBuilder setKeyboardActions(@NotNull List<Pair<ActionListener, KeyStroke>> keyboardActions);
+
+  @NotNull
+  ComponentPopupBuilder setSettingButtons(@NotNull Component button);
 }

@@ -80,30 +80,24 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   }
 
   @NotNull
-  public AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab,
-                                                      FindUsagesHandler handler) {
+  public AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
     PsiElement element = getPsiElement();
     if (element instanceof PsiPackage) {
-      return new FindPackageUsagesDialog(element, getProject(), myFindPackageOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile,
-                                         handler);
+      return new FindPackageUsagesDialog(element, getProject(), myFindPackageOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, this);
     }
     if (element instanceof PsiClass) {
-      return new FindClassUsagesDialog(element, getProject(), myFindClassOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile,
-                                       handler);
+      return new FindClassUsagesDialog(element, getProject(), myFindClassOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, this);
     }
     if (element instanceof PsiMethod) {
-      return new FindMethodUsagesDialog(element, getProject(), myFindMethodOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile,
-                                        handler);
+      return new FindMethodUsagesDialog(element, getProject(), myFindMethodOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, this);
     }
     if (element instanceof PsiVariable) {
-      return new FindVariableUsagesDialog(element, getProject(), myFindVariableOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile,
-                                          handler);
+      return new FindVariableUsagesDialog(element, getProject(), myFindVariableOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, this);
     }
     if (ThrowSearchUtil.isSearchable(element)) {
-      return new FindThrowUsagesDialog(element, getProject(), myFindThrowOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile,
-                                       handler);
+      return new FindThrowUsagesDialog(element, getProject(), myFindThrowOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, this);
     }
-    return super.getFindUsagesDialog(isSingleFile, toShowInNewTab, mustOpenInNewTab, handler);
+    return super.getFindUsagesDialog(isSingleFile, toShowInNewTab, mustOpenInNewTab);
   }
 
   private static boolean askWhetherShouldSearchForParameterInOverridingMethods(final PsiElement psiElement, final PsiParameter parameter) {

@@ -19,6 +19,8 @@ package com.intellij.openapi.ui.popup;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.ui.InplaceButton;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.ui.UIUtil;
@@ -33,6 +35,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author max
@@ -59,7 +62,9 @@ public class PopupChooserBuilder {
   ArrayList<JBPopupListener> myListeners = new ArrayList<JBPopupListener>();
   private String myAd;
   private Dimension myMinSize;
-
+  private InplaceButton myCommandButton;
+  private final List<Pair<ActionListener,KeyStroke>> myKeyboardActions = new ArrayList<Pair<ActionListener, KeyStroke>>();
+  private Component mySettingsButtons;
 
   public PopupChooserBuilder(@NotNull JList list) {
     myChooserComponent = new MyListWrapper(list);
@@ -126,6 +131,11 @@ public class PopupChooserBuilder {
     return this;
   }
 
+  public PopupChooserBuilder setCommandButton(@NotNull InplaceButton commandButton) {
+    myCommandButton = commandButton;
+    return this;
+  }
+
   public PopupChooserBuilder setAlpha(final float alpha) {
     myAlpha = alpha;
     return this;
@@ -159,10 +169,10 @@ public class PopupChooserBuilder {
       }
     });
 
-    regsiterClosePopupKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), false);
-    regsiterClosePopupKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), true);
+    registerClosePopupKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), false);
+    registerClosePopupKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), true);
     for (KeyStroke keystroke : myAdditionalKeystrokes) {
-      regsiterClosePopupKeyboardAction(keystroke, true);
+      registerClosePopupKeyboardAction(keystroke, true);
     }
 
     final JScrollPane scrollPane;
@@ -201,12 +211,19 @@ public class PopupChooserBuilder {
       .setAlpha(myAlpha)
       .setFocusOwners(myFocusOwners)
       .setCancelKeyEnabled(myCancelKeyEnabled)
-      .setAdText(myAd);
+      .setAdText(myAd)
+      .setKeyboardActions(myKeyboardActions)
+      ;
+    if (myCommandButton != null) {
+      builder.setCommandButton(myCommandButton);
+    }
 
     if (myMinSize != null) {
       builder.setMinSize(myMinSize);
     }
-
+    if (mySettingsButtons != null) {
+      builder.setSettingButtons(mySettingsButtons);
+    }
     myPopup = builder.createPopup();
     return myPopup;
   }
@@ -216,7 +233,12 @@ public class PopupChooserBuilder {
     return this;
   }
 
-  private void regsiterClosePopupKeyboardAction(final KeyStroke keyStroke, final boolean shouldPerformAction) {
+  public PopupChooserBuilder registerKeyboardAction(KeyStroke keyStroke, ActionListener actionListener) {
+    myKeyboardActions.add(Pair.create(actionListener, keyStroke));
+    return this;
+  }
+
+  private void registerClosePopupKeyboardAction(final KeyStroke keyStroke, final boolean shouldPerformAction) {
     myChooserComponent.registerKeyboardAction(new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         closePopup(shouldPerformAction, null);
@@ -326,11 +348,15 @@ public class PopupChooserBuilder {
     return e.isShiftDown() || e.isControlDown() || e.isMetaDown();
   }
 
+  public void setSettingButton(Component abutton) {
+    mySettingsButtons = abutton;
+  }
+
   private class MyListWrapper extends JScrollPane implements DataProvider {
     @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
     private final JList myList;
 
-    public MyListWrapper(final JList list) {
+    private MyListWrapper(final JList list) {
       super(list);
       list.addMouseMotionListener(new MouseMotionAdapter() {
         boolean myIsEngaged = false;

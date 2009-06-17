@@ -8,6 +8,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.CompoundBorder;
 import java.awt.*;
 
 public class HintUtil {
@@ -28,18 +29,20 @@ public class HintUtil {
     JLabel label = new HintLabel();
     label.setText(text);
     label.setIcon(INFORMATION_ICON);
-    label.setBorder(
-      BorderFactory.createCompoundBorder(
-        new SideBorder2(Color.white, Color.white, Color.gray, Color.gray, 1),
-        BorderFactory.createEmptyBorder(2, 2, 2, 2)
-      )
-    );
+    label.setBorder(createHintBorder());
     label.setForeground(Color.black);
     label.setFont(getBoldFont());
     label.setBackground(INFORMATION_COLOR);
     label.setOpaque(true);
 
     return label;
+  }
+
+  public static CompoundBorder createHintBorder() {
+    return BorderFactory.createCompoundBorder(
+      new SideBorder2(Color.white, Color.white, Color.gray, Color.gray, 1),
+      BorderFactory.createEmptyBorder(2, 2, 2, 2)
+    );
   }
 
   public static JComponent createInformationLabel(SimpleColoredText text) {
@@ -51,12 +54,7 @@ public class HintUtil {
     label.setText(text);
     label.setIcon(QUESTION_ICON);
 //    label.setBorder(BorderFactory.createLineBorder(Color.black));
-    label.setBorder(
-      BorderFactory.createCompoundBorder(
-        new SideBorder2(Color.white, Color.white, Color.gray, Color.gray, 1),
-        BorderFactory.createEmptyBorder(2, 2, 2, 2)
-      )
-    );
+    label.setBorder(createHintBorder());
     label.setForeground(Color.black);
     label.setFont(getBoldFont());
     label.setBackground(QUESTION_COLOR);
@@ -89,11 +87,7 @@ public class HintUtil {
     label.setText(text.replaceAll("\n"," "));
     label.setIcon(ERROR_ICON);
 //    label.setBorder(BorderFactory.createLineBorder(Color.black));
-    label.setBorder(
-      BorderFactory.createCompoundBorder(
-        new SideBorder2(Color.white, Color.white, Color.gray, Color.gray, 1),
-        BorderFactory.createEmptyBorder(2, 2, 2, 2)
-      )
+    label.setBorder(createHintBorder()
     );
     label.setForeground(Color.black);
     label.setFont(getBoldFont());

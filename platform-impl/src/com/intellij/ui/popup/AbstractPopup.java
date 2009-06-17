@@ -13,10 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -37,11 +34,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
-public class AbstractPopup implements JBPopup, Disposable {
+public class AbstractPopup implements JBPopup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.AbstractPopup");
 
   private static final Image ourMacCorner = ImageLoader.loadFromResource("/general/macCorner.png");
@@ -124,31 +120,37 @@ public class AbstractPopup implements JBPopup, Disposable {
   AbstractPopup() {
   }
 
-  AbstractPopup init(final Project project, @NotNull final JComponent component, @Nullable final JComponent preferredFocusedComponent, final boolean requestFocus,
-                      final boolean focusable,
-                      final boolean forceHeavyweight,
-                      final String dimensionServiceKey,
-                      final boolean resizable,
-                      @Nullable final String caption,
-                      @Nullable final Computable<Boolean> callback,
-                      final boolean cancelOnClickOutside,
-                      @Nullable final Set<JBPopupListener> listeners,
-                      final boolean useDimServiceForXYLocation,
-                      @Nullable final IconButton cancelButton,
-                      @Nullable final MouseChecker cancelOnMouseOutCallback,
-                      final boolean cancelOnWindow,
-                      @Nullable final ActiveIcon titleIcon,
-                      final boolean cancelKeyEnabled,
-                      final boolean locateBycontent,
-                      final boolean placeWithinScreenBounds,
-                      @Nullable final Dimension minSize,
-                      float alpha,
-                      @Nullable MaskProvider maskProvider,
-                      boolean inStack,
-                      boolean modalContext,
-                      @Nullable Component[] focusOwners,
-                      @Nullable String adText,
-                      final boolean headerAlwaysFocusable) {
+  AbstractPopup init(final Project project,
+                     @NotNull final JComponent component,
+                     @Nullable final JComponent preferredFocusedComponent,
+                     final boolean requestFocus,
+                     final boolean focusable,
+                     final boolean forceHeavyweight,
+                     final String dimensionServiceKey,
+                     final boolean resizable,
+                     @Nullable final String caption,
+                     @Nullable final Computable<Boolean> callback,
+                     final boolean cancelOnClickOutside,
+                     @Nullable final Set<JBPopupListener> listeners,
+                     final boolean useDimServiceForXYLocation,
+                     InplaceButton commandButton,
+                     @Nullable final IconButton cancelButton,
+                     @Nullable final MouseChecker cancelOnMouseOutCallback,
+                     final boolean cancelOnWindow,
+                     @Nullable final ActiveIcon titleIcon,
+                     final boolean cancelKeyEnabled,
+                     final boolean locateBycontent,
+                     final boolean placeWithinScreenBounds,
+                     @Nullable final Dimension minSize,
+                     float alpha,
+                     @Nullable MaskProvider maskProvider,
+                     boolean inStack,
+                     boolean modalContext,
+                     @Nullable Component[] focusOwners,
+                     @Nullable String adText,
+                     final boolean headerAlwaysFocusable,
+                     @NotNull List<Pair<ActionListener, KeyStroke>> keyboardActions,
+                     Component settingsButtons) {
 
     if (requestFocus && !focusable) {
       assert false : "Incorrect argument combination: requestFocus=" + requestFocus + " focusable=" + focusable;
@@ -193,6 +195,9 @@ public class AbstractPopup implements JBPopup, Disposable {
           }
         }));
       }
+      else if (commandButton != null) {
+        myCaption.setButtonComponent(commandButton);
+      }
     }
     else {
       myCaption = new CaptionPanel();
@@ -218,6 +223,14 @@ public class AbstractPopup implements JBPopup, Disposable {
     myUseDimServiceForXYLocation = useDimServiceForXYLocation;
     myCancelOnWindow = cancelOnWindow;
     myMinSize = minSize;
+
+    for (Pair<ActionListener, KeyStroke> pair : keyboardActions) {
+      myContent.registerKeyboardAction(pair.getFirst(), pair.getSecond(), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }
+
+    if (settingsButtons != null) {
+      myCaption.addSettingsComponent(settingsButtons);
+    }
 
     return this;
   }

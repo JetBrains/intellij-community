@@ -11,6 +11,10 @@ import javax.swing.*;
  * @author cdr
  */
 public abstract class HintManager {
+  public static HintManager getInstance() {
+    return ServiceManager.getService(HintManager.class);
+  }
+
   // Constants for 'constraint' parameter of showErrorHint()
   public static final short ABOVE = 1;
   public static final short UNDER = 2;
@@ -32,7 +36,8 @@ public abstract class HintManager {
 
   public abstract void showErrorHint(@NotNull Editor editor, String text);
 
-  public abstract void showInformationHint(@NotNull Editor editor, String text);
+  public abstract void showInformationHint(@NotNull Editor editor, @NotNull String text);
+  public abstract void showInformationHint(@NotNull Editor editor, @NotNull JComponent component);
 
   public abstract void showQuestionHint(
     Editor editor,
@@ -41,11 +46,7 @@ public abstract class HintManager {
     int offset2,
     QuestionAction action);
 
-  protected abstract boolean hideHints(int mask, boolean onlyOne, boolean editorChanged);
-
-  public static HintManager getInstance() {
-    return ServiceManager.getService(HintManager.class);
-  }
+  public abstract boolean hideHints(int mask, boolean onlyOne, boolean editorChanged);
 
   public abstract void showErrorHint(
     Editor editor,

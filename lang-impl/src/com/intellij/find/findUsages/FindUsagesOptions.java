@@ -2,14 +2,14 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindSettings;
+import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  *
@@ -39,8 +39,17 @@ public class FindUsagesOptions extends UserDataHolderBase implements Cloneable {
   public boolean isThrowUsages = false;
 
   public FindUsagesOptions(@NotNull Project project) {
-    NamedScope defaultScope = NamedScopesHolder.getScope(project, FindSettings.getInstance().getDefaultScopeName());
-    searchScope = defaultScope == null ? ProjectScope.getProjectScope(project) : GlobalSearchScope.filterScope(project, defaultScope);
+    String defaultScopeName = FindSettings.getInstance().getDefaultScopeName();
+    List<SearchScope> predefined = ScopeChooserCombo.getPredefinedScopes(project, true, false, false, false);
+    for (SearchScope scope : predefined) {
+      if (scope.getDisplayName().equals(defaultScopeName)) {
+        searchScope = scope;
+        break;
+      }
+    }
+    if (searchScope == null) {
+      searchScope = ProjectScope.getProjectScope(project);
+    }
   }
 
   public Object clone() {

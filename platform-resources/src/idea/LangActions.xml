@@ -114,6 +114,7 @@
     <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
       <add-to-group group-id="ViewMenu" relative-to-action="ViewStatusBar" anchor="after"/>
     </action>
+    <action id="ShowUsagesSettings" class="com.intellij.find.actions.ShowUsagesAction$ShowSettings"/>
 
     <group id="CodeEditorBaseGroup">
       <separator/>

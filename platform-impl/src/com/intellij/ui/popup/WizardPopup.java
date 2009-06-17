@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Collections;
 
 public abstract class WizardPopup extends AbstractPopup implements ActionListener, ElementFilter {
 
@@ -72,8 +74,8 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     init(project, myScrollPane, getPreferredFocusableComponent(), true, true, true, null,
-         false, aStep.getTitle(), null, true, null, false, null, null, false, null, true, false, true, null, 0f,
-         null, true, false, new Component[0], null, true);
+         false, aStep.getTitle(), null, true, null, false, null, null, null, false, null, true, false, true, null, 0f,
+         null, true, false, new Component[0], null, true, Collections.<Pair<ActionListener, KeyStroke>>emptyList(), null);
 
     registerAction("disposeAll", KeyEvent.VK_ESCAPE, InputEvent.SHIFT_MASK, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {

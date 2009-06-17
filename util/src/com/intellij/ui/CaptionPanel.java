@@ -16,6 +16,8 @@
 
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -25,14 +27,15 @@ import java.awt.event.MouseEvent;
  * @author max
  */
 public class CaptionPanel extends JPanel {
-  private final static Color CNT_COLOR = new Color(240, 240, 240);
-  private final static Color BND_COLOR = new Color(240, 240, 240);
+  private static final Color CNT_COLOR = new Color(240, 240, 240);
+  private static final Color BND_COLOR = new Color(240, 240, 240);
 
-  public final static Color CNT_ACTIVE_COLOR = new Color(0xcacaca);
-  public final static Color BND_ACTIVE_COLOR = new Color(0xefefef);
+  public static final Color CNT_ACTIVE_COLOR = new Color(0xcacaca);
+  public static final Color BND_ACTIVE_COLOR = new Color(0xefefef);
 
   private boolean myActive = false;
   private ActiveComponent myButtonComponent;
+  private JComponent mySettingComponent;
 
   public CaptionPanel() {
     setLayout(new BorderLayout());
@@ -70,12 +73,26 @@ public class CaptionPanel extends JPanel {
     repaint();
   }
 
-  public void setButtonComponent(ActiveComponent component) {
+  public void setButtonComponent(@NotNull ActiveComponent component) {
     if (myButtonComponent != null) {
       remove(myButtonComponent.getComponent());
     }
-    add(component.getComponent(), BorderLayout.EAST);
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(new JLabel(" "), BorderLayout.WEST);
+    panel.add(component.getComponent(), BorderLayout.CENTER);
+    panel.setOpaque(false);
+    add(panel, BorderLayout.EAST);
     myButtonComponent = component;
+  }
+
+  public void addSettingsComponent(Component component) {
+    if (mySettingComponent == null) {
+      mySettingComponent = new JPanel(new FlowLayout());
+      mySettingComponent.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
+      add(mySettingComponent, BorderLayout.WEST);
+      mySettingComponent.setOpaque(false);
+    }
+    mySettingComponent.add(component);
   }
 
   public boolean isWithinPanel(MouseEvent e) {

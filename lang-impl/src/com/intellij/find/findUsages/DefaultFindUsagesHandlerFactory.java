@@ -11,7 +11,7 @@ import com.intellij.lang.findUsages.LanguageFindUsages;
 /**
  * @author peter
 */
-public class DefaultFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
+public final class DefaultFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   public boolean canFindUsages(final PsiElement element) {
     if (element instanceof PsiFile) {
       if (((PsiFile)element).getVirtualFile() == null) return false;
