@@ -14,6 +14,7 @@ import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
 import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.util.ColorProgressBar;
@@ -129,8 +130,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(myProject, myTestsRootNode);
     myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
     Disposer.register(this, myTreeBuilder);
-    myAnimator = new MyAnimator(myTreeBuilder);
-    Disposer.register(this, myAnimator);
+    myAnimator = new MyAnimator(this, myTreeBuilder);
 
     return myTreeView;
   }
@@ -438,7 +438,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
 
 
   private static class MyAnimator extends TestsProgressAnimator {
-    public MyAnimator(final AbstractTestTreeBuilder builder) {
+    public MyAnimator(final Disposable parentDisposable, final AbstractTestTreeBuilder builder) {
+      super(parentDisposable);
       init(builder);
     }
   }

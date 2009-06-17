@@ -3,6 +3,7 @@ package com.intellij.execution.testframework.ui;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
@@ -21,7 +22,9 @@ public abstract class TestsProgressAnimator implements Runnable, Disposable {
   private AbstractTestProxy myCurrentTestCase;
   private AbstractTestTreeBuilder myTreeBuilder;
 
-
+  protected TestsProgressAnimator(Disposable parentDisposable) {
+    Disposer.register(parentDisposable, this);
+  }
 
   static {
     for (int i = 0; i < FRAMES_COUNT; i++)

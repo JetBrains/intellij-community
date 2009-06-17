@@ -13,7 +13,8 @@ import javax.swing.tree.DefaultTreeModel;
  * @author: Roman Chernyatchik
  */
 public abstract class AbstractTestTreeBuilder extends AbstractTreeBuilder {
-  public AbstractTestTreeBuilder(final JTree tree, final DefaultTreeModel defaultTreeModel,
+  public AbstractTestTreeBuilder(final JTree tree,
+                                 final DefaultTreeModel defaultTreeModel,
                                  final AbstractTreeStructure structure,
                                  final IndexComparator instance) {
     super(tree, defaultTreeModel, structure, instance);
@@ -24,15 +25,15 @@ public abstract class AbstractTestTreeBuilder extends AbstractTreeBuilder {
   }
 
   public void repaintWithParents(final AbstractTestProxy testProxy) {
-      AbstractTestProxy current = testProxy;
-      do {
-          DefaultMutableTreeNode node = getNodeForElement(current);
-          if (node != null) {
-              JTree tree = getTree();
-              ((DefaultTreeModel) tree.getModel()).nodeChanged(node);
-          }
-          current = current.getParent();
+    AbstractTestProxy current = testProxy;
+    do {
+      DefaultMutableTreeNode node = getNodeForElement(current);
+      if (node != null) {
+        JTree tree = getTree();
+        ((DefaultTreeModel)tree.getModel()).nodeChanged(node);
       }
-      while (current != null);
+      current = current.getParent();
+    }
+    while (current != null);
   }
 }

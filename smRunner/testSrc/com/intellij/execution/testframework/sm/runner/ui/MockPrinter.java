@@ -66,7 +66,7 @@ public class MockPrinter implements Printer {
     return myHasPrinted;
   }
 
-  public void onNewAvaliable(Printable printable) {
+  public void onNewAvailable(Printable printable) {
     printable.printOn(this);
   }
 

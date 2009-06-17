@@ -58,6 +58,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
     myStatusLine = createStatusLine();
     JComponent testTreeView = createTestTreeView();
     myToolbarPanel = createToolbarPanel();
+    Disposer.register(this, myToolbarPanel);
     final Splitter splitter = createSplitter(mySplitterProportionProperty, mySplitterDefaultProportion);
     Disposer.register(this, new Disposable(){
       public void dispose() {

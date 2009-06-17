@@ -35,7 +35,6 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
     myRunnerSettings = runnerSettings;
     myConfigurationPerRunnerSettings = configurationPerRunnerSettings;
     mySplitterProperty = splitterProperty;
-    consoleProperties.setConsole(this);
   }
 
   protected TestResultsPanel createTestResultsPanel() {

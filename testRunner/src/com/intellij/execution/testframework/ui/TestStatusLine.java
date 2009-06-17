@@ -19,6 +19,7 @@ public class TestStatusLine extends JPanel {
     final JPanel progressPanel = new JPanel(new GridBagLayout());
     add(progressPanel);
     progressPanel.add(myProgressBar, new GridBagConstraints(0, 0, 0, 0, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    myProgressBar.setColor(ColorProgressBar.GREEN);
   }
 
   public void setStatusColor(Color color) {

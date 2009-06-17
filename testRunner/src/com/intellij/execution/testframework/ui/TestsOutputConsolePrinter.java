@@ -64,7 +64,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
     myConsole.print(text, contentType);
   }
 
-  public void onNewAvaliable(final Printable printable) {
+  public void onNewAvailable(final Printable printable) {
     printable.printOn(myCurrentOutputStorage);
     printable.printOn(myOutput);
   }

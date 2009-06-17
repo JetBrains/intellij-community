@@ -13,6 +13,7 @@ import com.intellij.execution.testframework.actions.TestFrameworkActions;
 import com.intellij.execution.testframework.actions.TestTreeExpander;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -23,7 +24,7 @@ import com.intellij.util.config.ToggleBooleanProperty;
 import javax.swing.*;
 import java.awt.*;
 
-public class ToolbarPanel extends JPanel implements OccurenceNavigator {
+public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposable {
   protected final TestTreeExpander myTreeExpander = new TestTreeExpander();
   protected final FailedTestsNavigator myOccurenceNavigator;
   protected final ScrollToTestSourceAction myScrollToSource;

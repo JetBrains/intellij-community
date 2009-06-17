@@ -335,7 +335,7 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
   }
 
   private void fireOnNewPrintable(final Printable printable) {
-    myPrinter.onNewAvaliable(printable);
+    myPrinter.onNewAvailable(printable);
   }
 
   @NotNull
