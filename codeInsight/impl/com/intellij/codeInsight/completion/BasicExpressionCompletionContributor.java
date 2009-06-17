@@ -5,10 +5,9 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
+import com.intellij.codeInsight.lookup.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.patterns.PsiJavaPatterns;
 import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
@@ -19,10 +18,9 @@ import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.getters.*;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -134,6 +132,18 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
             result.addElement(LookupItemUtil.objectToLookupItem(expression));
           }
         }
+
+        processInstanceOfs(position, new Consumer<PsiInstanceOfExpression>() {
+          public void consume(PsiInstanceOfExpression psiInstanceOfExpression) {
+            final PsiTypeElement checkType = psiInstanceOfExpression.getCheckType();
+            if (checkType != null) {
+              final PsiType castType = checkType.getType();
+              if (expectedType.isAssignableFrom(castType)) {
+                result.addElement(new CastingLookupElementDecorator(new ExpressionLookupItem(psiInstanceOfExpression.getOperand()), castType));
+              }
+            }
+          }
+        });
       }
     });
 
@@ -144,6 +154,30 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
       }
     });
 
+  }
+
+  private static void processInstanceOfs(PsiElement position, Consumer<PsiInstanceOfExpression> instanceofConsumer) {
+    PsiElement scope = position.getParent();
+    PsiElement lastParent = position;
+    while (scope != null && !(scope instanceof PsiFile)) {
+      if (scope instanceof PsiIfStatement) {
+        final PsiIfStatement statement = (PsiIfStatement)scope;
+        final PsiExpression condition = statement.getCondition();
+        if (lastParent != condition && condition instanceof PsiInstanceOfExpression) {
+          instanceofConsumer.consume((PsiInstanceOfExpression)condition);
+        }
+      }
+      else if (scope instanceof PsiConditionalExpression) {
+        final PsiConditionalExpression expression = (PsiConditionalExpression)scope;
+        final PsiExpression condition = expression.getCondition();
+        if (lastParent != condition && condition instanceof PsiInstanceOfExpression) {
+          instanceofConsumer.consume((PsiInstanceOfExpression) condition);
+        }
+      }
+
+      lastParent = scope;
+      scope = scope.getContext();
+    }
   }
 
   private static boolean isClassType(final PsiType type, final String className) {

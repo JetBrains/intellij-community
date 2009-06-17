@@ -212,6 +212,15 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
           final Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
             public void consume(final LookupElement lookupElement) {
+              if (lookupElement instanceof TypedLookupItem) {
+                final TypedLookupItem item = (TypedLookupItem)lookupElement;
+                final PsiType psiType = item.getType();
+                if (psiType != null && type.isAssignableFrom(psiType)) {
+                  result.addElement(lookupElement);
+                }
+                return;
+              }
+
               final Object object = lookupElement.getObject();
               if (!filter.isClassAcceptable(object.getClass())) return;
 
@@ -233,12 +242,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
             }
           };
           for (ExpressionSmartCompletionContributor contributor : ExpressionSmartCompletionContributor.CONTRIBUTORS) {
-            final CompletionResultSet set =
-              CompletionService.getCompletionService().createResultSet(parameters, consumer, JavaSmartCompletionContributor.this);
-            contributor.fillCompletionVariants(parameters, set);
-            if (set.isStopped()) {
-              return;
-            }
+            contributor.fillCompletionVariants(parameters, CompletionService.getCompletionService().createResultSet(parameters, consumer, JavaSmartCompletionContributor.this));
           }
 
         }

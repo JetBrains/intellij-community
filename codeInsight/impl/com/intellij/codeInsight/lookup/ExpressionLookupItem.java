@@ -4,23 +4,39 @@
  */
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.*;
+import com.intellij.util.Icons;
 
 /**
  * @author peter
 */
-class ExpressionLookupItem extends LookupItem<PsiExpression> {
-public ExpressionLookupItem(final PsiExpression expression) {
-  super(expression, expression.getText());
-}
+public class ExpressionLookupItem extends LookupItem<PsiExpression> implements TypedLookupItem {
+  public ExpressionLookupItem(final PsiExpression expression) {
+    super(expression, expression.getText());
 
-@Override
-public boolean equals(final Object o) {
-  return o instanceof ExpressionLookupItem && getLookupString().equals(((ExpressionLookupItem)o).getLookupString());
-}
+    if (expression instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+      final PsiElement element = referenceExpression.resolve();
+      if (element != null) {
+        setIcon(element.getIcon(0));
+      }
+    }
+    if (expression instanceof PsiMethodCallExpression) {
+      setIcon(Icons.METHOD_ICON);
+    }
+  }
 
-@Override
-public int hashCode() {
-  return getLookupString().hashCode();
-}
+  public PsiType getType() {
+    return getObject().getType();
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    return o instanceof ExpressionLookupItem && getLookupString().equals(((ExpressionLookupItem)o).getLookupString());
+  }
+
+  @Override
+  public int hashCode() {
+    return getLookupString().hashCode();
+  }
 }
