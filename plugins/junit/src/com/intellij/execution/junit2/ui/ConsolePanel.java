@@ -60,8 +60,6 @@ class ConsolePanel extends TestResultsPanel implements Disposable {
   private StatisticsPanel myStatisticsPanel;
   private TestTreeView myTreeView;
   private TestsOutputConsolePrinter myPrinter;
-  private final RunnerSettings myRunnerSettings;
-  private final ConfigurationPerRunnerSettings myConfigurationSettings;
   private StartingProgress myStartingProgress;
 
   public ConsolePanel(final JComponent console,
@@ -69,10 +67,8 @@ class ConsolePanel extends TestResultsPanel implements Disposable {
                       final JUnitConsoleProperties properties,
                       final RunnerSettings runnerSettings,
                       final ConfigurationPerRunnerSettings configurationSettings, AnAction[] consoleActions) {
-    super(console, consoleActions, properties, PROPORTION_PROPERTY, DEFAULT_PROPORTION);
+    super(console, consoleActions, properties, runnerSettings, configurationSettings, PROPORTION_PROPERTY, DEFAULT_PROPORTION);
     myPrinter = printer;
-    myRunnerSettings = runnerSettings;
-    myConfigurationSettings = configurationSettings;
   }
 
   public void initUI() {
