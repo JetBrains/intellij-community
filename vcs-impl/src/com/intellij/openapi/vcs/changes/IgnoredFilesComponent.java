@@ -2,10 +2,14 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class IgnoredFilesComponent {
@@ -15,6 +19,14 @@ public class IgnoredFilesComponent {
   public IgnoredFilesComponent(final Project project) {
     myProject = project;
     myFilesToIgnore = new HashSet<IgnoredFileBean>();
+
+    project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      public void before(List<? extends VFileEvent> events) {}
+
+      public void after(List<? extends VFileEvent> events) {
+        resetCaches();
+      }
+    });
   }
 
   public void add(final IgnoredFileBean... filesToIgnore) {
@@ -44,6 +56,14 @@ public class IgnoredFilesComponent {
   public IgnoredFileBean[] getFilesToIgnore() {
     synchronized(myFilesToIgnore) {
       return myFilesToIgnore.toArray(new IgnoredFileBean[myFilesToIgnore.size()]);
+    }
+  }
+
+  private void resetCaches() {
+    synchronized (myFilesToIgnore) {
+      for (IgnoredFileBean bean : myFilesToIgnore) {
+        bean.resetCache();
+      }
     }
   }
 

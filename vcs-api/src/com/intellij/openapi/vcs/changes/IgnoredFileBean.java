@@ -27,6 +27,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,7 +105,7 @@ public class IgnoredFileBean {
     }
     else {
       VirtualFile selector = resolve();
-      if (selector == null) return false;
+      if (selector == NullVirtualFile.INSTANCE) return false;
 
       if (myType == IgnoreSettingsType.FILE) {
         return selector == file;
@@ -119,11 +120,12 @@ public class IgnoredFileBean {
     }
   }
 
-  @Nullable
   private VirtualFile resolve() {
-    if (myCachedResolved == null || !myCachedResolved.isValid()) {
-      myCachedResolved = doResolve();
+    if (myCachedResolved == null) {
+      VirtualFile resolved = doResolve();
+      myCachedResolved = resolved != null ? resolved : NullVirtualFile.INSTANCE;
     }
+
     return myCachedResolved;
   }
 
@@ -140,5 +142,9 @@ public class IgnoredFileBean {
     if (resolvedRelative != null) return resolvedRelative;
 
     return LocalFileSystem.getInstance().findFileByPath(path);
+  }
+
+  public void resetCache() {
+    myCachedResolved = null;
   }
 }
