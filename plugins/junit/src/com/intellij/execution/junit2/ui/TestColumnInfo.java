@@ -203,6 +203,9 @@ public abstract class TestColumnInfo extends ColumnInfo implements Comparator {
     private void customizeCellRenderer(final JTable table, final int row) {
       final StatisticsTable model = (StatisticsTable)table.getModel();
       final TestProxy test = model.getTestAt(row);
+      if (test == null) {
+        return;
+      }
       if (test.getChildCount() == 0) {
         customizeTestCase(test);
       }
