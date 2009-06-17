@@ -103,9 +103,13 @@ public class RefreshSessionImpl extends RefreshSession {
         notifyCacheUpdaters();
       }
       finally {
-        manager.fireAfterRefreshFinish(myIsAsync);
-        if (myFinishRunnable != null) {
-          myFinishRunnable.run();
+        try {
+          manager.fireAfterRefreshFinish(myIsAsync);
+        }
+        finally {
+          if (myFinishRunnable != null) {
+            myFinishRunnable.run();
+          }
         }
       }
     }
