@@ -23,7 +23,7 @@ import com.intellij.util.config.ToggleBooleanProperty;
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class ToolbarPanel extends JPanel implements OccurenceNavigator {
+public class ToolbarPanel extends JPanel implements OccurenceNavigator {
   protected final TestTreeExpander myTreeExpander = new TestTreeExpander();
   protected final FailedTestsNavigator myOccurenceNavigator;
   protected final ScrollToTestSourceAction myScrollToSource;
@@ -82,9 +82,10 @@ public abstract class ToolbarPanel extends JPanel implements OccurenceNavigator 
         getComponent(), BorderLayout.CENTER);
   }
 
-  protected abstract void appendAdditionalActions(DefaultActionGroup actionGroup, TestConsoleProperties properties, RunnerSettings runnerSettings,
-                                                  ConfigurationPerRunnerSettings configurationSettings,
-                                                  JComponent parent);
+  protected void appendAdditionalActions(DefaultActionGroup actionGroup, TestConsoleProperties properties, RunnerSettings runnerSettings,
+                                         ConfigurationPerRunnerSettings configurationSettings,
+                                         JComponent parent) {
+  }
 
   public void setModel(final TestFrameworkRunningModel model) {
     TestFrameworkActions.installFilterAction(model);

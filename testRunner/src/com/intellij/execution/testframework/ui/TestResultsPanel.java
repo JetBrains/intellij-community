@@ -1,5 +1,7 @@
 package com.intellij.execution.testframework.ui;
 
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkPropertyListener;
 import com.intellij.execution.testframework.ToolbarPanel;
@@ -30,12 +32,14 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
   protected ToolbarPanel myToolbarPanel;
   private final String mySplitterProportionProperty;
   private final float mySplitterDefaultProportion;
+  protected final RunnerSettings myRunnerSettings;
+  protected final ConfigurationPerRunnerSettings myConfigurationSettings;
   protected final AnAction[] myConsoleActions;
   protected final TestConsoleProperties myProperties;
   protected TestStatusLine myStatusLine;
 
-  protected TestResultsPanel(@NotNull JComponent console, AnAction[] consoleActions,
-                             TestConsoleProperties properties,
+  protected TestResultsPanel(@NotNull JComponent console, AnAction[] consoleActions, TestConsoleProperties properties,
+                             RunnerSettings runnerSettings, ConfigurationPerRunnerSettings configurationSettings,
                              String splitterProportionProperty, float splitterDefaultProportion) {
     super(new BorderLayout(0,1));
     myConsole = console;
@@ -43,6 +47,8 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
     myProperties = properties;
     mySplitterProportionProperty = splitterProportionProperty;
     mySplitterDefaultProportion = splitterDefaultProportion;
+    myRunnerSettings = runnerSettings;
+    myConfigurationSettings = configurationSettings;
   }
 
   public void initUI() {
@@ -98,7 +104,9 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
 
   protected abstract JComponent createStatisticsPanel();
 
-  protected abstract ToolbarPanel createToolbarPanel();
+  protected ToolbarPanel createToolbarPanel() {
+    return new ToolbarPanel(myProperties, myRunnerSettings, myConfigurationSettings, this);
+  }
 
   protected TestStatusLine createStatusLine() {
     return new TestStatusLine();

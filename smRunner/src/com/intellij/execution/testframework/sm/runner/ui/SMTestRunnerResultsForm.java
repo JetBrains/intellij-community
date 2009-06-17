@@ -49,8 +49,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
   private final SMTestProxy myTestsRootNode;
   private SMTRunnerTreeBuilder myTreeBuilder;
   private final TestConsoleProperties myConsoleProperties;
-  private final RunnerSettings myRunnerSettings;
-  private final ConfigurationPerRunnerSettings myConfigurationSettings;
 
   private final List<ModelListener> myListeners = new ArrayList<ModelListener>();
   private final List<EventsListener> myEventListeners = new ArrayList<EventsListener>();
@@ -82,20 +80,15 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
                                  final RunnerSettings runnerSettings,
                                  final ConfigurationPerRunnerSettings configurationSettings,
                                  final String splitterPropertyName) {
-    super(console, consoleActions, consoleProperties, splitterPropertyName != null ? DEFAULT_SM_RUNNER_SPLITTER_PROPERTY : splitterPropertyName, 0.5f);
+    super(console, consoleActions, consoleProperties, runnerSettings, configurationSettings,
+          splitterPropertyName != null ? DEFAULT_SM_RUNNER_SPLITTER_PROPERTY : splitterPropertyName, 0.5f);
     myConsoleProperties = consoleProperties;
-    myRunnerSettings = runnerSettings;
-    myConfigurationSettings = configurationSettings;
 
     myProject = runConfiguration.getProject();
 
     //Create tests common suite root
     //noinspection HardCodedStringLiteral
     myTestsRootNode = new SMTestProxy("[root]", true, null);
-
-    //TODO: popup menu
-    //myTabs.setPopupGroup(, ViewContext.CELL_POPUP_PLACE);
-
 
     // Fire selection changed and move focus on SHIFT+ENTER
     //TODO[romeo] improve
