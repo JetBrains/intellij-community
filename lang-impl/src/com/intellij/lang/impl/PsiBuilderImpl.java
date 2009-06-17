@@ -52,7 +52,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.impl.PsiBuilderImpl");
 
   private int[] myLexStarts;
-  private int[] myLexEnds;
   private IElementType[] myLexTypes;
 
   private final MyList myProduction = new MyList();
@@ -141,7 +140,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     int approxLexCount = Math.max(10, myText.length() / 5);
 
     myLexStarts = new int[approxLexCount];
-    myLexEnds = new int[approxLexCount];
     myLexTypes = new IElementType[approxLexCount];
 
     int i = 0;
@@ -151,15 +149,16 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       IElementType type = myLexer.getTokenType();
       if (type == null) break;
 
-      if (i >= myLexStarts.length) {
+      if (i >= myLexTypes.length - 1) {
         resizeLexems(i * 3 / 2);
       }
       myLexStarts[i] = myLexer.getTokenStart();
-      myLexEnds[i] = myLexer.getTokenEnd();
       myLexTypes[i] = type;
       i++;
       myLexer.advance();
     }
+
+    myLexStarts[i] = myText.length();
 
     myLexemCount = i;
   }
@@ -445,7 +444,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     if (myRemapper != null) {
       IElementType type = myLexTypes[myCurrentLexem];
-      type = myRemapper.filter(type, myLexStarts[myCurrentLexem], myLexEnds[myCurrentLexem], myLexer.getBufferSequence());
+      type = myRemapper.filter(type, myLexStarts[myCurrentLexem], myLexStarts[myCurrentLexem + 1], myLexer.getBufferSequence());
       myLexTypes[myCurrentLexem] = type; // filter may have changed the type 
       return type;
     }
@@ -480,18 +479,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     if (type instanceof TokenWrapper) {
       return ((TokenWrapper)type).getValue();
     }
-    return myText.subSequence(myLexStarts[myCurrentLexem], myLexEnds[myCurrentLexem]).toString();
+    return myText.subSequence(myLexStarts[myCurrentLexem], myLexStarts[myCurrentLexem + 1]).toString();
   }
 
   private void resizeLexems(final int newSize) {
-    int count = Math.min(newSize, myLexStarts.length);
-    int[] newStarts = new int[newSize];
+    int count = Math.min(newSize, myLexTypes.length);
+    int[] newStarts = new int[newSize + 1];
     System.arraycopy(myLexStarts, 0, newStarts, 0, count);
     myLexStarts = newStarts;
-
-    int[] newEnds = new int[newSize];
-    System.arraycopy(myLexEnds, 0, newEnds, 0, count);
-    myLexEnds = newEnds;
 
     IElementType[] newTypes = new IElementType[newSize];
     System.arraycopy(myLexTypes, 0, newTypes, 0, count);
@@ -797,12 +792,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       LOG.error("Not all of the tokens inserted to the tree, parsed text:\n" + myText);
     }
 
-    if (myLexStarts.length <= myCurrentLexem) {
+    if (myLexStarts.length <= myCurrentLexem + 1) {
       resizeLexems(myCurrentLexem + 1);
     }
 
     myLexStarts[myCurrentLexem] = myLexer.getTokenStart(); // $ terminating token.;
-    myLexEnds[myCurrentLexem] = 0;
+    myLexStarts[myCurrentLexem + 1] = 0;
     myLexTypes[myCurrentLexem] = null;
 
     LOG.assertTrue(curNode == rootMarker, UNBALANCED_MESSAGE);
@@ -844,7 +839,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     lastIdx = Math.min(lastIdx, myLexemCount);
     while (curToken < lastIdx) {
       final int start = myLexStarts[curToken];
-      final int end = myLexEnds[curToken];
+      final int end = myLexStarts[curToken + 1];
       if (start < end || myLexTypes[curToken] instanceof ILeafElementType) { // Empty token. Most probably a parser directive like indent/dedent in phyton
         final IElementType type = myLexTypes[curToken];
         final TreeElement leaf = createLeaf(type, start, end);
@@ -1022,7 +1017,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       lastIdx = Math.min(lastIdx, myLexemCount);
       while (curToken < lastIdx) {
         final int start = myLexStarts[curToken];
-        final int end = myLexEnds[curToken];
+        final int end = myLexStarts[curToken + 1];
         final IElementType type = myLexTypes[curToken];
         if (start < end || type instanceof ILeafElementType) { // Empty token. Most probably a parser directive like indent/dedent in phyton
           Token lexem = myPool.alloc();
