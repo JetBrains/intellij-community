@@ -4,15 +4,17 @@
  */
 package com.intellij.execution.testframework;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.containers.Convertor;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,8 +39,8 @@ public abstract class TestTreeView extends Tree implements DataProvider {
     setModel(new DefaultTreeModel(new DefaultMutableTreeNode(model.getRoot())));
     getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myModel = model;
-    myModel.addListener(new TestFrameworkRunningModel.ModelListener() {
-      public void onDispose() {
+    Disposer.register(myModel, new Disposable() {
+      public void dispose() {
         setModel(null);
         myModel = null;
       }

@@ -51,7 +51,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
   private SMTRunnerTreeBuilder myTreeBuilder;
   private final TestConsoleProperties myConsoleProperties;
 
-  private final List<ModelListener> myListeners = new ArrayList<ModelListener>();
   private final List<EventsListener> myEventListeners = new ArrayList<EventsListener>();
 
   private PropagateSelectionHandler myShowStatisticForProxyHandler;
@@ -267,10 +266,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     myTreeBuilder.updateFromRoot();
   }
 
-  public void addListener(final ModelListener l) {
-    myListeners.add(l);
-  }
-
   public boolean isRunning() {
     return getRoot().isInProgress();
   }
@@ -321,9 +316,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
   }
 
   public void dispose() {
-    for (ModelListener listener : myListeners) {
-      listener.onDispose();
-    }
+    super.dispose();
     myShowStatisticForProxyHandler = null;
     myEventListeners.clear();
   }

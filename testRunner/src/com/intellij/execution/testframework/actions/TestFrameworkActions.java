@@ -8,6 +8,8 @@ import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkPropertyListener;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.config.AbstractProperty;
 
 public class TestFrameworkActions {
@@ -33,8 +35,8 @@ public class TestFrameworkActions {
     else {
       properties.addListener(property, propertyListener);
     }
-    model.addListener(new TestFrameworkRunningModel.ModelListener() {
-      public void onDispose() {
+    Disposer.register(model, new Disposable() {
+      public void dispose() {
         properties.removeListener(property, propertyListener);
       }
     });

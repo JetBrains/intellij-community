@@ -2,6 +2,8 @@ package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,8 +30,8 @@ public class FailedTestsNavigator implements OccurenceNavigator {
 
   public void setModel(final TestFrameworkRunningModel model) {
     myModel = model;
-    myModel.addListener(new TestFrameworkRunningModel.ModelListener() {
-      public void onDispose() {
+    Disposer.register(myModel, new Disposable() {
+      public void dispose() {
         myModel = null;
       }
     });

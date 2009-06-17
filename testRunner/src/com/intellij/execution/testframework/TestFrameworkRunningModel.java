@@ -11,8 +11,6 @@ public interface TestFrameworkRunningModel extends Disposable {
 
   void setFilter(final Filter filter);
 
-  void addListener(ModelListener l);
-
   boolean isRunning();
 
   TestTreeView getTreeView();
@@ -22,8 +20,4 @@ public interface TestFrameworkRunningModel extends Disposable {
   AbstractTestProxy getRoot();
 
   void selectAndNotify(final AbstractTestProxy testProxy);
-
-  interface ModelListener {
-    void onDispose();
-  }
 }
