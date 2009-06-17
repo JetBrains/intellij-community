@@ -75,7 +75,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
         return ContainerUtil.createMaybeSingletonList(checkRequiredGenericValue((GenericDomValue)element, required, holder));
       }
     }
-    if (element.getXmlElement() != null) {
+    if (DomUtil.hasXml(element)) {
       final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
       final DomGenericInfo info = element.getGenericInfo();
       for (final AbstractDomChildrenDescription description : info.getChildrenDescriptions()) {
@@ -83,8 +83,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
           final DomCollectionChildDescription childDescription = (DomCollectionChildDescription)description;
           final Required annotation = description.getAnnotation(Required.class);
           if (annotation != null && annotation.value()) {
-            list.add(holder.createProblem(element, childDescription,
-                                          IdeBundle.message("child.tag.0.should.be.defined", ((DomCollectionChildDescription)description).getXmlElementName())));
+            list.add(holder.createProblem(element, childDescription, IdeBundle.message("child.tag.0.should.be.defined", ((DomCollectionChildDescription)description).getXmlElementName())));
           }
         }
       }

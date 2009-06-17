@@ -66,7 +66,7 @@ public class DeleteDomElement extends BaseDomTreeAction {
     boolean enabled = false;
     if (selectedNode instanceof BaseDomElementNode) {
       final DomElement domElement = ((BaseDomElementNode)selectedNode).getDomElement();
-      if (domElement.isValid() && domElement.getXmlElement() != null && !(domElement.getParent() instanceof DomFileElement)) {
+      if (domElement.isValid() && DomUtil.hasXml(domElement) && !(domElement.getParent() instanceof DomFileElement)) {
         enabled = true;
       }
     }

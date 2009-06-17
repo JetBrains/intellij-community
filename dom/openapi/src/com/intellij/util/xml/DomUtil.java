@@ -197,7 +197,7 @@ public class DomUtil {
       final SmartList<DomElement> result = new SmartList<DomElement>();
       parent.acceptChildren(new DomElementVisitor() {
         public void visitDomElement(final DomElement element) {
-          if (element.getXmlElement() != null) {
+          if (DomUtil.hasXml(element)) {
             result.add(element);
           }
         }
@@ -415,4 +415,9 @@ public class DomUtil {
       domElement = parent;
     }
   }
+
+  public static boolean hasXml(@NotNull DomElement element) {
+    return element.getXmlElement() != null;
+  }
+  
 }

@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,7 +131,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
 
     final Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> problems = new ConcurrentHashMap<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>();
     mergeMaps(problems, myCachedErrors.get(domElement));
-    if (domElement.getXmlElement() != null) {
+    if (DomUtil.hasXml(domElement)) {
       domElement.acceptChildren(new DomElementVisitor() {
         public void visitDomElement(DomElement element) {
           mergeMaps(problems, getProblemsMap(element));

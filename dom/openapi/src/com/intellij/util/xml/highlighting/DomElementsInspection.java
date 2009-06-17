@@ -90,7 +90,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
       for (final AbstractDomChildrenDescription description : element.getGenericInfo().getChildrenDescriptions()) {
         if (description.getAnnotation(Required.class) != null) {
           for (final DomElement child : description.getValues(element)) {
-            if (child.getXmlElement() == null) {
+            if (!DomUtil.hasXml(child)) {
               visitor.consume(child);
             }
           }

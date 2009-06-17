@@ -175,7 +175,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     if (other == getProxy()) return;
     assert other.getDomElementType().equals(myType);
 
-    if (other.getXmlElement() == null) {
+    if (!DomUtil.hasXml(other)) {
       undefine();
       return;
     }
@@ -193,9 +193,10 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
           for (int i = 0; i < list.size(); i++) {
             final DomElement otherValue = otherValues.get(i);
             final DomElement value = list.get(i);
-            if (otherValue.getXmlElement() == null) {
+            if (!DomUtil.hasXml(otherValue)) {
               value.undefine();
-            } else {
+            }
+            else {
               value.copyFrom(otherValue);
             }
           }
