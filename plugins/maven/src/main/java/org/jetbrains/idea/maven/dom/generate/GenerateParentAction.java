@@ -4,6 +4,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.util.xml.ui.actions.generate.GenerateDomElementAction;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomParent;
@@ -29,7 +30,7 @@ public class GenerateParentAction extends GenerateDomElementAction {
 
       @Override
       protected boolean isAvailableForModel(MavenDomProjectModel mavenModel) {
-        return mavenModel.getMavenParent().getXmlElement() == null;
+        return !DomUtil.hasXml(mavenModel.getMavenParent());
       }
     });
   }
