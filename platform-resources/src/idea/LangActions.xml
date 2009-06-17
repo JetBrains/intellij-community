@@ -804,14 +804,14 @@
       <separator/>
       <action id="com.intellij.execution.testframework.sm.runner.ui.statistics.ShowStatisticsAction"
               class="com.intellij.execution.testframework.sm.runner.ui.statistics.ShowStatisticsAction"
-              text="Show statistics"/>
+              text="Show Statistics"/>
       <add-to-group group-id="TestTreePopupMenu" anchor="last"/>
     </group>
     <group id="SMTestRunnerStatistics">
       <separator/>
       <action id="com.intellij.execution.testframework.sm.runner.ui.statistics.ShowTestProxy"
               class="com.intellij.execution.testframework.sm.runner.ui.statistics.ShowTestProxy"
-              text="Navigate to test"/>
+              text="Navigate to Test"/>
       <add-to-group group-id="TestTreePopupMenu" anchor="last"/>
     </group>
 
