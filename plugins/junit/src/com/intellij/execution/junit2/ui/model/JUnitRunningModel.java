@@ -43,8 +43,6 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.util.ArrayList;
-import java.util.List;
 
 public class JUnitRunningModel implements TestFrameworkRunningModel {
   private final TestProgress myProgress;
@@ -58,7 +56,6 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
   private final JUnitListenersNotifier myNotifier = new JUnitListenersNotifier();
   private final Animator myAnimator;
   private PacketExtractorBase myPacketExtractor;
-  private final List<ModelListener> myListeners = new ArrayList<ModelListener>();
 
   public JUnitRunningModel(final TestProxy root, final TestingStatus status, final JUnitConsoleProperties properties) {
     myRoot = root;
@@ -147,15 +144,6 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
     final TestTreeStructure treeStructure = getStructure();
     treeStructure.setFilter(filter);
     myTreeBuilder.updateFromRoot();
-  }
-
-  public void addListener(final ModelListener l) {
-    myListeners.add(l);
-    Disposer.register(this, new Disposable() {
-      public void dispose() {
-        l.onDispose();
-      }
-    });
   }
 
   public boolean isRunning() {

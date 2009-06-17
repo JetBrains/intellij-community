@@ -66,7 +66,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   private final TreeRootNode rootNode;
   private static final String NO_PACKAGE = "No Package";
   private TestNGResults.OpenSourceSelectionListener openSourceListener;
-  private final List<ModelListener> myListeners = new ArrayList<ModelListener>();
   private final TestNGConsoleView myConsole;
 
   public TestNGResults(final JComponent component,
@@ -324,10 +323,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     treeBuilder.updateFromRoot();
   }
 
-  public void addListener(ModelListener l) {
-    myListeners.add(l);
-  }
-
   public boolean isRunning() {
     return rootNode.isInProgress();
   }
@@ -358,9 +353,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   }
 
   public void dispose() {
-    for (ModelListener listener : myListeners) {
-      listener.onDispose();
-    }
+    super.dispose();
     openSourceListener.structure = null;
     openSourceListener.console = null;
     tree.getSelectionModel().removeTreeSelectionListener(openSourceListener);
