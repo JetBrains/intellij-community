@@ -206,17 +206,6 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     LOG.assertTrue(ff.contains(f));
   }
 
-  public ExcludedOutputFolder addExcludedOutputFolder(VirtualFilePointer directory) {
-    getRootModel().assertWritable();
-    ExcludedOutputFolderImpl folder = new ExcludedOutputFolderImpl(this, directory);
-    myExcludedOutputFolders.add(folder);
-    return folder;
-  }
-
-  public boolean removeExcludedOutputFolder(ExcludedOutputFolder folder) {
-    return myExcludedOutputFolders.remove(folder);
-  }
-
   private void assertFolderUnderMe(String url) {
     final String rootUrl = getUrl();
     try {
