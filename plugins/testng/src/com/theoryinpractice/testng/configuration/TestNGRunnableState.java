@@ -19,6 +19,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -33,6 +34,7 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,6 +47,7 @@ import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.util.PathUtil;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.ui.TestNGConsoleView;
+import com.theoryinpractice.testng.ui.actions.RerunFailedTestsAction;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -137,7 +140,16 @@ public class TestNGRunnableState extends JavaCommandLineState
       }
     });
     console.attachToProcess(processHandler);
-    return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler, executor));
+
+    RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(console.getComponent());
+    rerunFailedTestsAction.init(console.getProperties(), runnerSettings, myConfigurationPerRunnerSettings);
+    rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
+      public TestFrameworkRunningModel get() {
+        return console.getModel();
+      }
+    });
+
+    return new DefaultExecutionResult(console, processHandler, rerunFailedTestsAction);
   }
 
   @Override
