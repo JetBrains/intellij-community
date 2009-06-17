@@ -398,10 +398,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
       if (!foundInfoList.isEmpty()) {
         HighlightInfo foundInfo = foundInfoList.get(0);
-        if (SeverityRegistrar.getInstance(myProject).compare(foundInfo.getSeverity(), info.getSeverity()) < 0) {
+        int compare = SeverityRegistrar.getInstance(myProject).compare(foundInfo.getSeverity(), info.getSeverity());
+        if (compare < 0) {
           foundInfoList.clear();
         }
-        else if (SeverityRegistrar.getInstance(myProject).compare(info.getSeverity(), foundInfo.getSeverity()) < 0) {
+        else if (compare > 0) {
           continue;
         }
       }

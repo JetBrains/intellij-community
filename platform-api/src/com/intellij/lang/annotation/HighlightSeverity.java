@@ -36,7 +36,7 @@ public class HighlightSeverity implements Comparable<HighlightSeverity>, JDOMExt
   /**
    * The standard severity level for information annotations.
    */
-  public static final HighlightSeverity INFORMATION = new HighlightSeverity("INFORMATION", 0);
+  public static final HighlightSeverity INFORMATION = new HighlightSeverity("INFORMATION", 10);
 
 
   /**
@@ -64,7 +64,7 @@ public class HighlightSeverity implements Comparable<HighlightSeverity>, JDOMExt
   /**
    * Standard severities levels
    */
-  public static final HighlightSeverity[] DEFAULT_SEVERITIES = new HighlightSeverity[] {INFORMATION, GENERIC_SERVER_ERROR_OR_WARNING, INFO, WARNING, ERROR};
+  public static final HighlightSeverity[] DEFAULT_SEVERITIES = {INFORMATION, GENERIC_SERVER_ERROR_OR_WARNING, INFO, WARNING, ERROR};
 
   /**
    * Creates a new highlighting severity level with the specified name and value.

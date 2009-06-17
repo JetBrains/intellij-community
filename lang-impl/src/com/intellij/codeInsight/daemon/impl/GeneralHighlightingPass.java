@@ -11,6 +11,7 @@ import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.concurrency.JobUtil;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
@@ -209,7 +210,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     JobUtil.invokeConcurrentlyUnderMyProgress(injectedFiles, new Processor<PsiFile>() {
       public boolean process(final PsiFile injectedPsi) {
-
         AnnotationHolderImpl annotationHolder = createAnnotationHolder();
         highlightInjectedIn(injectedPsi, annotationHolder, errorFilters, injectedLanguageManager);
         DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
@@ -226,6 +226,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           }
           else {
             fixedTextRange = null;
+          }
+          if (((DocumentWindowImpl)documentWindow).isOneLine()) {
+            annotation.setAfterEndOfLine(false);
           }
           final HighlightInfo highlightInfo = HighlightInfo.fromAnnotation(annotation, fixedTextRange);
           addHighlightInfo(textRange, highlightInfo);
