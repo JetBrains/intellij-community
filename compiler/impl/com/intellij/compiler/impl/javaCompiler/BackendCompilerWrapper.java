@@ -681,7 +681,7 @@ public class BackendCompilerWrapper {
         }
       }
     });
-    CompilerUtil.refreshIOFiles(chunk.myFilesToRefresh);
+    CompilerUtil.refreshIOFilesInterruptibly(myCompileContext, chunk.myFilesToRefresh, "Refreshing moved files");
     chunk.myFileNameToSourceMap.clear(); // clear the map before the next use
     chunk.myFilesToRefresh.clear();
   }

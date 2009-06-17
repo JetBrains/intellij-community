@@ -24,6 +24,11 @@ abstract class CompilationEvent {
       protected void process(OutputParser.Callback callback) {
         showProgressFor(title, fileObject.toUri(), callback);
       }
+
+      @Override
+      public String toString() {
+        return "Progress: "+title+" "+fileObject.toUri();
+      }
     };
   }
 
@@ -38,6 +43,10 @@ abstract class CompilationEvent {
         showProgressFor("Writing ", uri, callback);
         File file = new File(uri);
         callback.fileGenerated(new FileObject(file,bytes));
+      }
+      @Override
+      public String toString() {
+        return "Write: "+uri;
       }
     };
   }
@@ -69,6 +78,10 @@ abstract class CompilationEvent {
                                              : CompilerMessageCategory.INFORMATION;
         callback.message(category, message, url, (int)diagnostic.getLineNumber(), (int)diagnostic.getColumnNumber());
       }
+      @Override
+      public String toString() {
+        return "Diagnostic: "+diagnostic;
+      }
     };
   }
 
@@ -77,6 +90,10 @@ abstract class CompilationEvent {
       @Override
       protected void process(OutputParser.Callback callback) {
         callback.fileProcessed(null);
+      }
+      @Override
+      public String toString() {
+        return "Processed";
       }
     };
   }

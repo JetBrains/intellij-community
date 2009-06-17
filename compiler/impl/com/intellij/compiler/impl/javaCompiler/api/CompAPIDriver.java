@@ -24,6 +24,11 @@ public class CompAPIDriver {
     @Override
     protected void process(OutputParser.Callback callback) {
     }
+
+    @Override
+    public String toString() {
+      return "FINISH";
+    }
   };
   private String myOutputDir;
 
