@@ -72,7 +72,6 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
 
             || fileType == StdFileTypes.XML
             || fileType == StdFileTypes.JSPX
-            || fileType == StdFileTypes.XHTML
           ) {
           enabled = false;
         }

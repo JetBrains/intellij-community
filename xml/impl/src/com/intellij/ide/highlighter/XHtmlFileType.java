@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class XHtmlFileType extends XmlLikeFileType {
+public class XHtmlFileType extends HtmlFileType {
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/xhtml.png");
 
   public XHtmlFileType() {

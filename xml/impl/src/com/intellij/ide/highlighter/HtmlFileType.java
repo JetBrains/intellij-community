@@ -32,11 +32,12 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -44,7 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 
 public class HtmlFileType extends XmlLikeFileType {
@@ -53,6 +54,9 @@ public class HtmlFileType extends XmlLikeFileType {
 
   public HtmlFileType() {
     super(HTMLLanguage.INSTANCE);
+  }
+  public HtmlFileType(Language language) {
+    super(language);
   }
 
   @NotNull
@@ -75,15 +79,17 @@ public class HtmlFileType extends XmlLikeFileType {
   }
 
   public String getCharset(@NotNull final VirtualFile file, final byte[] content) {
+    String charset = XmlUtil.extractXmlEncodingFromProlog(content);
+    if (charset != null) return charset;
     @NonNls String strContent;
     try {
       strContent = new String(content, "ISO-8859-1");
     }
-    catch (IOException e) {
+    catch (UnsupportedEncodingException e) {
       return null;
     }
-    Charset charset = HtmlUtil.detectCharsetFromMetaHttpEquiv(strContent);
-    return charset == null ? null : charset.name();
+    Charset c = HtmlUtil.detectCharsetFromMetaHttpEquiv(strContent);
+    return c == null ? null : c.name();
   }
 
   public Charset extractCharsetFromFileContent(@Nullable final Project project, @Nullable final VirtualFile file, @NotNull final String content) {
