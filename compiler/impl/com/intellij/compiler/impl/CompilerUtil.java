@@ -74,6 +74,8 @@ public class CompilerUtil {
     refreshFilesInterruptibly(context, virtualFiles, title);
   }
   public static void refreshFilesInterruptibly(@NotNull final CompileContext context, @NotNull final Collection<VirtualFile> files, @Nullable String title) {
+    LocalFileSystem.getInstance().refreshFiles(files); //
+    if (true) return;
     ThrowableRunnable<RuntimeException> runnable = new ThrowableRunnable<RuntimeException>() {
       public void run() throws RuntimeException {
         boolean async = !ApplicationManager.getApplication().isDispatchThread();
