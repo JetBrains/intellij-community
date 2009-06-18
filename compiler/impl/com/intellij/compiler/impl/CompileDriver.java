@@ -1529,7 +1529,8 @@ public class CompileDriver {
             context.updateZippedOuput(outputDir, path.substring(outputDir.length() + 1));
           }
         }
-        CompilerUtil.refreshFilesInterruptibly(context, vFiles,"Refreshing processed files...");
+        //CompilerUtil.refreshFilesInterruptibly(context, vFiles,"Refreshing processed files...");
+        LocalFileSystem.getInstance().refreshFiles(vFiles);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Files after VFS refresh:");
           for (VirtualFile file : vFiles) {
