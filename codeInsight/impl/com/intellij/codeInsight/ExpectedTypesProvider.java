@@ -417,18 +417,7 @@ public class ExpectedTypesProvider {
         PsiExpression lExpr = assignment.getLExpression();
         PsiType type = lExpr.getType();
         if (type != null) {
-          TailType tailType = TailType.NONE;
-          if (assignment.getParent() instanceof PsiExpressionStatement) {
-            if (!(assignment.getParent().getParent() instanceof PsiForStatement)) {
-              tailType = TailType.SEMICOLON;
-            }
-            else {
-              PsiForStatement forStatement = (PsiForStatement)assignment.getParent().getParent();
-              if (!assignment.getParent().equals(forStatement.getUpdate())) {
-                tailType = TailType.SEMICOLON;
-              }
-            }
-          }
+          TailType tailType = getAssignmentRValueTailType(assignment);
           ExpectedTypeInfoImpl info = createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, tailType);
           if (lExpr instanceof PsiReferenceExpression) {
             PsiElement refElement = ((PsiReferenceExpression)lExpr).resolve();
@@ -467,6 +456,20 @@ public class ExpectedTypesProvider {
         }
         myResult = ExpectedTypeInfo.EMPTY_ARRAY;
       }
+    }
+
+    private TailType getAssignmentRValueTailType(PsiAssignmentExpression assignment) {
+      if (assignment.getParent() instanceof PsiExpressionStatement) {
+        if (!(assignment.getParent().getParent() instanceof PsiForStatement)) {
+          return TailType.SEMICOLON;
+        }
+
+        PsiForStatement forStatement = (PsiForStatement)assignment.getParent().getParent();
+        if (!assignment.getParent().equals(forStatement.getUpdate())) {
+          return TailType.SEMICOLON;
+        }
+      }
+      return TailType.NONE;
     }
 
     @Override public void visitExpressionList(PsiExpressionList list) {
@@ -664,19 +667,22 @@ public class ExpectedTypesProvider {
     @Override public void visitPrefixExpression(PsiPrefixExpression expr) {
       PsiJavaToken sign = expr.getOperationSign();
       IElementType i = sign.getTokenType();
+      final TailType tailType = expr.getParent() instanceof PsiAssignmentExpression && ((PsiAssignmentExpression) expr.getParent()).getRExpression() == expr ?
+                                getAssignmentRValueTailType((PsiAssignmentExpression) expr.getParent()) :
+                                TailType.NONE;
       if (i == JavaTokenType.PLUSPLUS || i == JavaTokenType.MINUSMINUS || i == JavaTokenType.TILDE) {
         ExpectedTypeInfoImpl info = createInfoImpl(PsiType.LONG, ExpectedTypeInfo.TYPE_OR_SUBTYPE,
-                                                   PsiType.INT, TailType.NONE);
+                                                   PsiType.INT, tailType);
         myResult = new ExpectedTypeInfo[]{info};
       }
       else if (i == JavaTokenType.PLUS || i == JavaTokenType.MINUS) {
         ExpectedTypeInfoImpl info = createInfoImpl(PsiType.DOUBLE, ExpectedTypeInfo.TYPE_OR_SUBTYPE,
-                                                   PsiType.INT, TailType.NONE);
+                                                   PsiType.INT, tailType);
         myResult = new ExpectedTypeInfo[]{info};
       }
       else if (i == JavaTokenType.EXCL) {
         ExpectedTypeInfoImpl info = createInfoImpl(PsiType.BOOLEAN, ExpectedTypeInfo.TYPE_STRICTLY,
-                                                   PsiType.BOOLEAN, TailType.NONE);
+                                                   PsiType.BOOLEAN, tailType);
         myResult = new ExpectedTypeInfo[]{info};
       }
     }

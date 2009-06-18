@@ -599,7 +599,14 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
   public TextRange getRangeInElement() {
     TreeElement nameChild = (TreeElement)findChildByRole(ChildRole.REFERENCE_NAME);
-    return new TextRange(nameChild != null ? nameChild.getStartOffsetInParent() : 0, getTextLength());
+    if (nameChild == null) {
+      final TreeElement dot = (TreeElement)findChildByRole(ChildRole.DOT);
+      if (dot == null) {
+        LOG.assertTrue(false, this);
+      }
+      return new TextRange(dot.getStartOffsetInParent() + dot.getTextLength(), getTextLength());
+    }
+    return new TextRange(nameChild.getStartOffsetInParent(), getTextLength());
   }
 
   public PsiElement getElement() {

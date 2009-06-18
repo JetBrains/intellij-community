@@ -2,7 +2,6 @@ package com.intellij.psi.filters.element;
 
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.util.PsiTreeUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,18 +14,26 @@ public class ExcludeSillyAssignment implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
     if(!(element instanceof PsiElement)) return true;
 
-    final PsiAssignmentExpression expression = PsiTreeUtil.getParentOfType(context, PsiAssignmentExpression.class, false, PsiClass.class);
-    if (expression == null) return true;
+    PsiElement each = context;
+    while (each != null && !(each instanceof PsiFile)) {
+      if (each instanceof PsiExpressionList || each instanceof PsiPrefixExpression || each instanceof PsiBinaryExpression) {
+        return true;
+      }
 
-    if (PsiTreeUtil.getParentOfType(context, PsiExpressionList.class, false, PsiAssignmentExpression.class) != null) return true;
+      if (each instanceof PsiAssignmentExpression) {
+        final PsiExpression left = ((PsiAssignmentExpression)each).getLExpression();
+        if (left instanceof PsiReferenceExpression) {
+          final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)left;
+          if (referenceExpression.isQualified()) return true;
 
-    final PsiExpression left = expression.getLExpression();
-    if (left instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)left;
-      if (referenceExpression.isQualified()) return true;
+          return !referenceExpression.isReferenceTo((PsiElement)element);
+        }
+        return true;
+      }
 
-      return !referenceExpression.isReferenceTo((PsiElement)element);
+      each = each.getContext();
     }
+
     return true;
   }
 
