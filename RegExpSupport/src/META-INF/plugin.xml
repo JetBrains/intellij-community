@@ -17,7 +17,7 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />
 
     <lang.documentationProvider language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpDocumentationProvider"/>
-    <completion.contributor implementation="org.intellij.lang.regexp.RegExpCompletionContributor"/>
+    <completion.contributor language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpCompletionContributor"/>
     <fileTypeFactory implementation="org.intellij.lang.regexp.RegExpSupportLoader" />
     <annotator language="RegExp" implementationClass="org.intellij.lang.regexp.validation.RegExpAnnotator"/>
     <lang.parserDefinition language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpParserDefinition"/>

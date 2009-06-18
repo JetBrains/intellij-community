@@ -106,8 +106,10 @@
                                     implementationClass="org.jetbrains.plugins.groovy.codeInsight.GroovyLineMarkerProvider"/>
     <codeInsight.gotoSuper language="Groovy" implementationClass="com.intellij.codeInsight.navigation.JavaGotoSuperHandler"/>
     <lookup.charFilter implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyReferenceCharFilter"/>
-    <completion.contributor implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionContributor"/>
-    <completion.contributor implementation="org.jetbrains.plugins.grails.GrailsCompletionContributor"/>
+    <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionContributor"/>
+    <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.grails.GrailsCompletionContributor"/>
+    <completion.contributor language="GSP" implementationClass="org.jetbrains.plugins.grails.GspCompletionContributor"/>
+    <completion.contributor language="HTML" implementationClass="org.jetbrains.plugins.grails.GspCompletionContributor"/>
     <debuggerClassFilterProvider implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerClassFilterProvider"/>
     <xdebugger.settings implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerSettings"/>
     <fileTypeIndentOptionsProvider implementation="org.jetbrains.plugins.groovy.formatter.GroovyIndentOptionsProvider"/>

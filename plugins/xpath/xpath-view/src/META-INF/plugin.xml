@@ -83,7 +83,7 @@
     <fileTypeFactory implementation="org.intellij.lang.xpath.XPathSupportLoader" />
     <inspectionToolProvider implementation="org.intellij.lang.xpath.XPathSupportLoader"/>
     <quoteHandler fileType="XPath" className="org.intellij.lang.xpath.XPathQuoteHandler" />
-    <completion.contributor implementation="org.intellij.lang.xpath.completion.XPathCompletionContributor" />
+    <completion.contributor language="XPath" implementationClass="org.intellij.lang.xpath.completion.XPathCompletionContributor" />
 
     <fileBasedIndex implementation="org.intellij.lang.xpath.xslt.impl.XsltSymbolIndex" />
     <psi.includeHandler implementation="org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex" />
