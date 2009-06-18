@@ -1,6 +1,7 @@
 package com.intellij.appengine.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.util.net.HttpConfigurable;
 import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.execution.ExecutionException;
@@ -118,6 +119,14 @@ public class AppEngineUploader {
       parameters.configureByModule(module, JavaParameters.JDK_ONLY);
       parameters.setMainClass("com.google.appengine.tools.admin.AppCfg");
       parameters.getClassPath().add(sdk.getToolsApiJarFile().getAbsolutePath());
+
+      HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
+      if (httpConfigurable.USE_HTTP_PROXY) {
+        final ParametersList parametersList = parameters.getVMParametersList();
+        parametersList.defineProperty("proxySet", "true");
+        parametersList.defineProperty("http.proxyHost", httpConfigurable.PROXY_HOST);
+        parametersList.defineProperty("http.proxyPort", Integer.toString(httpConfigurable.PROXY_PORT));
+      }
 
       final ParametersList programParameters = parameters.getProgramParametersList();
       programParameters.add("update");
