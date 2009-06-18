@@ -81,7 +81,6 @@ public class RunConfigurationModule implements JDOMExternalizable {
       }
     }
     if (myModule != null && myModule.isDisposed()) {
-      myModuleName = myModule.getName();
       myModule = null;
     }
     return myModule;
