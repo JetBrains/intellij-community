@@ -88,12 +88,12 @@ public class GroovyCompiler implements TranslatingCompiler {
     Set<OutputItem> successfullyCompiled = new HashSet<OutputItem>();
     Set<VirtualFile> toRecompile = new HashSet<VirtualFile>();
 
-    Map<Module, Set<VirtualFile>> mapModulesToVirtualFiles = buildModuleToFilesMap(compileContext, virtualFiles);
+    Map<Module, List<VirtualFile>> mapModulesToVirtualFiles = CompilerUtil.buildModuleToFilesMap(compileContext, virtualFiles);
 
-    for (Map.Entry<Module, Set<VirtualFile>> entry : mapModulesToVirtualFiles.entrySet()) {
+    for (Map.Entry<Module, List<VirtualFile>> entry : mapModulesToVirtualFiles.entrySet()) {
       final Module module = entry.getKey();
       final GroovyFacet facet = GroovyFacet.getInstance(module);
-      final Set<VirtualFile> moduleFiles = entry.getValue();
+      final List<VirtualFile> moduleFiles = entry.getValue();
       if (module.getModuleType() instanceof JavaModuleType && (facet == null || facet.getConfiguration().isCompileGroovyFiles())) {
         doCompile(compileContext, successfullyCompiled, toRecompile, module, moduleFiles);
       }
@@ -109,7 +109,7 @@ public class GroovyCompiler implements TranslatingCompiler {
   }
 
   private void doCompile(CompileContext compileContext, Set<OutputItem> successfullyCompiled, Set<VirtualFile> toRecompile, final Module module,
-                         final Set<VirtualFile> toCompile) {
+                         final List<VirtualFile> toCompile) {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
     assert sdk != null; //verified before
@@ -289,7 +289,7 @@ public class GroovyCompiler implements TranslatingCompiler {
     }
   }
 
-  private void fillFileWithGroovycParameters(Module module, Set<VirtualFile> virtualFiles, File f) {
+  private void fillFileWithGroovycParameters(Module module, List<VirtualFile> virtualFiles, File f) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Running groovyc on: " + virtualFiles.toString());
     }
@@ -454,28 +454,5 @@ public class GroovyCompiler implements TranslatingCompiler {
     final String output = CompilerPaths.getModuleOutputPath(module, false);
     if (output != null) pathsList.add(output);
     return pathsList;
-  }
-
-  private static Map<Module, Set<VirtualFile>> buildModuleToFilesMap(final CompileContext context, final VirtualFile[] files) {
-    final Map<Module, Set<VirtualFile>> map = new HashMap<Module, Set<VirtualFile>>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        for (VirtualFile file : files) {
-          final Module module = context.getModuleByFile(file);
-
-          if (module == null) {
-            continue;
-          }
-
-          Set<VirtualFile> moduleFiles = map.get(module);
-          if (moduleFiles == null) {
-            moduleFiles = new HashSet<VirtualFile>();
-            map.put(module, moduleFiles);
-          }
-          moduleFiles.add(file);
-        }
-      }
-    });
-    return map;
   }
 }
