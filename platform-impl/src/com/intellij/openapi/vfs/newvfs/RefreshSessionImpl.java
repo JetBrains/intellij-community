@@ -26,7 +26,7 @@ import java.util.List;
 public class RefreshSessionImpl extends RefreshSession {
   private final boolean myIsAsync;
   private final boolean myIsRecursive;
-  private Runnable myFinishRunnable;
+  private final Runnable myFinishRunnable;
   private final List<CacheUpdater> myRefreshParticipants;
   
   private List<VirtualFile> myWorkQueue = new ArrayList<VirtualFile>();
