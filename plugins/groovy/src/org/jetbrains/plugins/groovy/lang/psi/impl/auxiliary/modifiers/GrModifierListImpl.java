@@ -208,7 +208,15 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
   }
 
   @NotNull
-  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
-    throw new UnsupportedOperationException("Method addAnnotation is not yet implemented in " + getClass().getName());
+  public GrAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+    final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, getResolveScope());
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
+    if (psiClass != null && psiClass.isAnnotationType()) {
+      final GrAnnotation annotation = (GrAnnotation)addAfter(factory.createModifierFromText("@xxx"), null);
+      annotation.getClassReference().bindToElement(psiClass);
+      return annotation;
+    }
+
+    return (GrAnnotation)addAfter(factory.createModifierFromText("@" + qualifiedName), null);
   }
 }

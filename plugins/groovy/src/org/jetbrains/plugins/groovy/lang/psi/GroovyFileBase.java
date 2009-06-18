@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 /**
  * @author ilyas
  */
-public interface GroovyFileBase extends PsiFile, GroovyPsiElement, GrVariableDeclarationOwner, GrStatementOwner, PsiClassOwner, GrControlFlowOwner {
+public interface GroovyFileBase extends PsiFile, GroovyPsiElement, GrVariableDeclarationOwner, GrStatementOwner, PsiClassOwner, GrControlFlowOwner, PsiImportHolder {
   String SCRIPT_BASE_CLASS_NAME = "groovy.lang.Script";
   String[] IMPLICITLY_IMPORTED_PACKAGES = {
       "java.lang",
