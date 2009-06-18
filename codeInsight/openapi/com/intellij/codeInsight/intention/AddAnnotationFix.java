@@ -166,10 +166,8 @@ public class AddAnnotationFix extends PsiElementBaseIntentionAction implements L
             annotation.delete();
           }
         }
-        PsiManager manager = file.getManager();
-        PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-        PsiAnnotation annotation = factory.createAnnotationFromText("@" + myAnnotation, myModifierListOwner);
-        PsiElement inserted = modifierList.addAfter(annotation, null);
+
+        PsiElement inserted = modifierList.addAnnotation(myAnnotation);
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
         if (containingFile != file) {
           UndoUtil.markPsiFileForUndo(file);
