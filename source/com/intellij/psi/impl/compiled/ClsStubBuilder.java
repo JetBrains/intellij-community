@@ -285,7 +285,7 @@ public class ClsStubBuilder {
     private boolean isCorrectName(String name) {
       if (name == null) return false;
 
-      myLexer.start(name, 0, name.length(), 0);
+      myLexer.start(name);
       if (myLexer.getTokenType() != JavaTokenType.IDENTIFIER) return false;
       myLexer.advance();
       return myLexer.getTokenType() == null;

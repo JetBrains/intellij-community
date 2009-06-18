@@ -36,7 +36,7 @@ public class MissingTokenInserter {
 
   public void invoke() {
     if (myState < 0) {
-      myLexer.start(myLexer.getBufferSequence(), myStartOffset, myEndOffset,0);
+      myLexer.start(myLexer.getBufferSequence(), myStartOffset, myEndOffset);
     }
     else {
       myLexer.start(myLexer.getBufferSequence(), myStartOffset, myEndOffset, myState);

@@ -1382,7 +1382,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       if (!checkToken(token1) || !checkToken(token2)) return true;
       String text = token1.getText() + token2.getText();
       Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
-      lexer.start(text, 0, text.length(),0);
+      lexer.start(text);
       boolean canMerge = lexer.getTokenType() == type1;
       lexer.advance();
       canMerge &= lexer.getTokenType() == type2;
@@ -1395,7 +1395,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private static boolean checkToken(final ASTNode token1) {
     Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
     final String text = token1.getText();
-    lexer.start(text, 0, text.length(),0);
+    lexer.start(text);
     if (lexer.getTokenType() != token1.getElementType()) return false;
     lexer.advance();
     return lexer.getTokenType() == null;

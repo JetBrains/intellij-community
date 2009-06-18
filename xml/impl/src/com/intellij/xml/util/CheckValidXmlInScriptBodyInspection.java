@@ -69,7 +69,7 @@ public class CheckValidXmlInScriptBodyInspection extends XmlSuppressableInspecti
               final String tagBodyText = tagValue.getText();
 
               if (tagBodyText.length() > 0) {
-                myXmlLexer.start(tagBodyText, 0, tagBodyText.length(),0);
+                myXmlLexer.start(tagBodyText);
 
                 while(myXmlLexer.getTokenType() != null) {
                   IElementType tokenType = myXmlLexer.getTokenType();

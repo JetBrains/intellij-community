@@ -15,8 +15,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.containers.StringInterner;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.StringInterner;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -477,7 +477,7 @@ public class ModuleInsight {
   }
   
   private void scanImportStatements(char[] text, final Lexer lexer, final Set<String> usedPackages){
-    lexer.start(new CharArrayCharSequence(text), 0, text.length, 0);
+    lexer.start(new CharArrayCharSequence(text));
     
     skipWhiteSpaceAndComments(lexer);
     if (lexer.getTokenType() == JavaTokenType.PACKAGE_KEYWORD) {

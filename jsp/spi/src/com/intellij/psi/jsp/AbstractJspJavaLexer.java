@@ -3,10 +3,8 @@
  */
 package com.intellij.psi.jsp;
 
-import com.intellij.lexer.Lexer;
-
 /**
  * @author peter
  */
-public interface AbstractJspJavaLexer extends Lexer {
+public interface AbstractJspJavaLexer  {
 }

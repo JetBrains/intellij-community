@@ -65,7 +65,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
       assert text != null : "Text is null for " + original + "; " + original.getClass();
       LanguageLevel languageLevel = PsiUtil.getLanguageLevel(original);
       JavaLexer lexer = new JavaLexer(languageLevel);
-      lexer.start(text, 0, text.length(), 0);
+      lexer.start(text);
       TreeElement modifierListElement = new JavaParsingContext(table, languageLevel).getDeclarationParsing().parseModifierList(lexer);
       if (CodeEditUtil.isNodeGenerated(original.getNode())) modifierListElement.acceptTree(new GeneratedMarkerVisitor());
       return modifierListElement;
@@ -158,7 +158,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         @NonNls String text = typeElement.getText();
         if (text.equals("null")) return null;
         Lexer lexer = new JavaLexer(LanguageLevel.JDK_1_3);
-        lexer.start(text,0, text.length(),0);
+        lexer.start(text);
         TreeElement keyword = ParseUtil.createTokenElement(lexer, table);
         CodeEditUtil.setNodeGenerated(keyword, generated);
         CompositeElement element = ASTFactory.composite(JavaElementType.TYPE);

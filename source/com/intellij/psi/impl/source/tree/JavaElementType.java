@@ -128,7 +128,7 @@ public interface JavaElementType {
     public int getErrorsCount(CharSequence seq, Project project) {
       final Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
 
-      lexer.start(seq, 0, seq.length(), 0);
+      lexer.start(seq);
       if(lexer.getTokenType() != JavaTokenType.LBRACE) return FATAL_ERROR;
       lexer.advance();
       int balance = 1;

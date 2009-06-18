@@ -1,51 +1,18 @@
 package com.intellij.lexer;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 
 /**
  * @author mike
  */
-public class DtdHighlightingLexer extends LexerBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.XmlHighlightingLexer");
-
-  private final Lexer myLexer;
-
+public class DtdHighlightingLexer extends DelegateLexer {
   public DtdHighlightingLexer() {
-    myLexer = new OldXmlLexer();
-  }
-
-  public void advance() {
-    myLexer.advance();
-  }
-
-  public char[] getBuffer() {
-    return myLexer.getBuffer();
-  }
-
-  public CharSequence getBufferSequence() {
-    return myLexer.getBufferSequence();
-  }
-
-  public int getBufferEnd() {
-    return myLexer.getBufferEnd();
-  }
-
-  public int getState() {
-    return myLexer.getState();
-  }
-
-  public int getTokenEnd() {
-    return myLexer.getTokenEnd();
-  }
-
-  public int getTokenStart() {
-    return myLexer.getTokenStart();
+    super(new OldXmlLexer());
   }
 
   public IElementType getTokenType() {
-    IElementType tokenType = myLexer.getTokenType();
+    IElementType tokenType = super.getTokenType();
 
     if (tokenType == null) return tokenType;
 
@@ -63,13 +30,5 @@ public class DtdHighlightingLexer extends LexerBase {
     }
 
     return tokenType;
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    myLexer.start(buffer, startOffset, endOffset, initialState);
-  }
-
-  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
-    myLexer.start(buffer, startOffset, endOffset, initialState);
   }
 }

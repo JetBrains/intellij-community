@@ -16,8 +16,6 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.CharArrayUtil;
 
 import java.io.IOException;
 
@@ -38,11 +36,6 @@ public class FlexAdapter extends LexerBase {
 
   public FlexLexer getFlex() {
     return myFlex;
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    final CharArrayCharSequence arrayCharSequence = new CharArrayCharSequence(buffer);
-    start(arrayCharSequence, startOffset, endOffset, initialState);
   }
 
   public void start(final CharSequence buffer, int startOffset, int endOffset, final int initialState) {
@@ -80,10 +73,6 @@ public class FlexAdapter extends LexerBase {
   public void advance() {
     locateToken();
     myTokenType = null;
-  }
-
-  public char[] getBuffer() {
-    return CharArrayUtil.fromSequence(myText);
   }
 
   public CharSequence getBufferSequence() {

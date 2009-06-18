@@ -8,8 +8,8 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.JavaDocTokenType;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.ParsingContext;
@@ -43,7 +43,7 @@ public class JavadocParsing extends Parsing {
 
   public TreeElement parseJavaDocReference(CharSequence myBuffer, Lexer originalLexer, boolean isType, PsiManager manager) {
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(myBuffer, 0, myBuffer.length(), 0);
+    lexer.start(myBuffer);
 
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
     final CompositeElement element;
@@ -71,7 +71,7 @@ public class JavadocParsing extends Parsing {
     Lexer originalLexer = new JavaDocLexer(LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel().hasEnumKeywordAndAutoboxing()); // we need caching lexer because the lexer has states
 
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(TOKEN_FILTER));
-    lexer.start(buffer, startOffset, endOffset, 0);
+    lexer.start(buffer, startOffset, endOffset);
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
 
     while (true) {

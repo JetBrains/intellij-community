@@ -362,8 +362,8 @@ public final class FormSourceCodeGenerator {
     JavaLexer newTextLexer = new JavaLexer(LanguageLevel.HIGHEST);
     final String oldBuffer = classToBind.getText();
     final String newBuffer = newClass.getText();
-    oldTextLexer.start(oldBuffer,0,oldBuffer.length(),0);
-    newTextLexer.start(newBuffer,0,newBuffer.length(),0);
+    oldTextLexer.start(oldBuffer);
+    newTextLexer.start(newBuffer);
 
     while(true) {
       IElementType oldLexem = oldTextLexer.getTokenType();

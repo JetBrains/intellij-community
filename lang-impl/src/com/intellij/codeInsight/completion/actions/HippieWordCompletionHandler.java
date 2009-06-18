@@ -178,7 +178,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     final List<CompletionVariant> afterWords = new ArrayList<CompletionVariant>();
 
     IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor() {
-      public void run(final CharSequence chars, final int start, final int end, char[] charArray) {
+      public void run(final CharSequence chars, final int start, final int end) {
         final int caretOffset = editor.getCaretModel().getOffset();
         if (start <= caretOffset && end >= caretOffset) return; //skip prefix itself
 

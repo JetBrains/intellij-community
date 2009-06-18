@@ -10,11 +10,8 @@ import java.util.Set;
  * @author dsl
  */
 public final class CustomFileTypeLexer extends AbstractCustomLexer {
-  private final SyntaxTable myTable;
-
   public CustomFileTypeLexer(SyntaxTable table, boolean forHighlighting) {
     super(buildTokenParsers(table, forHighlighting));
-    myTable = table;
   }
 
   public CustomFileTypeLexer(SyntaxTable table) {
@@ -73,8 +70,7 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
       tokenParsers.add(new BraceTokenParser("]", CustomHighlighterTokenType.R_BRACKET));
     }
 
-    final TokenParser[] tokenParserArray = (TokenParser[]) tokenParsers.toArray(new TokenParser[tokenParsers.size()]);
-    return tokenParserArray;
+    return tokenParsers.toArray(new TokenParser[tokenParsers.size()]);
   }
 
 

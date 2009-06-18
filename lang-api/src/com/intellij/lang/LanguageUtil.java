@@ -31,10 +31,10 @@ public final class LanguageUtil {
   private LanguageUtil() {
   }
 
-  public static ParserDefinition.SpaceRequirements canStickTokensTogetherByLexer(ASTNode left, ASTNode right, Lexer lexer, int lexerState) {
+  public static ParserDefinition.SpaceRequirements canStickTokensTogetherByLexer(ASTNode left, ASTNode right, Lexer lexer) {
     String textStr = left.getText() + right.getText();
 
-    lexer.start(textStr, 0, textStr.length(), lexerState);
+    lexer.start(textStr, 0, textStr.length());
     if(lexer.getTokenType() != left.getElementType()) return ParserDefinition.SpaceRequirements.MUST;
     if(lexer.getTokenEnd() != left.getTextLength()) return ParserDefinition.SpaceRequirements.MUST;
     lexer.advance();

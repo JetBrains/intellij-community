@@ -28,7 +28,7 @@ public class LiteralSelectioner extends BasicSelectioner {
 
     TextRange range = e.getTextRange();
     final StringLiteralLexer lexer = new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL);
-    lexer.start(editorText, range.getStartOffset(), range.getEndOffset(),0);
+    lexer.start(editorText, range.getStartOffset(), range.getEndOffset());
 
     while (lexer.getTokenType() != null) {
       if (lexer.getTokenStart() <= cursorOffset && cursorOffset < lexer.getTokenEnd()) {

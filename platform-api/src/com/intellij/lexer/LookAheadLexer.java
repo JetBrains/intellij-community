@@ -40,10 +40,6 @@ public abstract class LookAheadLexer extends LexerBase{
     baseLexer.advance();
   }
 
-  public Lexer getBaseLexer() {
-    return myBaseLexer;
-  }
-
   public void advance() {
     if (!myTypeCache.isEmpty()) {
       myTypeCache.remove(0);
@@ -62,8 +58,8 @@ public abstract class LookAheadLexer extends LexerBase{
     assert !myTypeCache.isEmpty();
   }
 
-  public char[] getBuffer() {
-    return myBaseLexer.getBuffer();
+  public CharSequence getBufferSequence() {
+    return myBaseLexer.getBufferSequence();
   }
 
   public int getBufferEnd() {
@@ -92,7 +88,7 @@ public abstract class LookAheadLexer extends LexerBase{
   }
 
   protected void restore(final LookAheadLexerPosition position) {
-    start(myBaseLexer.getBuffer(), position.lastOffset, myBaseLexer.getBufferEnd(), position.lastState);
+    start(myBaseLexer.getBufferSequence(), position.lastOffset, myBaseLexer.getBufferEnd(), position.lastState);
     for (int i = 0; i < position.advanceCount; i++) {
       advance();
     }
@@ -102,7 +98,8 @@ public abstract class LookAheadLexer extends LexerBase{
     return myTypeCache.get(0);
   }
 
-  public void start(final char[] buffer, final int startOffset, final int endOffset, final int initialState) {
+  @Override
+  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBaseLexer.start(buffer, startOffset, endOffset, initialState & 0xFFFF);
     myTokenStart = startOffset;
     myTypeCache.clear();

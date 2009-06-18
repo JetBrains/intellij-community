@@ -1,81 +1,31 @@
 package com.intellij.psi.impl.cache.impl;
 
+import com.intellij.lexer.DelegateLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.lexer.LexerBase;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.CharSequenceSubSequence;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class BaseFilterLexer extends LexerBase implements IdTableBuilding.ScanWordProcessor {
-  protected final Lexer myOriginalLexer;
-
+public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBuilding.ScanWordProcessor {
   private final OccurrenceConsumer myOccurrenceConsumer;
 
   private int myTodoScannedBound = 0;
   private int myOccurenceMask;
-  private CharSequence myBuffer;
-  private char[] myBufferArray;
   private TodoScanningData[] myTodoScanningData;
 
-  public static interface OccurrenceConsumer {
+  public interface OccurrenceConsumer {
     void addOccurrence(CharSequence charSequence, int start, int end, int occurrenceMask);
-    void addOccurrence(char[] chars, int start, int end, int occurrenceMask);
-    
+
     boolean canConsumeTodoOccurrences();
     void incTodoOccurrence(IndexPattern pattern);
   }
   
   protected BaseFilterLexer(Lexer originalLexer, OccurrenceConsumer occurrenceConsumer) {
-    myOriginalLexer = originalLexer;
+    super(originalLexer);
     myOccurrenceConsumer = occurrenceConsumer;
-  }
-
-  public OccurrenceConsumer getOccurrenceConsumer() {
-    return myOccurrenceConsumer;
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    myOriginalLexer.start(buffer, startOffset, endOffset, initialState);
-  }
-
-  public final CharSequence getBufferSequence() {
-    return myBuffer;
-  }
-
-  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
-    myBuffer = buffer;
-    myBufferArray = CharArrayUtil.fromSequenceWithoutCopying(myBuffer);
-    myOriginalLexer.start(buffer, startOffset, endOffset, initialState);
-  }
-
-  public int getState() {
-    return myOriginalLexer.getState();
-  }
-
-  public final IElementType getTokenType() {
-    return myOriginalLexer.getTokenType();
-  }
-
-  public final int getTokenStart() {
-    return myOriginalLexer.getTokenStart();
-  }
-
-  public final int getTokenEnd() {
-    return myOriginalLexer.getTokenEnd();
-  }
-
-  public final char[] getBuffer() {
-    return myOriginalLexer.getBuffer();
-  }
-
-  public int getBufferEnd() {
-    return myOriginalLexer.getBufferEnd();
   }
 
   protected final void advanceTodoItemCountsInToken() {
@@ -85,7 +35,7 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
       start = Math.max(start, myTodoScannedBound);
       if (start >= end) return; // this prevents scanning of the same comment twice
 
-      CharSequence input = new CharSequenceSubSequence(myBuffer, start, end);
+      CharSequence input = getBufferSequence().subSequence(start, end);
       myTodoScanningData = advanceTodoItemsCount(input, myOccurrenceConsumer, myTodoScanningData);
 
       myTodoScannedBound = end;
@@ -132,55 +82,42 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
     return todoScanningData;
   }
 
-  public final void run(CharSequence chars, int start, int end, char[] charArray) {
-    if (charArray != null) {
-      myOccurrenceConsumer.addOccurrence(charArray, start, end, myOccurenceMask);
-    } else {
-      myOccurrenceConsumer.addOccurrence(chars, start, end, myOccurenceMask);
-    }
+  public final void run(CharSequence chars, int start, int end) {
+    myOccurrenceConsumer.addOccurrence(chars, start, end, myOccurenceMask);
   }
 
   protected final void addOccurrenceInToken(final int occurrenceMask) {
-    if (myBufferArray != null) {
-      myOccurrenceConsumer.addOccurrence(myBufferArray, getTokenStart(), getTokenEnd(), occurrenceMask);
-    }
-    else {
-      myOccurrenceConsumer.addOccurrence(myBuffer, getTokenStart(), getTokenEnd(), occurrenceMask);
-    }
+    myOccurrenceConsumer.addOccurrence(getBufferSequence(), getTokenStart(), getTokenEnd(), occurrenceMask);
   }
 
   protected final void scanWordsInToken(final int occurrenceMask, boolean mayHaveFileRefs, final boolean mayHaveEscapes) {
     myOccurenceMask = occurrenceMask;
     final int start = getTokenStart();
     final int end = getTokenEnd();
-    IdTableBuilding.scanWords(this, myBuffer, myBufferArray, start, end, mayHaveEscapes);
+    IdTableBuilding.scanWords(this, getBufferSequence(), null, start, end, mayHaveEscapes);
 
     if (mayHaveFileRefs) {
-      processPossibleComplexFileName(myBuffer, myBufferArray, start, end);
+      processPossibleComplexFileName(getBufferSequence(), start, end);
     }
   }
   
-  private void processPossibleComplexFileName(CharSequence chars, char[] charArray, int startOffset, int endOffset) {
-    int offset = findCharsWithinRange(chars, charArray,startOffset, endOffset, "/\\");
+  private void processPossibleComplexFileName(CharSequence chars, int startOffset, int endOffset) {
+    int offset = findCharsWithinRange(chars, startOffset, endOffset, "/\\");
     offset = Math.min(offset, endOffset);
     int start = startOffset;
 
     while(start < endOffset) {
       if (start != offset) {
-        if (charArray != null) {
-          myOccurrenceConsumer.addOccurrence(charArray, start, offset, UsageSearchContext.IN_FOREIGN_LANGUAGES);
-        } else {
-          myOccurrenceConsumer.addOccurrence(chars, start, offset,UsageSearchContext.IN_FOREIGN_LANGUAGES);
-        }
+        myOccurrenceConsumer.addOccurrence(chars, start, offset, UsageSearchContext.IN_FOREIGN_LANGUAGES);
       }
       start = offset + 1;
-      offset = Math.min(endOffset, findCharsWithinRange(chars, charArray, start, endOffset, "/\\"));
+      offset = Math.min(endOffset, findCharsWithinRange(chars, start, endOffset, "/\\"));
     }
   }
 
-  private static int findCharsWithinRange(final CharSequence chars, final char[] charArray, int startOffset, int endOffset, String charsToFind) {
+  private static int findCharsWithinRange(final CharSequence chars, int startOffset, int endOffset, String charsToFind) {
     while(startOffset < endOffset) {
-      if (charsToFind.indexOf(charArray != null ? charArray[startOffset]:chars.charAt(startOffset)) != -1) {
+      if (charsToFind.indexOf(chars.charAt(startOffset)) != -1) {
         return startOffset;
       }
       ++startOffset;

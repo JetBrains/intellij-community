@@ -15,11 +15,6 @@ public class _XmlLexer extends FlexAdapter {
     myState = ((flex.yyprevstate() & 15) << 4) | (flex.yystate() & 15);
   }
 
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    super.start(buffer, startOffset, endOffset, initialState);
-    handleState(initialState);
-  }
-
   private void handleState(final int initialState) {
     final __XmlLexer flex = (__XmlLexer)getFlex();
     flex.yybegin(initialState & 15);

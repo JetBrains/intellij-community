@@ -37,7 +37,7 @@ public class PsiNameHelperImpl extends PsiNameHelper{
 
     synchronized (LOCK) {
       updateLexer(LanguageLevelProjectExtension.getInstance(myManager.getProject()).getLanguageLevel());
-      myLexer.start(text,0,text.length(),0);
+      myLexer.start(text);
       if (myLexer.getTokenType() != JavaTokenType.IDENTIFIER) return false;
       myLexer.advance();
       return myLexer.getTokenType() == null;
@@ -50,7 +50,7 @@ public class PsiNameHelperImpl extends PsiNameHelper{
 
     synchronized (LOCK) {
       updateLexer(languageLevel);
-      myLexer.start(text,0,text.length(),0);
+      myLexer.start(text);
       if (myLexer.getTokenType() != JavaTokenType.IDENTIFIER) return false;
       myLexer.advance();
       return myLexer.getTokenType() == null;
@@ -63,7 +63,7 @@ public class PsiNameHelperImpl extends PsiNameHelper{
 
     synchronized (LOCK) {
       updateLexer(LanguageLevelProjectExtension.getInstance(myManager.getProject()).getLanguageLevel());
-      myLexer.start(text,0,text.length(),0);
+      myLexer.start(text);
       if (myLexer.getTokenType() == null || !JavaTokenType.KEYWORD_BIT_SET.contains(myLexer.getTokenType())) return false;
       myLexer.advance();
       return myLexer.getTokenType() == null;

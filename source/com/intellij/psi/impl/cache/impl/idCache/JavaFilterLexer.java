@@ -15,7 +15,7 @@ public class JavaFilterLexer extends BaseFilterLexer {
   }
 
   public void advance() {
-    final IElementType tokenType = myOriginalLexer.getTokenType();
+    final IElementType tokenType = getDelegate().getTokenType();
 
     if (tokenType == JavaTokenType.IDENTIFIER
         || tokenType == JavaTokenType.LONG_LITERAL
@@ -35,6 +35,6 @@ public class JavaFilterLexer extends BaseFilterLexer {
       scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT, false, false);
     }
 
-    myOriginalLexer.advance();
+    getDelegate().advance();
   }
 }

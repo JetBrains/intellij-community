@@ -5,7 +5,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.Nullable;
 
 public class HtmlHighlightingLexer extends BaseHtmlLexer {
@@ -54,7 +53,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     public void handleElement(Lexer lexer) {
       setEmbeddedLexer();
       if (embeddedLexer != null) {
-        embeddedLexer.start(getBufferSequence(),HtmlHighlightingLexer.super.getTokenStart(),HtmlHighlightingLexer.super.getTokenEnd(), 0);
+        embeddedLexer.start(getBufferSequence(), HtmlHighlightingLexer.super.getTokenStart(), HtmlHighlightingLexer.super.getTokenEnd());
       }
     }
   }
@@ -70,10 +69,6 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     registerHandler(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,value);
     registerHandler(XmlTokenType.XML_DATA_CHARACTERS,value);
     registerHandler(XmlTokenType.XML_COMMENT_CHARACTERS,value);
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    start(new CharArrayCharSequence(buffer),startOffset, endOffset, initialState);
   }
 
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {

@@ -9,8 +9,8 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
-import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -25,8 +25,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -142,7 +142,7 @@ public class EnterHandler extends EditorWriteActionHandler {
     final PsiFile containingFile = comment.getContainingFile();
     final Language language = comment.getParent().getLanguage();
     Lexer lexer = LanguageParserDefinitions.INSTANCE.forLanguage(language).createLexer(containingFile.getProject());
-    lexer.start(commentText, commenter.getDocumentationCommentPrefix().length(), commentText.length(),0);
+    lexer.start(commentText, commenter.getDocumentationCommentPrefix().length(), commentText.length());
     QuoteHandler fileTypeHandler = TypedHandler.getQuoteHandler(containingFile);
     JavaLikeQuoteHandler javaLikeQuoteHandler = fileTypeHandler instanceof JavaLikeQuoteHandler ?
                                                              (JavaLikeQuoteHandler)fileTypeHandler:null;
@@ -167,7 +167,7 @@ public class EnterHandler extends EditorWriteActionHandler {
       }
       if (lexer.getTokenEnd() == commentText.length()) {
         if (lexer.getTokenType() == commenter.getLineCommentTokenType()) {
-          lexer.start(commentText, lexer.getTokenStart() + commenter.getLineCommentPrefix().length(), commentText.length(), 0);
+          lexer.start(commentText, lexer.getTokenStart() + commenter.getLineCommentPrefix().length(), commentText.length());
           lexer.advance();
           continue;
         }

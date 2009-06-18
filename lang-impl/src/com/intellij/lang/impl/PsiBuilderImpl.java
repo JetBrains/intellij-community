@@ -144,7 +144,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     int i = 0;
 
-    myLexer.start(myText, 0, myText.length(), 0);
+    myLexer.start(myText);
     while (true) {
       IElementType type = myLexer.getTokenType();
       if (type == null) break;

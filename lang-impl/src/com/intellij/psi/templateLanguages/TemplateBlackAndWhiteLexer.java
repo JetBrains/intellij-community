@@ -8,7 +8,7 @@ import com.intellij.lexer.LexerPosition;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
 
-public class TemplateBlackAndWhiteLexer implements Lexer{
+public class TemplateBlackAndWhiteLexer extends Lexer {
   private final Lexer myBaseLexer;
   private final Lexer myTemplateLexer;
   private final IElementType myTemplateElementType;
@@ -20,19 +20,6 @@ public class TemplateBlackAndWhiteLexer implements Lexer{
     myBaseLexer = baseLexer;
     myTemplateElementType = templateElementType;
     myOuterElementType = outerElementType;
-  }
-
-  public void start(char[] buffer) {
-    start(buffer, 0, buffer.length, 0);
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset) {
-    start(buffer, startOffset, endOffset, 0);
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    myBaseLexer.start(buffer, startOffset, endOffset, initialState);
-    setupTemplateToken();
   }
 
   public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
@@ -141,10 +128,6 @@ public class TemplateBlackAndWhiteLexer implements Lexer{
     else {
       setupTemplateToken();
     }
-  }
-
-  public char[] getBuffer() {
-    return myBaseLexer.getBuffer();
   }
 
   public int getBufferEnd() {

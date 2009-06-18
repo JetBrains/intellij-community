@@ -29,12 +29,6 @@ public abstract class CompositeLexer extends LexerBase {
 
   protected abstract IElementType getCompositeTokenType(IElementType type1, IElementType type2);
 
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    myLexer1.start(buffer, startOffset, endOffset, (initialState >> 16) & 0xFFFF);
-    myLexer2.start(buffer, startOffset, endOffset, initialState & 0xFFFF);
-    myCurOffset = startOffset;
-  }
-
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myLexer1.start(buffer, startOffset, endOffset, (initialState >> 16) & 0xFFFF);
     myLexer2.start(buffer, startOffset, endOffset, initialState & 0xFFFF);
@@ -82,10 +76,6 @@ public abstract class CompositeLexer extends LexerBase {
     if (myCurOffset == end2){
       myLexer2.advance();
     }
-  }
-
-  public char[] getBuffer() {
-    return myLexer1.getBuffer();
   }
 
   public int getBufferEnd() {

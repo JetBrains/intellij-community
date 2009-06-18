@@ -5,10 +5,9 @@ import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.IdDataConsumer;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -21,7 +20,7 @@ public abstract class LexerBasedIdIndexer extends FileTypeIdIndexer {
     final IdDataConsumer consumer = new IdDataConsumer();
     final Lexer lexer = createLexer(new OccurrenceToIdDataConsumerAdapter(consumer));
     final CharSequence chars = inputData.getContentAsText();
-    lexer.start(chars, 0, chars.length(),0);
+    lexer.start(chars);
     while (lexer.getTokenType() != null) {
       lexer.advance();
     }
@@ -40,11 +39,7 @@ public abstract class LexerBasedIdIndexer extends FileTypeIdIndexer {
     public void addOccurrence(final CharSequence charSequence, final int start, final int end, final int occurrenceMask) {
       myIndexDataConsumer.addOccurrence(charSequence, start, end, occurrenceMask);
     }
-  
-    public void addOccurrence(final char[] chars, final int start, final int end, final int occurrenceMask) {
-      myIndexDataConsumer.addOccurrence(chars, start, end, occurrenceMask);
-    }
-  
+
     public void incTodoOccurrence(final IndexPattern pattern) {
       // empty
     }

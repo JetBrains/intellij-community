@@ -44,7 +44,7 @@ public class OldXmlParsing implements XmlElementType {
 
   public TreeElement parse(Lexer originalLexer, CharSequence buffer, int startOffset, int endOffset, PsiManager manager) {
     final Lexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, startOffset, endOffset, 0);
+    lexer.start(buffer, startOffset, endOffset);
 
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
 
@@ -59,26 +59,6 @@ public class OldXmlParsing implements XmlElementType {
                                   endOffset,
                                   -1, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return root;
-  }
-
-  public static ASTNode parseTag(Lexer lexer, char[] buffer, int startOffset, int endOffset, CharTable table, ASTNode parent) {
-    XmlParsingContext context = new XmlParsingContext(table);
-    FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
-    filterLexer.start(buffer, startOffset, endOffset);
-    final FileElement holderElement = DummyHolderFactory.createHolder(SharedImplUtil.getManagerByTree(parent), null, table).getTreeElement();
-    final Set<String> names = new HashSet<String>();
-    while (parent instanceof XmlTag) {
-      names.add(((XmlTag)parent).getName());
-      parent = parent.getTreeParent();
-    }
-
-    context.getXmlParsing()._parseTag(holderElement, filterLexer, names);
-    while (filterLexer.getTokenType() != null) {
-      context.getXmlParsing().addToken(holderElement, filterLexer);
-    }
-    insertMissingTokens(holderElement, lexer, startOffset, endOffset, -1, WhiteSpaceAndCommentsProcessor.INSTANCE, context);
-    ASTNode result = holderElement.getFirstChildNode();
-    return result;
   }
 
   public void parseGenericXml(Lexer lexer, CompositeElement root, Set<String> names) {
@@ -274,7 +254,7 @@ public class OldXmlParsing implements XmlElementType {
       return true;
     }
 
-    final String openedName = lexer.getBufferSequence().subSequence(lexer.getTokenStart(),lexer.getTokenEnd()).toString();
+    final String openedName = lexer.getTokenText();
     addToken(tag, lexer);
 
     parseAttributeList(tag, lexer);
@@ -344,7 +324,7 @@ public class OldXmlParsing implements XmlElementType {
                                                                          lexer.getTokenEnd()).toString();
 
       if (!closingName.equals(openedName) && names.contains(closingName)) {
-        lexer.start(lexer.getBufferSequence(), pos, lexer.getBufferEnd(), 0);
+        lexer.start(lexer.getBufferSequence(), pos, lexer.getBufferEnd());
         if (tagEnd != null) {
           final TreeElement start = tagEnd.getTreeNext();
           tagEnd.setTreeNext(null);
@@ -992,7 +972,7 @@ public class OldXmlParsing implements XmlElementType {
                                          TokenProcessor processor,
                                          ParsingContext context) {
     if (state < 0) {
-      lexer.start(lexer.getBufferSequence(), startOffset, endOffset,0);
+      lexer.start(lexer.getBufferSequence(), startOffset, endOffset);
     }
     else {
       lexer.start(lexer.getBufferSequence(), startOffset, endOffset, state);

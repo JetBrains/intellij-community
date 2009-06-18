@@ -19,7 +19,7 @@ class MacroParser {
       return new ConstantNode("");
     }
     Lexer lexer = new MacroLexer();
-    lexer.start(expression, 0, expression.length(), 0);
+    lexer.start(expression);
     skipWhitespaces(lexer);
     return parseMacro(lexer, expression);
   }

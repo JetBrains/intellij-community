@@ -2,10 +2,10 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,7 +25,7 @@ public class LightKeyword extends LightElement implements PsiKeyword, PsiJavaTok
 
   public IElementType getTokenType(){
     Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
-    lexer.start(myText,0,myText.length(),0);
+    lexer.start(myText);
     return lexer.getTokenType();
   }
 

@@ -5,7 +5,6 @@ package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.CharArrayCharSequence;
 
 public class PrefixSuffixStripperLexer extends LexerBase {
   private CharSequence myBuffer;
@@ -31,10 +30,6 @@ public class PrefixSuffixStripperLexer extends LexerBase {
     mySuffix = suffix;
     myPrefixType = prefixType;
     myPrefix = prefix;
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    start(new CharArrayCharSequence(buffer),startOffset, endOffset, initialState);
   }
 
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
@@ -68,10 +63,6 @@ public class PrefixSuffixStripperLexer extends LexerBase {
 
   public int getBufferEnd() {
     return myBufferEnd;
-  }
-
-  public char[] getBuffer() {
-    return CharArrayUtil.fromSequence(myBuffer);
   }
 
   public CharSequence getBufferSequence() {

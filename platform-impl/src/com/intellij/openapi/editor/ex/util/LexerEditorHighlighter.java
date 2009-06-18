@@ -41,7 +41,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   public LexerEditorHighlighter(SyntaxHighlighter highlighter, EditorColorsScheme scheme) {
     myScheme = scheme;
     myLexer = highlighter.getHighlightingLexer();
-    myLexer.start(ArrayUtil.EMPTY_CHAR_SEQUENCE,0,0,0);
+    myLexer.start(ArrayUtil.EMPTY_CHAR_SEQUENCE);
     myInitialState = myLexer.getState();
     myAttributesMap = new HashMap<IElementType, TextAttributes>();
     myHighlighter = highlighter;

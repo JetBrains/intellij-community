@@ -247,7 +247,7 @@ public class HtmlLinkTagIndex extends SingleEntryFileBasedIndexExtension<HtmlLin
     });
 
     final CharSequence data = inputData.getContentAsText();
-    lexer.start(data, 0, data.length(), 0);
+    lexer.start(data);
 
     IElementType tokenType = lexer.getTokenType();
     boolean linkTag = false;

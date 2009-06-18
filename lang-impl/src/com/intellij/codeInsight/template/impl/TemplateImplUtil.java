@@ -2,12 +2,10 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Set;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,7 +17,7 @@ import org.jetbrains.annotations.NonNls;
 public class TemplateImplUtil {
   public static boolean validateTemplateText(String s) {
     TemplateTextLexer lexer = new TemplateTextLexer();
-    lexer.start(s,0,s.length(),0);
+    lexer.start(s);
     int end = -1;
     while(true){
       IElementType tokenType = lexer.getTokenType();
@@ -38,7 +36,7 @@ public class TemplateImplUtil {
 
   public static void parseVariables(CharSequence text, ArrayList variables, Set predefinedVars) {
     TemplateTextLexer lexer = new TemplateTextLexer();
-    lexer.start(text, 0, text.length(),0);
+    lexer.start(text);
 
     while(true){
       IElementType tokenType = lexer.getTokenType();

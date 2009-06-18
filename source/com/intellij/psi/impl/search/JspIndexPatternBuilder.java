@@ -18,8 +18,6 @@ import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 
 /**
@@ -91,10 +89,6 @@ public class JspIndexPatternBuilder implements IndexPatternBuilder {
       iterator = myHighlighter.createIterator(0);
     }
 
-    public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-      start(new CharArrayCharSequence(buffer), startOffset, endOffset, initialState);
-    }
-
     public int getState() {
       return 0;
     }
@@ -114,10 +108,6 @@ public class JspIndexPatternBuilder implements IndexPatternBuilder {
 
     public void advance() {
       iterator.advance();
-    }
-
-    public char[] getBuffer() {
-      return CharArrayUtil.fromSequence(buffer);
     }
 
     public CharSequence getBufferSequence() {

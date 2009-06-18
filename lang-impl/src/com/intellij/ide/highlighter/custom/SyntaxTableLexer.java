@@ -3,8 +3,6 @@ package com.intellij.ide.highlighter.custom;
 import com.intellij.lexer.LexerBase;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.CharArrayUtil;
 
 /**
  * @author Yura Cangea
@@ -60,11 +58,6 @@ public class SyntaxTableLexer extends LexerBase {
     tokenizer.start(buffer, startOffset, endOffset);
 
     firstCall = true;
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset,
-                    int initialState) {
-    start(new CharArrayCharSequence(buffer), startOffset, endOffset, initialState);
   }
 
   private void parseToken() {
@@ -158,10 +151,6 @@ public class SyntaxTableLexer extends LexerBase {
       firstCall = false;
     }
     parseToken();
-  }
-
-  public char[] getBuffer() {
-    return CharArrayUtil.fromSequence(buffer);
   }
 
   public CharSequence getBufferSequence() {

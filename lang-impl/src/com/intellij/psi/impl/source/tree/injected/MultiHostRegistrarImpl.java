@@ -449,7 +449,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens = new ArrayList<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>>(10);
     SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, (VirtualFile)virtualFile);
     Lexer lexer = syntaxHighlighter.getHighlightingLexer();
-    lexer.start(outChars, 0, outChars.length(), 0);
+    lexer.start(outChars);
     int hostNum = -1;
     int prevHostEndOffset = 0;
     PsiLanguageInjectionHost host = null;

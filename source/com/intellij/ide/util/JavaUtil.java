@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.util.text.CharArrayCharSequence;
 
 import java.io.File;
 import java.io.IOException;
@@ -116,23 +117,23 @@ public class JavaUtil {
       return null;
     }
 
-    try{
-      final char[] chars = FileUtil.loadFileText(javaFile);
+    try {
+      final CharSequence chars = new CharArrayCharSequence(FileUtil.loadFileText(javaFile));
 
       String packageName = getPackageStatement(chars);
-      if (packageName != null){
+      if (packageName != null) {
         File root = javaFile.getParentFile();
         int index = packageName.length();
-        while(index > 0){
+        while (index > 0) {
           int index1 = packageName.lastIndexOf('.', index - 1);
           String token = packageName.substring(index1 + 1, index);
           String dirName = root.getName();
           final boolean equalsToToken = SystemInfo.isFileSystemCaseSensitive ? dirName.equals(token) : dirName.equalsIgnoreCase(token);
-          if (!equalsToToken){
+          if (!equalsToToken) {
             return Pair.create(root, packageName.substring(0, index));
           }
           String parent = root.getParent();
-          if (parent == null){
+          if (parent == null) {
             return null;
           }
           root = new File(parent);
@@ -148,7 +149,7 @@ public class JavaUtil {
     return null;
   }
 
-  private static String getPackageStatement(char[] text){
+  private static String getPackageStatement(CharSequence text){
     Lexer lexer = new JavaLexer(LanguageLevel.JDK_1_3);
     lexer.start(text);
     skipWhiteSpaceAndComments(lexer);

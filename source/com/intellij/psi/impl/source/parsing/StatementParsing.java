@@ -4,8 +4,8 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.*;
@@ -58,7 +58,7 @@ public class StatementParsing extends Parsing {
       lexer = new JavaLexer(myContext.getLanguageLevel());
     }
     final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    if (state < 0) filterLexer.start(buffer, startOffset, endOffset,0);
+    if (state < 0) filterLexer.start(buffer, startOffset, endOffset);
     else filterLexer.start(buffer, startOffset, endOffset, state);
 
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
@@ -81,7 +81,7 @@ public class StatementParsing extends Parsing {
       lexer = new JavaLexer(myContext.getLanguageLevel());
     }
     final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    if (state < 0) filterLexer.start(buffer, startOffset, endOffset,0);
+    if (state < 0) filterLexer.start(buffer, startOffset, endOffset);
     else filterLexer.start(buffer, startOffset, endOffset, state);
 
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
@@ -98,7 +98,7 @@ public class StatementParsing extends Parsing {
 
   public TreeElement parseCodeBlock(Lexer lexer, boolean deep) {
     if (lexer.getTokenType() != JavaTokenType.LBRACE) return null;
-    Lexer badLexer = lexer instanceof StoppableLexerAdapter ? ((StoppableLexerAdapter)lexer).getOriginal() : lexer;
+    Lexer badLexer = lexer instanceof StoppableLexerAdapter ? ((StoppableLexerAdapter)lexer).getDelegate() : lexer;
     if (badLexer instanceof FilterLexer){
       final Lexer original = ((FilterLexer)badLexer).getOriginal();
       if (original instanceof AbstractJspJavaLexer){
@@ -253,7 +253,7 @@ public class StatementParsing extends Parsing {
   public TreeElement parseStatementText(CharSequence buffer) {
     Lexer lexer = new JavaLexer(myContext.getLanguageLevel());
     final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    filterLexer.start(buffer, 0, buffer.length(), 0);
+    filterLexer.start(buffer);
 
     TreeElement statement = parseStatement(filterLexer);
     if (statement == null) return null;
@@ -967,7 +967,7 @@ public class StatementParsing extends Parsing {
   public TreeElement parseCatchSectionText(CharSequence buffer) {
     Lexer lexer = new JavaLexer(myContext.getLanguageLevel());
     final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    filterLexer.start(buffer, 0, buffer.length(),0);
+    filterLexer.start(buffer);
 
     CompositeElement catchSection = parseCatchSection(filterLexer);
     if (catchSection == null) return null;

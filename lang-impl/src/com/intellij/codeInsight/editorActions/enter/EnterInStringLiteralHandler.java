@@ -1,5 +1,8 @@
 package com.intellij.codeInsight.editorActions.enter;
 
+import com.intellij.codeInsight.editorActions.JavaLikeQuoteHandler;
+import com.intellij.codeInsight.editorActions.QuoteHandler;
+import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.StringLiteralLexer;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -8,11 +11,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.codeInsight.editorActions.QuoteHandler;
-import com.intellij.codeInsight.editorActions.TypedHandler;
-import com.intellij.codeInsight.editorActions.JavaLikeQuoteHandler;
 
 public class EnterInStringLiteralHandler implements EnterHandlerDelegate {
   public Result preprocessEnter(final PsiFile file, final Editor editor, Ref<Integer> caretOffsetRef, final Ref<Integer> caretAdvanceRef, 
@@ -34,7 +36,7 @@ public class EnterInStringLiteralHandler implements EnterHandlerDelegate {
         TextRange range = token.getTextRange();
         final char literalStart = token.getText().charAt(0);
         final StringLiteralLexer lexer = new StringLiteralLexer(literalStart, token.getElementType());
-        lexer.start(text, range.getStartOffset(), range.getEndOffset(),0);
+        lexer.start(text, range.getStartOffset(), range.getEndOffset());
 
         while (lexer.getTokenType() != null) {
           if (lexer.getTokenStart() < caretOffset && caretOffset < lexer.getTokenEnd()) {

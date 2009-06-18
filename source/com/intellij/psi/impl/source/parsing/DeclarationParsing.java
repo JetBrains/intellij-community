@@ -35,7 +35,7 @@ public class DeclarationParsing extends Parsing {
   public TreeElement parseEnumConstantText(CharSequence buffer) {
     Lexer originalLexer = new JavaLexer(LanguageLevel.JDK_1_5);
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, 0, buffer.length(),0);
+    lexer.start(buffer);
     return parseEnumConstant(lexer);
   }
 
@@ -45,7 +45,7 @@ public class DeclarationParsing extends Parsing {
                                           Context context) {
     Lexer originalLexer = new JavaLexer(languageLevel);
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, 0, buffer.length(), 0);
+    lexer.start(buffer);
     TreeElement first = parseDeclaration(lexer, context);
     if (first == null) return null;
     if (lexer.getTokenType() != null) return null;
@@ -60,7 +60,7 @@ public class DeclarationParsing extends Parsing {
   public TreeElement parseMemberValueText(PsiManager manager, CharSequence buffer, final LanguageLevel languageLevel) {
     Lexer originalLexer = new JavaLexer(languageLevel);
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, 0, buffer.length(), 0);
+    lexer.start(buffer);
     TreeElement first = parseAnnotationMemberValue(lexer);
     if (first == null) return null;
     if (lexer.getTokenType() != null) return null;
@@ -437,7 +437,7 @@ public class DeclarationParsing extends Parsing {
   public CompositeElement parseAnnotationFromText(PsiManager manager, String text, final LanguageLevel languageLevel) {
     Lexer originalLexer = new JavaLexer(languageLevel);
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(text, 0, text.length(),0);
+    lexer.start(text);
     CompositeElement first = parseAnnotation(lexer);
     if (first == null) return null;
     if (lexer.getTokenType() != null) return null;
@@ -724,7 +724,7 @@ public class DeclarationParsing extends Parsing {
   public TreeElement parseTypeParameterText(CharSequence buffer) {
     Lexer originalLexer = new JavaLexer(myContext.getLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, 0, buffer.length(),0);
+    lexer.start(buffer);
     CompositeElement typeParameter = parseTypeParameter(lexer);
     if (typeParameter == null) return null;
     if (lexer.getTokenType() != null) return null;
@@ -995,7 +995,7 @@ public class DeclarationParsing extends Parsing {
   public CompositeElement parseParameterText(CharSequence buffer) {
     Lexer originalLexer = new JavaLexer(myContext.getLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, 0, buffer.length(), 0);
+    lexer.start(buffer);
     ASTNode first = parseParameter(lexer, true);
     if (first == null || first.getElementType() != PARAMETER) return null;
     if (lexer.getTokenType() != null) return null;

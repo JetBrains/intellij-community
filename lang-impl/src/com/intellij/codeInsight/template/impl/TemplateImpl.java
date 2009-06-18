@@ -253,7 +253,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     mySegments = new ArrayList<Segment>();
     StringBuilder buffer = new StringBuilder("");
     TemplateTextLexer lexer = new TemplateTextLexer();
-    lexer.start(myString,0,myString.length(),0);
+    lexer.start(myString);
 
     while(true){
       IElementType tokenType = lexer.getTokenType();

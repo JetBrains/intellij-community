@@ -18,8 +18,6 @@ package com.intellij.lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.CharArrayUtil;
 
 /**
  * @author max
@@ -58,10 +56,6 @@ public class StringLiteralLexer extends LexerBase {
     myOriginalLiteralToken = originalLiteralToken;
     myCanEscapeEolOrFramingSpaces = canEscapeEolOrFramingSpaces;
     myAdditionalValidEscapes = additionalValidEscapes;
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    start(new CharArrayCharSequence(buffer),startOffset,endOffset,initialState);
   }
 
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
@@ -220,10 +214,6 @@ public class StringLiteralLexer extends LexerBase {
     myLastState = myState;
     myStart = myEnd;
     myEnd = locateToken(myStart);
-  }
-
-  public char[] getBuffer() {
-    return CharArrayUtil.fromSequence(myBuffer);
   }
 
   public CharSequence getBufferSequence() {

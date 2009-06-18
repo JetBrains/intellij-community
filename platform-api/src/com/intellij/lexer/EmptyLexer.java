@@ -17,8 +17,6 @@ package com.intellij.lexer;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.CharArrayUtil;
 
 public class EmptyLexer extends LexerBase {
   private CharSequence myBuffer;
@@ -26,10 +24,6 @@ public class EmptyLexer extends LexerBase {
   private int myEndOffset;
 
   private static final IElementType EMPTY_TOKEN_TYPE = new IElementType("empty token", Language.ANY);
-
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    start(new CharArrayCharSequence(buffer), startOffset, endOffset,0);
-  }
 
   public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
     myBuffer = buffer;
@@ -66,10 +60,6 @@ public class EmptyLexer extends LexerBase {
   }
 
   public void restore(LexerPosition position) {}
-
-  public char[] getBuffer() {
-    return CharArrayUtil.fromSequence(myBuffer);
-  }
 
   public int getBufferEnd() {
     return myEndOffset;

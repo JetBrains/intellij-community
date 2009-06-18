@@ -1,6 +1,5 @@
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -9,6 +8,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -130,7 +130,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
                                    final TIntArrayList commentStarts,
                                    final TIntArrayList commentEnds,
                                    final IndexPatternBuilder builderForFile) {
-    for (lexer.start(chars,0,chars.length(),0); ; lexer.advance()) {
+    for (lexer.start(chars); ; lexer.advance()) {
       IElementType tokenType = lexer.getTokenType();
       if (tokenType == null) break;
 

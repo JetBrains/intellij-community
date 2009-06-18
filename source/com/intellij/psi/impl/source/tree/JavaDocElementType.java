@@ -65,7 +65,7 @@ public interface JavaDocElementType {
     public boolean isParsable(CharSequence buffer, final Project project) {
       final JavaLexer lexer = new JavaLexer(LanguageLevel.JDK_1_5);
 
-      lexer.start(buffer, 0, buffer.length(),0);
+      lexer.start(buffer);
       if(lexer.getTokenType() != DOC_COMMENT) return false;
       lexer.advance();
       if(lexer.getTokenType() != null) return false;

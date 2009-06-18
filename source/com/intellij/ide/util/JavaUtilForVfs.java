@@ -137,7 +137,7 @@ public class JavaUtilForVfs {
 
   private static String getPackageStatement(CharSequence text){
     Lexer lexer = new JavaLexer(LanguageLevel.JDK_1_3);
-    lexer.start(text, 0, text.length(), 0);
+    lexer.start(text);
 
     skipWhiteSpaceAndComments(lexer);
     if (lexer.getTokenType() != JavaTokenType.PACKAGE_KEYWORD) return null;

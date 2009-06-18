@@ -9,6 +9,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,15 +30,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.lexer.Lexer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -317,7 +317,7 @@ public class TypedHandler implements TypedActionHandler {
     final ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     if (definition != null && !(language instanceof TemplateLanguage)) {
       final Lexer lexer = definition.createLexer(editor.getProject());
-      lexer.start(Character.toString(charTyped), 0, 1, 0);
+      lexer.start(Character.toString(charTyped));
       final IElementType tokenType = lexer.getTokenType();
       if (tokenType != iterator.getTokenType()) {
         return false;        

@@ -6,8 +6,6 @@ import com.intellij.lexer.LexerBase;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.CharArrayUtil;
 
 /**
  * @author dsl
@@ -16,9 +14,7 @@ public abstract class AbstractCustomLexer extends LexerBase {
   protected CharSequence myBuffer = ArrayUtil.EMPTY_CHAR_SEQUENCE;
   protected int myStartOffset = 0;
   protected int myEndOffset = 0;
-  private static final short START_STATE = (short) 0;
   private final TokenParser[] myTokenParsers;
-  private final int mySmartUpdateShift;
   private TokenInfo myCurrentToken;
   private int myPosition;
 
@@ -26,15 +22,9 @@ public abstract class AbstractCustomLexer extends LexerBase {
     myTokenParsers = tokenParsers;
 
     int smartUpdateShift = 0;
-    for (int i = 0; i < myTokenParsers.length; i++) {
-      TokenParser tokenParser = myTokenParsers[i];
+    for (TokenParser tokenParser : myTokenParsers) {
       smartUpdateShift = Math.max(smartUpdateShift, tokenParser.getSmartUpdateShift());
     }
-    mySmartUpdateShift = smartUpdateShift;
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-   start(new CharArrayCharSequence(buffer), startOffset, endOffset, initialState);
   }
 
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
@@ -71,8 +61,7 @@ public abstract class AbstractCustomLexer extends LexerBase {
       return;
     }
     boolean tokenFound = false;
-    for (int i = 0; i < myTokenParsers.length; i++) {
-      TokenParser tokenParser = myTokenParsers[i];
+    for (TokenParser tokenParser : myTokenParsers) {
       if (tokenParser.hasToken(myPosition)) {
         tokenParser.getTokenInfo(myCurrentToken);
         tokenFound = true;
@@ -84,10 +73,6 @@ public abstract class AbstractCustomLexer extends LexerBase {
       myCurrentToken.updateData(myPosition, myPosition + 1, CustomHighlighterTokenType.CHARACTER);
     }
     myPosition = myCurrentToken.getEnd();
-  }
-
-  public char[] getBuffer() {
-    return CharArrayUtil.fromSequence(myBuffer);
   }
 
   public CharSequence getBufferSequence() {

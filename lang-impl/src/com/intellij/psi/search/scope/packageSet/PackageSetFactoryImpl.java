@@ -13,7 +13,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
 
   public PackageSet compile(String text) throws ParsingException {
     Lexer lexer = new ScopesLexer();
-    lexer.start(text,0,text.length(),0);
+    lexer.start(text);
     return new Parser(lexer).parse();
   }
 

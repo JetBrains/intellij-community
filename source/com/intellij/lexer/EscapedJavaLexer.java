@@ -4,8 +4,6 @@ package com.intellij.lexer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.CharArrayUtil;
 
 /**
  * Used to process scriptlet code in JSP attribute values like this:
@@ -46,10 +44,6 @@ public class EscapedJavaLexer extends LexerBase {
     return myBuffer;
   }
 
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    start(new CharArrayCharSequence(buffer),startOffset,endOffset,0);
-  }
-
   public int getState() {
     return 0;
   }
@@ -73,10 +67,6 @@ public class EscapedJavaLexer extends LexerBase {
     locateToken();
     myTokenType = null;
     myCurOffset = myTokenEnd;
-  }
-
-  public final char[] getBuffer(){
-    return CharArrayUtil.fromSequence(myBuffer);
   }
 
   public final int getBufferEnd(){
@@ -137,7 +127,7 @@ public class EscapedJavaLexer extends LexerBase {
     switch (state){
       case 0:
         if(offset == myCurOffset){
-          myJavaLexer.start(myBuffer, myCurOffset, myBufferEnd,0);
+          myJavaLexer.start(myBuffer, myCurOffset, myBufferEnd);
           myTokenType = myJavaLexer.getTokenType();
           myTokenEnd = myJavaLexer.getTokenEnd();
         }

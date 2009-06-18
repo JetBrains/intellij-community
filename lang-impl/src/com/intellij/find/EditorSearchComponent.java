@@ -648,7 +648,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       CharSequence chars = myEditor.getDocument().getCharsSequence();
 
       IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor() {
-        public void run(final CharSequence chars, final int start, final int end, char[] charArray) {
+        public void run(final CharSequence chars, final int start, final int end) {
           final String word = chars.subSequence(start, end).toString();
           if (matcher.matches(word)) {
             words.add(word);

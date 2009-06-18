@@ -85,7 +85,7 @@ public class JavaParserDefinition implements ParserDefinition {
     else lexer = new JavaLexer(LanguageLevel.HIGHEST);
     if(right.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN) return SpaceRequirements.MUST_NOT;
     if(left.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN) return SpaceRequirements.MUST_NOT;
-    final SpaceRequirements spaceRequirements = LanguageUtil.canStickTokensTogetherByLexer(left, right, lexer, 0);
+    final SpaceRequirements spaceRequirements = LanguageUtil.canStickTokensTogetherByLexer(left, right, lexer);
     if(left.getElementType() == JavaTokenType.END_OF_LINE_COMMENT) return SpaceRequirements.MUST_LINE_BREAK;
 
     if(left.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {

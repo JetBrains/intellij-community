@@ -42,7 +42,7 @@ public class Parsing implements Constants{
                                                        boolean eatAll) {
     Lexer originalLexer = new JavaLexer(LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, startOffset, endOffset,0);
+    lexer.start(buffer, startOffset, endOffset);
 
     JavaParsingContext context = new JavaParsingContext(table, LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
     CompositeElement ref = context.getStatementParsing().parseJavaCodeReference(lexer, false, true);
@@ -159,7 +159,7 @@ public class Parsing implements Constants{
   public static CompositeElement parseTypeText(PsiManager manager, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
     Lexer originalLexer = new JavaLexer(LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, startOffset, endOffset, 0);
+    lexer.start(buffer, startOffset, endOffset);
     final JavaParsingContext context = new JavaParsingContext(table,
                                                               LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
     CompositeElement type = context.getStatementParsing().parseTypeWithEllipsis(lexer);
@@ -263,7 +263,7 @@ public class Parsing implements Constants{
       lexer = new JavaLexer(LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
     }
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    if (state < 0) filterLexer.start(buffer, startOffset, endOffset,0);
+    if (state < 0) filterLexer.start(buffer, startOffset, endOffset);
     else filterLexer.start(buffer, startOffset, endOffset, state);
     final JavaParsingContext context = new JavaParsingContext(table,
                                                               LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel());

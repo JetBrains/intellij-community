@@ -5,11 +5,10 @@ import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -22,7 +21,7 @@ public abstract class LexerBasedTodoIndexer implements DataIndexer<TodoIndexEntr
     final TodoOccurrenceConsumer todoOccurrenceConsumer = new TodoOccurrenceConsumer();
     final Lexer filterLexer = createLexer(todoOccurrenceConsumer);
     final CharSequence chars = inputData.getContentAsText();
-    filterLexer.start(chars, 0, chars.length(),0);
+    filterLexer.start(chars);
     while (filterLexer.getTokenType() != null) {
       filterLexer.advance();
     }

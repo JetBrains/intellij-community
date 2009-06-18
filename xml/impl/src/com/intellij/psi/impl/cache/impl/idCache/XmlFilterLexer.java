@@ -13,7 +13,7 @@ public class XmlFilterLexer extends BaseFilterLexer {
   }
 
   public void advance() {
-    final IElementType tokenType = myOriginalLexer.getTokenType();
+    final IElementType tokenType = getDelegate().getTokenType();
 
     if (tokenType == XmlElementType.XML_COMMENT_CHARACTERS) {
       scanWordsInToken(UsageSearchContext.IN_COMMENTS, false, false);
@@ -36,6 +36,6 @@ public class XmlFilterLexer extends BaseFilterLexer {
       scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT, false, false);
     }
 
-    myOriginalLexer.advance();
+    getDelegate().advance();
   }
 }

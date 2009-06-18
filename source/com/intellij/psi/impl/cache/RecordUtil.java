@@ -73,7 +73,7 @@ public class RecordUtil {
       Lexer originalLexer = impl.createLexer();
       FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
       final TextRange range = psiElement.getTextRange();
-      lexer.start(fileBuffer, range.getStartOffset(), range.getEndOffset(),0);
+      lexer.start(fileBuffer, range.getStartOffset(), range.getEndOffset());
       boolean isInNewExpression = false;
       boolean isRightAfterNewExpression = false;
       int angleLevel = 0;

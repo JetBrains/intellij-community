@@ -19,7 +19,7 @@ import com.intellij.psi.xml.XmlElementType;
 public class DTDParserDefinition extends XMLParserDefinition {
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
     final OldXmlLexer xmlLexer = new OldXmlLexer();
-    return LanguageUtil.canStickTokensTogetherByLexer(left, right, xmlLexer, 0);
+    return LanguageUtil.canStickTokensTogetherByLexer(left, right, xmlLexer);
   }
 
   public PsiFile createFile(FileViewProvider viewProvider) {

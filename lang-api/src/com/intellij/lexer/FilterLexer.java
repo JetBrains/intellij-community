@@ -21,14 +21,13 @@ import com.intellij.psi.tree.TokenSet;
 /**
  *
  */
-public class FilterLexer extends LexerBase {
-  private Lexer myOriginal;
+public class FilterLexer extends DelegateLexer {
   private Filter myFilter;
   private boolean[] myStateFilter;
   private int myPrevTokenEnd;
 
   public interface Filter {
-    public boolean reject(IElementType type);
+    boolean reject(IElementType type);
   }
 
   public static final class SetFilter implements Filter {
@@ -44,7 +43,7 @@ public class FilterLexer extends LexerBase {
   }
 
   public FilterLexer(Lexer original, Filter filter, boolean[] stateFilter) {
-    myOriginal = original;
+    super(original);
     myFilter = filter;
     myStateFilter = stateFilter;
   }
@@ -54,52 +53,19 @@ public class FilterLexer extends LexerBase {
   }
 
   public Lexer getOriginal() {
-    return myOriginal;
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    myOriginal.start(buffer, startOffset, endOffset, initialState);
-    myPrevTokenEnd = -1;
-    locateToken();
+    return getDelegate();
   }
 
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
-    myOriginal.start(buffer, startOffset, endOffset, initialState);
+    super.start(buffer, startOffset, endOffset, initialState);
     myPrevTokenEnd = -1;
     locateToken();
   }
 
-  public CharSequence getBufferSequence() {
-    return myOriginal.getBufferSequence();
-  }
-
-  public int getState() {
-    return myOriginal.getState();
-  }
-
-  public IElementType getTokenType() {
-    return myOriginal.getTokenType();
-  }
-
-  public int getTokenStart() {
-    return myOriginal.getTokenStart();
-  }
-
-  public int getTokenEnd() {
-    return myOriginal.getTokenEnd();
-  }
-
-  public char[] getBuffer() {
-    return myOriginal.getBuffer();
-  }
-
-  public int getBufferEnd() {
-    return myOriginal.getBufferEnd();
-  }
 
   public void advance() {
-    myPrevTokenEnd = myOriginal.getTokenEnd();
-    myOriginal.advance();
+    myPrevTokenEnd = getDelegate().getTokenEnd();
+    super.advance();
     locateToken();
   }
 
@@ -108,24 +74,25 @@ public class FilterLexer extends LexerBase {
   }
 
   public LexerPosition getCurrentPosition() {
-    return myOriginal.getCurrentPosition();    //To change body of overridden methods use File | Settings | File Templates.
+    return getDelegate().getCurrentPosition();    //To change body of overridden methods use File | Settings | File Templates.
   }
 
   public void restore(LexerPosition position) {
-    myOriginal.restore(position);
+    getDelegate().restore(position);
     myPrevTokenEnd = -1;
   }
 
   public final void locateToken(){
     while(true){
-      IElementType tokenType = myOriginal.getTokenType();
+      Lexer delegate = getDelegate();
+      IElementType tokenType = delegate.getTokenType();
       if (tokenType == null) break;
       if (myFilter == null || !myFilter.reject(tokenType)) {
-        if (myStateFilter == null || !myStateFilter[myOriginal.getState()]){
+        if (myStateFilter == null || !myStateFilter[delegate.getState()]){
           break;
         }
       }
-      myOriginal.advance();
+      delegate.advance();
     }
   }
 }

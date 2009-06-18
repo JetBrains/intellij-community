@@ -21,88 +21,49 @@ package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
 
-public class StoppableLexerAdapter implements Lexer {
+public class StoppableLexerAdapter extends DelegateLexer {
 
-  public static interface StoppingCondition {
+  public interface StoppingCondition {
     boolean stopsAt(IElementType token, int start, int end);
   }
 
-  private final Lexer myOriginal;
   private final StoppingCondition myCondition;
   private boolean myStopped = false;
 
-  public Lexer getOriginal() {
-    return myOriginal;
-  }
-
   public StoppableLexerAdapter(final StoppingCondition condition, final Lexer original) {
+    super(original);
     myCondition = condition;
-    myOriginal = original;
-    myStopped = myCondition.stopsAt(myOriginal.getTokenType(), myOriginal.getTokenStart(), myOriginal.getTokenEnd());
+    myStopped = myCondition.stopsAt(original.getTokenType(), original.getTokenStart(), original.getTokenEnd());
   }
 
   public void advance() {
     if (myStopped) return;
-    myOriginal.advance();
+    super.advance();
 
-    if (myCondition.stopsAt(myOriginal.getTokenType(), myOriginal.getTokenStart(), myOriginal.getTokenEnd())) {
+    if (myCondition.stopsAt(getDelegate().getTokenType(), getDelegate().getTokenStart(), getDelegate().getTokenEnd())) {
       myStopped = true;
     }
   }
 
   public int getPrevTokenEnd() {
-    return myOriginal instanceof StoppableLexerAdapter ? ((StoppableLexerAdapter)myOriginal).getPrevTokenEnd() : ((FilterLexer)myOriginal).getPrevTokenEnd();
-  }
-
-  public char[] getBuffer() {
-    return myOriginal.getBuffer();
-  }
-
-  public int getBufferEnd() {
-    return myOriginal.getBufferEnd();
-  }
-
-  public LexerPosition getCurrentPosition() {
-    return myOriginal.getCurrentPosition();
-  }
-
-  public int getState() {
-    return myOriginal.getState();
+    Lexer delegate = getDelegate();
+    return delegate instanceof StoppableLexerAdapter ? ((StoppableLexerAdapter)delegate).getPrevTokenEnd() : ((FilterLexer)delegate).getPrevTokenEnd();
   }
 
   public int getTokenEnd() {
-    return myStopped ? myOriginal.getTokenStart() : myOriginal.getTokenEnd();
-  }
-
-  public int getTokenStart() {
-    return myOriginal.getTokenStart();
+    return myStopped ? super.getTokenStart() : super.getTokenEnd();
   }
 
   public IElementType getTokenType() {
-    return myStopped ? null : myOriginal.getTokenType();
+    return myStopped ? null : super.getTokenType();
+  }
+
+  public LexerPosition getCurrentPosition() {
+    return getDelegate().getCurrentPosition();
   }
 
   public void restore(LexerPosition position) {
-    myOriginal.restore(position);
+    getDelegate().restore(position);
   }
 
-  public void start(char[] buffer) {
-    myOriginal.start(buffer);
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset) {
-    myOriginal.start(buffer, startOffset, endOffset);
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    myOriginal.start(buffer, startOffset, endOffset, initialState);
-  }
-
-  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
-    myOriginal.start(buffer, startOffset, endOffset, initialState);
-  }
-
-  public CharSequence getBufferSequence() {
-    return myOriginal.getBufferSequence();
-  }
 }

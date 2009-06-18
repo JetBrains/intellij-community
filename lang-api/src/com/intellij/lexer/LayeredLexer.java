@@ -18,8 +18,6 @@ package com.intellij.lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.CharArrayUtil;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -27,15 +25,12 @@ import java.util.Map;
 /**
  * @author max
  */
-public class LayeredLexer extends LexerBase {
+public class LayeredLexer extends DelegateLexer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.LayeredLexer");
   private static final int IN_LAYER_STATE = 1024; // TODO: Other value?
 
-  private CharSequence myBuffer;
-  private int myBufferEnd;
   private int myState;
 
-  private final Lexer myBaseLexer;
   private final Map<IElementType, Lexer> myStartTokenToLayerLexer = new HashMap<IElementType, Lexer>();
   private Lexer myCurrentLayerLexer;
   private final HashSet<Lexer> mySelfStoppingLexers = new HashSet<Lexer>(1);
@@ -43,7 +38,7 @@ public class LayeredLexer extends LexerBase {
 
 
   public LayeredLexer(Lexer baseLexer) {
-    myBaseLexer = baseLexer;
+    super(baseLexer);
   }
 
   public void registerSelfStoppingLayer(Lexer Lexer, IElementType[] startTokens, IElementType[] stopTokens) {
@@ -60,26 +55,22 @@ public class LayeredLexer extends LexerBase {
   }
 
   private void activateLayerIfNecessary() {
-    myCurrentLayerLexer = myStartTokenToLayerLexer.get(myBaseLexer.getTokenType());
+    Lexer base = getDelegate();
+    myCurrentLayerLexer = myStartTokenToLayerLexer.get(base.getTokenType());
     if (myCurrentLayerLexer != null) {
-      myCurrentLayerLexer.start(myBaseLexer.getBufferSequence(), myBaseLexer.getTokenStart(), myBaseLexer.getTokenEnd(),0);
+      myCurrentLayerLexer.start(base.getBufferSequence(), base.getTokenStart(), base.getTokenEnd());
       if (mySelfStoppingLexers.contains(myCurrentLayerLexer)) {
-        myBaseLexer.advance();
+        base.advance();
       }
     }
   }
-
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    start(new CharArrayCharSequence(buffer),startOffset, endOffset, initialState);
-  }
-
+  
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     LOG.assertTrue(initialState != IN_LAYER_STATE, "Restoring to layer is not supported.");
     myState = initialState;
     myCurrentLayerLexer = null;
-    myBuffer = buffer;
-    myBufferEnd = endOffset;
-    myBaseLexer.start(buffer, startOffset, endOffset, initialState);
+
+    super.start(buffer, startOffset, endOffset, initialState);
     activateLayerIfNecessary();
   }
 
@@ -88,15 +79,15 @@ public class LayeredLexer extends LexerBase {
   }
 
   public IElementType getTokenType() {
-    return isLayerActive() ? myCurrentLayerLexer.getTokenType() : myBaseLexer.getTokenType();
+    return isLayerActive() ? myCurrentLayerLexer.getTokenType() : super.getTokenType();
   }
 
   public int getTokenStart() {
-    return isLayerActive() ? myCurrentLayerLexer.getTokenStart() : myBaseLexer.getTokenStart();
+    return isLayerActive() ? myCurrentLayerLexer.getTokenStart() : super.getTokenStart();
   }
 
   public int getTokenEnd() {
-    return isLayerActive() ? myCurrentLayerLexer.getTokenEnd() : myBaseLexer.getTokenEnd();
+    return isLayerActive() ? myCurrentLayerLexer.getTokenEnd() : super.getTokenEnd();
   }
 
   public void advance() {
@@ -112,7 +103,7 @@ public class LayeredLexer extends LexerBase {
         int tokenEnd = myCurrentLayerLexer.getTokenEnd();
         if (!mySelfStoppingLexers.contains(myCurrentLayerLexer)) {
           myCurrentLayerLexer = null;
-          myBaseLexer.advance();
+          super.advance();
           activateLayerIfNecessary();
         } else {
           myCurrentLayerLexer = null;
@@ -120,10 +111,10 @@ public class LayeredLexer extends LexerBase {
         }
       }
     } else {
-      myBaseLexer.advance();
+      super.advance();
       activateLayerIfNecessary();
     }
-    myState = isLayerActive() ? IN_LAYER_STATE : myBaseLexer.getState();
+    myState = isLayerActive() ? IN_LAYER_STATE : super.getState();
   }
 
   public LexerPosition getCurrentPosition() {
@@ -143,23 +134,7 @@ public class LayeredLexer extends LexerBase {
     return false;
   }
 
-  public char[] getBuffer() {
-    return CharArrayUtil.fromSequence(myBuffer);
-  }
-
-  public CharSequence getBufferSequence() {
-    return myBuffer;
-  }
-
-  public int getBufferEnd() {
-    return myBufferEnd;
-  }
-
   private boolean isLayerActive() {
     return myCurrentLayerLexer != null;
-  }
-
-  public Lexer getBaseLexer() {
-    return myBaseLexer;
   }
 }

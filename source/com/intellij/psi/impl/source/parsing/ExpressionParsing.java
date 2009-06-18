@@ -29,7 +29,7 @@ public class ExpressionParsing extends Parsing {
     final LanguageLevel level = LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel();
     Lexer originalLexer = new JavaLexer(level);
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, startOffset, endOffset, 0);
+    lexer.start(buffer, startOffset, endOffset);
     JavaParsingContext context = new JavaParsingContext(table, level);
     CompositeElement expression = context.getExpressionParsing().parseExpression(lexer);
     if (expression == null) return null;
@@ -48,7 +48,7 @@ public class ExpressionParsing extends Parsing {
                                          final int endOffset,
                                          PsiManager manager) {
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, startOffset, endOffset,0);
+    lexer.start(buffer, startOffset, endOffset);
     CharTable table = myContext.getCharTable();
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, table).getTreeElement();
     CompositeElement expression = parseExpression(lexer);
@@ -80,7 +80,7 @@ public class ExpressionParsing extends Parsing {
       lexer.start(buffer, startOffset, endOffset, state);
     }
     else {
-      lexer.start(buffer, startOffset, endOffset, 0);
+      lexer.start(buffer, startOffset, endOffset);
     }
 
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();

@@ -50,7 +50,7 @@ public class DefaultWordsScanner implements WordsScanner {
   }
 
   public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
-    myLexer.start(fileText, 0, fileText.length(),0);
+    myLexer.start(fileText);
     WordOccurrence occurence = null; // shared occurence
 
     while (myLexer.getTokenType() != null) {

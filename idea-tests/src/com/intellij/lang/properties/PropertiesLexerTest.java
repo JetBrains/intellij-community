@@ -1,8 +1,8 @@
 package com.intellij.lang.properties;
 
+import com.intellij.lang.properties.parsing.PropertiesLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.testFramework.LightIdeaTestCase;
-import com.intellij.lang.properties.parsing.PropertiesLexer;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -20,7 +20,7 @@ public class PropertiesLexerTest extends LightIdeaTestCase {
   }
 
   private static void doTest(String text, String[] expectedTokens,Lexer lexer) {
-    lexer.start(text.toCharArray());
+    lexer.start(text);
     int idx = 0;
     while (lexer.getTokenType() != null) {
       if (idx >= expectedTokens.length) fail("Too many tokens");

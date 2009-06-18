@@ -28,7 +28,7 @@ public class FileTextParsing extends Parsing {
 
   public static TreeElement parseFileText(PsiManager manager, @NotNull Lexer lexer, CharSequence buffer, int startOffset, int endOffset, boolean skipHeader, CharTable table) {
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    filterLexer.start(buffer, startOffset, endOffset,0);
+    filterLexer.start(buffer, startOffset, endOffset);
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, table).getTreeElement();
     JavaParsingContext context = new JavaParsingContext(dummyRoot.getCharTable(),
                                                         LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel());

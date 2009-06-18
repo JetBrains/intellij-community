@@ -102,7 +102,7 @@ public class ChunkExtractor {
     appendPrefix(result);
 
     Lexer lexer = highlighter.getHighlightingLexer();
-    lexer.start(chars, 0, chars.length(), 0);
+    lexer.start(chars);
 
     for (int offset = start; offset < end; offset++) {
       if (chars.charAt(offset) == '\n') {

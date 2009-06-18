@@ -76,7 +76,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     final Lexer lexer = new MergingLexerAdapter(
       new TemplateBlackAndWhiteLexer(createBaseLexer(viewProvider), langLexer, myTemplateElementType, myOuterElementType),
       TokenSet.create(myTemplateElementType, myOuterElementType));
-    lexer.start(chars, 0, chars.length(),0);
+    lexer.start(chars);
     insertOuters(parsed, lexer, table);
 
     if (parsed != null) {
@@ -93,7 +93,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
 
   private CharSequence createTemplateText(CharSequence buf, Lexer lexer) {
     StringBuilder result = new StringBuilder(buf.length());
-    lexer.start(buf, 0, buf.length(), 0);
+    lexer.start(buf);
 
     while (lexer.getTokenType() != null) {
       if (lexer.getTokenType() == myTemplateElementType) {

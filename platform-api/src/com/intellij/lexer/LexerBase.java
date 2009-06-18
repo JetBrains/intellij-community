@@ -15,13 +15,10 @@
  */
 package com.intellij.lexer;
 
-import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.CharArrayUtil;
-
 /**
  *
  */
-public abstract class LexerBase implements Lexer{
+public abstract class LexerBase extends Lexer {
   public LexerPosition getCurrentPosition() {
     final int offset = getTokenStart();
     final int intState = getState();
@@ -30,21 +27,5 @@ public abstract class LexerBase implements Lexer{
 
   public void restore(LexerPosition position) {
     start(getBufferSequence(), position.getOffset(), getBufferEnd(), position.getState());
-  }
-
-  public CharSequence getBufferSequence() {
-    return new CharArrayCharSequence(getBuffer());
-  }
-
-  public void start(char[] buffer) {
-    start(buffer,0, buffer.length);
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset) {
-    start(buffer,startOffset,endOffset,0);
-  }
-
-  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
-    start(CharArrayUtil.fromSequence(buffer), startOffset, endOffset, initialState);
   }
 }

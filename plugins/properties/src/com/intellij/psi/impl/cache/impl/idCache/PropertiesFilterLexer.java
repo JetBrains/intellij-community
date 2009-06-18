@@ -15,7 +15,7 @@ public class PropertiesFilterLexer extends BaseFilterLexer {
   }
 
   public void advance() {
-    final IElementType tokenType = myOriginalLexer.getTokenType();
+    final IElementType tokenType = getDelegate().getTokenType();
 
     if (tokenType == PropertiesTokenTypes.KEY_CHARACTERS) {
       scanWordsInToken(UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_PLAIN_TEXT, false, false);
@@ -28,6 +28,6 @@ public class PropertiesFilterLexer extends BaseFilterLexer {
       scanWordsInToken(UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_PLAIN_TEXT, false, false);
     }
 
-    myOriginalLexer.advance();
+    getDelegate().advance();
   }
 }

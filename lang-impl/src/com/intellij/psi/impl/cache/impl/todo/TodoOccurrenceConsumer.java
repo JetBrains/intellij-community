@@ -23,10 +23,6 @@ public class TodoOccurrenceConsumer implements BaseFilterLexer.OccurrenceConsume
     // empty
   }
 
-  public void addOccurrence(final char[] chars, final int start, final int end, final int occurrenceMask) {
-    // empty
-  }
-
   public void incTodoOccurrence(final IndexPattern pattern) {
     myTodoOccurrences.adjustValue(pattern, 1);
   }

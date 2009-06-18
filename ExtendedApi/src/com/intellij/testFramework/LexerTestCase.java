@@ -17,7 +17,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
 
   protected void doTest(@NonNls String text) {
     Lexer lexer = createLexer();
-    lexer.start(text.toCharArray());
+    lexer.start(text);
     String result = "";
     for (; ;) {
       IElementType tokenType = lexer.getTokenType();

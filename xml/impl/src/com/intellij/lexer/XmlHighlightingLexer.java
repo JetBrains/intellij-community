@@ -1,46 +1,18 @@
 package com.intellij.lexer;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 
 /**
  * @author mike
  */
-public class XmlHighlightingLexer extends LexerBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.XmlHighlightingLexer");
-
-  private final XmlLexer myLexer = new XmlLexer();
-
+public class XmlHighlightingLexer extends DelegateLexer {
   public XmlHighlightingLexer() {
-  }
-
-  public void advance() {
-    myLexer.advance();
-  }
-
-  public char[] getBuffer() {
-    return myLexer.getBuffer();
-  }
-
-  public int getBufferEnd() {
-    return myLexer.getBufferEnd();
-  }
-
-  public int getState() {
-    return myLexer.getState();
-  }
-
-  public int getTokenEnd() {
-    return myLexer.getTokenEnd();
-  }
-
-  public int getTokenStart() {
-    return myLexer.getTokenStart();
+    super(new XmlLexer());
   }
 
   public IElementType getTokenType() {
-    IElementType tokenType = myLexer.getTokenType();
+    IElementType tokenType = getDelegate().getTokenType();
 
     if (tokenType == null) return tokenType;
 
@@ -83,17 +55,5 @@ public class XmlHighlightingLexer extends LexerBase {
       if (state == __XmlLexer.COMMENT) return XmlTokenType.XML_COMMENT_CHARACTERS;
     }
     return tokenType;
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    myLexer.start(buffer, startOffset, endOffset, initialState);
-  }
-
-  public CharSequence getBufferSequence() {
-    return myLexer.getBufferSequence();
-  }
-
-  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
-    myLexer.start(buffer, startOffset, endOffset, initialState);
   }
 }

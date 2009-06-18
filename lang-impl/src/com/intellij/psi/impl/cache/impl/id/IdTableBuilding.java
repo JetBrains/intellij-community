@@ -49,7 +49,7 @@ public class IdTableBuilding {
   }
 
   public interface ScanWordProcessor {
-    void run (CharSequence chars, int start, int end, @Nullable char[] charArray);
+    void run(CharSequence chars, int start, int end);
   }
 
   public static class PlainTextIndexer extends FileTypeIdIndexer {
@@ -58,13 +58,8 @@ public class IdTableBuilding {
       final IdDataConsumer consumer = new IdDataConsumer();
       final CharSequence chars = inputData.getContentAsText();
       scanWords(new ScanWordProcessor(){
-        public void run(final CharSequence chars11, final int start, final int end, char[] charsArray) {
-          if (charsArray != null) {
-            consumer.addOccurrence(charsArray, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
-          }
-          else {
-            consumer.addOccurrence(chars11, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
-          }
+        public void run(final CharSequence chars11, final int start, final int end) {
+          consumer.addOccurrence(chars11, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
         }
       }, chars, 0, chars.length());
       return consumer.getResult();
@@ -344,7 +339,7 @@ public class IdTableBuilding {
         }
         if (index - index1 > 100) continue; // Strange limit but we should have some!
 
-        processor.run(chars, index1, index, charArray);
+        processor.run(chars, index1, index);
       }
   }
 
