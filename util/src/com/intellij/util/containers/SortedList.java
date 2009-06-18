@@ -31,10 +31,14 @@ public class SortedList<T> extends AbstractList<T>{
 
   public T get(final int index) {
     if (!mySorted) {
-      Collections.sort(myDelegate, myComparator);
+      sort(myDelegate);
       mySorted = true;
     }
     return myDelegate.get(index);
+  }
+
+  protected void sort(List<T> delegate) {
+    Collections.sort(myDelegate, myComparator);
   }
 
   @Override

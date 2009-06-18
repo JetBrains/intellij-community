@@ -11,7 +11,21 @@ import java.util.Iterator;
 import java.util.List;
 
 public abstract class HighlighterList {
-  private final List<RangeHighlighterImpl> mySegmentHighlighters = new SortedList<RangeHighlighterImpl>(MY_RANGE_COMPARATOR);
+  private final List<RangeHighlighterImpl> mySegmentHighlighters = new SortedList<RangeHighlighterImpl>(MY_RANGE_COMPARATOR) {
+    @Override
+    protected void sort(List<RangeHighlighterImpl> delegate) {
+      Iterator<RangeHighlighterImpl> it = delegate.iterator();
+
+      while (it.hasNext()) {
+        RangeHighlighterImpl highlighter = it.next();
+        if (!highlighter.isValid()) {
+          it.remove();
+        }
+      }
+
+      super.sort(delegate);
+    }
+  };
 
   private boolean myIsDirtied = false;
   private final DocumentAdapter myDocumentListener;
