@@ -29,11 +29,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.jetbrains.python.lexer.PythonIndentingLexer;
 import com.jetbrains.python.parsing.PyParser;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyFileImpl;
-import com.jetbrains.python.lexer.PythonIndentingLexer;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -103,7 +103,7 @@ public class PythonParserDefinition implements ParserDefinition {
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
     if(left.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) return SpaceRequirements.MUST_LINE_BREAK;
     final Lexer lexer = createLexer(left.getPsi().getProject());
-    return LanguageUtil.canStickTokensTogetherByLexer(left, right, lexer, 0);
+    return LanguageUtil.canStickTokensTogetherByLexer(left, right, lexer);
   }
 
 }

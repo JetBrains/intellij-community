@@ -1,11 +1,9 @@
 package com.jetbrains.python.lexer;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.StringEscapesTokenTypes;
-import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.lexer.LexerBase;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.StringEscapesTokenTypes;
+import com.intellij.psi.tree.IElementType;
 
 /**
  * Specialized lexer for string literals. To be used as a layer in a LayeredLexer.
@@ -50,10 +48,6 @@ public class PyStringLiteralLexer extends LexerBase {
   public PyStringLiteralLexer(final IElementType originalLiteralToken, boolean isUnicodeDefault) {
     myUnicodeIsDefault = isUnicodeDefault;
     myOriginalLiteralToken = originalLiteralToken;
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    start(new CharArrayCharSequence(buffer),startOffset,endOffset,initialState);
   }
 
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
@@ -282,10 +276,6 @@ public class PyStringLiteralLexer extends LexerBase {
       LOG.warn("Inconsistent: start " + myStart + ", end " + myEnd + ", buf end " + myBufferEnd);
     }
     //assert myStart < myEnd || (myStart == myEnd && myEnd == myBufferEnd) : "Inconsistent: start " + myStart + ", end " + myEnd + ", buf end " + myBufferEnd;
-  }
-
-  public char[] getBuffer() {
-    return CharArrayUtil.fromSequence(myBuffer);
   }
 
   public CharSequence getBufferSequence() {

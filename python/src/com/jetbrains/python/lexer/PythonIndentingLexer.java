@@ -31,14 +31,6 @@ public class PythonIndentingLexer extends PythonFutureAwareLexer {
 
   private static final boolean DUMP_TOKENS = false;
 
-  // used in Demetra and earlier
-  @Override
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    checkStartState(startOffset, initialState);
-    super.start(buffer, startOffset, endOffset, initialState);
-    setStartState();
-  }
-
   // used in Selena
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     checkStartState(startOffset, initialState);

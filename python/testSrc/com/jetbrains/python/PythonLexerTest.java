@@ -17,8 +17,8 @@
 package com.jetbrains.python;
 
 import com.intellij.lexer.Lexer;
-import junit.framework.TestCase;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
+import junit.framework.TestCase;
 
 /**
  * @author yole
@@ -121,7 +121,7 @@ public class PythonLexerTest extends TestCase {
 
   private void doTest(String text, String[] expectedTokens) {
     Lexer lexer = new PythonIndentingLexer();
-    lexer.start(text.toCharArray());
+    lexer.start(text);
     int idx = 0;
     int tokenPos = 0;
     while (lexer.getTokenType() != null) {
