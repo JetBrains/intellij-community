@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -110,7 +109,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         final CompletionInitializationContext initializationContext = new CompletionInitializationContext(editor, psiFile, myCompletionType);
         result.setResult(initializationContext);
 
-        for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
+        for (final CompletionContributor contributor : CompletionContributor.forLanguage(PsiUtilBase.getLanguageInEditor(editor, project))) {
           if (DumbService.getInstance(project).isDumb() && !(contributor instanceof DumbAware)) {
             continue;
           }
@@ -374,7 +373,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       LOG.assertTrue(false, "null root pane");
     }
 
-    for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
+    for (final CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
       final String text = contributor.handleEmptyLookup(parameters, editor);
       if (StringUtil.isNotEmpty(text)) {
         final EditorHintListener listener = new EditorHintListener() {

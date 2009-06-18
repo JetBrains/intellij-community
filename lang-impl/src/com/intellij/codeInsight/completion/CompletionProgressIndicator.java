@@ -15,7 +15,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Computable;
@@ -92,7 +91,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
+        for (final CompletionContributor contributor : CompletionContributor.forParameters(myParameters)) {
           if (myLookup.getAdvertisementText() != null) return;
           if (!myLookup.isCalculating() && !myLookup.isVisible()) return;
 

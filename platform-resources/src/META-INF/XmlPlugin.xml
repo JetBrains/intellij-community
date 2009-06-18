@@ -38,7 +38,7 @@
     <renameHandler implementation="com.intellij.xml.refactoring.XmlTagRenameHandler"/>
 
 
-    <completion.contributor implementation="com.intellij.codeInsight.completion.XmlCompletionContributor" id="xml" order="first, before basic2ClassName"/>
+    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.XmlCompletionContributor" id="xml" order="first, before basic2ClassName"/>
 
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.XmlCharFilter" id="xml"/>
 
@@ -179,6 +179,7 @@
     <completionData fileType="DTD" className="com.intellij.codeInsight.completion.DtdCompletionData"/>
 
     <psi.referenceContributor implementation="com.intellij.xml.util.XmlReferenceContributor"/>
+    <!--<pom.declarationSearcher implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.IdDeclarationSearcher"/>-->
     <anchorReferenceProvider implementation="com.intellij.xml.util.AnchorPathReferenceProvider"/>
 
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.HtmlSelectioner"/>

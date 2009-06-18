@@ -30,8 +30,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
-import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.PairConsumer;
@@ -48,8 +46,6 @@ import java.util.Set;
  */
 public class JavaCompletionContributor extends CompletionContributor {
   public static final Key<Condition<String>> NAME_FILTER = Key.create("NAME_FILTER");
-  private static final ElementPattern<PsiElement> INSIDE_METHOD_TYPE_ELEMENT = psiElement().inside(
-      psiElement(PsiTypeElement.class).withParent(or(psiMethod(), psiElement(PsiVariable.class))));
   private static final Java15CompletionData ourJava15CompletionData = new Java15CompletionData();
   private static final JavaCompletionData ourJavaCompletionData = new JavaCompletionData();
   private static final PsiNameValuePairPattern NAME_VALUE_PAIR = psiNameValuePair().withSuperParent(
@@ -384,25 +380,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     final Project project = context.getProject();
 
     JavaCompletionUtil.initOffsets(file, project, context.getOffsetMap(), context.getCompletionType());
-
-    PsiReference reference = file.findReferenceAt(context.getStartOffset());
-    if (reference instanceof PsiMultiReference) {
-      for (final PsiReference psiReference : ((PsiMultiReference)reference).getReferences()) {
-        if (psiReference instanceof JavaClassReference) {
-          reference = psiReference;
-          break;
-        }
-      }
-    }
-    if (reference instanceof JavaClassReference) {
-      final JavaClassReference classReference = (JavaClassReference)reference;
-      if (classReference.getExtendClassNames() != null) {
-        final PsiReference[] references = classReference.getJavaClassReferenceSet().getReferences();
-        final PsiReference lastReference = references[references.length - 1];
-        final int endOffset = lastReference.getRangeInElement().getEndOffset() + lastReference.getElement().getTextRange().getStartOffset();
-        context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, endOffset);
-      }
-    }
 
     if (file instanceof PsiJavaFile) {
       autoImport(file, context.getStartOffset() - 1, context.getEditor());

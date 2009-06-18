@@ -16,9 +16,9 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * For completion FAQ, see {@link CompletionContributor}.
@@ -65,11 +65,11 @@ public abstract class CompletionService {
   public void getVariantsFromContributors(final CompletionParameters parameters,
                                           @Nullable final CompletionContributor from,
                                           final Consumer<LookupElement> consumer) {
-    final CompletionContributor[] contributors = CompletionContributor.EP_NAME.getExtensions();
+    final List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
     final boolean dumb = DumbService.getInstance(parameters.getPosition().getProject()).isDumb();
 
-    for (int i = Arrays.asList(contributors).indexOf(from) + 1; i < contributors.length; i++) {
-      final CompletionContributor contributor = contributors[i];
+    for (int i = contributors.indexOf(from) + 1; i < contributors.size(); i++) {
+      final CompletionContributor contributor = contributors.get(i);
       if (dumb && !(contributor instanceof DumbAware)) continue;
 
       final CompletionResultSet result = createResultSet(parameters, consumer, contributor);

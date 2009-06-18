@@ -333,11 +333,11 @@
   <weigher key="preferredCompletionItem" implementationClass="com.intellij.codeInsight.completion.LookupElementDecoratorPreselectWeigher" id="decorator" order="first"/>
   <weigher key="preferredCompletionItem" implementationClass="com.intellij.codeInsight.completion.PrefixMatchingWeigher" id="prefix" order="first, after decorator"/>
 
-  <completion.contributor implementation="com.intellij.codeInsight.completion.DefaultCompletionContributor" id="default" order="last"/>
-  <completion.contributor implementation="com.intellij.codeInsight.completion.ComboEditorCompletionContributor" id="comboEditor" order="first"/>
-  <completion.contributor implementation="com.intellij.codeInsight.completion.WordCompletionContributor" id="wordCompletion" order="last"/>
-  <completion.contributor implementation="com.intellij.codeInsight.completion.LegacyCompletionContributor" id="legacy" order="last"/>
-  <completion.contributor implementation="com.intellij.codeInsight.completion.FilePathCompletionContributor" id="filePath" order="last"/>
+  <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.DefaultCompletionContributor" id="default" order="last"/>
+  <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.ComboEditorCompletionContributor" id="comboEditor" order="first"/>
+  <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.WordCompletionContributor" id="wordCompletion" order="last"/>
+  <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.LegacyCompletionContributor" id="legacy" order="last"/>
+  <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.FilePathCompletionContributor" id="filePath" order="last"/>
 
   <lookup.charFilter implementation="com.intellij.codeInsight.completion.CompletionCharFilter" order="last" id="completion"/>
   <lookup.charFilter implementation="com.intellij.refactoring.IdentifierCharFilter" id="identifier"/>

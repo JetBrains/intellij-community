@@ -80,13 +80,23 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
   }
 
   protected List<T> buildExtensions(final String stringKey, final KeyT key) {
-    final List<T> explicit = myExplicitExtensions.get(stringKey);
+    return buildExtensions(Collections.singleton(stringKey));
+  }
+
+  protected final List<T> buildExtensions(Set<String> keys) {
     List<T> result = null;
+    for (String expKey : myExplicitExtensions.keySet()) {
+      if (keys.contains(expKey)) {
+        if (result == null) result = new ArrayList<T>();
+        result.addAll(myExplicitExtensions.get(expKey));
+      }
+    }
+
     final ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
     if (point != null) {
       final KeyedLazyInstance<T>[] beans = point.getExtensions();
       for (KeyedLazyInstance<T> bean : beans) {
-        if (stringKey.equals(bean.getKey())) {
+        if (keys.contains(bean.getKey())) {
           final T instance;
           try {
             instance = bean.getInstance();
@@ -96,13 +106,13 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
             continue;
           }
           if (result == null) {
-            result = explicit == null ? new ArrayList<T>() : new ArrayList<T>(explicit);
+            result = new ArrayList<T>();
           }
           result.add(instance);
         }
       }
     }
-    return result == null ? explicit == null ? Collections.<T>emptyList() : explicit : result;
+    return result == null ? Collections.<T>emptyList() : result;
   }
 
   @Nullable

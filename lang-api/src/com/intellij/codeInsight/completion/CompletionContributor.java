@@ -4,22 +4,27 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.ProcessingContext;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Consumer;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Completion FAQ:<p>
@@ -108,7 +113,6 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class CompletionContributor extends AbstractCompletionContributor<CompletionParameters>{
-  public static final ExtensionPointName<CompletionContributor> EP_NAME = ExtensionPointName.create("com.intellij.completion.contributor");
 
   private final MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>> myMap =
       new MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>>();
@@ -189,6 +193,37 @@ public abstract class CompletionContributor extends AbstractCompletionContributo
    */
   protected static String getActionShortcut(@NonNls final String actionId) {
     return KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(actionId));
+  }
+
+  public static List<CompletionContributor> forParameters(CompletionParameters parameters) {
+    return forLanguage(PsiUtilBase.getLanguageAtOffset(parameters.getPosition().getContainingFile(), parameters.getOffset()));
+  }
+
+  public static List<CompletionContributor> forLanguage(Language language) {
+    return MyExtensionPointManager.INSTANCE.forKey(language);
+  }
+
+  private static class MyExtensionPointManager extends KeyedExtensionCollector<CompletionContributor, Language> {
+    public static final MyExtensionPointManager INSTANCE = new MyExtensionPointManager();
+
+    MyExtensionPointManager() {
+      super("com.intellij.completion.contributor");
+    }
+
+    @Override
+    protected List<CompletionContributor> buildExtensions(String stringKey, Language key) {
+      final THashSet<String> allowed = new THashSet<String>();
+      while (key != null) {
+        allowed.add(keyToString(key));
+        key = key.getBaseLanguage();
+      }
+      allowed.add("any");
+      return buildExtensions(allowed);
+    }
+
+    protected String keyToString(Language key) {
+      return key.getID();
+    }
   }
 
 }
