@@ -38,7 +38,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
 
     // Foldings
     Element child = element.getChild(FOLDING_ELEMENT);
-    Document document = FileDocumentManager.getInstance().getDocument(file);
+    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
     if (child != null && document != null) {
       //PsiDocumentManager.getInstance(project).commitDocument(document);
       state.FOLDING_STATE = CodeFoldingManager.getInstance(project).readFoldingState(child, document);
