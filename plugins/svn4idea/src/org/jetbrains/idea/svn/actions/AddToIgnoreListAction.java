@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -38,6 +39,16 @@ public class AddToIgnoreListAction extends BasicAction {
     presentation.setText(myActionName);
     presentation.setDescription(SvnBundle.message((myUseCommonExtension) ? "action.Subversion.Ignore.MatchExtension.description" :
                                                   "action.Subversion.Ignore.ExactMatch.description", myActionName));
+  }
+
+  @Override
+  protected void doVcsRefresh(Project project, VirtualFile file) {
+    final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+    if (file.isDirectory()) {
+      vcsDirtyScopeManager.dirDirtyRecursively(file);
+    } else {
+      vcsDirtyScopeManager.fileDirty(file);
+    }
   }
 
   protected boolean isEnabled(final Project project, final SvnVcs vcs, final VirtualFile file) {

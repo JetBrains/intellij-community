@@ -1,6 +1,5 @@
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -12,9 +11,7 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.CommonProcessors;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -225,52 +222,6 @@ public class SvnChangeProvider implements ChangeProvider {
                    changedFile.getFilePath(), changedFile.getStatus().getCommittedRevision());
   }
 
-  /**
-   * Check if some of the parents of the specified path are switched and/or ignored. These statuses should propagate to
-   * the files for which the status was requested even if none of these files are switched or ignored by themselves.
-   * (See IDEADEV-13393)
-   */
-  @Nullable
-  private FileStatus getParentStatus(final SvnChangeProviderContext context, final FilePath path) {
-    if (context.isCanceled()) {
-      throw new ProcessCanceledException();
-    }
-    final FilePath parentPath = path.getParentPath();
-    if (parentPath == null) {
-      return null;
-    }
-    VirtualFile file = parentPath.getVirtualFile();
-    if (file == null) {
-      return null;
-    }
-    FileStatus status = FileStatusManager.getInstance(myVcs.getProject()).getStatus(file);
-    if (status == FileStatus.IGNORED) {
-      return status;
-    }
-    // performance optimization which doesn't work in tests: ask SVN for status only if we know of some change to file
-    final Change change = ChangeListManager.getInstance(myVcs.getProject()).getChange(file);
-    if (ApplicationManager.getApplication().isUnitTestMode() || (change != null && (change.isRenamed() || change.isMoved()))) {
-      try {
-        final SVNStatus svnStatus = context.getClient().doStatus(parentPath.getIOFile(), false, false);
-        if ((svnStatus != null) && (svnStatus.getCopyFromURL() != null)) {
-          context.addCopyFromURL(parentPath, svnStatus.getCopyFromURL());
-        }
-      }
-      catch (SVNException e) {
-        // ignore
-      }
-    }
-    FileStatus parentStatus = getParentStatus(context, parentPath);
-    if (parentStatus != null) {
-      return parentStatus;
-    }
-    // we care about switched only if none of the parents is ignored
-    if (status == FileStatus.SWITCHED) {
-      return status;
-    }
-    return null;
-  }
-
   private static File guessWorkingCopyPath(final File file, @NotNull final SVNURL url, final String copyFromURL) throws SVNException {
     String copiedPath = url.getPath();
     String copyFromPath = SVNURL.parseURIEncoded(copyFromURL).getPath();
@@ -327,7 +278,7 @@ public class SvnChangeProvider implements ChangeProvider {
             if ((vFile != null) && (status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED) && path.isDirectory()) {
               if (myClManager.isIgnoredFile(vFile)) {
                 // for directory, this means recursively ignored by Idea
-                reportIgnoredRecursively(vFile, context);
+                context.getBuilder().processIgnoredFile(vFile);
               } else {
                 // process children of this file with another client.
                 SVNStatusClient client = myVcs.createStatusClient();
@@ -369,15 +320,6 @@ public class SvnChangeProvider implements ChangeProvider {
       else {
         throw e;
       }
-    }
-  }
-
-  private void reportIgnoredRecursively(final VirtualFile vFile, final SvnChangeProviderContext context) {
-    final CommonProcessors.CollectUniquesProcessor<VirtualFile> processor = new CommonProcessors.CollectUniquesProcessor<VirtualFile>();
-    VfsUtil.processFilesRecursively(vFile, processor);
-    final Collection<VirtualFile> ignoredFiles = processor.getResults();
-    for (VirtualFile ignoredFile : ignoredFiles) {
-      context.getBuilder().processIgnoredFile(ignoredFile);
     }
   }
 
