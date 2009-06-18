@@ -30,11 +30,15 @@ public class SortedList<T> extends AbstractList<T>{
   }
 
   public T get(final int index) {
+    ensureSorted();
+    return myDelegate.get(index);
+  }
+
+  private void ensureSorted() {
     if (!mySorted) {
       sort(myDelegate);
       mySorted = true;
     }
-    return myDelegate.get(index);
   }
 
   protected void sort(List<T> delegate) {
@@ -47,6 +51,7 @@ public class SortedList<T> extends AbstractList<T>{
   }
 
   public int size() {
+    ensureSorted();
     return myDelegate.size();
   }
 }
