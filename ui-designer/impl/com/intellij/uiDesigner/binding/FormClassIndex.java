@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.binding;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -84,7 +85,14 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
                                                     final GlobalSearchScope scope) {
     return ApplicationManager.getApplication().runReadAction(new Computable<List<PsiFile>>() {
       public List<PsiFile> compute() {
-        final Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, className, GlobalSearchScope.projectScope(project).intersectWith(scope));
+        final Collection<VirtualFile> files;
+        try {
+          files = FileBasedIndex.getInstance().getContainingFiles(NAME, className,
+                                                                  GlobalSearchScope.projectScope(project).intersectWith(scope));
+        }
+        catch (IndexNotReadyException e) {
+          return Collections.emptyList();
+        }
         if (files.isEmpty()) return Collections.emptyList();
         List<PsiFile> result = new ArrayList<PsiFile>();
         for(VirtualFile file: files) {
