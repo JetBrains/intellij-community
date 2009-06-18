@@ -39,7 +39,7 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
 
       if (context.options.getFileType() == StdFileTypes.JAVA) {
         if (javaLexer == null) javaLexer = new JavaLexer(LanguageLevel.HIGHEST);
-        javaLexer.start(refname,0,refname.length(),0);
+        javaLexer.start(refname);
         isJavaReservedWord = JavaTokenType.KEYWORD_BIT_SET.contains(javaLexer.getTokenType());
       }
 
