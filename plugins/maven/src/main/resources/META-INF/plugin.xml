@@ -8,7 +8,6 @@
     <![CDATA[]]>
   </change-notes>
   <idea-version since-build="6800"/>
-
   <extensionPoints>
     <extensionPoint name="facetImporter" interface="org.jetbrains.idea.maven.facets.FacetImporter"/>
     <extensionPoint name="archetypesProvider" interface="org.jetbrains.idea.maven.indices.MavenArchetypesProvider"/>
