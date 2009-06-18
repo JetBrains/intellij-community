@@ -193,7 +193,7 @@ public class GroovyOverrideImplementUtil {
   private static boolean writeMethodModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers) {
     boolean wasAddedModifiers = false;
     for (String modifierType : modifiers) {
-      if (modifierList.hasModifierProperty(modifierType)) {
+      if (modifierList.hasModifierProperty(modifierType) && modifierType != PsiModifier.PUBLIC) {
         text.append(modifierType);
         text.append(" ");
         wasAddedModifiers = true;
@@ -207,21 +207,18 @@ public class GroovyOverrideImplementUtil {
       PsiModifier.PUBLIC,
       PsiModifier.PROTECTED,
       PsiModifier.PRIVATE,
-      PsiModifier.PACKAGE_LOCAL,
       PsiModifier.STATIC,
       PsiModifier.ABSTRACT,
       PsiModifier.FINAL,
-      PsiModifier.NATIVE,
       PsiModifier.SYNCHRONIZED,
-      PsiModifier.STRICTFP,
-      PsiModifier.TRANSIENT,
-      PsiModifier.VOLATILE
   };
 
 
   private static GrMethod createOverrideImplementMethodSignature(Project project, PsiMethod method, PsiSubstitutor substitutor, PsiClass aClass) {
     StringBuffer buffer = new StringBuffer();
-    writeMethodModifiers(buffer, method.getModifierList(), GROOVY_MODIFIERS);
+    if (!writeMethodModifiers(buffer, method.getModifierList(), GROOVY_MODIFIERS)) {
+      buffer.append("def ");
+    }
 
     final PsiType returnType = substitutor.substitute(method.getReturnType());
 
