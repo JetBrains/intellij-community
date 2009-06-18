@@ -97,7 +97,7 @@ public class BackendCompilerWrapper {
           saveTestData();
         }
 
-        final Map<Module, List<VirtualFile>> moduleToFilesMap = buildModuleToFilesMap(myCompileContext, myFilesToCompile);
+        final Map<Module, List<VirtualFile>> moduleToFilesMap = CompilerUtil.buildModuleToFilesMap(myCompileContext, myFilesToCompile);
         compileModules(moduleToFilesMap);
       }
 
@@ -115,7 +115,7 @@ public class BackendCompilerWrapper {
           if (filesInScope.isEmpty()) {
             break;
           }
-          final Map<Module, List<VirtualFile>> moduleToFilesMap = buildModuleToFilesMap(myCompileContext, filesInScope);
+          final Map<Module, List<VirtualFile>> moduleToFilesMap = CompilerUtil.buildModuleToFilesMap(myCompileContext, filesInScope);
           myCompileContext.getDependencyCache().clearTraverseRoots();
           compileModules(moduleToFilesMap);
         }
@@ -905,30 +905,6 @@ public class BackendCompilerWrapper {
     }
     myCompileContext.getProgressIndicator().setText2(msg);
     myCompileContext.getProgressIndicator().setFraction(1.0* myProcessedFilesCount /myTotalFilesToCompile);
-  }
-
-  private static Map<Module, List<VirtualFile>> buildModuleToFilesMap(final CompileContext context, final List<VirtualFile> files) {
-    //assertion: all files are different
-    final Map<Module, List<VirtualFile>> map = new THashMap<Module, List<VirtualFile>>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        for (VirtualFile file : files) {
-          final Module module = context.getModuleByFile(file);
-
-          if (module == null) {
-            continue; // looks like file invalidated
-          }
-
-          List<VirtualFile> moduleFiles = map.get(module);
-          if (moduleFiles == null) {
-            moduleFiles = new ArrayList<VirtualFile>();
-            map.put(module, moduleFiles);
-          }
-          moduleFiles.add(file);
-        }
-      }
-    });
-    return map;
   }
 
   private class ClassParsingThread implements Runnable {

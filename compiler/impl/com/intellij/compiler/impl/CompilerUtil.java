@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.Module;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
@@ -19,11 +20,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import gnu.trove.THashMap;
 
 public class CompilerUtil {
   public static String quotePath(String path) {
@@ -47,6 +48,35 @@ public class CompilerUtil {
         container.add(file);
       }
     }
+  }
+
+  public static Map<Module, List<VirtualFile>> buildModuleToFilesMap(CompileContext context, VirtualFile[] files) {
+    return buildModuleToFilesMap(context, Arrays.asList(files));
+  }
+
+
+  public static Map<Module, List<VirtualFile>> buildModuleToFilesMap(final CompileContext context, final List<VirtualFile> files) {
+    //assertion: all files are different
+    final Map<Module, List<VirtualFile>> map = new THashMap<Module, List<VirtualFile>>();
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        for (VirtualFile file : files) {
+          final Module module = context.getModuleByFile(file);
+
+          if (module == null) {
+            continue; // looks like file invalidated
+          }
+
+          List<VirtualFile> moduleFiles = map.get(module);
+          if (moduleFiles == null) {
+            moduleFiles = new ArrayList<VirtualFile>();
+            map.put(module, moduleFiles);
+          }
+          moduleFiles.add(file);
+        }
+      }
+    });
+    return map;
   }
 
 
