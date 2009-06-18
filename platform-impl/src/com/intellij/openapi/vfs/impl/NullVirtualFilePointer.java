@@ -8,10 +8,15 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
  */
 class NullVirtualFilePointer implements VirtualFilePointer {
-  public static final VirtualFilePointer INSTANCE = new NullVirtualFilePointer();
+  private final String myUrl;
+
+  NullVirtualFilePointer(@NotNull String url) {
+    myUrl = url;
+  }
+
   @NotNull
   public String getFileName() {
-    return "NullVirtualFilePointer";
+    return getUrl();
   }
 
   public VirtualFile getFile() {
@@ -20,7 +25,7 @@ class NullVirtualFilePointer implements VirtualFilePointer {
 
   @NotNull
   public String getUrl() {
-    return getFileName();
+    return myUrl;
   }
 
   @NotNull

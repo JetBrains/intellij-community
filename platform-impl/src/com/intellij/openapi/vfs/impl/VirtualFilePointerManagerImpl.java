@@ -157,7 +157,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     VirtualFileSystem fileSystem = myVirtualFileManager.getFileSystem(protocol);
     if (fileSystem == null) {
       // this pointer will never be alive
-      return NullVirtualFilePointer.INSTANCE;
+      return new NullVirtualFilePointer(url);
     }
 
     url = stripTrailingPathSeparator(url, protocol);
