@@ -348,8 +348,9 @@ public class PopupChooserBuilder {
     return e.isShiftDown() || e.isControlDown() || e.isMetaDown();
   }
 
-  public void setSettingButton(Component abutton) {
+  public PopupChooserBuilder setSettingButton(Component abutton) {
     mySettingsButtons = abutton;
+    return this;
   }
 
   private class MyListWrapper extends JScrollPane implements DataProvider {
