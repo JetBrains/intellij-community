@@ -343,6 +343,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           }
         }
         composite.getSwitchedFileHolder().calculateChildren();
+        composite.getIgnoredFileHolder().calculateChildren();
       }
     }
     finally {
