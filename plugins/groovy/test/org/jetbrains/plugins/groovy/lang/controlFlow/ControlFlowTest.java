@@ -2,28 +2,51 @@ package org.jetbrains.plugins.groovy.lang.controlFlow;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import junit.framework.Test;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.openapi.editor.SelectionModel;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
-import org.jetbrains.plugins.groovy.util.PathUtil;
-import org.jetbrains.plugins.groovy.util.TestUtils;
+
+import java.util.List;
 
 /**
  * @author ven
  */
-public class ControlFlowTest extends SimpleGroovyFileSetTestCase {
-  @NonNls
-  private static final String DATA_PATH = PathUtil.getDataPath(ControlFlowTest.class);
-
-  public ControlFlowTest() {
-    super(DATA_PATH);
+public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/groovy/controlFlow/";
   }
 
-  private String dumpControlFlow(Instruction[] instructions) {
+  public void testAssignment() throws Throwable { doTest(); }
+  public void testClosure1() throws Throwable { doTest(); }
+  public void testComplexAssign() throws Throwable { doTest(); }
+  public void testFor1() throws Throwable { doTest(); }
+  public void testForeach1() throws Throwable { doTest(); }
+  public void testGrvy1497() throws Throwable { doTest(); }
+  public void testIf1() throws Throwable { doTest(); }
+  public void testMultipleAssignment() throws Throwable { doTest(); }
+  public void testNested() throws Throwable { doTest(); }
+  public void testReturn() throws Throwable { doTest(); }
+  public void testSwitch1() throws Throwable { doTest(); }
+  public void testThrow1() throws Throwable { doTest(); }
+  public void testThrowInCatch() throws Throwable { doTest(); }
+  public void testTry1() throws Throwable { doTest(); }
+  public void testTry2() throws Throwable { doTest(); }
+  public void testTry3() throws Throwable { doTest(); }
+  public void testTry4() throws Throwable { doTest(); }
+  public void testTry5() throws Throwable { doTest(); }
+  public void testTry6() throws Throwable { doTest(); }
+  public void testTry7() throws Throwable { doTest(); }
+  public void testWhile1() throws Throwable { doTest(); }
+  public void testWhile2() throws Throwable { doTest(); }
+  public void testIfInstanceofElse() throws Throwable { doTest(); }
+
+  private static String dumpControlFlow(Instruction[] instructions) {
     StringBuilder builder = new StringBuilder();
     for (Instruction instruction : instructions) {
       builder.append(instruction.toString()).append("\n");
@@ -33,24 +56,19 @@ public class ControlFlowTest extends SimpleGroovyFileSetTestCase {
   }
 
 
-  public String transform(String testName, String[] data) throws Exception {
-    String text = data[0];
-    int selStart = Math.max(text.indexOf(ourSelectionStartMarker), 0);
-    text = withoutText(text, ourSelectionStartMarker);
-    int selEnd = text.indexOf(ourSelectionEndMarker);
-    if (selEnd < 0) selEnd = text.length();
-    text = withoutText(text, ourSelectionEndMarker);
-    assert (selStart >= 0) && (selStart >= 0) || ((selStart < 0) && (selStart < 0));
+  public void doTest() throws Throwable {
+    final List<String> input = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + getTestName(true) + ".test");
 
-    final GroovyFile file = (GroovyFile) TestUtils.createPseudoPhysicalGroovyFile(myProject, text);
-    final PsiElement start = file.findElementAt(selStart);
-    final PsiElement end = file.findElementAt(selEnd - 1);
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, input.get(0));
+
+    final GroovyFile file = (GroovyFile)myFixture.getFile();
+    final SelectionModel model = myFixture.getEditor().getSelectionModel();
+    final PsiElement start = file.findElementAt(model.hasSelection() ? model.getSelectionStart() : 0);
+    final PsiElement end = file.findElementAt(model.hasSelection() ? model.getSelectionEnd() - 1 : file.getTextLength() - 1);
     final GrControlFlowOwner owner = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(start, end), GrControlFlowOwner.class, false);
     final Instruction[] instructions = new ControlFlowBuilder().buildControlFlow(owner, null, null);
-    return dumpControlFlow(instructions);
+    final String cf = dumpControlFlow(instructions);
+    assertEquals(input.get(1).trim(), cf.trim());
   }
 
-  public static Test suite() {
-    return new ControlFlowTest();
-  }
 }

@@ -13,7 +13,7 @@ import java.util.Stack;
 /**
  * @author ven
  */
-class InstructionImpl implements Instruction, Cloneable {
+public class InstructionImpl implements Instruction, Cloneable {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl");
 
   ArrayList<InstructionImpl> myPred = new ArrayList<InstructionImpl>();
@@ -28,7 +28,7 @@ class InstructionImpl implements Instruction, Cloneable {
     return myPsiElement;
   }
 
-  InstructionImpl(PsiElement element, int num) {
+  public InstructionImpl(PsiElement element, int num) {
     myPsiElement = element;
     myNumber = num;
   }

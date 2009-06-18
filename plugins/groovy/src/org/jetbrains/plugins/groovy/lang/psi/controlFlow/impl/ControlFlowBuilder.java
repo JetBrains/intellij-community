@@ -24,10 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.AfterCallInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallEnvironment;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
@@ -51,6 +48,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   private Stack<ExceptionInfo> myCatchedExceptionInfos;
   private InstructionImpl myHead;
+  private boolean myNegate;
 
   private List<Pair<InstructionImpl, GroovyPsiElement>> myPending;
   private GroovyPsiElement myStartInScope;
@@ -282,6 +280,24 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
+  @Override
+  public void visitParenthesizedExpression(GrParenthesizedExpression expression) {
+    expression.getOperand().accept(this);
+  }
+
+  @Override
+  public void visitUnaryExpression(GrUnaryExpression expression) {
+    myNegate = !myNegate;
+    expression.getOperand().accept(this);
+    myNegate = !myNegate;
+  }
+
+  @Override
+  public void visitInstanceofExpression(GrInstanceOfExpression expression) {
+    expression.getOperand().accept(this);
+    addNode(new AssertionInstruction(myInstructionNumber++, expression, myNegate));
+  }
+
   public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
     super.visitReferenceExpression(referenceExpression);
     if (referenceExpression.getQualifierExpression() == null) {
@@ -314,13 +330,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitIfStatement(GrIfStatement ifStatement) {
     InstructionImpl ifInstruction = startNode(ifStatement);
     final GrCondition condition = ifStatement.getCondition();
-    if (condition != null) {
-      condition.accept(this);
-    }
 
     final InstructionImpl head = myHead;
     final GrStatement thenBranch = ifStatement.getThenBranch();
     if (thenBranch != null) {
+      if (condition != null) {
+        condition.accept(this);
+      }
       final InstructionImpl thenInstruction = startNode(thenBranch);
       thenBranch.accept(this);
       addPendingEdge(ifStatement, myHead);
@@ -330,6 +346,11 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     myHead = head;
     final GrStatement elseBranch = ifStatement.getElseBranch();
     if (elseBranch != null) {
+      if (condition != null) {
+        myNegate = !myNegate;
+        condition.accept(this);
+        myNegate = !myNegate;
+      }
       final InstructionImpl elseInstruction = startNode(elseBranch);
       elseBranch.accept(this);
       addPendingEdge(ifStatement, myHead);

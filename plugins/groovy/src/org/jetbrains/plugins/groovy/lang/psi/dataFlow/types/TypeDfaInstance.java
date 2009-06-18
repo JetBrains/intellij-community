@@ -23,8 +23,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.AssertionInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
@@ -52,15 +55,27 @@ public class TypeDfaInstance implements DfaInstance<Map<String, PsiType>> {
         }
       }
     }
+    if (instruction instanceof AssertionInstruction) {
+      final AssertionInstruction assertionInstruction = (AssertionInstruction)instruction;
+      final PsiElement element = assertionInstruction.getElement();
+      if (element instanceof GrInstanceOfExpression && !assertionInstruction.isNegate()) {
+        final GrExpression operand = ((GrInstanceOfExpression)element).getOperand();
+        final GrTypeElement typeElement = ((GrInstanceOfExpression)element).getTypeElement();
+        if (typeElement != null) {
+          map.put(operand.getText(), typeElement.getType());
+        }
+      }
+    }
   }
 
   private Computable<PsiType> getInitializerTypeComputation(PsiElement element) {
     GrExpression initializer = null;
     if (element instanceof GrReferenceExpression && ((GrReferenceExpression) element).getQualifierExpression() == null) {
-      if (element.getParent() instanceof GrAssignmentExpression) {
-        initializer = ((GrAssignmentExpression) element.getParent()).getRValue();
-      } else if (element.getParent() instanceof GrListOrMap) {
-        GrListOrMap list = (GrListOrMap) element.getParent();
+      final PsiElement parent = element.getParent();
+      if (parent instanceof GrAssignmentExpression) {
+        initializer = ((GrAssignmentExpression)parent).getRValue();
+      } else if (parent instanceof GrListOrMap) {
+        GrListOrMap list = (GrListOrMap)parent;
         if (list.getParent() instanceof GrAssignmentExpression) {
           GrAssignmentExpression assignment = (GrAssignmentExpression) list.getParent(); //multiple assignment
           int idx = -1;

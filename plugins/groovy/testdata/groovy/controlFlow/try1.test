@@ -7,8 +7,8 @@ print e
 -----
 0(1) element: null
 1(2) element: Open block
-2(3) element: IF statement
-3(4,8) READ c
+2(3,8) element: IF statement
+3(4) READ c
 4(6) element: RETURN statement
 5(10) element: Finally clause
 6(5,7)  CALL 5

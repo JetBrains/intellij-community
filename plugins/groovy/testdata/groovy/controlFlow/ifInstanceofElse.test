@@ -1,0 +1,23 @@
+if (o instanceof String) b = 1
+else if (!(o instanceof Integer)) b = 2
+else b = 3
+-----
+0(1) element: null
+1(2,6) element: IF statement
+2(3) READ o
+3(4) assertion: o instanceof String
+4(5) element: Assignment expression
+5(18) WRITE b
+6(7) READ o
+7(8) assertion: ! o instanceof String
+8(9) element: IF statement
+9(10,14) element: IF statement
+10(11) READ o
+11(12) assertion: ! o instanceof Integer
+12(13) element: Assignment expression
+13(18) WRITE b
+14(15) READ o
+15(16) assertion: o instanceof Integer
+16(17) element: Assignment expression
+17(18) WRITE b
+18() element: null

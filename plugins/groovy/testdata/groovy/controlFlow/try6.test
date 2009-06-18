@@ -9,8 +9,8 @@ if (url == null) {
 return url
 -----
 0(1) element: null
-1(2) element: IF statement
-2(3,9) READ url
+1(2,9) element: IF statement
+2(3) READ url
 3(4) element: Block statement
 4(5,6) element: Open block
 5(6,9) WRITE url
