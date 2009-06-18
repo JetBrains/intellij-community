@@ -1,15 +1,12 @@
-
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.jsp.JspFile;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -17,7 +14,7 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 
-public abstract class ParsingTestCase extends LightIdeaTestCase {
+public abstract class ParsingTestCase extends LightPlatformTestCase {
   protected String myFileExt;
   @NonNls private final String myFullDataPath;
   protected PsiFile myFile;
@@ -47,7 +44,6 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
     else{
       toParseTreeText(myFile, includeRanges());
     }
-    if(myFile instanceof JspFile) ((MultiplePsiFilesPerDocumentFileViewProvider)((JspFile)myFile).getViewProvider()).checkAllTreesEqual();
   }
 
   protected void checkResult(@NonNls String targetDataName, final PsiFile file) throws Exception {
