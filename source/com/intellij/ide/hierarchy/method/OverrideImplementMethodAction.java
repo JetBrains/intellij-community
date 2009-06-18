@@ -1,6 +1,8 @@
 package com.intellij.ide.hierarchy.method;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
+import com.intellij.ide.hierarchy.MethodHierarchyBrowserBase;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -27,7 +29,7 @@ abstract class OverrideImplementMethodAction extends AnAction {
 
   public final void actionPerformed(final AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
-    final MethodHierarchyBrowser methodHierarchyBrowser = (MethodHierarchyBrowser)dataContext.getData(MethodHierarchyBrowser.METHOD_HIERARCHY_BROWSER_DATA_CONSTANT);
+    final MethodHierarchyBrowser methodHierarchyBrowser = (MethodHierarchyBrowser)dataContext.getData(MethodHierarchyBrowserBase.METHOD_HIERARCHY_BROWSER_DATA_CONSTANT);
     if (methodHierarchyBrowser == null) return;
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
@@ -39,11 +41,11 @@ abstract class OverrideImplementMethodAction extends AnAction {
           public void run() {
 
             try{
-              final MethodHierarchyNodeDescriptor[] selectedDescriptors = methodHierarchyBrowser.getSelectedDescriptors();
+              final HierarchyNodeDescriptor[] selectedDescriptors = methodHierarchyBrowser.getSelectedDescriptors();
               if (selectedDescriptors.length > 0) {
                 final List<VirtualFile> files = new ArrayList<VirtualFile>(selectedDescriptors.length);
-                for (MethodHierarchyNodeDescriptor selectedDescriptor1 : selectedDescriptors) {
-                  final PsiFile containingFile = selectedDescriptor1.getPsiClass().getContainingFile();
+                for (HierarchyNodeDescriptor selectedDescriptor : selectedDescriptors) {
+                  final PsiFile containingFile = ((MethodHierarchyNodeDescriptor)selectedDescriptor).getPsiClass().getContainingFile();
                   if (containingFile != null) {
                     final VirtualFile vFile = containingFile.getVirtualFile();
                     if (vFile != null) {
@@ -53,8 +55,8 @@ abstract class OverrideImplementMethodAction extends AnAction {
                 }
                 final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files.toArray(new VirtualFile[files.size()]));
                 if (!status.hasReadonlyFiles()) {
-                  for (MethodHierarchyNodeDescriptor selectedDescriptor : selectedDescriptors) {
-                    OverrideImplementUtil.overrideOrImplement(selectedDescriptor.getPsiClass(), methodHierarchyBrowser.getBaseMethod());
+                  for (HierarchyNodeDescriptor selectedDescriptor : selectedDescriptors) {
+                    OverrideImplementUtil.overrideOrImplement(((MethodHierarchyNodeDescriptor)selectedDescriptor).getPsiClass(), methodHierarchyBrowser.getBaseMethod());
                   }
                   ToolWindowManager.getInstance(project).activateEditorComponent();
                 }
@@ -93,12 +95,12 @@ abstract class OverrideImplementMethodAction extends AnAction {
       return;
     }
 
-    final MethodHierarchyNodeDescriptor[] selectedDescriptors = methodHierarchyBrowser.getSelectedDescriptors();
+    final HierarchyNodeDescriptor[] selectedDescriptors = methodHierarchyBrowser.getSelectedDescriptors();
     int toImplement = 0;
     int toOverride = 0;
 
-    for (final MethodHierarchyNodeDescriptor descriptor : selectedDescriptors) {
-      if (canImplementOverride(descriptor, methodHierarchyBrowser, true)) {
+    for (final HierarchyNodeDescriptor descriptor : selectedDescriptors) {
+      if (canImplementOverride((MethodHierarchyNodeDescriptor)descriptor, methodHierarchyBrowser, true)) {
         if (toOverride > 0) {
           // no mixed actions allowed
           presentation.setEnabled(false);
@@ -107,7 +109,7 @@ abstract class OverrideImplementMethodAction extends AnAction {
         }
         toImplement++;
       }
-      else if (canImplementOverride(descriptor, methodHierarchyBrowser, false)) {
+      else if (canImplementOverride((MethodHierarchyNodeDescriptor)descriptor, methodHierarchyBrowser, false)) {
         if (toImplement > 0) {
           // no mixed actions allowed
           presentation.setEnabled(false);
