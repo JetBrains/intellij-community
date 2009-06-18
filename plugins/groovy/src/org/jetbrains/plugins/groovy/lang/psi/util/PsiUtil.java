@@ -316,7 +316,7 @@ public class PsiUtil {
 
   public static boolean isValidReferenceName(String text) {
     final GroovyLexer lexer = new GroovyLexer();
-    lexer.start(text.toCharArray());
+    lexer.start(text);
     return TokenSets.REFERENCE_NAMES.contains(lexer.getTokenType()) && lexer.getTokenEnd() == text.length();
   }
 

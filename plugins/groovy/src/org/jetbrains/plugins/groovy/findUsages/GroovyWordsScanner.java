@@ -21,7 +21,7 @@ class GroovyWordsScanner implements WordsScanner
   }
 
   public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
-    myLexer.start(fileText, 0, fileText.length(),0);
+    myLexer.start(fileText);
     WordOccurrence occurrence = null; // shared occurrence
 
     while (myLexer.getTokenType() != null) {

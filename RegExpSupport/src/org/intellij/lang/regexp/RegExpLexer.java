@@ -25,16 +25,9 @@ class RegExpLexer extends FlexAdapter {
         super(new _RegExLexer(xmlSchemaMode));
     }
 
-    public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-        getFlex().commentMode = (initialState & COMMENT_MODE) != 0;
-        initialState = initialState & ~COMMENT_MODE;
-        super.start(buffer, startOffset, endOffset, initialState);
-    }
-
     public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
         getFlex().commentMode = (initialState & COMMENT_MODE) != 0;
-        initialState = initialState & ~COMMENT_MODE;
-        super.start(buffer, startOffset, endOffset, initialState);
+        super.start(buffer, startOffset, endOffset, initialState & ~COMMENT_MODE);
     }
 
     public _RegExLexer getFlex() {

@@ -21,8 +21,8 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 import java.util.ArrayList;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author ven
@@ -34,7 +34,7 @@ public class GroovyNamesUtil {
     if (text == null) return false;
 
     Lexer lexer = new GroovyLexer();
-    lexer.start(text, 0, text.length(), 0);
+    lexer.start(text);
     if (lexer.getTokenType() != GroovyTokenTypes.mIDENT) return false;
     lexer.advance();
     return lexer.getTokenType() == null;
@@ -44,7 +44,7 @@ public class GroovyNamesUtil {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     Lexer lexer = new GroovyLexer();
-    lexer.start(text,0,text.length(),0);
+    lexer.start(text);
     if (lexer.getTokenType() == null || !GroovyTokenTypes.KEYWORDS.contains(lexer.getTokenType())) return false;
     lexer.advance();
     return lexer.getTokenType() == null;

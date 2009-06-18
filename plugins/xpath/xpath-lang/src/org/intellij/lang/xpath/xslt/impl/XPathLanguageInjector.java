@@ -92,7 +92,7 @@ class XPathLanguageInjector implements MultiHostInjector {
           final Lexer lexer = myParserDefinition.createLexer(attribute.getProject());
             while ((i = XsltSupport.getAVTOffset(value, j)) != -1) {
                 // "A right curly brace inside a Literal in an expression is not recognized as terminating the expression."
-                lexer.start(value, i, value.length(), 0);
+              lexer.start(value, i, value.length());
                 j = -1;
                 while (lexer.getTokenType() != null) {
                     if (lexer.getTokenType() == XPathTokenTypes.RBRACE) {

@@ -28,9 +28,9 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
@@ -38,12 +38,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.refactoring.RefactoringActionHandler;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import org.intellij.lang.xpath.completion.CompletionLists;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.psi.XPathFunction;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class XPathLanguage extends Language {
     public static final String ID = "XPath";
@@ -135,7 +134,7 @@ public final class XPathLanguage extends Language {
         private final XPathLexer xPathLexer = new XPathLexer();
 
         public synchronized boolean isIdentifier(String text, Project project) {
-            xPathLexer.start(text.toCharArray());
+            xPathLexer.start(text);
             assert xPathLexer.getState() == 0;
 
             boolean b = xPathLexer.getTokenType() == XPathTokenTypes.NCNAME;

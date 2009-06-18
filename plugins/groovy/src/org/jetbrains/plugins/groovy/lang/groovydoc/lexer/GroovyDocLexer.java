@@ -63,16 +63,8 @@ public class GroovyDocLexer extends MergingLexerAdapter implements GroovyDocToke
       myFlexLexer.reset(myBuffer, startOffset, endOffset, initialState);
     }
 
-    public final void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-      start(buffer, startOffset, endOffset);
-    }
-
     public int getState() {
       return myState;
-    }
-
-    public char[] getBuffer() {
-      return CharArrayUtil.fromSequence(myBuffer);
     }
 
     public CharSequence getBufferSequence() {
