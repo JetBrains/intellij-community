@@ -559,7 +559,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       final FilePath filePath = afterRevision != null ? afterRevision.getFile() : beforeRevision.getFile();
       final VirtualFile vcsRoot;
       try {
-        vcsRoot = GitUtil.getGitRoot(filePath);
+        // the parent paths for calculating roots in order to account for submodules that contribute
+        // to the parent change. The path "." is never is valid change, so there should be no problem
+        // with it.
+        vcsRoot = GitUtil.getGitRoot(filePath.getParentPath());
       }
       catch (VcsException e) {
         exceptions.add(e);
