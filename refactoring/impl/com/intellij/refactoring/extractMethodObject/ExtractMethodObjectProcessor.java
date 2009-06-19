@@ -672,8 +672,5 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    public List<PsiVariable> getInputVariables() {
-      return myInputVariables;
-    }
   }
 }
