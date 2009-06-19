@@ -13,7 +13,8 @@ package git4idea.config;
  * Copyright 2007 Aspiro AS
  * Copyright 2008 MQSoftware
  * Copyright 2008 JetBrains s.r.o.
- * 
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
  * Authors: gevession, Erlend Simonsen & Mark Scott
  *
  * This code was originally derived from the MKS & Mercurial IDEA VCS plugins
@@ -45,6 +46,10 @@ import java.util.LinkedList;
     file = "$WORKSPACE_FILE$")})
 public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> {
   /**
+   * Default SSH policy
+   */
+  private static final SshExecutable DEFAULT_SSH = SshExecutable.IDEA_SSH;
+  /**
    * the default cygwin executable
    */
   @NonNls private static final String[] DEFAULT_WINDOWS_PATHS =
@@ -67,17 +72,21 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
    */
   public String GIT_EXECUTABLE = defaultGit();
   /**
-   * The previously entered authors of the commit (up to 10)
+   * The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
    */
   public String[] PREVIOUS_COMMIT_AUTHORS = {};
   /**
    * Limit for previous commit authors
    */
-  private static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16;
+  public static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16;
   /**
    * Checkout includes tags
    */
   public Boolean CHECKOUT_INCLUDE_TAGS;
+  /**
+   * IDEA SSH should be used instead of native SSH.
+   */
+  public SshExecutable SSH_EXECUTABLE = DEFAULT_SSH;
 
   /**
    * Save an author of the commit and make it the first one. If amount of authors exceeds the limit, remove least recently selected author.
@@ -155,4 +164,40 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
     }
     return program;     // otherwise, hope it's in $PATH
   }
+
+  /**
+   * @return true if IDEA ssh should be used
+   */
+  public boolean isIdeaSsh() {
+    return (SSH_EXECUTABLE == null ? DEFAULT_SSH : SSH_EXECUTABLE) == SshExecutable.IDEA_SSH;
+  }
+
+  /**
+   * @return true if IDEA ssh should be used
+   */
+  public static boolean isDefaultIdeaSsh() {
+    return DEFAULT_SSH == SshExecutable.IDEA_SSH;
+  }
+
+  /**
+   * Set IDEA ssh value
+   *
+   * @param value the value to set
+   */
+  public void setIdeaSsh(boolean value) {
+    SSH_EXECUTABLE = value ? SshExecutable.IDEA_SSH : SshExecutable.NATIVE_SSH;
+  }
+
+  /**
+   * Kinds of SSH executable to be used with the git
+   */
+  public enum SshExecutable {
+    /**
+     * SSH provided by IDEA
+     */
+    IDEA_SSH,
+    /**
+     * Naive SSH.
+     */
+    NATIVE_SSH, }
 }

@@ -230,6 +230,10 @@ public abstract class GitHandler {
    * The environment
    */
   private final Map<String, String> myEnv;
+  /**
+   * The settings object
+   */
+  private GitVcsSettings mySettings;
 
 
   /**
@@ -241,7 +245,7 @@ public abstract class GitHandler {
    */
   protected GitHandler(@NotNull Project project, @NotNull File directory, @NotNull String command) {
     myProject = project;
-    GitVcsSettings settings = GitVcsSettings.getInstanceChecked(project);
+    mySettings = GitVcsSettings.getInstanceChecked(project);
     myEnv = new HashMap<String, String>(System.getenv());
     myVcs = GitVcs.getInstance(project);
     if (myVcs != null) {
@@ -249,7 +253,7 @@ public abstract class GitHandler {
     }
     myWorkingDirectory = directory;
     myCommandLine = new GeneralCommandLine();
-    myCommandLine.setExePath(settings.GIT_EXECUTABLE);
+    myCommandLine.setExePath(mySettings.GIT_EXECUTABLE);
     myCommandLine.setWorkingDirectory(myWorkingDirectory);
     if (command.length() > 0) {
       myCommandLine.addParameter(command);
@@ -467,12 +471,12 @@ public abstract class GitHandler {
     try {
       // setup environment
       if (!myProject.isDefault() && !mySilent) {
-        GitVcs.getInstance(myProject).showCommandLine(printableCommandLine());
+        myVcs.showCommandLine(printableCommandLine());
       }
       if (log.isDebugEnabled()) {
         log.debug("running git: " + myCommandLine.getCommandLineString() + " in " + myWorkingDirectory);
       }
-      if (!myNoSSHFlag) {
+      if (!myNoSSHFlag && mySettings.isIdeaSsh()) {
         GitSSHService ssh = GitSSHService.getInstance();
         myEnv.put(GitSSHService.GIT_SSH_ENV, ssh.getScriptPath().getPath());
         myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject));
