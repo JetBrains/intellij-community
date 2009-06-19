@@ -2,10 +2,10 @@
 <%@ page isELIgnored="false" %>
 <html>
 <head>
-    <title>Test <weak_warning descr="Word 'ttitle' is misspelled">ttitle</weak_warning></title>
+    <title>Test <MISSPELLED descr="Word 'ttitle' is misspelled">ttitle</MISSPELLED></title>
 </head>
 <body>
-    <div title="div <weak_warning descr="Word 'ttitle' is misspelled">ttitle</weak_warning>">Test <weak_warning descr="Word 'ccontent' is misspelled">ccontent</weak_warning> goes here</div>
+    <div title="div <MISSPELLED descr="Word 'ttitle' is misspelled">ttitle</MISSPELLED>">Test <MISSPELLED descr="Word 'ccontent' is misspelled">ccontent</MISSPELLED> goes here</div>
     <a href="#">test link</a>
 </body>
 </html>

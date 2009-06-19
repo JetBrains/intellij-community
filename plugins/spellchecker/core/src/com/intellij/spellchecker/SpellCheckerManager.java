@@ -4,16 +4,15 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.spellchecker.engine.SpellChecker;
 import com.intellij.spellchecker.engine.SpellCheckerFactory;
 import com.intellij.spellchecker.options.SpellCheckerConfiguration;
 import com.intellij.spellchecker.util.Strings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,7 +43,7 @@ public final class SpellCheckerManager {
 
   @NotNull
   public static HighlightDisplayLevel getHighlightDisplayLevel() {
-    return HighlightDisplayLevel.INFO;
+    return HighlightDisplayLevel.find(SpellCheckerSeveritiesProvider.MISSPELLED);
   }
 
   @NotNull

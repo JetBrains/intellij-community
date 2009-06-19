@@ -59,6 +59,9 @@
   <extensionPoint name="daemon.highlightInfoFilter"
                   interface="com.intellij.codeInsight.daemon.impl.HighlightInfoFilter"/>
 
+  <extensionPoint name="severitiesProvider"
+                  interface="com.intellij.codeInsight.daemon.impl.SeveritiesProvider"/>
+
   <extensionPoint name="implicitUsageProvider"
                   interface="com.intellij.codeInsight.daemon.ImplicitUsageProvider"/>
 

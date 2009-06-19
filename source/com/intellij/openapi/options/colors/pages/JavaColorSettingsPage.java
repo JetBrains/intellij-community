@@ -31,11 +31,15 @@
  */
 package com.intellij.openapi.options.colors.pages;
 
+import com.intellij.application.options.colors.InspectionColorSettingsPage;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.OptionsBundle;
@@ -43,7 +47,6 @@ import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -156,6 +159,12 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.info"), CodeInsightColors.INFO_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.problems"), CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.duplicate"), CodeInsightColors.DUPLICATE_FROM_SERVER));
+    for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
+      for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {
+        final TextAttributesKey attributesKey = highlightInfoType.getAttributesKey();
+        descriptors.add(new AttributesDescriptor(attributesKey.myExternalName, attributesKey));
+      }
+    }
     return descriptors.toArray(new AttributesDescriptor[descriptors.size()]);
   }
 

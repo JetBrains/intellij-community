@@ -6,7 +6,11 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -37,13 +41,26 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
 
   private final JDOMExternalizableStringList myOrder = new JDOMExternalizableStringList();
 
-  private static final Map<String, HighlightInfoType> STANDARD_SEVERITIES = new HashMap<String, HighlightInfoType>();
+  private static final Map<String, HighlightInfoType> STANDART_SEVERITIES = new HashMap<String, HighlightInfoType>();
 
   static {
-    STANDARD_SEVERITIES.put(HighlightSeverity.ERROR.toString(), HighlightInfoType.ERROR);
-    STANDARD_SEVERITIES.put(HighlightSeverity.WARNING.toString(), HighlightInfoType.WARNING);
-    STANDARD_SEVERITIES.put(HighlightSeverity.INFO.toString(), HighlightInfoType.INFO);
-    STANDARD_SEVERITIES.put(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING.toString(), HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER);
+    STANDART_SEVERITIES.put(HighlightSeverity.ERROR.toString(), HighlightInfoType.ERROR);
+    STANDART_SEVERITIES.put(HighlightSeverity.WARNING.toString(), HighlightInfoType.WARNING);
+    STANDART_SEVERITIES.put(HighlightSeverity.INFO.toString(), HighlightInfoType.INFO);
+    STANDART_SEVERITIES.put(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING.toString(), HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER);
+    final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
+      for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {
+        final HighlightSeverity highlightSeverity = highlightInfoType.getSeverity(null);
+        STANDART_SEVERITIES.put(highlightSeverity.toString(), highlightInfoType);
+        final TextAttributesKey attributesKey = highlightInfoType.getAttributesKey();
+        TextAttributes textAttributes = scheme.getAttributes(attributesKey);
+        if (textAttributes == null) {
+          textAttributes = attributesKey.getDefaultAttributes();
+        }
+        HighlightDisplayLevel.registerSeverity(highlightSeverity, provider.getTrafficRendererColor(textAttributes));
+      }
+    }
   }
 
   public static SeverityRegistrar getInstance() {
@@ -63,15 +80,29 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   public Collection<SeverityBasedTextAttributes> getRegisteredHighlightingInfoTypes() {
-    return ourMap.values();
+    final Collection<SeverityBasedTextAttributes> collection = new ArrayList<SeverityBasedTextAttributes>(ourMap.values());
+    for (HighlightInfoType type : STANDART_SEVERITIES.values()) {
+      collection.add(getSeverityBasedTextAttributes(type));
+    }
+    return collection;
   }
+
+  private SeverityBasedTextAttributes getSeverityBasedTextAttributes(HighlightInfoType type) {
+    final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    final TextAttributes textAttributes = scheme.getAttributes(type.getAttributesKey());
+    if (textAttributes != null) {
+      return new SeverityBasedTextAttributes(textAttributes, (HighlightInfoType.HighlightInfoTypeImpl)type);
+    }
+    return new SeverityBasedTextAttributes(getTextAttributesBySeverity(type.getSeverity(null)), (HighlightInfoType.HighlightInfoTypeImpl)type);
+  }
+
 
   public SeverityBasedTextAttributes unregisterSeverity(HighlightSeverity severity){
     return ourMap.remove(severity.toString());
   }
 
   public HighlightInfoType.HighlightInfoTypeImpl getHighlightInfoTypeBySeverity(HighlightSeverity severity) {
-    HighlightInfoType infoType = STANDARD_SEVERITIES.get(severity.toString());
+    HighlightInfoType infoType = STANDART_SEVERITIES.get(severity.toString());
     if (infoType != null) {
       return (HighlightInfoType.HighlightInfoTypeImpl)infoType;
     }
@@ -115,6 +146,11 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     }
     myOrder.clear();
     myOrder.readExternal(element);
+    for (String stdSeverity : STANDART_SEVERITIES.keySet()) {
+      if (!myOrder.contains(stdSeverity)) { //todo order
+        myOrder.add(0, stdSeverity);
+      }
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -142,7 +178,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   public HighlightSeverity getSeverity(final String name) {
-    final HighlightInfoType type = STANDARD_SEVERITIES.get(name);
+    final HighlightInfoType type = STANDART_SEVERITIES.get(name);
     if (type != null) return type.getSeverity(null);
     final SeverityBasedTextAttributes attributes = ourMap.get(name);
     if (attributes != null) return attributes.getSeverity();
@@ -151,7 +187,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
 
   private List<String> createCurrentSeverities() {
     List<String> list = new ArrayList<String>();
-    list.addAll(STANDARD_SEVERITIES.keySet());
+    list.addAll(STANDART_SEVERITIES.keySet());
     list.addAll(ourMap.keySet());
     Collections.sort(list);
     return list;
@@ -178,7 +214,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   private JDOMExternalizableStringList getOrder() {
     if (myOrder.isEmpty()) {
       final List<HighlightSeverity> order = new ArrayList<HighlightSeverity>();
-      for (HighlightInfoType type : STANDARD_SEVERITIES.values()) {
+      for (HighlightInfoType type : STANDART_SEVERITIES.values()) {
         order.add(type.getSeverity(null));
       }
       for (SeverityBasedTextAttributes attributes : ourMap.values()) {
@@ -198,7 +234,18 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   public int getSeverityIdx(@NotNull HighlightSeverity severity) {
-    return myOrder.indexOf(severity.toString());
+    return getOrder().indexOf(severity.toString());
+  }
+
+  public boolean isDefaultSeverity(HighlightSeverity severity) {
+    return STANDART_SEVERITIES.containsKey(severity.myName);
+  }
+
+  public static boolean skipSeverity(HighlightSeverity minSeverity) {
+    for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
+      if (!provider.isGotoBySeverityEnabled(minSeverity)) return true;
+    }
+    return false;
   }
 
   public static class SeverityBasedTextAttributes implements JDOMExternalizable {

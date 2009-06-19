@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -40,10 +41,13 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     if (settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST) {
       for (int idx = severityRegistrar.getSeveritiesCount() - 1; idx >= 0; idx--) {
-        HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), severityRegistrar.getSeverityByIndex(idx), project);
-        if (errors.length != 0) {
-          highlights = errors;
-          break;
+        final HighlightSeverity minSeverity = severityRegistrar.getSeverityByIndex(idx);
+        if (!SeverityRegistrar.skipSeverity(minSeverity)) {
+          HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), minSeverity, project);
+          if (errors.length != 0) {
+            highlights = errors;
+            break;
+          }
         }
       }
     }
@@ -54,6 +58,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     HighlightInfo infoToGoIfNoLuck = null;
     int caretOffsetIfNoLuck = myGoForward ? -1 : editor.getDocument().getTextLength();
     for (HighlightInfo info : highlights) {
+      if (SeverityRegistrar.skipSeverity(info.getSeverity())) continue;
       int startOffset = getNavigationPositionFor(info, editor.getDocument());
       if (isBetter(caretOffset, offsetToGo, startOffset)) {
         offsetToGo = startOffset;

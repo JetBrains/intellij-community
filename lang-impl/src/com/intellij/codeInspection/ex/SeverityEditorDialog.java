@@ -19,7 +19,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -37,7 +36,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ReorderableListController;
-import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -89,7 +87,7 @@ public class SeverityEditorDialog extends DialogWrapper {
         myCurrentSelection = (SeverityRegistrar.SeverityBasedTextAttributes)myOptionsList.getSelectedValue();
         if (myCurrentSelection != null) {
           reset(myCurrentSelection);
-          myCard.show(myRightPanel, isDefaultSetting(myCurrentSelection.getType()) ? DEFAULT : EDITABLE);
+          myCard.show(myRightPanel, mySeverityRegistrar.isDefaultSeverity(myCurrentSelection.getSeverity()) ? DEFAULT : EDITABLE);
         }
       }
     });
@@ -151,10 +149,6 @@ public class SeverityEditorDialog extends DialogWrapper {
     model.removeAllElements();
     final List<SeverityRegistrar.SeverityBasedTextAttributes> infoTypes = new ArrayList<SeverityRegistrar.SeverityBasedTextAttributes>();
     infoTypes.addAll(mySeverityRegistrar.getRegisteredHighlightingInfoTypes());
-    infoTypes.add(getSeverityBasedTextAttributes(HighlightInfoType.ERROR));
-    infoTypes.add(getSeverityBasedTextAttributes(HighlightInfoType.WARNING));
-    infoTypes.add(getSeverityBasedTextAttributes(HighlightInfoType.INFO));
-    infoTypes.add(getSeverityBasedTextAttributes(HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER));
     Collections.sort(infoTypes, new Comparator<SeverityRegistrar.SeverityBasedTextAttributes>() {
       public int compare(SeverityRegistrar.SeverityBasedTextAttributes attributes1, SeverityRegistrar.SeverityBasedTextAttributes attributes2) {
         return - mySeverityRegistrar.compare(attributes1.getSeverity(), attributes2.getSeverity());
@@ -171,14 +165,6 @@ public class SeverityEditorDialog extends DialogWrapper {
     myOptionsList.setSelectedValue(preselection, true);
   }
 
-  private SeverityRegistrar.SeverityBasedTextAttributes getSeverityBasedTextAttributes(HighlightInfoType type) {
-    final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    final TextAttributes textAttributes = scheme.getAttributes(type.getAttributesKey());
-    if (textAttributes != null) {
-      return new SeverityRegistrar.SeverityBasedTextAttributes(textAttributes, (HighlightInfoType.HighlightInfoTypeImpl)type);
-    }
-    return new SeverityRegistrar.SeverityBasedTextAttributes(mySeverityRegistrar.getTextAttributesBySeverity(type.getSeverity(null)), (HighlightInfoType.HighlightInfoTypeImpl)type);
-  }
 
   private void apply(SeverityRegistrar.SeverityBasedTextAttributes info) {
     final MyTextAttributesDescription description =
@@ -242,8 +228,7 @@ public class SeverityEditorDialog extends DialogWrapper {
       controller.addRemoveAction(IdeBundle.message("action.remove"));
     removeAction.setEnableCondition(new Condition<SeverityRegistrar.SeverityBasedTextAttributes>() {
       public boolean value(final SeverityRegistrar.SeverityBasedTextAttributes pair) {
-        final HighlightInfoType info = pair.getType();
-        return info != null && !isDefaultSetting(info);
+        return !mySeverityRegistrar.isDefaultSeverity(pair.getSeverity());
       }
     });
     controller.addAction(new MyMoveUpAction());
@@ -252,17 +237,6 @@ public class SeverityEditorDialog extends DialogWrapper {
     return toolbar.getComponent();
   }
 
-  public JList getOptionsList() {
-    return myOptionsList;
-  }
-
-  private static boolean isDefaultSetting(HighlightInfoType info) {
-    HighlightSeverity severity = info.getSeverity(null);
-    if (ArrayUtil.find(HighlightSeverity.DEFAULT_SEVERITIES, severity) != -1) {
-      return true;
-    }
-    return false;
-  }
 
   protected void doOKAction() {
     apply((SeverityRegistrar.SeverityBasedTextAttributes)myOptionsList.getSelectedValue());
@@ -274,7 +248,7 @@ public class SeverityEditorDialog extends DialogWrapper {
       final SeverityRegistrar.SeverityBasedTextAttributes info =
         (SeverityRegistrar.SeverityBasedTextAttributes)listModel.getElementAt(i);
       order.add(info.getSeverity().myName);
-      if (!isDefaultSetting(info.getType())) {
+      if (!mySeverityRegistrar.isDefaultSeverity(info.getSeverity())) {
         infoTypes.remove(info);
         final Color stripeColor = info.getAttributes().getErrorStripeColor();
         mySeverityRegistrar.registerSeverity(info, stripeColor != null ? stripeColor : LightColors.YELLOW);
@@ -333,10 +307,10 @@ public class SeverityEditorDialog extends DialogWrapper {
       if (canMove) {
         SeverityRegistrar.SeverityBasedTextAttributes pair =
           (SeverityRegistrar.SeverityBasedTextAttributes)myOptionsList.getSelectedValue();
-        if (pair != null && isDefaultSetting(pair.getType())) {
+        if (pair != null && mySeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
           final int newPosition = myOptionsList.getSelectedIndex() - 1;
           pair = (SeverityRegistrar.SeverityBasedTextAttributes)myOptionsList.getModel().getElementAt(newPosition);
-          if (isDefaultSetting(pair.getType())) {
+          if (mySeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
             canMove = false;
           }
         }
@@ -360,10 +334,10 @@ public class SeverityEditorDialog extends DialogWrapper {
       if (canMove) {
         SeverityRegistrar.SeverityBasedTextAttributes pair =
           (SeverityRegistrar.SeverityBasedTextAttributes)myOptionsList.getSelectedValue();
-        if (pair != null && isDefaultSetting(pair.getType())) {
+        if (pair != null && mySeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
           final int newPosition = myOptionsList.getSelectedIndex() + 1;
           pair = (SeverityRegistrar.SeverityBasedTextAttributes)myOptionsList.getModel().getElementAt(newPosition);
-          if (isDefaultSetting(pair.getType())) {
+          if (mySeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
             canMove = false;
           }
         }

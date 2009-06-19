@@ -1,6 +1,6 @@
 <xml>
-  <!--<weak_warning descr="Word 'commments' is misspelled">commments</weak_warning> in xml-->
-  <a>tag value <!--<weak_warning descr="Word 'commments' is misspelled">commments</weak_warning> in xml-->
+  <!--<MISSPELLED descr="Word 'commments' is misspelled">commments</MISSPELLED> in xml-->
+  <a>tag value <!--<MISSPELLED descr="Word 'commments' is misspelled">commments</MISSPELLED> in xml-->
     plain text
   </a>
 </xml>

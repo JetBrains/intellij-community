@@ -38,6 +38,7 @@
     <inspectionToolProvider
         implementation="com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider"/>
     <nameSuggestionProvider id="DictionarySuggestionProvider" implementation="com.intellij.spellchecker.DictionarySuggestionProvider"/>
+    <severitiesProvider implementation="com.intellij.spellchecker.SpellCheckerSeveritiesProvider"/>
   </extensions>
 </idea-plugin>
         

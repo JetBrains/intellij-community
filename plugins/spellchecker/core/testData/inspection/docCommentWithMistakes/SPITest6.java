@@ -1,7 +1,7 @@
 package testData.inspection.docCommentWithMistakes.data.java.src;
 
 /**
- * doc <weak_warning descr="Word 'commment' is misspelled">commment</weak_warning>
+ * doc <MISSPELLED descr="Word 'commment' is misspelled">commment</MISSPELLED>
  *
  * @author Ekaterina Shliakhovetskaja
  * @author Test Test

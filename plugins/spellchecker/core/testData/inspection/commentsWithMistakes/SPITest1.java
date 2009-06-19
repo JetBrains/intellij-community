@@ -2,13 +2,13 @@ package testData.inspection.commentsWithMistakes.data.java.src;
 
 class SPITest1 {
   /* boolean is Java keyword
-   <weak_warning descr="Word 'commment' is misspelled">commment</weak_warning>
+   <MISSPELLED descr="Word 'commment' is misspelled">commment</MISSPELLED>
   */
-  // single line <weak_warning descr="Word 'commment' is misspelled">commment</weak_warning>
+  // single line <MISSPELLED descr="Word 'commment' is misspelled">commment</MISSPELLED>
   void method() {
     /*
-    <weak_warning descr="Word 'commment' is misspelled">commment</weak_warning> within method
+    <MISSPELLED descr="Word 'commment' is misspelled">commment</MISSPELLED> within method
    */
-    // single line <weak_warning descr="Word 'commment' is misspelled">commment</weak_warning> within method
+    // single line <MISSPELLED descr="Word 'commment' is misspelled">commment</MISSPELLED> within method
   }
 }
