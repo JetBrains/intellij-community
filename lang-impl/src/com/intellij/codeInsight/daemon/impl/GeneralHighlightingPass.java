@@ -36,6 +36,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
@@ -422,7 +423,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final Set<HighlightInfo> gotHighlights = new THashSet<HighlightInfo>();
 
     final List<HighlightVisitor> visitors = new ArrayList<HighlightVisitor>(highlightVisitors.length);
-    for (HighlightVisitor visitor : highlightVisitors) {
+    for (HighlightVisitor visitor : DumbService.getInstance(myProject).filterByDumbAwareness(visitors)) {
       if (visitor.suitableForFile(myFile)) visitors.add(visitor);
     }
 
