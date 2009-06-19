@@ -218,7 +218,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
   @NotNull
   public PsiElement getNameIdentifierGroovy() {
     PsiElement ident = findChildByType(TokenSets.PROPERTY_NAMES);
-    assert ident != null;
+    assert ident != null : getText();
     return ident;
   }
 
