@@ -68,10 +68,10 @@ public class ProtectedInnerClassInspection extends BaseInspection {
 
     @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new PackageVisibleInnerClassVisitor();
+        return new ProtectedInnerClassVisitor();
     }
 
-    private class PackageVisibleInnerClassVisitor
+    private class ProtectedInnerClassVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitClass(@NotNull PsiClass aClass) {

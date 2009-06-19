@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,31 +26,37 @@ import org.jetbrains.annotations.NotNull;
 
 public class PackageVisibleFieldInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "package.visible.field.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "package.visible.field.problem.descriptor");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new EncapsulateVariableFix();
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new ProtectedFieldVisitor();
+        return new PackageVisibleFieldVisitor();
     }
 
-    private static class ProtectedFieldVisitor extends BaseInspectionVisitor {
+    private static class PackageVisibleFieldVisitor
+            extends BaseInspectionVisitor {
 
         @Override public void visitField(@NotNull PsiField field) {
             if (field.hasModifierProperty(PsiModifier.PROTECTED) ||
