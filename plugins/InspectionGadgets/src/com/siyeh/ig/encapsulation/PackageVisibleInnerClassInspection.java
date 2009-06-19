@@ -86,8 +86,10 @@ public class PackageVisibleInnerClassInspection extends BaseInspection {
                 return;
             }
             final PsiElement parent = aClass.getParent();
-            if (parent instanceof PsiTypeParameterList ||
-                    parent instanceof PsiNewExpression) {
+            // parent must be class to not warn on
+            // the type parameters of classes, anonymous classes and
+            // enum constants for example.
+            if (!(parent instanceof PsiClass)) {
                 return;
             }
             registerClassError(aClass);

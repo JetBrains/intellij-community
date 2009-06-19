@@ -13,4 +13,21 @@ public class PackageVisibleInnerClassInspection<T>
         int val = -1;
     }
 
+    Object foo() {
+        return new Object() {};
+    }
+}
+enum Sample {
+    Sample1() {
+        @Override
+        void test() {
+        }
+    },
+    Sample2() {
+        @Override
+        void test() {
+        }
+    };
+
+    abstract void test();
 }
