@@ -159,7 +159,7 @@ public class JavaUtil {
     StringBuilder buffer = new StringBuilder();
     while(true){
       if (lexer.getTokenType() != JavaTokenType.IDENTIFIER) break;
-      buffer.append(text, lexer.getTokenStart(), lexer.getTokenEnd() - lexer.getTokenStart());
+      buffer.append(text, lexer.getTokenStart(), lexer.getTokenEnd());
       lexer.advance();
       skipWhiteSpaceAndComments(lexer);
       if (lexer.getTokenType() != JavaTokenType.DOT) break;
