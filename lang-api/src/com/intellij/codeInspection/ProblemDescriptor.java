@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
 
 /**
@@ -27,4 +28,12 @@ public interface ProblemDescriptor extends CommonProblemDescriptor{
   int getLineNumber();
   ProblemHighlightType getHighlightType();
   boolean isAfterEndOfLine();
+
+  /**
+   * Sets custom attributes for highlighting the inspection result. Can be used only when the severity of the problem is INFORMATION.
+   *
+   * @param key the text attributes key for highlighting the result.
+   * @since 9.0
+   */
+  void setTextAttributes(TextAttributesKey key);
 }

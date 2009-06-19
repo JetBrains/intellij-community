@@ -1,11 +1,12 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,6 +28,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   private final boolean myAfterEndOfLine;
   private final TextRange myTextRangeInElement;
   private final HintAction myHintAction;
+  private TextAttributesKey myEnforcedTextAttributes;
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
                                ProblemHighlightType highlightType, boolean isAfterEndOfLine, final TextRange rangeInElement) {
@@ -107,6 +109,14 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
 
   public boolean isAfterEndOfLine() {
     return myAfterEndOfLine;
+  }
+
+  public void setTextAttributes(TextAttributesKey key) {
+    myEnforcedTextAttributes = key;
+  }
+
+  public TextAttributesKey getEnforcedTextAttributes() {
+    return myEnforcedTextAttributes;
   }
 
   public TextRange getTextRange() {
