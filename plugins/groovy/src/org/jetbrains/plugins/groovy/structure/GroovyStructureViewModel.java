@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.structure;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
 import com.intellij.ide.util.treeView.smartTree.Filter;
-import com.intellij.ide.util.treeView.smartTree.Grouper;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -38,11 +37,6 @@ public class GroovyStructureViewModel extends TextEditorBasedStructureViewModel 
   @NotNull
   public StructureViewTreeElement getRoot() {
     return new GroovyFileStructureViewElement(myRootElement);
-  }
-
-  @NotNull
-  public Grouper[] getGroupers() {
-    return Grouper.EMPTY_ARRAY;
   }
 
   @NotNull
