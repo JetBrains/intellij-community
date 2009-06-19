@@ -281,6 +281,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return myPriority;
   }
 
+  @Override
   public final int getGrouping() {
     return myGrouping;
   }

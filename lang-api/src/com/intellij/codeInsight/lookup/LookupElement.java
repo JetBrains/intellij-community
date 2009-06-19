@@ -91,4 +91,7 @@ public abstract class LookupElement extends UserDataHolderBase {
     myRenderer.getValue().renderElement(this, presentation);
   }
 
+  public int getGrouping() {
+    return 0;
+  }
 }
