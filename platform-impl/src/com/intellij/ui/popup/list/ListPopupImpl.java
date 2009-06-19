@@ -4,6 +4,8 @@
  */
 package com.intellij.ui.popup.list;
 
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -373,7 +375,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     myIndexForShowingChild = aIndexForShowingChild;
   }
 
-  private class MyList extends JList {
+  private class MyList extends JList implements DataProvider{
     public MyList() {
       super(myListModel);
     }
@@ -385,6 +387,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     public void processKeyEvent(KeyEvent e) {
       e.setSource(this);
       super.processKeyEvent(e);
+    }
+
+    public Object getData(String dataId) {
+       if (dataId.equals(DataConstants.SELECTED_ITEM)){
+        return myList.getSelectedValue();
+      }
+      return null;
     }
   }
 
