@@ -5,10 +5,8 @@
 package com.intellij.util.xml.structure;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.ide.structureView.impl.xml.XmlFileTreeElement;
-import com.intellij.ide.util.treeView.smartTree.Filter;
-import com.intellij.ide.util.treeView.smartTree.Grouper;
+import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiFile;
@@ -45,18 +43,8 @@ public class DomStructureViewTreeModel extends XmlStructureViewTreeModel impleme
   }
 
   @NotNull
-  public Grouper[] getGroupers() {
-    return Grouper.EMPTY_ARRAY;
-  }
-
-  @NotNull
   public Sorter[] getSorters() {
     return new Sorter[]{Sorter.ALPHA_SORTER};
-  }
-
-  @NotNull
-  public Filter[] getFilters() {
-    return Filter.EMPTY_ARRAY;
   }
 
   protected PsiFile getPsiFile() {

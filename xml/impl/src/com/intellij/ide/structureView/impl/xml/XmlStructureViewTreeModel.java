@@ -35,9 +35,6 @@ import com.intellij.ide.structureView.StructureViewExtension;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
-import com.intellij.ide.util.treeView.smartTree.Filter;
-import com.intellij.ide.util.treeView.smartTree.Grouper;
-import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -59,21 +56,6 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
   public StructureViewTreeElement getRoot() {
     if (myFile.getLanguage() == DTDLanguage.INSTANCE) return new DtdFileTreeElement(myFile);
     return new XmlFileTreeElement(myFile);
-  }
-
-  @NotNull
-  public Grouper[] getGroupers() {
-    return Grouper.EMPTY_ARRAY;
-  }
-
-  @NotNull
-  public Sorter[] getSorters() {
-    return Sorter.EMPTY_ARRAY;
-  }
-
-  @NotNull
-  public Filter[] getFilters() {
-    return Filter.EMPTY_ARRAY;
   }
 
   public boolean shouldEnterElement(final Object element) {

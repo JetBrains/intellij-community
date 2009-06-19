@@ -15,6 +15,9 @@
  */
 package com.intellij.ide.structureView;
 
+import com.intellij.ide.util.treeView.smartTree.Filter;
+import com.intellij.ide.util.treeView.smartTree.Grouper;
+import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.CaretEvent;
@@ -42,6 +45,7 @@ import java.util.List;
 
 public abstract class TextEditorBasedStructureViewModel implements StructureViewModel {
   private final Editor myEditor;
+  private final PsiFile myPsiFile;
   private final CaretListener myCaretListener;
   private final List<FileEditorPositionListener> myListeners = ContainerUtil.createEmptyCOWList();
 
@@ -52,7 +56,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
    * @param psiFile the file for which the structure view model is requested.
    */
   protected TextEditorBasedStructureViewModel(@NotNull PsiFile psiFile) {
-    this(getEditorForFile(psiFile));
+    this(getEditorForFile(psiFile), psiFile);
   }
 
   /**
@@ -61,7 +65,12 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
    * @param editor the editor for which the structure view model is requested.
    */
   protected TextEditorBasedStructureViewModel(final Editor editor) {
+    this(editor, null);
+  }
+
+  private TextEditorBasedStructureViewModel(Editor editor, PsiFile file) {
     myEditor = editor;
+    myPsiFile = file;
     myCaretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e) {
         if (Comparing.equal(e.getEditor(), myEditor)) {
@@ -126,7 +135,9 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     return null;
   }
 
-  protected abstract PsiFile getPsiFile();   // TODO: change abstract method to constructor parameter?
+  protected PsiFile getPsiFile() {
+    return myPsiFile;
+  }
 
   protected boolean isSuitable(final PsiElement element) {
     if (element == null) return false;
@@ -158,5 +169,20 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
 
   protected Editor getEditor() {
     return myEditor;
+  }
+
+  @NotNull
+  public Grouper[] getGroupers() {
+    return Grouper.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public Sorter[] getSorters() {
+    return Sorter.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public Filter[] getFilters() {
+    return Filter.EMPTY_ARRAY;
   }
 }

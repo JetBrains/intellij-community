@@ -3,7 +3,10 @@ package com.intellij.lang.properties.structureView;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
-import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
+import com.intellij.ide.util.treeView.smartTree.Grouper;
+import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.lang.properties.editor.PropertiesGroupingStructureViewModel;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -77,11 +80,6 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
   @NotNull
   public Sorter[] getSorters() {
     return new Sorter[] {Sorter.ALPHA_SORTER, KIND_SORTER};
-  }
-
-  @NotNull
-  public Filter[] getFilters() {
-    return Filter.EMPTY_ARRAY;
   }
 
   protected PsiFile getPsiFile() {
