@@ -50,8 +50,19 @@ public class SortedList<T> extends AbstractList<T>{
     myDelegate.clear();
   }
 
-  public int size() {
+  @Override
+  public Iterator<T> iterator() {
     ensureSorted();
+    return super.iterator();
+  }
+
+  @Override
+  public ListIterator<T> listIterator() {
+    ensureSorted();
+    return super.listIterator();
+  }
+
+  public int size() {
     return myDelegate.size();
   }
 }
