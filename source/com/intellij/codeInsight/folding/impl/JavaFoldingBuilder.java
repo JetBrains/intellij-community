@@ -546,7 +546,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx {
                   }
                 });
 
-              if (rbrace != null) {
+              if (rbrace != null && rangeEnd + 1 < closureEnd) {
                 foldElements
                   .add(new FoldingDescriptor(rbrace.getNode(), new TextRange(rangeEnd, closureEnd), group) {
                     @Override
