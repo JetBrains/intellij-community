@@ -1,5 +1,6 @@
 package com.intellij.compiler.impl.packagingCompiler;
 
+import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
@@ -19,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -113,8 +115,12 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
     final Set<String> writtenPaths = createPathsHashSet();
     Boolean built = new ReadAction<Boolean>() {
       protected void run(final Result<Boolean> result) {
-        boolean built = doBuild(context, items, processedItems, writtenPaths, deletedJars);
-        result.setResult(built);
+        CompileDriver.runInContext(context, "Copying files", new ThrowableRunnable<RuntimeException>() {
+          public void run() throws RuntimeException {
+            boolean built = doBuild(context, items, processedItems, writtenPaths, deletedJars);
+            result.setResult(built);
+          }
+        });
       }
     }.execute().getResultObject();
     if (!built) {
@@ -173,7 +179,7 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
     beforeBuildStarted(builderContext);
 
     try {
-
+      int i = 0;
       for (ProcessingItem item0 : items) {
         if (item0 instanceof MockProcessingItem) continue;
         context.getProgressIndicator().checkCanceled();
@@ -193,6 +199,7 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
             changedJars.add(((JarDestinationInfo)destination).getJarInfo());
           }
         }
+        context.getProgressIndicator().setFraction(++i*1.0/items.length);
         processedItems.add(item);
       }
 

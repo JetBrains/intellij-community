@@ -129,17 +129,13 @@ public class BackendCompilerWrapper {
       throw new CompilerException(e.getMessage(), e);
     }
     finally {
-      CompileDriver.runInContext(myCompileContext, CompilerBundle.message("progress.deleting.temp.files"), new ThrowableRunnable<RuntimeException>(){
-        public void run() throws RuntimeException {
-          for (final VirtualFile file : myModuleToTempDirMap.values()) {
-            if (file != null) {
-              final File ioFile = new File(file.getPath());
-              FileUtil.asyncDelete(ioFile);
-            }
-          }
-          myModuleToTempDirMap.clear();
+      for (final VirtualFile file : myModuleToTempDirMap.values()) {
+        if (file != null) {
+          final File ioFile = new File(file.getPath());
+          FileUtil.asyncDelete(ioFile);
         }
-      });
+      }
+      myModuleToTempDirMap.clear();
     }
 
     if (myCompileContext.getProgressIndicator().isCanceled()) {

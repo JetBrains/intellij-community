@@ -50,6 +50,41 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
       each.checkCanceled();
     }
   };
+  private static final IndicatorAction STOP_ACTION = new IndicatorAction() {
+    public void execute(final ProgressIndicatorEx each) {
+      each.stop();
+    }
+  };
+  private static final IndicatorAction START_ACTION = new IndicatorAction() {
+    public void execute(final ProgressIndicatorEx each) {
+      each.start();
+    }
+  };
+  private static final IndicatorAction CANCEL_ACTION = new IndicatorAction() {
+    public void execute(final ProgressIndicatorEx each) {
+      each.cancel();
+    }
+  };
+  private static final IndicatorAction PUSH_ACTION = new IndicatorAction() {
+    public void execute(final ProgressIndicatorEx each) {
+      each.pushState();
+    }
+  };
+  private static final IndicatorAction POP_ACTION = new IndicatorAction() {
+    public void execute(final ProgressIndicatorEx each) {
+      each.popState();
+    }
+  };
+  private static final IndicatorAction STARTNC_ACTION = new IndicatorAction() {
+    public void execute(final ProgressIndicatorEx each) {
+      each.startNonCancelableSection();
+    }
+  };
+  private static final IndicatorAction FINISHNC_ACTION = new IndicatorAction() {
+    public void execute(final ProgressIndicatorEx each) {
+      each.finishNonCancelableSection();
+    }
+  };
 
   public void start() {
     synchronized (this) {
@@ -61,11 +96,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
       myRunning = true;
       myWasStarted = true;
 
-      delegateRunningChange(new IndicatorAction() {
-        public void execute(final ProgressIndicatorEx each) {
-          each.start();
-        }
-      });
+      delegateRunningChange(START_ACTION);
     }
 
     enterModality();
@@ -92,11 +123,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     LOG.assertTrue(myRunning, "stop() should be called only if start() called before");
     myRunning = false;
 
-    delegateRunningChange(new IndicatorAction() {
-      public void execute(final ProgressIndicatorEx each) {
-        each.stop();
-      }
-    });
+    delegateRunningChange(STOP_ACTION);
     exitModality();
   }
 
@@ -124,11 +151,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
   public void cancel() {
     myCanceled = true;
 
-    delegateRunningChange(new IndicatorAction() {
-      public void execute(final ProgressIndicatorEx each) {
-        each.cancel();
-      }
-    });
+    delegateRunningChange(CANCEL_ACTION);
   }
 
   public void finish(@NotNull final TaskInfo task) {
@@ -219,48 +242,32 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     myTextStack.push(myText);
     myFractionStack.add(myFraction);
     myText2Stack.push(myText2);
-    setText("");
-    setFraction(0);
-    setText2("");
 
-    delegateProgressChange(new IndicatorAction() {
-      public void execute(final ProgressIndicatorEx each) {
-        each.pushState();
-      }
-    });
+    delegateProgressChange(PUSH_ACTION);
   }
 
   public synchronized void popState() {
     LOG.assertTrue(!myTextStack.isEmpty());
-    setText(myTextStack.pop());
-    setFraction(myFractionStack.remove(myFractionStack.size() - 1));
-    setText2(myText2Stack.pop());
+    String oldText = myTextStack.pop();
+    double oldFraction = myFractionStack.remove(myFractionStack.size() - 1);
+    String oldText2 = myText2Stack.pop();
+    setText(oldText);
+    setFraction(oldFraction);
+    setText2(oldText2);
 
-    delegateProgressChange(new IndicatorAction() {
-      public void execute(final ProgressIndicatorEx each) {
-        each.popState();
-      }
-    });
+    delegateProgressChange(POP_ACTION);
   }
 
   public void startNonCancelableSection() {
     myNonCancelableCount++;
 
-    delegateProgressChange(new IndicatorAction() {
-      public void execute(final ProgressIndicatorEx each) {
-        each.startNonCancelableSection();
-      }
-    });
+    delegateProgressChange(STARTNC_ACTION);
   }
 
   public void finishNonCancelableSection() {
     myNonCancelableCount--;
 
-    delegateProgressChange(new IndicatorAction() {
-      public void execute(final ProgressIndicatorEx each) {
-        each.finishNonCancelableSection();
-      }
-    });
+    delegateProgressChange(FINISHNC_ACTION);
   }
 
   protected boolean isCancelable() {

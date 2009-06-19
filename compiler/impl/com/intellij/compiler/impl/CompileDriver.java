@@ -861,13 +861,17 @@ public class CompileDriver {
   }
 
   public static <T extends Throwable> void runInContext(CompileContext context, String title, ThrowableRunnable<T> action) throws T {
-    context.getProgressIndicator().pushState();
-    context.getProgressIndicator().setText(title);
+    if (title != null) {
+      context.getProgressIndicator().pushState();
+      context.getProgressIndicator().setText(title);
+    }
     try {
       action.run();
     }
     finally {
-      context.getProgressIndicator().popState();
+      if (title != null) {
+        context.getProgressIndicator().popState();
+      }
     }
   }
 

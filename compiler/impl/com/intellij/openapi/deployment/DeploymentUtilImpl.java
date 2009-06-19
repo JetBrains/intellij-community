@@ -197,7 +197,8 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     }
     if (!FileUtil.isFilePathAcceptable(toFile, fileFilter)) return;
     if (context.getProgressIndicator() != null) {
-      context.getProgressIndicator().setText(CompilerBundle.message("progress.text.copying.file", fromFile.getPath()));
+      context.getProgressIndicator().setText("Copying files");
+      context.getProgressIndicator().setText2(fromFile.getPath());
     }
     try {
       LOG.debug("Copy file '" + fromFile + "' to '"+toFile+"'");
