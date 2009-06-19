@@ -7,6 +7,8 @@ import com.intellij.projectImport.ProjectImportWizardStep;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -43,8 +45,12 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
   }
 
   public void updateStep() {
-    profileChooser.setElements(getBuilder().getProfiles(), false);
-    profileChooser.markElements(getBuilder().getSelectedProfiles());
+    List<String> allProfiles = getBuilder().getProfiles();
+    List<String> markedProfiles = new ArrayList<String>(getBuilder().getSelectedProfiles());
+    markedProfiles.retainAll(allProfiles); // mark only existing profiles
+
+    profileChooser.setElements(allProfiles, false);
+    profileChooser.markElements(markedProfiles);
   }
 
   public boolean validate() throws ConfigurationException {
