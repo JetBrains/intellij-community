@@ -1,6 +1,5 @@
 package com.intellij.ide.hierarchy.type;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
@@ -8,7 +7,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 
 public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructure {
-  public static final String TYPE = IdeBundle.message("title.hierarchy.supertypes");
 
   public SupertypesHierarchyTreeStructure(final Project project, final PsiClass aClass) {
     super(project, new TypeHierarchyNodeDescriptor(project, null, aClass, true));

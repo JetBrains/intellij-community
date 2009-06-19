@@ -1,4 +1,4 @@
-package com.intellij.ide.hierarchy.type;
+package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -14,12 +14,12 @@ public final class ViewClassHierarchyAction extends ChangeViewTypeActionBase {
   }
 
   protected final String getTypeName() {
-    return TypeHierarchyTreeStructure.TYPE;
+    return TypeHierarchyBrowserBase.TYPE_HIERARCHY_TYPE;
   }
 
   public final void update(final AnActionEvent event) {
     super.update(event);
-    final TypeHierarchyBrowser browser = getTypeHierarchyBrowser(event.getDataContext());
+    final TypeHierarchyBrowserBase browser = getTypeHierarchyBrowser(event.getDataContext());
     event.getPresentation().setEnabled(browser != null && !browser.isInterface());
   }
 }

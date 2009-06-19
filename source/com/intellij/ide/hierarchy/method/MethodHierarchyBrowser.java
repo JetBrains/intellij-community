@@ -32,7 +32,7 @@ public final class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_METHOD_HIERARCHY_POPUP);
     PopupHandler.installPopupHandler(tree, group, ActionPlaces.METHOD_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
 
-    final MethodHierarchyBrowserBase.BaseOnThisMethodAction baseOnThisMethodAction = new BaseOnThisMethodAction();
+    final BaseOnThisMethodAction baseOnThisMethodAction = new BaseOnThisMethodAction();
     baseOnThisMethodAction
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_METHOD_HIERARCHY).getShortcutSet(), tree);
 
@@ -92,9 +92,6 @@ public final class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
   }
 
   public static final class BaseOnThisMethodAction extends MethodHierarchyBrowserBase.BaseOnThisMethodAction {
-    protected boolean isApplicableElement(final PsiElement psiElement) {
-      return psiElement instanceof PsiMethod;
-    }
   }
 
   @Nullable

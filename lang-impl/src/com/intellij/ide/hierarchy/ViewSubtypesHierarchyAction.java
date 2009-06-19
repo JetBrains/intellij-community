@@ -1,7 +1,7 @@
-package com.intellij.ide.hierarchy.type;
+package com.intellij.ide.hierarchy;
 
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.IconLoader;
 
 /**
  * @author cdr
@@ -13,6 +13,6 @@ public final class ViewSubtypesHierarchyAction extends ChangeViewTypeActionBase 
   }
 
   protected final String getTypeName() {
-    return SubtypesHierarchyTreeStructure.TYPE;
+    return TypeHierarchyBrowserBase.SUBTYPES_HIERARCHY_TYPE;
   }
 }

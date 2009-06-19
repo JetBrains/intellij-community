@@ -374,9 +374,9 @@
 
     <group id="TypeHierarchyPopupMenu">
       <action id="TypeHierarchy.BaseOnThisType" class="com.intellij.ide.hierarchy.type.TypeHierarchyBrowser$BaseOnThisTypeAction"/>
-      <action id="TypeHierarchy.Class" class="com.intellij.ide.hierarchy.type.ViewClassHierarchyAction"/>
-      <action id="TypeHierarchy.Subtypes" class="com.intellij.ide.hierarchy.type.ViewSubtypesHierarchyAction"/>
-      <action id="TypeHierarchy.Supertypes" class="com.intellij.ide.hierarchy.type.ViewSupertypesHierarchyAction"/>
+      <action id="TypeHierarchy.Class" class="com.intellij.ide.hierarchy.ViewClassHierarchyAction"/>
+      <action id="TypeHierarchy.Subtypes" class="com.intellij.ide.hierarchy.ViewSubtypesHierarchyAction"/>
+      <action id="TypeHierarchy.Supertypes" class="com.intellij.ide.hierarchy.ViewSupertypesHierarchyAction"/>
       <separator/>
       <reference ref="EditSource"/>
       <separator/>

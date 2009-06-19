@@ -535,7 +535,7 @@ public abstract class MethodHierarchyBrowserBase extends JPanel implements DataP
     }
   }
 
-  public static abstract class BaseOnThisMethodAction extends AnAction {
+  public static class BaseOnThisMethodAction extends AnAction {
     public BaseOnThisMethodAction() {
       super(IdeBundle.message("action.base.on.this.method"));
     }
@@ -546,7 +546,7 @@ public abstract class MethodHierarchyBrowserBase extends JPanel implements DataP
       if (browser == null) return;
 
       final PsiElement selectedElement = browser.getSelectedElement();
-      if (!isApplicableElement(selectedElement)) {
+      if (!browser.isApplicableElement(selectedElement)) {
         return;
       }
 
@@ -576,7 +576,7 @@ public abstract class MethodHierarchyBrowserBase extends JPanel implements DataP
       }
 
       final PsiElement selectedElement = browser.getSelectedElement();
-      if (!isApplicableElement(selectedElement)) {
+      if (!browser.isApplicableElement(selectedElement)) {
         presentation.setEnabled(false);
         presentation.setVisible(false);
         return;
@@ -593,8 +593,6 @@ public abstract class MethodHierarchyBrowserBase extends JPanel implements DataP
         presentation.setEnabled(false);
       }
     }
-
-    protected abstract boolean isApplicableElement(final PsiElement psiElement);
   }
 
   public final HierarchyNodeDescriptor[] getSelectedDescriptors() {

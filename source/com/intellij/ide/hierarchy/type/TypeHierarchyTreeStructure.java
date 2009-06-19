@@ -1,14 +1,12 @@
 package com.intellij.ide.hierarchy.type;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 
 import java.util.ArrayList;
 
 public final class TypeHierarchyTreeStructure extends SubtypesHierarchyTreeStructure {
-  public static final String TYPE = IdeBundle.message("title.hierarchy.class");
 
   public TypeHierarchyTreeStructure(final Project project, final PsiClass aClass) {
     super(project, buildHierarchyElement(project, aClass));

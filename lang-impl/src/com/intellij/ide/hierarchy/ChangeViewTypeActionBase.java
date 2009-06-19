@@ -1,4 +1,4 @@
-package com.intellij.ide.hierarchy.type;
+package com.intellij.ide.hierarchy;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -17,7 +17,7 @@ abstract class ChangeViewTypeActionBase extends ToggleAction {
   }
 
   public final boolean isSelected(final AnActionEvent event) {
-    final TypeHierarchyBrowser browser = getTypeHierarchyBrowser(event.getDataContext());
+    final TypeHierarchyBrowserBase browser = getTypeHierarchyBrowser(event.getDataContext());
     return browser != null && getTypeName().equals(browser.getCurrentViewName());
   }
 
@@ -25,7 +25,7 @@ abstract class ChangeViewTypeActionBase extends ToggleAction {
 
   public final void setSelected(final AnActionEvent event, final boolean flag) {
     if (flag) {
-      final TypeHierarchyBrowser browser = getTypeHierarchyBrowser(event.getDataContext());
+      final TypeHierarchyBrowserBase browser = getTypeHierarchyBrowser(event.getDataContext());
       //        setWaitCursor();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
@@ -41,11 +41,11 @@ abstract class ChangeViewTypeActionBase extends ToggleAction {
     // its important to assign the myTypeHierarchyBrowser first
     super.update(event);
     final Presentation presentation = event.getPresentation();
-    final TypeHierarchyBrowser browser = getTypeHierarchyBrowser(event.getDataContext());
+    final TypeHierarchyBrowserBase browser = getTypeHierarchyBrowser(event.getDataContext());
     presentation.setEnabled(browser != null && browser.isValidBase());
   }
 
-  protected TypeHierarchyBrowser getTypeHierarchyBrowser(DataContext context) {
-    return (TypeHierarchyBrowser)context.getData(TypeHierarchyBrowser.TYPE_HIERARCHY_BROWSER_ID);
+  protected static TypeHierarchyBrowserBase getTypeHierarchyBrowser(final DataContext context) {
+    return (TypeHierarchyBrowserBase)context.getData(TypeHierarchyBrowserBase.TYPE_HIERARCHY_BROWSER_ID);
   }
 }

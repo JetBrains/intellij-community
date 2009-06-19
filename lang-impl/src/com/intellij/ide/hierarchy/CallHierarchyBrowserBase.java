@@ -228,34 +228,37 @@ public abstract class CallHierarchyBrowserBase extends JPanel implements Hierarc
     myCardLayout.show(myTreePanel, typeName);
 
     if (!myBuilders.containsKey(typeName)) {
-      setWaitCursor();
+      try {
+        setWaitCursor();
 
-      // create builder
-      final JTree tree = myType2TreeMap.get(typeName);
-      final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode(""));
-      tree.setModel(model);
+        // create builder
+        final JTree tree = myType2TreeMap.get(typeName);
+        final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode(""));
+        tree.setModel(model);
 
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      final HierarchyTreeStructure structure = createHierarchyTreeStructure(typeName, element);
-      if (structure == null) return;
-      final Comparator<NodeDescriptor> comparator = getComparator();
-      final HierarchyTreeBuilder builder = new HierarchyTreeBuilder(myProject, tree, model, structure, comparator);
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        final HierarchyTreeStructure structure = createHierarchyTreeStructure(typeName, element);
+        if (structure == null) return;
+        final Comparator<NodeDescriptor> comparator = getComparator();
+        final HierarchyTreeBuilder builder = new HierarchyTreeBuilder(myProject, tree, model, structure, comparator);
 
-      myBuilders.put(typeName, builder);
+        myBuilders.put(typeName, builder);
 
-      final HierarchyNodeDescriptor baseDescriptor = structure.getBaseDescriptor();
-      builder.expand(baseDescriptor, null);
-      /*
-      builder.buildNodeForElement(baseDescriptor);
-      final DefaultMutableTreeNode node = builder.getNodeForElement(baseDescriptor);
-      if (node != null) {
-        final TreePath path = new TreePath(node.getPath());
-        tree.expandPath(path);
-        TreeUtil.selectPath(tree, path);
+        final HierarchyNodeDescriptor baseDescriptor = structure.getBaseDescriptor();
+        builder.expand(baseDescriptor, null);
+        /*
+          builder.buildNodeForElement(baseDescriptor);
+          final DefaultMutableTreeNode node = builder.getNodeForElement(baseDescriptor);
+          if (node != null) {
+            final TreePath path = new TreePath(node.getPath());
+            tree.expandPath(path);
+            TreeUtil.selectPath(tree, path);
+          }
+          */
       }
-      */
-
-      restoreCursor();
+      finally {
+        restoreCursor();
+      }
     }
 
     getCurrentTree().requestFocus();

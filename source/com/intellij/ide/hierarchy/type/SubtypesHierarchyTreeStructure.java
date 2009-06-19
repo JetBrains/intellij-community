@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
-  public static final String TYPE = IdeBundle.message("title.hierarchy.subtypes");
 
   protected SubtypesHierarchyTreeStructure(final Project project, final HierarchyNodeDescriptor descriptor) {
     super(project, descriptor);

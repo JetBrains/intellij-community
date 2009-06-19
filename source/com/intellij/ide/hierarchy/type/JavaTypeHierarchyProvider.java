@@ -2,6 +2,7 @@ package com.intellij.ide.hierarchy.type;
 
 import com.intellij.ide.hierarchy.HierarchyProvider;
 import com.intellij.ide.hierarchy.HierarchyBrowser;
+import com.intellij.ide.hierarchy.TypeHierarchyBrowserBase;
 import com.intellij.psi.*;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -57,7 +58,8 @@ public class JavaTypeHierarchyProvider implements HierarchyProvider {
 
   public void browserActivated(final HierarchyBrowser hierarchyBrowser) {
     final TypeHierarchyBrowser browser = (TypeHierarchyBrowser)hierarchyBrowser;
-    final String typeName = browser.isInterface() ? SubtypesHierarchyTreeStructure.TYPE : TypeHierarchyTreeStructure.TYPE;
+    final String typeName =
+      browser.isInterface() ? TypeHierarchyBrowserBase.SUBTYPES_HIERARCHY_TYPE : TypeHierarchyBrowserBase.TYPE_HIERARCHY_TYPE;
     browser.changeView(typeName);
   }
 }
