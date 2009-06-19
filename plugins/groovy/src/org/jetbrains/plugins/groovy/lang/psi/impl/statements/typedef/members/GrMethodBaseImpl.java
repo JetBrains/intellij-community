@@ -185,6 +185,10 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
       @Nullable
       public String getLocationString() {
         PsiClass clazz = getContainingClass();
+        if (clazz == null) {
+          return null;
+        }
+
         String name = clazz.getQualifiedName();
         assert name != null;
         return "(in " + name + ")";
