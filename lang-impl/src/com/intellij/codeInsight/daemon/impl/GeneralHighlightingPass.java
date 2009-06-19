@@ -423,7 +423,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final Set<HighlightInfo> gotHighlights = new THashSet<HighlightInfo>();
 
     final List<HighlightVisitor> visitors = new ArrayList<HighlightVisitor>(highlightVisitors.length);
-    for (HighlightVisitor visitor : DumbService.getInstance(myProject).filterByDumbAwareness(visitors)) {
+    for (HighlightVisitor visitor : DumbService.getInstance(myProject).filterByDumbAwareness(Arrays.asList(highlightVisitors))) {
       if (visitor.suitableForFile(myFile)) visitors.add(visitor);
     }
 
