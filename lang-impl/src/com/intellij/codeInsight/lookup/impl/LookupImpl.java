@@ -114,12 +114,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
           double priority2 = ((LookupItem)c2).getPriority();
           if (priority1 > priority2) return -1;
           if (priority2 > priority1) return 1;
-
-          int grouping1 = ((LookupItem)c1).getGrouping();
-          int grouping2 = ((LookupItem)c2).getGrouping();
-          if (grouping1 > grouping2) return -1;
-          if (grouping2 > grouping1) return 1;
         }
+
+        int grouping1 = c1.getGrouping();
+        int grouping2 = c2.getGrouping();
+        if (grouping1 > grouping2) return -1;
+        if (grouping2 > grouping1) return 1;
 
         int stringCompare = o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
         if (stringCompare != 0) return stringCompare;
