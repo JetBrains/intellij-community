@@ -9,12 +9,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,7 +30,11 @@ import java.util.List;
 public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   protected final Project myProject;
 
-  public BaseProjectTreeBuilder(Project project, JTree tree, DefaultTreeModel treeModel, AbstractTreeStructure treeStructure, Comparator<NodeDescriptor> comparator) {
+  public BaseProjectTreeBuilder(Project project,
+                                JTree tree,
+                                DefaultTreeModel treeModel,
+                                AbstractTreeStructure treeStructure,
+                                Comparator<NodeDescriptor> comparator) {
     super(tree, treeModel, treeStructure, comparator);
     myProject = project;
   }
@@ -68,6 +73,10 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     getTree().expandPath(new TreePath(node.getPath()));
 
+    return collectChildren(node);
+  }
+
+  private List<AbstractTreeNode> collectChildren(DefaultMutableTreeNode node) {
     int childCount = node.getChildCount();
     List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>(childCount);
     for (int i = 0; i < childCount; i++) {
@@ -85,32 +94,47 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     return result;
   }
 
-  private void hideChildrenFor(DefaultMutableTreeNode node) {
-    if (node != null){
-      final JTree tree = getTree();
-      final TreePath path = new TreePath(node.getPath());
-      if (tree.isExpanded(path)) {
-        tree.collapsePath(path);
+  public ActionCallback select(Object element, VirtualFile file, final boolean requestFocus) {
+    return _select(element, file, requestFocus, Conditions.<AbstractTreeNode>alwaysTrue());
+  }
+
+  public ActionCallback selectInWidth(final Object element,
+                                      final boolean requestFocus,
+                                      final Condition<AbstractTreeNode> nonStopCondition) {
+    return _select(element, null, requestFocus, nonStopCondition);
+  }
+
+  private ActionCallback _select(Object element,
+                                 VirtualFile file,
+                                 final boolean requestFocus,
+                                 final Condition<AbstractTreeNode> nonStopCondition) {
+    final ActionCallback result = new ActionCallback();
+
+    DefaultMutableTreeNode selected = alreadySelectedNode(element);
+
+    final Runnable onDone = new Runnable() {
+      public void run() {
+        if (requestFocus) {
+          IdeFocusManager.getInstance(myProject).requestFocus(getTree(), true);
+        }
+
+        result.setDone();
       }
-    }
-  }
+    };
 
-  public ActionCallback select(Object element, VirtualFile file, boolean requestFocus) {
-    DefaultMutableTreeNode selected = alreadySelectedNode(element);
     if (selected == null) {
-      AbstractTreeNode node = expandPathTo(file, (AbstractTreeNode)getTreeStructure().getRootElement(), element, Conditions.<AbstractTreeNode>alwaysTrue());
-      selected = getNodeForElement(node);
+      expandPathTo(file, (AbstractTreeNode)getTreeStructure().getRootElement(), element, nonStopCondition)
+        .doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
+          public void run(AbstractTreeNode node) {
+            select(node, onDone);
+          }
+        }).notifyWhenRejected(result);
     }
-    return TreeUtil.selectInTree(myProject, selected, requestFocus, getTree(), true);
-  }
+    else {
+      onDone.run();
+    }
 
-  public void selectInWidth(final Object element, final boolean requestFocus, final Condition<AbstractTreeNode> nonStopCondition) {
-    DefaultMutableTreeNode selected = alreadySelectedNode(element);
-    if (selected == null) {
-      AbstractTreeNode node = expandPathTo(null, (AbstractTreeNode)getTreeStructure().getRootElement(), element, nonStopCondition);
-      selected = getNodeForElement(node);
-    }
-    TreeUtil.selectInTree(selected, requestFocus, getTree());
+    return result;
   }
 
   // returns selected node for element or null if element node is not selected
@@ -121,7 +145,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     }
     for (TreePath selectionPath : selectionPaths) {
       Object selected = selectionPath.getLastPathComponent();
-      if (elementIsEqualTo(selected, element)){
+      if (elementIsEqualTo(selected, element)) {
         return (DefaultMutableTreeNode)selected;
       }
     }
@@ -139,34 +163,53 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     return false;
   }
 
-  private AbstractTreeNode expandPathTo(VirtualFile file, AbstractTreeNode root, Object element, Condition<AbstractTreeNode> nonStopCondition) {
-    if (root.canRepresent(element)) return root;
-    if (root instanceof ProjectViewNode && file != null && !((ProjectViewNode)root).contains(file)) return null;
-
-    DefaultMutableTreeNode currentNode = getNodeForElement(root);
-    boolean expanded = currentNode != null && getTree().isExpanded(new TreePath(currentNode.getPath()));
-
-    List<AbstractTreeNode> kids = getOrBuildChildren(root);
-    for (AbstractTreeNode node : kids) {
-      if (nonStopCondition.value(node)) {
-        AbstractTreeNode result = expandPathTo(file, node, element, nonStopCondition);
-        if (result != null) {
-          currentNode = getNodeForElement(root);
-          if (currentNode != null) {
-            final TreePath path = new TreePath(currentNode.getPath());
-            if (!getTree().isExpanded(path)) {
-              getTree().expandPath(path);
-            }
-          }
-          return result;
-        }
-        else if (!expanded) {
-          hideChildrenFor(currentNode);
-        }
-      }
+  private AsyncResult<AbstractTreeNode> expandPathTo(final VirtualFile file,
+                                                     final AbstractTreeNode root,
+                                                     final Object element,
+                                                     final Condition<AbstractTreeNode> nonStopCondition) {
+    if (root.canRepresent(element)) return new AsyncResult.Done<AbstractTreeNode>(root);
+    if (root instanceof ProjectViewNode && file != null && !((ProjectViewNode)root).contains(file)) {
+      return new AsyncResult.Rejected<AbstractTreeNode>();
     }
 
-    return null;
+    final AsyncResult<AbstractTreeNode> async = new AsyncResult<AbstractTreeNode>();
+
+    expand(root, new Runnable() {
+      public void run() {
+        final DefaultMutableTreeNode rootNode = getNodeForElement(root);
+        if (rootNode != null) {
+          final List<AbstractTreeNode> kids = collectChildren(rootNode);
+          for (final AbstractTreeNode node : kids) {
+            final boolean[] nodeWasCollapsed = new boolean[] {true};
+            final DefaultMutableTreeNode nodeForElement = getNodeForElement(node);
+            if (nodeForElement != null) {
+              nodeWasCollapsed[0] = getTree().isCollapsed(new TreePath(nodeForElement.getPath()));
+            }
+
+            if (nonStopCondition.value(node)) {
+              expandPathTo(file, node, element, nonStopCondition).doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
+                public void run(AbstractTreeNode abstractTreeNode) {
+                  async.setDone(abstractTreeNode);
+                }
+              }).doWhenRejected(new Runnable() {
+                public void run() {
+                  if (nodeWasCollapsed[0]) {
+                    collapseChildren(node, null);
+                  }
+                }
+              });
+            } else {
+              async.setRejected();
+            }
+          }
+        }
+        else {
+          async.setRejected();
+        }
+      }
+    });
+
+    return async;
   }
 
   protected boolean validateNode(final Object child) {

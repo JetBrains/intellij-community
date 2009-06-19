@@ -67,6 +67,9 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     }*/
     myProblemListener = new MyProblemListener();
     WolfTheProblemSolver.getInstance(project).addProblemListener(myProblemListener);
+
+    setCanYieldUpdate(true);
+
     initRootNode();
   }
 

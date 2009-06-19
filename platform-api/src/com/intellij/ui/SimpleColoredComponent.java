@@ -238,6 +238,10 @@ public class SimpleColoredComponent extends JComponent {
     width += borderInsets.left;
 
     Font font = getFont();
+    if (font == null) {
+      font = UIManager.getFont("Label.font");
+    }
+
     LOG.assertTrue(font != null);
 
     for (int i = 0; i < myAttributes.size(); i++) {

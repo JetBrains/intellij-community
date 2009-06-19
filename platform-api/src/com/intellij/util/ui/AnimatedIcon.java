@@ -30,13 +30,14 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
 
   private Icon myPassiveIcon;
 
+  private Icon myEmptyPassiveIcon;
+  private boolean myPaintPassive = true;
+
   private boolean myRunning = true;
 
   protected Animator myAnimator;
 
   private final String myName;
-
-
 
   protected AnimatedIcon(final String name) {
     myName = name;
@@ -72,7 +73,18 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
       }
     };
 
+
+    if (icons.length > 0) {
+      myEmptyPassiveIcon = new EmptyIcon(icons[0]);
+    } else {
+      myEmptyPassiveIcon = new EmptyIcon(0);
+    }
+
     setOpaque(true);
+  }
+
+  public void setPaintPassiveIcon(boolean paintPassive) {
+    myPaintPassive = paintPassive;
   }
 
   protected void onAnimationMaxCycleReached() throws InterruptedException {
@@ -143,7 +155,7 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
   }
 
   protected Icon getPassiveIcon() {
-    return myPassiveIcon;
+    return myPaintPassive ? myPassiveIcon : myEmptyPassiveIcon;
   }
 
 

@@ -35,7 +35,7 @@ public class UpdaterTreeState {
     }
   }
 
-  private static Set<Object> addPaths(Object[] elements) {
+  private Set<Object> addPaths(Object[] elements) {
     Set<Object> set = new HashSet<Object>();
     if (elements != null) {
       set.addAll(Arrays.asList(elements));
@@ -44,7 +44,7 @@ public class UpdaterTreeState {
     return addPaths(set);
   }
 
-  private static Set<Object> addPaths(Enumeration elements) {
+  private Set<Object> addPaths(Enumeration elements) {
     ArrayList<Object> elementArray = new ArrayList<Object>();
     if (elements != null) {
       while (elements.hasMoreElements()) {
@@ -56,7 +56,7 @@ public class UpdaterTreeState {
     return addPaths(elementArray);
   }
 
-  private static Set<Object> addPaths(Collection elements) {
+  private Set<Object> addPaths(Collection elements) {
     Set<Object> target = new HashSet<Object>();
 
     if (elements != null) {
@@ -65,7 +65,7 @@ public class UpdaterTreeState {
         if (node instanceof DefaultMutableTreeNode) {
           final Object descriptor = ((DefaultMutableTreeNode)node).getUserObject();
           if (descriptor instanceof NodeDescriptor) {
-            final Object element = ((NodeDescriptor)descriptor).getElement();
+            final Object element = myUi.getElementFromDescriptor((NodeDescriptor)descriptor);
             if (element != null) {
               target.add(element);
             }

@@ -70,7 +70,7 @@ public class AbstractTreeBuilder implements Disposable {
     getUi().init(this, tree, treeModel, treeStructure, comparator, updateIfInactive);
   }
 
-  AbstractTreeUi createUi() {
+  protected AbstractTreeUi createUi() {
     return new AbstractTreeUi();
   }
 
@@ -88,6 +88,10 @@ public class AbstractTreeBuilder implements Disposable {
 
   public final void expand(Object element, @Nullable Runnable onDone) {
     getUi().expand(element, onDone);
+  }
+
+  public final void collapseChildren(Object element, @Nullable Runnable onDone) {
+    getUi().collapseChildren(element, onDone);
   }
 
   public final void select(final Object[] elements, @Nullable final Runnable onDone) {

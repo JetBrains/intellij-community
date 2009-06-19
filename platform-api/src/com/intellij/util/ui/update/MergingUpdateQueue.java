@@ -268,13 +268,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   public void queue(final Update update) {
     final Application app = ApplicationManager.getApplication();
+
     if (myPassThrough) {
-      app.invokeLater(new Runnable() {
-        public void run() {
-          if (myDisposed) return;
-          update.run();
-        }
-      });
+      if (myDisposed) return;
+      update.run();
       return;
     }
 

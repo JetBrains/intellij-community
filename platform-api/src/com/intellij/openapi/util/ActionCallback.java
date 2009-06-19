@@ -100,6 +100,14 @@ public class ActionCallback implements Disposable {
     });
   }
 
+  public final ActionCallback notifyWhenRejected(final ActionCallback child) {
+    return doWhenRejected(new Runnable() {
+      public void run() {
+        child.setRejected();
+      }
+    });
+  }
+
   public final ActionCallback notify(final ActionCallback child) {
     return doWhenDone(new Runnable() {
       public void run() {

@@ -18,8 +18,10 @@ package com.intellij.ui.treeStructure;
 import com.intellij.Patches;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.ui.TestableUi;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
+import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,21 +42,25 @@ import java.util.Map;
 
 public class Tree extends JTree implements Autoscroll, TestableUi {
 
+  private AsyncProcessIcon myBusyIcon;
+  private boolean myBusy;
+  private Rectangle myLastVisibleRec;
+
   public Tree() {
-    patchTree();
+    initTree_();
   }
 
   public Tree(TreeModel treemodel) {
     super(treemodel);
-    patchTree();
+    initTree_();
   }
 
   public Tree(TreeNode root) {
     super(root);
-    patchTree();
+    initTree_();
   }
 
-  private void patchTree() {
+  private void initTree_() {
     addMouseListener(new MyMouseListener());
     if (Patches.SUN_BUG_ID_4893787) {
       addFocusListener(new MyFocusListener());
@@ -63,6 +69,44 @@ public class Tree extends JTree implements Autoscroll, TestableUi {
     addFocusListener(new SelectionFixer());
 
     setCellRenderer(new NodeRenderer());
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+
+    updateBusy();
+  }
+
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+
+    if (myBusyIcon != null) {
+      Disposer.dispose(myBusyIcon);
+      myBusyIcon = null;
+    }
+  }
+
+  @Override
+  public void doLayout() {
+    super.doLayout();
+
+    updateBusyIconLocation();
+  }
+
+  private void updateBusyIconLocation() {
+    if (myBusyIcon != null) {
+      final Rectangle rec = getVisibleRect();
+
+      final Dimension iconSize = myBusyIcon.getPreferredSize();
+
+      final Rectangle newBounds = new Rectangle(rec.x + rec.width - iconSize.width, rec.y, iconSize.width, iconSize.height);
+      if (!newBounds.equals(myBusyIcon.getBounds())) {
+        myBusyIcon.setBounds(newBounds);
+        repaint();
+      }
+    }
   }
 
   /**
@@ -397,6 +441,47 @@ public class Tree extends JTree implements Autoscroll, TestableUi {
 
     if (nodesText.length() > 0) {
       info.put("selectedNodes", nodesText.toString());
+    }
+  }
+
+  public void setPaintBusy(boolean paintBusy) {
+    if (myBusy == paintBusy) return;
+
+    myBusy = paintBusy;
+    updateBusy();
+  }
+
+  @Override
+  public void paint(Graphics g) {
+    super.paint(g);
+
+    final Rectangle visible = getVisibleRect();
+
+    if (!visible.equals(myLastVisibleRec)) {
+      updateBusyIconLocation();
+    }
+
+    myLastVisibleRec = visible;
+  }
+
+  private void updateBusy() {
+    if (myBusy) {
+      if (myBusyIcon == null) {
+        myBusyIcon = new AsyncProcessIcon(toString());
+        myBusyIcon.setPaintPassiveIcon(false);
+        add(myBusyIcon);
+      }
+    }
+
+    if (myBusyIcon != null) {
+      if (myBusy) {
+        myBusyIcon.resume();
+      } else {
+        myBusyIcon.suspend();
+      }
+
+
+      updateBusyIconLocation();
     }
   }
 }

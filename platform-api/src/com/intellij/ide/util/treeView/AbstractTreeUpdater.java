@@ -17,11 +17,13 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
@@ -58,6 +60,10 @@ public class AbstractTreeUpdater implements Disposable {
     myUpdateQueue.setMergingTimeSpan(delay);
   }
 
+  public boolean hasNodesToUpdate() {
+    return myNodeQueue.size() > 0;
+  }
+
   public void dispose() {
   }
 
@@ -70,7 +76,7 @@ public class AbstractTreeUpdater implements Disposable {
       LOG.debug("addSubtreeToUpdate:" + toAdd.getNode());
     }
 
-    assert !toAdd.isExpired();
+   assert !toAdd.isExpired();
 
     for (Iterator<TreeUpdatePass> iterator = myNodeQueue.iterator(); iterator.hasNext();) {
       final TreeUpdatePass passInQueue = iterator.next();
@@ -86,7 +92,8 @@ public class AbstractTreeUpdater implements Disposable {
       }
     }
 
-    final Set<TreeUpdatePass> yielding = myTreeBuilder.getUi().getYeildingPasses();
+    final AbstractTreeUi ui = myTreeBuilder.getUi();
+    final Collection<TreeUpdatePass> yielding = ui.getYeildingPasses();
     for (Iterator<TreeUpdatePass> iterator = yielding.iterator(); iterator.hasNext();) {
       TreeUpdatePass eachYielding = iterator.next();
       if (eachYielding.getNode() == toAdd.getNode()) {
@@ -97,7 +104,7 @@ public class AbstractTreeUpdater implements Disposable {
         return;
       }
     }
-
+    
 
     myNodeQueue.add(toAdd);
 
@@ -155,7 +162,7 @@ public class AbstractTreeUpdater implements Disposable {
     }
 
     if (myRunAfterUpdate != null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      final Runnable runnable = new Runnable() {
         public void run() {
           List<Runnable> runAfterUpdate = null;
           synchronized (myRunAfterUpdate) {
@@ -170,7 +177,18 @@ public class AbstractTreeUpdater implements Disposable {
             }
           }
         }
-      });
+      };
+
+      invokeLater(runnable);
+    }
+  }
+
+  protected void invokeLater(Runnable runnable) {
+    final Application app = ApplicationManager.getApplication();
+    if (app != null) {
+      app.invokeLater(runnable);
+    } else {
+      UIUtil.invokeAndWaitIfNeeded(runnable);
     }
   }
 
