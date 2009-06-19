@@ -1,6 +1,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.components.StateStorage;
@@ -48,6 +49,8 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   @NonNls private static final String COMPONENT = "component";
   @NonNls private static final String NAME = "name";
 
+  private final FileTypeManager myFileTypeManager;
+
   public DirectoryBasedStorage(final TrackingPathMacroSubstitutor pathMacroSubstitutor,
                                final String dir,
                                final StateSplitter splitter,
@@ -83,6 +86,8 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
         }
       }, false, this);
     }
+
+    myFileTypeManager = FileTypeManager.getInstance();
   }
 
   @Nullable
@@ -222,7 +227,10 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
       IFile[] children = myDir.listFiles();
       for (IFile child : children) {
-        currentNames.add(child.getName());
+        final String fileName = child.getName();
+        if (! myFileTypeManager.isFileIgnored(fileName)) {
+          currentNames.add(fileName);
+        }
       }
 
       myStorageData.process(new StorageDataProcessor() {
