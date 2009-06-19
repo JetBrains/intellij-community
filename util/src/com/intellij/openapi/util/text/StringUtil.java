@@ -351,6 +351,15 @@ public class StringUtil {
   }
 
   @NotNull public static String wordsToBeginFromUpperCase(@NotNull String s) {
+    return toTitleCase(s, ourPrepositions);
+  }
+
+  @NotNull
+  public static String toTitleCase(String s) {
+    return toTitleCase(s, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  private static String toTitleCase(String s, final String[] prepositions) {
     StringBuffer buffer = null;
     for (int i = 0; i < s.length(); i++) {
       char prevChar = i == 0 ? ' ' : s.charAt(i - 1);
@@ -364,7 +373,7 @@ public class StringUtil {
                 break;
               }
             }
-            if (!isPreposition(s, i, j - 1)) {
+            if (!isPreposition(s, i, j - 1, prepositions)) {
               if (buffer == null) {
                 buffer = new StringBuffer(s);
               }
@@ -386,7 +395,11 @@ public class StringUtil {
 
 
   public static boolean isPreposition(@NotNull String s, int firstChar, int lastChar) {
-    for (String preposition : ourPrepositions) {
+    return isPreposition(s, firstChar, lastChar, ourPrepositions);
+  }
+
+  public static boolean isPreposition(String s, int firstChar, int lastChar, final String[] prepositions) {
+    for (String preposition : prepositions) {
       boolean found = false;
       if (lastChar - firstChar + 1 == preposition.length()) {
         found = true;
