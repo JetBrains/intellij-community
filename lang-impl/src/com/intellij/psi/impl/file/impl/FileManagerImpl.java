@@ -101,6 +101,10 @@ public class FileManagerImpl implements FileManager {
     handleFileTypesChange(new FileTypesChanged() {
       protected void updateMaps() {
         for (final FileViewProvider provider : myVFileToViewProviderMap.values()) {
+          if (!provider.getVirtualFile().isValid()) {
+            continue;
+          }
+
           for (Language language : provider.getLanguages()) {
             final PsiFile psi = provider.getPsi(language);
             if (psi != null) {
