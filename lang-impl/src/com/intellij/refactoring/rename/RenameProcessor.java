@@ -41,6 +41,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   private boolean mySearchInComments;
   private boolean mySearchTextOccurrences;
+  private boolean myForceShowPreview;
+
   private String myCommandName;
 
   private NonCodeUsageInfo[] myNonCodeUsages = new NonCodeUsageInfo[0];
@@ -88,6 +90,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   public void prepareRenaming() {
     final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(myPrimaryElement);
     processor.prepareRenaming(myPrimaryElement, myNewName, myAllRenames);
+    myForceShowPreview = processor.forcesShowPreview();
   }
 
   @Nullable
@@ -222,6 +225,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean isPreviewUsages(UsageInfo[] usages) {
+    if (myForceShowPreview) return true;
     if (super.isPreviewUsages(usages)) return true;
     if (UsageViewUtil.hasNonCodeUsages(usages)) {
       WindowManager.getInstance().getStatusBar(myProject)

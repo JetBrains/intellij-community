@@ -1,16 +1,16 @@
 package com.intellij.refactoring.rename;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -18,8 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -113,4 +113,13 @@ public abstract class RenamePsiElementProcessor {
       return true;
     }
   };
+
+  /**
+   * Use this method to force showing preview for custom processors.
+   * This method is always called after prepareRenaming()
+   * @return force show preview
+   */
+  public boolean forcesShowPreview() {
+    return false;
+  }
 }
