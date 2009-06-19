@@ -1427,13 +1427,14 @@ class AbstractTreeUi {
 
             if (hasNoChildren[0]) {
               update(descriptor, false);
-              Object element = getElementFromDescriptor(descriptor);
-              if (element != null) {
-                DefaultMutableTreeNode node = getNodeForElement(element, false);
-                if (node != null) {
-                  expand(node);
-                }
-              }
+              // todo please check the fix
+              // removing loading node from the same node we've added it to, no need to look for it
+              removeLoadingNode(node);
+              //Object element = getElementFromDescriptor(descriptor);
+              //if (element != null) {
+              //  DefaultMutableTreeNode node = getNodeForElement(element, false);
+              //  removeLoadingNode(node);
+              //}
             }
           }
         };
