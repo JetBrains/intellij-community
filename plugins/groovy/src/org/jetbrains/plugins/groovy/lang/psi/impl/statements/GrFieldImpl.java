@@ -274,10 +274,6 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     return originalField != null ? originalField : this;
   }
 
-  public PsiElement getContext() {
-    return getParent();
-  }
-
   @Nullable
   public Icon getIcon(int flags) {
     Icon superIcon = GroovyIcons.FIELD;

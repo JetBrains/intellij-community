@@ -485,10 +485,6 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     return originalMethod != null ? originalMethod : this;
   }
 
-  public PsiElement getContext() {
-    return getParent();
-  }
-
   public void delete() throws IncorrectOperationException {
     PsiElement parent = getParent();
     if (parent instanceof GroovyFileImpl || parent instanceof GrTypeDefinitionBody) {
