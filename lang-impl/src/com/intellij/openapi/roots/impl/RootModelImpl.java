@@ -481,7 +481,7 @@ public class RootModelImpl implements ModifiableRootModel {
       }
     }
 
-    if (!myOrderRootPointerContainers.equals(getSourceModel().myOrderRootPointerContainers)) {
+    if (areOrderRootPointerContainersChanged()) {
       getSourceModel().copyContainersFrom(this);
     }
 
@@ -723,8 +723,26 @@ public class RootModelImpl implements ModifiableRootModel {
 
     return myExcludeExploded != getSourceModel().myExcludeExploded ||
            areOrderEntriesChanged() ||
-           areContentEntriesChanged() ||
-           !myOrderRootPointerContainers.equals(getSourceModel().myOrderRootPointerContainers);
+           areContentEntriesChanged() || areOrderRootPointerContainersChanged();
+  }
+
+  private boolean areOrderRootPointerContainersChanged() {
+    if (myOrderRootPointerContainers.size() != getSourceModel().myOrderRootPointerContainers.size()) return true;
+    for (final OrderRootType type : myOrderRootPointerContainers.keySet()) {
+      final VirtualFilePointerContainer container = myOrderRootPointerContainers.get(type);
+      final VirtualFilePointerContainer otherContainer = getSourceModel().myOrderRootPointerContainers.get(type);
+      if (container == null || otherContainer == null) {
+        if (container != otherContainer) return true;
+      } else {
+        final String[] urls = container.getUrls();
+        final String[] otherUrls = otherContainer.getUrls();
+        if (urls.length != otherUrls.length) return true;
+        for (int i = 0; i < urls.length; i++) {
+          if (!Comparing.strEqual(urls[i], otherUrls[i])) return true;
+        }
+      }
+    }
+    return false;
   }
 
   private boolean areContentEntriesChanged() {
