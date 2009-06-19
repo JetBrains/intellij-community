@@ -1,6 +1,5 @@
 package com.intellij.ide.hierarchy.call;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
@@ -15,7 +14,6 @@ import com.intellij.util.containers.HashMap;
 import java.util.ArrayList;
 
 public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
-  public static final String TYPE = IdeBundle.message("title.hierarchy.callees.of");
   private final String myScopeType;
 
   /**

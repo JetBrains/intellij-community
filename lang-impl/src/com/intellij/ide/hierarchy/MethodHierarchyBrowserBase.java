@@ -116,7 +116,7 @@ public abstract class MethodHierarchyBrowserBase extends JPanel implements DataP
       myOccurrenceNavigators.put(key, new OccurenceNavigatorSupport(tree){
         @Nullable
         protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
-          final PsiElement psiElement = getElementFromNode(node);
+          final PsiElement psiElement = getTargetElementFromNode(node);
           if (psiElement == null || !psiElement.isValid()) return null;
             final VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
             if (virtualFile != null) {
@@ -142,7 +142,7 @@ public abstract class MethodHierarchyBrowserBase extends JPanel implements DataP
 
   protected abstract void createTrees(final Hashtable<String, JTree> trees);
 
-  protected abstract PsiElement getElementFromNode(final DefaultMutableTreeNode node);
+  protected abstract PsiElement getTargetElementFromNode(final DefaultMutableTreeNode node);
 
   public JComponent getComponent() {
     return this;
@@ -440,7 +440,7 @@ public abstract class MethodHierarchyBrowserBase extends JPanel implements DataP
 
   private PsiElement getSelectedElement() {
     final DefaultMutableTreeNode node = getSelectedNode();
-    return getElementFromNode(node);
+    return getTargetElementFromNode(node);
   }
 
   protected abstract PsiElement[] getSelectedMethods();
@@ -563,7 +563,6 @@ public abstract class MethodHierarchyBrowserBase extends JPanel implements DataP
 
     public final void update(final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
-      presentation.setText(IdeBundle.message("action.base.on.this.method"));
 
       registerCustomShortcutSet(
         ActionManager.getInstance().getAction(IdeActions.ACTION_METHOD_HIERARCHY).getShortcutSet(), null);

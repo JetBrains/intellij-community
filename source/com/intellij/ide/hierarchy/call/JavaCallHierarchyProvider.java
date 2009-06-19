@@ -2,6 +2,7 @@ package com.intellij.ide.hierarchy.call;
 
 import com.intellij.ide.hierarchy.HierarchyProvider;
 import com.intellij.ide.hierarchy.HierarchyBrowser;
+import com.intellij.ide.hierarchy.CallHierarchyBrowserBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,6 +28,6 @@ public class JavaCallHierarchyProvider implements HierarchyProvider {
   }
 
   public void browserActivated(final HierarchyBrowser hierarchyBrowser) {
-    ((CallHierarchyBrowser) hierarchyBrowser).changeView(CallerMethodsTreeStructure.TYPE);
+    ((CallHierarchyBrowser) hierarchyBrowser).changeView(CallHierarchyBrowserBase.CALLER_TYPE);
   }
 }

@@ -1,6 +1,5 @@
 package com.intellij.ide.hierarchy.call;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
@@ -20,7 +19,6 @@ import java.util.Map;
 import java.util.Set;
 
 public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
-  public static final String TYPE = IdeBundle.message("title.hierarchy.callers.of");
   private final String myScopeType;
 
   /**

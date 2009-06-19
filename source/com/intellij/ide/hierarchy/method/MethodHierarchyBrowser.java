@@ -45,7 +45,7 @@ public final class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
                                      IdeBundle.message("hierarchy.legend.method.should.be.defined"));
   }
 
-  protected PsiElement getElementFromNode(final DefaultMutableTreeNode node) {
+  protected PsiElement getTargetElementFromNode(final DefaultMutableTreeNode node) {
     final Object userObject = node == null ? null : node.getUserObject();
     if (userObject instanceof MethodHierarchyNodeDescriptor) {
       MethodHierarchyNodeDescriptor nodeDescriptor = (MethodHierarchyNodeDescriptor)userObject;
