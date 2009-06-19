@@ -122,8 +122,15 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       }
     };
 
+    final Condition<AbstractTreeNode> condition = new Condition<AbstractTreeNode>() {
+      public boolean value(AbstractTreeNode abstractTreeNode) {
+        if (result.isProcessed()) return false;
+        return nonStopCondition.value(abstractTreeNode);
+      }
+    };
+
     if (selected == null) {
-      expandPathTo(file, (AbstractTreeNode)getTreeStructure().getRootElement(), element, nonStopCondition)
+      expandPathTo(file, (AbstractTreeNode)getTreeStructure().getRootElement(), element, condition)
         .doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
           public void run(AbstractTreeNode node) {
             select(node, onDone);
@@ -179,29 +186,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
         final DefaultMutableTreeNode rootNode = getNodeForElement(root);
         if (rootNode != null) {
           final List<AbstractTreeNode> kids = collectChildren(rootNode);
-          for (final AbstractTreeNode node : kids) {
-            final boolean[] nodeWasCollapsed = new boolean[] {true};
-            final DefaultMutableTreeNode nodeForElement = getNodeForElement(node);
-            if (nodeForElement != null) {
-              nodeWasCollapsed[0] = getTree().isCollapsed(new TreePath(nodeForElement.getPath()));
-            }
-
-            if (nonStopCondition.value(node)) {
-              expandPathTo(file, node, element, nonStopCondition).doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
-                public void run(AbstractTreeNode abstractTreeNode) {
-                  async.setDone(abstractTreeNode);
-                }
-              }).doWhenRejected(new Runnable() {
-                public void run() {
-                  if (nodeWasCollapsed[0]) {
-                    collapseChildren(node, null);
-                  }
-                }
-              });
-            } else {
-              async.setRejected();
-            }
-          }
+          expandChild(kids, 0, nonStopCondition, file, element, async);
         }
         else {
           async.setRejected();
@@ -210,6 +195,37 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     });
 
     return async;
+  }
+
+  private void expandChild(final List<AbstractTreeNode> kids, final int i, final Condition<AbstractTreeNode> nonStopCondition, final VirtualFile file,
+                           final Object element,
+                           final AsyncResult<AbstractTreeNode> async) {
+
+    if (i >= kids.size()) return;
+
+    final AbstractTreeNode eachKid = kids.get(i);
+    final boolean[] nodeWasCollapsed = new boolean[] {true};
+    final DefaultMutableTreeNode nodeForElement = getNodeForElement(eachKid);
+    if (nodeForElement != null) {
+      nodeWasCollapsed[0] = getTree().isCollapsed(new TreePath(nodeForElement.getPath()));
+    }
+
+    if (nonStopCondition.value(eachKid)) {
+      expandPathTo(file, eachKid, element, nonStopCondition).doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
+        public void run(AbstractTreeNode abstractTreeNode) {
+          async.setDone(abstractTreeNode);
+        }
+      }).doWhenRejected(new Runnable() {
+        public void run() {
+          if (nodeWasCollapsed[0]) {
+            collapseChildren(eachKid, null);
+          }
+          expandChild(kids, i + 1, nonStopCondition, file, element, async);
+        }
+      });
+    } else {
+      async.setRejected();
+    }
   }
 
   protected boolean validateNode(final Object child) {
