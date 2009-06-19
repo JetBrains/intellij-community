@@ -94,11 +94,12 @@ public class XPathAppComponent implements ApplicationComponent, JDOMExternalizab
      * @return the configuration object
      * @see Config
      */
+    @NotNull
     public Config getConfig() {
         return configuration;
     }
 
-  public void setConfig(Config configuration) {
+  public void setConfig(@NotNull Config configuration) {
     this.configuration = configuration;
   }
 

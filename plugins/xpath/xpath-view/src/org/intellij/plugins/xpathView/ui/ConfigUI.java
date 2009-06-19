@@ -19,6 +19,8 @@ import org.intellij.plugins.xpathView.Config;
 
 import com.intellij.ui.ColorPanel;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
@@ -115,6 +117,7 @@ public class ConfigUI extends JPanel {
         colors.add(chooseContext, constraints);
     }
 
+    @NotNull
     public Config getConfig() {
         final Config config = new Config();
         config.setHighlightStartTagOnly(highlightStartTagOnly.isSelected());
@@ -130,7 +133,7 @@ public class ConfigUI extends JPanel {
         return config;
     }
 
-    public void setConfig(Config configuration) {
+    public void setConfig(@NotNull Config configuration) {
         scrollToFirst.setSelected(configuration.isScrollToFirst());
         highlightStartTagOnly.setSelected(configuration.isHighlightStartTagOnly());
         useContextAtCursor.setSelected(configuration.isUseContextAtCursor());
