@@ -116,6 +116,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     getStub(); // Make sure myPackageStatement initializes.
 
     ClsPackageStatementImpl statement = myPackageStatement;
+    if (statement == null) statement = new ClsPackageStatementImpl(this);
     return statement.getPackageName() != null ? statement : null;
   }
 
