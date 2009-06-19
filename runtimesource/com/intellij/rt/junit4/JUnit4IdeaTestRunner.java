@@ -7,16 +7,22 @@ import com.intellij.rt.execution.junit.segments.Packet;
 import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import junit.textui.ResultPrinter;
+import org.junit.internal.requests.ClassRequest;
+import org.junit.internal.requests.FilterRequest;
 import org.junit.runner.Description;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Request;
 import org.junit.runner.Result;
+import org.junit.runner.manipulation.Filter;
 import org.junit.runner.notification.RunListener;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 
-public class JUnit4IdeaTestRunner implements IdeaTestRunner{
+/** @noinspection UnusedDeclaration*/
+public class JUnit4IdeaTestRunner implements IdeaTestRunner {
   private RunListener myTestsListener;
   private OutputObjectRegistryEx myRegistry;
 
@@ -40,14 +46,17 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner{
     try {
       final JUnitCore runner = new JUnitCore();
 
-      final Request request = JUnit4TestRunnerUtil.buildRequest(args).sortWith(new Comparator() {
-        public int compare(Object d1, Object d2) {
-          return ((Description)d1).getDisplayName().compareTo(((Description)d2).getDisplayName());
-        }
-      });
+      final Request request = JUnit4TestRunnerUtil.buildRequest(args);
 
       try {
-        sendTree(myRegistry, request.getRunner().getDescription());
+        Description description = request.getRunner().getDescription();
+        if (request instanceof ClassRequest) {
+          description = getSuiteMethodDescription(request, description);
+        }
+        else if (request instanceof FilterRequest) {
+          description = getFilteredDescription(request, description);
+        }
+        sendTree(myRegistry, description);
       }
       catch (Exception e) {
         //noinspection HardCodedStringLiteral
@@ -76,10 +85,14 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner{
         //coverage was not enabled
       }
 
-      long startTime= System.currentTimeMillis();
-      Result result = runner.run(request);
-      long endTime= System.currentTimeMillis();
-      long runTime= endTime-startTime;
+      long startTime = System.currentTimeMillis();
+      Result result = runner.run(request.sortWith(new Comparator() {
+        public int compare(Object d1, Object d2) {
+          return ((Description)d1).getDisplayName().compareTo(((Description)d2).getDisplayName());
+        }
+      }));
+      long endTime = System.currentTimeMillis();
+      long runTime = endTime - startTime;
       new TimeSender().printHeader(runTime);
 
       if (!result.wasSuccessful()) {
@@ -91,6 +104,41 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner{
       e.printStackTrace(System.err);
       return -2;
     }
+  }
+
+  private static Description getFilteredDescription(Request request, Description description) throws NoSuchFieldException, IllegalAccessException {
+    final Field field = FilterRequest.class.getDeclaredField("fFilter");
+    field.setAccessible(true);
+    final Filter filter = (Filter)field.get(request);
+    final String filterDescription = filter.describe();
+    try {
+      final Description failedTestsDescription = Description.createSuiteDescription(filterDescription, null);
+      for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext();) {
+        final Description childDescription = (Description)iterator.next();
+        if (filter.shouldRun(childDescription)) {
+          failedTestsDescription.addChild(childDescription);
+        }
+      }
+      description = failedTestsDescription;
+      if (failedTestsDescription.testCount() == 1 && filterDescription.startsWith("Method")) {
+        description = (Description)failedTestsDescription.getChildren().get(0);
+      }
+    }
+    catch (NoSuchMethodError e) {
+      //junit 4.0 doesn't have method createSuite(String, Annotation...) : skip it
+    }
+    return description;
+  }
+
+  private static Description getSuiteMethodDescription(Request request, Description description) throws NoSuchFieldException, IllegalAccessException {
+    final Field field = ClassRequest.class.getDeclaredField("fTestClass");
+    field.setAccessible(true);
+    final Description methodDescription = Description.createSuiteDescription((Class)field.get(request));
+    for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext();) {
+      methodDescription.addChild((Description)iterator.next());
+    }
+    description = methodDescription;
+    return description;
   }
 
 
