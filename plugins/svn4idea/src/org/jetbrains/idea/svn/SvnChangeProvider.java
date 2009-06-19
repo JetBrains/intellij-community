@@ -17,11 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -76,12 +72,12 @@ public class SvnChangeProvider implements ChangeProvider {
       final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, progress);
 
       for (FilePath path : zipper.getRecursiveDirs()) {
-        processFile(path, context, null, SVNDepth.INFINITY, context.getClient());
+        processFile(path, context, SVNDepth.INFINITY, context.getClient());
       }
 
       context.getClient().setFilesProvider(fileProvider);
       for (SvnScopeZipper.MyDirNonRecursive item : nonRecursiveMap.values()) {
-        processFile(item.getDir(), context, null, SVNDepth.FILES, context.getClient());
+        processFile(item.getDir(), context, SVNDepth.FILES, context.getClient());
       }
 
       // they are taken under non recursive: ENTRIES file is read anyway, so we get to know parent status also for free
@@ -108,13 +104,13 @@ public class SvnChangeProvider implements ChangeProvider {
       if (context.isCanceled()) {
         throw new ProcessCanceledException();
       }
-      processStatus(deletedFile.getFilePath(), deletedFile.getStatus(), null, context);
+      processStatus(deletedFile.getFilePath(), deletedFile.getStatus(), context);
     }
   }
 
   public void getChanges(final FilePath path, final boolean recursive, final ChangelistBuilder builder) throws SVNException {
     final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, null);
-    processFile(path, context, null, recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES, context.getClient());
+    processFile(path, context, recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES, context.getClient());
     processCopiedAndDeleted(context);
   }
 
@@ -212,7 +208,7 @@ public class SvnChangeProvider implements ChangeProvider {
     if (!foundRename) {
       // for debug
       LOG.info("Rename not found for " + copiedFile.getFilePath().getPresentableUrl());
-      processStatus(copiedFile.getFilePath(), copiedStatus, null, context);
+      processStatus(copiedFile.getFilePath(), copiedStatus, context);
     }
   }
 
@@ -255,9 +251,7 @@ public class SvnChangeProvider implements ChangeProvider {
     new CleanupWorker(files.toArray(new VirtualFile[files.size()]), myVcs.getProject(), "action.Subversion.cleanup.progress.title").execute();
   }
 
-  private void processFile(FilePath path, final SvnChangeProviderContext context,
-                           final FileStatus parentStatus, final SVNDepth depth,
-                           final SVNStatusClient statusClient) throws SVNException {
+  private void processFile(FilePath path, final SvnChangeProviderContext context, final SVNDepth depth, final SVNStatusClient statusClient) throws SVNException {
     if (context.isCanceled()) {
       throw new ProcessCanceledException();
     }
@@ -274,7 +268,7 @@ public class SvnChangeProvider implements ChangeProvider {
             if (vFile != null && myExcludedFileIndex.isExcludedFile(vFile)) {
               return;
             }
-            processStatusFirstPass(path, status, context, parentStatus);
+            processStatusFirstPass(path, status, context);
             if ((vFile != null) && (status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED) && path.isDirectory()) {
               if (myClManager.isIgnoredFile(vFile)) {
                 // for directory, this means recursively ignored by Idea
@@ -287,7 +281,7 @@ public class SvnChangeProvider implements ChangeProvider {
                   VirtualFile[] children = vFile.getChildren();
                   for (VirtualFile aChildren : children) {
                     FilePath filePath = VcsUtil.getFilePath(aChildren.getPath(), aChildren.isDirectory());
-                    processFile(filePath, context, parentStatus, depth, client);
+                    processFile(filePath, context, depth, client);
                   }
                 }
               }
@@ -295,25 +289,21 @@ public class SvnChangeProvider implements ChangeProvider {
           }
         }, null);
       } else {
-        processFile(path, context, parentStatus);
+        processFile(path, context);
       }
     } catch (SVNException e) {
       if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
         final VirtualFile virtualFile = path.getVirtualFile();
         if (virtualFile != null) {
           if (myExcludedFileIndex.isExcludedFile(virtualFile)) return;
-          if (parentStatus != FileStatus.IGNORED) {
-            if (! SvnUtil.isWorkingCopyRoot(new File(virtualFile.getPath()))) {
-              context.getBuilder().processUnversionedFile(virtualFile);
-            }
-          }
+          context.getBuilder().processUnversionedFile(virtualFile);
         }
         // process children recursively!
         if ((! SVNDepth.EMPTY.equals(depth)) && path.isDirectory() && virtualFile != null) {
           VirtualFile[] children = virtualFile.getChildren();
           for (VirtualFile child : children) {
             FilePath filePath = VcsUtil.getFilePath(child.getPath(), child.isDirectory());
-            processFile(filePath, context, parentStatus, SVNDepth.INFINITY.equals(depth) ? SVNDepth.INFINITY : SVNDepth.EMPTY, statusClient);
+            processFile(filePath, context, SVNDepth.INFINITY.equals(depth) ? SVNDepth.INFINITY : SVNDepth.EMPTY, statusClient);
           }
         }
       }
@@ -323,13 +313,12 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
-  private void processFile(FilePath filePath, SvnChangeProviderContext context, FileStatus parentStatus) throws SVNException {
+  private void processFile(FilePath filePath, SvnChangeProviderContext context) throws SVNException {
     SVNStatus status = context.getClient().doStatus(filePath.getIOFile(), false, false);
-    processStatusFirstPass(filePath, status, context, parentStatus);
+    processStatusFirstPass(filePath, status, context);
   }
 
-  private void processStatusFirstPass(final FilePath filePath, final SVNStatus status, final SvnChangeProviderContext context,
-                                      final FileStatus parentStatus) throws SVNException {
+  private void processStatusFirstPass(final FilePath filePath, final SVNStatus status, final SvnChangeProviderContext context) throws SVNException {
     if (status == null) {
       // external to wc
       return;
@@ -358,7 +347,7 @@ public class SvnChangeProvider implements ChangeProvider {
       if (parentCopyFromURL != null) {
         context.addCopiedFile(filePath, status, parentCopyFromURL);
       } else {
-        processStatus(filePath, status, parentStatus, context);
+        processStatus(filePath, status, context);
       }
     }
   }
@@ -380,7 +369,8 @@ public class SvnChangeProvider implements ChangeProvider {
     return new SvnLocallyDeletedChange(filePath, getState(status, context));
   }
 
-  private ConflictState getState(@Nullable final SVNStatus svnStatus, @NotNull final SvnChangeProviderContext context) {
+  // todo context method
+  private static ConflictState getState(@Nullable final SVNStatus svnStatus, @NotNull final SvnChangeProviderContext context) {
     if (svnStatus == null) {
       return ConflictState.none;
     }
@@ -395,7 +385,7 @@ public class SvnChangeProvider implements ChangeProvider {
     return ConflictState.getInstance(treeConflict, textConflict, propertyConflict);
   }
 
-  private void processStatus(final FilePath filePath, final SVNStatus status, final FileStatus parentStatus, @NotNull final SvnChangeProviderContext context) throws SVNException {
+  private void processStatus(final FilePath filePath, final SVNStatus status, @NotNull final SvnChangeProviderContext context) throws SVNException {
     final ChangelistBuilder builder = context.getBuilder();
     loadEntriesFile(filePath);
     if (status != null) {
@@ -428,7 +418,7 @@ public class SvnChangeProvider implements ChangeProvider {
       else if (statusType == SVNStatusType.STATUS_MISSING) {
         builder.processLocallyDeletedFile(createLocallyDeletedChange(filePath, status, context));
       }
-      else if (statusType == SVNStatusType.STATUS_IGNORED || parentStatus == FileStatus.IGNORED) {
+      else if (statusType == SVNStatusType.STATUS_IGNORED) {
         builder.processIgnoredFile(filePath.getVirtualFile());
       }
       else if (status.isCopied()) {
@@ -512,45 +502,6 @@ public class SvnChangeProvider implements ChangeProvider {
     }
     else if (status.isCopied()) {
       return FileStatus.ADDED;
-    }
-    if (file.isDirectory() && file.getParentFile() != null) {
-      String childURL = null;
-      String parentURL = null;
-      SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
-      try {
-        wcAccess.open(file, false, 0);
-        SVNAdminArea parentDir = wcAccess.open(file.getParentFile(), false, 0);
-        final SVNEntry childEntry = wcAccess.getEntry(file, false);
-        if (childEntry != null) {
-          childURL = childEntry.getURL();
-        }
-        if (parentDir != null) {
-          final SVNEntry parentDirEntry = parentDir.getEntry("", false);
-          if (parentDirEntry != null) {
-            parentURL = parentDirEntry.getURL();
-          }
-        }
-      } catch (SVNException e) {
-        parentURL = null;
-      }
-      finally {
-        try {
-          wcAccess.close();
-        } catch (SVNException e) {
-          //
-        }
-      }
-        try {
-          // todo isWorking copy root ? maybe use already got area entry
-            if (parentURL != null && !SVNWCUtil.isWorkingCopyRoot(file)) {
-              parentURL = SVNPathUtil.append(parentURL, SVNEncodingUtil.uriEncode(file.getName()));
-              if (childURL != null && !parentURL.equals(childURL)) {
-                return FileStatus.SWITCHED;
-              }
-            }
-        } catch (SVNException e) {
-            //
-        }
     }
     return FileStatus.NOT_CHANGED;
   }
