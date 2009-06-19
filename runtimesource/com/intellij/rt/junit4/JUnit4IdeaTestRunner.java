@@ -18,7 +18,6 @@ import org.junit.runner.notification.RunListener;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Iterator;
 
 /** @noinspection UnusedDeclaration*/
@@ -86,11 +85,11 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
       }
 
       long startTime = System.currentTimeMillis();
-      Result result = runner.run(request.sortWith(new Comparator() {
+      Result result = runner.run(request/*.sortWith(new Comparator() {
         public int compare(Object d1, Object d2) {
           return ((Description)d1).getDisplayName().compareTo(((Description)d2).getDisplayName());
         }
-      }));
+      })*/);
       long endTime = System.currentTimeMillis();
       long runTime = endTime - startTime;
       new TimeSender().printHeader(runTime);
