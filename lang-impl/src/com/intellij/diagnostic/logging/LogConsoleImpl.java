@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.FilterComponent;
@@ -242,7 +243,7 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
       myReaderThread = null;
     }
     if (myConsole != null) {
-      myConsole.dispose();
+      Disposer.dispose(myConsole);
       myConsole = null;
     }
     if (myFilter != null) {
@@ -425,7 +426,7 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
           LOG.error(e);
         }
         catch (InterruptedException e) {
-          dispose();
+          Disposer.dispose(LogConsoleImpl.this);
         }
       }
     }
