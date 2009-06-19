@@ -201,18 +201,17 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private void initDescriptors() {
-    if (mySelectedProfile == null) return;
+    final InspectionProfileImpl profile = mySelectedProfile;
+    if (profile == null) return;
     myDescriptors.clear();
-    List<ScopeToolState> tools = mySelectedProfile.getDefaultStates();
-    final InspectionProfile profile = mySelectedProfile;
-    final InspectionProfile inspectionProfile = profile != null ? profile : InspectionProfileImpl.getDefaultProfile();
+    List<ScopeToolState> tools = profile.getDefaultStates();
     for (ScopeToolState state : tools) {
       final ArrayList<Descriptor> descriptors = new ArrayList<Descriptor>();
-      myDescriptors.put(new Descriptor(state, inspectionProfile), descriptors);
-      final List<ScopeToolState> nonDefaultTools = mySelectedProfile.getNonDefaultTools(state.getTool().getShortName());
+      myDescriptors.put(new Descriptor(state, profile), descriptors);
+      final List<ScopeToolState> nonDefaultTools = profile.getNonDefaultTools(state.getTool().getShortName());
       if (nonDefaultTools != null) {
         for (ScopeToolState nonDefaultToolState : nonDefaultTools) {
-          descriptors.add(new Descriptor(nonDefaultToolState, inspectionProfile));
+          descriptors.add(new Descriptor(nonDefaultToolState, profile));
         }
       }
     }

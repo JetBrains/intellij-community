@@ -37,6 +37,7 @@ public interface Tools {
   @NotNull
   List<ScopeToolState> getTools();
 
+  @NotNull
   ScopeToolState getDefaultState();
 
   boolean isEnabled();

@@ -185,6 +185,7 @@ public class ToolsImpl implements Tools {
     return result;
   }
 
+  @NotNull
   public ScopeToolState getDefaultState() {
     return myDefaultState;
   }
