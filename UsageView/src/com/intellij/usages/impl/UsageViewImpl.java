@@ -95,7 +95,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final UsageModelTracker myModelTracker;
   private final Set<Usage> myUsages = new ConcurrentHashSet<Usage>();
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<Usage, UsageNode>();
-  private static final UsageNode NULL_NODE = new UsageNode(new NullUsage(), new UsageViewTreeModelBuilder(new UsageViewPresentation(), UsageTarget.EMPTY_ARRAY));
+  public static final UsageNode NULL_NODE = new UsageNode(NullUsage.INSTANCE, new UsageViewTreeModelBuilder(new UsageViewPresentation(), UsageTarget.EMPTY_ARRAY));
   private final ButtonPanel myButtonPanel = new ButtonPanel();
   private volatile boolean isDisposed;
   private volatile boolean myChangesDetected = false;
@@ -611,7 +611,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     });
   }
 
-  private void reset() {
+  public void reset() {
     myUsageNodes.clear();
     myIsFirstVisibleUsageFound = false;
 
@@ -656,11 +656,15 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private volatile boolean myIsFirstVisibleUsageFound = false;
 
   public void appendUsage(@NotNull Usage usage) {
+    doAppendUsage(usage);
+  }
+
+  public UsageNode doAppendUsage(Usage usage) {
     // invoke in ReadAction to be be sure that usages are not invalidated while the tree is being built
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!usage.isValid()) {
       // because the view is built incrementally with Alarm, the usage may be already invalid, so need filter such cases
-      return;
+      return null;
     }
     myUsages.add(usage);
     UsageNode node = myBuilder.appendUsage(usage);
@@ -669,11 +673,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       myIsFirstVisibleUsageFound = true;
       showNode(node);
     }
+    return node;
   }
 
   public void removeUsage(@NotNull Usage usage) {
     final UsageNode node = myUsageNodes.remove(usage);
-    if (node != NULL_NODE && node != null) {
+    if (node != NULL_NODE && node != null && !myPresentation.isDetachedMode()) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           if (isDisposed) return;

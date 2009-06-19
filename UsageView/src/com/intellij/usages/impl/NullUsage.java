@@ -24,7 +24,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author cdr
  */
-class NullUsage implements Usage {
+public class NullUsage implements Usage {
+  public static final NullUsage INSTANCE = new NullUsage();
+
+  private NullUsage() {
+  }
+
   @NotNull
   public UsagePresentation getPresentation() {
     throw new IllegalAccessError();

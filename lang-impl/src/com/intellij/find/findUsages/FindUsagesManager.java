@@ -258,12 +258,13 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   // return null on failure or cancel
   @Nullable
-  public UsageViewPresentation processUsages(@NotNull PsiElement element, @NotNull final Processor<Usage> processor, FindUsagesHandler handler) {
+  public UsageViewPresentation processUsages(FindUsagesHandler handler, @NotNull final Processor<Usage> processor) {
     if (handler == null) return null;
 
     FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions();
 
-    LOG.assertTrue(handler.getPsiElement().isValid());
+    PsiElement element = handler.getPsiElement();
+    LOG.assertTrue(element.isValid());
     final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor =
       new UsageInfoToUsageConverter.TargetElementsDescriptor(handler.getPrimaryElements(), handler.getSecondaryElements());
 

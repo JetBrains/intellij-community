@@ -9,6 +9,7 @@ import com.intellij.usages.UsagePresentation;
 import com.intellij.usages.impl.GroupNode;
 import com.intellij.usages.impl.UsageNode;
 import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.usages.impl.NullUsage;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,10 +19,16 @@ import java.awt.*;
 */
 class ShowUsagesListCellRenderer implements ListCellRenderer {
   private final UsageViewImpl myUsageView;
-  private static final ColoredListCellRenderer USAGE_RENDERER = new ColoredListCellRenderer() {
+  private static class UsageRenderer extends ColoredListCellRenderer {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       UsageNode usageNode = (UsageNode)value;
       Usage usage = usageNode.getUsage();
+      if (usage == NullUsage.INSTANCE) {
+        append("...<");
+        append("more usages",SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        append(">...");
+        return;
+      }
       UsagePresentation presentation = usage.getPresentation();
       setIcon(presentation.getIcon());
 
@@ -30,29 +37,24 @@ class ShowUsagesListCellRenderer implements ListCellRenderer {
         append(textChunk.getText(), SimpleTextAttributes.fromTextAttributes(textChunk.getAttributes()));
       }
     }
-  };
+  }
 
   ShowUsagesListCellRenderer(UsageViewImpl usageView) {
     myUsageView = usageView;
   }
 
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    UsageNode usageNode = (UsageNode)value;
+
     JPanel panel = new JPanel(new GridBagLayout());
     panel.setBackground(list.getBackground());
-    if (!(value instanceof UsageNode)) {
-      JLabel label = new JLabel("<html><body><b>"+value.toString(), SwingConstants.CENTER);
-      //panel.add(new JLabel("<html><body><table><tr><td align=center><b>"+value.toString()+"</b></td></tr></table></body></html>"),
-      //          new GridBagConstraints(0, 0, GridBagConstraints.REMAINDER, 0, 1, 0, GridBagConstraints.CENTER,
-      //                                 GridBagConstraints.HORIZONTAL, new Insets(3, 3, 3, 3), 0, 1));
-      return label;
-    }
-    UsageNode usageNode = (UsageNode)value;
     int seq = appendGroupText((GroupNode)usageNode.getParent(), panel,list, value, index, isSelected);
 
-    USAGE_RENDERER.setIpad(new Insets(0,0,0,0));
-    USAGE_RENDERER.setBorder(null);
-    USAGE_RENDERER.getListCellRendererComponent(list, value, index, isSelected, false);
-    panel.add(USAGE_RENDERER, new GridBagConstraints(seq, 0, GridBagConstraints.REMAINDER, 0, 1, 0,
+    UsageRenderer renderer = new UsageRenderer();
+    renderer.setIpad(new Insets(0,0,0,0));
+    renderer.setBorder(null);
+    renderer.getListCellRendererComponent(list, value, index, isSelected, false);
+    panel.add(renderer, new GridBagConstraints(seq, 0, GridBagConstraints.REMAINDER, 0, 1, 0,
                                                     GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 1));
     return panel;
   }

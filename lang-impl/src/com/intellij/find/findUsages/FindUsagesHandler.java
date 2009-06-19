@@ -44,7 +44,7 @@ public abstract class FindUsagesHandler {
     return myPsiElement;
   }
 
-  protected final Project getProject() {
+  public final Project getProject() {
     return myPsiElement.getProject();
   }
 
