@@ -10,7 +10,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.importing.*;
+import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
+import org.jetbrains.idea.maven.importing.MavenUIModifiableModelsProvider;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -71,19 +72,13 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
     List<VirtualFile> files = getParameters().myMavenProjectTree.getRootProjectsFiles();
-
     manager.addManagedFilesWithProfiles(files, getSelectedProfiles());
     manager.waitForReadingCompletion();
 
     boolean isFromUI = model != null;
-    MavenProjectLibrariesProvider librariesProvider = isFromUI
-                                                      ? new MavenUIProjectLibrariesProvider(project)
-                                                      : new MavenDefaultProjectLibrariesProvider(project);
-    MavenModuleModelsProvider modelsProvider = isFromUI
-                                               ? new MavenUIModuleModelsProvider(model, modulesProvider)
-                                               : new MavenDefaultModuleModelsProvider(project);
-
-    return manager.importProjects(modelsProvider, librariesProvider);
+    return manager.importProjects(isFromUI
+                                  ? new MavenUIModifiableModelsProvider(project, model, modulesProvider)
+                                  : new MavenDefaultModifiableModelsProvider(project));
   }
 
   public VirtualFile getRootDirectory() {
@@ -99,20 +94,20 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     if (getImportRoot() == null) return false;
 
     return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
-      public void run(MavenProgressIndicator process) throws MavenProcessCanceledException {
-        process.setText(ProjectBundle.message("maven.locating.files"));
+      public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+        indicator.setText(ProjectBundle.message("maven.locating.files"));
         getParameters().myFiles = FileFinder.findPomFiles(getImportRoot().getChildren(),
                                                           getImportingSettings().isLookForNested(),
-                                                          process.getIndicator(),
+                                                          indicator.getIndicator(),
                                                           new ArrayList<VirtualFile>());
 
-        collectProfiles(process);
+        collectProfiles(indicator);
         if (getParameters().myProfiles.isEmpty()) {
-          readMavenProjectTree(process);
+          readMavenProjectTree(indicator);
         }
 
-        process.setText("");
-        process.setText2("");
+        indicator.setText("");
+        indicator.setText2("");
       }
     });
   }
@@ -150,9 +145,9 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     getParameters().mySelectedProfiles = profiles;
 
     return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
-      public void run(MavenProgressIndicator process) throws MavenProcessCanceledException {
-        readMavenProjectTree(process);
-        process.setText2("");
+      public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+        readMavenProjectTree(indicator);
+        indicator.setText2("");
       }
     });
   }

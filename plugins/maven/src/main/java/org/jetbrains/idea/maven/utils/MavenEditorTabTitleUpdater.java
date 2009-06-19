@@ -42,7 +42,7 @@ public class MavenEditorTabTitleUpdater extends SimpleProjectComponent {
   }
 
   private void updateTabName(final List<MavenProject> projects) {
-    MavenUtil.invokeInDispatchThread(myProject, new Runnable() {
+    MavenUtil.invokeLater(myProject, new Runnable() {
       public void run() {
         for (MavenProject each : projects) {
           FileEditorManagerEx.getInstanceEx(myProject).updateFilePresentation(each.getFile());

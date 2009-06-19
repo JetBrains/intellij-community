@@ -9,5 +9,5 @@ public interface MavenProjectsProcessorTask {
   void perform(Project project,
                MavenEmbeddersManager embeddersManager,
                MavenConsole console,
-               MavenProgressIndicator process) throws MavenProcessCanceledException;
+               MavenProgressIndicator indicator) throws MavenProcessCanceledException;
 }

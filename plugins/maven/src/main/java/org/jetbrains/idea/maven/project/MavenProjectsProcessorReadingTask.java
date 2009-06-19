@@ -31,14 +31,14 @@ public class MavenProjectsProcessorReadingTask implements MavenProjectsProcessor
     myFilesToDelete = filesToDelete;
   }
 
-  public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator process)
+  public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
     if (myFilesToUpdate == null) {
-      myTree.updateAll(myForce, mySettings, process);
+      myTree.updateAll(myForce, mySettings, indicator);
     }
     else {
-      myTree.delete(myFilesToDelete, mySettings, process);
-      myTree.update(myFilesToUpdate, myForce, mySettings, process);
+      myTree.delete(myFilesToDelete, mySettings, indicator);
+      myTree.update(myFilesToUpdate, myForce, mySettings, indicator);
     }
   }
 }

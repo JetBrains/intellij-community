@@ -521,6 +521,9 @@ public class MavenProjectReader {
       mavenProject = result.first;
       unresolvedArtifactsIds = result.second;
     }
+    catch (MavenProcessCanceledException e) {
+      throw e;
+    }
     catch (Throwable e) {
       String message = e.getMessage();
 

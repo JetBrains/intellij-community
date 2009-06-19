@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
@@ -13,31 +12,25 @@ import java.util.Map;
 
 public class MavenModuleImporter {
   private final Module myModule;
-  private final ModifiableModuleModel myModuleModel;
   private final MavenProjectsTree myMavenTree;
   private final MavenProject myMavenProject;
   private final Map<MavenProject, String> myMavenProjectToModuleName;
   private final MavenImportingSettings mySettings;
-  private final MavenModuleModelsProvider myRootModelsProvider;
-  private final MavenProjectLibrariesProvider myLibrariesProvider;
+  private final MavenModifiableModelsProvider myModifiableModelsProvider;
   private MavenRootModelAdapter myRootModelAdapter;
 
   public MavenModuleImporter(Module module,
-                                 ModifiableModuleModel moduleModel,
-                                 MavenProjectsTree mavenTree,
-                                 MavenProject mavenProject,
-                                 Map<MavenProject, String> mavenProjectToModuleName,
-                                 MavenImportingSettings settings,
-                                 MavenModuleModelsProvider rootModelsProvider,
-                                 MavenProjectLibrariesProvider librariesProvider) {
+                             MavenProjectsTree mavenTree,
+                             MavenProject mavenProject,
+                             Map<MavenProject, String> mavenProjectToModuleName,
+                             MavenImportingSettings settings,
+                             MavenModifiableModelsProvider modifiableModelsProvider) {
     myModule = module;
-    myModuleModel = moduleModel;
     myMavenTree = mavenTree;
     myMavenProject = mavenProject;
     myMavenProjectToModuleName = mavenProjectToModuleName;
     mySettings = settings;
-    myRootModelsProvider = rootModelsProvider;
-    myLibrariesProvider = librariesProvider;
+    myModifiableModelsProvider = modifiableModelsProvider;
   }
 
   public ModifiableRootModel getRootModel() {
@@ -45,7 +38,7 @@ public class MavenModuleImporter {
   }
 
   public void config(boolean isNewlyCreatedModule) {
-    myRootModelAdapter = new MavenRootModelAdapter(myMavenProject, myModule, myRootModelsProvider);
+    myRootModelAdapter = new MavenRootModelAdapter(myMavenProject, myModule, myModifiableModelsProvider);
     myRootModelAdapter.init(isNewlyCreatedModule);
 
     configFolders();
@@ -55,13 +48,13 @@ public class MavenModuleImporter {
 
   public void preConfigFacets() {
     for (FacetImporter importer : getSuitableFacetImporters()) {
-      importer.preProcess(myModule, myMavenProject);
+      importer.preProcess(myModule, myMavenProject, myModifiableModelsProvider);
     }
   }
 
-  public void configFacets(List<MavenProjectsProcessorPostConfigurationTask> postTasks) {
+  public void configFacets(List<MavenProjectsProcessorTask> postTasks) {
     for (FacetImporter importer : getSuitableFacetImporters()) {
-      importer.process(myModuleModel,
+      importer.process(myModifiableModelsProvider,
                        myModule,
                        myRootModelAdapter,
                        myMavenTree,
@@ -87,7 +80,7 @@ public class MavenModuleImporter {
         myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(depProject), isExportable);
       }
       else if (myMavenProject.isSupportedDependency(artifact)) {
-        myRootModelAdapter.addLibraryDependency(artifact, isExportable, myLibrariesProvider);
+        myRootModelAdapter.addLibraryDependency(artifact, isExportable, myModifiableModelsProvider);
       }
     }
   }

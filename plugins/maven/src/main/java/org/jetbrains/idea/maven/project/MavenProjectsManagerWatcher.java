@@ -28,6 +28,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -51,9 +52,7 @@ public class MavenProjectsManagerWatcher {
   private List<LocalFileSystem.WatchRequest> myWatchedRoots = new ArrayList<LocalFileSystem.WatchRequest>();
 
   private final Set<Document> myChangedDocuments = new THashSet<Document>();
-  private final MavenMergingUpdateQueue myChangedDocumentsQueue = new MavenMergingUpdateQueue(getClass() + ": Document changes queue",
-                                                                                              DOCUMENT_SAVE_DELAY,
-                                                                                              false);
+  private final MavenMergingUpdateQueue myChangedDocumentsQueue;
 
   public MavenProjectsManagerWatcher(Project project,
                                      MavenProjectsTree projectsTree,
@@ -67,6 +66,11 @@ public class MavenProjectsManagerWatcher {
     myEmbeddersManager = embeddersManager;
 
     myBusConnection = myProject.getMessageBus().connect();
+
+    myChangedDocumentsQueue = new MavenMergingUpdateQueue(getClass() + ": Document changes queue",
+                                                          DOCUMENT_SAVE_DELAY,
+                                                          false,
+                                                          myProject);
   }
 
   public synchronized void start() {
@@ -92,16 +96,20 @@ public class MavenProjectsManagerWatcher {
         }
         myChangedDocumentsQueue.queue(new Update(MavenProjectsManagerWatcher.this) {
           public void run() {
-            Set<Document> copy;
+            final Set<Document> copy;
 
             synchronized (myChangedDocuments) {
               copy = new THashSet<Document>(myChangedDocuments);
               myChangedDocuments.clear();
             }
 
-            for (Document each : copy) {
-              FileDocumentManager.getInstance().saveDocument(each);
-            }
+            MavenUtil.invokeLater(myProject, new Runnable() {
+              public void run() {
+                for (Document each : copy) {
+                  FileDocumentManager.getInstance().saveDocument(each);
+                }
+              }
+            });
           }
         });
       }

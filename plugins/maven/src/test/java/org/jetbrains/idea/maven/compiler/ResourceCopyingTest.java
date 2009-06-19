@@ -6,7 +6,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
-import org.jetbrains.idea.maven.importing.MavenDefaultModuleModelsProvider;
+import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 
 public class ResourceCopyingTest extends MavenImportingTestCase {
   public void testBasic() throws Exception {
@@ -275,7 +275,7 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
 
     MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
                                                               getModule("project"),
-                                                              new MavenDefaultModuleModelsProvider(myProject));
+                                                              new MavenDefaultModifiableModelsProvider(myProject));
     adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/resources").getPath(), false);
     adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/ideaRes").getPath(), false);
     adapter.getRootModel().commit();

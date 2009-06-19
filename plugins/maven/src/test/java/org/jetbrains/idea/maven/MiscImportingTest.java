@@ -9,17 +9,19 @@ import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 import java.io.File;
 
 public class MiscImportingTest extends MavenImportingTestCase {
-  private int count;
+  private int beforeRootsChangedCount;
+  private int rootsChangedCount;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void beforeRootsChange(ModuleRootEvent event) {
+        beforeRootsChangedCount++;
       }
 
       public void rootsChanged(ModuleRootEvent event) {
-        count++;
+        rootsChangedCount++;
       }
     });
   }
@@ -57,7 +59,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    assertEquals(1, count);
+    assertRootsChanged(1);
   }
 
   public void testResolvingFiresRootChangesOnlyOnce() throws Exception {
@@ -65,16 +67,17 @@ public class MiscImportingTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    assertEquals(1, count);
+    assertRootsChanged(1);
 
     resolveDependenciesAndImport();
-    assertEquals(2, count);
+    assertRootsChanged(2);
   }
 
-  public void testImportingWithLibrariesFiresRootChangesOnlyOnce() throws Exception {
+  public void testImportingWithLibrariesAndFacetsFiresRootChangesOnlyOnce() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
+                  "<packaging>war</packaging>" +
 
                   "<dependencies>" +
                   "  <dependency>" +
@@ -89,7 +92,10 @@ public class MiscImportingTest extends MavenImportingTestCase {
                   "  </dependency>" +
                   "</dependencies>");
 
-    assertEquals(1, count);
+    assertRootsChanged(1);
+
+    resolveDependenciesAndImport();
+    assertRootsChanged(2);
   }
 
   public void testFacetsDoNotFireRootsChanges() throws Exception {
@@ -98,10 +104,10 @@ public class MiscImportingTest extends MavenImportingTestCase {
                   "<version>1</version>" +
                   "<packaging>war</packaging>");
 
-    assertEquals(1, count);
+    assertRootsChanged(1);
 
     resolveDependenciesAndImport();
-    assertEquals(2, count);
+    assertRootsChanged(2);
   }
 
   public void testDoNotRecreateModulesBeforeResolution() throws Exception {
@@ -173,5 +179,10 @@ public class MiscImportingTest extends MavenImportingTestCase {
     myProjectsManager.scheduleResolveAllInTests(); // force resolving
     resolveDependenciesAndImport();
     assertTrue(jarFile.exists());
+  }
+
+  private void assertRootsChanged(int count) {
+    assertEquals(count, rootsChangedCount);
+    assertEquals(rootsChangedCount, beforeRootsChangedCount);
   }
 }

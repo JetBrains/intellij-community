@@ -24,12 +24,6 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
 
   public MavenMergingUpdateQueue(String name,
                                  int mergingTimeSpan,
-                                 boolean isActive) {
-    this(name, mergingTimeSpan, isActive, null);
-  }
-
-  public MavenMergingUpdateQueue(String name,
-                                 int mergingTimeSpan,
                                  boolean isActive,
                                  Disposable parent) {
     this(name, mergingTimeSpan, isActive, ANY_COMPONENT, parent);
@@ -40,7 +34,7 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
                                  boolean isActive,
                                  JComponent modalityStateComponent,
                                  Disposable parent) {
-    super(name, mergingTimeSpan, isActive, modalityStateComponent, parent);
+    super(name, mergingTimeSpan, isActive, modalityStateComponent, parent, null, false);
   }
 
   @Override

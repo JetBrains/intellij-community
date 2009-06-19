@@ -11,8 +11,8 @@ public class MavenProjectsProcessorArtifactsDownloadingTask extends MavenProject
     super(project, tree);
   }
 
-  public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator process)
+  public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    myTree.downloadArtifacts(myMavenProject, embeddersManager, console, process);
+    myTree.downloadArtifacts(myMavenProject, embeddersManager, console, indicator);
   }
 }

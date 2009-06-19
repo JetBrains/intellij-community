@@ -13,8 +13,8 @@ public class MavenProjectsProcessorFoldersResolvingTask extends MavenProjectsPro
     myImportingSettings = importingSettings;
   }
 
-  public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator process)
+  public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    myTree.resolveFolders(myMavenProject, myImportingSettings, embeddersManager, console, process);
+    myTree.resolveFolders(myMavenProject, myImportingSettings, embeddersManager, console, indicator);
   }
 }

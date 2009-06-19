@@ -58,7 +58,7 @@ public class MavenDomElementDescriptorHolder {
   private void initDescriptor() {
     myNSDescriptor = new XmlNSDescriptorImpl();
 
-    String schemaUrl = MavenSchemaRegistrar.MAVEN_SCHEMA_URL;
+    String schemaUrl = MavenSchemaProvider.MAVEN_SCHEMA_URL;
     String location = ExternalResourceManager.getInstance().getResourceLocation(schemaUrl);
     if (schemaUrl.equals(location)) return;
 

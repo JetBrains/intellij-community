@@ -1,8 +1,8 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.SettingsSavingComponent;
@@ -30,7 +30,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.importing.*;
+import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
+import org.jetbrains.idea.maven.importing.MavenFoldersConfigurator;
+import org.jetbrains.idea.maven.importing.MavenModifiableModelsProvider;
+import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.runner.SoutMavenConsole;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -213,37 +216,37 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
     myReadingProcessor = new MavenProjectsProcessor(myProject,
                                                     ProjectBundle.message("maven.reading"),
-                                                    true,
+                                                    false,
                                                     myEmbeddersManager);
     myResolvingProcessor = new MavenProjectsProcessor(myProject,
                                                       ProjectBundle.message("maven.resolving"),
-                                                      false,
+                                                      true,
                                                       myEmbeddersManager);
     myPluginsResolvingProcessor = new MavenProjectsProcessor(myProject,
                                                              ProjectBundle.message("maven.downloading.plugins"),
-                                                             false,
+                                                             true,
                                                              myEmbeddersManager);
     myFoldersResolvingProcessor = new MavenProjectsProcessor(myProject,
                                                              ProjectBundle.message("maven.updating.folders"),
-                                                             false,
+                                                             true,
                                                              myEmbeddersManager);
     myArtifactsDownloadingProcessor = new MavenProjectsProcessor(myProject,
                                                                  ProjectBundle.message("maven.downloading"),
-                                                                 false,
+                                                                 true,
                                                                  myEmbeddersManager);
     myPostProcessor = new MavenProjectsProcessor(myProject,
                                                  ProjectBundle.message("maven.post.processing"),
-                                                 false,
+                                                 true,
                                                  myEmbeddersManager);
 
     myWatcher = new MavenProjectsManagerWatcher(myProject, myProjectsTree, getGeneralSettings(), myReadingProcessor, myEmbeddersManager);
 
-    myImportingQueue = new MavenMergingUpdateQueue(getComponentName() + ": Importing queue", IMPORT_DELAY, !isUnitTestMode());
+    myImportingQueue = new MavenMergingUpdateQueue(getComponentName() + ": Importing queue", IMPORT_DELAY, !isUnitTestMode(), myProject);
     myImportingQueue.setPassThrough(false); // by default in unit-test mode it executes request right-away
     myImportingQueue.makeUserAware(myProject);
     myImportingQueue.makeDumbAware(myProject);
 
-    mySchedulesQueue = new MavenMergingUpdateQueue(getComponentName() + ": Schedules queue", 1000, true);
+    mySchedulesQueue = new MavenMergingUpdateQueue(getComponentName() + ": Schedules queue", 1000, true, myProject);
     mySchedulesQueue.setPassThrough(true);
   }
 
@@ -277,7 +280,6 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
         for (MavenProject each : ContainerUtil.concat(updated, deleted)) {
           toResolve.addAll(myProjectsTree.getDependentProjects(each));
         }
-        scheduleResolve(new ArrayList<MavenProject>(toResolve));
 
         // import only updated and the dependents
         Set<MavenProject> toImport = new THashSet<MavenProject>(updated);
@@ -285,6 +287,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
           toImport.addAll(myProjectsTree.getDependentProjects(each));
         }
         scheduleImport(toImport);
+        scheduleResolve(new ArrayList<MavenProject>(toResolve));
       }
 
       @Override
@@ -646,8 +649,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     }
   }
 
-  private void schedulePostImportTasts(List<MavenProjectsProcessorPostConfigurationTask> postTasks) {
-    for (MavenProjectsProcessorPostConfigurationTask each : postTasks) {
+  private void schedulePostImportTasts(List<MavenProjectsProcessorTask> postTasks) {
+    for (MavenProjectsProcessorTask each : postTasks) {
       myPostProcessor.scheduleTask(each);
     }
   }
@@ -717,7 +720,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   private void updateProjectFolders(final boolean targetFoldersOnly) {
-    MavenUtil.invokeInDispatchThread(myProject, new Runnable() {
+    MavenUtil.invokeLater(myProject, new Runnable() {
       public void run() {
         MavenFoldersConfigurator.updateProjectFolders(myProject, targetFoldersOnly);
         VirtualFileManager.getInstance().refresh(false);
@@ -726,39 +729,54 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   public List<Module> importProjects() {
-    return importProjects(new MavenDefaultModuleModelsProvider(myProject),
-                          new MavenDefaultProjectLibrariesProvider(myProject));
+    return importProjects(new MavenDefaultModifiableModelsProvider(myProject));
   }
 
-  public List<Module> importProjects(final MavenModuleModelsProvider moduleModelsProvider,
-                                     final MavenProjectLibrariesProvider librariesProvider) {
-    List<Module> result = new WriteAction<List<Module>>() {
-      protected void run(Result<List<Module>> result) throws Throwable {
-        Set<MavenProject> projectsToImport;
-        synchronized (myProjectsToImport) {
-          projectsToImport = new THashSet<MavenProject>(myProjectsToImport);
-          myProjectsToImport.clear();
-        }
+  public List<Module> importProjects(final MavenModifiableModelsProvider modifiableModelsProvider) {
+    final Set<MavenProject> projectsToImport;
+    synchronized (myProjectsToImport) {
+      projectsToImport = new THashSet<MavenProject>(myProjectsToImport);
+      myProjectsToImport.clear();
+    }
 
-        MavenProjectImporter importer = new MavenProjectImporter(myProject,
-                                                                 myProjectsTree,
-                                                                 getFileToModuleMapping(),
-                                                                 projectsToImport,
-                                                                 moduleModelsProvider,
-                                                                 librariesProvider,
-                                                                 getImportingSettings());
-        long before = System.currentTimeMillis();
-        schedulePostImportTasts(importer.importProject());
-        long after = System.currentTimeMillis();
-        System.out.println("imported in : " + (after - before) + "ms");
-        result.setResult(importer.getCreatedModules());
+    long before = System.currentTimeMillis();
+
+    final Ref<MavenProjectImporter> importer = new Ref<MavenProjectImporter>();
+    final Ref<List<MavenProjectsProcessorTask>> postTasks = new Ref<List<MavenProjectsProcessorTask>>();
+
+    final Runnable r = new Runnable() {
+      public void run() {
+        importer.set(new MavenProjectImporter(myProject,
+                                              myProjectsTree,
+                                              getFileToModuleMapping(),
+                                              projectsToImport,
+                                              modifiableModelsProvider,
+                                              getImportingSettings()));
+        postTasks.set(importer.get().importProject());
       }
-    }.execute().getResultObject();
+    };
+
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      r.run();
+    }
+    else {
+      MavenUtil.runInBackground(myProject, ProjectBundle.message("maven.project.importing"), false, new MavenTask() {
+        public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+          r.run();
+        }
+      }).waitFor();
+    }
+
+    long after = System.currentTimeMillis();
+    System.out.println("imported in : " + (after - before) + "ms");
+
     VirtualFileManager.getInstance().refresh(isNormalProject());
+    schedulePostImportTasts(postTasks.get());
 
     // do not block user too often
     myImportingQueue.restartTimer();
-    return result;
+
+    return importer.get().getCreatedModules();
   }
 
   private Map<VirtualFile, Module> getFileToModuleMapping() {
@@ -784,8 +802,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
     try {
       MavenUtil.run(myProject, "Downloading dependency...", new MavenTask() {
-        public void run(MavenProgressIndicator process) throws MavenProcessCanceledException {
-          artifact[0] = myProjectsTree.downloadArtifact(mavenProject, id, myEmbeddersManager, new SoutMavenConsole(), process);
+        public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+          artifact[0] = myProjectsTree.downloadArtifact(mavenProject, id, myEmbeddersManager, new SoutMavenConsole(), indicator);
         }
       });
     }
@@ -820,22 +838,6 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
   public void addProjectsTreeListener(MavenProjectsTree.Listener listener) {
     myProjectsTreeDispatcher.addListener(listener);
-  }
-
-  public MavenProjectsProcessor.Handler getQuickResolvingProcessorHandler() {
-    return myResolvingProcessor.getHandler();
-  }
-
-  public MavenProjectsProcessor.Handler getFoldersUpdatingProcessorHandler() {
-    return myFoldersResolvingProcessor.getHandler();
-  }
-
-  public MavenProjectsProcessor.Handler getPluginDownloadingProcessorHandler() {
-    return myPluginsResolvingProcessor.getHandler();
-  }
-
-  public MavenProjectsProcessor.Handler getArtifactsDownloadingProcessorHandler() {
-    return myArtifactsDownloadingProcessor.getHandler();
   }
 
   @TestOnly

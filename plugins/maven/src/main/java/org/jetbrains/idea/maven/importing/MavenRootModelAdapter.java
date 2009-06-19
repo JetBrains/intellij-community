@@ -1,7 +1,7 @@
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
@@ -23,11 +23,13 @@ import java.text.MessageFormat;
 public class MavenRootModelAdapter {
   private static final String MAVEN_LIB_PREFIX = "Maven: ";
   private final MavenProject myMavenProject;
+  private final ModifiableModuleModel myModuleModel;
   private final ModifiableRootModel myRootModel;
 
-  public MavenRootModelAdapter(MavenProject p, Module module, final MavenModuleModelsProvider rootModelsProvider) {
+  public MavenRootModelAdapter(MavenProject p, Module module, final MavenModifiableModelsProvider rootModelsProvider) {
     myMavenProject = p;
-    myRootModel = rootModelsProvider.getModifiableRootModel(module);
+    myModuleModel = rootModelsProvider.getModuleModel();
+    myRootModel = rootModelsProvider.getRootModel(module);
   }
 
   public void init(boolean isNewlyCreatedModule) {
@@ -194,10 +196,10 @@ public class MavenRootModelAdapter {
 
   @Nullable
   private Module findModuleByName(String moduleName) {
-    return ModuleManager.getInstance(myRootModel.getProject()).findModuleByName(moduleName);
+    return myModuleModel.findModuleByName(moduleName);
   }
 
-  public void addLibraryDependency(MavenArtifact artifact, boolean isExportable, MavenProjectLibrariesProvider provider) {
+  public void addLibraryDependency(MavenArtifact artifact, boolean isExportable, MavenModifiableModelsProvider provider) {
     String libraryName = makeLibraryName(artifact);
 
     Library library = provider.getLibraryByName(libraryName);
@@ -205,13 +207,11 @@ public class MavenRootModelAdapter {
       library = provider.createLibrary(libraryName);
     }
 
-    Library.ModifiableModel libraryModel = provider.getModifiableModel(library);
+    Library.ModifiableModel libraryModel = provider.getLibraryModel(library);
 
     setUrl(libraryModel, OrderRootType.CLASSES, artifact, null);
     setUrl(libraryModel, OrderRootType.SOURCES, artifact, MavenConstants.SOURCES_CLASSIFIER);
     setUrl(libraryModel, JavadocOrderRootType.getInstance(), artifact, MavenConstants.JAVADOC_CLASSIFIER);
-
-    provider.commit(libraryModel);
 
     myRootModel.addLibraryEntry(library).setExported(isExportable);
 

@@ -17,6 +17,8 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     initProjectsManager(false);
 
     myNavigator = MavenProjectsNavigator.getInstance(myProject);
+    myNavigator.setGroupModules(true);
+
     myNavigator.initForTests();
     myStructure = myNavigator.getStructureForTests();
   }

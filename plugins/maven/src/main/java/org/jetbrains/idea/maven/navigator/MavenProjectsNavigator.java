@@ -233,7 +233,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
   }
 
   private void scheduleStructureUpdate(Runnable r) {
-    MavenUtil.invokeInDispatchThread(myProject, r);
+    MavenUtil.invokeLater(myProject, r);
   }
 
   private class MyProjectsListener extends MavenProjectsTree.ListenerAdapter {

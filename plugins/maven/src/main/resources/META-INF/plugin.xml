@@ -51,7 +51,7 @@
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfigurationParameter"
                   extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationParameterDomExtender"/>
 
-    <standardResourceProvider implementation="org.jetbrains.idea.maven.dom.MavenSchemaRegistrar"/>
+    <standardResourceProvider implementation="org.jetbrains.idea.maven.dom.MavenSchemaProvider"/>
 
     <projectService serviceInterface="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"
                     serviceImplementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"/>

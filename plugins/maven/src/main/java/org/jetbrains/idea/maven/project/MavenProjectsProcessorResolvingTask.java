@@ -16,8 +16,8 @@ public class MavenProjectsProcessorResolvingTask extends MavenProjectsProcessorB
     myGeneralSettings = generalSettings;
   }
 
-  public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator process)
+  public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    myTree.resolve(myMavenProject, myGeneralSettings, embeddersManager, console, process);
+    myTree.resolve(myMavenProject, myGeneralSettings, embeddersManager, console, indicator);
   }
 }
