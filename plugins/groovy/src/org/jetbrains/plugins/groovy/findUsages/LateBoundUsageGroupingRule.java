@@ -15,17 +15,17 @@
 
 package org.jetbrains.plugins.groovy.findUsages;
 
-import com.intellij.usages.rules.OrderableUsageGroupingRule;
-import com.intellij.usages.rules.PsiElementUsage;
-import com.intellij.usages.UsageGroup;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageView;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.rules.OrderableUsageGroupingRule;
+import com.intellij.usages.rules.PsiElementUsage;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 import javax.swing.*;
-
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 /**
  * @author ven
@@ -39,6 +39,7 @@ public class LateBoundUsageGroupingRule implements OrderableUsageGroupingRule {
       return null;
     }
 
+    @NotNull
     public String getText(UsageView view) {
       return "Dynamically typed usages";
     }
