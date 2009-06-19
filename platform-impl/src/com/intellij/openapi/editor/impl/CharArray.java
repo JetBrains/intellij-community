@@ -135,7 +135,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
 
   public final char charAt(int i) {
     if (i < 0 || i >= myCount) {
-      throw new IndexOutOfBoundsException("Wrong offset: " + i);
+      throw new IndexOutOfBoundsException("Wrong offset: " + i+"; count:"+myCount);
     }
     if (myOriginalSequence != null) return myOriginalSequence.charAt(i);
     return myArray[i];
