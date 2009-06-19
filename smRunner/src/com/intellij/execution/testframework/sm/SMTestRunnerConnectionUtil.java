@@ -131,7 +131,7 @@ public class SMTestRunnerConnectionUtil {
     // subscribe on events
 
     // subsrcibes event processor on output consumer events
-    outputConsumer.addProcessor(eventsProcessor);
+    outputConsumer.setProcessor(eventsProcessor);
     // subsrcibes result viewer on event processor
     eventsProcessor.addEventsListener(resultsViewer);
     // subsrcibes test runner's actions on results viewer events

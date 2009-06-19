@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Key;
  * @author Roman Chernyatchik
  */
 public interface ProcessOutputConsumer extends Disposable {
-  void addProcessor(GeneralTestEventsProcessor processor);
+  void setProcessor(GeneralTestEventsProcessor processor);
   void process(String text, Key outputType);
 }
  

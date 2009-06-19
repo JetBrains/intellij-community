@@ -24,7 +24,7 @@ import java.util.List;
 public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer {
   private static final Logger LOG = Logger.getInstance(OutputToGeneralTestEventsConverter.class.getName());
   
-  private final List<GeneralTestEventsProcessor> myProcessors = new ArrayList<GeneralTestEventsProcessor>();
+  private GeneralTestEventsProcessor myProcessor;
   private final MyServiceMessageVisitor myServiceMessageVisitor;
 
   private static class OutputChunk {
@@ -56,8 +56,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     myOutputChunks = new ArrayList<OutputChunk>();
   }
 
-  public void addProcessor(final GeneralTestEventsProcessor processor) {
-    myProcessors.add(processor);
+  public void setProcessor(final GeneralTestEventsProcessor processor) {
+    myProcessor = processor;
   }
 
   public void process(final String text, final Key outputType) {
@@ -78,7 +78,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   public void dispose() {
-    myProcessors.clear();
+    setProcessor(null);
   }
 
   private void flushStdOutputBuffer() {
@@ -154,7 +154,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   private void fireOnTestStarted(final String testName, @Nullable  final String locationUrl) {
-    for (GeneralTestEventsProcessor processor : myProcessors) {
+    // local variable is used to prevent concurrent modification
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
       processor.onTestStarted(testName, locationUrl);
     }
   }
@@ -162,7 +164,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private void fireOnTestFailure(final String testName, final String localizedMessage, final String stackTrace,
                                  final boolean isTestError) {
 
-    for (GeneralTestEventsProcessor processor : myProcessors) {
+     // local variable is used to prevent concurrent modification
+     final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
       processor.onTestFailure(testName, localizedMessage, stackTrace, isTestError);
     }
   }
@@ -170,43 +174,57 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private void fireOnTestIgnored(final String testName, final String ignoreComment,
                                  @Nullable final String details) {
 
-    for (GeneralTestEventsProcessor processor : myProcessors) {
+    // local variable is used to prevent concurrent modification
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
       processor.onTestIgnored(testName, ignoreComment, details);
     }
   }
 
   private void fireOnTestOutput(final String testName, final String text, final boolean stdOut) {
-    for (GeneralTestEventsProcessor processor : myProcessors) {
+    // local variable is used to prevent concurrent modification
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
       processor.onTestOutput(testName, text, stdOut);
     }
   }
 
   private void fireOnUncapturedOutput(final String text, final Key outputType) {
-    for (GeneralTestEventsProcessor processor : myProcessors) {
+    // local variable is used to prevent concurrent modification
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
       processor.onUncapturedOutput(text, outputType);
     }
   }
 
   private void fireOnTestsCountInSuite(final int count) {
-    for (GeneralTestEventsProcessor processor : myProcessors) {
+    // local variable is used to prevent concurrent modification
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
       processor.onTestsCountInSuite(count);
     }
   }
 
   private void fireOnTestFinished(final String testName, final int duration) {
-    for (GeneralTestEventsProcessor processor : myProcessors) {
+    // local variable is used to prevent concurrent modification
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
       processor.onTestFinished(testName, duration);
     }
   }
 
   private void fireOnSuiteStarted(final String suiteName, @Nullable final String locationUrl) {
-    for (GeneralTestEventsProcessor processor : myProcessors) {
+    // local variable is used to prevent concurrent modification
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
       processor.onSuiteStarted(suiteName, locationUrl);
     }
   }
 
   private void fireOnSuiteFinished(final String suiteName) {
-    for (GeneralTestEventsProcessor processor : myProcessors) {
+    // local variable is used to prevent concurrent modification
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
       processor.onSuiteFinished(suiteName);
     }
   }
