@@ -13,6 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.module.ModuleUtil;
+import com.sun.jdi.ReferenceType;
 
 /**
  * @author ilyas
@@ -26,7 +27,7 @@ public class GantPositionManagerHelper implements ScriptPositionManagerHelper {
   }
 
   @NotNull
-  public String getOriginalScriptName(@NotNull final String runtimeName) {
+  public String getOriginalScriptName(ReferenceType refType, @NotNull final String runtimeName) {
     return StringUtil.trimEnd(runtimeName, GANT_SUFFIX);
   }
 
@@ -45,7 +46,7 @@ public class GantPositionManagerHelper implements ScriptPositionManagerHelper {
     return originalName + GANT_SUFFIX;
   }
 
-  public PsiFile getExtraScriptIfNotFound(@NotNull final String runtimeName, final Project project) {
+  public PsiFile getExtraScriptIfNotFound(ReferenceType refType, @NotNull final String runtimeName, final Project project) {
     PsiFile[] files = FilenameIndex.getFilesByName(project, StringUtil.trimEnd(runtimeName, GANT_SUFFIX) + "." + GantFileType.DEFAULT_EXTENSION,
                                                    GlobalSearchScope.allScope(project));
     if (files.length == 1) return files[0];

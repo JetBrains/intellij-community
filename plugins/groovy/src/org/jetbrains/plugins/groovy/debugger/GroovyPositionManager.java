@@ -194,7 +194,7 @@ public class GroovyPositionManager implements PositionManager {
     String runtimeName = qName;
     for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
       if (helper.isAppropriateRuntimeName(runtimeName)) {
-        qName = helper.getOriginalScriptName(runtimeName);
+        qName = helper.getOriginalScriptName(refType, runtimeName);
         break;
       }
     }
@@ -236,7 +236,7 @@ public class GroovyPositionManager implements PositionManager {
     }
     for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
       if (helper.isAppropriateRuntimeName(runtimeName)) {
-        PsiFile file = helper.getExtraScriptIfNotFound(runtimeName, project);
+        PsiFile file = helper.getExtraScriptIfNotFound(refType, runtimeName, project);
         if (file != null) return file;
       }
     }

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.extensions.debugger;
 import com.intellij.psi.PsiFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -21,7 +22,7 @@ public interface ScriptPositionManagerHelper {
    * @return Original script name by modified runtime from runtime
    */
   @NotNull
-  String getOriginalScriptName(@NotNull String runtimeName);
+  String getOriginalScriptName(ReferenceType refType, @NotNull String runtimeName);
 
   boolean isAppropriateScriptFile(@NotNull PsiFile scriptFile);
 
@@ -36,5 +37,5 @@ public interface ScriptPositionManagerHelper {
    * @return Posiible script to debug through in project scope if there wer not found other by standarrd methods
    */
   @Nullable
-  PsiFile getExtraScriptIfNotFound(@NotNull String runtimeName, Project project);
+  PsiFile getExtraScriptIfNotFound(ReferenceType refType, @NotNull String runtimeName, Project project);
 }
