@@ -464,6 +464,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       myFocusedCallback = focused;
       myTypeAheadDone = typeAheadDone;
 
+      final long typeAhead = getDialogWrapper().getTypeAheadTimeoutMs();
+      if (typeAhead <= 0) {
+        myTypeAheadDone.setDone();
+      }
+
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       myWindowListener = new MyWindowListener();
       addWindowListener(myWindowListener);
@@ -802,9 +807,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
               myTypeAheadDone.setDone();
             }
           }, timeout);
-        } else {
-          myTypeAheadDone.setDone();
-        }
+        } 
       }
 
       private DialogWrapper getActiveWrapper() {
@@ -917,7 +920,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       }
 
       public Boolean dispatch(KeyEvent e, Context context) {
-        if (myWrapper == null) return null;
+        if (myWrapper == null || myTypeAheadDone.isProcessed()) return null;
 
         myEvents.addAll(context.getQueue());
         context.getQueue().clear();
