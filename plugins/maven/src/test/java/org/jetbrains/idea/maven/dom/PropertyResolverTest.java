@@ -138,6 +138,15 @@ public class PropertyResolverTest extends MavenImportingTestCase {
     assertEquals("${prop5}", resolve("${prop4}", myProjectPom));
   }
 
+  public void testSophisticatedPropertyNameDoesNotBreakResolver() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertEquals("${~!@#$%^&*()}", resolve("${~!@#$%^&*()}", myProjectPom));
+    assertEquals("${#ARRAY[@]}", resolve("${#ARRAY[@]}", myProjectPom));
+  }
+
   public void testProjectPropertiesWithProfiles() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

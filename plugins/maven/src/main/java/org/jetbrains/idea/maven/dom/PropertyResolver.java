@@ -161,6 +161,8 @@ public class PropertyResolver {
     }
     catch (NoSuchMethodException e) {
     }
+    catch (IllegalArgumentException e) {
+    }
     if (result != null) return result;
 
     result = additionalProperties.getProperty(propName);
