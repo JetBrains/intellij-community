@@ -27,6 +27,8 @@ public abstract class ProjectRootManagerEx extends ProjectRootManager {
 
   public abstract void rootsChanged(boolean filetypes);
 
+  public abstract void mergeRootsChangesDuring(Runnable r);
+
   public abstract GlobalSearchScope getScopeForLibraryUsedIn(List<Module> modulesLibraryIsUsedIn);
 
   public abstract GlobalSearchScope getScopeForJdk(final JdkOrderEntry jdkOrderEntry);

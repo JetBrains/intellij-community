@@ -29,6 +29,4 @@ public abstract class ModuleRootEvent extends EventObject{
   }
 
   public abstract boolean isCausedByFileTypesChange();
-
-  public abstract boolean isCausedByDumbnessChange();
 }

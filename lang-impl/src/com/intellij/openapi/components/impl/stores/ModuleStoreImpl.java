@@ -1,10 +1,9 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.ide.impl.convert.ProjectConversionHelper;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.PathMacroSubstitutor;
+import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -156,11 +155,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
 
   public void setModuleFilePath(@NotNull final String filePath) {
     final String path = filePath.replace(File.separatorChar, '/');
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-      }
-    });
+    LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     final StateStorageManager storageManager = getStateStorageManager();
     storageManager.clearStateStorage(DEFAULT_STATE_STORAGE);
     storageManager.addMacro(MODULE_FILE_MACRO, path);

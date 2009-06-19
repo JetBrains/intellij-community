@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.facet.Facet;
+import com.intellij.facet.FacetModel;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.FacetEditorImpl;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
@@ -146,6 +147,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return rootModel;
   }
 
+  public FacetModel getFacetModel(Module module) {
+    return myFacetsConfigurator.getOrCreateModifiableModel(module);
+  }
 
   public void resetModuleEditors() {
     myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();

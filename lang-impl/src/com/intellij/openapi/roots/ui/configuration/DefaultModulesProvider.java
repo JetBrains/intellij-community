@@ -9,6 +9,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.facet.FacetModel;
+import com.intellij.facet.FacetManager;
 
 /**
  * @author nik
@@ -30,5 +32,9 @@ public class DefaultModulesProvider implements ModulesProvider {
 
   public ModuleRootModel getRootModel(Module module) {
     return ModuleRootManager.getInstance(module);
+  }
+
+  public FacetModel getFacetModel(Module module) {
+    return FacetManager.getInstance(module);
   }
 }

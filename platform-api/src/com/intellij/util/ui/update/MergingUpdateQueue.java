@@ -30,20 +30,22 @@ import java.util.TreeMap;
 
 public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
-  public static final JComponent ANY_COMPONENT = new JComponent() {};
+  public static final JComponent ANY_COMPONENT = new JComponent() {
+  };
 
   private volatile boolean myActive;
   private volatile boolean mySuspended;
 
   private final Map<Update, Update> mySheduledUpdates = new TreeMap<Update, Update>();
 
-  private final Alarm myWaiterForMerge = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myWaiterForMerge;
 
   private volatile boolean myFlushing;
 
   private String myName;
   private int myMergingTimeSpan;
   private final JComponent myModalityStateComponent;
+  private boolean myExecuteInDispatchThread;
   private boolean myPassThrough;
   private boolean myDisposed;
 
@@ -54,15 +56,39 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     this(name, mergingTimeSpan, isActive, modalityStateComponent, null);
   }
 
-  public MergingUpdateQueue(@NonNls String name, int mergingTimeSpan, boolean isActive, JComponent modalityStateComponent, @Nullable Disposable parent) {
+  public MergingUpdateQueue(@NonNls String name,
+                            int mergingTimeSpan,
+                            boolean isActive,
+                            JComponent modalityStateComponent,
+                            @Nullable Disposable parent) {
     this(name, mergingTimeSpan, isActive, modalityStateComponent, parent, null);
   }
 
-  public MergingUpdateQueue(@NonNls String name, int mergingTimeSpan, boolean isActive, JComponent modalityStateComponent, @Nullable Disposable parent, @Nullable JComponent activationComponent) {
+  public MergingUpdateQueue(@NonNls String name,
+                            int mergingTimeSpan,
+                            boolean isActive,
+                            JComponent modalityStateComponent,
+                            @Nullable Disposable parent,
+                            @Nullable JComponent activationComponent) {
+    this(name, mergingTimeSpan, isActive, modalityStateComponent, parent, activationComponent, true);
+  }
+
+  public MergingUpdateQueue(@NonNls String name,
+                            int mergingTimeSpan,
+                            boolean isActive,
+                            JComponent modalityStateComponent,
+                            @Nullable Disposable parent,
+                            @Nullable JComponent activationComponent,
+                            boolean executeInDispatchThread) {
     myMergingTimeSpan = mergingTimeSpan;
     myModalityStateComponent = modalityStateComponent;
     myName = name;
     myPassThrough = ApplicationManager.getApplication().isUnitTestMode();
+    myExecuteInDispatchThread = executeInDispatchThread;
+
+    myWaiterForMerge = myExecuteInDispatchThread
+                       ? new Alarm(Alarm.ThreadToUse.SWING_THREAD)
+                       : new Alarm(Alarm.ThreadToUse.OWN_THREAD, this);
 
     if (isActive) {
       showNotify();
@@ -138,9 +164,14 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     if (!myActive) return;
 
     clearWaiter();
-    myWaiterForMerge.addRequest(this, myMergingTimeSpan, getMergerModailityState());
-  }
 
+    if (myExecuteInDispatchThread) {
+      myWaiterForMerge.addRequest(this, myMergingTimeSpan, getMergerModailityState());
+    }
+    else {
+      myWaiterForMerge.addRequest(this, myMergingTimeSpan);
+    }
+  }
 
   public void run() {
     if (mySuspended) return;
@@ -148,7 +179,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   public void flush() {
-    synchronized(mySheduledUpdates) {
+    synchronized (mySheduledUpdates) {
       if (mySheduledUpdates.isEmpty()) return;
     }
     flush(true);
@@ -185,7 +216,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       }
     };
 
-    if (invokeLaterIfNotDispatch && !ApplicationManager.getApplication().isDispatchThread()) {
+    if (myExecuteInDispatchThread && invokeLaterIfNotDispatch && !ApplicationManager.getApplication().isDispatchThread()) {
       ApplicationManager.getApplication().invokeLater(toRun, ModalityState.NON_MODAL);
     }
     else {
@@ -194,6 +225,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   protected boolean isModalityStateCorrect() {
+    if (!myExecuteInDispatchThread) return true;
     if (myModalityStateComponent == ANY_COMPONENT) return true;
 
     ModalityState current = ApplicationManager.getApplication().getCurrentModalityState();
@@ -228,7 +260,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   private void execute(final Update each) {
     if (myDisposed) {
       each.setRejected();
-    } else {
+    }
+    else {
       each.run();
     }
   }
@@ -290,10 +323,6 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       existing.setRejected();
     }
     mySheduledUpdates.put(update, update);
-  }
-
-  protected static boolean passThroughForUnitTesting() {
-    return true;
   }
 
   public boolean isActive() {

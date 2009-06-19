@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
@@ -31,6 +33,10 @@ public interface ModulesProvider {
     public ModuleRootModel getRootModel(Module module) {
       return ModuleRootManager.getInstance(module);
     }
+
+    public FacetModel getFacetModel(Module module) {
+      return FacetManager.getInstance(module);
+    }
   };
   
   Module[] getModules();
@@ -38,4 +44,6 @@ public interface ModulesProvider {
   Module getModule(String name);
 
   ModuleRootModel getRootModel(Module module);
+
+  FacetModel getFacetModel(Module module);
 }

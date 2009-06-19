@@ -40,6 +40,10 @@ public class StubProjectRootManagerEx extends ProjectRootManagerEx {
     throw new UnsupportedOperationException();
   }
 
+  public void mergeRootsChangesDuring(Runnable r) {
+    throw new UnsupportedOperationException();
+  }
+
   public GlobalSearchScope getScopeForLibraryUsedIn(List<Module> modulesLibraryIsUsedIn) {
     throw new UnsupportedOperationException();
   }
