@@ -9,6 +9,7 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -33,11 +34,14 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
 
   private static class PsiAwareTextEditorComponent extends TextEditorComponent {
     private final Project myProject;
+    private final VirtualFile myFile;
+
     private PsiAwareTextEditorComponent(@NotNull final Project project,
                                         @NotNull final VirtualFile file,
                                         @NotNull final TextEditorImpl textEditor) {
       super(project, file, textEditor);
       myProject = project;
+      myFile = file;
       CodeFoldingManager.getInstance(project).buildInitialFoldings(getEditor());
     }
 
@@ -53,6 +57,9 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
         if (lookup != null && lookup.isVisible()) {
           return lookup.getBounds();
         }
+      }
+      if (DataConstants.MODULE.equals(dataId)) {
+        return ModuleUtil.findModuleForFile(myFile, myProject);
       }
       return super.getData(dataId);
     }
