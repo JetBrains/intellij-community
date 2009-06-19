@@ -16,6 +16,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NotNull;
@@ -73,10 +74,14 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
       final String fqName = myExistentClassTF.getText().trim();
       className = StringUtil.getShortName(fqName);
       packageName = StringUtil.getPackageName(fqName);
+      final PsiClass builderClass = JavaPsiFacade.getInstance(myProject).findClass(StringUtil.getQualifiedName(packageName, className), GlobalSearchScope.projectScope(myProject));
+      if (builderClass != null && !CommonRefactoringUtil.checkReadOnlyStatus(myProject, builderClass)) return;
     }
     invokeRefactoring(new ReplaceConstructorWithBuilderProcessor(getProject(), myConstructors, myParametersMap, className, packageName,
                                                                  myCreateBuilderClassRadioButton.isSelected()));
   }
+
+
 
   @Override
   protected JComponent createNorthPanel() {
