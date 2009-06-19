@@ -100,11 +100,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
         // execute when current dialog is closed (e.g. Project Structure)
         MavenUtil.invokeInDispatchThread(project, ModalityState.NON_MODAL, new Runnable() {
           public void run() {
-            manager.waitForReadingCompletion();
-            manager.importProjects();
-
             EditorHelper.openInEditor(getPsiFile(project, pom));
-
             if (myArchetype != null) generateFromArchetype(project, pom);
           }
         });

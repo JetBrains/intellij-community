@@ -37,12 +37,14 @@ public class MavenBeforeRunTasksProvider implements BeforeRunTaskProvider<MavenB
   }
 
   public String getDescription(RunConfiguration runConfiguration, MavenBeforeRunTask task) {
-    String desc = "<not selected>";
+    String desc = null;
     if (task.isEnabled()) {
       Pair<MavenProject, String> projectAndGoal = getProjectAndGoalChecked(task);
       if (projectAndGoal != null) desc = projectAndGoal.first.getDisplayName() + ":" + projectAndGoal.second;
     }
-    return TasksBundle.message("maven.tasks.before.run", desc);
+    return desc == null
+           ? TasksBundle.message("maven.tasks.before.run.empty")
+           : TasksBundle.message("maven.tasks.before.run", desc);
   }
 
   private Pair<MavenProject, String> getProjectAndGoalChecked(MavenBeforeRunTask task) {

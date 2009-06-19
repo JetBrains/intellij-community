@@ -55,6 +55,7 @@ public class MavenAddArchetypeDialog extends DialogWrapper {
     if (StringUtil.isEmptyOrSpaces(myVersionField.getText())) errors.add("Version");
 
     if (errors.isEmpty()) {
+      setErrorText(null);
       getOKAction().setEnabled(true);
       return;
     }
