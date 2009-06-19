@@ -4,6 +4,7 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     LOG.assertTrue(element instanceof AbstractTreeNode, element.getClass().getName());
     AbstractTreeNode<?> treeNode = (AbstractTreeNode)element;
     Collection<? extends AbstractTreeNode> elements = treeNode.getChildren();
-    List<TreeStructureProvider> providers = getProviders();
+    List<TreeStructureProvider> providers = getProvidersDumbAware();
     Collection<AbstractTreeNode> modified = new ArrayList<AbstractTreeNode>(elements);
     if (providers != null) {
       for (TreeStructureProvider provider : providers) {
@@ -57,7 +58,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
   public abstract List<TreeStructureProvider> getProviders();
 
   public Object getDataFromProviders(final List<AbstractTreeNode> selectedNodes, final String dataId) {
-    final List<TreeStructureProvider> providers = getProviders();
+    final List<TreeStructureProvider> providers = getProvidersDumbAware();
     if (providers != null) {
       for (TreeStructureProvider treeStructureProvider : providers) {
         final Object fromProvider = treeStructureProvider.getData(selectedNodes, dataId);
@@ -67,5 +68,9 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
       }
     }
     return null;
+  }
+
+  private List<TreeStructureProvider> getProvidersDumbAware() {
+    return DumbService.getInstance(myProject).filterByDumbAwareness(getProviders());
   }
 }

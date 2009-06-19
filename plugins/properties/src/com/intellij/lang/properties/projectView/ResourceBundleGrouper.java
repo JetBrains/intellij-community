@@ -9,6 +9,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
@@ -18,7 +19,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class ResourceBundleGrouper implements TreeStructureProvider {
+public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
   private final Project myProject;
 
   public ResourceBundleGrouper(Project project) {

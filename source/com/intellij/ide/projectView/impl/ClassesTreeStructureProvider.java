@@ -8,13 +8,14 @@ import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class ClassesTreeStructureProvider implements SelectableTreeStructureProvider {
+public class ClassesTreeStructureProvider implements SelectableTreeStructureProvider, DumbAware {
   private final Project myProject;
 
   public ClassesTreeStructureProvider(Project project) {
