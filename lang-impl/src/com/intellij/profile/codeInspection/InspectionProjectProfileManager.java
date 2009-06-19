@@ -20,6 +20,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -149,14 +151,24 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     myStatusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
     myTogglePopupHintsPanel = new TogglePopupHintsPanel(myStatusBar);
     myStatusBar.addFileStatusComponent(myTogglePopupHintsPanel);
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable(){
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
-        Set<Profile> profiles = new HashSet<Profile>();
+        final Set<Profile> profiles = new HashSet<Profile>();
         profiles.add(getProjectProfileImpl());
         profiles.addAll(getProfiles());
         profiles.addAll(InspectionProfileManager.getInstance().getProfiles());
-        for (Profile profile : profiles) {
-          initProfileWrapper(profile);
+        final Application app = ApplicationManager.getApplication();
+        Runnable initInspectionProfilesRunnable = new Runnable() {
+          public void run() {
+            for (Profile profile : profiles) {
+              initProfileWrapper(profile);
+            }
+          }
+        };
+        if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+          initInspectionProfilesRunnable.run();
+        } else {
+          app.executeOnPooledThread(initInspectionProfilesRunnable);
         }
       }
     });
