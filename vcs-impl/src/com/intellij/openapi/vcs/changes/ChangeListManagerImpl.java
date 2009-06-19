@@ -342,7 +342,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             myUpdateException = e;
           }
         }
-        composite.getSwitchedFileHolder().calculateChildren();
         composite.getIgnoredFileHolder().calculateChildren();
       }
     }
@@ -434,7 +433,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   MultiMap<String, VirtualFile> getSwitchedFilesMap() {
-    return myComposite.getSwitchedFileHolder().getBranchToFileMap();
+    synchronized (myDataLock) {
+      return myWorker.getSwitchedHolder().getBranchToFileMap();
+    }
   }
 
   public VcsException getUpdateException() {
@@ -616,7 +617,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       if (status != null) {
         return status;
       }
-      if (myComposite.getSwitchedFileHolder().containsFile(file)) return FileStatus.SWITCHED;
+      if (myWorker.isSwitched(file)) return FileStatus.SWITCHED;
       return FileStatus.NOT_CHANGED;
     }
   }
@@ -826,7 +827,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Nullable
   public String getSwitchedBranch(final VirtualFile file) {
-    return myComposite.getSwitchedFileHolder().getBranchForFile(file);    
+    synchronized (myDataLock) {
+      return myWorker.getBranchForFile(file);
+    }
   }
 
   @Override

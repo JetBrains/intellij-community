@@ -98,7 +98,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
         myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).addFile(file);
       }
       // if a file was previously marked as switched through recursion, remove it from switched list
-      myComposite.getSwitchedFileHolder().removeFile(file);
+      myChangeListWorker.removeSwitched(file);
     }
   }
 
@@ -157,7 +157,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     checkIfDisposed();
     if (isExcluded(file)) return;
     if (myScope.belongsTo(new FilePathImpl(file))) {
-      myComposite.getSwitchedFileHolder().addFile(file, branch, recursive);
+      myChangeListWorker.addSwitched(file, branch, recursive);
     }
   }
 

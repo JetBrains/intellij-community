@@ -25,6 +25,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   private final Map<String, LocalChangeList> myMap;
   // in fact, a kind of local change
   private final DeletedFilesHolder myLocallyDeleted;
+  private final SwitchedFileHolder mySwitchedHolder;
   private LocalChangeList myDefault;
 
   private ChangeListsIndexes myIdx;
@@ -34,6 +35,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myMap = new HashMap<String, LocalChangeList>();
     myIdx = new ChangeListsIndexes();
     myLocallyDeleted = new DeletedFilesHolder();
+    mySwitchedHolder = new SwitchedFileHolder(project, FileHolder.HolderType.SWITCHED);
   }
 
   private ChangeListWorker(final ChangeListWorker worker) {
@@ -41,6 +43,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myMap = new HashMap<String, LocalChangeList>();
     myIdx = new ChangeListsIndexes(worker.myIdx);
     myLocallyDeleted = worker.myLocallyDeleted.copy();
+    mySwitchedHolder = (SwitchedFileHolder) worker.mySwitchedHolder.copy();
     
     LocalChangeList defaultList = null;
     for (LocalChangeList changeList : worker.myMap.values()) {
@@ -76,6 +79,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myIdx = new ChangeListsIndexes(worker.myIdx);
     // todo +-
     myLocallyDeleted.takeFrom(worker.myLocallyDeleted);
+    mySwitchedHolder.takeFrom(worker.mySwitchedHolder);
   }
 
   public ChangeListWorker copy() {
@@ -294,6 +298,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       myIdx.changeRemoved(change);
     }
     myLocallyDeleted.cleanScope(scope);
+    mySwitchedHolder.cleanScope(scope);
   }
 
   public void notifyDoneProcessingChanges(final ChangeListListener dispatcher) {
@@ -315,6 +320,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     for(ChangeList changeList: changedLists) {
       dispatcher.changeListChanged(changeList);
     }
+    mySwitchedHolder.calculateChildren();
   }
 
   public List<LocalChangeList> getListsCopy() {
@@ -396,6 +402,26 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   public DeletedFilesHolder getLocallyDeleted() {
     return myLocallyDeleted.copy();
+  }
+
+  public SwitchedFileHolder getSwitchedHolder() {
+    return mySwitchedHolder.copy();
+  }
+
+  public void addSwitched(final VirtualFile file, @NotNull String branchName, final boolean recursive) {
+    mySwitchedHolder.addFile(file, branchName, recursive);
+  }
+
+  public void removeSwitched(final VirtualFile file) {
+    mySwitchedHolder.removeFile(file);
+  }
+
+  public String getBranchForFile(final VirtualFile file) {
+    return mySwitchedHolder.getBranchForFile(file);
+  }
+
+  public boolean isSwitched(final VirtualFile file) {
+    return mySwitchedHolder.containsFile(file);
   }
 
   public void addLocallyDeleted(final LocallyDeletedChange change) {

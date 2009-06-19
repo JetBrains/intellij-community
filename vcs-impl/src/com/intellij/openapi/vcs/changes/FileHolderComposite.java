@@ -12,9 +12,9 @@ public class FileHolderComposite implements FileHolder {
   public FileHolderComposite(final Project project) {
     myHolders = new HashMap<HolderType, FileHolder>();
     myHolders.put(FileHolder.HolderType.UNVERSIONED, new VirtualFileHolder(project, FileHolder.HolderType.UNVERSIONED));
-    myHolders.put(FileHolder.HolderType.SWITCHED, new SwitchedFileHolder(project, HolderType.SWITCHED));
+    //myHolders.put(FileHolder.HolderType.SWITCHED, new SwitchedFileHolder(project, HolderType.SWITCHED));
     myHolders.put(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING, new VirtualFileHolder(project, FileHolder.HolderType.MODIFIED_WITHOUT_EDITING));
-    myHolders.put(FileHolder.HolderType.IGNORED, new SwitchedFileHolder(project, FileHolder.HolderType.IGNORED));
+    myHolders.put(FileHolder.HolderType.IGNORED, new RecursiveFileHolder(project, FileHolder.HolderType.IGNORED));
     myHolders.put(FileHolder.HolderType.LOCKED, new VirtualFileHolder(project, FileHolder.HolderType.LOCKED));
     myHolders.put(FileHolder.HolderType.LOGICALLY_LOCKED, new LogicallyLockedHolder(project));
   }
@@ -84,11 +84,7 @@ public class FileHolderComposite implements FileHolder {
     throw new UnsupportedOperationException();
   }
 
-  public SwitchedFileHolder getSwitchedFileHolder() {
-    return (SwitchedFileHolder) myHolders.get(HolderType.SWITCHED);
-  }
-
-  public SwitchedFileHolder getIgnoredFileHolder() {
-    return (SwitchedFileHolder) myHolders.get(HolderType.IGNORED);
+  public RecursiveFileHolder getIgnoredFileHolder() {
+    return (RecursiveFileHolder) myHolders.get(HolderType.IGNORED);
   }
 }
