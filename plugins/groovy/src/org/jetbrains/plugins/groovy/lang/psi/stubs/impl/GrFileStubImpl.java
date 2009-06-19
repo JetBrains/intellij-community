@@ -4,7 +4,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.io.StringRef;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
 
@@ -31,7 +31,7 @@ public class GrFileStubImpl extends PsiFileStubImpl<GroovyFile> implements GrFil
   }
 
   public IStubFileElementType getType() {
-    return GroovyElementTypes.GROOVY_FILE;
+    return GroovyParserDefinition.GROOVY_FILE;
   }
 
   public StringRef getPackageName() {

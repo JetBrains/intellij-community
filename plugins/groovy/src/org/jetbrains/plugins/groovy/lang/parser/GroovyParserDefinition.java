@@ -27,17 +27,21 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.IStubFileElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mWS;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrStubFileElementType;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author ilyas
  */
 public class GroovyParserDefinition implements ParserDefinition {
+  public static final IStubFileElementType GROOVY_FILE = new GrStubFileElementType(GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
 
   @NotNull
   public Lexer createLexer(Project project) {
@@ -49,7 +53,7 @@ public class GroovyParserDefinition implements ParserDefinition {
   }
 
   public IFileElementType getFileNodeType() {
-    return GroovyElementTypes.GROOVY_FILE;
+    return GROOVY_FILE;
   }
 
   @NotNull

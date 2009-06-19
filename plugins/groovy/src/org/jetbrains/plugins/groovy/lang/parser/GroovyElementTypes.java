@@ -15,9 +15,7 @@
 
 package org.jetbrains.plugins.groovy.lang.parser;
 
-import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -52,9 +50,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   GrStubElementType<GrReferenceListStub, GrImplementsClause> IMPLEMENTS_CLAUSE = new GrImplementsClauseElementType();
   GrStubElementType<GrReferenceListStub, GrExtendsClause> EXTENDS_CLAUSE = new GrExtendsClauseElementType();
-
-
-  IStubFileElementType GROOVY_FILE = new GrStubFileElementType(GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
 
 
   GroovyElementType NONE = new GroovyElementType("no token"); //not a node
