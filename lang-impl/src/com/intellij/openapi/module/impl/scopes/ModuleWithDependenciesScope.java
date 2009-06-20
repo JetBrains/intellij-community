@@ -29,6 +29,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   private final boolean myIncludeTests;
 
   private final ModuleFileIndex myFileIndex;
+  private final ProjectFileIndex myProjectFileIndex;
   private final Set<Module> myModules;
 
   public ModuleWithDependenciesScope(Module module, boolean includeLibraries, boolean includeOtherModules, boolean includeTests) {
@@ -39,6 +40,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     myIncludeTests = includeTests;
 
     myFileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
+    myProjectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
 
     if (myIncludeOtherModules) {
       myModules = new LinkedHashSet<Module>();
@@ -76,6 +78,13 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     final List<OrderEntry> entries = myFileIndex.getOrderEntriesForFile(file);
     for (OrderEntry orderEntry : entries) {
       if (myIncludeLibraries) {
+        if (orderEntry instanceof LibraryOrderEntry ||
+            orderEntry instanceof JdkOrderEntry
+           ) {
+          if (!myProjectFileIndex.isInLibraryClasses(file)) {
+            continue;
+          }
+        }
         if (myIncludeOtherModules) {
           return true;
         }

@@ -355,6 +355,10 @@ public class FileManagerImpl implements FileManager {
       return GlobalSearchScope.allScope(project);
     }
 
+    return getDefaultResolveScope(vFile);
+  }
+
+  public GlobalSearchScope getDefaultResolveScope(VirtualFile vFile) {
     ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
     Module module = projectFileIndex.getModuleForFile(vFile);
     if (module != null) {
@@ -366,6 +370,8 @@ public class FileManagerImpl implements FileManager {
       // resolve references in libraries in context of all modules which contain it
       List<Module> modulesLibraryUsedIn = new ArrayList<Module>();
       List<OrderEntry> orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
+      final ProgressManager progressManager = ProgressManager.getInstance();
+
       for (OrderEntry entry : orderEntries) {
         progressManager.checkCanceled();
 
