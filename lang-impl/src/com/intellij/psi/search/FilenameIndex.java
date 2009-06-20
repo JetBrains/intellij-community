@@ -55,11 +55,11 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   }
 
   public static PsiFile[] getFilesByName(final Project project, final String name, final GlobalSearchScope scope) {
-    final Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, name, GlobalSearchScope.allScope(project));
+    final Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, name, scope);
     if (files.isEmpty()) return PsiFile.EMPTY_ARRAY;
     List<PsiFile> result = new ArrayList<PsiFile>();
     for(VirtualFile file: files) {
-      if (!file.isValid() || !scope.contains(file)) continue;
+      if (!file.isValid()) continue;
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile != null) {
         result.add(psiFile);
