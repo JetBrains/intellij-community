@@ -11,15 +11,9 @@ import java.awt.event.ActionEvent;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: pti
- * Date: Jun 24, 2005
- * Time: 10:26:21 PM
- * To change this template use File | Settings | File Templates.
+ * @author pti
  */
-
 class UpdateInfoDialog extends AbstractUpdateDialog {
-  private UpdateInfoPanel myUpdateInfoPanel;
   private final UpdateChecker.NewVersion myNewVersion;
 
   protected UpdateInfoDialog(final boolean canBeParent,
@@ -38,7 +32,6 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       AbstractAction moreInfo = new AbstractAction(IdeBundle.message("updates.more.info.button")) {
         public void actionPerformed(ActionEvent e) {
           openDownloadPage();
-          UpdateInfoDialog.super.doCancelAction();
         }
       };
       return new Action[]{getOKAction(), moreInfo, getCancelAction()};
@@ -47,7 +40,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     return super.createActions();
   }
 
-  private void openDownloadPage() {
+  private static void openDownloadPage() {
     BrowserUtil.launchBrowser(ApplicationInfoEx.getInstanceEx().getUpdateUrls().getDownloadUrl());
   }
 
@@ -63,8 +56,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   protected JComponent createCenterPanel() {
-    myUpdateInfoPanel = new UpdateInfoPanel();
-    return myUpdateInfoPanel.myPanel;
+    UpdateInfoPanel updateInfoPanel = new UpdateInfoPanel();
+    return updateInfoPanel.myPanel;
   }
 
   @Override
