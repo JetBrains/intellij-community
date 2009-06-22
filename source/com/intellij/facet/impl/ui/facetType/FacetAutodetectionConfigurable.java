@@ -250,21 +250,33 @@ public class FacetAutodetectionConfigurable implements Configurable {
         myEnableAutoDetectionCheckBox.setSelected(false);
       }
       else {
+        List<String> modules = new ArrayList<String>();
+        List<String> urls = new ArrayList<String>();
+
         for (DisabledAutodetectionInModuleElement moduleElement : moduleElements) {
           String moduleName = moduleElement.getModuleName();
           if (moduleElement.isDisableInWholeModule()) {
-            myModulesListModel.addElement(moduleName);
+            modules.add(moduleName);
           }
           else {
             for (String url : moduleElement.getFiles()) {
               myFile2Module.put(url, moduleName);
-              myFilesListModel.addElement(url);
+              urls.add(url);
             }
             for (String url : moduleElement.getDirectories()) {
               myFile2Module.put(url, moduleName);
-              myFilesListModel.addElement(url);
+              urls.add(url);
             }
           }
+        }
+        
+        Collections.sort(urls);
+        Collections.sort(modules);
+        for (String url : urls) {
+          myFilesListModel.addElement(url);
+        }
+        for (String moduleName : modules) {
+          myModulesListModel.addElement(moduleName);
         }
       }
     }
