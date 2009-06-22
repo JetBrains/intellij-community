@@ -99,9 +99,11 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     List<GenerationItem> generationItems = new ArrayList<GenerationItem>();
     GenerationItem item;
+    final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+    final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
     for (VirtualFile file : getGroovyFilesToGenerate(context)) {
-      if (CompilerManager.getInstance(myProject).isExcludedFromCompilation(file)) continue;
-      if (CompilerConfiguration.getInstance(myProject).isResourceFile(file.getName())) continue;
+      if (compilerManager.isExcludedFromCompilation(file)) continue;
+      if (compilerConfiguration.isResourceFile(file.getName())) continue;
 
       final Module module = getModuleByFile(context, file);
       if (module == null || !(module.getModuleType() instanceof JavaModuleType)) {
