@@ -86,7 +86,7 @@ public class GroovyCompiler implements TranslatingCompiler {
       LOG.debug("running groovyc");
     }
     Set<OutputItem> successfullyCompiled = new HashSet<OutputItem>();
-    Set<VirtualFile> toRecompile = new HashSet<VirtualFile>();
+    Set<VirtualFile> toRecompileCollector = new HashSet<VirtualFile>();
 
     Map<Module, List<VirtualFile>> mapModulesToVirtualFiles = CompilerUtil.buildModuleToFilesMap(compileContext, virtualFiles);
 
@@ -94,18 +94,30 @@ public class GroovyCompiler implements TranslatingCompiler {
       final Module module = entry.getKey();
       final GroovyFacet facet = GroovyFacet.getInstance(module);
       final List<VirtualFile> moduleFiles = entry.getValue();
-      if (module.getModuleType() instanceof JavaModuleType && (facet == null || facet.getConfiguration().isCompileGroovyFiles())) {
-        doCompile(compileContext, successfullyCompiled, toRecompile, module, moduleFiles);
+      final List<VirtualFile> toCompile = new ArrayList<VirtualFile>();
+      final List<VirtualFile> toCopy = new ArrayList<VirtualFile>();
+      final CompilerConfiguration configuration = CompilerConfiguration.getInstance(myProject);
+      if (module.getModuleType() instanceof JavaModuleType && facet != null && facet.getConfiguration().isCompileGroovyFiles()) {
+        for (final VirtualFile file : moduleFiles) {
+          (configuration.isResourceFile(file.getName()) ? toCopy : toCompile).add(file);
+        }
+      } else {
+        toCopy.addAll(moduleFiles);
       }
-      else {
-        final ResourceCompiler resourceCompiler = new ResourceCompiler(myProject, CompilerConfiguration.getInstance(myProject));
-        final ExitStatus exitStatus = resourceCompiler.compile(compileContext, moduleFiles.toArray(new VirtualFile[moduleFiles.size()]));
+
+      if (!toCompile.isEmpty()) {
+        doCompile(compileContext, successfullyCompiled, toRecompileCollector, module, toCompile);
+      }
+
+      if (!toCopy.isEmpty()) {
+        final ResourceCompiler resourceCompiler = new ResourceCompiler(myProject, configuration);
+        final ExitStatus exitStatus = resourceCompiler.compile(compileContext, toCopy.toArray(new VirtualFile[toCopy.size()]));
         successfullyCompiled.addAll(Arrays.asList(exitStatus.getSuccessfullyCompiled()));
-        toRecompile.addAll(Arrays.asList(exitStatus.getFilesToRecompile()));
+        toRecompileCollector.addAll(Arrays.asList(exitStatus.getFilesToRecompile()));
       }
     }
 
-    return new GroovyCompileExitStatus(successfullyCompiled, toRecompile.toArray(new VirtualFile[toRecompile.size()]));
+    return new GroovyCompileExitStatus(successfullyCompiled, toRecompileCollector.toArray(new VirtualFile[toRecompileCollector.size()]));
   }
 
   private void doCompile(CompileContext compileContext, Set<OutputItem> successfullyCompiled, Set<VirtualFile> toRecompile, final Module module,
