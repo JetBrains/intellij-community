@@ -40,7 +40,7 @@ public class TestSuiteStack {
   @NotNull
   public SMTestProxy popSuite(final String suiteName) throws EmptyStackException {
     if (myStack.isEmpty()) {
-      LOG.assertTrue(false, "Pop error: Test runner try to close test suite which has been already closed or wasn't started at all. Unexpected suite name [" + suiteName + "]");
+      LOG.assertTrue(false, "Pop error: Test runner tried to close test suite which has been already closed or wasn't started at all. Unexpected suite name [" + suiteName + "]");
       return null;
     }
     final SMTestProxy currentSuite = myStack.pop();
