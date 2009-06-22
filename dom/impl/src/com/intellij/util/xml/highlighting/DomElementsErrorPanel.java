@@ -153,6 +153,10 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
     protected void fillDaemonCodeAnalyzerErrorsSatus(DaemonCodeAnalyzerStatus status, boolean fillErrorsCount) {
       for (int i = 0; i < status.errorCount.length; i++) {
         final HighlightSeverity minSeverity = SeverityRegistrar.getInstance(myProject).getSeverityByIndex(i);
+        if (minSeverity == null) {
+          continue;
+        }
+
         int sum = 0;
         for (DomElement element : myDomElements) {
           final DomElementsProblemsHolder holder = myAnnotationsManager.getCachedProblemHolder(element);
