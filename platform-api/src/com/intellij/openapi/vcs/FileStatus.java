@@ -42,7 +42,7 @@ public interface FileStatus {
   FileStatus MERGED_WITH_CONFLICTS = ServiceManager.getService(FileStatusFactory.class)
    .createFileStatus("IDEA_FILESTATUS_MERGED_WITH_CONFLICTS", VcsBundle.message("file.status.name.merged.with.conflicts"), Color.red);
   FileStatus MERGED_WITH_BOTH_CONFLICTS = ServiceManager.getService(FileStatusFactory.class)
-   .createFileStatus("IDEA_FILESTATUS_MERGED_WITH_BOTH_CONFLICTS", VcsBundle.message("file.status.name.merged.with.conflicts"), Color.red);
+   .createFileStatus("IDEA_FILESTATUS_MERGED_WITH_BOTH_CONFLICTS", VcsBundle.message("file.status.name.merged.with.both.conflicts"), Color.red);
   FileStatus MERGED_WITH_PROPERTY_CONFLICTS = ServiceManager.getService(FileStatusFactory.class)
    .createFileStatus("IDEA_FILESTATUS_MERGED_WITH_PROPERTY_CONFLICTS", VcsBundle.message("file.status.name.merged.with.property.conflicts"), Color.red);
   FileStatus DELETED_FROM_FS = ServiceManager.getService(FileStatusFactory.class)
