@@ -1,7 +1,7 @@
 package com.intellij.execution.testframework.sm.runner;
 
+import org.jetbrains.plugins.ruby.support.AssertionErrorCase;
 import org.jetbrains.plugins.ruby.support.AssertionUtil;
-import org.jetbrains.plugins.ruby.support.EmptyStackExceptionCase;
 
 /**
  * @author Roman Chernyatchik
@@ -51,7 +51,7 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
   public void testPopSuite() {
     final String suiteName = mySuite.getName();
 
-    AssertionUtil.assertException(new EmptyStackExceptionCase() {
+    AssertionUtil.assertException(new AssertionErrorCase() {
       public void tryClosure() {
         myTestSuiteStack.popSuite("some suite");
       }
