@@ -1,13 +1,9 @@
 package com.intellij.lang.ant;
 
-import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.changes.AntChangeVisitor;
-import com.intellij.lang.ant.validation.AntDuplicateImportedTargetsInspection;
-import com.intellij.lang.ant.validation.AntDuplicateTargetsInspection;
-import com.intellij.lang.ant.validation.AntMissingPropertiesFileInspection;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -25,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class AntSupport implements ApplicationComponent, InspectionToolProvider {
+public class AntSupport implements ApplicationComponent {
   private static LanguageFileType ourFileType = null;
   private static AntLanguage ourLanguage = null;
   private static AntChangeVisitor ourChangeVisitor = null;
@@ -77,11 +73,6 @@ public class AntSupport implements ApplicationComponent, InspectionToolProvider 
       ForcedAntFileAttribute.forceAntFile(file, value);
       viewProvider.contentsSynchronized();
     }
-  }
-
-  public Class[] getInspectionClasses() {
-    return new Class[]{AntDuplicateTargetsInspection.class, AntDuplicateImportedTargetsInspection.class,
-      AntMissingPropertiesFileInspection.class};
   }
 
   //

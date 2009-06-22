@@ -35,6 +35,7 @@
     <declarationRangeHandler key="com.intellij.lang.ant.psi.AntStructuredElement"
                              implementationClass="com.intellij.lang.ant.AntDeclarationRangeHandler"/>
     <refactoring.elementListenerProvider implementation="com.intellij.lang.ant.refactoring.AntTargetRenameListenerProvider"/>
+    <inspectionToolProvider implementation="com.intellij.lang.ant.AntInspectionToolProvider"/>
   </extensions>
 
   <application-components>
