@@ -558,11 +558,11 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
 
     protected boolean getOptionValue() {
-      return UsageViewSettings.getInstance().IS_FILTER_DUPLICATED_LINE;
+      return UsageViewSettings.getInstance().isFilterDuplicatedLine();
     }
 
     protected void setOptionValue(boolean value) {
-      UsageViewSettings.getInstance().IS_FILTER_DUPLICATED_LINE = value;
+      UsageViewSettings.getInstance().setFilterDuplicatedLine(value);
     }
   }
 

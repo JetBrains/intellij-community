@@ -96,7 +96,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   private UsageNode tryMerge(Usage usage) {
     if (!(usage instanceof MergeableUsage)) return null;
-    if (!UsageViewSettings.getInstance().IS_FILTER_DUPLICATED_LINE) return null;
+    if (!UsageViewSettings.getInstance().isFilterDuplicatedLine()) return null;
     for (UsageNode node : myUsageNodes) {
       Usage original = node.getUsage();
       if (original instanceof MergeableUsage) {

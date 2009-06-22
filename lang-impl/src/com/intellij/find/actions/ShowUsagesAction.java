@@ -48,10 +48,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Vector;
 
 public class ShowUsagesAction extends AnAction {
   private final boolean showSettingsDialogBefore;
@@ -133,7 +131,7 @@ public class ShowUsagesAction extends AnAction {
     final UsageViewImpl usageView = (UsageViewImpl)UsageViewManager.getInstance(handler.getProject()).createUsageView(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation, null);
 
     final List<Usage> usages = new ArrayList<Usage>();
-    final List<UsageNode> visibleNodes = new ArrayList<UsageNode>();
+    final Set<UsageNode> visibleNodes = new LinkedHashSet<UsageNode>();
     Processor<Usage> collect = new Processor<Usage>() {
       public boolean process(@NotNull Usage usage) {
         synchronized (usages) {
@@ -234,18 +232,14 @@ public class ShowUsagesAction extends AnAction {
   }
 
   private JBPopup createUsagePopup(final List<Usage> usages,
-                                   List<UsageNode> visibleNodes,
+                                   Set<UsageNode> visibleNodes,
                                    final String title,
                                    final FindUsagesHandler handler,
                                    final Editor editor,
                                    final RelativePoint popupPosition,
                                    final int maxUsages,
                                    final UsageViewImpl usageView) {
-    boolean hasMore = false;
-    if (!visibleNodes.isEmpty() && visibleNodes.get(visibleNodes.size()-1) == UsageViewImpl.NULL_NODE) {
-      visibleNodes.remove(visibleNodes.size() - 1);
-      hasMore = true;
-    }
+    boolean hasMore = visibleNodes.remove(UsageViewImpl.NULL_NODE);
 
     final UsageViewSettings usageViewSettings = UsageViewSettings.getInstance();
     final UsageViewSettings save = new UsageViewSettings();
@@ -279,15 +273,15 @@ public class ShowUsagesAction extends AnAction {
     }
     if (visibleNodes.size() == 1 && usages.size() == 1) {
       //the only usage
-      Usage usage = visibleNodes.get(0).getUsage();
-      navigateAndHint(usage, UsageViewBundle.message("show.usages.only.usage", searchScopePresentableName(handler)), handler,
-                      popupPosition, maxUsages);
+      Usage usage = visibleNodes.iterator().next().getUsage();
+      navigateAndHint(usage, UsageViewBundle.message("show.usages.only.usage", searchScopePresentableName(handler)), handler, popupPosition,
+                      maxUsages);
       Disposer.dispose(usageView);
       return null;
     }
     if (visibleNodes.size() == 1 && usages.size() >= 1) {
       // usage view can filter usages down to one
-      Usage usage = visibleNodes.get(0).getUsage();
+      Usage usage = visibleNodes.iterator().next().getUsage();
       navigateAndHint(usage, UsageViewBundle.message("all.usages.are.in.this.line", usages.size(), searchScopePresentableName(handler)),
                       handler, popupPosition, maxUsages);
       Disposer.dispose(usageView);
@@ -298,6 +292,7 @@ public class ShowUsagesAction extends AnAction {
       usages.add(NullUsage.INSTANCE);
       visibleNodes.add(UsageViewImpl.NULL_NODE);
     }
+    addUsageNodes(usageView.getRoot(), usageView, new ArrayList<UsageNode>());
     Vector<Object> data = createListModel(visibleNodes, usages);
     final JList list = new JList(data);
     list.setCellRenderer(new ShowUsagesListCellRenderer(usageView));
@@ -308,7 +303,7 @@ public class ShowUsagesAction extends AnAction {
         if (value instanceof UsageNode) {
           Usage usage = ((UsageNode)value).getUsage();
           if (usage == NullUsage.INSTANCE) {
-            appendMoreUsages(editor,popupPosition, handler, maxUsages);
+            appendMoreUsages(editor, popupPosition, handler, maxUsages);
             return;
           }
           navigateAndHint(usage, null, handler, popupPosition, maxUsages);
@@ -323,7 +318,7 @@ public class ShowUsagesAction extends AnAction {
     if (title != null) {
       String s;
       if (hasMore) {
-        s = "<html><body><b>Some</b> "+title + " " + "<b>(Only "+(visibleNodes.size()-1)+" usages shown)</b></body></html>";
+        s = "<html><body><b>Some</b> " + title + " " + "<b>(Only " + (visibleNodes.size() - 1) + " usages shown)</b></body></html>";
       }
       else {
         s = title + " (" + usages.size() + " usages found)";
@@ -364,7 +359,7 @@ public class ShowUsagesAction extends AnAction {
     final JComponent toolBar = actionToolbar.getComponent();
     toolBar.setOpaque(false);
     builder.setSettingButton(toolBar);
-  
+
     popup[0] = builder.createPopup();
     Disposer.register(popup[0], usageView);
     for (AnAction action : filters.getChildren(null)) {
@@ -423,8 +418,8 @@ public class ShowUsagesAction extends AnAction {
     //rebuildPopup(usageView, usages, list, popup);
   }
 
-  private static Vector<Object> createListModel(List<UsageNode> nodes, List<Usage> usages) {
-    return nodes.isEmpty() ? new Vector<Object>(Arrays.asList(UsageViewBundle.message("usages.were.filtered.out", usages.size()))) : new Vector<Object>(nodes);
+  private static Vector<Object> createListModel(Collection<UsageNode> nodes, List<Usage> usages) {
+    return nodes.isEmpty() ? new Vector<Object>(Collections.singletonList(UsageViewBundle.message("usages.were.filtered.out", usages.size()))) : new Vector<Object>(nodes);
   }
 
   private static KeyboardShortcut getSettingsShortcut() {

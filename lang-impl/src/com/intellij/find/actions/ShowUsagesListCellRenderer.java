@@ -44,6 +44,9 @@ class ShowUsagesListCellRenderer implements ListCellRenderer {
   }
 
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    if (!(value instanceof UsageNode)) {
+      return new JLabel("<html><body><b>"+value+"</b></body></html>", SwingConstants.CENTER);
+    }
     UsageNode usageNode = (UsageNode)value;
 
     JPanel panel = new JPanel(new GridBagLayout());
