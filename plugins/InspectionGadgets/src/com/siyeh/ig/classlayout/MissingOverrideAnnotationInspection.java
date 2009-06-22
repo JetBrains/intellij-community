@@ -18,14 +18,20 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class MissingOverrideAnnotationInspection extends BaseInspection {
 
@@ -140,18 +146,19 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
             return annotation != null;
         }
 
-        private static boolean isJdk6Override(PsiMethod method){
-            final PsiMethod[] superMethods = method.findSuperMethods();
+        private static boolean isJdk6Override(PsiMethod method) {
+            final PsiClass methodClass = method.getContainingClass();
+            if (methodClass == null) {
+                return false;
+            }
+
+            final PsiMethod[] superMethods = getSuperMethodsInJavaSense(method, methodClass);
             if (superMethods.length <= 0) {
                 return false;
             }
             // is override except if this is an interface method
             // overriding a protected method in java.lang.Object
             // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6501053
-            final PsiClass methodClass = method.getContainingClass();
-            if (methodClass == null) {
-                return false;
-            }
             if (!methodClass.isInterface()) {
                 return true;
             }
@@ -163,12 +170,12 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
             return false;
         }
 
-        private static boolean isJdk5Override(PsiMethod method){
-            final PsiMethod[] superMethods = method.findSuperMethods();
+        private static boolean isJdk5Override(PsiMethod method) {
             final PsiClass methodClass = method.getContainingClass();
             if (methodClass == null) {
                 return false;
             }
+            final PsiMethod[] superMethods = getSuperMethodsInJavaSense(method, methodClass);
             for (PsiMethod superMethod : superMethods) {
                 final PsiClass superClass = superMethod.getContainingClass();
                 if (superClass == null) {
@@ -177,8 +184,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
                 if (superClass.isInterface()) {
                     continue;
                 }
-                if (methodClass.isInterface() &&
-                        superMethod.hasModifierProperty(PsiModifier.PROTECTED)) {
+                if (methodClass.isInterface() && superMethod.hasModifierProperty(PsiModifier.PROTECTED)) {
                     // only true for J2SE java.lang.Object.clone(), but might
                     // be different on other/newer java platforms
                     continue;
@@ -186,6 +192,23 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
                 return true;
             }
             return false;
+        }
+
+        private static PsiMethod[] getSuperMethodsInJavaSense(@NotNull PsiMethod method, @NotNull PsiClass methodClass) {
+            final PsiMethod[] superMethods = method.findSuperMethods();
+            List<PsiMethod> toExclude = new SmartList<PsiMethod>();
+            for (PsiMethod superMethod : superMethods) {
+                final PsiClass superClass = superMethod.getContainingClass();
+                if (!InheritanceUtil.isCorrectDescendant(methodClass, superClass, true)) {
+                    toExclude.add(superMethod);
+                }
+            }
+            if (!toExclude.isEmpty()) {
+                List<PsiMethod> result = new ArrayList<PsiMethod>(Arrays.asList(superMethods));
+                result.removeAll(toExclude);
+                return result.toArray(new PsiMethod[result.size()]);
+            }
+            return superMethods;
         }
     }
 }
