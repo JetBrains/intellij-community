@@ -39,11 +39,15 @@ public class TestSuiteStack {
    */
   @NotNull
   public SMTestProxy popSuite(final String suiteName) throws EmptyStackException {
+    if (myStack.isEmpty()) {
+      LOG.assertTrue(false, "Pop error: Test runner try to close test suite which has been already closed or wasn't started at all. Unexpected suite name [" + suiteName + "]");
+      return null;
+    }
     final SMTestProxy currentSuite = myStack.pop();
 
     if (!suiteName.equals(currentSuite.getName())) {
-      LOG.assertTrue(false, "Pop error: Unexpected top element. Expected [" + suiteName + "] but [" + currentSuite.getName() + "] was found. Rest of stack: " + getSuitePathPresentation());
-      assert false;
+      LOG.assertTrue(false, "Pop error: Unexpected closing suite. Expected [" + suiteName + "] but [" + currentSuite.getName() + "] was found. Rest of stack: " + getSuitePathPresentation());
+      return null;
     }
 
     return currentSuite;
