@@ -207,7 +207,7 @@ public class ManagedLibrariesEditor {
     for (OrderEntry entry : rootModel.getOrderEntries()) {
       if (entry instanceof LibraryOrderEntry) {
         final Library library = ((LibraryOrderEntry)entry).getLibrary();
-        if (library != null && toDelete.contains(library)) {
+        if (library != null && toDelete.remove(library)) {
           rootModel.removeOrderEntry(entry);
         }
       }
