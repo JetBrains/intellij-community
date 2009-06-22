@@ -390,6 +390,90 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertTrue(getMavenProject().getMavenModel().getBuild().getPluginsAsMap().isEmpty());
   }
 
+  public void testDependenciesTree() throws Exception {
+    VirtualFile m1 = createModulePom("p1",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m1</artifactId>" +
+                                     "<version>1</version>" +
+
+                                     "<dependencies>" +
+                                     "  <dependency>" +
+                                     "    <groupId>test</groupId>" +
+                                     "    <artifactId>m2</artifactId>" +
+                                     "    <version>1</version>" +
+                                     "  </dependency>" +
+                                     "  <dependency>" +
+                                     "    <groupId>test</groupId>" +
+                                     "    <artifactId>lib1</artifactId>" +
+                                     "    <version>1</version>" +
+                                     "  </dependency>" +
+                                     "</dependencies>");
+
+    VirtualFile m2 = createModulePom("p2",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m2</artifactId>" +
+                                     "<version>1</version>" +
+
+                                     "<dependencies>" +
+                                     "  <dependency>" +
+                                     "    <groupId>junit</groupId>" +
+                                     "    <artifactId>junit</artifactId>" +
+                                     "    <version>4.0</version>" +
+                                     "  </dependency>" +
+                                     "  <dependency>" +
+                                     "    <groupId>test</groupId>" +
+                                     "    <artifactId>lib2</artifactId>" +
+                                     "    <version>1</version>" +
+                                     "  </dependency>" +
+                                     "</dependencies>");
+
+    importProjects(m1, m2);
+    resolveDependenciesAndImport();
+
+    assertDependenciesNodes(myProjectsTree.getRootProjects().get(0).getDependenciesNodes(),
+                           "test:m2:jar:1->(junit:junit:jar:4.0->(),test:lib2:jar:1->()),test:lib1:jar:1->()");
+  }
+  
+  public void testDependenciesTreeWithTypesAndClassifiers() throws Exception {
+    VirtualFile m1 = createModulePom("p1",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m1</artifactId>" +
+                                     "<version>1</version>" +
+
+                                     "<dependencies>" +
+                                     "  <dependency>" +
+                                     "    <groupId>test</groupId>" +
+                                     "    <artifactId>m2</artifactId>" +
+                                     "    <version>1</version>" +
+                                     "    <type>pom</type>" +
+                                     "    <classifier>test</classifier>" +
+                                     "  </dependency>" +
+                                     "</dependencies>");
+
+    VirtualFile m2 = createModulePom("p2",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m2</artifactId>" +
+                                     "<version>1</version>" +
+
+                                     "<dependencies>" +
+                                     "  <dependency>" +
+                                     "    <groupId>test</groupId>" +
+                                     "    <artifactId>lib</artifactId>" +
+                                     "    <version>1</version>" +
+                                     "  </dependency>" +
+                                     "</dependencies>");
+
+    importProjects(m1, m2);
+    resolveDependenciesAndImport();
+
+    assertDependenciesNodes(myProjectsTree.getRootProjects().get(0).getDependenciesNodes(),
+                           "test:m2:pom:test:1->(test:lib:jar:1->())");
+  }
+
+  protected void assertDependenciesNodes(List<MavenArtifactNode> nodes, String expected) {
+    assertEquals(expected, MavenArtifactNode.formatNodesList(nodes));
+  }
+
   private String findPluginConfig(String groupId, String artifactId, String path) {
     return getMavenProject().findPluginConfigurationValue(groupId, artifactId, path);
   }

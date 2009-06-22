@@ -18,9 +18,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
+import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 
 import java.io.File;
@@ -90,11 +90,11 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return new DependencyStrategy(dependency);
     }
 
-    if (MavenDomUtil.getImmediateParent(context, MavenDomExclusion.class) != null ) {
+    if (MavenDomUtil.getImmediateParent(context, MavenDomExclusion.class) != null) {
       return new ExclusionStrategy();
     }
 
-    if (MavenDomUtil.getImmediateParent(context, MavenDomPlugin.class) != null ) {
+    if (MavenDomUtil.getImmediateParent(context, MavenDomPlugin.class) != null) {
       return new PluginOrExtensionStrategy(true);
     }
 
@@ -167,11 +167,11 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     protected File makeLocalRepositoryFile(MavenId id, File localRepostory) {
-      String relPath = ("" + id.groupId).replace(".", "/");
+      String relPath = ("" + id.getGroupId()).replace(".", "/");
 
-      relPath += "/" + id.artifactId;
-      relPath += "/" + id.version;
-      relPath += "/" + id.artifactId + "-" + id.version + ".pom";
+      relPath += "/" + id.getArtifactId();
+      relPath += "/" + id.getVersion();
+      relPath += "/" + id.getArtifactId() + "-" + id.getVersion() + ".pom";
 
       return new File(localRepostory, relPath);
     }
@@ -250,9 +250,9 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     public boolean isValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
-      if (StringUtil.isEmpty(id.groupId)) {
+      if (StringUtil.isEmpty(id.getGroupId())) {
         for (String each : MavenArtifactUtil.DEFAULT_GROUPS) {
-          id.groupId = each;
+          id = new MavenId(each, id.getArtifactId(), id.getVersion());
           if (super.isValid(id, manager, context)) return true;
         }
         return false;
@@ -262,10 +262,10 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
     @Override
     public Set<String> getVariants(MavenId id, MavenProjectIndicesManager manager) {
-      if (StringUtil.isEmpty(id.groupId)) {
+      if (StringUtil.isEmpty(id.getGroupId())) {
         Set<String> result = new THashSet<String>();
         for (String each : MavenArtifactUtil.DEFAULT_GROUPS) {
-          id.groupId = each;
+          id = new MavenId(each, id.getArtifactId(), id.getVersion());
           result.addAll(super.getVariants(id, manager));
         }
         return result;
@@ -275,7 +275,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
     @Override
     protected File makeLocalRepositoryFile(MavenId id, File localRepository) {
-      return MavenArtifactUtil.getArtifactFile(localRepository, id.groupId, id.artifactId, id.version, "pom");
+      return MavenArtifactUtil.getArtifactFile(localRepository, id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
     }
   }
 }

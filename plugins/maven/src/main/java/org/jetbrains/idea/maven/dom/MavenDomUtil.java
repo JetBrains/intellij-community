@@ -42,9 +42,9 @@ public class MavenDomUtil {
     Project project = mavenModel.getXmlElement().getProject();
 
     MavenId parentId = parentProject.getMavenId();
-    result.getGroupId().setStringValue(parentId.groupId);
-    result.getArtifactId().setStringValue(parentId.artifactId);
-    result.getVersion().setStringValue(parentId.version);
+    result.getGroupId().setStringValue(parentId.getGroupId());
+    result.getArtifactId().setStringValue(parentId.getArtifactId());
+    result.getVersion().setStringValue(parentId.getVersion());
 
     if (pomFile.getParent().getParent() != parentProject.getDirectoryFile()) {
       result.getRelativePath().setValue(PsiManager.getInstance(project).findFile(parentProject.getFile()));

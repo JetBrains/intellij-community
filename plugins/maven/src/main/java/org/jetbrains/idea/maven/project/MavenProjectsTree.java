@@ -22,7 +22,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 public class MavenProjectsTree {
-  private static final String STORAGE_VERSION = MavenProjectsTree.class.getSimpleName() + ".4";
+  private static final String STORAGE_VERSION = MavenProjectsTree.class.getSimpleName() + ".5";
 
   enum EmbedderKind {
     EMBEDDER_FOR_DEPENDENCIES_RESOLVE,
@@ -915,9 +915,7 @@ public class MavenProjectsTree {
                                                                                  new MavenProjectReader(),
                                                                                  myProjectLocator,
                                                                                  process);
-      if (nativeProject != null) {
-        fireProjectResolved(mavenProject, nativeProject);
-      }
+      fireProjectResolved(mavenProject, nativeProject);
     }
     finally {
       embeddersManager.release(embedder);
@@ -994,9 +992,9 @@ public class MavenProjectsTree {
     embedder.customizeForResolve(console, process);
 
     try {
-      Artifact artifact = embedder.createArtifact(id.groupId,
-                                                  id.artifactId,
-                                                  id.version,
+      Artifact artifact = embedder.createArtifact(id.getGroupId(),
+                                                  id.getArtifactId(),
+                                                  id.getVersion(),
                                                   MavenConstants.TYPE_JAR,
                                                   null);
       artifact.setScope(Artifact.SCOPE_COMPILE);

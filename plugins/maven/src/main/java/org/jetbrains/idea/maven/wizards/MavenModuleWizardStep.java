@@ -225,8 +225,8 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     }
 
     myArtifactIdField.setText(myBuilder.getName());
-    myGroupIdField.setText(myParent == null ? myBuilder.getName() : myParent.getMavenId().groupId);
-    myVersionField.setText(myParent == null ? "1.0" : myParent.getMavenId().version);
+    myGroupIdField.setText(myParent == null ? myBuilder.getName() : myParent.getMavenId().getGroupId());
+    myVersionField.setText(myParent == null ? "1.0" : myParent.getMavenId().getVersion());
 
     ArchetypeInfo selectedArch = getSelectedArchetype();
     if (selectedArch == null) {
@@ -347,11 +347,11 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
       if (myInheritGroupIdCheckBox.isSelected()
           || myGroupIdField.getText().equals(myInheritedGroupId)) {
-        myGroupIdField.setText(myParent.getMavenId().groupId);
+        myGroupIdField.setText(myParent.getMavenId().getGroupId());
       }
       if (myInheritVersionCheckBox.isSelected()
           || myVersionField.getText().equals(myInheritedVersion)) {
-        myVersionField.setText(myParent.getMavenId().version);
+        myVersionField.setText(myParent.getMavenId().getVersion());
       }
       myInheritedGroupId = myGroupIdField.getText();
       myInheritedVersion = myVersionField.getText();
@@ -368,7 +368,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   private String formatProjectString(MavenProject project) {
     if (project == null) return "<none>";
-    return project.getMavenId().displayString();
+    return project.getMavenId().getDisplayString();
   }
 
   @Override

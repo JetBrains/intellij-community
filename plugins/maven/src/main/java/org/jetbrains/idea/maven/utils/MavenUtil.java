@@ -135,10 +135,6 @@ public class MavenUtil {
     return (collection instanceof Set ? collection : new THashSet<T>(collection));
   }
 
-  public static boolean isMavenProjectFile(VirtualFile file) {
-    return file != null && !file.isDirectory() && MavenConstants.POM_XML.equals(file.getName());
-  }
-
   public static String formatHtmlImage(URL url) {
     return "<img src=\"" + url + "\"> ";
   }
@@ -152,11 +148,11 @@ public class MavenUtil {
            "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
            "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
            "    <modelVersion>4.0.0</modelVersion>\n" +
-           (inheritGroupId ? "" : "    <groupId>" + projectId.groupId + "</groupId>\n") +
+           (inheritGroupId ? "" : "    <groupId>" + projectId.getGroupId() + "</groupId>\n") +
            "    <artifactId>" +
-           projectId.artifactId +
+           projectId.getArtifactId() +
            "</artifactId>\n" +
-           (inheritVersion ? "" : "    <version>" + projectId.version + "</version>\n") +
+           (inheritVersion ? "" : "    <version>" + projectId.getVersion() + "</version>\n") +
            "</project>";
   }
 

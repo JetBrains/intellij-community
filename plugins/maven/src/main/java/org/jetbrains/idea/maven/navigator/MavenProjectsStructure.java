@@ -610,7 +610,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     @Nullable
     @NonNls
     protected String getMenuId() {
-      return "Maven.ProjectMenu";
+      return "Maven.NavigatorProjectMenu";
     }
 
     @Nullable

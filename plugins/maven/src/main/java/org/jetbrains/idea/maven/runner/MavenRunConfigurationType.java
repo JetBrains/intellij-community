@@ -117,8 +117,8 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
     if (virtualFile != null) {
       MavenProject mavenProject = MavenProjectsManager.getInstance(project).findProject(virtualFile);
       if (mavenProject != null) {
-        if (!StringUtil.isEmptyOrSpaces(mavenProject.getMavenId().artifactId)) {
-          return mavenProject.getMavenId().artifactId;
+        if (!StringUtil.isEmptyOrSpaces(mavenProject.getMavenId().getArtifactId())) {
+          return mavenProject.getMavenId().getArtifactId();
         }
       }
     }

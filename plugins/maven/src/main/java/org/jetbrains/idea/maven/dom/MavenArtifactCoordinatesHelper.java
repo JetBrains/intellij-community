@@ -9,12 +9,13 @@ import org.jetbrains.idea.maven.project.MavenId;
 public class MavenArtifactCoordinatesHelper {
   public static MavenId getId(ConvertContext context) {
     MavenDomShortMavenArtifactCoordinates coords = (MavenDomShortMavenArtifactCoordinates)context.getInvocationElement().getParent();
+    String version = "";
+    if (coords instanceof MavenDomArtifactCoordinates) {
+      version = resolveProperties(((MavenDomArtifactCoordinates)coords).getVersion());
+    }
     MavenId result = new MavenId(resolveProperties(coords.getGroupId()),
                                  resolveProperties(coords.getArtifactId()),
-                                 "");
-    if (coords instanceof MavenDomArtifactCoordinates) {
-      result.version = resolveProperties(((MavenDomArtifactCoordinates)coords).getVersion());
-    }
+                                 version);
     return result;
   }
 

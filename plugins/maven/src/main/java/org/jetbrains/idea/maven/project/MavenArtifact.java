@@ -124,12 +124,6 @@ public class MavenArtifact implements Serializable {
     return myFile.getPath();
   }
 
-  public void setResolved(File file) {
-    myFile = file;
-    myResolved = true;
-    myStubbed = false;
-  }
-
   public String getDisplayStringSimple() {
     StringBuilder builder = new StringBuilder();
 
@@ -146,6 +140,18 @@ public class MavenArtifact implements Serializable {
     append(builder, myGroupId);
     append(builder, myArtifactId);
     append(builder, myType);
+    append(builder, myVersion);
+
+    return builder.toString();
+  }
+
+  public String getDisplayStringWithTypeAndClassifier() {
+    StringBuilder builder = new StringBuilder();
+
+    append(builder, myGroupId);
+    append(builder, myArtifactId);
+    append(builder, myType);
+    if (myClassifier != null) append(builder, myClassifier);
     append(builder, myVersion);
 
     return builder.toString();

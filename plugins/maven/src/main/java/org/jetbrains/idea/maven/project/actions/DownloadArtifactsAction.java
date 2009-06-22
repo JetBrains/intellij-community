@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.project.action;
+package org.jetbrains.idea.maven.project.actions;
 
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 

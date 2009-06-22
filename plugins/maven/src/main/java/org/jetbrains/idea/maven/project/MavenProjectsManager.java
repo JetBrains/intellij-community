@@ -292,6 +292,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
       @Override
       public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+        if (project.hasErrors()) return;
+        
         if (project.hasUnresolvedPlugins()) {
           schedulePluginsResolving(project, nativeMavenProject);
         }

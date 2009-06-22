@@ -10,23 +10,23 @@ import java.util.Set;
 public class MavenArtifactCoordinatesVersionConverter extends MavenArtifactCoordinatesConverter {
   @Override
   protected boolean doIsValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
-    if (StringUtil.isEmpty(id.groupId)
-        || StringUtil.isEmpty(id.artifactId)
-        || StringUtil.isEmpty(id.version)) {
+    if (StringUtil.isEmpty(id.getGroupId())
+        || StringUtil.isEmpty(id.getArtifactId())
+        || StringUtil.isEmpty(id.getVersion())) {
       return false;
     }
     if (isVersionRange(id)) return true; // todo handle ranges more sensibly
-    return manager.hasVersion(id.groupId, id.artifactId, id.version);
+    return manager.hasVersion(id.getGroupId(), id.getArtifactId(), id.getVersion());
   }
 
   private boolean isVersionRange(MavenId id) {
-    String version = id.version.trim();
+    String version = id.getVersion().trim();
     return version.startsWith("(") || version.startsWith("[");
   }
 
   @Override
   protected Set<String> doGetVariants(MavenId id, MavenProjectIndicesManager manager
   ) {
-    return manager.getVersions(id.groupId, id.artifactId);
+    return manager.getVersions(id.getGroupId(), id.getArtifactId());
   }
 }

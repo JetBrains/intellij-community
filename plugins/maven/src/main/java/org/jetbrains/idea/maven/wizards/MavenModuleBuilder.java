@@ -157,14 +157,14 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     props.put("archetypeVersion", myArchetype.version);
     if (myArchetype.repository != null) props.put("archetypeRepository", myArchetype.repository);
 
-    props.put("groupId", myProjectId.groupId);
-    props.put("artifactId", myProjectId.artifactId);
-    props.put("version", myProjectId.version);
+    props.put("groupId", myProjectId.getGroupId());
+    props.put("artifactId", myProjectId.getArtifactId());
+    props.put("version", myProjectId.getVersion());
 
     runner.run(params, settings, new Runnable() {
       public void run() {
         try {
-          FileUtil.copyDir(new File(workingDir, myProjectId.artifactId), new File(myContentRootPath));
+          FileUtil.copyDir(new File(workingDir, myProjectId.getArtifactId()), new File(myContentRootPath));
         }
         catch (IOException e) {
           MavenLog.LOG.warn("Cannot generate archetype", e);

@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.project.action;
+package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.ProjectManager;

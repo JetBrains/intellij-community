@@ -24,7 +24,7 @@ public class MavenArtifactUtil {
 
   @Nullable
   public static MavenPluginInfo readPluginInfo(File localRepository, MavenId mavenId) {
-    File file = getArtifactFile(localRepository, mavenId.groupId, mavenId.artifactId, mavenId.version, "jar");
+    File file = getArtifactFile(localRepository, mavenId.getGroupId(), mavenId.getArtifactId(), mavenId.getVersion(), "jar");
 
     MavenPluginInfo result = ourPluginInfoCache.get(file);
     if (result == null) {
@@ -39,7 +39,7 @@ public class MavenArtifactUtil {
   }
 
   public static boolean hasArtifactFile(File localRepository, MavenId id, String type) {
-    return getArtifactFile(localRepository, id.groupId, id.artifactId, id.version, type).exists();
+    return getArtifactFile(localRepository, id.getGroupId(), id.getArtifactId(), id.getVersion(), type).exists();
   }
 
   public static File getArtifactFile(File localRepostiory, String groupId, String artifactId, String version, String type) {

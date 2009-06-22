@@ -38,7 +38,7 @@ public class MavenModuleNameMapper {
         name = module.getName();
       }
       else {
-        name = each.getMavenId().artifactId;
+        name = each.getMavenId().getArtifactId();
         if (!isValidName(name)) name = each.getDirectoryFile().getName();
       }
       mavenProjectToModuleName.put(each, name);
@@ -50,7 +50,7 @@ public class MavenModuleNameMapper {
     for (MavenProject each : projects) {
       String name = mavenProjectToModuleName.get(each);
       if (counts.get(name) > 1) {
-        String groupId = each.getMavenId().groupId;
+        String groupId = each.getMavenId().getGroupId();
         if (isValidName(groupId)) {
           mavenProjectToModuleName.put(each, name + " (" + groupId + ")");
         }

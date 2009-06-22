@@ -5,7 +5,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.tasks.MavenCompilerTask;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
-import org.jetbrains.idea.maven.utils.MavenToggleAction;
+import org.jetbrains.idea.maven.utils.actions.MavenToggleAction;
+import org.jetbrains.idea.maven.utils.actions.MavenActionUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,7 +35,7 @@ public abstract class ToggleCompilerTasksAction extends MavenToggleAction {
   }
 
   protected List<MavenCompilerTask> getTasks(AnActionEvent e) {
-    VirtualFile file = getMavenProjectFile(e);
+    VirtualFile file = MavenActionUtils.getMavenProjectFile(e);
     if (file == null) return Collections.EMPTY_LIST;
 
     List<String> goals = e.getData(MavenDataKeys.MAVEN_GOALS);
@@ -54,6 +55,6 @@ public abstract class ToggleCompilerTasksAction extends MavenToggleAction {
   protected abstract void removeTasks(MavenTasksManager manager, List<MavenCompilerTask> tasks);
 
   private MavenTasksManager getTasksManager(AnActionEvent e) {
-    return MavenTasksManager.getInstance(getProject(e));
+    return MavenTasksManager.getInstance(MavenActionUtils.getProject(e));
   }
 }

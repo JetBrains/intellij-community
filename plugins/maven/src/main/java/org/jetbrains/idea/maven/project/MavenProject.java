@@ -139,6 +139,7 @@ public class MavenProject {
     Set<MavenId> newUnresolvedArtifacts = new THashSet<MavenId>();
     LinkedHashSet<MavenRemoteRepository> newRepositories = new LinkedHashSet<MavenRemoteRepository>();
     LinkedHashSet<MavenArtifact> newDependencies = new LinkedHashSet<MavenArtifact>();
+    LinkedHashSet<MavenArtifactNode> newDependenciesNodes = new LinkedHashSet<MavenArtifactNode>();
     LinkedHashSet<MavenPlugin> newPlugins = new LinkedHashSet<MavenPlugin>();
     LinkedHashSet<MavenArtifact> newExtensions = new LinkedHashSet<MavenArtifact>();
 
@@ -146,6 +147,7 @@ public class MavenProject {
       if (state.myUnresolvedArtifactIds != null) newUnresolvedArtifacts.addAll(state.myUnresolvedArtifactIds);
       if (state.myRemoteRepositories != null) newRepositories.addAll(state.myRemoteRepositories);
       if (state.myDependencies != null) newDependencies.addAll(state.myDependencies);
+      if (state.myDependenciesNodes != null) newDependenciesNodes.addAll(state.myDependenciesNodes);
       if (state.myPlugins != null) newPlugins.addAll(state.myPlugins);
       if (state.myExtensions != null) newExtensions.addAll(state.myExtensions);
     }
@@ -153,12 +155,14 @@ public class MavenProject {
     newUnresolvedArtifacts.addAll(readerResult.unresolvedArtifactIds);
     newRepositories.addAll(convertRepositories(model.getRepositories()));
     newDependencies.addAll(convertArtifacts(nativeMavenProject.getArtifacts()));
+    buildDependenciesNodes(nativeMavenProject.getArtifacts(), newDependenciesNodes);
     newPlugins.addAll(collectPlugins(model, state.myActiveProfilesIds));
     newExtensions.addAll(convertArtifacts(nativeMavenProject.getExtensionArtifacts()));
 
     state.myUnresolvedArtifactIds = newUnresolvedArtifacts;
     state.myRemoteRepositories = new ArrayList<MavenRemoteRepository>(newRepositories);
     state.myDependencies = new ArrayList<MavenArtifact>(newDependencies);
+    state.myDependenciesNodes = new ArrayList<MavenArtifactNode>(newDependenciesNodes);
     state.myPlugins = new ArrayList<MavenPlugin>(newPlugins);
     state.myExtensions = new ArrayList<MavenArtifact>(newExtensions);
   }
@@ -207,6 +211,48 @@ public class MavenProject {
       result.add(new MavenArtifact(each));
     }
     return result;
+  }
+
+  private static void buildDependenciesNodes(Collection<Artifact> artifacts,
+                                             Collection<MavenArtifactNode> result) {
+    for (Artifact each : artifacts) {
+      Collection<MavenArtifactNode> currentScope = result;
+      List<String> trail = each.getDependencyTrail();
+      for (int i= 1; i < trail.size(); i++) {
+        String eachKey = trail.get(i);
+        MavenArtifactNode node = findNodeFor(eachKey, currentScope);
+        if (node == null) {
+          MavenArtifact artifact = findArtifactFor(eachKey, artifacts);
+          if (artifact == null) break;
+          node = new MavenArtifactNode(artifact, new ArrayList<MavenArtifactNode>());
+          currentScope.add(node);
+        }
+        currentScope = node.getDependencies();
+      }
+    }
+  }
+
+  private static MavenArtifactNode findNodeFor(String artifactKey, Collection<MavenArtifactNode> nodes) {
+    for (MavenArtifactNode each : nodes) {
+      if (each.getArtifact().getDisplayStringWithTypeAndClassifier().equals(artifactKey)) {
+        return each;
+      }
+    }
+    for (MavenArtifactNode each : nodes) {
+      MavenArtifactNode result = findNodeFor(artifactKey, each.getDependencies());
+      if (result != null) return result;
+    }
+    return null;
+  }
+
+  private static MavenArtifact findArtifactFor(String artifactKey, Collection<Artifact> artifacts) {
+    for (Artifact each : artifacts) {
+      MavenArtifact eachArtifact = new MavenArtifact(each);
+      if (eachArtifact.getDisplayStringWithTypeAndClassifier().equals(artifactKey)) {
+        return eachArtifact;
+      }
+    }
+    return null;
   }
 
   private static List<MavenPlugin> collectPlugins(Model mavenModel, List<String> activeProfilesIds) {
@@ -309,6 +355,10 @@ public class MavenProject {
     return myFile.getParent();
   }
 
+  public boolean hasErrors()  {
+    return !myState.myValid;
+  }
+
   public List<String> getActiveProfilesIds() {
     return myState.myActiveProfilesIds;
   }
@@ -319,7 +369,7 @@ public class MavenProject {
 
   public String getDisplayName() {
     State state = myState;
-    if (StringUtil.isEmptyOrSpaces(state.myName)) return state.myMavenId.artifactId;
+    if (StringUtil.isEmptyOrSpaces(state.myName)) return state.myMavenId.getArtifactId();
     return state.myName;
   }
 
@@ -402,7 +452,7 @@ public class MavenProject {
                                                             locator,
                                                             process);
     set(result, false, result.isValid, false);
-    return result.isValid ? result.nativeMavenProject : null;
+    return result.nativeMavenProject;
   }
 
   public boolean resolveFolders(MavenEmbedderWrapper embedder,
@@ -569,6 +619,10 @@ public class MavenProject {
 
   public List<MavenArtifact> getDependencies() {
     return myState.myDependencies;
+  }
+
+  public List<MavenArtifactNode> getDependenciesNodes() {
+    return myState.myDependenciesNodes;
   }
 
   public boolean isSupportedDependency(MavenArtifact artifact) {
@@ -755,6 +809,7 @@ public class MavenProject {
     List<MavenArtifact> myExtensions;
 
     List<MavenArtifact> myDependencies;
+    List<MavenArtifactNode> myDependenciesNodes;
 
     Map<String, String> myModulesPathsAndNames;
 

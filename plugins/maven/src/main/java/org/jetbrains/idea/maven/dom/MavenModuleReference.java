@@ -140,20 +140,20 @@ public class MavenModuleReference extends MavenPsiReference implements LocalQuic
     private TemplateBuilder buildTemplate(Project project, VirtualFile modulePomFile) {
       MavenId id = PomDescriptor.describe(PomDescriptor.getPom(myPsiFile));
 
-      if (id.groupId == null) id.groupId = "groupId";
-      if (id.version == null) id.version = "version";
-      id.artifactId = modulePomFile.getParent().getName();
+      String groupId = id.getGroupId() == null ? "groupId" : id.getGroupId();
+      String artifactId = modulePomFile.getParent().getName();
+      String version= id.getVersion() == null ? "version" : id.getVersion();
 
       XmlFile psiFile = (XmlFile)PsiFileFactory.getInstance(project).createFileFromText(
         MavenConstants.POM_XML,
         StdLanguages.XML,
-        MavenUtil.makeFileContent(id));
+        MavenUtil.makeFileContent(new MavenId(groupId, artifactId, version)));
 
       TemplateBuilder b = new TemplateBuilder(psiFile);
 
-      b.replaceElement(getTagValueElement(psiFile, "groupId"), new ConstantNode(id.groupId));
-      b.replaceElement(getTagValueElement(psiFile, "artifactId"), new ConstantNode(id.artifactId));
-      b.replaceElement(getTagValueElement(psiFile, "version"), new ConstantNode(id.version));
+      b.replaceElement(getTagValueElement(psiFile, "groupId"), new ConstantNode(groupId));
+      b.replaceElement(getTagValueElement(psiFile, "artifactId"), new ConstantNode(artifactId));
+      b.replaceElement(getTagValueElement(psiFile, "version"), new ConstantNode(version));
 
       return b;
     }

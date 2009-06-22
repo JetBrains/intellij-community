@@ -103,82 +103,86 @@
   </project-components>
 
   <actions>
-    <group id="Maven.General">
-      <action id="Maven.Reimport" class="org.jetbrains.idea.maven.project.action.ReimportAction"
-              text="Force Reimport All Maven Projects" description="Force IDEA to reimport all Maven projects"
-              icon="/actions/sync.png">
-      </action>
+    <action id="Maven.Reimport" class="org.jetbrains.idea.maven.project.actions.ReimportAction"
+            text="Force Reimport All Maven Projects" description="Force IDEA to reimport all Maven projects"
+            icon="/actions/sync.png">
+    </action>
 
-      <action id="Maven.ReimportProject" class="org.jetbrains.idea.maven.project.action.ReimportProjectAction"
-              text="Force Reimport" description="Force IDEA to reimport selected Maven projects"
-              icon="/actions/sync.png">
-      </action>
+    <action id="Maven.ReimportProject" class="org.jetbrains.idea.maven.project.actions.ReimportProjectAction"
+            text="Force Reimport" description="Force IDEA to reimport selected Maven projects"
+            icon="/actions/sync.png">
+    </action>
 
-      <action id="Maven.UpdateFolders" class="org.jetbrains.idea.maven.project.action.UpdateFoldersAction"
-              text="Update Folders For All Projects" description="Generate sources and update project folders"
-              icon="/images/updateFolders.png">
-      </action>
+    <action id="Maven.UpdateFolders" class="org.jetbrains.idea.maven.project.actions.UpdateFoldersAction"
+            text="Update Folders For All Projects" description="Generate sources and update project folders"
+            icon="/images/updateFolders.png">
+    </action>
 
-      <action id="Maven.UpdateFoldersForProject" class="org.jetbrains.idea.maven.project.action.UpdateFoldersForProjectAction"
-              text="Update Folders" description="Generate sources and update folders for selected projects"
-              icon="/images/updateFolders.png">
-      </action>
+    <action id="Maven.UpdateFoldersForProject" class="org.jetbrains.idea.maven.project.actions.UpdateFoldersForProjectAction"
+            text="Update Folders" description="Generate sources and update folders for selected projects"
+            icon="/images/updateFolders.png">
+    </action>
 
-      <action id="Maven.DownloadArtifacts" class="org.jetbrains.idea.maven.project.action.DownloadArtifactsAction"
-              text="Download Sources And Javadoc For All Projects" description="Download sources and javadoc for all dependencies"
-              icon="/images/download.png">
-      </action>
+    <action id="Maven.DownloadArtifacts" class="org.jetbrains.idea.maven.project.actions.DownloadArtifactsAction"
+            text="Download Sources And Javadoc For All Projects" description="Download sources and javadoc for all dependencies"
+            icon="/images/download.png">
+    </action>
 
-      <action id="Maven.DownloadArtifactsForProject" class="org.jetbrains.idea.maven.project.action.DownloadArtifactsForProjectAction"
-              text="Download Sources And Javadoc" description="Download sources and javadoc for all dependencies for selected projects"
-              icon="/images/download.png">
-      </action>
+    <action id="Maven.DownloadArtifactsForProject" class="org.jetbrains.idea.maven.project.actions.DownloadArtifactsForProjectAction"
+            text="Download Sources And Javadoc" description="Download sources and javadoc for all dependencies for selected projects"
+            icon="/images/download.png">
+    </action>
 
-      <action id="Maven.AddManagedFiles" class="org.jetbrains.idea.maven.project.action.AddManagedFilesAction"
-              text="Add Maven Projects" description="Add and import Maven projects to projects tree"
-              icon="/general/add.png">
-      </action>
-      <action id="Maven.RemoveManagedFiles" class="org.jetbrains.idea.maven.project.action.RemoveManagedFilesAction"
-              text="Remove Project" description="Remove selected Maven projects from project tree"
-              icon="/general/remove.png">
-      </action>
+    <action id="Maven.AddManagedFiles" class="org.jetbrains.idea.maven.project.actions.AddManagedFilesAction"
+            text="Add Maven Projects" description="Add and import Maven projects to projects tree"
+            icon="/general/add.png">
+    </action>
+    <action id="Maven.RemoveManagedFiles" class="org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction"
+            text="Remove Project" description="Remove selected Maven projects from project tree"
+            icon="/general/remove.png">
+    </action>
 
-      <action id="Maven.IgnoreProject"
-              class="org.jetbrains.idea.maven.project.action.ToggleIgnoredProjectsAction" text="_Ignore Project"
-              description="Exclude/Include selected Maven projects from being imported">
-      </action>
-      <action id="Maven.ToggleProfile"
-              class="org.jetbrains.idea.maven.project.action.ToggleProfileAction" text="Toggle Profile"
-              description="Activate/deactivate profile">
-      </action>
+    <action id="Maven.IgnoreProject"
+            class="org.jetbrains.idea.maven.project.actions.ToggleIgnoredProjectsAction" text="_Ignore Project"
+            description="Exclude/Include selected Maven projects from being imported">
+    </action>
+    <action id="Maven.ToggleProfile"
+            class="org.jetbrains.idea.maven.project.actions.ToggleProfileAction" text="Toggle Profile"
+            description="Activate/deactivate profile">
+    </action>
 
-      <action id="Maven.RunBuild"
-              class="org.jetbrains.idea.maven.project.action.RunBuildAction" text="_Run Maven Build"
-              description="Execute selected phases or goals"
-              icon="/actions/execute.png">
-      </action>
-    </group>
+    <action id="Maven.RunBuild"
+            class="org.jetbrains.idea.maven.project.actions.RunBuildAction" text="_Run Maven Build"
+            description="Execute selected phases or goals"
+            icon="/actions/execute.png">
+    </action>
+
+    <action id="Maven.ShowGraph"
+            class="org.jetbrains.idea.maven.graph.actions.ShowGraphAction" text="_Dependency Graph"
+            description="Show Maven dependency graph"
+            icon="/images/graph.png">
+    </action>
 
     <action id="Maven.ShowSettings"
-            class="org.jetbrains.idea.maven.project.action.EditSettingsAction" text="Maven Settings"
+            class="org.jetbrains.idea.maven.project.actions.EditSettingsAction" text="Maven Settings"
             description="Edit Maven integration settings for the current project"
             icon="/images/mavenSettings.png">
     </action>
 
     <action id="Maven.ShowTemplateSettings"
-            class="org.jetbrains.idea.maven.project.action.EditTemplateSettingsAction" text="Template Maven Settings"
+            class="org.jetbrains.idea.maven.project.actions.EditTemplateSettingsAction" text="Template Maven Settings"
             description="Edit Maven integration settings for the template project"
             icon="/general/applicationSettings.png">
     </action>
 
     <action id="Maven.ToggleOffline"
-            class="org.jetbrains.idea.maven.project.action.ToggleOfflineAction" text="Toggle Offline Mode"
+            class="org.jetbrains.idea.maven.project.actions.ToggleOfflineAction" text="Toggle Offline Mode"
             description="Toggle offline mode for Maven builds"
             icon="/images/offlineMode.png">
     </action>
 
     <action id="Maven.ToggleSkipTests"
-            class="org.jetbrains.idea.maven.project.action.ToggleSkipTestsAction" text="Toggle 'Skip Tests' Mode"
+            class="org.jetbrains.idea.maven.project.actions.ToggleSkipTestsAction" text="Toggle 'Skip Tests' Mode"
             description="Toggle 'Skip tests' mode for Maven builds"
             icon="/nodes/exceptionClass.png">
     </action>
@@ -188,17 +192,17 @@
 
     <group id="Maven.NavigatorSettingsGroup">
       <action id="Maven.GroupProjects"
-              class="org.jetbrains.idea.maven.navigator.action.GroupProjectsAction"
+              class="org.jetbrains.idea.maven.navigator.actions.GroupProjectsAction"
               text="Group Projects"
               description="Group projects according to Maven structure"
               icon="/nodes/folder.png"/>
       <action id="Maven.ShowIgnored"
-              class="org.jetbrains.idea.maven.navigator.action.ShowIgnoredProjectsAction"
+              class="org.jetbrains.idea.maven.navigator.actions.ShowIgnoredProjectsAction"
               text="Show Ignored Projects"
               description="Show ignored projects"
               icon="/actions/showHiddens.png"/>
       <action id="Maven.ShowBasicPhasesOnly"
-              class="org.jetbrains.idea.maven.navigator.action.ShowBasicPhasesOnlyAction"
+              class="org.jetbrains.idea.maven.navigator.actions.ShowBasicPhasesOnlyAction"
               text="Show Basic Phases Only"
               description="Show basic phases only"
               icon="/images/filterPhases.png"/>
@@ -243,18 +247,32 @@
       <reference id="Maven.Help"/>
     </group>
 
-    <group id="Maven.ProjectMenu" popup="true">
+    <group id="Maven.BaseProjectMenu">
       <reference id="Maven.ReimportProject"/>
       <reference id="Maven.UpdateFoldersForProject"/>
       <reference id="Maven.DownloadArtifactsForProject"/>
       <separator/>
       <reference id="Maven.RemoveManagedFiles"/>
+    </group>
+
+    <group id="Maven.NavigatorProjectMenu" popup="true">
+      <reference ref="Maven.BaseProjectMenu"/>
       <separator/>
       <reference id="Maven.RunBuild"/>
       <reference ref="RunContextGroup"/>
       <separator/>
+      <reference id="Maven.ShowGraph"/>
+      <separator/>
       <reference id="EditSource"/>
       <reference id="Maven.IgnoreProject"/>
+    </group>
+    
+    <group id="Maven.EditorProjectMenu" class="org.jetbrains.idea.maven.project.actions.MavenEditorActionGroup" popup="true" text="Maven" icon="/images/mavenLogo.png">
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+
+      <reference ref="Maven.BaseProjectMenu"/>
+      <separator/>
+      <reference id="Maven.ShowGraph"/>
     </group>
 
     <group id="Maven.BuildMenu" popup="true">
@@ -265,9 +283,10 @@
     </group>
 
     <group id="Maven.GenerateGroup" text="Generate">
+      <add-to-group group-id="GenerateGroup" anchor="last"/>
+
       <action id="GenerateDependency" text="Dependency" class="org.jetbrains.idea.maven.dom.generate.GenerateDependencyAction"/>
       <action id="GenerateParent" text="Parent" class="org.jetbrains.idea.maven.dom.generate.GenerateParentAction"/>
-      <add-to-group group-id="GenerateGroup" anchor="last"/>
     </group>
   </actions>
 </idea-plugin>

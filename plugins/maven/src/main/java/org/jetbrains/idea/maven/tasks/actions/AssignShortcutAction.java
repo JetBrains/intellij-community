@@ -5,10 +5,10 @@ import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenAction;
-import org.jetbrains.idea.maven.utils.MavenDataKeys;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
+import org.jetbrains.idea.maven.utils.actions.MavenAction;
+import org.jetbrains.idea.maven.utils.actions.MavenActionUtils;
+import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
 import java.util.List;
 
@@ -19,26 +19,21 @@ public class AssignShortcutAction extends MavenAction {
   }
 
   private boolean isIgnoredProject(AnActionEvent e) {
-    VirtualFile file = getMavenProjectFile(e);
-    if (file == null) return false;
-
-    MavenProjectsManager manager = getProjectsManager(e);
-    MavenProject project = manager.findProject(file);
+    MavenProject project = MavenActionUtils.getMavenProject(e);
     if (project == null) return false;
-
-    return manager.isIgnored(project);
+    return MavenActionUtils.getProjectsManager(e).isIgnored(project);
   }
 
   public void actionPerformed(AnActionEvent e) {
     String actionId = getGoalActionId(e);
     if (actionId != null) {
-      new EditKeymapsDialog(getProject(e), actionId).show();
+      new EditKeymapsDialog(MavenActionUtils.getProject(e), actionId).show();
     }
   }
 
   @Nullable
   private String getGoalActionId(AnActionEvent e) {
-    VirtualFile file = getMavenProjectFile(e);
+    VirtualFile file = MavenActionUtils.getMavenProjectFile(e);
     if (file == null) return null;
 
     List<String> goals = e.getData(MavenDataKeys.MAVEN_GOALS);
@@ -48,7 +43,7 @@ public class AssignShortcutAction extends MavenAction {
   }
 
   protected MavenShortcutsManager getShortcutsManager(AnActionEvent e) {
-    return MavenShortcutsManager.getInstance(getProject(e));
+    return MavenShortcutsManager.getInstance(MavenActionUtils.getProject(e));
   }
 }
 

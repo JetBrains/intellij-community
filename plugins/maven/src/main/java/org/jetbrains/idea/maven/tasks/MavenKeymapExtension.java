@@ -19,7 +19,8 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.runner.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
-import org.jetbrains.idea.maven.utils.MavenAction;
+import org.jetbrains.idea.maven.utils.actions.MavenAction;
+import org.jetbrains.idea.maven.utils.actions.MavenActionUtils;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenPluginInfo;
@@ -172,8 +173,8 @@ public class MavenKeymapExtension implements KeymapExtension {
         MavenRunnerParameters params = new MavenRunnerParameters(true,
                                                                  myMavenProject.getDirectory(),
                                                                  Arrays.asList(myGoal),
-                                                                 getProjectsManager(e).getActiveProfiles());
-        MavenRunConfigurationType.runConfiguration(getProject(e), params, e.getDataContext());
+                                                                 MavenActionUtils.getProjectsManager(e).getActiveProfiles());
+        MavenRunConfigurationType.runConfiguration(MavenActionUtils.getProject(e), params, e.getDataContext());
       }
       catch (ExecutionException ex) {
         MavenLog.LOG.warn(ex);

@@ -19,7 +19,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
-  private final static Icon ICON = IconLoader.getIcon("/images/mavenEmblem.png");
+  private final static Icon ICON = IconLoader.getIcon("/images/mavenLogo.png");
 
   private static class Parameters {
     private Project myProjectToUpdate;
@@ -235,7 +235,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   public String getSuggestedProjectName() {
     final List<MavenProject> list = getParameters().myMavenProjectTree.getRootProjects();
     if (list.size() == 1) {
-      return list.get(0).getMavenId().artifactId;
+      return list.get(0).getMavenId().getArtifactId();
     }
     return null;
   }

@@ -7,26 +7,38 @@ import java.io.Serializable;
 public class MavenId implements Serializable {
   public static final String UNKNOWN_VALUE = "Unknown";
 
-  public String groupId;
-  public String artifactId;
-  public String version;
+  private final String myGroupId;
+  private final String myArtifactId;
+  private final String myVersion;
 
   public MavenId(String groupId, String artifactId, String version) {
-    this.groupId = groupId;
-    this.artifactId = artifactId;
-    this.version = version;
+    this.myGroupId = groupId;
+    this.myArtifactId = artifactId;
+    this.myVersion = version;
   }
 
   public MavenId(Artifact artifact) {
     this(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
   }
 
-  public String displayString() {
+  public String getGroupId() {
+    return myGroupId;
+  }
+
+  public String getArtifactId() {
+    return myArtifactId;
+  }
+
+  public String getVersion() {
+    return myVersion;
+  }
+
+  public String getDisplayString() {
     StringBuilder builder = new StringBuilder();
 
-    append(builder, groupId);
-    append(builder, artifactId);
-    append(builder, version);
+    append(builder, myGroupId);
+    append(builder, myArtifactId);
+    append(builder, myVersion);
 
     return builder.toString();
   }
@@ -38,7 +50,7 @@ public class MavenId implements Serializable {
 
   @Override
   public String toString() {
-    return displayString();
+    return getDisplayString();
   }
 
   @Override
@@ -48,9 +60,9 @@ public class MavenId implements Serializable {
 
     MavenId projectId = (MavenId)o;
 
-    if (groupId != null ? !groupId.equals(projectId.groupId) : projectId.groupId != null) return false;
-    if (artifactId != null ? !artifactId.equals(projectId.artifactId) : projectId.artifactId != null) return false;
-    if (version != null ? !version.equals(projectId.version) : projectId.version != null) return false;
+    if (myGroupId != null ? !myGroupId.equals(projectId.myGroupId) : projectId.myGroupId != null) return false;
+    if (myArtifactId != null ? !myArtifactId.equals(projectId.myArtifactId) : projectId.myArtifactId != null) return false;
+    if (myVersion != null ? !myVersion.equals(projectId.myVersion) : projectId.myVersion != null) return false;
 
     return true;
   }
@@ -58,9 +70,9 @@ public class MavenId implements Serializable {
   @Override
   public int hashCode() {
     int result;
-    result = (groupId != null ? groupId.hashCode() : 0);
-    result = 31 * result + (artifactId != null ? artifactId.hashCode() : 0);
-    result = 31 * result + (version != null ? version.hashCode() : 0);
+    result = (myGroupId != null ? myGroupId.hashCode() : 0);
+    result = 31 * result + (myArtifactId != null ? myArtifactId.hashCode() : 0);
+    result = 31 * result + (myVersion != null ? myVersion.hashCode() : 0);
     return result;
   }
 }

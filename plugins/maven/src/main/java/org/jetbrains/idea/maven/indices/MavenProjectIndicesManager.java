@@ -188,7 +188,7 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
   private Set<String> getProjectGroupIds() {
     Set<String> result = new THashSet<String>();
     for (MavenId each : getProjectsIds()) {
-      result.add(each.groupId);
+      result.add(each.getGroupId());
     }
     return result;
   }
@@ -196,8 +196,8 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
   private Set<String> getProjectArtifactIds(String groupId) {
     Set<String> result = new THashSet<String>();
     for (MavenId each : getProjectsIds()) {
-      if (groupId.equals(each.groupId)) {
-        result.add(each.artifactId);
+      if (groupId.equals(each.getGroupId())) {
+        result.add(each.getArtifactId());
       }
     }
     return result;
@@ -206,8 +206,8 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
   private Set<String> getProjectVersions(String groupId, String artifactId) {
     Set<String> result = new THashSet<String>();
     for (MavenId each : getProjectsIds()) {
-      if (groupId.equals(each.groupId) && artifactId.equals(each.artifactId)) {
-        result.add(each.version);
+      if (groupId.equals(each.getGroupId()) && artifactId.equals(each.getArtifactId())) {
+        result.add(each.getVersion());
       }
     }
     return result;

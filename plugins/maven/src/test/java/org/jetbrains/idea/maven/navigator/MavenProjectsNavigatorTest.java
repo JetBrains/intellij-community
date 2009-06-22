@@ -1,9 +1,11 @@
 package org.jetbrains.idea.maven.navigator;
 
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 
@@ -238,6 +240,7 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     assertEquals(0, projectNode.getModulesNode().getProjectNodes().size());
   }
 
+  @Bombed(day = 24, month = Calendar.JUNE)
   public void testReorderingProjectsWhenNameChanges() throws Exception {
     myProjectsManager.fireActivatedInTests();
 

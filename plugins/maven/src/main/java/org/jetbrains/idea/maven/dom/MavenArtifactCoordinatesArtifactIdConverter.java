@@ -10,12 +10,12 @@ import java.util.Set;
 public class MavenArtifactCoordinatesArtifactIdConverter extends MavenArtifactCoordinatesConverter {
   @Override
   protected boolean doIsValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
-    if (StringUtil.isEmpty(id.groupId) || StringUtil.isEmpty(id.artifactId)) return false;
-    return manager.hasArtifactId(id.groupId, id.artifactId);
+    if (StringUtil.isEmpty(id.getGroupId()) || StringUtil.isEmpty(id.getArtifactId())) return false;
+    return manager.hasArtifactId(id.getGroupId(), id.getArtifactId());
   }
 
   @Override
   protected Set<String> doGetVariants(MavenId id, MavenProjectIndicesManager manager) {
-    return manager.getArtifactIds(id.groupId);
+    return manager.getArtifactIds(id.getGroupId());
   }
 }

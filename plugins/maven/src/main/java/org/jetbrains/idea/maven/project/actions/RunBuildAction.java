@@ -1,11 +1,12 @@
-package org.jetbrains.idea.maven.project.action;
+package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.runner.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
-import org.jetbrains.idea.maven.utils.MavenAction;
+import org.jetbrains.idea.maven.utils.actions.MavenAction;
+import org.jetbrains.idea.maven.utils.actions.MavenActionUtils;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
@@ -23,7 +24,7 @@ public class RunBuildAction extends MavenAction {
   }
 
   private boolean checkOrPerform(AnActionEvent e, boolean perform) {
-    VirtualFile file = getMavenProjectFile(e);
+    VirtualFile file = MavenActionUtils.getMavenProjectFile(e);
     if (file == null) return false;
 
     List<String> goals = e.getData(MavenDataKeys.MAVEN_GOALS);
@@ -33,8 +34,8 @@ public class RunBuildAction extends MavenAction {
 
     try {
       MavenRunnerParameters params = new MavenRunnerParameters(
-        true, file.getParent().getPath(), goals, getProjectsManager(e).getActiveProfiles());
-      MavenRunConfigurationType.runConfiguration(getProject(e), params, e.getDataContext());
+        true, file.getParent().getPath(), goals, MavenActionUtils.getProjectsManager(e).getActiveProfiles());
+      MavenRunConfigurationType.runConfiguration(MavenActionUtils.getProject(e), params, e.getDataContext());
     }
     catch (ExecutionException ex) {
       MavenLog.LOG.warn(ex);

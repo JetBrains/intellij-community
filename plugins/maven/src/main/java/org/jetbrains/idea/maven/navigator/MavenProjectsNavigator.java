@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class MavenProjectsNavigator extends SimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState> {
   public static final String TOOL_WINDOW_ID = "Maven Projects";
 
-  private static final Icon ICON = IconLoader.getIcon("/images/mavenEmblem.png");
+  private static final Icon ICON = IconLoader.getIcon("/images/mavenLogo.png");
   private static final URL ADD_ICON_URL = MavenProjectsNavigator.class.getResource("/general/add.png");
   private static final URL SYNC_ICON_URL = MavenProjectsNavigator.class.getResource("/actions/sync.png");
 

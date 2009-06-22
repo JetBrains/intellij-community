@@ -60,7 +60,7 @@ public class MavenProjectsTreeIgnoresTest extends MavenProjectsTreeTestCase {
     private String format(List<MavenProject> projects) {
       return StringUtil.join(projects, new Function<MavenProject, String>() {
         public String fun(MavenProject project) {
-          return project.getMavenId().artifactId;
+          return project.getMavenId().getArtifactId();
         }
       }, ", ");
     }
