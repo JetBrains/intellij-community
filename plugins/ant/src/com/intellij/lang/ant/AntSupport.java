@@ -5,7 +5,6 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.changes.AntChangeVisitor;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -27,16 +26,9 @@ public class AntSupport implements ApplicationComponent {
   private static AntChangeVisitor ourChangeVisitor = null;
   private static final Map<AntFile, WeakHashMap<AntFile, Boolean>> ourFileDependencies = new WeakHashMap<AntFile, WeakHashMap<AntFile, Boolean>>();
 
-  public AntSupport(FileTypeManager fileTypeManager, ActionManager actionManager) {
+  public AntSupport(FileTypeManager fileTypeManager) {
     fileTypeManager.getRegisteredFileTypes();
     ((CompositeLanguage)StdLanguages.XML).registerLanguageExtension(new AntLanguageExtension());
-
-    final AnAction addAntBuildFile = actionManager.getAction("AddAntBuildFile");
-    assert addAntBuildFile != null;
-    final DefaultActionGroup group = (DefaultActionGroup)actionManager.getAction("J2EEViewPopupMenu");
-    if (group != null) {
-      group.add(addAntBuildFile, new Constraints(Anchor.AFTER, "ValidateXml"));
-    }
   }
 
   public static synchronized AntLanguage getLanguage() {
