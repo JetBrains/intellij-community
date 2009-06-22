@@ -449,7 +449,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       if (containingClass != null && method.isConstructor() && containingClass.getConstructors().length == 1 && !isClassUnused(containingClass)) return null;
       if (isImplicitUsage(method)) return null;
 
-      if (!method.getHierarchicalMethodSignature().getSuperSignatures().isEmpty() || !weAreSureThereAreNoUsages(method)) {
+      if (method.findSuperMethods().length != 0 || !weAreSureThereAreNoUsages(method)) {
         return null;
       }
     }
