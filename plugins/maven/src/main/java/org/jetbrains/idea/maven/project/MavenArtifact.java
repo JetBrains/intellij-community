@@ -19,11 +19,13 @@ package org.jetbrains.idea.maven.project;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.jetbrains.idea.maven.embedder.CustomArtifact;
-import org.jetbrains.idea.maven.utils.MavenConstants;
 import static org.jetbrains.idea.maven.project.MavenId.append;
+import org.jetbrains.idea.maven.utils.MavenConstants;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MavenArtifact implements Serializable {
   private String myGroupId;
@@ -41,6 +43,8 @@ public class MavenArtifact implements Serializable {
   private File myFile;
   private boolean myResolved;
   private boolean myStubbed;
+
+  private List<String> myTrail;
 
   protected MavenArtifact() {
   }
@@ -61,6 +65,11 @@ public class MavenArtifact implements Serializable {
     myFile = artifact.getFile();
     myResolved = artifact.isResolved();
     myStubbed = artifact instanceof CustomArtifact && ((CustomArtifact)artifact).isStub();
+
+    List<String> originalTrail = artifact.getDependencyTrail();
+    myTrail = originalTrail == null || originalTrail.isEmpty()
+              ? new ArrayList<String>()
+              : new ArrayList<String>(originalTrail.subList(1, originalTrail.size()));
   }
 
   private String getExtension(Artifact artifact) {
@@ -122,6 +131,10 @@ public class MavenArtifact implements Serializable {
 
   public String getPath() {
     return myFile.getPath();
+  }
+
+  public List<String> getTrail() {
+    return myTrail;
   }
 
   public String getDisplayStringSimple() {
@@ -204,6 +217,7 @@ public class MavenArtifact implements Serializable {
     if (myType != null ? !myType.equals(that.myType) : that.myType != null) return false;
     if (myClassifier != null ? !myClassifier.equals(that.myClassifier) : that.myClassifier != null) return false;
     if (myScope != null ? !myScope.equals(that.myScope) : that.myScope != null) return false;
+    if (myTrail != null ? myTrail.equals(that.myTrail) : that.myTrail != null) return false;
 
     return true;
   }
@@ -217,6 +231,7 @@ public class MavenArtifact implements Serializable {
     result = 31 * result + (myType != null ? myType.hashCode() : 0);
     result = 31 * result + (myClassifier != null ? myClassifier.hashCode() : 0);
     result = 31 * result + (myScope != null ? myScope.hashCode() : 0);
+    result = 31 * result + (myTrail != null ? myTrail.hashCode() : 0);
     return result;
   }
 }
