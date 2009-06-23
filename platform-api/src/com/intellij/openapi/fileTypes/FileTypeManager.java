@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,7 +39,8 @@ public abstract class FileTypeManager{
    */
   public static FileTypeManager getInstance() {
     if (ourInstance == null) {
-      ourInstance = ApplicationManager.getApplication().getComponent(FileTypeManager.class);
+      Application app = ApplicationManager.getApplication();
+      ourInstance = app != null ? app.getComponent(FileTypeManager.class) : new MockFileTypeManager();
     }
     return ourInstance;
   }

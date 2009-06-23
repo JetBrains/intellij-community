@@ -408,6 +408,7 @@ public class JavaLexer extends LexerBase {
     walk(root, stats);
 
     System.out.println("Scanned " + stats.files + " files, total of " + stats.lines + " lines in " + (stats.time / 1000000) + " ms.");
+    System.out.println("Size:" + stats.bytes);
     ProfilingUtil.captureCPUSnapshot();
 
   }
@@ -421,6 +422,8 @@ public class JavaLexer extends LexerBase {
       stats.lines++;
       buf.append(s).append("\n");
     }
+    
+    stats.bytes += buf.length();
 
     long start = System.nanoTime();
     lexText(buf);
@@ -439,6 +442,7 @@ public class JavaLexer extends LexerBase {
     public int files;
     public int lines;
     public long time;
+    public long bytes;
   }
 
   private static void walk(File root, Stats stats) throws IOException {
