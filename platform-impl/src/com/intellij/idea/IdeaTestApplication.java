@@ -54,4 +54,8 @@ public class IdeaTestApplication extends CommandLineApplication {
     }
     return (IdeaTestApplication)ourInstance;
   }
+
+  public static boolean isInitialized() {
+    return ourInstance != null;
+  }
 }
