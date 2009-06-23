@@ -49,8 +49,6 @@ public abstract class IdeaTestFixtureFactory {
 
   public abstract TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder();
 
-  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(String platformPrefix);
-
   public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder();
 
   public abstract CodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture);
