@@ -67,8 +67,8 @@ public class JUnit4TestRunnerUtil {
             return classMethods.isEmpty() ? allClasses : allClasses.filterWith(new Filter() {
               public boolean shouldRun(Description description) {
                 if (description.isTest()) {
-                  final Set methods = (Set)classMethods.get(description.getClassName());
-                  return methods == null || methods.contains(description.getMethodName());
+                  final Set methods = (Set)classMethods.get(JUnit4ReflectionUtil.getClassName(description));
+                  return methods == null || methods.contains(JUnit4ReflectionUtil.getMethodName(description));
                 }
                 return true;
               }

@@ -70,11 +70,11 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
         if (data != null) {
           runner.addListener(new RunListener() {
             public void testStarted(Description description) {
-              ((com.intellij.rt.coverage.data.ProjectData)data).testStarted(description.getClassName() + "." + description.getMethodName());
+              ((com.intellij.rt.coverage.data.ProjectData)data).testStarted(JUnit4ReflectionUtil.getClassName(description) + "." + JUnit4ReflectionUtil.getMethodName(description));
             }
 
             public void testFinished(Description description) {
-              ((com.intellij.rt.coverage.data.ProjectData)data).testEnded(description.getClassName() + "." + description.getMethodName());
+              ((com.intellij.rt.coverage.data.ProjectData)data).testEnded(JUnit4ReflectionUtil.getClassName(description) + "." + JUnit4ReflectionUtil.getMethodName(description));
             }
 
           });

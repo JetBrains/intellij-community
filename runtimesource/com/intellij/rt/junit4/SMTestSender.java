@@ -23,7 +23,7 @@ class SMTestSender extends RunListener {
   }
 
   public void testStarted(Description description) throws Exception {
-    final String className = description.getClassName();
+    final String className = JUnit4ReflectionUtil.getClassName(description);
     if (myCurrentClassName == null || !myCurrentClassName.equals(className)) {
       if (myCurrentClassName != null) {
         System.out.println("##teamcity[testSuiteFinished name=\'" + myCurrentClassName + "\']");
@@ -31,16 +31,16 @@ class SMTestSender extends RunListener {
       myCurrentClassName = className;
       System.out.println("##teamcity[testSuiteStarted name=\'" + className + "\']");
     }
-    System.out.println("##teamcity[testStarted name=\'" + description.getMethodName() + "\']");
+    System.out.println("##teamcity[testStarted name=\'" + JUnit4ReflectionUtil.getMethodName(description) + "\']");
   }
 
   public void testFinished(Description description) throws Exception {
-    System.out.println("##teamcity[testFinished name=\'" + description.getMethodName() + "\']");
+    System.out.println("##teamcity[testFinished name=\'" + JUnit4ReflectionUtil.getMethodName(description) + "\']");
   }
 
   public void testFailure(Failure failure) throws Exception {
     System.out.println("##teamcity[testFailed name=\'" +
-                       failure.getDescription().getMethodName() +
+                       JUnit4ReflectionUtil.getMethodName(failure.getDescription()) +
                        "\' message=\'" +
                        failure.getMessage() +
                        "\' details=\'" +
@@ -53,6 +53,6 @@ class SMTestSender extends RunListener {
   }
 
   public void testIgnored(Description description) throws Exception {
-    System.out.println("##teamcity[testIgnored name=\'" + description.getMethodName() + "\']");
+    System.out.println("##teamcity[testIgnored name=\'" + JUnit4ReflectionUtil.getMethodName(description) + "\']");
   }
 }
