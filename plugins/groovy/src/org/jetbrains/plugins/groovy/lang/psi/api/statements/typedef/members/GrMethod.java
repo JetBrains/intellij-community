@@ -39,7 +39,7 @@ import java.util.Set;
  */
 public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMethod, GrMember,
         GrParametersOwner, GrTopLevelDefintion, GrTypeParameterListOwner {
-  public static final GrMethod[] EMPTY_ARRAY = new GrMethod[0];
+  GrMethod[] EMPTY_ARRAY = new GrMethod[0];
   Key<Boolean> BUILDER_METHOD = Key.create("BUILDER_METHOD");
 
   @Nullable

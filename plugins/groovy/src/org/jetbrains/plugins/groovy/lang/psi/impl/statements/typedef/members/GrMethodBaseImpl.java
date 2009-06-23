@@ -2,11 +2,11 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
@@ -14,8 +14,10 @@ import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.ui.RowIcon;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,8 +133,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     return new GrMember[]{this};
   }
 
-  private static class MyTypeCalculator implements Function<GrMethod, PsiType> {
-
+  private static final Function<GrMethod, PsiType> ourTypesCalculator = new NullableFunction<GrMethod, PsiType>() {
     public PsiType fun(GrMethod method) {
       PsiType nominal = getNominalType(method);
       if (nominal != null && nominal.equals(PsiType.VOID)) return nominal;
@@ -144,25 +145,24 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
       return nominal;
     }
 
+    @Nullable
     private PsiType getNominalType(GrMethod method) {
       GrTypeElement element = method.getReturnTypeElementGroovy();
       return element != null ? element.getType() : null;
     }
 
+    @Nullable
     private PsiType getInferredType(GrMethod method) {
       final GrOpenBlock block = method.getBlock();
       if (block == null) return null;
 
-      if (GroovyPsiManager.getInstance(method.getProject()).isTypeBeingInferred(method)) {
+      if (GroovyPsiManager.isTypeBeingInferred(method)) {
         return null;
       }
 
-      return GroovyPsiManager.getInstance(method.getProject()).inferType(method, new MethodTypeInferencer(block));
+      return GroovyPsiManager.inferType(method, new MethodTypeInferencer(block));
     }
-
-  }
-
-  private static final MyTypeCalculator ourTypesCalculator = new MyTypeCalculator();
+  };
 
   //PsiMethod implementation
   @Nullable
@@ -172,38 +172,13 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
 
   @Override
   public Icon getIcon(int flags) {
-    return GroovyIcons.METHOD;
+    RowIcon baseIcon = createLayeredIcon(GroovyIcons.METHOD, ElementPresentationUtil.getFlags(this, false));
+    return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
   @Override
   public ItemPresentation getPresentation() {
-    return new ItemPresentation() {
-      public String getPresentableText() {
-        return getName();
-      }
-
-      @Nullable
-      public String getLocationString() {
-        PsiClass clazz = getContainingClass();
-        if (clazz == null) {
-          return null;
-        }
-
-        String name = clazz.getQualifiedName();
-        assert name != null;
-        return "(in " + name + ")";
-      }
-
-      @Nullable
-      public Icon getIcon(boolean open) {
-        return GrMethodBaseImpl.this.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
-      }
-
-      @Nullable
-      public TextAttributesKey getTextAttributesKey() {
-        return null;
-      }
-    };
+    return JavaPresentationUtil.getMethodPresentation(this);
   }
 
   @Nullable
@@ -249,7 +224,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     return new JavaIdentifier(getManager(), getContainingFile(), getNameIdentifierGroovy());
   }
 
-  private void findSuperMethodRecursilvely(Set<PsiMethod> methods,
+  private static void findSuperMethodRecursilvely(Set<PsiMethod> methods,
                                            PsiClass psiClass,
                                            boolean allowStatic,
                                            Set<PsiClass> visited,
@@ -284,7 +259,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     }
   }
 
-  private boolean dominated(MethodSignature signature, Iterable<MethodSignature> supersInInheritor) {
+  private static boolean dominated(MethodSignature signature, Iterable<MethodSignature> supersInInheritor) {
     for (MethodSignature sig1 : supersInInheritor) {
       if (PsiImplUtil.isExtendsSignature(signature, sig1)) return true;
     }
@@ -295,7 +270,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
   public PsiMethod[] findDeepestSuperMethods() {
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
     findDeepestSuperMethodsForClass(methods, this);
-    return methods.toArray(PsiMethod.EMPTY_ARRAY);
+    return methods.toArray(new PsiMethod[methods.size()]);
   }
 
   private void findDeepestSuperMethodsForClass(List<PsiMethod> collectedMethods, PsiMethod method) {
@@ -320,7 +295,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     }
   }
 
-  private void checkForMethodOverriding(List<PsiMethod> collectedMethods, PsiMethod superClassMethod) {
+  private static void checkForMethodOverriding(List<PsiMethod> collectedMethods, PsiMethod superClassMethod) {
     int i = 0;
     while (i < collectedMethods.size()) {
       PsiMethod collectedMethod = collectedMethods.get(i);
@@ -488,6 +463,8 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     final PsiMethod originalMethod = originalClass.findMethodBySignature(this, false);
     return originalMethod != null ? originalMethod : this;
   }
+
+
 
   public void delete() throws IncorrectOperationException {
     PsiElement parent = getParent();
