@@ -18,15 +18,23 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.NameHint;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.indexing.AdditionalIndexedRootsScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.dsl.*;
 import org.jetbrains.plugins.groovy.extensions.script.GroovyScriptDetector;
 import org.jetbrains.plugins.groovy.extensions.script.ScriptDetectorRegistry;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -43,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import javax.swing.*;
+import java.util.LinkedHashMap;
 
 /**
  * Implements all abstractions related to Groovy file
@@ -51,6 +60,7 @@ import javax.swing.*;
  */
 public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl");
+  private static final Key<CachedValue<GroovyDslExecutor>> CACHED_ENHANCED_KEY = Key.create("CACHED_ENHANCED_KEY");
 
   private PsiClass myScriptClass;
   private boolean myScriptClassInitialized = false;
@@ -76,7 +86,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return findChildByClass(GrPackageDefinition.class);
   }
 
-  private GrParameter getSyntheticArgsParameter() {
+  private synchronized GrParameter getSyntheticArgsParameter() {
     if (mySyntheticArgsParameter == null) {
       try {
         mySyntheticArgsParameter =
@@ -93,17 +103,19 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    for (final GrTopLevelDefintion definition : getTopLevelDefinitions()) {
+    PsiClass scriptClass = getScriptClass();
+    if (scriptClass != null) {
+      if (!scriptClass.processDeclarations(processor, state, lastParent, place)) return false;
+      if (!ResolveUtil.processElement(processor, scriptClass)) return false;
+    }
+
+    for (GrTypeDefinition definition : getTypeDefinitions()) {
       if (!ResolveUtil.processElement(processor, definition)) return false;
     }
 
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-
-    if (!(lastParent instanceof GrTypeDefinition)) {
+    if (lastParent != null && !(lastParent instanceof GrTypeDefinition) && scriptClass != null) {
       if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter())) return false;
-
-      PsiClass scriptClass = getScriptClass();
-      if (scriptClass != null && !scriptClass.processDeclarations(processor, state, lastParent, place)) return false;
+      if (!processScriptEnhancements(place, processor)) return false;
     }
 
     if (!processChildrenScopes(this, processor, state, lastParent, place)) return false;
@@ -117,6 +129,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
 
     String currentPackageName = getPackageName();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     PsiPackage currentPackage = facade.findPackage(currentPackageName);
 
     if (currentPackage != null && !currentPackage.processDeclarations(processor, state, lastParent, place)) return false;
@@ -154,6 +167,72 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     return true;
   }
+
+  private boolean processScriptEnhancements(final PsiElement place, PsiScopeProcessor processor) {
+    final PsiFile placeFile = getOriginalFile();
+    final VirtualFile placeVFfile = placeFile.getVirtualFile();
+    if (placeVFfile == null) {
+      return true;
+    }
+
+    final Project project = getProject();
+    for (final GroovyFile file : GroovyDslFileIndex.getDslFiles(new AdditionalIndexedRootsScope(getResolveScope(), StandardDslIndexedRootsProvider.class))) {
+      final VirtualFile vfile = file.getVirtualFile();
+      if (vfile == null || vfile.equals(placeVFfile)) {
+        continue;
+      }
+
+      CachedValue<GroovyDslExecutor> cachedEnhanced = file.getUserData(CACHED_ENHANCED_KEY);
+      if (cachedEnhanced == null) {
+        file.putUserData(CACHED_ENHANCED_KEY, cachedEnhanced = file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<GroovyDslExecutor>() {
+          public Result<GroovyDslExecutor> compute() {
+            return Result.create(new GroovyDslExecutor(file.getText(), vfile.getName()), file);
+          }
+        }, false));
+      }
+
+      final StringBuilder classText = new StringBuilder();
+
+      cachedEnhanced.getValue().processScriptVariants(new ScriptWrapper() {
+        public String getExtension() {
+          return placeVFfile.getExtension();
+        }
+      }, new GroovyEnhancerConsumer() {
+        public void property(String name, String type) {
+          classText.append("def ").append(type).append(" ").append(name).append("\n");
+        }
+
+        public void method(String name, String type, final LinkedHashMap<String, String> parameters) {
+          classText.append("def ").append(type).append(" ").append(name).append("(");
+          classText.append(StringUtil.join(parameters.keySet(), new Function<String, String>() {
+            public String fun(String s) {
+              return parameters.get(s) + " " + s;
+            }
+          }, ", "));
+
+          classText.append(") {}\n");
+        }
+      });
+      if (classText.length() > 0) {
+        final PsiClass psiClass =
+          GroovyPsiElementFactory.getInstance(project).createGroovyFile("class GroovyEnhanced {\n" + classText + "}", false, place)
+            .getClasses()[0];
+
+        final NameHint nameHint = processor.getHint(NameHint.KEY);
+        final String expectedName = nameHint == null ? null : nameHint.getName(ResolveState.initial());
+
+        for (PsiMethod method : psiClass.getMethods()) {
+          if ((expectedName == null || expectedName.equals(method.getName())) && !processor.execute(method, ResolveState.initial())) return false;
+        }
+        for (final PsiField field : psiClass.getFields()) {
+          if ((expectedName == null || expectedName.equals(field.getName())) && !processor.execute(field, ResolveState.initial())) return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
 
   private static boolean processChildrenScopes(PsiElement element,
                                                PsiScopeProcessor processor,
@@ -259,7 +338,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return false;
   }
 
-  public PsiClass getScriptClass() {
+  public synchronized PsiClass getScriptClass() {
     if (!myScriptClassInitialized) {
       if (isScript()) {
         myScriptClass = new GroovyScriptClass(this);
@@ -316,7 +395,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
   }
 
-  public void clearCaches() {
+  public synchronized void clearCaches() {
     super.clearCaches();
     myScriptClass = null;
     myScriptClassInitialized = false;

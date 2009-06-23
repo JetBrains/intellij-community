@@ -34,6 +34,16 @@
     <orderEntry type="module" module-name="properties" />
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="spring-web" />
+    <orderEntry type="module" module-name="groovy-dsl" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/dsl/groovy-dsl.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
 

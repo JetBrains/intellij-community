@@ -25,7 +25,7 @@ import org.jetbrains.plugins.grails.fileType.GspFileType;
  */
 public class GroovyFileTypeLoader extends FileTypeFactory{
   public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-    consumer.consume(GroovyFileType.GROOVY_FILE_TYPE, GroovyFileType.DEFAULT_EXTENSION);
+    consumer.consume(GroovyFileType.GROOVY_FILE_TYPE, GroovyFileType.DEFAULT_EXTENSION + ";gdsl");
     consumer.consume(GspFileType.GSP_FILE_TYPE, GspFileType.GSP_EXTENSION);
   }
 }

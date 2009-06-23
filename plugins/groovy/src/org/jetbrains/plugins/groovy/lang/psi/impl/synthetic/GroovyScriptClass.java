@@ -18,22 +18,22 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.extensions.script.ScriptDetectorRegistry;
 import org.jetbrains.plugins.groovy.extensions.script.GroovyScriptDetector;
+import org.jetbrains.plugins.groovy.extensions.script.ScriptDetectorRegistry;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -325,28 +325,26 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner {
     return false;
   }
 
-  public PsiMetaData getMetaData() {
-    return null;
-  }
-
-  public boolean isMetaEnough() {
-    return false;
-  }
-
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
-    if (!(lastParent instanceof GroovyPsiElement)) {
-      for (PsiMethod method : getMethods()) {
-        if (!ResolveUtil.processElement(processor, method)) return false;
-      }
-
-      for (GrVariableDeclaration variableDeclaration : myFile.getTopLevelVariableDeclarations()) {
-        if (!variableDeclaration.processDeclarations(processor, state, lastParent, place)) return false;
-      }
+  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
+    for (GrTopLevelDefintion defintion : myFile.getTopLevelDefinitions()) {
+      if (!ResolveUtil.processElement(processor, defintion)) return false;
     }
 
-    PsiClass scriptClass = getSuperClass();
-    return scriptClass == null || scriptClass.processDeclarations(processor, state, lastParent, place);
+    final PsiClass scriptClass = getSuperClass();
+    if (scriptClass != null && !scriptClass.processDeclarations(new BaseScopeProcessor() {
+      public boolean execute(PsiElement element, ResolveState state) {
+        return !(element instanceof PsiNamedElement) || ResolveUtil.processElement(processor, (PsiNamedElement)element);
+      }
 
+      @Override
+      public <T> T getHint(Key<T> hintKey) {
+        return processor.getHint(hintKey);
+      }
+    }, state, lastParent, place)) {
+      return false;
+    }
+    
+    return true;
   }
 
   //default implementations of methods from NavigationItem
