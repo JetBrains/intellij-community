@@ -51,6 +51,7 @@ public class PropertiesUtil {
 
     List<String> parts = StringUtil.split(name, "_");
     if (parts.size() == 1) return parts.get(0);
+    if (parts.size() == 0) return "";
 
     String baseName = parts.get(0);
     for (int i = 1; i< parts.size(); i++) {
