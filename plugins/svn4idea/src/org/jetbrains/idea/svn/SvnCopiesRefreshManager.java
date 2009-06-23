@@ -93,7 +93,6 @@ public class SvnCopiesRefreshManager {
     public void run() {
       try {
         myMapping.realRefresh(myAtomicSectionsAware);
-        myProject.getMessageBus().syncPublisher(SvnVcs.ROOTS_RELOADED).run();
       }
       catch (ProcessCanceledException e) {
         //

@@ -1,8 +1,6 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 
 import java.io.File;
 import java.util.*;
@@ -41,12 +39,23 @@ public class SvnMapping {
     myPreCalculatedUnderVcsRoots = null;
   }
 
-  public void add(final VirtualFile file, final VirtualFile root, final SVNInfo info, final SVNURL repositoryUrl) {
-    final File ioFile = new File(file.getPath());
-    final SVNURL url = info.getURL();
-    final RootUrlInfo rootInfo = new RootUrlInfo(repositoryUrl, url, SvnFormatSelector.getWorkingCopyFormat(ioFile), file, root);
+  public void addAll(final Collection<RootUrlInfo> roots) {
+    for (RootUrlInfo rootInfo : roots) {
+      final VirtualFile file = rootInfo.getVirtualFile();
+      final File ioFile = new File(file.getPath());
+      
+      myRootsDifferFromSettings |= ! rootInfo.getRoot().getPath().equals(file.getPath());
 
-    myRootsDifferFromSettings |= ! root.getPath().equals(file.getPath());
+      myFile2UrlMap.put(ioFile.getAbsolutePath(), rootInfo);
+      myUrl2FileMap.put(rootInfo.getAbsoluteUrl(), rootInfo);
+    }
+  }
+
+  public void add(final RootUrlInfo rootInfo) {
+    final VirtualFile file = rootInfo.getVirtualFile();
+    final File ioFile = new File(file.getPath());
+
+    myRootsDifferFromSettings |= ! rootInfo.getRoot().getPath().equals(file.getPath());
 
     myFile2UrlMap.put(ioFile.getAbsolutePath(), rootInfo);
     myUrl2FileMap.put(rootInfo.getAbsoluteUrl(), rootInfo);
@@ -101,8 +110,8 @@ public class SvnMapping {
     return myRootsDifferFromSettings;
   }
 
-  public void reportLonelyRoot(final VirtualFile root) {
-    myLonelyRoots.add(root);
+  public void reportLonelyRoots(final Collection<VirtualFile> roots) {
+    myLonelyRoots.addAll(roots);
   }
 
   public List<VirtualFile> getLonelyRoots() {

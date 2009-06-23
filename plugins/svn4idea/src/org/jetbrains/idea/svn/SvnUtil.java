@@ -365,9 +365,19 @@ public class SvnUtil {
 
   @Nullable
   public static SVNURL getRepositoryRoot(final SvnVcs vcs, final String url) {
+    try {
+      return getRepositoryRoot(vcs, SVNURL.parseURIEncoded(url));
+    }
+    catch (SVNException e) {
+      return null;
+    }
+  }
+
+  @Nullable
+  public static SVNURL getRepositoryRoot(final SvnVcs vcs, final SVNURL url) {
     final SVNWCClient client = vcs.createWCClient();
     try {
-      SVNInfo info = client.doInfo(SVNURL.parseURIEncoded(url), SVNRevision.UNDEFINED, SVNRevision.HEAD);
+      SVNInfo info = client.doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
       return (info == null) ? null : info.getRepositoryRootURL();
     } catch (SVNException e) {
       return null;

@@ -5,6 +5,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.Processor;
 
 import java.util.Collection;
@@ -42,6 +43,19 @@ public class AlienDirtyScope extends VcsDirtyScope {
 
   public Set<FilePath> getRecursivelyDirtyDirectories() {
     return myDirs;
+  }
+
+  @Override
+  public boolean isRecursivelyDirty(final VirtualFile vf) {
+    for (FilePath dir : myDirs) {
+      final VirtualFile dirVf = dir.getVirtualFile();
+      if (dirVf != null) {
+        if (VfsUtil.isAncestor(dirVf, vf, false)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public void iterate(final Processor<FilePath> iterator) {

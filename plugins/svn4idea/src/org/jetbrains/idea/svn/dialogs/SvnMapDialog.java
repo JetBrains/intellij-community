@@ -8,8 +8,11 @@ import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.messages.Topic;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -39,6 +42,7 @@ public class SvnMapDialog extends DialogWrapper {
 
   private final Project myProject;
   private final ActionListener myChangeFormatListener;
+  private MessageBusConnection myMessageBusConnection;
 
   public SvnMapDialog(final Project project) {
     super(project, true);
@@ -106,12 +110,34 @@ public class SvnMapDialog extends DialogWrapper {
 
     myRefresh.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        SvnVcs.getInstance(myProject).invokeRefreshSvnRoots(false);
-        final List<WCInfo> infoList = vcs.getAllWcInfos();
+        final SvnVcs vcs = SvnVcs.getInstance(myProject);
+        subscribeToUpdates(vcs);
+        vcs.invokeRefreshSvnRoots(false);
+        myRefresh.setEnabled(false);
+        /*final List<WCInfo> infoList = vcs.getAllWcInfos();
         myTableModel.setItems(infoList);
-        myTableView.repaint();
+        myTableView.repaint();*/
       }
     });
+  }
+
+  private void subscribeToUpdates(final SvnVcs vcs) {
+    if (myMessageBusConnection == null) {
+      myMessageBusConnection = myProject.getMessageBus().connect(getDisposable());
+      final ModalityState state = ModalityState.current();
+      myMessageBusConnection.subscribe(SvnVcs.ROOTS_RELOADED, new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              final List<WCInfo> infoList = vcs.getAllWcInfos();
+              myTableModel.setItems(infoList);
+              myRefresh.setEnabled(true);
+              myTableView.repaint();
+            }
+          }, state);
+        }
+      });
+    }
   }
 
   private void correctMappings(final SvnVcs vcs, final List<WCInfo> infos) {
