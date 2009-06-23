@@ -4,6 +4,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.properties.psi.Property;
@@ -11,13 +12,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.jsp.JspFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -31,9 +29,9 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     }
     final PsiJavaFile file = (PsiJavaFile) element;
     final List<FoldingDescriptor> result = new ArrayList<FoldingDescriptor>();
-
+    boolean hasJsp = ContainerUtil.intersects(Arrays.asList(StdLanguages.JSP, StdLanguages.JSPX), file.getViewProvider().getLanguages());
     //hack here because JspFile PSI elements are not threaded correctly via nextSibling/prevSibling
-    file.accept(file instanceof JspFile ? new JavaRecursiveElementVisitor() {
+    file.accept(hasJsp ? new JavaRecursiveElementVisitor() {
       @Override
       public void visitLiteralExpression(PsiLiteralExpression expression) {
         checkLiteral(expression, result);
