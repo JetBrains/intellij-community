@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.rt.execution.junit.JUnitStarter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,11 +65,16 @@ public class TestPackage extends TestObject {
     final TestClassFilter filter = getClassFilter(aPackage);
     final ExecutionException[] exception = new ExecutionException[1];
     findTestsWithProgress(new FindCallback() {
-      public void found(@NotNull final Collection<PsiClass> classes) {
+      public void found(@NotNull final Collection<PsiClass> classes, final boolean isJunit4) {
         if (classes.isEmpty()) {
           exception[0] = new CantRunException(ExecutionBundle.message("no.tests.found.in.package.error.message", packageName));
           return;
         }
+
+        if (isJunit4) {
+          myJavaParameters.getProgramParametersList().add(JUnitStarter.JUNIT4_PARAMETER);
+        }
+
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
             try {
@@ -145,18 +151,19 @@ public class TestPackage extends TestObject {
     if (isSyncSearch()) {
       THashSet<PsiClass> classes = new THashSet<PsiClass>();
       boolean isJUnit4 = ConfigurationUtil.findAllTestClasses(classFilter, classes);
-      callback.found(classes);
+      callback.found(classes, isJUnit4);
       return;
     }
 
     final THashSet<PsiClass> classes = new THashSet<PsiClass>();
+    final boolean[] isJunit4 = new boolean[1];
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        ConfigurationUtil.findAllTestClasses(classFilter, classes);
+        isJunit4[0] = ConfigurationUtil.findAllTestClasses(classFilter, classes);
       }
     }, ExecutionBundle.message("seaching.test.progress.title"), true, classFilter.getProject());
 
-    callback.found(classes);
+    callback.found(classes, isJunit4[0]);
   }
 
   private static boolean isSyncSearch() {
@@ -167,6 +174,6 @@ public class TestPackage extends TestObject {
     /**
      * Invoked in dispatch thread
      */
-    void found(@NotNull Collection<PsiClass> classes);
+    void found(@NotNull Collection<PsiClass> classes, final boolean isJunit4);
   }
 }

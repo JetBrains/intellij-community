@@ -33,10 +33,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
+import com.intellij.util.containers.hash.LinkedHashMap;
 
 import java.util.Collection;
-import java.util.LinkedHashMap;
 
 public class TestMethods extends TestMethod {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.TestMethods");
@@ -65,6 +66,7 @@ public class TestMethods extends TestMethod {
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     RunConfigurationModule module = myConfiguration.getConfigurationModule();
     final Project project = module.getProject();
+    addJUnit4Parameter(data, project);
     final ExecutionException[] exception = new ExecutionException[1];
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -97,6 +99,17 @@ public class TestMethods extends TestMethod {
       }
     }, data.getPackageName());
 
+  }
+  protected void addJUnit4Parameter(final JUnitConfiguration.Data data, Project project) {
+    for (AbstractTestProxy failedTest : myFailedTests) {
+      Location location = failedTest.getLocation(project);
+      if (!(location instanceof MethodLocation)) continue;
+      PsiMethod method = ((MethodLocation)location).getPsiElement();
+      if (JUnitUtil.isTestAnnotated(method)) {
+        myJavaParameters.getProgramParametersList().add(JUnitStarter.JUNIT4_PARAMETER);
+        break;
+      }
+    }
   }
 
   public String suggestActionName() {
