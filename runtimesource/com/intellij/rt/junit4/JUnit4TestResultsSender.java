@@ -32,7 +32,9 @@ public class JUnit4TestResultsSender extends RunListener {
     }
 
     else {
-      stopMeter(description);
+      if (description.equals(myCurrentTest)) { //exceptions thrown from @BeforeClass
+        stopMeter(description);
+      }
       prepareDefectPacket(description, throwable).send();
     }
   }
