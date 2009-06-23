@@ -7,6 +7,8 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
@@ -14,7 +16,6 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +58,7 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
 
   public void projectOpened(){
     StartupManager.getInstance(myProject).registerPostStartupActivity(
-      new Runnable(){
+      new DumbAwareRunnable(){
         public void run(){
           // myElement may be null if node that correspondes to this manager does not exist
           if (myElement != null){
