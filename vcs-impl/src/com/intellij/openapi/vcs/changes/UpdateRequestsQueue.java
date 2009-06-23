@@ -3,13 +3,9 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -96,21 +92,10 @@ public class UpdateRequestsQueue {
     LOG.debug("Stop finished for project: " + myProject.getName());
   }
 
-  private static class CallbackData {
-    private final Runnable myCallback;
-    private final Runnable myWrapperStarter;
-
-    private CallbackData(@NotNull final Runnable callback, @Nullable final Runnable wrapperStarter) {
-      myCallback = callback;
-      myWrapperStarter = wrapperStarter;
-    }
-  }
-
-  public void invokeAfterUpdate(final Runnable afterUpdate, final boolean cancellable, final boolean silently, final String title,
-                                final boolean synchronously, final Consumer<VcsDirtyScopeManager> dirtyScopeManagerFiller,
-                                final ModalityState state) {
+  public void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title,
+                                final Consumer<VcsDirtyScopeManager> dirtyScopeManagerFiller, final ModalityState state) {
     LOG.debug("invokeAfterUpdate for project: " + myProject.getName());
-    final CallbackData data = createCallbackWrapperRunnable(afterUpdate, cancellable, silently, title, synchronously, state);
+    final CallbackData data = CallbackData.create(afterUpdate, title, state, mode, myProject);
 
     VcsDirtyScopeManagerProxy managerProxy = null;
     if (dirtyScopeManagerFiller != null) {
@@ -124,7 +109,7 @@ public class UpdateRequestsQueue {
           managerProxy.callRealManager(VcsDirtyScopeManager.getInstance(myProject));
         }
         
-        myWaitingUpdateCompletionQueue.add(data.myCallback);
+        myWaitingUpdateCompletionQueue.add(data.getCallback());
         schedule(true);
       }
     }
@@ -139,59 +124,11 @@ public class UpdateRequestsQueue {
       return;
     } else {
       // invoke progress if needed
-      if (data.myWrapperStarter != null) {
-        data.myWrapperStarter.run();
+      if (data.getWrapperStarter() != null) {
+        data.getWrapperStarter().run();
       }
     }
     LOG.debug("invokeAfterUpdate: exit for project: " + myProject.getName());
-  }
-
-  private CallbackData createCallbackWrapperRunnable(final Runnable afterUpdate, final boolean cancellable, final boolean silently,
-                                                     final String title, final boolean synchronously, final ModalityState state) {
-    if (silently) {
-      return new CallbackData(new Runnable() {
-        public void run() {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              LOG.debug("invokeAfterUpdate: silent wrapper called for project: " + myProject.getName());
-              if (myProject.isDisposed()) return;
-              afterUpdate.run();
-              ChangesViewManager.getInstance(myProject).refreshView();
-            }
-          });
-        }
-      }, null);
-    } else {
-      if (synchronously) {
-        final Waiter waiter = new Waiter(myProject, afterUpdate, state);
-        return new CallbackData(
-          new Runnable() {
-            public void run() {
-              LOG.debug("invokeAfterUpdate: NOT silent SYNCHRONOUS wrapper called for project: " + myProject.getName());
-              waiter.done();
-            }
-          }, new Runnable() {
-            public void run() {
-              ProgressManager.getInstance().runProcessWithProgressSynchronously(waiter,
-                VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable, myProject);
-            }
-          }
-        );
-      } else {
-        final FictiveBackgroundable fictiveBackgroundable = new FictiveBackgroundable(myProject, afterUpdate, cancellable, title, state);
-        return new CallbackData(
-          new Runnable() {
-            public void run() {
-              LOG.debug("invokeAfterUpdate: NOT silent wrapper called for project: " + myProject.getName());
-              fictiveBackgroundable.done();
-            }
-          }, new Runnable() {
-            public void run() {
-              ProgressManager.getInstance().run(fictiveBackgroundable);
-            }
-          });
-      }
-    }
   }
 
   private class MyRunnable implements Runnable {

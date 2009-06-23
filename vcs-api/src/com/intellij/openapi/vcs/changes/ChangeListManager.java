@@ -53,7 +53,8 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract void scheduleUpdate(boolean updateUnversionedFiles);
   public abstract void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title,
                                          final ModalityState state);
-  public abstract void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title, final Consumer<VcsDirtyScopeManager> dirtyScopeManager,
+  public abstract void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title,
+                                         final Consumer<VcsDirtyScopeManager> dirtyScopeManager,
                                          final ModalityState state);
   public abstract boolean ensureUpToDate(boolean canBeCanceled);
 

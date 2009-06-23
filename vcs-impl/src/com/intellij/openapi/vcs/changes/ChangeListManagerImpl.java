@@ -174,13 +174,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
    * runnable is invoked on AWT thread
    */
   public void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title, final ModalityState state) {
-    myUpdater.invokeAfterUpdate(afterUpdate, mode.isCancellable(), mode.isSilently(), title, mode.isSynchronous(), null, state);
+    myUpdater.invokeAfterUpdate(afterUpdate, mode, title, null, state);
   }
 
   public void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title,
                                 final Consumer<VcsDirtyScopeManager> dirtyScopeManagerFiller, final ModalityState state) {
-    myUpdater.invokeAfterUpdate(afterUpdate, mode.isCancellable(), mode.isSilently(), title, mode.isSynchronous(), dirtyScopeManagerFiller,
-                                state);
+    myUpdater.invokeAfterUpdate(afterUpdate, mode, title, dirtyScopeManagerFiller, state);
   }
 
   static class DisposedException extends RuntimeException {}

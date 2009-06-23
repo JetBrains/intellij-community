@@ -74,6 +74,21 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
     return result;
   }
 
+  @Override
+  public boolean isRecursivelyDirty(final VirtualFile vf) {
+    for(THashSet<FilePath> dirsByRoot: myDirtyDirectoriesRecursively.values()) {
+      for (FilePath dir : dirsByRoot) {
+        final VirtualFile dirVf = dir.getVirtualFile();
+        if (dirVf != null) {
+          if (VfsUtil.isAncestor(dirVf, vf, false)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   /**
    * Add dirty directory recursively. If there are already dirty entries
    * that are descendants or ancestors for the added directory, the contained

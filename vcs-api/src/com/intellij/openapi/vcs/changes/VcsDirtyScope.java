@@ -82,6 +82,8 @@ public abstract class VcsDirtyScope {
    */
   public abstract Set<FilePath> getRecursivelyDirtyDirectories();
 
+  public abstract boolean isRecursivelyDirty(final VirtualFile vf);
+
   /**
    * Invoke the {@code iterator} for all files in the dirty scope.
    * For recursively dirty directories all children are processed.

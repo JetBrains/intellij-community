@@ -1,7 +1,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class SwitchedFileHolder extends RecursiveFileHolder {
@@ -30,6 +29,6 @@ public class SwitchedFileHolder extends RecursiveFileHolder {
     if (scope == null) return true;
     if (fileDropped(file)) return true;
     final VirtualFile parent = file.getParent();
-    return (parent != null) && (scope.belongsTo(new FilePathImpl(parent)));
+    return (parent != null) && (scope.isRecursivelyDirty(parent));
   }
 }
