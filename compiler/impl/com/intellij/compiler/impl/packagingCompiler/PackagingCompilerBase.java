@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -113,17 +114,13 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
 
     final List<PackagingProcessingItem> processedItems = new ArrayList<PackagingProcessingItem>();
     final Set<String> writtenPaths = createPathsHashSet();
-    Boolean built = new ReadAction<Boolean>() {
-      protected void run(final Result<Boolean> result) {
-        CompileDriver.runInContext(context, "Copying files", new ThrowableRunnable<RuntimeException>() {
-          public void run() throws RuntimeException {
-            boolean built = doBuild(context, items, processedItems, writtenPaths, deletedJars);
-            result.setResult(built);
-          }
-        });
+    final Ref<Boolean> built = Ref.create(false);
+    CompileDriver.runInContext(context, "Copying files", new ThrowableRunnable<RuntimeException>() {
+      public void run() throws RuntimeException {
+        built.set(doBuild(context, items, processedItems, writtenPaths, deletedJars));
       }
-    }.execute().getResultObject();
-    if (!built) {
+    });
+    if (!built.get()) {
       return ProcessingItem.EMPTY_ARRAY;
     }
 
@@ -169,7 +166,7 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
     final DeploymentUtil deploymentUtil = DeploymentUtil.getInstance();
     final FileFilter fileFilter = new IgnoredFileFilter();
     final C builderContext = context.getUserData(myBuilderContextKey);
-    Set<JarInfo> changedJars = new THashSet<JarInfo>();
+    final Set<JarInfo> changedJars = new THashSet<JarInfo>();
     for (String deletedJar : deletedJars) {
       final Collection<JarInfo> infos = builderContext.getJarInfos(deletedJar);
       if (infos != null) {
@@ -180,25 +177,41 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
 
     try {
       int i = 0;
-      for (ProcessingItem item0 : items) {
+      for (final ProcessingItem item0 : items) {
         if (item0 instanceof MockProcessingItem) continue;
+        final PackagingProcessingItem item = (PackagingProcessingItem)item0;
         context.getProgressIndicator().checkCanceled();
-        PackagingProcessingItem item = (PackagingProcessingItem)item0;
-        final List<DestinationInfo> destinations = item.getDestinations();
-        final File fromFile = VfsUtil.virtualToIoFile(item.getFile());
-        for (DestinationInfo destination : destinations) {
-          if (destination instanceof ExplodedDestinationInfo) {
-            final ExplodedDestinationInfo explodedDestination = (ExplodedDestinationInfo)destination;
-            File toFile = new File(FileUtil.toSystemDependentName(explodedDestination.getOutputPath()));
-            if (fromFile.exists()) {
-              deploymentUtil.copyFile(fromFile, toFile, context, writtenPaths, fileFilter);
+
+        final Ref<IOException> exception = Ref.create(null);
+        new ReadAction() {
+          protected void run(final Result result) {
+            final List<DestinationInfo> destinations = item.getDestinations();
+            final File fromFile = VfsUtil.virtualToIoFile(item.getFile());
+            for (DestinationInfo destination : destinations) {
+              if (destination instanceof ExplodedDestinationInfo) {
+                final ExplodedDestinationInfo explodedDestination = (ExplodedDestinationInfo)destination;
+                File toFile = new File(FileUtil.toSystemDependentName(explodedDestination.getOutputPath()));
+                if (fromFile.exists()) {
+                  try {
+                    deploymentUtil.copyFile(fromFile, toFile, context, writtenPaths, fileFilter);
+                  }
+                  catch (IOException e) {
+                    exception.set(e);
+                    return;
+                  }
+                }
+                onFileCopied(builderContext, explodedDestination);
+              }
+              else {
+                changedJars.add(((JarDestinationInfo)destination).getJarInfo());
+              }
             }
-            onFileCopied(builderContext, explodedDestination);
           }
-          else {
-            changedJars.add(((JarDestinationInfo)destination).getJarInfo());
-          }
+        }.execute();
+        if (exception.get() != null) {
+          throw exception.get();
         }
+
         context.getProgressIndicator().setFraction(++i*1.0/items.length);
         processedItems.add(item);
       }
