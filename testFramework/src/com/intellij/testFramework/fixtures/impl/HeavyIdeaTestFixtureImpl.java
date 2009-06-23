@@ -60,6 +60,15 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   private final Set<File> myFilesToDelete = new HashSet<File>();
   private IdeaTestApplication myApplication;
   private final Set<ModuleFixtureBuilder> myModuleFixtureBuilders = new THashSet<ModuleFixtureBuilder>();
+  private String myPlatformPrefix;
+
+  HeavyIdeaTestFixtureImpl() {
+  }
+
+  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
+  HeavyIdeaTestFixtureImpl(String platformPrefix) {
+    myPlatformPrefix = platformPrefix;
+  }
 
   protected void addModuleFixtureBuilder(ModuleFixtureBuilder builder) {
     myModuleFixtureBuilders.add(builder);
@@ -136,6 +145,9 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   }
 
   private void initApplication() throws Exception {
+    if (myPlatformPrefix != null) {
+      System.setProperty("idea.platform.prefix", myPlatformPrefix);
+    }
     myApplication = IdeaTestApplication.getInstance();
     myApplication.setDataProvider(new MyDataProvider());
   }
