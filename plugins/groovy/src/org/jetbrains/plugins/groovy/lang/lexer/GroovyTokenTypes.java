@@ -46,7 +46,7 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes{
   IElementType mSH_COMMENT = new GroovyElementType("shell comment");
   IElementType mSL_COMMENT = new GroovyElementType("line comment");
   IElementType mML_COMMENT = new GroovyElementType("block comment");
-  TokenSet COMMENT_SET = TokenSet.create(mML_COMMENT, mSH_COMMENT, mSL_COMMENT);
+  TokenSet COMMENT_SET = TokenSet.create(mML_COMMENT, mSH_COMMENT, mSL_COMMENT, GROOVY_DOC_COMMENT);
 
   /* **************************************************************************************************
  *  Identifiers
