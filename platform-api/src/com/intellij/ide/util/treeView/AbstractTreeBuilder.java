@@ -18,9 +18,12 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,11 +31,11 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Set;
-import java.lang.ref.WeakReference;
 
 public class AbstractTreeBuilder implements Disposable {
   private AbstractTreeUi myUi;
@@ -275,6 +278,22 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   public boolean isChildrenResortingNeeded(NodeDescriptor descriptor) {
+    return true;
+  }
+
+  protected void runOnYeildingDone(Runnable onDone) {
+    if (getTree().isShowing()) {
+      ApplicationManager.getApplication().invokeLater(onDone, ModalityState.stateForComponent(getTree()));
+    } else {
+      UIUtil.invokeLaterIfNeeded(onDone);
+    }
+  }
+
+  protected void yield(Runnable runnable) {
+    SwingUtilities.invokeLater(runnable);
+  }
+
+  public boolean isToYieldUpdateFor(DefaultMutableTreeNode node) {
     return true;
   }
 

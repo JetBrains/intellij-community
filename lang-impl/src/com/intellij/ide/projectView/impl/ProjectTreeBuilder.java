@@ -8,6 +8,7 @@ import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -68,7 +69,8 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     myProblemListener = new MyProblemListener();
     WolfTheProblemSolver.getInstance(project).addProblemListener(myProblemListener);
 
-    setCanYieldUpdate(true);
+    //todo: kirillk turn into a real test
+    setCanYieldUpdate(!ApplicationManager.getApplication().isUnitTestMode());
 
     initRootNode();
   }

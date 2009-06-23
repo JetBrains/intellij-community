@@ -174,12 +174,22 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
                                                      final AbstractTreeNode root,
                                                      final Object element,
                                                      final Condition<AbstractTreeNode> nonStopCondition) {
-    if (root.canRepresent(element)) return new AsyncResult.Done<AbstractTreeNode>(root);
-    if (root instanceof ProjectViewNode && file != null && !((ProjectViewNode)root).contains(file)) {
-      return new AsyncResult.Rejected<AbstractTreeNode>();
+    final AsyncResult<AbstractTreeNode> async = new AsyncResult<AbstractTreeNode>();
+
+    if (root.canRepresent(element)) {
+      expand(root, new Runnable() {
+        public void run() {
+          async.setDone(root);
+        }
+      });
+      return async;
     }
 
-    final AsyncResult<AbstractTreeNode> async = new AsyncResult<AbstractTreeNode>();
+    if (root instanceof ProjectViewNode && file != null && !((ProjectViewNode)root).contains(file)) {
+      async.setRejected();
+      return async;
+    }
+
 
     expand(root, new Runnable() {
       public void run() {
@@ -201,7 +211,10 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
                            final Object element,
                            final AsyncResult<AbstractTreeNode> async) {
 
-    if (i >= kids.size()) return;
+    if (i >= kids.size()) {
+      async.setRejected();
+      return;
+    }
 
     final AbstractTreeNode eachKid = kids.get(i);
     final boolean[] nodeWasCollapsed = new boolean[] {true};

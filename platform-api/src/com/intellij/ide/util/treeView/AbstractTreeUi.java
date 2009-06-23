@@ -828,9 +828,15 @@ class AbstractTreeUi {
     myYeildingNow = true;
     yield(new Runnable() {
       public void run() {
+        if (isReleased()) {
+          return;
+        }
+
         runOnYeildingDone(new Runnable() {
           public void run() {
-            if (isReleased()) return;
+            if (isReleased()) {
+              return;
+            }
             executeYeildingRequest(runnable, pass);
           }
         });
@@ -893,11 +899,11 @@ class AbstractTreeUi {
   }
 
   protected void runOnYeildingDone(Runnable onDone) {
-    ApplicationManager.getApplication().invokeLater(onDone, ModalityState.stateForComponent(myTree));
+    getBuilder().runOnYeildingDone(onDone);
   }
 
   protected void yield(Runnable runnable) {
-    SwingUtilities.invokeLater(runnable);
+    getBuilder().yield(runnable);
   }
 
   private ActionCallback processAllChildren(final DefaultMutableTreeNode node,
@@ -932,16 +938,8 @@ class AbstractTreeUi {
   }
 
   private boolean isToYieldUpdateFor(final DefaultMutableTreeNode node) {
-    return canYield();
-    //if (!canYield()) return false;
-    //
-    //final Rectangle rect = myTree.getVisibleRect();
-    //final TreePath path = getPathFor(node);
-    //final Rectangle pathBounds = myTree.getPathBounds(path);
-    //
-    //if (pathBounds == null) return false;
-    //
-    //return rect.intersects(pathBounds) || rect.contains(pathBounds);
+    if (!canYield()) return false;
+    return getBuilder().isToYieldUpdateFor(node);
   }
 
   private Map<Object, Integer> collectElementToIndexMap(final NodeDescriptor descriptor) {
