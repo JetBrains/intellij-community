@@ -225,10 +225,10 @@ public class TreeState implements JDOMExternalizable {
   }
 
   public void applyTo(JTree tree) {
-    applyExpanded(tree, tree.getModel().getRoot());
+    applyExpanded(getFacade(tree), tree.getModel().getRoot());
   }
 
-  private void applyExpanded(final JTree tree, final Object root) {
+  private void applyExpanded(final TreeFacade tree, final Object root) {
     if (!(root instanceof DefaultMutableTreeNode)) {
       return;
     }
@@ -242,7 +242,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   public void applyTo(final JTree tree, final DefaultMutableTreeNode node) {
-    applyExpanded(tree, node);
+    applyExpanded(getFacade(tree), node);
     if (tree.getSelectionCount() == 0) {
       applySelected(tree, node);
     }
@@ -298,7 +298,7 @@ public class TreeState implements JDOMExternalizable {
 
   }
 
-  private static boolean applyTo(final int positionInPath, final List<PathElement> path, final Object root, JTree tree) {
+  private static boolean applyTo(final int positionInPath, final List<PathElement> path, final Object root, final TreeFacade tree) {
     if (!(root instanceof DefaultMutableTreeNode)) return false;
 
     final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)root;
@@ -313,23 +313,22 @@ public class TreeState implements JDOMExternalizable {
       if (!pathElement.matchedWithByObject(userObject)) return false;
     }
 
-    final TreePath currentPath = new TreePath(treeNode.getPath());
+    tree.expand(treeNode).doWhenDone(new Runnable() {
+      public void run() {
+        if (positionInPath == path.size() - 1) {
+          return;
+        }
 
-    if (!tree.isExpanded(currentPath)) {
-      tree.expandPath(currentPath);
-    }
-
-    if (positionInPath == path.size() - 1) {
-      return true;
-    }
-
-    for (int j = 0; j < treeNode.getChildCount(); j++) {
-      final TreeNode child = treeNode.getChildAt(j);
-      final boolean resultFromChild = applyTo(positionInPath + 1, path, child, tree);
-      if (resultFromChild) {
-        break;
+        for (int j = 0; j < treeNode.getChildCount(); j++) {
+          final TreeNode child = treeNode.getChildAt(j);
+          final boolean resultFromChild = applyTo(positionInPath + 1, path, child, tree);
+          if (resultFromChild) {
+            break;
+          }
+        }
       }
-    }
+    });
+
 
     return true;
   }
@@ -350,6 +349,57 @@ public class TreeState implements JDOMExternalizable {
     final TreePath pathInNewTree = new TreePath(((DefaultMutableTreeNode) root).getPath());
     TreeUtil.selectPath(tree, pathInNewTree);
     outSelectionPaths.add(pathInNewTree);
+  }
+
+  interface TreeFacade {
+    ActionCallback expand(DefaultMutableTreeNode node);
+  }
+
+  private static TreeFacade getFacade(JTree tree) {
+    final AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
+    return builder != null ? new BuilderFacade(builder) : new JTreeFacade(tree);
+  }
+
+  static class JTreeFacade implements TreeFacade {
+
+    private JTree myTree;
+
+    JTreeFacade(JTree tree) {
+      myTree = tree;
+    }
+
+    public ActionCallback expand(DefaultMutableTreeNode node) {
+      myTree.expandPath(new TreePath(node.getPath()));
+      return new ActionCallback.Done();
+    }
+  }
+
+  static class BuilderFacade implements TreeFacade {
+
+    private AbstractTreeBuilder myBuilder;
+
+    BuilderFacade(AbstractTreeBuilder builder) {
+      myBuilder = builder;
+    }
+
+    public ActionCallback expand(DefaultMutableTreeNode node) {
+      final Object userObject = node.getUserObject();
+      if (!(userObject instanceof NodeDescriptor)) return new ActionCallback.Rejected();
+
+      NodeDescriptor desc = (NodeDescriptor)userObject;
+
+      final Object element = myBuilder.getTreeStructureElement(desc);
+
+      final ActionCallback result = new ActionCallback();
+
+      myBuilder.expand(element, new Runnable() {
+        public void run() {
+          result.setDone();
+        }
+      });
+
+      return result;
+    }
   }
 
 }
