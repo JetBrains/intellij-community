@@ -142,7 +142,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
 
     @NotNull
     public String getText(UsageView view) {
-      return myModule.getName();
+      return myModule.isDisposed() ? "" : myModule.getName();
     }
 
     public FileStatus getFileStatus() {
