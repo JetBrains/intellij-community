@@ -1,10 +1,12 @@
 package com.intellij.execution;
 
-import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.DeferredIconImpl;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.Function;
 
 import javax.swing.*;
 
@@ -31,13 +33,18 @@ public class ExecutionUtil {
   }
 
   public static Icon getConfigurationIcon(final Project project, final RunnerAndConfigurationSettings settings) {
-    try {
-      settings.checkSettings();
-      return getConfigurationIcon(project, settings, false);
-    }
-    catch (RuntimeConfigurationException ex) {
-      return getConfigurationIcon(project, settings, true);
-    }
+    final Icon baseIcon = getConfigurationIcon(project, settings, false);
+    return new DeferredIconImpl<RunnerAndConfigurationSettings>(baseIcon, settings, new Function<RunnerAndConfigurationSettings, Icon>() {
+      public Icon fun(RunnerAndConfigurationSettings runnerAndConfigurationSettings) {
+        try {
+          settings.checkSettings();
+          return baseIcon;
+        }
+        catch (RuntimeConfigurationException ex) {
+          return getConfigurationIcon(project, settings, true);
+        }
+      }
+    });
   }
 
   public static String shortenName(final String name, final int toBeAdded) {
