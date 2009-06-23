@@ -13,8 +13,8 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.*;
+import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
@@ -27,8 +27,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -186,6 +186,9 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     final AnAction[] profileActions = myExecutionResult.getActions();
     for (final AnAction profileAction : profileActions) {
       actionGroup.add(profileAction);
+    }
+    if (profileActions.length > 0) {
+      actionGroup.addSeparator();
     }
 
     for (final AnAction anAction : myRunnerActions) {

@@ -283,6 +283,9 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
     for (final AnAction profileAction : profileActions) {
       group.add(profileAction);
     }
+    if (profileActions.length > 0) {
+      group.addSeparator();
+    }
 
     addActionToGroup(group, XDebuggerActions.RESUME);
     addActionToGroup(group, XDebuggerActions.PAUSE);
