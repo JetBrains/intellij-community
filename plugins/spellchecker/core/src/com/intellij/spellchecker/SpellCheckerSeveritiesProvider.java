@@ -33,9 +33,7 @@ public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
 
   @Override
   public Color getTrafficRendererColor(TextAttributes textAttributes) {
-    final Color errorStripeColor = textAttributes.getErrorStripeColor();
-    if (errorStripeColor != null) return errorStripeColor;
-    return textAttributes.getEffectColor();
+    return Color.GREEN;
   }
 
   @Override
