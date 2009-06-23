@@ -67,5 +67,17 @@ public interface RefactoringSupportProvider {
    */
   @Nullable RefactoringActionHandler getIntroduceParameterHandler();
 
+  /**
+   * @return  handler for pulling up members in this language
+   * @see com.intellij.refactoring.RefactoringActionHandler
+   */
+  @Nullable RefactoringActionHandler getPullUpHandler();
+
+  /**
+   * @return  handler for pulling up members in this language
+   * @see com.intellij.refactoring.RefactoringActionHandler
+   */
+  @Nullable RefactoringActionHandler getPushDownHandler();
+
   boolean doInplaceRenameFor(PsiElement element, PsiElement context);
 }

@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.JavaDocPolicy;
@@ -35,8 +36,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Callback {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.memberPullUp.PullUpHandler");
+public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog.Callback, ElementsHandler {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.memberPullUp.JavaPullUpHandler");
   public static final String REFACTORING_NAME = RefactoringBundle.message("pull.members.up.title");
   private PsiClass mySubclass;
   private Project myProject;
@@ -184,5 +185,23 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
       if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, info.getMember())) return false;
     }
     return true;
+  }
+
+  public boolean isEnabledOnElements(PsiElement[] elements) {
+    /*
+    if (elements.length == 1) {
+      return elements[0] instanceof PsiClass || elements[0] instanceof PsiField || elements[0] instanceof PsiMethod;
+    }
+    else if (elements.length > 1){
+      for (int  idx = 0;  idx < elements.length;  idx++) {
+        PsiElement element = elements[idx];
+        if (!(element instanceof PsiField || element instanceof PsiMethod)) return false;
+      }
+      return true;
+    }
+    return false;
+    */
+    // todo: multiple selection etc
+    return elements.length == 1 && elements[0] instanceof PsiClass;
   }
 }

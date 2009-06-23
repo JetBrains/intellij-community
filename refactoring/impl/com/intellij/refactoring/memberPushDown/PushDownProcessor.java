@@ -44,7 +44,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   }
 
   protected String getCommandName() {
-    return PushDownHandler.REFACTORING_NAME;
+    return JavaPushDownHandler.REFACTORING_NAME;
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
@@ -71,7 +71,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
                             RefactoringBundle.message("interface.0.does.not.have.inheritors", myClass.getQualifiedName()) :
                             RefactoringBundle.message("class.0.does.not.have.inheritors", myClass.getQualifiedName());
       final String message = noInheritors + "\n" + RefactoringBundle.message("push.down.will.delete.members");
-      final int answer = Messages.showYesNoDialog(message, PushDownHandler.REFACTORING_NAME, Messages.getWarningIcon());
+      final int answer = Messages.showYesNoDialog(message, JavaPushDownHandler.REFACTORING_NAME, Messages.getWarningIcon());
       if (answer != 0) return false;
     }
     for (UsageInfo usage : usagesIn) {

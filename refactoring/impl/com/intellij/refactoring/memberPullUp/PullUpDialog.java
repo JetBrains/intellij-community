@@ -56,7 +56,7 @@ public class PullUpDialog extends DialogWrapper {
     myMemberInfos = myMemberInfoStorage.getClassMemberInfos(aClass).toArray(new MemberInfo[0]);
     myCallback = callback;
 
-    setTitle(PullUpHandler.REFACTORING_NAME);
+    setTitle(JavaPullUpHandler.REFACTORING_NAME);
 
     init();
   }

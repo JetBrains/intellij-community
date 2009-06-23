@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -20,7 +21,7 @@ import java.util.List;
 /**
  * @author dsl
  */
-public class PushDownHandler implements RefactoringActionHandler {
+public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("push.members.down.title");
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
@@ -86,5 +87,23 @@ public class PushDownHandler implements RefactoringActionHandler {
             members.toArray(new MemberInfo[members.size()]),
             aClass);
     dialog.show();
+  }
+
+  public boolean isEnabledOnElements(PsiElement[] elements) {
+    /*
+    if (elements.length == 1) {
+      return elements[0] instanceof PsiClass || elements[0] instanceof PsiField || elements[0] instanceof PsiMethod;
+    }
+    else if (elements.length > 1){
+      for (int  idx = 0;  idx < elements.length;  idx++) {
+        PsiElement element = elements[idx];
+        if (!(element instanceof PsiField || element instanceof PsiMethod)) return false;
+      }
+      return true;
+    }
+    return false;
+    */
+    // todo: multiple selection etc
+    return elements.length == 1 && elements[0] instanceof PsiClass;
   }
 }

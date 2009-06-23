@@ -30,7 +30,7 @@ public class PushDownDialog extends RefactoringDialog {
     myMemberInfos = memberInfos;
     myClass = aClass;
 
-    setTitle(PushDownHandler.REFACTORING_NAME);
+    setTitle(JavaPushDownHandler.REFACTORING_NAME);
 
     init();
   }

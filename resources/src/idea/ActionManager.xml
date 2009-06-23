@@ -154,9 +154,11 @@
       <separator/>
       <action id="ExtractInterface" class="com.intellij.refactoring.actions.ExtractInterfaceAction"/>
       <action id="ExtractSuperclass" class="com.intellij.refactoring.actions.ExtractSuperclassAction"/>
+    <add-to-group group-id="RefactoringMenu" anchor="before" relative-to-action="ExtractInclude"/>
+    </group>
+    
+    <group id="RefactoringMenu4">
       <action id="TurnRefsToSuper" class="com.intellij.refactoring.actions.TurnRefsToSuperAction"/>
-      <action id="MembersPullUp" class="com.intellij.refactoring.actions.PullUpAction"/>
-      <action id="MemberPushDown" class="com.intellij.refactoring.actions.PushDownAction"/>
       <action id="InheritanceToDelegation" class="com.intellij.refactoring.actions.InheritanceToDelegationAction"/>
       <action id="RemoveMiddleman" class="com.intellij.refactoring.actions.RemoveMiddlemanAction"/>
       <action id="WrapReturnValue" class="com.intellij.refactoring.wrapreturnvalue.WrapReturnValueAction"/>
@@ -172,7 +174,7 @@
       <action id="Migrate" class="com.intellij.refactoring.actions.MigrateAction"/>
       <separator/>
 
-      <add-to-group group-id="RefactoringMenu" anchor="before" relative-to-action="ExtractInclude"/>
+      <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="MemberPushDown"/>
     </group>
 
     <action id="ReplaceMethodWithMethodObject" class="com.intellij.refactoring.actions.ReplaceMethodWithMethodObjectAction">

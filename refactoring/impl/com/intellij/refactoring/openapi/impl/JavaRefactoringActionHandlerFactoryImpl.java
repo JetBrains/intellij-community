@@ -17,8 +17,8 @@ import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.invertBoolean.InvertBooleanHandler;
 import com.intellij.refactoring.makeStatic.MakeStaticHandler;
-import com.intellij.refactoring.memberPullUp.PullUpHandler;
-import com.intellij.refactoring.memberPushDown.PushDownHandler;
+import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
+import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
 import com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryHandler;
 import com.intellij.refactoring.tempWithQuery.TempWithQueryHandler;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperHandler;
@@ -31,11 +31,11 @@ public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActi
   }
 
   public RefactoringActionHandler createPullUpHandler() {
-    return new PullUpHandler();
+    return new JavaPullUpHandler();
   }
 
   public RefactoringActionHandler createPushDownHandler() {
-    return new PushDownHandler();
+    return new JavaPushDownHandler();
   }
 
   public RefactoringActionHandler createTurnRefsToSuperHandler() {
