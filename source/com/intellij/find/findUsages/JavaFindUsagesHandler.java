@@ -44,7 +44,7 @@ import java.util.*;
  */
 public class JavaFindUsagesHandler extends FindUsagesHandler{
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findUsages.DefaultFindUsagesHandler");
-  static final String ACTION_STRING = FindBundle.message("find.super.method.warning.action.verb");
+  public static final String ACTION_STRING = FindBundle.message("find.super.method.warning.action.verb");
 
   private final PsiElement[] myElementsToSearch;
   private final FindUsagesOptions myFindPackageOptions;

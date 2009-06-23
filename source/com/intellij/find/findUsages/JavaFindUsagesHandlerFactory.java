@@ -4,10 +4,13 @@
  */
 package com.intellij.find.findUsages;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.lang.java.JavaFindUsagesProvider;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -18,6 +21,10 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   private final FindUsagesOptions myFindPackageOptions;
   private final FindUsagesOptions myFindThrowOptions;                   
   private final FindUsagesOptions myFindVariableOptions;
+
+  public static JavaFindUsagesHandlerFactory getInstance(@NotNull Project project) {
+    return ContainerUtil.findInstance(Extensions.getExtensions(EP_NAME, project), JavaFindUsagesHandlerFactory.class);
+  }
 
   public JavaFindUsagesHandlerFactory(Project project) {
     final FindUsagesOptions findClassOptions = FindUsagesHandler.createFindUsagesOptions(project);
@@ -71,5 +78,25 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
 
     return new JavaFindUsagesHandler(element, myFindClassOptions, myFindMethodOptions, myFindPackageOptions, myFindThrowOptions,
                                      myFindVariableOptions);
+  }
+
+  public FindUsagesOptions getFindClassOptions() {
+    return myFindClassOptions;
+  }
+
+  public FindUsagesOptions getFindMethodOptions() {
+    return myFindMethodOptions;
+  }
+
+  public FindUsagesOptions getFindPackageOptions() {
+    return myFindPackageOptions;
+  }
+
+  public FindUsagesOptions getFindThrowOptions() {
+    return myFindThrowOptions;
+  }
+
+  public FindUsagesOptions getFindVariableOptions() {
+    return myFindVariableOptions;
   }
 }
