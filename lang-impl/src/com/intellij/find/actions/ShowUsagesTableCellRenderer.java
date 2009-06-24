@@ -36,6 +36,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
 
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0,0));
     panel.setBackground(isSelected ? UIUtil.getListSelectionBackground() : list.getBackground());
+    panel.setForeground(isSelected ? UIUtil.getListSelectionForeground() : list.getForeground());
     GroupNode parent = (GroupNode)usageNode.getParent();
     SimpleColoredComponent textChunks = new SimpleColoredComponent();
     textChunks.setIpad(new Insets(0,0,0,0));
