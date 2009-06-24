@@ -431,6 +431,11 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     return myProjectsTree.findProject(id);
   }
 
+  public MavenProject findProject(MavenArtifact artifact) {
+    if (!isInitialized()) return null;
+    return myProjectsTree.findProject(artifact);
+  }
+
   public MavenProject findProject(Module module) {
     VirtualFile f = findPomFile(module);
     return f == null ? null : findProject(f);

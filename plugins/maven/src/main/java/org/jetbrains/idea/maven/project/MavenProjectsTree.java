@@ -811,6 +811,10 @@ public class MavenProjectsTree {
     }
   }
 
+  public MavenProject findProject(MavenArtifact artifact) {
+    return findProject(artifact.getMavenId());
+  }
+
   public MavenProject findProject(Artifact artifact) {
     return findProject(new MavenId(artifact));
   }

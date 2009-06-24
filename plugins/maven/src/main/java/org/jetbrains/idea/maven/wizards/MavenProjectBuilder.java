@@ -6,7 +6,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.Nullable;
@@ -19,8 +18,6 @@ import javax.swing.*;
 import java.util.*;
 
 public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
-  private final static Icon ICON = IconLoader.getIcon("/images/mavenLogo.png");
-
   private static class Parameters {
     private Project myProjectToUpdate;
 
@@ -44,7 +41,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return MavenIcons.MAVEN_ICON;
   }
 
   public void cleanup() {

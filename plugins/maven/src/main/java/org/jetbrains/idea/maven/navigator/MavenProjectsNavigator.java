@@ -5,7 +5,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -18,6 +17,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
+import org.jetbrains.idea.maven.utils.MavenIcons;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 
@@ -33,7 +33,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class MavenProjectsNavigator extends SimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState> {
   public static final String TOOL_WINDOW_ID = "Maven Projects";
 
-  private static final Icon ICON = IconLoader.getIcon("/images/mavenLogo.png");
   private static final URL ADD_ICON_URL = MavenProjectsNavigator.class.getResource("/general/add.png");
   private static final URL SYNC_ICON_URL = MavenProjectsNavigator.class.getResource("/actions/sync.png");
 
@@ -214,7 +213,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
 
     ToolWindowManager manager = ToolWindowManager.getInstance(myProject);
     ToolWindow toolWindow = manager.registerToolWindow(TOOL_WINDOW_ID, panel, ToolWindowAnchor.RIGHT, myProject, true);
-    toolWindow.setIcon(ICON);
+    toolWindow.setIcon(MavenIcons.MAVEN_ICON);
   }
 
   private void update(boolean restructure) {

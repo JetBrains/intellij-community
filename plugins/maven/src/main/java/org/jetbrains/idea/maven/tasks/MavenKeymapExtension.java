@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
-import org.jetbrains.idea.maven.navigator.MavenProjectsStructure;
 import org.jetbrains.idea.maven.project.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -24,6 +23,7 @@ import org.jetbrains.idea.maven.utils.actions.MavenActionUtils;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenPluginInfo;
+import org.jetbrains.idea.maven.utils.MavenIcons;
 
 import java.io.File;
 import java.util.*;
@@ -31,8 +31,8 @@ import java.util.*;
 public class MavenKeymapExtension implements KeymapExtension {
   public KeymapGroup createGroup(Condition<AnAction> condition, Project project) {
     KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(TasksBundle.message("maven.tasks.action.group.name"),
-                                                                      MavenProjectsStructure.OPEN_PHASES_ICON,
-                                                                      MavenProjectsStructure.CLOSED_PHASES_ICON);
+                                                                      MavenIcons.OPEN_PHASES_ICON,
+                                                                      MavenIcons.CLOSED_PHASES_ICON);
     if (project == null) return result;
 
     Comparator<MavenProject> projectComparator = new Comparator<MavenProject>() {
@@ -75,8 +75,8 @@ public class MavenKeymapExtension implements KeymapExtension {
       Set<Pair<String, String>> goalsToActionIds = each.getValue();
       if (goalsToActionIds.isEmpty()) continue;
       KeymapGroup group = KeymapGroupFactory.getInstance().createGroup(mavenProject.getDisplayName(),
-                                                                       MavenProjectsStructure.OPEN_MODULES_ICON,
-                                                                       MavenProjectsStructure.CLOSED_MODULES_ICON);
+                                                                       MavenIcons.OPEN_MODULES_ICON,
+                                                                       MavenIcons.CLOSED_MODULES_ICON);
       result.addGroup(group);
       for (Pair<String, String> eachGoalToActionId : goalsToActionIds) {
         group.addActionId(eachGoalToActionId.getSecond());
@@ -165,7 +165,7 @@ public class MavenKeymapExtension implements KeymapExtension {
       myGoal = goal;
       Presentation template = getTemplatePresentation();
       template.setText(goal, false);
-      template.setIcon(MavenProjectsStructure.PHASE_ICON);
+      template.setIcon(MavenIcons.PHASE_ICON);
     }
 
     public void actionPerformed(AnActionEvent e) {

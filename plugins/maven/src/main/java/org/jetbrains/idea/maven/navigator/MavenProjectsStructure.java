@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.navigator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -21,12 +20,8 @@ import org.jetbrains.idea.maven.project.MavenProjectProblem;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
-import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
-import org.jetbrains.idea.maven.utils.MavenPluginInfo;
-import org.jetbrains.idea.maven.utils.MavenUIUtil;
-import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.*;
 
-import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -36,23 +31,6 @@ import java.util.*;
 import java.util.List;
 
 public class MavenProjectsStructure extends SimpleTreeStructure {
-  public static final Icon MAVEN_PROJECT_ICON = IconLoader.getIcon("/images/mavenProject.png");
-
-  public static final Icon OPEN_PROFILES_ICON = IconLoader.getIcon("/images/profilesOpen.png");
-  public static final Icon CLOSED_PROFILES_ICON = IconLoader.getIcon("/images/profilesClosed.png");
-
-  public static final Icon OPEN_PHASES_ICON = IconLoader.getIcon("/images/phasesOpen.png");
-  public static final Icon CLOSED_PHASES_ICON = IconLoader.getIcon("/images/phasesClosed.png");
-  public static final Icon PHASE_ICON = IconLoader.getIcon("/images/phase.png");
-
-  public static final Icon OPEN_PLUGINS_ICON = IconLoader.getIcon("/images/phasesOpen.png");
-  public static final Icon CLOSED_PLUGINS_ICON = IconLoader.getIcon("/images/phasesClosed.png");
-  public static final Icon PLUGIN_ICON = IconLoader.getIcon("/images/mavenPlugin.png");
-  public static final Icon PLUGIN_GOAL_ICON = IconLoader.getIcon("/images/pluginGoal.png");
-
-  public static final Icon OPEN_MODULES_ICON = IconLoader.getIcon("/images/modulesOpen.png");
-  public static final Icon CLOSED_MODULES_ICON = IconLoader.getIcon("/images/modulesClosed.png");
-
   public static final URL ERROR_ICON_URL = MavenProjectsStructure.class.getResource("/images/error.png");
   public static final URL WARNING_ICON_URL = MavenProjectsStructure.class.getResource("/images/warning.png");
 
@@ -492,7 +470,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     public ProjectsGroupNode(CustomNode parent) {
       super(parent);
-      setIcons(CLOSED_MODULES_ICON, OPEN_MODULES_ICON);
+      setIcons(MavenIcons.CLOSED_MODULES_ICON, MavenIcons.OPEN_MODULES_ICON);
     }
 
     protected List<? extends CustomNode> getStructuralChildren() {
@@ -570,7 +548,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       myModulesNode = new ModulesNode(this);
 
       updateNode();
-      setUniformIcon(MAVEN_PROJECT_ICON);
+      setUniformIcon(MavenIcons.MAVEN_PROJECT_ICON);
     }
 
     @Override
@@ -756,7 +734,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   public class ModulesNode extends ProjectsGroupNode {
     public ModulesNode(ProjectNode parent) {
       super(parent);
-      setIcons(CLOSED_MODULES_ICON, OPEN_MODULES_ICON);
+      setIcons(MavenIcons.CLOSED_MODULES_ICON, MavenIcons.OPEN_MODULES_ICON);
     }
 
     @Override
@@ -794,7 +772,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       myGoal = goal;
       myDisplayName = displayName;
       updateNameAndDescription();
-      setUniformIcon(PHASE_ICON);
+      setUniformIcon(MavenIcons.PHASE_ICON);
     }
 
     public String getProjectPath() {
@@ -842,7 +820,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         myGoalNodes.add(new StandardGoalNode(this, goal));
       }
       updateNameAndDescription();
-      setIcons(CLOSED_PHASES_ICON, OPEN_PHASES_ICON);
+      setIcons(MavenIcons.CLOSED_PHASES_ICON, MavenIcons.OPEN_PHASES_ICON);
     }
 
     @Override
@@ -867,7 +845,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     public ProfilesNode(CustomNode parent) {
       super(parent);
       updateNameAndDescription();
-      setIcons(CLOSED_PROFILES_ICON, OPEN_PROFILES_ICON);
+      setIcons(MavenIcons.CLOSED_PROFILES_ICON, MavenIcons.OPEN_PROFILES_ICON);
     }
 
     @Override
@@ -946,7 +924,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     public PluginsNode(ProjectNode parent) {
       super(parent);
       updateNameAndDescription();
-      setIcons(CLOSED_PLUGINS_ICON, OPEN_PLUGINS_ICON);
+      setIcons(MavenIcons.CLOSED_PLUGINS_ICON, MavenIcons.OPEN_PLUGINS_ICON);
     }
 
     @Override
@@ -995,7 +973,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       myPlugin = plugin;
 
       updateNameAndDescription();
-      setUniformIcon(PLUGIN_ICON);
+      setUniformIcon(MavenIcons.PLUGIN_ICON);
     }
 
     @Override
@@ -1027,7 +1005,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   public class PluginGoalNode extends GoalNode {
     public PluginGoalNode(PluginNode parent, String goal, String displayName) {
       super(parent, goal, displayName);
-      setUniformIcon(PLUGIN_GOAL_ICON);
+      setUniformIcon(MavenIcons.PLUGIN_GOAL_ICON);
     }
   }
 }
