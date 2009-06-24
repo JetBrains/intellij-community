@@ -36,4 +36,12 @@ public abstract class BrowseModuleValueActionListener implements ActionListener 
   protected abstract String showDialog();
 
   public Project getProject() { return myProject; }
+
+  public void detach() {
+    if (myField != null) {
+      myField.removeActionListener(this);
+      myField = null;
+    }
+  }
+
 }
