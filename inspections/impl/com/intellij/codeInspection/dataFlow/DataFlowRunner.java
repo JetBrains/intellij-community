@@ -18,7 +18,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +58,7 @@ public class DataFlowRunner {
     return myInstructionFactory;
   }
 
-  public RunnerResult analyzeMethod(PsiCodeBlock psiBlock) {
+  public RunnerResult analyzeMethod(PsiElement psiBlock) {
     final boolean isInMethod = psiBlock.getParent() instanceof PsiMethod;
 
     try {

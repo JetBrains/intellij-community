@@ -23,6 +23,10 @@ public class InstructionFactory {
     return new AssignInstruction(RExpression);
   }
 
+  public BinopInstruction createInstanceofInstruction(@NotNull PsiElement psiAnchor, @NotNull final PsiExpression left, @NotNull final PsiType castType) {
+    return new BinopInstruction(PsiKeyword.INSTANCEOF, psiAnchor, psiAnchor.getProject());
+  }
+
   public BinopInstruction createBinopInstruction(@NonNls String opSign, PsiElement psiAnchor, Project project) {
     return new BinopInstruction(opSign, psiAnchor, project);
   }

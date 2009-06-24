@@ -16,10 +16,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +44,7 @@ public class StandardDataFlowRunner extends DataFlowRunner {
     mySuggestNullableAnnotations = suggestNullableAnnotations;
   }
 
-  public RunnerResult analyzeMethod(PsiCodeBlock psiBlock) {
+  public RunnerResult analyzeMethod(PsiElement psiBlock) {
     myIsInMethod = psiBlock.getParent() instanceof PsiMethod;
 
     if (myIsInMethod) {

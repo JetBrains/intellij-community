@@ -5,6 +5,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
@@ -18,11 +19,13 @@ import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.getters.*;
-import com.intellij.util.Consumer;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.LinkedHashMap;
 
 /**
  * @author peter
@@ -133,17 +136,14 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
           }
         }
 
-        processInstanceOfs(position, new Consumer<PsiInstanceOfExpression>() {
-          public void consume(PsiInstanceOfExpression psiInstanceOfExpression) {
-            final PsiTypeElement checkType = psiInstanceOfExpression.getCheckType();
-            if (checkType != null) {
-              final PsiType castType = checkType.getType();
-              if (expectedType.isAssignableFrom(castType)) {
-                result.addElement(new CastingLookupElementDecorator(new ExpressionLookupItem(psiInstanceOfExpression.getOperand()), castType));
-              }
-            }
+        final LinkedHashMap<PsiExpression,PsiType> map = GuessManager.getInstance(position.getProject())
+          .getDataFlowExpressionTypes(PsiTreeUtil.getParentOfType(position, PsiExpression.class));
+        for (final PsiExpression expression : map.keySet()) {
+          final PsiType castType = map.get(expression);
+          if (expectedType.isAssignableFrom(castType)) {
+            result.addElement(new CastingLookupElementDecorator(new ExpressionLookupItem(expression), castType));
           }
-        });
+        }
       }
     });
 
@@ -154,30 +154,6 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
       }
     });
 
-  }
-
-  private static void processInstanceOfs(PsiElement position, Consumer<PsiInstanceOfExpression> instanceofConsumer) {
-    PsiElement scope = position.getParent();
-    PsiElement lastParent = position;
-    while (scope != null && !(scope instanceof PsiFile)) {
-      if (scope instanceof PsiIfStatement) {
-        final PsiIfStatement statement = (PsiIfStatement)scope;
-        final PsiExpression condition = statement.getCondition();
-        if (lastParent != condition && condition instanceof PsiInstanceOfExpression) {
-          instanceofConsumer.consume((PsiInstanceOfExpression)condition);
-        }
-      }
-      else if (scope instanceof PsiConditionalExpression) {
-        final PsiConditionalExpression expression = (PsiConditionalExpression)scope;
-        final PsiExpression condition = expression.getCondition();
-        if (lastParent != condition && condition instanceof PsiInstanceOfExpression) {
-          instanceofConsumer.consume((PsiInstanceOfExpression) condition);
-        }
-      }
-
-      lastParent = scope;
-      scope = scope.getContext();
-    }
   }
 
   private static boolean isClassType(final PsiType type, final String className) {

@@ -992,17 +992,24 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiExpression thenExpression = expression.getThenExpression();
       PsiExpression elseExpression = expression.getElseExpression();
 
-      if (thenExpression != null && elseExpression != null) {
+      final int elseOffset = elseExpression == null ? getEndOffset(expression) : getStartOffset(elseExpression);
+      if (thenExpression != null) {
         condition.accept(this);
         generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
         PsiType type = expression.getType();
-        addInstruction(myInstructionFactory.createConditionalGotoInstruction(getStartOffset(elseExpression), true, condition));
+        addInstruction(myInstructionFactory.createConditionalGotoInstruction(elseOffset, true, condition));
         thenExpression.accept(this);
         generateBoxingUnboxingInstructionFor(thenExpression,type);
 
         addInstruction(myInstructionFactory.createGotoInstruction(getEndOffset(expression)));
-        elseExpression.accept(this);
-        generateBoxingUnboxingInstructionFor(elseExpression,type);
+
+        if (elseExpression != null) {
+          elseExpression.accept(this);
+          generateBoxingUnboxingInstructionFor(elseExpression,type);
+        }
+        else {
+          pushUnknown();
+        }
       }
       else {
         pushUnknown();
@@ -1027,7 +1034,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         type = ((PsiClassType)type).rawType();
       }
       addInstruction(myInstructionFactory.createPushInstruction(myFactory.getTypeFactory().create(type), null));
-      addInstruction(myInstructionFactory.createBinopInstruction("instanceof", expression,expression.getProject()));
+      addInstruction(myInstructionFactory.createInstanceofInstruction(expression, operand, type));
     }
     else {
       pushUnknown();
@@ -1178,8 +1185,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     return false;
   }
 
-  private void conditionalExit(final int exitPoint, final boolean negated) {
-    addInstruction(myInstructionFactory.createConditionalGotoInstruction(exitPoint, negated, null));
+  private void conditionalExit(final int continuePoint, final boolean exitIfTrue) {
+    addInstruction(myInstructionFactory.createConditionalGotoInstruction(continuePoint, exitIfTrue, null));
     addInstruction(myInstructionFactory.createReturnInstruction());
     pushUnknown();
   }
