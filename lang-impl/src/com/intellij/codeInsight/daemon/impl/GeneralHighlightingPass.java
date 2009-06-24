@@ -99,6 +99,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<AtomicInteger>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");
+  @NotNull
   private HighlightVisitor[] createHighlightVisitors() {
     int oldCount = incVisitorUsageCount(1);
     HighlightVisitor[] highlightVisitors = Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, myProject);
@@ -423,9 +424,11 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final Set<HighlightInfo> gotHighlights = new THashSet<HighlightInfo>();
 
     final List<HighlightVisitor> visitors = new ArrayList<HighlightVisitor>(highlightVisitors.length);
-    for (HighlightVisitor visitor : DumbService.getInstance(myProject).filterByDumbAwareness(Arrays.asList(highlightVisitors))) {
+    List<HighlightVisitor> list = Arrays.asList(highlightVisitors);
+    for (HighlightVisitor visitor : DumbService.getInstance(myProject).filterByDumbAwareness(list)) {
       if (visitor.suitableForFile(myFile)) visitors.add(visitor);
     }
+    LOG.assertTrue(!visitors.isEmpty(), list);
 
     HighlightVisitor[] visitorArray = visitors.toArray(new HighlightVisitor[visitors.size()]);
     Arrays.sort(visitorArray, VISITOR_ORDER_COMPARATOR);
