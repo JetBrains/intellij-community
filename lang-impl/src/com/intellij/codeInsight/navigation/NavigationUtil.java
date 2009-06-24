@@ -48,7 +48,9 @@ public final class NavigationUtil {
         int[] ids = list.getSelectedIndices();
         if (ids == null || ids.length == 0) return;
         for (Object element : list.getSelectedValues()) {
-          processor.execute((T)element);
+          if (element != null) {
+            processor.execute((T)element);
+          }
         }
       }
     };

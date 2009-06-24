@@ -121,7 +121,9 @@ public class ShowUsagesAction extends AnAction {
     }
     else {
       PsiElement element = ((PsiElementUsageTarget)usageTargets[0]).getElement();
-      startFindUsages(element, popupPosition, editor, USAGES_PAGE_SIZE);
+      if (element != null) {
+        startFindUsages(element, popupPosition, editor, USAGES_PAGE_SIZE);
+      }
     }
   }
 
@@ -129,7 +131,7 @@ public class ShowUsagesAction extends AnAction {
     HintManager.getInstance().hideHints(HintManager.HIDE_BY_ANY_KEY, false, false);
   }
 
-  private void startFindUsages(PsiElement element, RelativePoint popupPosition, Editor editor, int maxUsages) {
+  private void startFindUsages(@NotNull PsiElement element, RelativePoint popupPosition, Editor editor, int maxUsages) {
     Project project = element.getProject();
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element, false);
@@ -144,7 +146,26 @@ public class ShowUsagesAction extends AnAction {
     UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setDetachedMode(true);
 
-    final UsageViewImpl usageView = (UsageViewImpl)UsageViewManager.getInstance(handler.getProject()).createUsageView(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation, null);
+    final UsageViewSettings usageViewSettings = UsageViewSettings.getInstance();
+    final UsageViewSettings save = new UsageViewSettings();
+
+    save.loadState(usageViewSettings);
+    usageViewSettings.GROUP_BY_FILE_STRUCTURE = false;
+    usageViewSettings.GROUP_BY_MODULE = false;
+    usageViewSettings.GROUP_BY_PACKAGE = false;
+    usageViewSettings.GROUP_BY_USAGE_TYPE = false;
+
+    UsageViewManager manager = UsageViewManager.getInstance(handler.getProject());
+    final UsageViewImpl usageView = (UsageViewImpl)manager.createUsageView(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation, null);
+
+    Disposer.register(usageView, new Disposable() {
+      public void dispose() {
+        usageViewSettings.GROUP_BY_FILE_STRUCTURE = save.GROUP_BY_FILE_STRUCTURE;
+        usageViewSettings.GROUP_BY_MODULE = save.GROUP_BY_MODULE;
+        usageViewSettings.GROUP_BY_PACKAGE = save.GROUP_BY_PACKAGE;
+        usageViewSettings.GROUP_BY_USAGE_TYPE = save.GROUP_BY_USAGE_TYPE;
+      }
+    });
 
     final List<Usage> usages = new ArrayList<Usage>();
     final Set<UsageNode> visibleNodes = new LinkedHashSet<UsageNode>();
@@ -257,24 +278,7 @@ public class ShowUsagesAction extends AnAction {
                                    final UsageViewImpl usageView) {
     boolean hasMore = visibleNodes.remove(UsageViewImpl.NULL_NODE);
 
-    final UsageViewSettings usageViewSettings = UsageViewSettings.getInstance();
-    final UsageViewSettings save = new UsageViewSettings();
-
-    save.loadState(usageViewSettings);
-    usageViewSettings.GROUP_BY_FILE_STRUCTURE = false;
-    usageViewSettings.GROUP_BY_MODULE = false;
-    usageViewSettings.GROUP_BY_PACKAGE = false;
-    usageViewSettings.GROUP_BY_USAGE_TYPE = false;
-
     final Project project = handler.getProject();
-    Disposer.register(usageView, new Disposable() {
-      public void dispose() {
-        usageViewSettings.GROUP_BY_FILE_STRUCTURE = save.GROUP_BY_FILE_STRUCTURE;
-        usageViewSettings.GROUP_BY_MODULE = save.GROUP_BY_MODULE;
-        usageViewSettings.GROUP_BY_PACKAGE = save.GROUP_BY_PACKAGE;
-        usageViewSettings.GROUP_BY_USAGE_TYPE = save.GROUP_BY_USAGE_TYPE;
-      }
-    });
 
     if (visibleNodes.isEmpty()) {
       if (usages.isEmpty()) {
@@ -317,7 +321,8 @@ public class ShowUsagesAction extends AnAction {
         return true;
       }
     };
-    final Vector<Object> data = setModel(table, usages, visibleNodes, usageView);
+    final Vector<Object> data = new Vector<Object>();
+    setModel(table, usages, visibleNodes, usageView, data);
 
     final Runnable navigateRunnable = new Runnable() {
       public void run() {
@@ -335,7 +340,6 @@ public class ShowUsagesAction extends AnAction {
         }
       }
     };
-
 
     SpeedSearchBase<JTable> speedSearch = new SpeedSearchBase<JTable>(table) {
       protected int getSelectedIndex() {
@@ -444,8 +448,14 @@ public class ShowUsagesAction extends AnAction {
     return popup[0];
   }
 
-  private static Vector<Object> setModel(JTable table, List<Usage> usages, Collection<UsageNode> visibleNodes, UsageViewImpl usageView) {
-    final Vector<Object> data = createListModel(visibleNodes, usages);
+  private static int setModel(JTable table, List<Usage> usages, Collection<UsageNode> visibleNodes, UsageViewImpl usageView,
+                                         final Vector<Object> data) {
+    if (visibleNodes.isEmpty()) {
+      data.add(UsageViewBundle.message("usages.were.filtered.out", usages.size()));
+    }
+    else {
+      data.addAll(visibleNodes);
+    }
     Collections.sort(data, USAGE_COMPARATOR);
     AbstractTableModel model = new AbstractTableModel() {
       public int getRowCount() {
@@ -489,18 +499,16 @@ public class ShowUsagesAction extends AnAction {
       column.setPreferredWidth(width);
     }
 
-    int width = calcMaxWidth(table, colsNum - 1);
-    totalWidth += width;
+    totalWidth += calcMaxWidth(table, colsNum - 1);
 
-    Dimension dimension = new Dimension(totalWidth, table.getPreferredSize().height);
+    Dimension dimension = new Dimension(totalWidth, table.getRowHeight() * data.size());
     table.setMinimumSize(dimension);
     table.setSize(dimension);
+    table.setPreferredSize(dimension);
     table.setMaximumSize(dimension);
-    Dimension scrollable =
-      new Dimension(Math.max(table.getPreferredScrollableViewportSize().width, totalWidth), table.getPreferredSize().height);
-    table.setPreferredScrollableViewportSize(scrollable);
+    table.setPreferredScrollableViewportSize(dimension);
 
-    return data;
+    return totalWidth;
   }
 
   private static int calcMaxWidth(JTable table, int col) {
@@ -519,40 +527,32 @@ public class ShowUsagesAction extends AnAction {
   private void rebuildPopup(final UsageViewImpl usageView, final List<Usage> usages, final JTable table, final JBPopup popup) {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        JComponent content = popup.getContent();
+        Window window = SwingUtilities.windowForComponent(content);
+        Dimension d = window.getSize();
+
         final List<UsageNode> nodes = new ArrayList<UsageNode>();
         addUsageNodes(usageView.getRoot(), usageView, nodes);
 
         int old = table.getModel().getRowCount();
-        Vector<Object> data = setModel(table, usages, nodes, usageView);
+        Vector<Object> data = new Vector<Object>();
+        int width = setModel(table, usages, nodes, usageView, data);
 
-        int width = 0;
-        for (int col = 0; col < table.getColumnModel().getColumnCount(); col++) {
-          width += calcMaxWidth(table, col);
-        }
-
-        JComponent content = popup.getContent();
-        Window window = SwingUtilities.windowForComponent(content);
 
         if (myWidth == -1) myWidth = width;
-        Dimension d = new Dimension(window.getSize());
-        Dimension newDim = new Dimension(d.width + width - myWidth, d.height + (data.size() - old) * table.getRowHeight());
+        Dimension newDim = new Dimension(Math.max(width, d.width + width - myWidth), d.height + (data.size() - old) * table.getRowHeight());
         myWidth = width;
         window.setSize(newDim);
         window.validate();
         window.repaint();
-        //table.revalidate();
-        //table.repaint();
-        //table.validate();
+        table.revalidate();
+        table.repaint();
       }
     });
   }
 
   private void appendMoreUsages(Editor editor, RelativePoint popupPosition, FindUsagesHandler handler, int maxUsages) {
     showElementUsages(handler,  editor, popupPosition, maxUsages+USAGES_PAGE_SIZE);
-  }
-
-  private static Vector<Object> createListModel(Collection<UsageNode> nodes, List<Usage> usages) {
-    return nodes.isEmpty() ? new Vector<Object>(Collections.singletonList(UsageViewBundle.message("usages.were.filtered.out", usages.size()))) : new Vector<Object>(nodes);
   }
 
   private static KeyboardShortcut getSettingsShortcut() {

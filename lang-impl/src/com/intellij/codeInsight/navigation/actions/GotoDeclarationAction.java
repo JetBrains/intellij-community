@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -25,6 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.actions.GotoDeclarationAction");
   protected CodeInsightActionHandler getHandler() {
     return this;
   }
@@ -91,6 +93,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     final Collection<PsiElement> candidates = suggestCandidates(reference);
     if (candidates.size() == 1) {
       PsiElement element = candidates.iterator().next();
+      LOG.assertTrue(element != null);
       processor.execute(element);
       return true;
     }
