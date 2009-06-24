@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class DefaultHighlightVisitor extends PsiElementVisitor implements HighlightVisitor {
+public class DefaultHighlightVisitor extends PsiElementVisitor implements HighlightVisitor, DumbAware {
   private final AnnotationHolderImpl myAnnotationHolder = new AnnotationHolderImpl();
   private HighlightInfoHolder myHolder;
 
