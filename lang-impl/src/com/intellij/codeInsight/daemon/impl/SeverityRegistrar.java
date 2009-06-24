@@ -146,8 +146,13 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     }
     myOrder.clear();
     myOrder.readExternal(element);
-    for (String stdSeverity : STANDART_SEVERITIES.keySet()) {
-      if (!myOrder.contains(stdSeverity)) { //todo order
+
+    final Set<String> knownSeverities = new HashSet<String>(ourMap.keySet()); //remove all irrelevant
+    knownSeverities.addAll(STANDART_SEVERITIES.keySet());
+    myOrder.retainAll(knownSeverities);
+
+    for (String stdSeverity : knownSeverities) { //enforce include all known
+      if (!myOrder.contains(stdSeverity)) {
         myOrder.add(0, stdSeverity);
       }
     }
