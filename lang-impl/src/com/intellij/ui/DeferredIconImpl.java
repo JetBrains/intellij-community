@@ -5,8 +5,8 @@ package com.intellij.ui;
 
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.util.Function;
 import com.intellij.util.ui.EmptyIcon;
 
@@ -50,7 +50,13 @@ public class DeferredIconImpl<T> implements DeferredIcon {
           target = tree;
         }
         else {
-          target = c;
+          final Container table = SwingUtilities.getAncestorOfClass(JTable.class, c);
+          if (table != null) {
+            target = table;
+          }
+          else {
+            target = c;
+          }
         }
       }
 
