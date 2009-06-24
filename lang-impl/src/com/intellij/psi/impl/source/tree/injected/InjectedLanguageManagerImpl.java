@@ -12,6 +12,8 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
@@ -250,9 +252,14 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     boolean process(PsiElement element, MultiHostInjector injector);
   }
   public void processInPlaceInjectorsFor(@NotNull PsiElement element, @NotNull InjProcessor processor) {
+    final boolean dumb = DumbService.getInstance(myProject).isDumb();
     MultiHostInjector[] infos = cachedInjectors.get(element.getClass());
     if (infos != null) {
       for (MultiHostInjector injector : infos) {
+        if (dumb && !(injector instanceof DumbAware)) {
+          continue;
+        }
+
         if (!processor.process(element, injector)) return;
       }
     }
