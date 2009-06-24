@@ -571,15 +571,17 @@ class AbstractTreeUi {
     updateNodeChildren(node, pass);
   }
 
+  @NotNull
   UpdaterTreeState setUpdaterState(UpdaterTreeState state) {
-    if (myUpdaterState == null) {
+    final UpdaterTreeState oldState = myUpdaterState;
+    if (oldState == null) {
       myUpdaterState = state;
+      return state;
     }
     else {
-      myUpdaterState.addAll(state);
+      oldState.addAll(state);
+      return oldState;
     }
-
-    return myUpdaterState;
   }
 
   protected void doUpdateNode(DefaultMutableTreeNode node) {
@@ -1152,8 +1154,8 @@ class AbstractTreeUi {
       //  }
       //}
 
-      if (myNodeActions.size() == 0 && myUpdaterState != null && !myUpdaterState.isProcessingNow()) {
-        final UpdaterTreeState state = myUpdaterState;
+      final UpdaterTreeState state = myUpdaterState;
+      if (myNodeActions.size() == 0 && state != null && !state.isProcessingNow()) {
         if (!state.restore()) {
           setUpdaterState(state);
         }
