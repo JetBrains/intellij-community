@@ -8,6 +8,7 @@ import com.intellij.codeInspection.HintAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -59,6 +61,15 @@ public final class QuickFixAction {
     }
   }
 
+  public static void unregisterQuickFixAction(HighlightInfo info, Condition<IntentionAction> condition) {
+    for (Iterator<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> it = info.quickFixActionRanges.iterator(); it.hasNext();) {
+      Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair = it.next();
+      if (condition.value(pair.first.getAction())) {
+        it.remove();
+      }
+    }
+  }
+
   /**
    * Is invoked inside atomic action.
    */
@@ -95,5 +106,4 @@ public final class QuickFixAction {
       }
     }
   }
-
 }
