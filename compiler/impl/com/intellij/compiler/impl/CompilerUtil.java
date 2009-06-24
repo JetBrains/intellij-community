@@ -7,13 +7,14 @@ package com.intellij.compiler.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ThrowableRunnable;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,10 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import gnu.trove.THashMap;
 
 public class CompilerUtil {
   public static String quotePath(String path) {
@@ -104,40 +101,53 @@ public class CompilerUtil {
     refreshFilesInterruptibly(context, virtualFiles, title);
   }
   public static void refreshFilesInterruptibly(@NotNull final CompileContext context, @NotNull final Collection<VirtualFile> files, @Nullable String title) {
-    LocalFileSystem.getInstance().refreshFiles(files); //
-    if (true) return;
     ThrowableRunnable<RuntimeException> runnable = new ThrowableRunnable<RuntimeException>() {
-      public void run() throws RuntimeException {
-        boolean async = !ApplicationManager.getApplication().isDispatchThread();
-        final CountDownLatch latch = new CountDownLatch(files.size());
-        final int[] i = {0};
-        for (final VirtualFile virtualFile : files) {
+      public void run() {
+        int i =0;
+        for (VirtualFile file : files) {
           context.getProgressIndicator().checkCanceled();
-          virtualFile.refresh(async, true, new Runnable() {
-            public void run() {
-              latch.countDown();
-              context.getProgressIndicator().setFraction(++i[0] * 1.0 / files.size());
-              context.getProgressIndicator().setText2(virtualFile.getPath());
-            }
-          });
-        }
-        try {
-          while (true) {
-            latch.await(100, TimeUnit.MILLISECONDS);
-            if (latch.getCount() == 0) break;
-            context.getProgressIndicator().checkCanceled();
+          if (files.size() > 100) {
+            context.getProgressIndicator().setFraction(++i * 1.0 / files.size());
+            context.getProgressIndicator().setText2(file.getPath());
           }
-        }
-        catch (InterruptedException ignored) {
+          file.refresh(false, true);
         }
       }
     };
-    if (title != null) {
+    if (files.size() > 100) {
       CompileDriver.runInContext(context, title, runnable);
     }
     else {
       runnable.run();
     }
+    //LocalFileSystem.getInstance().refreshFiles(files);
+    //if (true) return;
+    //ThrowableRunnable<RuntimeException> runnable = new ThrowableRunnable<RuntimeException>() {
+    //  public void run() throws RuntimeException {
+    //    boolean async = !ApplicationManager.getApplication().isDispatchThread();
+    //    final CountDownLatch latch = new CountDownLatch(files.size());
+    //    final int[] i = {0};
+    //    for (final VirtualFile virtualFile : files) {
+    //      context.getProgressIndicator().checkCanceled();
+    //      virtualFile.refresh(async, true, new Runnable() {
+    //        public void run() {
+    //          latch.countDown();
+    //          context.getProgressIndicator().setFraction(++i[0] * 1.0 / files.size());
+    //          context.getProgressIndicator().setText2(virtualFile.getPath());
+    //        }
+    //      });
+    //    }
+    //    try {
+    //      while (true) {
+    //        latch.await(100, TimeUnit.MILLISECONDS);
+    //        if (latch.getCount() == 0) break;
+    //        context.getProgressIndicator().checkCanceled();
+    //      }
+    //    }
+    //    catch (InterruptedException ignored) {
+    //    }
+    //  }
+    //};
   }
 
   public static void refreshIODirectories(@NotNull final Collection<File> files) {
