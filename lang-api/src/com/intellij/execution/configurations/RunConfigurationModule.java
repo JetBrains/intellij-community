@@ -76,9 +76,6 @@ public class RunConfigurationModule implements JDOMExternalizable {
   public Module getModule() {
     if (myModuleName != null) { //caching
       myModule = findModule(myModuleName);
-      if (myModule != null) {
-        myModuleName = null;
-      }
     }
     if (myModule != null && myModule.isDisposed()) {
       myModule = null;
@@ -93,12 +90,11 @@ public class RunConfigurationModule implements JDOMExternalizable {
 
   public void setModule(final Module module) {
     myModule = module;
-    myModuleName = null;
+    myModuleName = module.getName();
   }
 
   public String getModuleName() {
-    final Module module = getModule();
-    return module != null ? module.getName() : "";
+    return myModuleName != null ? myModuleName : "";
   }
 
   private ModuleManager getModuleManager() {
