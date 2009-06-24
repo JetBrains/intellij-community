@@ -75,6 +75,10 @@ public class RefactoringBundle {
     return CommonBundle.message(getBundle(), key, params);
   }
 
+  public static String message(@PropertyKey(resourceBundle = BUNDLE)String key) {
+    return CommonBundle.message(getBundle(), key);
+  }
+
   private static ResourceBundle getBundle() {
     ResourceBundle bundle = null;
     if (ourBundle != null) bundle = ourBundle.get();
