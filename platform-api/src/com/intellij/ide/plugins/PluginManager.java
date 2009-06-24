@@ -932,8 +932,10 @@ public class PluginManager {
   }
 
   public static boolean disablePlugin(String id) {
+    if (getDisabledPlugins().contains(id)) return false;
+    getDisabledPlugins().add(id);
     try {
-      saveDisabledPlugins(Collections.singletonList(id), true);
+      saveDisabledPlugins(getDisabledPlugins(), false);
     }
     catch (IOException e) {
       return false;
