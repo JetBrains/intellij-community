@@ -32,6 +32,9 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -81,6 +84,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private UnusedSymbolLocalInspection myUnusedSymbolInspection;
   private HighlightDisplayKey myUnusedSymbolKey;
   private boolean myDeadCodeEnabled;
+  private boolean myInLibrary;
 
   private PostHighlightingPass(@NotNull Project project,
                                @NotNull PsiFile file,
@@ -121,6 +125,11 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
       elementSet.addAll(elements);
     }
+
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    VirtualFile virtualFile = viewProvider.getVirtualFile();
+    myInLibrary = fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile);
+
     myRefCountHolder = RefCountHolder.getInstance(myFile);
     if (!myRefCountHolder.retrieveUnusedReferencesInfo(new Runnable() {
       public void run() {
@@ -473,6 +482,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private boolean weAreSureThereAreNoUsages(PsiMember member) {
+    if (myInLibrary) return false;
     if (!myDeadCodeEnabled) return false;
     if (myDeadCodeInspection.isEntryPoint(member)) return false;
 
