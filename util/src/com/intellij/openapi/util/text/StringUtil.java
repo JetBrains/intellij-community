@@ -1163,11 +1163,12 @@ public class StringUtil {
   }
 
   public static int indexOf(CharSequence s, char c) {
-    int l = s.length();
-    for (int i = 0; i < l; i++) {
+    return indexOf(s, c, 0, s.length());
+  }
+  public static int indexOf(CharSequence s, char c, int start, int end) {
+    for (int i = start; i < end; i++) {
       if (s.charAt(i) == c) return i;
     }
-
     return -1;
   }
 

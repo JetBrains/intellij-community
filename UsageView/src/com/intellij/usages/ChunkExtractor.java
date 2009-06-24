@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -104,12 +105,8 @@ public class ChunkExtractor {
     Lexer lexer = highlighter.getHighlightingLexer();
     lexer.start(chars);
 
-    for (int offset = start; offset < end; offset++) {
-      if (chars.charAt(offset) == '\n') {
-        end = offset;
-        break;
-      }
-    }
+    int i = StringUtil.indexOf(chars, '\n', start, end);
+    if (i != -1) end = i;
 
     boolean isBeginning = true;
 
@@ -203,7 +200,4 @@ public class ChunkExtractor {
     TextChunk prefixChunk = new TextChunk(myColorsScheme.getAttributes(UsageTreeColors.USAGE_LOCATION), buffer.toString());
     result.add(prefixChunk);
   }
-
-
-
 }

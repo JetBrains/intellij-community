@@ -19,17 +19,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.InplaceButton;
-import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usageView.UsageViewBundle;
@@ -39,12 +41,15 @@ import com.intellij.usages.impl.NullUsage;
 import com.intellij.usages.impl.UsageNode;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
-import com.intellij.util.Function;
+import com.intellij.util.Icons;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -53,25 +58,31 @@ import java.util.List;
 
 public class ShowUsagesAction extends AnAction {
   private final boolean showSettingsDialogBefore;
-  private static final Function<Object,String> SPEED_SEARCH_TEXT = new Function<Object, String>() {
-    public String fun(Object element) {
-      if (!(element instanceof UsageNode)) return element.toString();
-      StringBuilder text = new StringBuilder();
-      UsageNode node = (UsageNode)element;
-      Usage usage = node.getUsage();
-      VirtualFile virtualFile = UsageListCellRenderer.getVirtualFile(usage);
-      if (virtualFile != null) {
-        text.append(virtualFile.getName());
-      }
-      TextChunk[] chunks = usage.getPresentation().getText();
-      for (TextChunk chunk : chunks) {
-        text.append(chunk.getText());
-      }
-      return text.toString();
-    }
-  };
 
   private static final int USAGES_PAGE_SIZE = 100;
+  private static final Comparator<Object> USAGE_COMPARATOR = new Comparator<Object>() {
+    public int compare(Object c1, Object c2) {
+      Usage o1 = ((UsageNode)c1).getUsage();
+      Usage o2 = ((UsageNode)c2).getUsage();
+      if (o1 == NullUsage.INSTANCE) return 1;
+      if (o2 == NullUsage.INSTANCE) return -1;
+
+      VirtualFile v1 = UsageListCellRenderer.getVirtualFile(o1);
+      VirtualFile v2 = UsageListCellRenderer.getVirtualFile(o2);
+      String name1 = v1 == null ? null : v1.getName();
+      String name2 = v2 == null ? null : v2.getName();
+      int i = Comparing.compare(name1, name2);
+      if (i!=0) return i;
+
+      if (o1 instanceof Comparable && o2 instanceof Comparable) {
+        return ((Comparable)o1).compareTo(o2);
+      }
+
+      FileEditorLocation loc1 = o1.getLocation();
+      FileEditorLocation loc2 = o2.getLocation();
+      return Comparing.compare(loc1, loc2);
+    }
+  };
 
   public ShowUsagesAction() {
     setInjectedContext(true);
@@ -92,7 +103,7 @@ public class ShowUsagesAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return;
-    HintManager.getInstance().hideHints(HintManager.HIDE_BY_ANY_KEY, false, false);
+    hideHints();
     final RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.usages");
@@ -111,6 +122,10 @@ public class ShowUsagesAction extends AnAction {
       PsiElement element = ((PsiElementUsageTarget)usageTargets[0]).getElement();
       startFindUsages(element, popupPosition, editor, USAGES_PAGE_SIZE);
     }
+  }
+
+  private static void hideHints() {
+    HintManager.getInstance().hideHints(HintManager.HIDE_BY_ANY_KEY, false, false);
   }
 
   private void startFindUsages(PsiElement element, RelativePoint popupPosition, Editor editor, int maxUsages) {
@@ -167,7 +182,7 @@ public class ShowUsagesAction extends AnAction {
   private void showHint(String text, final Editor editor, final RelativePoint popupPosition, FindUsagesHandler handler, int maxUsages) {
     JComponent label = createHintComponent(text, handler, popupPosition, editor, new Runnable() {
       public void run() {
-        HintManager.getInstance().hideHints(HintManager.HIDE_BY_ANY_KEY, false, false);
+        hideHints();
       }
     }, maxUsages);
     if (editor == null) {
@@ -204,7 +219,7 @@ public class ShowUsagesAction extends AnAction {
     if (shortcut != null) {
       shortcutText = "(" + KeymapUtil.getShortcutText(shortcut) + ")";
     }
-    return new InplaceButton("Configure..." + shortcutText, IconLoader.getIcon("/general/ideOptions.png"), new ActionListener() {
+    return new InplaceButton("Options..." + shortcutText, IconLoader.getIcon("/general/ideOptions.png"), new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
@@ -293,28 +308,59 @@ public class ShowUsagesAction extends AnAction {
       visibleNodes.add(UsageViewImpl.NULL_NODE);
     }
     addUsageNodes(usageView.getRoot(), usageView, new ArrayList<UsageNode>());
-    Vector<Object> data = createListModel(visibleNodes, usages);
-    final JList list = new JList(data);
-    list.setCellRenderer(new ShowUsagesListCellRenderer(usageView));
+
+
+    final JTable table = new Table(){
+      @Override
+      public boolean getScrollableTracksViewportWidth() {
+        return true;
+      }
+    };
+    final Vector<Object> data = setModel(table, usages, visibleNodes, usageView);
 
     final Runnable navigateRunnable = new Runnable() {
       public void run() {
-        Object value = list.getSelectedValue();
-        if (value instanceof UsageNode) {
-          Usage usage = ((UsageNode)value).getUsage();
-          if (usage == NullUsage.INSTANCE) {
-            appendMoreUsages(editor, popupPosition, handler, maxUsages);
-            return;
+        int[] selected = table.getSelectedRows();
+        for (int i : selected) {
+          Object value = table.getValueAt(i,0);
+          if (value instanceof UsageNode) {
+            Usage usage = ((UsageNode)value).getUsage();
+            if (usage == NullUsage.INSTANCE) {
+              appendMoreUsages(editor, popupPosition, handler, maxUsages);
+              return;
+            }
+            navigateAndHint(usage, null, handler, popupPosition, maxUsages);
           }
-          navigateAndHint(usage, null, handler, popupPosition, maxUsages);
         }
       }
     };
 
-    ListSpeedSearch speedSearch = new ListSpeedSearch(list, SPEED_SEARCH_TEXT);
+
+    SpeedSearchBase<JTable> speedSearch = new SpeedSearchBase<JTable>(table) {
+      protected int getSelectedIndex() {
+        return table.getSelectedRow();
+      }
+
+      protected Object[] getAllElements() {
+        return data.toArray(new Object[data.size()]);
+      }
+
+      protected String getElementText(Object element) {
+        if (!(element instanceof UsageNode)) return element.toString();
+        UsageNode node = (UsageNode)element;
+        GroupNode group = (GroupNode)node.getParent();
+        return node.getUsage().getPresentation().getPlainText() + group.toString();
+      }
+
+      protected void selectElement(Object element, String selectedText) {
+        int i = data.indexOf(element);
+        if (i == -1) return;
+        table.getSelectionModel().setSelectionInterval(i, i);
+      }
+    };
     speedSearch.setComparator(new SpeedSearchBase.SpeedSearchComparator(false));
 
-    PopupChooserBuilder builder = new PopupChooserBuilder(list);
+    PopupChooserBuilder builder = new PopupChooserBuilder(table);
     if (title != null) {
       String s;
       if (hasMore) {
@@ -354,6 +400,26 @@ public class ShowUsagesAction extends AnAction {
 
     DefaultActionGroup filters = new DefaultActionGroup();
     usageView.addFilteringActions(filters);
+
+    filters.add(new AnAction("Open Find Usages Toolwindow", "Show all usages in a separate toolwindow", IconLoader.getIcon("/general/toolWindowFind.png")) {
+      {
+        AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES);
+        setShortcutSet(action.getShortcutSet());
+      }
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        hideHints();
+        popup[0].cancel();
+        FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
+        FindUsagesManager.SearchData data = new FindUsagesManager.SearchData();
+        data.myOptions = handler.getFindUsagesOptions();
+        SmartPsiElementPointer<PsiElement> pointer =
+          SmartPointerManager.getInstance(project).createSmartPsiElementPointer(handler.getPsiElement());
+        data.myElements = new SmartPsiElementPointer[]{pointer};
+        findUsagesManager.rerunAndRecallFromHistory(data);
+      }
+    });
+
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR, filters, true);
     actionToolbar.setReservePlaceAutoPopupIcon(false);
     final JComponent toolBar = actionToolbar.getComponent();
@@ -370,52 +436,119 @@ public class ShowUsagesAction extends AnAction {
     final MessageBusConnection messageBusConnection = project.getMessageBus().connect(usageView);
     messageBusConnection.subscribe(UsageFilteringRuleProvider.RULES_CHANGED, new Runnable() {
       public void run() {
-        rebuildPopup(usageView, usages, list, popup[0]);
+        rebuildPopup(usageView, usages, table, popup[0]);
       }
     });
 
     return popup[0];
   }
 
-  private static void rebuildPopup(final UsageViewImpl usageView, final List<Usage> usages, final JList list, final JBPopup popup) {
+  private static Vector<Object> setModel(JTable table, List<Usage> usages, Collection<UsageNode> visibleNodes, UsageViewImpl usageView) {
+    final Vector<Object> data = createListModel(visibleNodes, usages);
+    Collections.sort(data, USAGE_COMPARATOR);
+    AbstractTableModel model = new AbstractTableModel() {
+      public int getRowCount() {
+        return data.size();
+      }
+
+      public int getColumnCount() {
+        return data.get(0) instanceof UsageNode ? 3 : 1;
+      }
+
+      public Object getValueAt(int rowIndex, int columnIndex) {
+        return data.get(rowIndex);
+      }
+    };
+    table.setModel(model);
+
+    table.setRowHeight(Icons.CLASS_ICON.getIconHeight()+2);
+    table.setShowGrid(false);
+    table.setShowVerticalLines(false);
+    table.setShowHorizontalLines(false);
+    table.setTableHeader(null);
+    table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+    ShowUsagesTableCellRenderer renderer = new ShowUsagesTableCellRenderer(usageView);
+    for (int i=0;i<table.getColumnModel().getColumnCount();i++) {
+      TableColumn column = table.getColumnModel().getColumn(i);
+      column.setCellRenderer(renderer);
+    }
+    table.setIntercellSpacing(new Dimension(0, 0));
+
+    int colNum = table.getColumnModel().getColumnCount();
+
+    int totalWidth = 0;
+    for (int col = 0; col < (colNum == 1 ? 0 : colNum); col++) {
+      TableColumn column = table.getColumnModel().getColumn(col);
+      int preferred = column.getPreferredWidth();
+      int width = Math.max(preferred, calcMaxWidth(table, col));
+      totalWidth+=width;
+      column.setMinWidth(width);
+      column.setMaxWidth(width);
+      column.setWidth(width);
+      column.setPreferredWidth(width);
+    }
+
+    if (colNum == 1) {
+      int width = calcMaxWidth(table, colNum - 1);
+      totalWidth += width;
+    }
+
+    Dimension dimension = new Dimension(totalWidth, table.getPreferredSize().height);
+    table.setMinimumSize(dimension);
+    table.setSize(dimension);
+    table.setPreferredScrollableViewportSize(new Dimension(Math.max(table.getPreferredScrollableViewportSize().width, totalWidth), table.getPreferredSize().height));
+
+    return data;
+  }
+
+  private static int calcMaxWidth(JTable table, int col) {
+    TableColumn column = table.getColumnModel().getColumn(col);
+    int width = 0;
+    for (int row = 0; row < table.getRowCount(); row++) {
+      Component component = table.prepareRenderer(column.getCellRenderer(), row, col);
+
+      int rendererWidth = component.getPreferredSize().width;
+      width = Math.max(width, rendererWidth + table.getIntercellSpacing().width);
+    }
+    return width;
+  }
+
+  private static void rebuildPopup(final UsageViewImpl usageView, final List<Usage> usages, final JTable table, final JBPopup popup) {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         final List<UsageNode> nodes = new ArrayList<UsageNode>();
         addUsageNodes(usageView.getRoot(), usageView, nodes);
 
-        Vector<Object> data = createListModel(nodes, usages);
-        Dimension oldPreferred = list.getPreferredSize();
-        list.setListData(data);
-        list.setVisibleRowCount(data.size());
-        Dimension newPreferred = list.getPreferredSize();
+        int oldwidth = 0;
+        for (int col = 0; col < table.getColumnModel().getColumnCount(); col++) {
+          oldwidth+= calcMaxWidth(table, col);
+        }
+
+        int old = table.getModel().getRowCount();
+        Vector<Object> data = setModel(table, usages, nodes, usageView);
+
+        int width = 0;
+        for (int col = 0; col < table.getColumnModel().getColumnCount(); col++) {
+          width+= calcMaxWidth(table, col);
+        }
 
         JComponent content = popup.getContent();
         Window window = SwingUtilities.windowForComponent(content);
 
         Dimension d = new Dimension(window.getSize());
-        d.setSize(d.width + newPreferred.width - oldPreferred.width, d.height + newPreferred.height - oldPreferred.height);
+        d.setSize(d.width + width-oldwidth, d.height + (data.size()- old)* table.getRowHeight());
         window.setSize(d);
         window.validate();
         window.repaint();
+        table.revalidate();
+        table.repaint();
+        table.validate();
       }
     });
   }
 
   private void appendMoreUsages(Editor editor, RelativePoint popupPosition, FindUsagesHandler handler, int maxUsages) {
     showElementUsages(handler,  editor, popupPosition, maxUsages+USAGES_PAGE_SIZE);
-
-    //List<Usage> usages = new ArrayList<Usage>();
-    //UsageViewPresentation presentation =
-    //  processUsages(usages, handler, maxUsages + USAGES_PAGE_SIZE);
-    //if (presentation == null) {
-    //  popup.cancel();
-    //  return;
-    //}
-    //usageView.reset();
-    //for (Usage usage : usages) {
-    //  usageView.appendUsage(usage);
-    //}
-    //rebuildPopup(usageView, usages, list, popup);
   }
 
   private static Vector<Object> createListModel(Collection<UsageNode> nodes, List<Usage> usages) {

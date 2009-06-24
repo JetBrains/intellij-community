@@ -19,11 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.LogicalPosition;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 21, 2004
- * Time: 5:15:34 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class TextEditorLocation implements FileEditorLocation {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.TextEditorLocation");
