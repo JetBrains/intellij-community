@@ -30,8 +30,10 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Comparing;
@@ -214,11 +216,9 @@ public class CtrlMouseHandler implements ProjectComponent {
   private static String generateInfo(PsiElement element) {
     final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element);
 
-    if (documentationProvider != null) {
-      String info = documentationProvider.getQuickNavigateInfo(element);
-      if (info != null) {
-        return info;
-      }
+    String info = documentationProvider.getQuickNavigateInfo(element);
+    if (info != null) {
+      return info;
     }
 
     if (element instanceof PsiFile) {
@@ -281,7 +281,13 @@ public class CtrlMouseHandler implements ProjectComponent {
 
     @Nullable
     public String getInfo() {
-      return generateInfo(myTargetElement);
+      try {
+        return generateInfo(myTargetElement);
+      }
+      catch (IndexNotReadyException e) {
+        DumbService.getInstance(myTargetElement.getProject()).showDumbModeNotification("Element information is not available during index update");
+        return null;
+      }
     }
 
     public boolean isValid(Document document) {

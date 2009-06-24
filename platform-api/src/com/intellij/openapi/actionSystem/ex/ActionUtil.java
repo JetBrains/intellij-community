@@ -1,19 +1,14 @@
 package com.intellij.openapi.actionSystem.ex;
 
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -28,7 +23,7 @@ public class ActionUtil {
   }
 
   public static void showDumbModeWarning(AnActionEvent... events) {
-    MessageBus bus = null;
+    Project project = null;
     List<String> actionNames = new ArrayList<String>();
     for (final AnActionEvent event : events) {
       final String s = event.getPresentation().getText();
@@ -36,14 +31,14 @@ public class ActionUtil {
         actionNames.add(s);
       }
 
-      final Project project = (Project)event.getDataContext().getData(DataConstantsEx.PROJECT);
-      if (project != null) {
-        bus = project.getMessageBus();
+      final Project _project = (Project)event.getDataContext().getData(DataConstantsEx.PROJECT);
+      if (_project != null && project == null) {
+        project = _project;
       }
     }
 
-    if (bus == null) {
-      bus = ApplicationManager.getApplication().getMessageBus();
+    if (project == null) {
+      return;
     }
 
     String message;
@@ -56,7 +51,7 @@ public class ActionUtil {
       message = "None of the following actions are" + beAvailableUntil + ": " + StringUtil.join(actionNames, ", ");
     }
 
-    bus.syncPublisher(Notifications.TOPIC).notify("dumb", message, "", NotificationType.INFORMATION, NotificationListener.REMOVE);
+    DumbService.getInstance(project).showDumbModeNotification(message);
   }
 
   /**

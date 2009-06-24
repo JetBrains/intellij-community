@@ -13,12 +13,19 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.ui.popup.BalloonHandler;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.event.HyperlinkListener;
+import javax.swing.event.HyperlinkEvent;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -158,5 +165,25 @@ public class DumbServiceImpl extends DumbService {
     }
   }
 
+  @Override
+  public BalloonHandler showDumbModeNotification(final String message) {
+    StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getIdeFrame(myProject).getStatusBar();
+    HyperlinkListener listener = new HyperlinkListener() {
+      public void hyperlinkUpdate(HyperlinkEvent e) {
+        if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
+
+        Messages.showMessageDialog("<html>" +
+                                   "IntelliJ IDEA is now indexing your source and library files. These indices are<br>" +
+                                   "needed for most of the smart functionality to work properly." +
+                                   "<p>" +
+                                   "During this process some actions that require these indices won't be available,<br>" +
+                                   "although you still can edit your files and work with VCS and file system.<br>" +
+                                   "If you need smarter actions like Goto Declaration, Find Usages or refactorings,<br>" +
+                                   "please wait until the update is finished. We appreciate your understanding." +
+                                   "</html>", "Don't panic!", null);
+      }
+    };
+    return statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, listener);
+  }
 
 }

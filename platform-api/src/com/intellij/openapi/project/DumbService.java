@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.Topic;
@@ -108,6 +109,8 @@ public abstract class DumbService {
 
     return new ArrayList<T>(collection);
   }
+
+  public abstract BalloonHandler showDumbModeNotification(String message);
 
 
   public interface DumbModeListener {
