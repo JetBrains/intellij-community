@@ -16,12 +16,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -33,11 +33,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.extensions.resolve.ScriptMembersProvider;
-import org.jetbrains.plugins.groovy.extensions.resolve.ScriptMembersProviderRegistry;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -58,8 +55,6 @@ public class GroovyPsiManager {
   private final Project myProject;
 
   private Map<String, List<PsiMethod>> myDefaultMethods;
-  private Map<String, List<PsiMethod>> myScriptMethods;
-  private Map<String, List<PsiField>> myScriptProperties;
 
   private static final String DEFAULT_METHODS_QNAME = "org.codehaus.groovy.runtime.DefaultGroovyMethods";
   private static final String DEFAULT_STATIC_METHODS_QNAME = "org.codehaus.groovy.runtime.DefaultGroovyStaticMethods";
@@ -131,25 +126,6 @@ public class GroovyPsiManager {
 
     addSwingBuilderMethods(newMap);
     return newMap;
-  }
-
-  /*
-   * Method to add custom properties for some Groovy extensions
-   */
-  private void buildGroovyScriptExtensionProperties() {
-    final HashMap<String, List<PsiField>> newMap = new HashMap<String, List<PsiField>>();
-    for (ScriptMembersProvider provider : ScriptMembersProviderRegistry.getInstance().getProviders()) {
-      provider.addExtensionProperties(newMap, myProject);
-    }
-    myScriptProperties = newMap;
-  }
-
-  private void buildGroovyScriptExtensionMethods() {
-    final HashMap<String, List<PsiMethod>> newMap = new HashMap<String, List<PsiMethod>>();
-    for (ScriptMembersProvider provider : ScriptMembersProviderRegistry.getInstance().getProviders()) {
-      provider.addExtensionMethods(newMap, myProject);
-    }
-    myScriptMethods = newMap;
   }
 
   private static void addDefaultMethod(PsiMethod method, HashMap<String, List<PsiMethod>> map, boolean isStatic) {
@@ -237,47 +213,6 @@ public class GroovyPsiManager {
     List<PsiMethod> methods = myDefaultMethods.get(qName);
     if (methods == null) return Collections.emptyList();
     return methods;
-  }
-
-  public List<PsiField> getDefaultScriptProperties(GroovyFile file) {
-    if (myScriptProperties == null) {
-      buildGroovyScriptExtensionProperties();
-    }
-    final String ext = getScriptType(file);
-    if (myScriptProperties == null || ext == null) {
-      return Collections.emptyList();
-    }
-
-    List<PsiField> properties = myScriptProperties.get(ext);
-    if (properties == null) return Collections.emptyList();
-    return properties;
-  }
-
-  public List<PsiMethod> getDefaultScriptMethods(GroovyFile file) {
-    if (myScriptMethods == null) {
-      buildGroovyScriptExtensionMethods();
-    }
-    final String ext = getScriptType(file);
-    if (myScriptMethods == null || ext == null) {
-      return Collections.emptyList();
-    }
-
-    List<PsiMethod> methods = myScriptMethods.get(ext);
-    if (methods == null) return Collections.emptyList();
-    return methods;
-  }
-
-  /*
-   * Get script extension by type
-   */
-  @Nullable
-  private static String getScriptType(GroovyFile file) {
-    for (ScriptMembersProvider provider : ScriptMembersProviderRegistry.getInstance().getProviders()) {
-      if (provider.canBeProcessed(file)) {
-        return provider.getScriptExtension();
-      }
-    }
-    return null;
   }
 
   public static GroovyPsiManager getInstance(Project project) {

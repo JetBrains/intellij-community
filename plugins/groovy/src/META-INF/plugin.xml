@@ -534,9 +534,6 @@
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.extensions.script.ScriptDetectorRegistry</implementation-class>
     </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.extensions.resolve.ScriptMembersProviderRegistry</implementation-class>
-    </component>
   </application-components>
 
   <project-components>

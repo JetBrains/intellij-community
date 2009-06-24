@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gant.completion;
+package org.jetbrains.plugins.groovy.gant.completion;
 
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import org.jetbrains.plugins.groovy.lang.completion.CompletionTestBase;
