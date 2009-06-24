@@ -1,0 +1,150 @@
+package com.intellij.codeInsight.daemon.impl;
+
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.codeInsight.daemon.LineMarkerProvider;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.event.MouseEvent;
+import java.util.*;
+
+/**
+ * Shows small (16x16 or less) icons as gutters
+ * Works in places where it's possible to resolve from literal expression
+ * to an icon image
+ *
+ * @author Konstantin Bulenkov
+ */
+public class IconLineMarkerProvider implements LineMarkerProvider {
+  private static final @NonNls String JAVAX_SWING_ICON = "javax.swing.Icon";
+  private static final int ICON_MAX_WEIGHT = 16;
+  private static final int ICON_MAX_HEIGHT = 16;
+  private static final List<String> ICON_EXTS = Arrays.asList("png", "ico", "bmp", "gif", "jpg");
+
+  //TODO: remove old unused icons from the cache
+  private final HashMap<String, Pair<Long, Icon>> iconsCache = new HashMap<String, Pair<Long, Icon>>();
+
+  public LineMarkerInfo getLineMarkerInfo(PsiElement element) {
+    if (element instanceof PsiAssignmentExpression) {
+      final PsiExpression lExpression = ((PsiAssignmentExpression)element).getLExpression();
+      final PsiExpression expr = ((PsiAssignmentExpression)element).getRExpression();
+      if (lExpression instanceof PsiReferenceExpression) {
+        PsiElement var = ((PsiReferenceExpression)lExpression).resolve();
+        if (var instanceof PsiVariable) {
+          return resolveIconInfo(((PsiVariable)var).getType(), expr);
+        }
+      }
+    }
+    else if (element instanceof PsiReturnStatement) {
+      PsiReturnStatement psiReturnStatement = (PsiReturnStatement)element;
+      final PsiExpression value = psiReturnStatement.getReturnValue();
+      final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+      if (method != null) {
+        return resolveIconInfo(method.getReturnType(), value);
+      }
+    }
+    else if (element instanceof PsiVariable) {
+      PsiVariable var = (PsiVariable)element;
+      return resolveIconInfo(var.getType(), var.getInitializer());
+    }
+    return null;
+  }
+
+  @Nullable
+  private LineMarkerInfo<PsiElement> resolveIconInfo(PsiType type, PsiExpression initializer) {
+    if (initializer != null && isIconClassType(type)) {
+
+      final List<FileReference> refs = new ArrayList<FileReference>();
+      initializer.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          if (element instanceof PsiLiteralExpression) {
+            for (PsiReference ref : element.getReferences()) {
+              if (ref instanceof FileReference) {
+                refs.add((FileReference)ref);
+              }
+            }
+          }
+          super.visitElement(element);
+        }
+      });
+
+      for (FileReference ref : refs) {
+        final PsiFileSystemItem psiFileSystemItem = ref.resolve();
+        VirtualFile file = null;
+        if (psiFileSystemItem == null) {
+          final ResolveResult[] results = ref.multiResolve(false);
+          for (ResolveResult result : results) {
+            final PsiElement element = result.getElement();
+            if (element instanceof PsiBinaryFile) {
+              file = ((PsiFile)element).getVirtualFile();
+              break;
+            }
+          }
+        } else {
+          file = psiFileSystemItem.getVirtualFile();
+        }
+
+        if (file == null || file.isDirectory() || !isIconFileExtension(file.getExtension())) continue;
+
+        final Icon icon = getIcon(file);
+
+        if (icon != null) {
+          final GutterIconNavigationHandler<PsiElement> navHandler = new GutterIconNavigationHandler<PsiElement>() {
+            public void navigate(MouseEvent e, PsiElement elt) {
+              psiFileSystemItem.navigate(true);
+            }
+          };
+          return new LineMarkerInfo<PsiElement>(initializer, initializer.getTextRange(), icon,
+                                                Pass.UPDATE_ALL, null, navHandler,
+                                                GutterIconRenderer.Alignment.LEFT);
+        }
+      }
+    }
+    return null;
+  }
+
+  private static boolean isIconFileExtension(String extension) {
+    return extension != null && ICON_EXTS.contains(extension.toLowerCase());
+  }
+
+  public void collectSlowLineMarkers(List<PsiElement> elements, Collection<LineMarkerInfo> result) {
+  }
+
+  private static boolean hasProperSize(Icon icon) {
+    return icon.getIconHeight() <= ICON_MAX_HEIGHT && icon.getIconWidth() <= ICON_MAX_WEIGHT;
+  }
+
+  @Nullable
+  private Icon getIcon(VirtualFile file) {
+    final String path = file.getPath();
+    final long stamp = file.getModificationStamp();
+    Pair<Long, Icon> iconInfo = iconsCache.get(path);
+    if (iconInfo == null || iconInfo.getFirst() < stamp) {
+      try {
+        final Icon icon = new ImageIcon(file.contentsToByteArray());
+        iconInfo = new Pair<Long, Icon>(stamp, hasProperSize(icon) ? icon : null);
+        iconsCache.put(file.getPath(), iconInfo);
+      }
+      catch (Exception e) {//
+        iconInfo = null;
+        iconsCache.remove(path);
+      }
+    }
+    return iconInfo == null ? null : iconInfo.getSecond();
+  }
+
+  private static boolean isIconClassType(PsiType type) {
+    return InheritanceUtil.isInheritor(type, JAVAX_SWING_ICON);
+  }
+}
