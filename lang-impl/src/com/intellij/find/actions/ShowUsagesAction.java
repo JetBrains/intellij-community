@@ -104,6 +104,7 @@ public class ShowUsagesAction extends AnAction {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return;
     hideHints();
+    myWidth = -1;
     final RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.usages");
@@ -474,29 +475,30 @@ public class ShowUsagesAction extends AnAction {
     }
     table.setIntercellSpacing(new Dimension(0, 0));
 
-    int colNum = table.getColumnModel().getColumnCount();
+    int colsNum = table.getColumnModel().getColumnCount();
 
     int totalWidth = 0;
-    for (int col = 0; col < (colNum == 1 ? 0 : colNum); col++) {
+    for (int col = 0; col < colsNum -1; col++) {
       TableColumn column = table.getColumnModel().getColumn(col);
       int preferred = column.getPreferredWidth();
       int width = Math.max(preferred, calcMaxWidth(table, col));
-      totalWidth+=width;
+      totalWidth += width;
       column.setMinWidth(width);
       column.setMaxWidth(width);
       column.setWidth(width);
       column.setPreferredWidth(width);
     }
 
-    if (colNum == 1) {
-      int width = calcMaxWidth(table, colNum - 1);
-      totalWidth += width;
-    }
+    int width = calcMaxWidth(table, colsNum - 1);
+    totalWidth += width;
 
     Dimension dimension = new Dimension(totalWidth, table.getPreferredSize().height);
     table.setMinimumSize(dimension);
     table.setSize(dimension);
-    table.setPreferredScrollableViewportSize(new Dimension(Math.max(table.getPreferredScrollableViewportSize().width, totalWidth), table.getPreferredSize().height));
+    table.setMaximumSize(dimension);
+    Dimension scrollable =
+      new Dimension(Math.max(table.getPreferredScrollableViewportSize().width, totalWidth), table.getPreferredSize().height);
+    table.setPreferredScrollableViewportSize(scrollable);
 
     return data;
   }
@@ -513,36 +515,34 @@ public class ShowUsagesAction extends AnAction {
     return width;
   }
 
-  private static void rebuildPopup(final UsageViewImpl usageView, final List<Usage> usages, final JTable table, final JBPopup popup) {
+  private int myWidth;
+  private void rebuildPopup(final UsageViewImpl usageView, final List<Usage> usages, final JTable table, final JBPopup popup) {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         final List<UsageNode> nodes = new ArrayList<UsageNode>();
         addUsageNodes(usageView.getRoot(), usageView, nodes);
-
-        int oldwidth = 0;
-        for (int col = 0; col < table.getColumnModel().getColumnCount(); col++) {
-          oldwidth+= calcMaxWidth(table, col);
-        }
 
         int old = table.getModel().getRowCount();
         Vector<Object> data = setModel(table, usages, nodes, usageView);
 
         int width = 0;
         for (int col = 0; col < table.getColumnModel().getColumnCount(); col++) {
-          width+= calcMaxWidth(table, col);
+          width += calcMaxWidth(table, col);
         }
 
         JComponent content = popup.getContent();
         Window window = SwingUtilities.windowForComponent(content);
 
+        if (myWidth == -1) myWidth = width;
         Dimension d = new Dimension(window.getSize());
-        d.setSize(d.width + width-oldwidth, d.height + (data.size()- old)* table.getRowHeight());
-        window.setSize(d);
+        Dimension newDim = new Dimension(d.width + width - myWidth, d.height + (data.size() - old) * table.getRowHeight());
+        myWidth = width;
+        window.setSize(newDim);
         window.validate();
         window.repaint();
-        table.revalidate();
-        table.repaint();
-        table.validate();
+        //table.revalidate();
+        //table.repaint();
+        //table.validate();
       }
     });
   }
