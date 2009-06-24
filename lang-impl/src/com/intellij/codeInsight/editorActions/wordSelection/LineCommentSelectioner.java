@@ -1,17 +1,24 @@
 package com.intellij.codeInsight.editorActions.wordSelection;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.lang.CodeDocumentationAwareCommenter;
+import com.intellij.lang.Commenter;
+import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 
 import java.util.List;
 
 public class LineCommentSelectioner extends WordSelectioner {
   public boolean canSelect(PsiElement e) {
-    return e instanceof PsiComment && !(e instanceof PsiDocComment);
+    if (e instanceof PsiComment) {
+      final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(e.getLanguage());
+      if (!(commenter instanceof CodeDocumentationAwareCommenter)) return true;
+      return !((CodeDocumentationAwareCommenter) commenter).isDocumentationComment((PsiComment)e);
+    }
+    return false;
   }
 
   public List<TextRange> select(PsiElement element, CharSequence editorText, int cursorOffset, Editor editor) {
