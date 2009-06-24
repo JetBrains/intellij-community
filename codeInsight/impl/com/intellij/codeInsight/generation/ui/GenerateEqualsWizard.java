@@ -185,6 +185,14 @@ public class GenerateEqualsWizard extends AbstractWizard {
     updateNonNullMemberInfos(selectedMemberInfos);
   }
 
+  @Override
+  protected void doOKAction() {
+    if (myEqualsPanel != null) {
+      equalsFieldsSelected();
+    }
+    super.doOKAction();
+  }
+
   private HashMap<PsiElement, MemberInfo> createFieldToMemberInfoMap(boolean checkedByDefault) {
     MemberInfo[] memberInfos = MemberInfo.extractClassMembers(myClass, MEMBER_INFO_FILTER, false);
     final HashMap<PsiElement, MemberInfo> result = new HashMap<PsiElement, MemberInfo>();
