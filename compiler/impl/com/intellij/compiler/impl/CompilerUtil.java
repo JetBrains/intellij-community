@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class CompilerUtil {
   public static String quotePath(String path) {
@@ -101,53 +103,40 @@ public class CompilerUtil {
     refreshFilesInterruptibly(context, virtualFiles, title);
   }
   public static void refreshFilesInterruptibly(@NotNull final CompileContext context, @NotNull final Collection<VirtualFile> files, @Nullable String title) {
+    LocalFileSystem.getInstance().refreshFiles(files); //
+    if (true) return;
     ThrowableRunnable<RuntimeException> runnable = new ThrowableRunnable<RuntimeException>() {
-      public void run() {
-        int i =0;
-        for (VirtualFile file : files) {
+      public void run() throws RuntimeException {
+        boolean async = !ApplicationManager.getApplication().isDispatchThread();
+        final CountDownLatch latch = new CountDownLatch(files.size());
+        final int[] i = {0};
+        for (final VirtualFile virtualFile : files) {
           context.getProgressIndicator().checkCanceled();
-          if (files.size() > 100) {
-            context.getProgressIndicator().setFraction(++i * 1.0 / files.size());
-            context.getProgressIndicator().setText2(file.getPath());
+          virtualFile.refresh(async, true, new Runnable() {
+            public void run() {
+              latch.countDown();
+              context.getProgressIndicator().setFraction(++i[0] * 1.0 / files.size());
+              context.getProgressIndicator().setText2(virtualFile.getPath());
+            }
+          });
+        }
+        try {
+          while (true) {
+            latch.await(100, TimeUnit.MILLISECONDS);
+            if (latch.getCount() == 0) break;
+            context.getProgressIndicator().checkCanceled();
           }
-          file.refresh(false, true);
+        }
+        catch (InterruptedException ignored) {
         }
       }
     };
-    if (files.size() > 100) {
+    if (title != null) {
       CompileDriver.runInContext(context, title, runnable);
     }
     else {
       runnable.run();
     }
-    //LocalFileSystem.getInstance().refreshFiles(files);
-    //if (true) return;
-    //ThrowableRunnable<RuntimeException> runnable = new ThrowableRunnable<RuntimeException>() {
-    //  public void run() throws RuntimeException {
-    //    boolean async = !ApplicationManager.getApplication().isDispatchThread();
-    //    final CountDownLatch latch = new CountDownLatch(files.size());
-    //    final int[] i = {0};
-    //    for (final VirtualFile virtualFile : files) {
-    //      context.getProgressIndicator().checkCanceled();
-    //      virtualFile.refresh(async, true, new Runnable() {
-    //        public void run() {
-    //          latch.countDown();
-    //          context.getProgressIndicator().setFraction(++i[0] * 1.0 / files.size());
-    //          context.getProgressIndicator().setText2(virtualFile.getPath());
-    //        }
-    //      });
-    //    }
-    //    try {
-    //      while (true) {
-    //        latch.await(100, TimeUnit.MILLISECONDS);
-    //        if (latch.getCount() == 0) break;
-    //        context.getProgressIndicator().checkCanceled();
-    //      }
-    //    }
-    //    catch (InterruptedException ignored) {
-    //    }
-    //  }
-    //};
   }
 
   public static void refreshIODirectories(@NotNull final Collection<File> files) {
