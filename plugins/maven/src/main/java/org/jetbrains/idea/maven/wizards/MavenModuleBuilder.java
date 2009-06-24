@@ -146,12 +146,13 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     }
 
     MavenRunnerParameters params = new MavenRunnerParameters(
-        false, workingDir.getPath(), Collections.singletonList("org.apache.maven.plugins:maven-archetype-plugin:create"), null);
+        false, workingDir.getPath(), Collections.singletonList("org.apache.maven.plugins:maven-archetype-plugin:generate"), null);
 
     MavenRunner runner = MavenRunner.getInstance(project);
     MavenRunnerSettings settings = runner.getState().clone();
     Map<String, String> props = settings.getMavenProperties();
 
+    props.put("interactiveMode", "false");
     props.put("archetypeGroupId", myArchetype.groupId);
     props.put("archetypeArtifactId", myArchetype.artifactId);
     props.put("archetypeVersion", myArchetype.version);
