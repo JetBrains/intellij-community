@@ -73,7 +73,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
         }
       };
       Application application = ApplicationManager.getApplication();
-      if (application.isWriteAccessAllowed()) {
+      if (application.isWriteAccessAllowed() || application.isDispatchThread()) {
         runnable.run();
       }
       else {
