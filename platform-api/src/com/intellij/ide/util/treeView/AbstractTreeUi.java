@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.ui.LoadingNode;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -768,7 +769,13 @@ class AbstractTreeUi {
 
   //todo [kirillk] temporary consistency check
   private Object[] getChildrenFor(final Object element) {
-    final Object[] passOne = getTreeStructure().getChildElements(element);
+    final Object[] passOne;
+    try {
+      passOne = getTreeStructure().getChildElements(element);
+    }
+    catch (IndexNotReadyException e) {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
 
     if (!myCheckStructure) return passOne;
 
