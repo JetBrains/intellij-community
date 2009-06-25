@@ -16,6 +16,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -283,13 +284,18 @@ public class NavBarModel {
     if (!checkValid(object)) return null;
     if (object instanceof Project) return IconLoader.getIcon("/nodes/project.png");
     if (object instanceof Module) return ((Module)object).getModuleType().getNodeIcon(false);
-    if (object instanceof PsiElement) return ApplicationManager.getApplication().runReadAction(
-        new Computable<Icon>() {
-          public Icon compute() {
-            return ((PsiElement)object).isValid() ? ((PsiElement)object).getIcon(Iconable.ICON_FLAG_CLOSED) : null;
+    try {
+      if (object instanceof PsiElement) return ApplicationManager.getApplication().runReadAction(
+          new Computable<Icon>() {
+            public Icon compute() {
+              return ((PsiElement)object).isValid() ? ((PsiElement)object).getIcon(Iconable.ICON_FLAG_CLOSED) : null;
+            }
           }
-        }
-    );
+      );
+    }
+    catch (IndexNotReadyException e) {
+      return null;
+    }
     if (object instanceof JdkOrderEntry) return ((JdkOrderEntry)object).getJdk().getSdkType().getIcon();
     if (object instanceof LibraryOrderEntry) return IconLoader.getIcon("/nodes/ppLibClosed.png");
     if (object instanceof ModuleOrderEntry) return ((ModuleOrderEntry)object).getModule().getModuleType().getNodeIcon(false);
