@@ -478,9 +478,14 @@ public class Tree extends JTree implements Autoscroll, TestableUi {
         myBusyIcon.resume();
       } else {
         myBusyIcon.suspend();
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            if (myBusyIcon != null) {
+              repaint();
+            }
+          }
+        });
       }
-
-
       updateBusyIconLocation();
     }
   }

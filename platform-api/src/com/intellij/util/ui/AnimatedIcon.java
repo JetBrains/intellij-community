@@ -39,6 +39,8 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
 
   private final String myName;
 
+  private boolean myLastPaintWasRunning;
+
   protected AnimatedIcon(final String name) {
     myName = name;
   }
@@ -134,7 +136,7 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
   }
 
   protected void paintComponent(Graphics g) {
-    if (isOpaque()) {
+    if (isOpaque() && (myAnimator.isRunning() || myPaintPassive || (myLastPaintWasRunning && !myAnimator.isRunning()))) {
       g.setColor(UIUtil.getBgFillColor(this));
       g.fillRect(0, 0, getWidth(), getHeight());
     }
@@ -152,6 +154,8 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
     int y = (size.height - icon.getIconHeight()) / 2;
 
     icon.paintIcon(this, g, x, y);
+
+    myLastPaintWasRunning = myAnimator.isRunning();
   }
 
   protected Icon getPassiveIcon() {

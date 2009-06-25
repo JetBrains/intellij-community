@@ -619,7 +619,7 @@ class AbstractTreeUi {
     if (descriptor == null) return;
 
     if (myUnbuiltNodes.contains(node)) {
-      processUnbuilt(node, descriptor);
+      processUnbuilt(node, descriptor, pass);
       processNodeActionsIfReady(node);
       return;
     }
@@ -633,6 +633,10 @@ class AbstractTreeUi {
     myUpdatingChildren.add(node);
     processAllChildren(node, elementToIndexMap, pass).doWhenDone(new Runnable() {
       public void run() {
+        if (canYield()) {
+          removeLoadingNode(node);
+        }
+
         ArrayList<TreeNode> nodesToInsert = collectNodesToInsert(descriptor, elementToIndexMap);
 
         insertNodesInto(nodesToInsert, node);
@@ -716,19 +720,31 @@ class AbstractTreeUi {
     }
   }
 
-  private void processUnbuilt(final DefaultMutableTreeNode node, final NodeDescriptor descriptor) {
+  private void processUnbuilt(final DefaultMutableTreeNode node, final NodeDescriptor descriptor, final TreeUpdatePass pass) {
     if (getBuilder().isAlwaysShowPlus(descriptor)) return; // check for isAlwaysShowPlus is important for e.g. changing Show Members state!
 
-    if (getTreeStructure().isToBuildChildrenInBackground(getBuilder().getTreeStructureElement(descriptor))) return; //?
+    final Object element = getBuilder().getTreeStructureElement(descriptor);
 
-    Object[] children = getChildrenFor(getBuilder().getTreeStructureElement(descriptor));
+    if (getTreeStructure().isToBuildChildrenInBackground(element)) return; //?
+
+    final Object[] children = getChildrenFor(element);
     if (children.length == 0) {
       removeLoadingNode(node);
     }
     else if (getBuilder().isAutoExpandNode((NodeDescriptor)node.getUserObject())) {
       addNodeAction(getElementFor(node), new NodeAction() {
         public void onReady(final DefaultMutableTreeNode node) {
-          removeLoadingNode(node);
+          final TreePath path = new TreePath(node.getPath());
+          if (getTree().isExpanded(path) || children.length == 0) {
+            removeLoadingNode(node);
+          } else {
+            maybeYeild(new ActiveRunnable() {
+              public ActionCallback run() {
+                expand(element, null);
+                return new ActionCallback.Done();
+              }
+            }, pass, node);
+          }
         }
       });
     }
@@ -2147,35 +2163,28 @@ class AbstractTreeUi {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       if (!myUnbuiltNodes.contains(node)) return;
       myUnbuiltNodes.remove(node);
-      final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-      alarm.addRequest(new Runnable() {
-        public void run() {
-          myTree.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        }
-      }, WAIT_CURSOR_DELAY);
 
       getBuilder().expandNodeChildren(node);
 
-      final Object element = getElementFor(node);
+      runDone(new Runnable() {
+        public void run() {
+          final Object element = getElementFor(node);
 
-      for (int i = 0; i < node.getChildCount(); i++) {
-        removeIfLoading(node.getChildAt(i));
-      }
-
-      if (node.getChildCount() == 0) {
-        addNodeAction(element, new NodeAction() {
-          public void onReady(final DefaultMutableTreeNode node) {
-            expand(element, null);
+          for (int i = 0; i < node.getChildCount(); i++) {
+            removeIfLoading(node.getChildAt(i));
           }
-        });
-      }
 
-      int n = alarm.cancelAllRequests();
-      if (n == 0) {
-        myTree.setCursor(Cursor.getDefaultCursor());
-      }
+          if (node.getChildCount() == 0) {
+            addNodeAction(element, new NodeAction() {
+              public void onReady(final DefaultMutableTreeNode node) {
+                expand(element, null);
+              }
+            });
+          }
 
-      processSmartExpand(node);
+          processSmartExpand(node);
+        }
+      });
     }
 
     public void treeCollapsed(TreeExpansionEvent e) {
