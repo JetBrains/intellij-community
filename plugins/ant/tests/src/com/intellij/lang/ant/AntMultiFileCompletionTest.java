@@ -56,7 +56,7 @@ public class AntMultiFileCompletionTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
     final JavaTestFixtureFactory fixtureFactory = JavaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createLightFixtureBuilder();
+    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
     myFixture = fixtureFactory.createCodeInsightFixture(testFixtureBuilder.getFixture());
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
