@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.command;
 
-import com.intellij.openapi.application.BaseActionRunnable;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.RunResult;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -69,11 +67,18 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     final RunResult<T> result = new RunResult<T>(this);
 
     try {
-      GuiUtils.runOrInvokeAndWait(new Runnable() {
+      Runnable runnable = new Runnable() {
         public void run() {
           performWriteCommandAction(result);
         }
-      });
+      };
+      Application application = ApplicationManager.getApplication();
+      if (application.isWriteAccessAllowed()) {
+        runnable.run();
+      }
+      else {
+        GuiUtils.invokeAndWait(runnable);
+      }
     } catch (Throwable e) {
       if (e instanceof InvocationTargetException) e = e.getCause();
       if (e instanceof Error) throw (Error)e;

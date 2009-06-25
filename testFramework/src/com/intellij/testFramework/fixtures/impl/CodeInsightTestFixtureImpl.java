@@ -851,7 +851,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     //To change body of implemented methods use File | Settings | File Templates.
   }
 
-  public PsiFile configureByText(final FileType fileType, @NonNls final String text) throws Throwable {
+  public PsiFile configureByText(final FileType fileType, @NonNls final String text) throws IOException {
     assertInitialized();
     final String extension = fileType.getDefaultExtension();
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();

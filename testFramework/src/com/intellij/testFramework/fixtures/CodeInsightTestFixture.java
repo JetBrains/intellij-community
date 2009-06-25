@@ -202,7 +202,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void configureByFiles(@NonNls String... files) throws Throwable;
 
-  PsiFile configureByText(FileType fileType, @NonNls String text) throws Throwable;
+  PsiFile configureByText(FileType fileType, @NonNls String text) throws IOException;
 
   /**
    * Compares current file against the given one.
