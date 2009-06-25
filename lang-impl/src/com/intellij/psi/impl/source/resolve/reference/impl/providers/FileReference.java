@@ -210,7 +210,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
 
     final Object[] variants = new Object[candidates.length];
     for (int i = 0; i < candidates.length; i++) {
-      variants[i] = FileInfoManager.getFileLookupItem(candidates[i]);
+      variants[i] = createLookupItem(candidates[i]);
     }
 
     if (myFileReferenceSet.isUrlEncoded()) {
@@ -229,6 +229,10 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
       }
     }
     return variants;
+  }
+
+  protected Object createLookupItem(PsiElement candidate) {
+    return FileInfoManager.getFileLookupItem(candidate);
   }
 
   protected static PsiFileSystemItem getOriginalFile(PsiFileSystemItem fileSystemItem) {
@@ -408,7 +412,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return rename(newName);
   }
 
-  private PsiElement rename(final String newName) throws IncorrectOperationException {
+  protected PsiElement rename(final String newName) throws IncorrectOperationException {
     final TextRange range = new TextRange(myFileReferenceSet.getStartInElement(), getRangeInElement().getEndOffset());
     final ElementManipulator<PsiElement> manipulator = CachingReference.getManipulator(getElement());
     if (manipulator == null) {
