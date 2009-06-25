@@ -29,10 +29,8 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.editor.HandlerUtils;
@@ -167,15 +165,17 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
 
 
   private boolean handleInString(Editor editor, int caretOffset, DataContext dataContext) {
-    PsiFile file = DataKeys.PSI_FILE.getData(dataContext);
     Project project = DataKeys.PROJECT.getData(dataContext);
+    if (project == null) return false;
+
+    PsiFile file = PsiManager.getInstance(project).findFile(FileDocumentManager.getInstance().getFile(editor.getDocument()));
 
     Document document = editor.getDocument();
     String fileText = document.getText();
     if (fileText.length() == caretOffset) return false;
 
     if (!checkStringApplicable(editor, caretOffset)) return false;
-    if (file == null || project == null) return false;
+    if (file == null) return false;
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
     PsiElement stringElement = file.findElementAt(caretOffset - 1);

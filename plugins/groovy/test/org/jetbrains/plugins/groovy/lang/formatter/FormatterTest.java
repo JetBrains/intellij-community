@@ -16,20 +16,10 @@
 
 package org.jetbrains.plugins.groovy.lang.formatter;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.util.IncorrectOperationException;
-import junit.framework.Test;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
-import org.jetbrains.plugins.groovy.util.PathUtil;
-import org.jetbrains.plugins.groovy.util.TestUtils;
+
+import java.util.List;
 
 /**
  * Test suite for static formatting. Compares two files:
@@ -37,57 +27,89 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
  *
  * @author Ilya.Sergey
  */
-public class FormatterTest extends SimpleGroovyFileSetTestCase {
-  @NonNls
-  private static final String DATA_PATH = PathUtil.getDataPath(FormatterTest.class);
+public class FormatterTest extends GroovyFormatterTestCase {
 
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.formatter.FormatterTest");
-
-  public FormatterTest(String path) {
-    super(path != null ? path :
-            System.getProperty("path") != null ?
-                    System.getProperty("path") :
-                    DATA_PATH
-    );
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/groovy/formatter/";
   }
 
-  protected void performFormatting(final Project project, final PsiFile file) throws IncorrectOperationException {
-    TextRange myTextRange = file.getTextRange();
-    CodeStyleManager.getInstance(project).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset());
-  }
-
-  public String transform(String testName, String[] data) throws Exception {
-    String fileText = data[0];
-    final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            try {
-              performFormatting(myProject, psiFile);
-            } catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
-      }
-    }, null, null);
-    String text = psiFile.getText();
-    //System.out.println("------------------------ " + testName + " ------------------------");
-    //System.out.println(text);
-    //System.out.println("");
-    return text;
-  }
-
-  protected void setUp() {
+  protected void setUp() throws Exception {
     super.setUp();
     myTempSettings.CLASS_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
     myTempSettings.METHOD_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
     myTempSettings.BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
   }
 
-  public static Test suite() {
-    return new FormatterTest(null);
+  public void testAddign1() throws Throwable { doTest(); }
+  public void testArg1() throws Throwable { doTest(); }
+  public void testArg2() throws Throwable { doTest(); }
+  public void testBin1() throws Throwable { doTest(); }
+  public void testBin2() throws Throwable { doTest(); }
+  public void testBlockExpr1() throws Throwable { doTest(); }
+  public void testClass1() throws Throwable { doTest(); }
+  public void testClo1() throws Throwable { doTest(); }
+  public void testClo2() throws Throwable { doTest(); }
+  public void testClo3() throws Throwable { doTest(); }
+  public void testClo4() throws Throwable { doTest(); }
+  public void testColon1() throws Throwable { doTest(); }
+  public void testColon2() throws Throwable { doTest(); }
+  public void testCond1() throws Throwable { doTest(); }
+  public void testDoc1() throws Throwable { doTest(); }
+  public void testDoc2() throws Throwable { doTest(); }
+  public void testDoc3() throws Throwable { doTest(); }
+  public void testDockter() throws Throwable { doTest(); }
+  public void testDot1() throws Throwable { doTest(); }
+  public void testDot2() throws Throwable { doTest(); }
+  public void testFor1() throws Throwable { doTest(); }
+  public void testFor2() throws Throwable { doTest(); }
+  public void testGbegin1() throws Throwable { doTest(); }
+  public void testGrvy1637() throws Throwable { doTest(); }
+  public void testMap6() throws Throwable { doTest(); }
+  public void testMeth1() throws Throwable { doTest(); }
+  public void testMeth2() throws Throwable { doTest(); }
+  public void testMeth3() throws Throwable { doTest(); }
+  public void testMeth4() throws Throwable { doTest(); }
+  public void testMeth5() throws Throwable { doTest(); }
+  public void testMultistring1() throws Throwable { doTest(); }
+  public void testMultistring2() throws Throwable { doTest(); }
+  public void testNew1() throws Throwable { doTest(); }
+  public void testParam1() throws Throwable { doTest(); }
+  public void testParam2() throws Throwable { doTest(); }
+  public void testParen1() throws Throwable { doTest(); }
+  public void testPath1() throws Throwable { doTest(); }
+  public void testPointer1() throws Throwable { doTest(); }
+  public void testRange1() throws Throwable { doTest(); }
+  public void testRegex1() throws Throwable { doTest(); }
+  public void testSh1() throws Throwable { doTest(); }
+  public void testSh2() throws Throwable { doTest(); }
+  public void testSqr1() throws Throwable { doTest(); }
+  public void testSqr2() throws Throwable { doTest(); }
+  public void testSqr3() throws Throwable { doTest(); }
+  public void testString1() throws Throwable { doTest(); }
+  public void testSuper1() throws Throwable { doTest(); }
+  public void testSwitch1() throws Throwable { doTest(); }
+  public void testSwitch2() throws Throwable { doTest(); }
+  public void testSwitch3() throws Throwable { doTest(); }
+  public void testSwitch4() throws Throwable { doTest(); }
+  public void testSwitch5() throws Throwable { doTest(); }
+  public void testSwitch6() throws Throwable { doTest(); }
+  public void testSwitch7() throws Throwable { doTest(); }
+  public void testSwitch8() throws Throwable { doTest(); }
+  public void testType1() throws Throwable { doTest(); }
+  public void testTypeparam1() throws Throwable { doTest(); }
+  public void testUn1() throws Throwable { doTest(); }
+  public void testUn2() throws Throwable { doTest(); }
+  public void testUn3() throws Throwable { doTest(); }
+  public void testWhile1() throws Throwable { doTest(); }
+
+  public void testWhile2() throws Throwable { doTest(); }
+
+  public void testWhileCStyle() throws Throwable { doTest(); }
+
+  public void doTest() throws Throwable {
+    final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + getTestName(true) + ".test");
+    checkFormatting(data.get(0), data.get(1));
   }
 
 }
