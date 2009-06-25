@@ -83,6 +83,11 @@ public class ShowUsagesAction extends AnAction {
       return Comparing.compare(loc1, loc2);
     }
   };
+  private static final Runnable HIDE_HINTS_ACTION = new Runnable() {
+    public void run() {
+      hideHints();
+    }
+  };
 
   public ShowUsagesAction() {
     setInjectedContext(true);
@@ -135,6 +140,7 @@ public class ShowUsagesAction extends AnAction {
     Project project = element.getProject();
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element, false);
+    if (handler == null) return;
     if (showSettingsDialogBefore) {
       showDialogAndFindUsages(handler, popupPosition, editor, maxUsages);
       return;
@@ -142,7 +148,7 @@ public class ShowUsagesAction extends AnAction {
     showElementUsages(handler, editor, popupPosition, maxUsages);
   }
 
-  private void showElementUsages(FindUsagesHandler handler, final Editor editor, final RelativePoint popupPosition, final int maxUsages) {
+  private void showElementUsages(@NotNull FindUsagesHandler handler, final Editor editor, final RelativePoint popupPosition, final int maxUsages) {
     UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setDetachedMode(true);
 
@@ -202,11 +208,7 @@ public class ShowUsagesAction extends AnAction {
   }
 
   private void showHint(String text, final Editor editor, final RelativePoint popupPosition, FindUsagesHandler handler, int maxUsages) {
-    JComponent label = createHintComponent(text, handler, popupPosition, editor, new Runnable() {
-      public void run() {
-        hideHints();
-      }
-    }, maxUsages);
+    JComponent label = createHintComponent(text, handler, popupPosition, editor, HIDE_HINTS_ACTION, maxUsages);
     if (editor == null) {
       HintManager.getInstance().showHint(label, popupPosition, HintManager.HIDE_BY_ANY_KEY |
                                                                HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0);

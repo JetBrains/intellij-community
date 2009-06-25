@@ -44,6 +44,7 @@ public abstract class FindUsagesHandler {
     return myPsiElement;
   }
 
+  @NotNull
   public final Project getProject() {
     return myPsiElement.getProject();
   }
