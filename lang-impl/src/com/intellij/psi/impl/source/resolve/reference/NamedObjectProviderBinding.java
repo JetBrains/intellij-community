@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.pom.references.PomReferenceProvider;
 import com.intellij.psi.PsiElement;
@@ -77,7 +78,13 @@ public abstract class NamedObjectProviderBinding<PsiReferenceProvider> implement
       if (offset != null) {
         context.put(PomReferenceProvider.OFFSET_IN_ELEMENT, offset);
       }
-      if (trinity.second.accepts(position, context)) {
+      boolean suitable = false;
+      try {
+        suitable = trinity.second.accepts(position, context);
+      }
+      catch (IndexNotReadyException ignored) {
+      }
+      if (suitable) {
         ret.add(Trinity.create(trinity.first, context, trinity.third));
       }
     }
