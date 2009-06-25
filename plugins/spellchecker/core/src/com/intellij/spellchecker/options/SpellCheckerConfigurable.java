@@ -37,7 +37,7 @@ public final class SpellCheckerConfigurable implements Configurable {
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return null;
+    return "reference.settings.ide.settings.spelling";
   }
 
   public JComponent createComponent() {
