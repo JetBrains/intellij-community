@@ -587,7 +587,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     HighlightUsagesHandler.invoke(getProject(), getEditor(), getFile());
   }
 
-  protected static void ctrlW() {
+  public static void ctrlW() {
     AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
     AnActionEvent event = new AnActionEvent(null, DataManager.getInstance().getDataContext(), "", action.getTemplatePresentation(),
                                             ActionManager.getInstance(), 0);

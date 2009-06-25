@@ -56,7 +56,7 @@ class FoldingUpdate {
     List<DocumentWindow> injectedDocuments = InjectedLanguageUtil.getCachedInjectedDocuments(file);
     for (DocumentWindow injectedDocument : injectedDocuments) {
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(injectedDocument);
-      if (psiFile == null || !psiFile.isValid()) continue;
+      if (psiFile == null || !psiFile.isValid() || !injectedDocument.isValid()) continue;
       getFoldingsFor(psiFile, injectedDocument, elementsToFoldMap, quick);
     }
 
