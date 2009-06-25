@@ -81,8 +81,8 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.testFramework.ExpectedHighlightingData;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
@@ -950,10 +950,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public VirtualFile findFileInTempDir(final String filePath) {
+    if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
+      return myTempDirFixture.getFile(filePath);
+    }
     String fullPath = getTempDirPath() + "/" + filePath;
 
     final VirtualFile copy = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath.replace(File.separatorChar, '/'));
-    assert copy != null: "file " + fullPath + " not found";
+    assert copy != null : "file " + fullPath + " not found";
     return copy;
   }
 

@@ -75,7 +75,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
   }
 
   public VirtualFile getFile(@NonNls String path) {
-    throw new UnsupportedOperationException();
+    return LightPlatformTestCase.getSourceRoot().findFileByRelativePath(path);
   }
 
   @NotNull
