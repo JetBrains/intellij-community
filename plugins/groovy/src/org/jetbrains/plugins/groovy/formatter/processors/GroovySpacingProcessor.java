@@ -39,7 +39,6 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kSYNCHRON
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLBRACK;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLCURLY;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLPAREN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mML_COMMENT;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRBRACK;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRPAREN;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSL_COMMENT;
@@ -170,21 +169,19 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
         if (myChild1.getElementType() != IMPORT_STATEMENT) {
           myResult = Spacing.createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, 1);
         }
-      } else {
-        if (myParent instanceof GroovyPsiElement) {
-          ((GroovyPsiElement) myParent).accept(this);
-          if (myResult == null) {
-            final ASTNode prev = SpacingUtil.getPrevElementType(myChild2);
-            if (prev != null && prev.getElementType() == mSL_COMMENT) {
-              myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
-            } else if (myChild1.getElementType() == mML_COMMENT) {
-              myResult = null;
-            } else if (!SpacingUtil.shouldKeepSpace(myParent)) {
-              // todo [ilyas] rewrite all pacings via this processor
-//              myResult = Spacing.createSpacing(0, 0, 0, true, mySettings.KEEP_BLANK_LINES_IN_CODE);
-            }
-          }
+        return;
+      }
+
+      if (myChild1 != null && myChild2 != null && myChild1.getElementType() == mNLS) {
+        final ASTNode prev = SpacingUtil.getPrevElementType(myChild1);
+        if (prev != null && prev.getElementType() == mSL_COMMENT) {
+          myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+          return;
         }
+      }
+
+      if (myParent instanceof GroovyPsiElement) {
+        ((GroovyPsiElement) myParent).accept(this);
       }
     }
 

@@ -107,6 +107,8 @@ public class FormatterTest extends GroovyFormatterTestCase {
 
   public void testWhileCStyle() throws Throwable { doTest(); }
 
+  public void testClosureAfterLineComment() throws Throwable { doTest(); }
+
   public void doTest() throws Throwable {
     final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + getTestName(true) + ".test");
     checkFormatting(data.get(0), data.get(1));
