@@ -258,7 +258,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     assert isValid();
     int lineNumber = myDocumentWindow.getLineNumber(offset);
     int lineStartOffset = myDocumentWindow.getLineStartOffset(lineNumber);
-    int column = calcColumnNumber(offset-lineStartOffset, lineNumber);
+    int column = calcLogicalColumnNumber(offset-lineStartOffset, lineNumber, lineStartOffset);
     return new LogicalPosition(lineNumber, column);
   }
 
@@ -401,20 +401,27 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
   }
 
   public int logicalPositionToOffset(@NotNull final LogicalPosition pos) {
-    return myDocumentWindow.getLineStartOffset(pos.line) + calcColumnNumber(pos.column, pos.line);
+    int lineStartOffset = myDocumentWindow.getLineStartOffset(pos.line);
+    return calcOffset(pos.column, pos.line, lineStartOffset);
   }
-  private int calcColumnNumber(int offset, int lineIndex) {
+  private int calcLogicalColumnNumber(int offsetInLine, int lineNumber, int lineStartOffset) {
     if (myDocumentWindow.getTextLength() == 0) return 0;
 
+    if (offsetInLine==0) return 0;
+    int end = myDocumentWindow.getLineEndOffset(lineNumber);
+    if (offsetInLine > end- lineStartOffset) offsetInLine = end - lineStartOffset;
+
     CharSequence text = myDocumentWindow.getCharsSequence();
-    int start = myDocumentWindow.getLineStartOffset(lineIndex);
-
-    if (offset==0) return 0;
-    int end = myDocumentWindow.getLineEndOffset(lineIndex);
-    if (offset > end-start) offset = end - start;
-    return EditorUtil.calcColumnNumber(this, text, start, start+offset, myDelegate.getTabSize());
+    return EditorUtil.calcColumnNumber(this, text, lineStartOffset, lineStartOffset +offsetInLine, myDelegate.getTabSize());
   }
+  private int calcOffset(int col, int lineNumber, int lineStartOffset) {
+    if (myDocumentWindow.getTextLength() == 0) return 0;
 
+    int end = myDocumentWindow.getLineEndOffset(lineNumber);
+
+    CharSequence text = myDocumentWindow.getCharsSequence();
+    return EditorUtil.calcOffset(this, text, lineStartOffset, end, col, myDelegate.getTabSize());
+  }
 
   public void setLastColumnNumber(final int val) {
     myDelegate.setLastColumnNumber(val);
@@ -528,11 +535,11 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     return myDelegate.getGutter();
   }
 
-  public <T> T getUserData(final Key<T> key) {
+  public <T> T getUserData(@NotNull final Key<T> key) {
     return myDelegate.getUserData(key);
   }
 
-  public <T> void putUserData(final Key<T> key, final T value) {
+  public <T> void putUserData(@NotNull final Key<T> key, final T value) {
     myDelegate.putUserData(key, value);
   }
 
