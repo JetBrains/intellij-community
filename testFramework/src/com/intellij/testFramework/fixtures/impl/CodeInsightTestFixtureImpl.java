@@ -82,6 +82,7 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
@@ -853,7 +854,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public PsiFile configureByText(final FileType fileType, @NonNls final String text) throws Throwable {
     assertInitialized();
     final String extension = fileType.getDefaultExtension();
-    final File tempFile = File.createTempFile("aaa", "." + extension, new File(getTempDirPath()));
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
       new WriteCommandAction(getProject()) {
@@ -862,7 +862,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
       }.execute();
     }
-    final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
+    final VirtualFile vFile;
+    if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
+      vFile = LightPlatformTestCase.getSourceRoot().createChildData(this, "aaa." + extension);
+    }
+    else{
+      final File tempFile = File.createTempFile("aaa", "." + extension, new File(getTempDirPath()));
+      vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
+    }
     VfsUtil.saveText(vFile, text);
     assert vFile != null;
     configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile, getProject()));
