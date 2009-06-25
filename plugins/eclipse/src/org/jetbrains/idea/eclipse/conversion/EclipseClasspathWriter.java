@@ -324,10 +324,11 @@ public class EclipseClasspathWriter {
         }
       }
 
-      final String compilerOutputUrl = compilerModuleExtension.getCompilerOutputUrl();
+      final VirtualFile entryFile = entry.getFile();
       for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
         final String exludeFolderUrl = excludeFolder.getUrl();
-        if (!Comparing.strEqual(exludeFolderUrl, compilerOutputUrl)) {
+        final VirtualFile excludeFile = excludeFolder.getFile();
+        if (entryFile == null || excludeFile == null || VfsUtil.isAncestor(entryFile, excludeFile, false)) {
           Element element = new Element(IdeaXml.EXCLUDE_FOLDER_TAG);
           contentEntryElement.addContent(element);
           element.setAttribute(IdeaXml.URL_ATTR, exludeFolderUrl);

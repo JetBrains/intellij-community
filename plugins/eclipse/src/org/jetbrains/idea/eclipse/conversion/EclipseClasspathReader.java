@@ -429,29 +429,12 @@ public class EclipseClasspathReader {
     final List entriesElements = root.getChildren(IdeaXml.CONTENT_ENTRY_TAG);
     if (!entriesElements.isEmpty()) {
       for (Object o : entriesElements) {
-        final Element contentEntryElement = (Element)o;
-        final ContentEntry contentEntry = model.addContentEntry(contentEntryElement.getAttributeValue(IdeaXml.URL_ATTR));
-        readSourceFolders(root, contentEntry);
-        for (Object excludeElement : contentEntryElement.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)) {
-          contentEntry.addExcludeFolder(((Element)excludeElement).getAttributeValue(IdeaXml.URL_ATTR));
-        }
+        readContentEntry(root, model.addContentEntry(((Element)o).getAttributeValue(IdeaXml.URL_ATTR)));
       }
     } else {
       final ContentEntry[] entries = model.getContentEntries();
       if (entries.length > 0) {
-        readSourceFolders(root, entries[0]);
-        final String url = entries[0].getUrl();
-        for (Object o : root.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)) {
-          final String excludeUrl = ((Element)o).getAttributeValue(IdeaXml.URL_ATTR);
-          try {
-            if (FileUtil.isAncestor(new File(url), new File(excludeUrl), false)) {
-              entries[0].addExcludeFolder(excludeUrl);
-            }
-          }
-          catch (IOException e) {
-            //ignore
-          }
-        }
+        readContentEntry(root, entries[0]);
       }
     }
 
@@ -469,7 +452,7 @@ public class EclipseClasspathReader {
     }
   }
 
-  private static void readSourceFolders(Element root, ContentEntry entry) {
+  private static void readContentEntry(Element root, ContentEntry entry) {
     for (Object o : root.getChildren(IdeaXml.TEST_FOLDER_TAG)) {
       final String url = ((Element)o).getAttributeValue(IdeaXml.URL_ATTR);
       SourceFolder folderToBeTest = null;
@@ -483,6 +466,19 @@ public class EclipseClasspathReader {
         entry.removeSourceFolder(folderToBeTest);
       }
       entry.addSourceFolder(url, true);
+    }
+
+    final String url = entry.getUrl();
+    for (Object o : root.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)) {
+      final String excludeUrl = ((Element)o).getAttributeValue(IdeaXml.URL_ATTR);
+      try {
+        if (FileUtil.isAncestor(new File(url), new File(excludeUrl), false)) { //check if it is excluded manually
+          entry.addExcludeFolder(excludeUrl);
+        }
+      }
+      catch (IOException e) {
+        //ignore
+      }
     }
   }
 }
