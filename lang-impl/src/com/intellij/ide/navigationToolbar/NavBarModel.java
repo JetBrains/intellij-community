@@ -254,11 +254,11 @@ public class NavBarModel {
           }
       ).booleanValue();
     }
-    return true;
+    return object != null;
   }
 
   @NotNull
-  protected static String getPresentableText(Object object, Window window) {
+  protected static String getPresentableText(final Object object, Window window) {
     if (!checkValid(object)) return IdeBundle.message("node.structureview.invalid");
     for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
       String text = modelExtension.getPresentableText(object);
