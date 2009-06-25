@@ -24,6 +24,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {
         final VirtualFile from = LocalFileSystem.getInstance().refreshAndFindFileByPath(dataDir);
+        assert from != null: "Cannot find testdata directory " + dataDir;
         try {
           VirtualFile tempDir = LightPlatformTestCase.getSourceRoot();
           if (targetDir.length() > 0) {

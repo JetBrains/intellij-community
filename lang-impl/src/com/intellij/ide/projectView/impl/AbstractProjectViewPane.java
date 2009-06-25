@@ -481,7 +481,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
 
   public void setTreeBuilder(final AbstractTreeBuilder treeBuilder) {
     if (treeBuilder != null) {
-      Disposer.register(myProject, treeBuilder);
+      Disposer.register(this, treeBuilder);
 // needs refactoring for project view first
 //      treeBuilder.setCanYieldUpdate(true);
       treeBuilder.setClearOnHideDelay(Time.SECOND * 120);

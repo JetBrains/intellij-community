@@ -7,8 +7,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
-import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +74,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
 
   public void deleteFile(final Object requestor, final VirtualFile file) throws IOException {
     final FSItem fsItem = convert(file);
-    assert fsItem != null;
+    assert fsItem != null: "failed to delete file " + file.getPath();
 
     fsItem.getParent().removeChild(fsItem);
   }
