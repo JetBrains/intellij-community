@@ -16,7 +16,9 @@
 
 package com.intellij.testFramework.fixtures;
 
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This is to be provided by IDEA and not by plugin authors.
@@ -50,6 +52,8 @@ public abstract class IdeaTestFixtureFactory {
   public abstract TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder();
 
   public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder();
+
+  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor);
 
   public abstract CodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture);
 

@@ -81,13 +81,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static IdeaTestApplication ourApplication;
   protected static Project ourProject;
   private static Module ourModule;
-  private static Sdk ourJDK;
   private static PsiManager ourPsiManager;
   private static boolean ourAssertionsInTestDetected;
   private static VirtualFile ourSourceRoot;
   private static TestCase ourTestCase = null;
   public static Thread ourTestThread;
-  private static ModuleType ourModuleType;
+  private static LightProjectDescriptor ourProjectDescriptor;
   private final Map<String, InspectionTool> myAvailableInspectionTools = new THashMap<String, InspectionTool>();
   private static boolean ourHaveShutdownHook;
 
@@ -156,7 +155,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((PersistentFS)ManagingFS.getInstance()).cleanPersistedContents();
   }
 
-  private static void initProject(final Sdk projectJDK, final ModuleType moduleType) throws Exception {
+  private static void initProject(final LightProjectDescriptor descriptor) throws Exception {
+    ourProjectDescriptor = descriptor;
     final File projectFile = File.createTempFile("lighttemp", ProjectFileType.DOT_DEFAULT_EXTENSION);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
@@ -175,8 +175,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           registerShutdownHook();
         }
         ourPsiManager = null;
-        ourModuleType = moduleType;
-        ourModule = createMainModule(moduleType);
+        ourModule = createMainModule(descriptor.getModuleType());
 
 
         //ourSourceRoot = DummyFileSystem.getInstance().createRoot("src");
@@ -211,13 +210,15 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
         final ModifiableRootModel rootModel = rootManager.getModifiableModel();
 
-        if (projectJDK != null) {
-          ourJDK = projectJDK;
-          rootModel.setSdk(projectJDK);
+
+        if (descriptor.getSdk() != null) {
+          rootModel.setSdk(descriptor.getSdk());
         }
 
         final ContentEntry contentEntry = rootModel.addContentEntry(ourSourceRoot);
         contentEntry.addSourceFolder(ourSourceRoot, false);
+
+        descriptor.configureModule(ourModule, rootModel);
 
         rootModel.commit();
 
@@ -260,24 +261,24 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   /**
    * @return The only source root
    */
-  protected static VirtualFile getSourceRoot() {
+  public static VirtualFile getSourceRoot() {
     return ourSourceRoot;
   }
 
   protected void setUp() throws Exception {
     super.setUp();
     initApplication(this);
-    doSetup(getProjectJDK(), getModuleType(), configureLocalInspectionTools(), myAvailableInspectionTools);
+    doSetup(new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK()), configureLocalInspectionTools(), myAvailableInspectionTools);
     storeSettings();
   }
 
-  public static void doSetup(final Sdk projectJDK, final ModuleType moduleType,
+  public static void doSetup(final LightProjectDescriptor descriptor,
                              final LocalInspectionTool[] localInspectionTools, final Map<String, InspectionTool> availableInspectionTools) throws Exception {
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overriden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
 
-    if (ourProject == null || isJDKChanged(projectJDK) || ourModuleType != moduleType) {
-      initProject(projectJDK, moduleType);
+    if (ourProject == null || !ourProjectDescriptor.equals(descriptor)) {
+      initProject(descriptor);
     }
 
     ProjectManagerEx.getInstanceEx().setCurrentTestProject(ourProject);
@@ -373,8 +374,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       public void run() {
         try {
           final VirtualFile[] children = ourSourceRoot.getChildren();
-          for (VirtualFile aChildren : children) {
-            aChildren.delete(this);
+          for (VirtualFile child : children) {
+            child.delete(this);
           }
         }
         catch (IOException e) {
@@ -397,7 +398,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       //assertTrue("Logger errors occurred. ", IdeaLogger.ourErrorsOccurred == null);
     }
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).clearUncommitedDocuments();
-
 
 
     UndoManager.getGlobalInstance().dropHistory();
@@ -477,11 +477,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     else {
       return null;
     }
-  }
-
-  private static boolean isJDKChanged(final Sdk newJDK) {
-    if (ourJDK == null && newJDK == null) return false;
-    return ourJDK == null || newJDK == null || !Comparing.equal(ourJDK.getVersionString(), newJDK.getVersionString());
   }
 
   protected Sdk getProjectJDK() {
@@ -583,5 +578,54 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         }
       }
     });
+  }
+
+  private static class SimpleLightProjectDescriptor implements LightProjectDescriptor {
+    private ModuleType myModuleType;
+    private Sdk mySdk;
+
+    SimpleLightProjectDescriptor(ModuleType moduleType, Sdk sdk) {
+      myModuleType = moduleType;
+      mySdk = sdk;
+    }
+
+    public ModuleType getModuleType() {
+      return myModuleType;
+    }
+
+    public Sdk getSdk() {
+      return mySdk;
+    }
+
+    public void configureModule(Module module, ModifiableRootModel model) {
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      SimpleLightProjectDescriptor that = (SimpleLightProjectDescriptor)o;
+
+      if (myModuleType != null ? !myModuleType.equals(that.myModuleType) : that.myModuleType != null) return false;
+      if (isJDKChanged(that.getSdk())) {
+        return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myModuleType != null ? myModuleType.hashCode() : 0;
+      result = 31 * result + (mySdk != null ? mySdk.hashCode() : 0);
+      return result;
+    }
+
+    private boolean isJDKChanged(final Sdk newJDK) {
+      if (mySdk == null && newJDK == null) return false;
+      return mySdk == null || newJDK == null || !Comparing.equal(mySdk.getVersionString(), newJDK.getVersionString());
+    }
+
   }
 }

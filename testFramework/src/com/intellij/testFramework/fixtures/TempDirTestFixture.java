@@ -30,7 +30,7 @@ public interface TempDirTestFixture extends IdeaTestFixture {
 
   VirtualFile copyFile(VirtualFile file);
 
-  void copyAll(String dataDir);
+  VirtualFile copyAll(String dataDir, String targetDir);
 
   String getTempDirPath();
 

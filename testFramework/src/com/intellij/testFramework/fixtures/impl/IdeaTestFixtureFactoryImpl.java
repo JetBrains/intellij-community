@@ -5,9 +5,15 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.openapi.module.EmptyModuleType;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,7 +53,14 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
 
   @Override
   public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder() {
-    return new LightTestFixtureBuilderImpl<IdeaProjectTestFixture>(new LightIdeaTestFixtureImpl(null, EmptyModuleType.getInstance()));
+    return new LightTestFixtureBuilderImpl<IdeaProjectTestFixture>(new LightIdeaTestFixtureImpl(ourEmptyProjectDescriptor));
+  }
+
+  public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor) {
+    if (projectDescriptor == null) {
+      projectDescriptor = ourEmptyProjectDescriptor;
+    }
+    return new LightTestFixtureBuilderImpl<IdeaProjectTestFixture>(new LightIdeaTestFixtureImpl(projectDescriptor));
   }
 
   public CodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture) {
@@ -67,4 +80,17 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
       return new ModuleFixtureImpl(this);
     }
   }
+
+  private static final LightProjectDescriptor ourEmptyProjectDescriptor = new LightProjectDescriptor() {
+    public ModuleType getModuleType() {
+      return EmptyModuleType.getInstance();
+    }
+
+    public Sdk getSdk() {
+      return null;
+    }
+
+    public void configureModule(Module module, ModifiableRootModel model) {
+    }
+  };
 }

@@ -38,19 +38,28 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     }
   }
 
-  public void copyAll(final String dataDir) {
+  public VirtualFile copyAll(final String dataDir, final String targetDir) {
     createTempDirectory();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
+    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      public VirtualFile compute() {
         try {
           VirtualFile tempDir =
             LocalFileSystem.getInstance().refreshAndFindFileByPath(myTempDir.getCanonicalPath().replace(File.separatorChar, '/'));
+          if (targetDir.length() > 0) {
+            assert !targetDir.contains("/") : "nested directories not implemented";
+            VirtualFile child = tempDir.findChild(targetDir);
+            if (child == null) {
+              child = tempDir.createChildDirectory(this, targetDir);
+            }
+            tempDir = child;
+          }
           final VirtualFile from = LocalFileSystem.getInstance().refreshAndFindFileByPath(dataDir);
           assert from != null : dataDir + " not found";
           VfsUtil.copyDirectory(null, from, tempDir, null);
+          return tempDir;
         }
         catch (IOException e) {
-          assert false : "Cannot copy " + dataDir + ": " + e;
+          throw new RuntimeException(e);
         }
       }
     });

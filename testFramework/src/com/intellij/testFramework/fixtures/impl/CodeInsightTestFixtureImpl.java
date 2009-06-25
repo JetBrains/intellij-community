@@ -120,7 +120,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private final Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
   private final Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
 
-  private final TempDirTestFixture myTempDirFixture = new TempDirTestFixtureImpl();
+  private final TempDirTestFixture myTempDirFixture;
   protected final IdeaProjectTestFixture myProjectFixture;
   protected final Set<VirtualFile> myAddedClasses = new THashSet<VirtualFile>();
   @NonNls private static final String XXX = "XXX";
@@ -128,6 +128,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public CodeInsightTestFixtureImpl(IdeaProjectTestFixture projectFixture) {
     myProjectFixture = projectFixture;
+    if (projectFixture instanceof LightIdeaTestFixture) {
+      myTempDirFixture = new LightTempDirTestFixtureImpl();
+    }
+    else {
+      myTempDirFixture = new TempDirTestFixtureImpl();
+    }
   }
 
   public void setTestDataPath(String dataPath) {
@@ -162,13 +168,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public VirtualFile copyDirectoryToProject(@NonNls final String sourceFilePath, @NonNls final String targetPath) throws IOException {
-    final File destFile = new File(getTempDirPath() + "/" + targetPath);
     final File fromFile = new File(getTestDataPath() + "/" + sourceFilePath);
-    FileUtil.copyDir(fromFile, destFile);
-    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destFile);
-    Assert.assertNotNull(file);
-    file.refresh(false, true);
-    return file;
+    if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
+      return myTempDirFixture.copyAll(fromFile.getPath(), targetPath);            
+    }
+    else {
+      final File destFile = new File(getTempDirPath() + "/" + targetPath);
+      FileUtil.copyDir(fromFile, destFile);
+      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destFile);
+      Assert.assertNotNull(file);
+      file.refresh(false, true);
+      return file;
+    }
   }
 
   public VirtualFile copyFileToProject(@NonNls final String sourceFilePath) throws IOException {

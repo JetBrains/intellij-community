@@ -10,35 +10,30 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Factory;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author mike
  */
-class LightIdeaTestFixtureImpl extends BaseFixture implements IdeaProjectTestFixture {
-  private final Factory<Sdk> mySdkFactory;
-  protected final ModuleType myModuleType;
+class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixture {
+  private LightProjectDescriptor myProjectDescriptor;
 
-  public LightIdeaTestFixtureImpl(@Nullable final Factory<Sdk> sdk, final ModuleType moduleType) {
-    mySdkFactory = sdk;
-    myModuleType = moduleType;
+  public LightIdeaTestFixtureImpl(LightProjectDescriptor projectDescriptor) {
+    myProjectDescriptor = projectDescriptor;
   }
 
   public void setUp() throws Exception {
     super.setUp();
 
     LightPlatformTestCase.initApplication(new MyDataProvider());
-    final Sdk sdk = mySdkFactory == null ? null : mySdkFactory.create();
-    LightPlatformTestCase.doSetup(sdk, myModuleType, new LocalInspectionTool[0], null);
+    LightPlatformTestCase.doSetup(myProjectDescriptor, new LocalInspectionTool[0], null);
     storeSettings();
   }
 
