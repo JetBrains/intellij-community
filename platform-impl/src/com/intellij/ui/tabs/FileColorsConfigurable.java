@@ -32,7 +32,7 @@ public class FileColorsConfigurable implements Configurable, NonDefaultProjectCo
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.settings.ide.settings.file-colors";
   }
 
   public JComponent createComponent() {
