@@ -16,8 +16,31 @@ import java.io.IOException;
  * @author yole
  */
 public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirTestFixture {
-  public VirtualFile copyFile(VirtualFile file) {
-    throw new UnsupportedOperationException();
+  public VirtualFile copyFile(VirtualFile file, String targetPath) {
+    int pos = targetPath.lastIndexOf('/');
+    String path = pos < 0 ? "" : targetPath.substring(0, pos);
+    try {
+      VirtualFile targetDir = findOrCreateTargetDir(path);
+      return VfsUtil.copyFile(this, file, targetDir);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private VirtualFile findOrCreateTargetDir(String path) throws IOException {
+    VirtualFile root = LightPlatformTestCase.getSourceRoot();
+    final String[] dirs = path.split("/");
+    for (String dirName : dirs) {
+      VirtualFile dir = root.findChild(dirName);
+      if (dir != null) {
+        root = dir;
+      }
+      else {
+        root = root.createChildDirectory(this, dirName);
+      }
+    }
+    return root;
   }
 
   public VirtualFile copyAll(final String dataDir, final String targetDir) {

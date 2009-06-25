@@ -26,7 +26,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   private final ArrayList<File> myFilesToDelete = new ArrayList<File>();
   private File myTempDir;
 
-  public VirtualFile copyFile(VirtualFile file) {
+  public VirtualFile copyFile(VirtualFile file, String targetPath) {
     try {
       createTempDirectory();
       VirtualFile tempDir =

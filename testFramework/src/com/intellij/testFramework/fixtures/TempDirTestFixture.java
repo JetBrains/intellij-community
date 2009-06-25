@@ -28,7 +28,7 @@ import java.io.IOException;
  */
 public interface TempDirTestFixture extends IdeaTestFixture {
 
-  VirtualFile copyFile(VirtualFile file);
+  VirtualFile copyFile(VirtualFile file, String targetPath);
 
   VirtualFile copyAll(String dataDir, String targetDir);
 
