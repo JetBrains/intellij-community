@@ -84,8 +84,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
     myRegistrar = inspectionProfile.myRegistrar;
     myTools = new HashMap<String, ToolsImpl>();
-    initInspectionTools();
-
     myVisibleTreeState = new VisibleTreeState(inspectionProfile.myVisibleTreeState);
 
     myBaseProfile = inspectionProfile.myBaseProfile;
@@ -94,6 +92,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     mySource = inspectionProfile;
     setProfileManager(inspectionProfile.getProfileManager());
     copyFrom(inspectionProfile);
+    initInspectionTools();
   }
 
   public InspectionProfileImpl(final String inspectionProfile,
