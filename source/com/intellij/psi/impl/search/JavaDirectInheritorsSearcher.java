@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurenceIndex;
@@ -61,6 +62,10 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
     final GlobalSearchScope scope = useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : null;
     final String searchKey = aClass.getName();
+    if (StringUtil.isEmpty(searchKey)) {
+      return true;
+    }
+
     Collection<PsiReferenceList> candidates = ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiReferenceList>>() {
       public Collection<PsiReferenceList> compute() {
         return JavaSuperClassNameOccurenceIndex.getInstance().get(searchKey, psiManager.getProject(), scope);
