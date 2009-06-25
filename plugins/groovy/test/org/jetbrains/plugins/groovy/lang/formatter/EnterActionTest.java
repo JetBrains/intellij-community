@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.formatter.enterAction;
+package org.jetbrains.plugins.groovy.lang.formatter;
 
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.formatter.GroovyFormatterTestCase;
