@@ -1,8 +1,10 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.light.*;
@@ -14,6 +16,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.lang.*;
+import com.intellij.lexer.Lexer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -313,6 +317,24 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       substMap.put(parameter, null);
     }
     return baseSubstitutor.putAll(PsiSubstitutorImpl.createSubstitutor(substMap));
+  }
+
+  @NotNull
+  public PsiElement createDummyHolder(@NotNull String text, @NotNull IElementType type, @Nullable PsiElement context) {
+    final DummyHolder result = DummyHolderFactory.createHolder(myManager, context);
+    final FileElement holder = result.getTreeElement();
+    final Language language = type.getLanguage();
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+    if (parserDefinition == null) {
+      throw new AssertionError("No parser definition for language " + language);
+    }
+    final Project project = myManager.getProject();
+    final Lexer lexer = parserDefinition.createLexer(project);
+    final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, holder, lexer, language, text);
+    parserDefinition.createParser(project).parse(type, builder);
+    final ASTNode node = builder.getTreeBuilt();
+    holder.rawAddChildren((TreeElement)node);
+    return node.getPsi();
   }
 
   @NotNull

@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -482,4 +483,16 @@ public interface PsiElementFactory extends PsiJavaParserFacade {
 
   @NotNull
   PsiSubstitutor createRawSubstitutor(@NotNull PsiSubstitutor baseSubstitutor, @NotNull PsiTypeParameter[] typeParameters);
+
+  /**
+   * Create a lightweight PsiElement of given element type in a lightweight non-physical PsiFile (aka DummyHolder) in a given context.
+   * Element type's language should have a parser definition which supports parsing for this element type (first
+   * parameter in {@link com.intellij.lang.PsiParser#parse(com.intellij.psi.tree.IElementType, com.intellij.lang.PsiBuilder)}.
+   * @param text text to parse
+   * @param type node type
+   * @param context context
+   * @return PsiElement of the desired element type
+   */
+  @NotNull
+  PsiElement createDummyHolder(@NotNull String text, @NotNull IElementType type, @Nullable PsiElement context);
 }
