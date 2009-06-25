@@ -260,7 +260,7 @@ final class JazzySpellChecker implements SpellChecker {
 
     private static final class SpellCheckerWrapper extends com.swabunga.spell.event.SpellChecker {
         private SpellCheckerWrapper() {
-            // Disable cashing
+            // Disable caching
             setCache(0);
         }
 

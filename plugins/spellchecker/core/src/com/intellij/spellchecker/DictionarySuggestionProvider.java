@@ -35,7 +35,7 @@ public class DictionarySuggestionProvider implements NameSuggestionProvider {
             return null;
         }
 
-        SpellCheckerManager manager = SpellCheckerManager.getInstance();
+        SpellCheckerManager manager = SpellCheckerManager.getInstance(element.getProject());
 
         String[] words = NameUtil.nameToWords(text);
 

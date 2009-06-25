@@ -5,18 +5,13 @@ import com.intellij.spellchecker.Splitter;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: shkate
- * Date: 07.05.2009
- * Time: 19:22:15
- * To change this template use File | Settings | File Templates.
- */
+
 public class SplitterTest extends TestCase {
 
 
@@ -119,12 +114,32 @@ public class SplitterTest extends TestCase {
     correctIgnored(checkAreas, text, new String[]{"JSP"});
   }
 
+  public void testStringLiterals() {
+    String text = "test\ntest\n";
+    List<CheckArea> checkAreas = Splitter.splitText(text);
+    correctListToCheck(checkAreas, text, new String[]{"test", "test"});
+    correctIgnored(checkAreas, text, new String[]{});
+  }
 
-   public void testSpecial() {
+  public void testCommentWithHtml() {
+    String text = "<!--<li style='color:red;'>something go here</li> foooo barrrr <p> text text -->";
+    List<CheckArea> checkAreas = Splitter.splitText(text);
+    correctListToCheck(checkAreas, text, new String[]{"something","here","foooo","barrrr","text", "text"});
+    correctIgnored(checkAreas, text, new String[]{"go"});
+  }
+
+  public void testSpecial() {
     String text = "test &nbsp; test";
     List<CheckArea> checkAreas = Splitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"test", "test"});
     correctIgnored(checkAreas, text, new String[]{"&nbsp;"});
+  }
+
+  public void testTooShort() {
+    String text = "bgColor carLight";
+    List<CheckArea> checkAreas = Splitter.splitText(text);
+    correctListToCheck(checkAreas, text, new String[]{"Color", "Light"});
+    correctIgnored(checkAreas, text, new String[]{"bg","car"});
   }
 
   public void testComplex() {
@@ -134,6 +149,7 @@ public class SplitterTest extends TestCase {
    correctIgnored(checkAreas, text, new String[]{});
  }
 
+  @Nullable
   private static List<String> wordsToCheck(List<CheckArea> toCheck, String text) {
     if (text == null || toCheck == null) return null;
     List<String> words = new ArrayList<String>();
@@ -146,7 +162,7 @@ public class SplitterTest extends TestCase {
   }
 
 
-
+ @Nullable
   private static List<String> wordsToIgnore(List<CheckArea> toCheck, String text) {
     if (text == null || toCheck == null) return null;
     List<String> words = new ArrayList<String>();

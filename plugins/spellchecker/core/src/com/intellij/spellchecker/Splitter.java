@@ -14,19 +14,22 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Created by IntelliJ IDEA.
- * User: shkate
- * Date: 07.05.2009
- * Time: 22:27:40
- * To change this template use File | Settings | File Templates.
+ * @author shkate@jetbrains.com
  */
 public class Splitter {
 
   @NonNls
   private static final Pattern NON_SPACE = Pattern.compile("\\S+");
+
+  @NonNls
+  private static final Pattern HTML = Pattern.compile("<(0)>");
+
   @NonNls
   /*private static final Pattern WORD = Pattern.compile("\\b\\p{L}+'?\\p{L}*\\b");*/
   private static final Pattern WORD = Pattern.compile("\\b\\p{Alpha}*'?\\p{Alpha}");
+  private static final String WORD_SPLITTER = "\\s+|<[^>]+>";
+
+
   @NonNls
   private static final Pattern URL = Pattern.compile("(https?|ftp|mailto)\\:\\/\\/");
   @NonNls
@@ -45,18 +48,26 @@ public class Splitter {
     if (text == null || StringUtil.isEmpty(text)) {
       return null;
     }
-    // Create a pattern to match breaks
-    Matcher matcher = NON_SPACE.matcher(text);
+ 
+    int i = Math.max(text.indexOf("<!--"),text.indexOf("<%--"));
+    i = (i>-1)?i+4:0;
     List<CheckArea> results = new ArrayList<CheckArea>();
-    while (matcher.find()) {
-      List<CheckArea> areaList = splitNonSpace(text, matcherRange(TextRange.from(0, text.length()), matcher));
-      if (areaList != null) {
-        results.addAll(areaList);
+    String[] pieces = text.substring(i).split(WORD_SPLITTER);
+    for (String s : pieces) {
+      if (s.length() > 0) {
+        int p1 = text.indexOf(s,i);
+        TextRange range = TextRange.from(p1, s.length());
+        List<CheckArea> areaList = splitNonSpace(text, range);
+        if (areaList != null) {
+          results.addAll(areaList);
+        }
+        i += (range.getEndOffset()-range.getStartOffset());
       }
     }
     return (results.size() == 0) ? null : results;
   }
 
+  @Nullable
   private static List<CheckArea> splitNonSpace(String text, TextRange range) {
     String nonSpaceArea = text.substring(range.getStartOffset(), range.getEndOffset());
     if (URL.matcher(nonSpaceArea).find() || COMPLEX.matcher(nonSpaceArea).find()) {
@@ -65,6 +76,7 @@ public class Splitter {
     return splitWord(text, range);
   }
 
+  @Nullable
   private static List<CheckArea> splitWord(String text, TextRange range) {
     if (range.getLength() <= 1) {
       return null;
@@ -76,17 +88,18 @@ public class Splitter {
     if (words == null) {
       return results;
     }
+
     if (words.length == 1) {
       Matcher matcher = WORD.matcher(words[0]);
       Matcher specialMatcher = SPECIAL.matcher(words[0]);
       if (specialMatcher.find()) {
         TextRange found = matcherRange(range, specialMatcher);
-        results.add(new CheckArea(text, found, true));
+        addWord(text, results, true, found);
         return results;
       }
       else if (matcher.find()) {
         TextRange found = matcherRange(range, matcher);
-        results.add(new CheckArea(text, found));
+        addWord(text, results, false, found);
         return results;
       }
     }
@@ -106,23 +119,20 @@ public class Splitter {
       int start = word.indexOf(s, index);
       int end = start + s.length();
       boolean isUpperCase = Strings.isUpperCase(s);
-      if (!(isUpperCase && !isAllWordsAreUpperCased) && !isKeyword(s)) {
-        Matcher matcher = WORD.matcher(s);
-        if (matcher.find()) {
-          TextRange found = matcherRange(subRange(range, start, end), matcher);
-          results.add(new CheckArea(text, found));
-        }
-      }
-      else {
-        Matcher matcher = WORD.matcher(s);
-        if (matcher.find()) {
-          TextRange found = matcherRange(subRange(range, start, end), matcher);
-          results.add(new CheckArea(text, found, true));
-        }
+      boolean flag = (isUpperCase && !isAllWordsAreUpperCased) || isKeyword(s);
+      Matcher matcher = WORD.matcher(s);
+      if (matcher.find()) {
+        TextRange found = matcherRange(subRange(range, start, end), matcher);
+        addWord(text, results, flag, found);
       }
       index = end;
     }
     return results;
+  }
+
+  private static void addWord(String text, List<CheckArea> results, boolean flag, TextRange found) {
+    boolean tooShort = (found.getEndOffset() - found.getStartOffset()) <= 3;
+    results.add(new CheckArea(text, found, flag || tooShort));
   }
 
   private static boolean isKeyword(String s) {

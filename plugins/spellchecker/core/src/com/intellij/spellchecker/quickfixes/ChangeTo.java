@@ -24,11 +24,11 @@ import java.util.List;
  *
  * @author Sergiy Dubovik
  */
-public class ChangeToQuickFix implements SpellCheckerQuickFix {
+public class ChangeTo implements SpellCheckerQuickFix {
 
   private TextRange textRange;
 
-  public ChangeToQuickFix(TextRange textRange, String correctWord) {
+  public ChangeTo(@NotNull TextRange textRange) {
     this.textRange = textRange;
   }
 
@@ -66,6 +66,8 @@ public class ChangeToQuickFix implements SpellCheckerQuickFix {
 
     final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
 
+    if (editor == null) return;
+
     /*FileEditorManager.getInstance(project).openEditor(new OpenFileDescriptor(project, psiFile.getVirtualFile(), psiElementOffset + textRange.getStartOffset()), true);*/
     editor.offsetToLogicalPosition(psiElementOffset + textRange.getStartOffset());
 
@@ -75,7 +77,7 @@ public class ChangeToQuickFix implements SpellCheckerQuickFix {
     String word = editor.getSelectionModel().getSelectedText();
     /*editor.getSelectionModel().selectWordAtCaret(true);*/
 
-    SpellCheckerManager manager = SpellCheckerManager.getInstance();
+    SpellCheckerManager manager = SpellCheckerManager.getInstance(project);
     List<String> variants = manager.getSuggestions(word);
 
     List<LookupItem<String>> lookupItems = new ArrayList<LookupItem<String>>();

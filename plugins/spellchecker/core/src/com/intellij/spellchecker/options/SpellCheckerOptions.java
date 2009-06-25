@@ -2,6 +2,7 @@ package com.intellij.spellchecker.options;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.spellchecker.dictionary.UserWordList;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.spellchecker.util.Strings;
@@ -9,6 +10,8 @@ import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.util.containers.HashSet;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -16,40 +19,88 @@ import java.util.Set;
 
 
 public class SpellCheckerOptions implements Disposable {
+
   private final SpellCheckerConfiguration configuration;
+  private final SpellCheckerManager manager;
 
   private JPanel root;
-  private WordsPanel userDictionaryWords;
-  private WordsPanel ignoredWords;
 
-  public SpellCheckerOptions(SpellCheckerConfiguration configuration) {
+  private WordsPanel userDictionaryWords;
+  /*private WordsPanel ignoredWords;*/
+  private JRadioButton projectRB;
+  private JRadioButton localRB;
+  private JLabel globalDictionaries;
+
+  private UserWordList shownDictionary;
+
+  public UserWordList getShownDictionary() {
+    return shownDictionary;
+  }
+
+  public SpellCheckerOptions(SpellCheckerConfiguration configuration, SpellCheckerManager manager) {
     this.configuration = configuration;
+    this.manager = manager;
   }
 
   private void createUIComponents() {
-    userDictionaryWords = new WordsPanel(configuration.USER_DICTIONARY_WORDS);
-    ignoredWords = new WordsPanel(configuration.IGNORED_WORDS);
+    userDictionaryWords = new WordsPanel(manager.getProjectWordList().getWords(), manager);
+    /*ignoredWords = new WordsPanel(manager.getProjectWordList().getIgnoredWords(), manager);*/
+    shownDictionary = manager.getProjectWordList();
+
   }
 
-  public Set<String> getUserDictionaryWords() {
+  public Set<String> getUserDictionaryWordsSet() {
     return getWords(userDictionaryWords);
+  }
+
+  public boolean useProjectDictionary() {
+    return projectRB.isSelected();
   }
 
   public void setUserDictionaryWords(Set<String> words) {
     userDictionaryWords.replaceAll(words);
   }
 
-  public Set<String> getIgnoredWords() {
+  /*public Set<String> getIgnoredWords() {
     return getWords(ignoredWords);
-  }
+  }*/
 
-  public void setIgnoredWords(Set<String> words) {
+ /* public void setIgnoredWords(Set<String> words) {
     ignoredWords.replaceAll(words);
-  }
+  }*/
+
 
   public JPanel getRoot() {
+    projectRB.setSelected(true);
+    projectRB.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        if (projectRB.isSelected()) {
+          shownDictionary = manager.getProjectWordList();
+          userDictionaryWords.replaceAll(shownDictionary.getWords());
+          /*ignoredWords.replaceAll(shownDictionary.getIgnoredWords());*/
+        }
+      }
+    });
+    localRB.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        if (localRB.isSelected()) {
+          shownDictionary = manager.getCachedWordList();
+          userDictionaryWords.replaceAll(shownDictionary.getWords());
+          /*ignoredWords.replaceAll(shownDictionary.getIgnoredWords());*/
+        }
+      }
+    });
+
+    if (manager.getDictionaries() != null) {
+      String label = "Global dictionaries: ";
+      for (String dic : manager.getDictionaries()) {
+        label += dic + "; ";
+      }
+      globalDictionaries.setText(label);
+    }
     return root;
   }
+
 
   private static Set<String> getWords(AddDeleteListPanel panel) {
     Set<String> words = new HashSet<String>();
@@ -60,14 +111,19 @@ public class SpellCheckerOptions implements Disposable {
     return words;
   }
 
+
   public void dispose() {
     userDictionaryWords.dispose();
-    ignoredWords.dispose();
+    /*ignoredWords.dispose();*/
   }
 
+
   private static final class WordsPanel extends AddDeleteListPanel implements Disposable {
-    private WordsPanel(Set<String> words) {
+    private SpellCheckerManager manager;
+
+    private WordsPanel(Set<String> words, SpellCheckerManager manager) {
       super(null, sort(words));
+      this.manager = manager;
     }
 
     private static List<String> sort(Set<String> words) {
@@ -75,6 +131,7 @@ public class SpellCheckerOptions implements Disposable {
       Collections.sort(arrayList);
       return arrayList;
     }
+
 
     protected Object findItemToAdd() {
       String word =
@@ -85,13 +142,13 @@ public class SpellCheckerOptions implements Disposable {
       else {
         word = word.trim();
       }
-      SpellCheckerManager checkerManager = SpellCheckerManager.getInstance();
+
       if (Strings.isMixedCase(word)) {
         Messages.showWarningDialog(SpellCheckerBundle.message("entered.word.0.is.mixed.cased.you.must.enter.simple.word", word),
                                    SpellCheckerBundle.message("add.new.word"));
         return null;
       }
-      if (!checkerManager.hasProblem(word)) {
+      if (!manager.hasProblem(word)) {
         Messages.showWarningDialog(SpellCheckerBundle.message("entered.word.0.is.correct.you.no.need.to.add.this.in.list", word),
                                    SpellCheckerBundle.message("add.new.word"));
         return null;

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 
-public class RenameToQuickFix implements SpellCheckerQuickFix {
+public class RenameTo implements SpellCheckerQuickFix {
 
   @NotNull
   public String getName() {
@@ -32,6 +32,7 @@ public class RenameToQuickFix implements SpellCheckerQuickFix {
   @Nullable
   private static DictionarySuggestionProvider findProvider() {
     Object[] extensions = Extensions.getExtensions(NameSuggestionProvider.EP_NAME);
+
     DictionarySuggestionProvider provider = null;
     if (extensions != null) {
       for (Object extension : extensions) {

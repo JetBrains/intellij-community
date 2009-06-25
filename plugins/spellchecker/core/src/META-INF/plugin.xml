@@ -3,14 +3,20 @@
   <description>Spell checker plugin</description>
   <version>1.0</version>
   <vendor>JetBrains</vendor>
-  <idea-version since-build="10204"/>
+
 
   <application-components>
-
+    <component>
+      <interface-class>com.intellij.spellchecker.dictionary.CachedWordList</interface-class>
+      <implementation-class>com.intellij.spellchecker.dictionary.CachedWordList</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
-    <!-- Add your project components here -->
+    <component>
+      <interface-class>com.intellij.spellchecker.dictionary.ProjectWordList</interface-class>
+      <implementation-class>com.intellij.spellchecker.dictionary.ProjectWordList</implementation-class>
+    </component>
   </project-components>
 
   <actions>
@@ -19,7 +25,6 @@
     <action id="SpellCheckerCompletion" class="com.intellij.spellchecker.actions.CompleteWordFromDictionaryAction"
             text="Complete Word From Dictionary"
             description="Complete word from spelling dictionaries">
-      <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt d"/>
       <add-to-group group-id="CodeCompletionGroup" anchor="after" relative-to-action="WordCompletion"/>
     </action>
     <group id="com.intellij.spellchecker.actions.SpellingPopupActionGroup"
@@ -30,11 +35,15 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.spellchecker.options.SpellCheckerConfiguration"
-                        serviceImplementation="com.intellij.spellchecker.options.SpellCheckerConfiguration"/>
-    <applicationService serviceInterface="com.intellij.spellchecker.SpellCheckerManager"
-                        serviceImplementation="com.intellij.spellchecker.SpellCheckerManager"/>
-    <applicationConfigurable implementation="com.intellij.spellchecker.options.SpellCheckerConfigurable"/>
+    <applicationService serviceInterface="com.intellij.spellchecker.SpellCheckerSeverityRegister"
+                        serviceImplementation="com.intellij.spellchecker.SpellCheckerSeverityRegister"/>
+    <projectService serviceInterface="com.intellij.spellchecker.options.SpellCheckerConfiguration"
+                    serviceImplementation="com.intellij.spellchecker.options.SpellCheckerConfiguration"/>
+    <projectService serviceInterface="com.intellij.spellchecker.SpellCheckerManager"
+                    serviceImplementation="com.intellij.spellchecker.SpellCheckerManager"/>
+    <projectConfigurable implementation="com.intellij.spellchecker.options.SpellCheckerConfigurable"/>
+
+
     <inspectionToolProvider
         implementation="com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider"/>
     <nameSuggestionProvider id="DictionarySuggestionProvider" implementation="com.intellij.spellchecker.DictionarySuggestionProvider"/>

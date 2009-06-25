@@ -24,7 +24,7 @@ public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
     final TextAttributes attributes = new TextAttributes();
 
     attributes.setEffectType(EffectType.WAVE_UNDERSCORE);
-    attributes.setEffectColor(Color.GRAY.brighter());
+    attributes.setEffectColor(Color.GRAY);
 
     result.add(new HighlightInfoType.HighlightInfoTypeImpl(MISSPELLED,
                TextAttributesKey.createTextAttributesKey("MISSPELLED", attributes)));

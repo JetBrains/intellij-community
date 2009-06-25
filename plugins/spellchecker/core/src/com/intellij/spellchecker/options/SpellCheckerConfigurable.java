@@ -42,22 +42,27 @@ public final class SpellCheckerConfigurable implements Configurable {
 
   public JComponent createComponent() {
     if (options == null) {
-      options = new SpellCheckerOptions(configuration);
+      options = new SpellCheckerOptions(configuration, manager);
     }
+
     return options.getRoot();
   }
 
   public boolean isModified() {
     if (options != null) {
-      if (!same(options.getUserDictionaryWords(), configuration.USER_DICTIONARY_WORDS)) {
+      if (dictionaryListWasChanged()) {
         return true;
       }
-      if (!same(options.getIgnoredWords(), configuration.IGNORED_WORDS)) {
-        return true;
-      }
+
     }
     return false;
   }
+
+
+  private boolean dictionaryListWasChanged() {
+    return !same(options.getUserDictionaryWordsSet(), options.getShownDictionary().getWords());
+  }
+
 
   private static boolean same(Set<String> modified, Set<String> original) {
     if (original.size() != modified.size()) {
@@ -69,22 +74,24 @@ public final class SpellCheckerConfigurable implements Configurable {
 
   public void apply() throws ConfigurationException {
     if (options != null) {
-      replaceAll(configuration.USER_DICTIONARY_WORDS, options.getUserDictionaryWords());
-      replaceAll(configuration.IGNORED_WORDS, options.getIgnoredWords());
-      manager.reloadAndRestartInspections();
+      boolean reload = false;
+      if (dictionaryListWasChanged()) {
+        options.getShownDictionary().replaceAllDictionaryWords(options.getUserDictionaryWordsSet());
+        reload = true;
+      }
+      
+      /***replaceAll(configuration.activeDictionary.dictionaryWords, options.getUserDictionaryWords());
+       replaceAll(configuration.activeDictionary.ignoredWords, options.getIgnoredWords());*//**//*
+      manager.restartInspections();*/
+      if (reload) {
+        manager.applyConfiguration();
+        manager.restartInspections();
+      }
     }
   }
 
-  private static void replaceAll(Set<String> words, Set<String> newWords) {
-    words.clear();
-    words.addAll(newWords);
-  }
 
   public void reset() {
-    if (options != null) {
-      options.setUserDictionaryWords(configuration.USER_DICTIONARY_WORDS);
-      options.setIgnoredWords(configuration.IGNORED_WORDS);
-    }
   }
 
   public void disposeUIResources() {

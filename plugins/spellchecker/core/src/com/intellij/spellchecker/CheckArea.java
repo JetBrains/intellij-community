@@ -1,21 +1,15 @@
 package com.intellij.spellchecker;
 
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: shkate
- * Date: 07.05.2009
- * Time: 19:26:59
- * To change this template use File | Settings | File Templates.
- */
 public class CheckArea {
 
   private String text;
   private TextRange textRange;
   private boolean ignored;
 
-  public CheckArea(String text,TextRange range) {
+  public CheckArea(String text, TextRange range) {
     this.text = text;
     textRange = range;
   }
@@ -42,8 +36,14 @@ public class CheckArea {
     this.ignored = ignored;
   }
 
+  @Nullable
   public String getWord() {
     if (text == null || textRange == null) return null;
     return text.substring(textRange.getStartOffset(), textRange.getEndOffset());
+  }
+
+  @Override
+  public String toString() {
+    return "CheckArea{range = " + textRange + ", ignored=" + ignored + ", word=" + (getWord()!=null?getWord():"") +'}';
   }
 }

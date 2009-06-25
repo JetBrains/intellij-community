@@ -4,13 +4,16 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.spellchecker.engine.SpellChecker;
 import com.intellij.spellchecker.engine.SpellCheckerFactory;
 import com.intellij.spellchecker.options.SpellCheckerConfiguration;
 import com.intellij.spellchecker.util.Strings;
+import com.intellij.spellchecker.dictionary.UserWordList;
+import com.intellij.spellchecker.dictionary.CachedWordList;
+import com.intellij.spellchecker.dictionary.ProjectWordList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,19 +28,32 @@ import java.util.*;
 public final class SpellCheckerManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.SpellCheckerManager");
   private static final int MAX_SUGGESTIONS_THRESHOLD = 10;
+  private Project project;
+  private static HighlightDisplayLevel level;
+  private Set<String> dictionaries = new HashSet<String>();
+
+  private UserWordList projectWordList;
+  private UserWordList cachedWordList;
+
+  public Set<String> getDictionaries() {
+    return dictionaries;
+  }
 
   @NonNls
-  private static final String DICT_URL = "english.dic";
+  private static final String[] DICT_URLS = new String[]{"english.dic", "jetbrains.dic"};
 
-  public static SpellCheckerManager getInstance() {
-    return ServiceManager.getService(SpellCheckerManager.class);
+
+  public static SpellCheckerManager getInstance(Project project) {
+    return ServiceManager.getService(project, SpellCheckerManager.class);
   }
 
   private final SpellCheckerConfiguration configuration;
   private final SpellChecker spellChecker = SpellCheckerFactory.create();
 
-  public SpellCheckerManager(SpellCheckerConfiguration configuration) {
+
+  public SpellCheckerManager(SpellCheckerConfiguration configuration, final Project project) {
     this.configuration = configuration;
+    this.project = project;
     reloadConfiguration();
   }
 
@@ -46,10 +62,12 @@ public final class SpellCheckerManager {
     return HighlightDisplayLevel.find(SpellCheckerSeveritiesProvider.MISSPELLED);
   }
 
+
   @NotNull
   public SpellChecker getSpellChecker() {
     return spellChecker;
   }
+
 
   public boolean hasProblem(@NotNull String word) {
     return !isIgnored(word) && !spellChecker.isCorrect(word);
@@ -91,10 +109,10 @@ public final class SpellCheckerManager {
 
   @NotNull
   public List<String> getSuggestionsExt(@NotNull String word) {
-    return spellChecker.getSuggestionsExt(word,MAX_SUGGESTIONS_THRESHOLD);
+    return spellChecker.getSuggestionsExt(word, MAX_SUGGESTIONS_THRESHOLD);
   }
 
-  
+
   /**
    * Load dictionary from stream.
    *
@@ -128,48 +146,72 @@ public final class SpellCheckerManager {
     spellChecker.addDictionary(inputStream, encoding, locale);
   }
 
-  public void addToDictionary(@NotNull String word) {
+  public void acceptWordAsCorrect(@NotNull String word) {
     String lowerCased = word.toLowerCase();
-    configuration.USER_DICTIONARY_WORDS.add(lowerCased);
+    projectWordList.acceptWord(word);
+    cachedWordList.acceptWord(word);
     spellChecker.addToDictionary(lowerCased);
   }
 
-  public void ignoreAll(@NotNull String word) {
-    String lowerCased = word.toLowerCase();
-    configuration.IGNORED_WORDS.add(lowerCased);
-    spellChecker.ignoreAll(lowerCased);
-  }
-
-  public final Set<String> getIgnoredWords() {
-    return configuration.IGNORED_WORDS;
-  }
-
-
-  private void reloadConfiguration() {
+   public void reloadConfiguration() {
     initDictionaries();
     spellChecker.reset();
-    for (String word : ejectAll(configuration.IGNORED_WORDS)) {
-      ignoreAll(word);
+
+    projectWordList = ServiceManager.getService(project, ProjectWordList.class);
+    cachedWordList = ServiceManager.getService(project, CachedWordList.class);
+
+    for (String word : projectWordList.getWords()) {
+      cachedWordList.acceptWord(word);
     }
-    for (String word : ejectAll(configuration.USER_DICTIONARY_WORDS)) {
-      addToDictionary(word);
+
+
+    for (String word : ejectAll(cachedWordList.words)) {
+      String lowerCased = word.toLowerCase();
+      spellChecker.addToDictionary(lowerCased);
     }
+
+  }
+
+  public void applyConfiguration() {
+    initDictionaries();
+    spellChecker.reset();
+
+    assert projectWordList != null;
+    assert cachedWordList != null;
+
+    for (String word : projectWordList.getWords()) {
+      cachedWordList.acceptWord(word);
+    }
+
+
+    for (String word : ejectAll(cachedWordList.words)) {
+      String lowerCased = word.toLowerCase();
+      spellChecker.addToDictionary(lowerCased);
+    }
+
   }
 
   private void initDictionaries() {
-    InputStream is = SpellCheckerManager.class.getResourceAsStream(DICT_URL);
+    for (String dictUrl : DICT_URLS) {
+      initDictionary(dictUrl);
+    }
+  }
+
+  private void initDictionary(String url) {
+    InputStream is = SpellCheckerManager.class.getResourceAsStream(url);
     if (is != null) {
       try {
+        dictionaries.add(url);
         addDictionary(is);
       }
       catch (IOException e) {
-        LOG.error("Dictionary could not be load", e);
+        LOG.error("Dictionary could not be loaded", e);
       }
     }
   }
 
-  public void reloadAndRestartInspections() {
-    reloadConfiguration();
+  public void restartInspections() {
+    //reloadConfiguration();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         Project[] projects = ProjectManager.getInstance().getOpenProjects();
@@ -184,7 +226,15 @@ public final class SpellCheckerManager {
 
   private HashSet<String> ejectAll(Set<String> from) {
     HashSet<String> words = new HashSet<String>(from);
-    from.clear();
+  //  from.clear();
     return words;
+  }
+
+  public UserWordList getProjectWordList() {
+    return projectWordList;
+  }
+
+  public UserWordList getCachedWordList() {
+    return cachedWordList;
   }
 }

@@ -8,15 +8,11 @@ import com.intellij.spellchecker.inspections.SpellCheckerQuickFix;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Add to dictionary quick fix.
- *
- * @author Sergiy Dubovik
- */
-public class AddToDictionaryQuickFix implements SpellCheckerQuickFix {
+
+public class AcceptWordAsCorrect implements SpellCheckerQuickFix {
   private String word;
 
-  public AddToDictionaryQuickFix(String word) {
+  public AcceptWordAsCorrect(String word) {
     this.word = word;
   }
 
@@ -36,7 +32,7 @@ public class AddToDictionaryQuickFix implements SpellCheckerQuickFix {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    SpellCheckerManager spellCheckerManager = SpellCheckerManager.getInstance();
-    spellCheckerManager.addToDictionary(word);
+    SpellCheckerManager spellCheckerManager = SpellCheckerManager.getInstance(project);
+    spellCheckerManager.acceptWordAsCorrect(word);
   }
 }

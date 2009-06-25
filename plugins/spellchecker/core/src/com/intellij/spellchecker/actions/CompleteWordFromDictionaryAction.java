@@ -54,7 +54,7 @@ public final class CompleteWordFromDictionaryAction extends AnAction {
               // Select replacement part
               editor.getSelectionModel().setSelection(caretOffset, caretOffset + suffix.length());
             }
-            List<String> variants = SpellCheckerManager.getInstance().getVariants(prefix);
+            List<String> variants = SpellCheckerManager.getInstance(project).getVariants(prefix);
 
             List<LookupItem<String>> lookupItems = new ArrayList<LookupItem<String>>();
             for (String variant : variants) {
