@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -157,6 +158,7 @@ public class AllClassesGetter {
   private static String getPackagePrefix(final PsiElement context, final int offset) {
     final String fileText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
+        ProgressManager.getInstance().checkCanceled();
         return context.getContainingFile().getText();
       }
     });
