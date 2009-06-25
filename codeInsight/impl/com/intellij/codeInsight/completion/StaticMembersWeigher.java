@@ -18,6 +18,8 @@ public class StaticMembersWeigher extends CompletionWeigher {
     if (loc.getCompletionType() != CompletionType.BASIC) return 0;
 
     final PsiElement position = loc.getCompletionParameters().getPosition();
+    if (!position.isValid()) return 0;
+
     if (PsiTreeUtil.getParentOfType(position, PsiDocComment.class) != null) return 0;
     if (position.getParent() instanceof PsiReferenceExpression) {
       final PsiReferenceExpression refExpr = (PsiReferenceExpression)position.getParent();
