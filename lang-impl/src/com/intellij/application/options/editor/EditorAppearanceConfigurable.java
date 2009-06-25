@@ -34,6 +34,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   private JPanel myAddonPanel;
   private JCheckBox myCbShowMethodSeparators;
   private JCheckBox myAntialiasingInEditorCheckBox;
+  private JCheckBox myCbShowIconsInGutter;
 
   public EditorAppearanceConfigurable() {
     myCbBlinkCaret.addActionListener(
@@ -60,6 +61,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     myCbBlockCursor.setSelected(editorSettings.isBlockCursor());
     myCbShowWhitespaces.setSelected(editorSettings.isWhitespacesShown());
     myAntialiasingInEditorCheckBox.setSelected(UISettings.getInstance().ANTIALIASING_IN_EDITOR);
+    myCbShowIconsInGutter.setSelected(DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER);
 
     super.reset();
   }
@@ -82,6 +84,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     EditorOptionsPanel.reinitAllEditors();
 
     DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS = myCbShowMethodSeparators.isSelected();
+    DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER = myCbShowIconsInGutter.isSelected();
 
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.ANTIALIASING_IN_EDITOR != myAntialiasingInEditorCheckBox.isSelected()) {
@@ -107,6 +110,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     isModified |= isModified(myCbShowLineNumbers, editorSettings.isLineNumbersShown());
     isModified |= isModified(myCbShowWhitespaces, editorSettings.isWhitespacesShown());
     isModified |= isModified(myCbShowMethodSeparators, DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS);
+    isModified |= isModified(myCbShowIconsInGutter, DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER);
     isModified |= myAntialiasingInEditorCheckBox.isSelected() != UISettings.getInstance().ANTIALIASING_IN_EDITOR;
 
     return isModified;

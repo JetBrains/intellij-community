@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
@@ -36,6 +37,8 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
   private final HashMap<String, Pair<Long, Icon>> iconsCache = new HashMap<String, Pair<Long, Icon>>();
 
   public LineMarkerInfo getLineMarkerInfo(PsiElement element) {
+    if (! DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER) return null;
+
     if (element instanceof PsiAssignmentExpression) {
       final PsiExpression lExpression = ((PsiAssignmentExpression)element).getLExpression();
       final PsiExpression expr = ((PsiAssignmentExpression)element).getRExpression();

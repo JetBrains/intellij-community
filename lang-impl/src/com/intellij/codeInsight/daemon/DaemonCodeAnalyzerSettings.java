@@ -56,6 +56,7 @@ public class DaemonCodeAnalyzerSettings implements PersistentStateComponent<Elem
   public boolean SUPPRESS_WARNINGS = true;
   public boolean SHOW_METHOD_SEPARATORS = false;
   public int ERROR_STRIPE_MARK_MIN_HEIGHT = 3;
+  public boolean SHOW_SMALL_ICONS_IN_GUTTER = true;
 
   public boolean isCodeHighlightingChanged(DaemonCodeAnalyzerSettings oldSettings) {
     try {
@@ -79,6 +80,7 @@ public class DaemonCodeAnalyzerSettings implements PersistentStateComponent<Elem
     settings.SHOW_ADD_IMPORT_HINTS = SHOW_ADD_IMPORT_HINTS;
     settings.SHOW_METHOD_SEPARATORS = SHOW_METHOD_SEPARATORS;
     settings.NO_AUTO_IMPORT_PATTERN = NO_AUTO_IMPORT_PATTERN;
+    settings.SHOW_SMALL_ICONS_IN_GUTTER = SHOW_SMALL_ICONS_IN_GUTTER;
     return settings;
   }
 
