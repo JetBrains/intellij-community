@@ -94,6 +94,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow {
   private boolean myCloseOnClick;
 
   private CopyOnWriteArraySet<JBPopupListener> myListeners = new CopyOnWriteArraySet<JBPopupListener>();
+  private boolean myVisible;
 
   private boolean isInsideBalloon(MouseEvent me) {
     if (!me.getComponent().isShowing()) return true;
@@ -188,6 +189,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow {
     else {
       assert false : window;
     }
+
+    myVisible = true;
 
     myLayeredPane = root.getLayeredPane();
     myPosition = position;
@@ -285,7 +288,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow {
         public void run() {
           hide();
         }
-      }, (int)myFadeoutTime);
+      }, (int)myFadeoutTime, null);
     }
   }
 
@@ -337,7 +340,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow {
     }
 
 
-    myLayeredPane = null;
+    myVisible = false;
 
     onDisposed();
   }
@@ -347,7 +350,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow {
   }
 
   public boolean isVisible() {
-    return myLayeredPane != null;
+    return myVisible;
   }
 
   public void setShowPointer(final boolean show) {
