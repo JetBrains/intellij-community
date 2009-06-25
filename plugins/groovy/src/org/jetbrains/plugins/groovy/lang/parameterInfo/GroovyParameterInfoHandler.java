@@ -41,10 +41,10 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     List<? extends PsiElement> elements = JavaCompletionUtil.getAllPsiElements((LookupItem) item);
 
     if (elements != null) {
-      List<PsiMethod> methods = new ArrayList<PsiMethod>();
+      List<GroovyResolveResult> methods = new ArrayList<GroovyResolveResult>();
       for (PsiElement element : elements) {
         if (element instanceof PsiMethod) {
-          methods.add((PsiMethod) element);
+          methods.add(new GroovyResolveResultImpl(element, true));
         }
       }
       return methods.toArray(new Object[methods.size()]);
