@@ -8,43 +8,19 @@
  */
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
-import com.intellij.codeInspection.dataFlow.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
-import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeCastExpression;
 
 public class TypeCastInstruction extends Instruction {
   private final PsiTypeCastExpression myCastExpression;
-  private final DfaRelationValue myInstanceofRelation;
-  private final boolean myIsSemantical;
+  private final PsiExpression myCasted;
+  private final PsiType myCastTo;
 
-  public TypeCastInstruction() {
-    myCastExpression = null;
-    myInstanceofRelation = null;
-    myIsSemantical = true;
-  }
-
-  public TypeCastInstruction(PsiTypeCastExpression castExpression, DfaRelationValue instanceofRelation) {
-    myIsSemantical = false;
+  public TypeCastInstruction(PsiTypeCastExpression castExpression, PsiExpression casted, PsiType castTo) {
     myCastExpression = castExpression;
-    myInstanceofRelation = instanceofRelation;
-  }
-
-  public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
-    if (myIsSemantical) {
-      memState.pop();
-      memState.push(DfaUnknownValue.getInstance());
-    }
-    else if (!memState.applyInstanceofOrNull(myInstanceofRelation)) {
-      onInstructionProducesCCE(runner);
-    }
-
-    return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(getIndex() + 1), memState)};
-  }
-
-  protected void onInstructionProducesCCE(final DataFlowRunner runner) {
+    myCasted = casted;
+    myCastTo = castTo;
   }
 
   public PsiTypeCastExpression getCastExpression() {

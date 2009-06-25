@@ -5,10 +5,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
@@ -102,12 +99,20 @@ public class InstructionFactory {
     return new SwapInstruction();
   }
 
-  public TypeCastInstruction createTypeCastInstruction() {
-    return new TypeCastInstruction();
+  public Instruction createTypeCastInstruction() {
+    return new Instruction() {
+      @Override
+      public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
+        memState.pop();
+        memState.push(DfaUnknownValue.getInstance());
+        return super.apply(runner, memState);
+      }
+    };
   }
 
-  public TypeCastInstruction createTypeCastInstruction(PsiTypeCastExpression castExpression, DfaRelationValue instanceofRelation) {
-    return new TypeCastInstruction(castExpression, instanceofRelation);
+  @NotNull
+  public TypeCastInstruction createTypeCastInstruction(PsiTypeCastExpression castExpression, @NotNull PsiExpression casted, @NotNull PsiType toType, DfaValueFactory factory) {
+    return new TypeCastInstruction(castExpression, casted, toType);
   }
 
 }

@@ -25,7 +25,7 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author peter
@@ -136,12 +136,15 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
           }
         }
 
-        final LinkedHashMap<PsiExpression,PsiType> map = GuessManager.getInstance(position.getProject())
-          .getDataFlowExpressionTypes(PsiTreeUtil.getParentOfType(position, PsiExpression.class));
-        for (final PsiExpression expression : map.keySet()) {
-          final PsiType castType = map.get(expression);
-          if (expectedType.isAssignableFrom(castType)) {
-            result.addElement(new CastingLookupElementDecorator(new ExpressionLookupItem(expression), castType));
+        final PsiExpression expr = PsiTreeUtil.getParentOfType(position, PsiExpression.class);
+        if (expr != null) {
+          final Map<PsiExpression,PsiType> map = GuessManager.getInstance(position.getProject()).getDataFlowExpressionTypes(expr);
+          for (final PsiExpression expression : map.keySet()) {
+            final PsiType castType = map.get(expression);
+            final PsiType baseType = expression.getType();
+            if (expectedType.isAssignableFrom(castType) && (baseType == null || !expectedType.isAssignableFrom(baseType))) {
+              result.addElement(new CastingLookupElementDecorator(new ExpressionLookupItem(expression), castType));
+            }
           }
         }
       }

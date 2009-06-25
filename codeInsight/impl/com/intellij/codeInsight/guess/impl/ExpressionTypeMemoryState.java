@@ -88,7 +88,7 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
     return super.toString() + " states=[" + new HashMap<PsiExpression, PsiType>(myStates) + "]";
   }
 
-  private void setExpressionType(PsiExpression expression, PsiType type) {
+  public void setExpressionType(PsiExpression expression, PsiType type) {
     myStates.put(expression, type);
   }
 }

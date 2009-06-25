@@ -12,7 +12,7 @@ import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -1387,46 +1387,36 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
-  @Override public void visitTypeCastExpression(PsiTypeCastExpression expression) {
-    startElement(expression);
-    PsiExpression operand = expression.getOperand();
+  @Override public void visitTypeCastExpression(PsiTypeCastExpression castExpression) {
+    startElement(castExpression);
+    PsiExpression operand = castExpression.getOperand();
 
     if (operand != null) {
       operand.accept(this);
-      generateBoxingUnboxingInstructionFor(operand, expression.getType());
+      generateBoxingUnboxingInstructionFor(operand, castExpression.getType());
     }
     else {
-      pushTypeOrUnknown(expression);
+      pushTypeOrUnknown(castExpression);
     }
 
-    TypeCastInstruction tcInstruction = createInstruction(expression);
-    if (tcInstruction != null) {
-      addInstruction(tcInstruction);
-    }
-
-    finishElement(expression);
+    addInstruction(createCastInstruction(castExpression));
+    finishElement(castExpression);
   }
 
   @Override public void visitClass(PsiClass aClass) {
   }
 
-  @Nullable
-  private TypeCastInstruction createInstruction(PsiTypeCastExpression castExpression) {
+  @NotNull
+  private Instruction createCastInstruction(PsiTypeCastExpression castExpression) {
     PsiExpression expr = castExpression.getOperand();
-    PsiType castType = castExpression.getCastType().getType();
-
-    if (expr == null) return null;
-
-    if (RedundantCastUtil.isTypeCastSemantical(castExpression)) {
-      return new TypeCastInstruction();
+    final PsiTypeElement typeElement = castExpression.getCastType();
+    if (typeElement != null && !RedundantCastUtil.isTypeCastSemantical(castExpression)) {
+      PsiType castType = typeElement.getType();
+      if (expr != null) {
+        return myInstructionFactory.createTypeCastInstruction(castExpression, expr, castType, myFactory);
+      }
     }
-
-    DfaValue dfaExpr = myFactory.create(expr);
-    DfaTypeValue dfaType = myFactory.getTypeFactory().create(castType);
-    if (dfaExpr == null) return null;
-
-    DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().create(dfaExpr, dfaType, "instanceof", false);
-    return dfaInstanceof != null ? myInstructionFactory.createTypeCastInstruction(castExpression, dfaInstanceof) : null;
+    return myInstructionFactory.createTypeCastInstruction();
   }
 
 

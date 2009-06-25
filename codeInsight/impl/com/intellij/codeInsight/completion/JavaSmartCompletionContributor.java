@@ -21,6 +21,7 @@ import com.intellij.patterns.PsiJavaPatterns;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import static com.intellij.patterns.StandardPatterns.*;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.filters.ElementExtractorFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.GeneratorFilter;
@@ -555,7 +556,11 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     result.addElement(item);
   }
 
-  static Set<LookupElement> completeReference(final PsiElement element, final PsiReference reference, final TailType tailType, final ElementFilter filter, final boolean acceptClasses) {
+  static Set<LookupElement> completeReference(final PsiElement element, PsiReference reference, final TailType tailType, final ElementFilter filter, final boolean acceptClasses) {
+    if (reference instanceof PsiMultiReference) {
+      reference = ContainerUtil.findInstance(((PsiMultiReference) reference).getReferences(), PsiJavaReference.class);
+    }
+
     if (reference instanceof PsiJavaReference) {
       final THashSet<LookupElement> set = new THashSet<LookupElement>();
       final PsiJavaReference javaReference = (PsiJavaReference)reference;
@@ -610,4 +615,21 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     set.add(ret);
   }
 
+  @Override
+  public void beforeCompletion(@NotNull CompletionInitializationContext context) {
+    if (context.getCompletionType() == CompletionType.SMART && !context.getEditor().getSelectionModel().hasSelection()) {
+      final PsiFile file = context.getFile();
+      PsiElement element = file.findElementAt(context.getStartOffset());
+      if (element instanceof PsiIdentifier) {
+        element = element.getParent();
+        while (element instanceof PsiJavaCodeReferenceElement || element instanceof PsiMethodCallExpression ||
+               element instanceof PsiThisExpression || element instanceof PsiSuperExpression ||
+               element instanceof PsiTypeElement ||
+               element instanceof PsiClassObjectAccessExpression) {
+          context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getTextRange().getEndOffset());
+          element = element.getParent();
+        }
+      }
+    }
+  }
 }

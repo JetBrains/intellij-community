@@ -2,7 +2,6 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -16,9 +15,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author ven
@@ -175,23 +171,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
       }
 
       public Object[] getVariants() {
-        PsiClass aClass = getReferencedClass();
-        if (aClass != null) {
-          PsiAnnotationParameterList parent = (PsiAnnotationParameterList)getParent();
-          final PsiNameValuePair[] existingPairs = parent.getAttributes();
-          List<PsiMethod> result = new ArrayList<PsiMethod>();
-methods:
-          for (PsiMethod method : aClass.getMethods()) {
-            for (PsiNameValuePair pair : existingPairs) {
-              if (Comparing.equal(pair.getName(), method.getName())) continue methods;
-            }
-            result.add(method);
-          }
-
-          return ArrayUtil.toObjectArray(result);
-        } else {
-          return ArrayUtil.EMPTY_OBJECT_ARRAY;
-        }
+        return ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
 
       public boolean isSoft() {

@@ -20,5 +20,5 @@ public abstract class GuessManager {
   public abstract PsiType[] guessTypeToCast(PsiExpression expr);
 
   @NotNull 
-  public abstract LinkedHashMap<PsiExpression, PsiType> getDataFlowExpressionTypes(PsiExpression forPlace);
+  public abstract LinkedHashMap<PsiExpression, PsiType> getDataFlowExpressionTypes(@NotNull PsiExpression forPlace);
 }

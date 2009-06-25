@@ -108,7 +108,7 @@ public class GuessManagerImpl extends GuessManager {
 
   @NotNull
   @Override
-  public LinkedHashMap<PsiExpression, PsiType> getDataFlowExpressionTypes(final PsiExpression forPlace) {
+  public LinkedHashMap<PsiExpression, PsiType> getDataFlowExpressionTypes(@NotNull final PsiExpression forPlace) {
     final Map<PsiExpression, PsiType> map = _getDataFlowExpressionTypes(forPlace);
     List<PsiExpression> exprs = new ArrayList<PsiExpression>(map.keySet());
     Collections.sort(exprs, new Comparator<PsiExpression>() {

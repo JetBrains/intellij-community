@@ -23,7 +23,9 @@ public abstract class Instruction {
     myProcessedStates = new ArrayList<DfaMemoryState>();
   }
 
-  public abstract DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState dfaBeforeMemoryState);
+  public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState stateBefore) {
+    return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(getIndex() + 1), stateBefore)};
+  }
 
   public boolean isMemoryStateProcessed(DfaMemoryState dfaMemState) {
     for (DfaMemoryState state : myProcessedStates) {
