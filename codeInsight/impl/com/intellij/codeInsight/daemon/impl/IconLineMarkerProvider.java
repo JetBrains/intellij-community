@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,7 +51,19 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
       final PsiExpression value = psiReturnStatement.getReturnValue();
       final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       if (method != null) {
-        return resolveIconInfo(method.getReturnType(), value);
+        final PsiType returnType = method.getReturnType();
+        final LineMarkerInfo<PsiElement> result = resolveIconInfo(returnType, value);
+
+        if (result != null || !isIconClassType(returnType) || value == null) return result;
+
+        if (methodContainsReturnStatementOnly(method)) {
+          for (PsiReference ref : value.getReferences()) {
+            final PsiElement field = ref.resolve();
+            if (field instanceof PsiField) {
+              return resolveIconInfo(returnType, ((PsiField)field).getInitializer(), psiReturnStatement);
+            }
+          }
+        }
       }
     }
     else if (element instanceof PsiVariable) {
@@ -60,8 +73,20 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
     return null;
   }
 
+  private static boolean methodContainsReturnStatementOnly(@NotNull PsiMethod method) {
+    final PsiCodeBlock body = method.getBody();
+    if (body == null || body.getStatements().length != 1) return false;
+
+    return body.getStatements()[0] instanceof PsiReturnStatement;
+  }
+
   @Nullable
   private LineMarkerInfo<PsiElement> resolveIconInfo(PsiType type, PsiExpression initializer) {
+    return resolveIconInfo(type, initializer, initializer);
+  }
+
+  @Nullable
+  private LineMarkerInfo<PsiElement> resolveIconInfo(PsiType type, PsiExpression initializer, PsiElement bindingElement) {
     if (initializer != null && isIconClassType(type)) {
 
       final List<FileReference> refs = new ArrayList<FileReference>();
@@ -105,7 +130,7 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
               psiFileSystemItem.navigate(true);
             }
           };
-          return new LineMarkerInfo<PsiElement>(initializer, initializer.getTextRange(), icon,
+          return new LineMarkerInfo<PsiElement>(bindingElement, bindingElement.getTextRange(), icon,
                                                 Pass.UPDATE_ALL, null, navHandler,
                                                 GutterIconRenderer.Alignment.LEFT);
         }
