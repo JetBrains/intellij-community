@@ -92,23 +92,29 @@ public class AbstractTreeUpdater implements Disposable {
       }
     }
 
+    long newUpdateCount = myUpdateCount + 1;
+
     final AbstractTreeUi ui = myTreeBuilder.getUi();
     final Collection<TreeUpdatePass> yielding = ui.getYeildingPasses();
     for (Iterator<TreeUpdatePass> iterator = yielding.iterator(); iterator.hasNext();) {
       TreeUpdatePass eachYielding = iterator.next();
-      if (eachYielding.getNode() == toAdd.getNode()) {
-        toAdd.expire();
-        return;
-      } else if (toAdd.getNode().isNodeAncestor(eachYielding.getNode())) {
-        toAdd.expire();
-        return;
+
+      final DefaultMutableTreeNode eachNode = eachYielding.getCurrentNode();
+      if (eachNode != null) {
+        if (eachNode.isNodeAncestor(toAdd.getNode())) {
+          toAdd.expire();
+        } else {
+          eachYielding.setSheduleStamp(newUpdateCount);
+        }
       }
     }
-    
+
+    if (toAdd.isExpired()) return;
+
 
     myNodeQueue.add(toAdd);
 
-    myUpdateCount++;
+    myUpdateCount = newUpdateCount;
     toAdd.setSheduleStamp(myUpdateCount);
 
     queue(new Update("ViewUpdate") {
@@ -229,5 +235,9 @@ public class AbstractTreeUpdater implements Disposable {
 
   public long getUpdateCount() {
     return myUpdateCount;
+  }
+
+  public boolean isRerunNeededFor(TreeUpdatePass pass) {
+    return pass.getUpdateStamp() < getUpdateCount();
   }
 }

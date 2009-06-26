@@ -15,6 +15,9 @@ public class TreeUpdatePass {
 
   private long myUpdateStamp;
   private boolean myExpired;
+
+  private DefaultMutableTreeNode myCurrentNode;
+
   public TreeUpdatePass(@NotNull final DefaultMutableTreeNode node, @Nullable final ActiveRunnable before, @Nullable final ActiveRunnable after) {
     myNode = node;
     myBefore = before;
@@ -43,6 +46,14 @@ public class TreeUpdatePass {
 
   public boolean isExpired() {
     return myExpired;
+  }
+
+  public DefaultMutableTreeNode getCurrentNode() {
+    return myCurrentNode;
+  }
+
+  public void setCurrentNode(DefaultMutableTreeNode currentNode) {
+    myCurrentNode = currentNode;
   }
 
   @Override

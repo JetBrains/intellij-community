@@ -104,6 +104,8 @@ class AbstractTreeUi {
   private RegistryValue myShowBusyIndicator = Registry.get("ide.tree.showBusyIndicator");
   private RegistryValue myWaitForReadyTime = Registry.get("ide.tree.waitForReadyTimout");
 
+  private boolean myWasEverIndexNotReady;
+
   protected final void init(AbstractTreeBuilder builder,
                             JTree tree,
                             DefaultTreeModel treeModel,
@@ -774,6 +776,10 @@ class AbstractTreeUi {
       passOne = getTreeStructure().getChildElements(element);
     }
     catch (IndexNotReadyException e) {
+      if (!myWasEverIndexNotReady) {
+        myWasEverIndexNotReady = true;
+        LOG.warn("Tree is not dumb-mode-aware; treeBuilder=" + getBuilder() + " treeStructure=" + getTreeStructure());
+      }
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
@@ -827,11 +833,12 @@ class AbstractTreeUi {
     final ActionCallback result = new ActionCallback();
 
     if (isToYieldUpdateFor(node)) {
+      pass.setCurrentNode(node);
       yieldAndRun(new Runnable() {
         public void run() {
           if (pass.isExpired()) return;
 
-          if (pass.getUpdateStamp() < getUpdater().getUpdateCount()) {
+          if (getUpdater().isRerunNeededFor(pass)) {
             getUpdater().addSubtreeToUpdate(pass);
             result.setRejected();
           }

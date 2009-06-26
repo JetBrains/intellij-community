@@ -83,6 +83,7 @@ public class Tree extends JTree implements Autoscroll, TestableUi {
     super.removeNotify();
 
     if (myBusyIcon != null) {
+      remove(myBusyIcon);
       Disposer.dispose(myBusyIcon);
       myBusyIcon = null;
     }
