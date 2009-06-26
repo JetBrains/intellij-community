@@ -50,6 +50,10 @@ public class CompileStepBeforeRun implements BeforeRunTaskProvider<CompileStepBe
   }
 
   public boolean executeTask(DataContext context, final RunConfiguration configuration, MakeBeforeRunTask task) {
+    if (!(configuration instanceof RunProfileWithCompileBeforeLaunchOption)) {
+      return true;
+    }
+
     final RunProfileWithCompileBeforeLaunchOption runConfiguration = (RunProfileWithCompileBeforeLaunchOption)configuration;
     final Semaphore done = new Semaphore();
     final boolean[] result = new boolean[1];
@@ -76,7 +80,8 @@ public class CompileStepBeforeRun implements BeforeRunTaskProvider<CompileStepBe
             final Module[] modules = runConfiguration.getModules();
             if (modules.length > 0) {
               scope = compilerManager.createModulesCompileScope(modules, true);
-            } else {
+            }
+            else {
               scope = compilerManager.createProjectCompileScope(myProject);
             }
           }
@@ -86,7 +91,8 @@ public class CompileStepBeforeRun implements BeforeRunTaskProvider<CompileStepBe
           compilerManager.make(scope, callback);
         }
       }, ModalityState.NON_MODAL);
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       return false;
     }
 
