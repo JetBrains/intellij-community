@@ -40,9 +40,10 @@ public class JavaCompletionStatistician extends CompletionStatistician{
       }
     }
 
-    if (!(element instanceof LookupItem)) return null;
+    LookupItem item = element.as(LookupItem.class);
+    if (item == null) return null;
 
-    PsiType qualifierType = JavaCompletionUtil.getQualifierType((LookupItem) element);
+    PsiType qualifierType = JavaCompletionUtil.getQualifierType(item);
     if (qualifierType == null) {
       if (infos != null && infos.length > 0) {
         qualifierType = infos[0].getDefaultType();

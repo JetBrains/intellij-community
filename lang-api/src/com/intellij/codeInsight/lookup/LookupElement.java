@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Set;
@@ -93,5 +94,11 @@ public abstract class LookupElement extends UserDataHolderBase {
 
   public int getGrouping() {
     return 0;
+  }
+
+  @Nullable
+  public <T> T as(Class<T> aClass) {
+    //noinspection unchecked
+    return aClass.isInstance(this) ? (T) this : null;
   }
 }

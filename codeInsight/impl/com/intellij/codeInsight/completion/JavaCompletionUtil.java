@@ -5,30 +5,33 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableLazyKey;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.BaseScopeProcessor;
+import com.intellij.psi.scope.NameHint;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
@@ -785,5 +788,74 @@ public class JavaCompletionUtil {
       return ((PsiMethod)o).getName();
     }
     return null;
+  }
+
+  @Nullable
+  public static PsiType getLookupElementType(final LookupElement element) {
+    PsiType qualifierType = null;
+    if (element instanceof TypedLookupItem) {
+      return ((TypedLookupItem)element).getType();
+    }
+
+    final Object o = element.getObject();
+    if (o instanceof PsiVariable) {
+      qualifierType = ((PsiVariable)o).getType();
+    }
+    else if (o instanceof PsiMethod) {
+      qualifierType = ((PsiMethod)o).getReturnType();
+    }
+    else if (o instanceof PsiExpression) {
+      qualifierType = ((PsiExpression) o).getType();
+    }
+
+    final LookupItem lookupItem = element.as(LookupItem.class);
+    if (lookupItem != null) {
+      final PsiSubstitutor substitutor = (PsiSubstitutor)lookupItem.getAttribute(LookupItem.SUBSTITUTOR);
+      if (substitutor != null) {
+        qualifierType = substitutor.substitute(qualifierType);
+      }
+    }
+    return qualifierType;
+  }
+
+  @Nullable
+  public static PsiType getQualifiedMemberReferenceType(@Nullable PsiType qualifierType, @NotNull final PsiMember member) {
+    final ClassCandidateInfo info = TypeConversionUtil.splitType(qualifierType, member);
+    if (info == null) {
+      return null;
+    }
+
+    final PsiClass element = info.getElement();
+    assert element != null;
+
+    final Ref<PsiSubstitutor> subst = Ref.create(PsiSubstitutor.EMPTY);
+    class MyProcessor extends BaseScopeProcessor implements NameHint, ElementClassHint {
+      public boolean execute(PsiElement element, ResolveState state) {
+        if (element == member) {
+          subst.set(state.get(PsiSubstitutor.KEY));
+        }
+        return true;
+      }
+
+      public String getName(ResolveState state) {
+        return member.getName();
+      }
+
+      public boolean shouldProcess(Class elementClass) {
+        return member instanceof PsiEnumConstant ? elementClass == PsiEnumConstant.class :
+               member instanceof PsiField ? elementClass == PsiField.class :
+               elementClass == PsiMethod.class;
+      }
+
+      @Override
+      public <T> T getHint(Key<T> hintKey) {
+        return hintKey == NameHint.KEY || hintKey == ElementClassHint.KEY ? (T)this : null;
+      }
+    }
+
+    element.processDeclarations(new MyProcessor(), ResolveState.initial().put(PsiSubstitutor.KEY, info.getSubstitutor()), null, member);
+
+    PsiType rawType = member instanceof PsiField ? ((PsiField) member).getType() : ((PsiMethod) member).getReturnType();
+    return subst.get().substitute(rawType);
   }
 }

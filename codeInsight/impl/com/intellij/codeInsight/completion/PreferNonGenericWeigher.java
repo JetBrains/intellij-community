@@ -5,8 +5,10 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,17 +17,10 @@ import org.jetbrains.annotations.NotNull;
 public class PreferNonGenericWeigher extends CompletionWeigher {
 
   public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
-    if (!(item instanceof LookupItem)) return 0;
-
     final Object object = item.getObject();
     if (object instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)object;
-
-      PsiSubstitutor substitutor = (PsiSubstitutor)((LookupItem)item).getAttribute(LookupItem.SUBSTITUTOR);
-      if (substitutor != null) {
-        final PsiType type = substitutor.substitute(method.getReturnType());
-        if (type instanceof PsiClassType && ((PsiClassType) type).resolve() instanceof PsiTypeParameter) return -1;
-      }
+      final PsiType type = JavaCompletionUtil.getLookupElementType(item);
+      if (type instanceof PsiClassType && ((PsiClassType) type).resolve() instanceof PsiTypeParameter) return -1;
     }
 
     return 0;

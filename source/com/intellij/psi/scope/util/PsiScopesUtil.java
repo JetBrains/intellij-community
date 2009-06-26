@@ -10,6 +10,7 @@ package com.intellij.psi.scope.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
@@ -97,16 +98,8 @@ public class PsiScopesUtil {
         PsiType type = null;
         if(qualifier instanceof PsiExpression){
           type = ((PsiExpression)qualifier).getType();
-          if (type instanceof PsiArrayType) {
-            LanguageLevel languageLevel = PsiUtil.getLanguageLevel(qualifier);
-            final PsiClass arrayClass = factory.getArrayClass(languageLevel);
-            target = arrayClass;
-            final PsiTypeParameter[] arrayTypeParameters = arrayClass.getTypeParameters();
-            if (arrayTypeParameters.length > 0) {
-              substitutor = substitutor.put(arrayTypeParameters[0], ((PsiArrayType)type).getComponentType());
-            }
-          } else {
-            final JavaResolveResult result = PsiUtil.resolveGenericsClassInType(type);
+          final ClassCandidateInfo result = TypeConversionUtil.splitType(type, qualifier);
+          if (result != null) {
             target = result.getElement();
             substitutor = result.getSubstitutor();
           }

@@ -121,4 +121,10 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
 
     };
   }
+
+  @Override
+  public <T> T as(Class<T> aClass) {
+    final T t = super.as(aClass);
+    return t == null ? myDelegate.as(aClass) : t;
+  }
 }
