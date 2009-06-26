@@ -31,6 +31,7 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
   private static final @NonNls String JAVAX_SWING_ICON = "javax.swing.Icon";
   private static final int ICON_MAX_WEIGHT = 16;
   private static final int ICON_MAX_HEIGHT = 16;
+  private static final int ICON_MAX_SIZE = 2 * 1024 * 1024; //2Kb
   private static final List<String> ICON_EXTS = Arrays.asList("png", "ico", "bmp", "gif", "jpg");
 
   //TODO: remove old unused icons from the cache
@@ -123,7 +124,9 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
           file = psiFileSystemItem.getVirtualFile();
         }
 
-        if (file == null || file.isDirectory() || !isIconFileExtension(file.getExtension())) continue;
+        if (file == null || file.isDirectory()
+            || !isIconFileExtension(file.getExtension())
+            || file.getLength() > ICON_MAX_SIZE) continue;
 
         final Icon icon = getIcon(file);
 
