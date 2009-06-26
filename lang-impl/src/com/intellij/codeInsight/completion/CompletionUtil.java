@@ -10,10 +10,13 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.PlatformPatterns.character;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -121,5 +124,28 @@ public class CompletionUtil {
     }
 
     return text.substring(start + 1, offsetInElement).trim();
+  }
+
+  static InsertionContext emulateInsertion(InsertionContext oldContext, int newStart, final LookupElement item, char completionChar) {
+    final Editor editor = oldContext.getEditor();
+    final Document document = editor.getDocument();
+    final InsertionContext newContext = new InsertionContext(new OffsetMap(document), completionChar, LookupElement.EMPTY_ARRAY, oldContext.getFile(), editor);
+    emulateInsertion(item, newStart, newContext);
+    return newContext;
+  }
+
+  public static void emulateInsertion(LookupElement item, int offset, InsertionContext context) {
+    context.getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, offset);
+    context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, offset);
+    context.setTailOffset(offset);
+
+    final Editor editor = context.getEditor();
+    final Document document = editor.getDocument();
+    final String lookupString = item.getLookupString();
+
+    document.insertString(offset, lookupString);
+    editor.getCaretModel().moveToOffset(context.getTailOffset());
+    PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
+    item.handleInsert(context);
   }
 }
