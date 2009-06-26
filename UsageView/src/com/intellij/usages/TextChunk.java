@@ -15,20 +15,21 @@
  */
 package com.intellij.usages;
 
+import com.intellij.openapi.editor.markup.AttributesFlyweight;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 public class TextChunk {
-  private final TextAttributes myAttributes;
+  private final AttributesFlyweight myAttributes;
   private final String myText;
 
   public TextChunk(TextAttributes attributesKey, @NotNull String text) {
-    myAttributes = attributesKey;
+    myAttributes = attributesKey.getFlyweight();
     myText = text;
   }
 
   public TextAttributes getAttributes() {
-    return myAttributes;
+    return TextAttributes.fromFlyweight(myAttributes);
   }
 
   public String getText() {

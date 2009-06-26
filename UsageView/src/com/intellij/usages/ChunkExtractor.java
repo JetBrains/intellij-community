@@ -163,11 +163,11 @@ public class ChunkExtractor {
 
   private static void addChunk(CharSequence chars, int start, int end, TextAttributes originalAttrs, boolean bold, List<TextChunk> result) {
     if (start >= end) return;
-    String rText = chars.subSequence(start, end).toString();
+
     TextAttributes attrs = bold
                            ? TextAttributes.merge(originalAttrs, new TextAttributes(null, null, null, null, Font.BOLD))
                            : originalAttrs;
-    result.add(new TextChunk(attrs, rText));
+    result.add(new TextChunk(attrs, new String(chars.subSequence(start, end).toString())));
   }
 
   private static boolean rangeIntersect(int s1, int e1, int s2, int e2) {

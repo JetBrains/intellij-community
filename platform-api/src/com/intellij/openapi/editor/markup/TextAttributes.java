@@ -77,94 +77,107 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     public void writeExternal(Element element) throws WriteExternalException {
       DefaultJDOMExternalizer.writeExternal(this, element);
     }
+
+    private EffectType getEffectType() {
+      switch (EFFECT_TYPE) {
+        case EFFECT_BORDER:
+          return EffectType.BOXED;
+        case EFFECT_BOLD_LINE:
+          return EffectType.BOLD_LINE_UNDERSCORE;
+        case EFFECT_LINE:
+          return EffectType.LINE_UNDERSCORE;
+        case EFFECT_STRIKEOUT:
+          return EffectType.STRIKEOUT;
+        case EFFECT_WAVE:
+          return EffectType.WAVE_UNDERSCORE;
+        default:
+          return null;
+      }
+    }
+
+    private void setEffectType(EffectType effectType) {
+      if (effectType == EffectType.BOXED) {
+        EFFECT_TYPE = EFFECT_BORDER;
+      } else if (effectType == EffectType.LINE_UNDERSCORE) {
+        EFFECT_TYPE = EFFECT_LINE;
+      } else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
+        EFFECT_TYPE = EFFECT_BOLD_LINE;
+      } else if (effectType == EffectType.STRIKEOUT) {
+        EFFECT_TYPE = EFFECT_STRIKEOUT;
+      } else if (effectType == EffectType.WAVE_UNDERSCORE) {
+        EFFECT_TYPE = EFFECT_WAVE;
+      } else {
+        EFFECT_TYPE = -1;
+      }
+    }
   }
 
-  private Externalizable myExternalizable;
+  private AttributesFlyweight myAttrs;
 
   public TextAttributes() {
-    myExternalizable = new Externalizable();
+    myAttrs = AttributesFlyweight.create(null, null, Font.PLAIN, null, EffectType.BOXED, null);
   }
 
   public TextAttributes(Color foregroundColor, Color backgroundColor, Color effectColor, EffectType effectType, int fontType) {
-    myExternalizable = new Externalizable();
-    setForegroundColor(foregroundColor);
-    setBackgroundColor(backgroundColor);
-    setEffectColor(effectColor);
-    setEffectType(effectType);
-    setFontType(fontType);
+    myAttrs = AttributesFlyweight.create(foregroundColor, backgroundColor, fontType, effectColor, effectType, null);
   }
 
   public boolean isEmpty(){
     return getForegroundColor() == null && getBackgroundColor() == null && getEffectColor() == null && getFontType() == Font.PLAIN;
   }
 
+  public AttributesFlyweight getFlyweight() {
+    return myAttrs;
+  }
+
+  public static TextAttributes fromFlyweight(AttributesFlyweight flyweight) {
+    TextAttributes f = new TextAttributes();
+    f.myAttrs = flyweight;
+    return f;
+  }
+
   public Color getForegroundColor() {
-    return myExternalizable.FOREGROUND;
+    return myAttrs.getForeground();
   }
 
   public void setForegroundColor(Color color) {
-    myExternalizable.FOREGROUND = color;
+    myAttrs = myAttrs.withForeground(color);
   }
 
   public Color getBackgroundColor() {
-    return myExternalizable.BACKGROUND;
+    return myAttrs.getBackground();
   }
 
   public void setBackgroundColor(Color color) {
-    myExternalizable.BACKGROUND = color;
+    myAttrs = myAttrs.withBackground(color);
   }
 
   public Color getEffectColor() {
-    return myExternalizable.EFFECT_COLOR;
+    return myAttrs.getEffectColor();
   }
 
   public void setEffectColor(Color color) {
-    myExternalizable.EFFECT_COLOR = color;
+    myAttrs = myAttrs.withEffectColor(color);
   }
 
   public Color getErrorStripeColor() {
-    return myExternalizable.ERROR_STRIPE_COLOR;
+    return myAttrs.getErrorStripeColor();
   }
 
   public void setErrorStripeColor(Color color) {
-    myExternalizable.ERROR_STRIPE_COLOR = color;
+    myAttrs = myAttrs.withErrorStripeColor(color);
   }
 
   public EffectType getEffectType() {
-    switch (myExternalizable.EFFECT_TYPE) {
-      case Externalizable.EFFECT_BORDER:
-        return EffectType.BOXED;
-      case Externalizable.EFFECT_BOLD_LINE:
-        return EffectType.BOLD_LINE_UNDERSCORE;
-      case Externalizable.EFFECT_LINE:
-        return EffectType.LINE_UNDERSCORE;
-      case Externalizable.EFFECT_STRIKEOUT:
-        return EffectType.STRIKEOUT;
-      case Externalizable.EFFECT_WAVE:
-        return EffectType.WAVE_UNDERSCORE;
-      default:
-        return null;
-    }
+    return myAttrs.getEffectType();
   }
 
   public void setEffectType(EffectType effectType) {
-    if (effectType == EffectType.BOXED) {
-      myExternalizable.EFFECT_TYPE = Externalizable.EFFECT_BORDER;
-    } else if (effectType == EffectType.LINE_UNDERSCORE) {
-      myExternalizable.EFFECT_TYPE = Externalizable.EFFECT_LINE;
-    } else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
-      myExternalizable.EFFECT_TYPE = Externalizable.EFFECT_BOLD_LINE;
-    } else if (effectType == EffectType.STRIKEOUT) {
-      myExternalizable.EFFECT_TYPE = Externalizable.EFFECT_STRIKEOUT;
-    } else if (effectType == EffectType.WAVE_UNDERSCORE) {
-      myExternalizable.EFFECT_TYPE = Externalizable.EFFECT_WAVE;
-    } else {
-      myExternalizable.EFFECT_TYPE = -1;
-    }
+    myAttrs = myAttrs.withEffectType(effectType);
   }
 
   public int getFontType() {
-    return myExternalizable.FONT_TYPE;
+    return myAttrs.getFontType();
   }
 
   public void setFontType(int type) {
@@ -172,18 +185,13 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
       LOG.error("Wrong font type: " + type);
       type = 0;
     }
-    myExternalizable.FONT_TYPE = type;
+    myAttrs = myAttrs.withFontType(type);
   }
 
   public TextAttributes clone() {
-    try {
-      TextAttributes cloned = new TextAttributes();
-      cloned.myExternalizable = (Externalizable) myExternalizable.clone();
-      return cloned;
-    } catch (CloneNotSupportedException e) {
-      LOG.error(e);
-      return null;
-    }
+    TextAttributes cloned = new TextAttributes();
+    cloned.myAttrs = myAttrs;
+    return cloned;
   }
 
   public boolean equals(Object obj) {
@@ -231,11 +239,27 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    myExternalizable.readExternal(element);
+    Externalizable ext = new Externalizable();
+    ext.readExternal(element);
+    myAttrs = AttributesFlyweight.create(ext.FOREGROUND, 
+                                         ext.BACKGROUND,
+                                         ext.FONT_TYPE,
+                                         ext.EFFECT_COLOR,
+                                         ext.getEffectType(),
+                                         ext.ERROR_STRIPE_COLOR);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    myExternalizable.writeExternal(element);
+    Externalizable ext = new Externalizable();
+
+    ext.FOREGROUND = myAttrs.getForeground();
+    ext.BACKGROUND = myAttrs.getBackground();
+    ext.FONT_TYPE = myAttrs.getFontType();
+    ext.EFFECT_COLOR = myAttrs.getEffectColor();
+    ext.ERROR_STRIPE_COLOR = myAttrs.getErrorStripeColor();
+    ext.setEffectType(myAttrs.getEffectType());
+
+    ext.writeExternal(element);
   }
 
   @Override
