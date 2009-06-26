@@ -66,6 +66,9 @@ public abstract class PackagingTreeBuilder {
     PackagingMethod method = element.getPackagingMethod();
     PackagingTreeNode parent;
     String path = element.getURI();
+    if (path == null) {
+      LOG.error("path==null for " + element + ", method = " + element.getPackagingMethod());
+    }
 
     path = fixPath(element, method, path);
 
