@@ -2,11 +2,16 @@ package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -79,6 +84,37 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
     myInsight.scanModules();
     final List<ModuleDescriptor> suggestedModules = myInsight.getSuggestedModules();
     return suggestedModules != null? suggestedModules : Collections.<ModuleDescriptor>emptyList();
+  }
+
+  @Override
+  public boolean validate() {
+    final boolean validated = super.validate();
+    if (!validated) {
+      return false;
+    }
+
+    final List<ModuleDescriptor> modules = myModulesLayoutPanel.getChosenEntries();
+    List<String> errors = new ArrayList<String>();
+    for (ModuleDescriptor module : modules) {
+      try {
+        final String moduleFilePath = module.computeModuleFilePath();
+        if (new File(moduleFilePath).exists()) {
+          errors.add(IdeBundle.message("warning.message.the.module.file.0.already.exist.and.will.be.overwritten", moduleFilePath));
+        }
+      }
+      catch (InvalidDataException e) {
+        errors.add(e.getMessage());
+      }
+    }
+    if (!errors.isEmpty()) {
+      final int answer = Messages.showYesNoDialog(getComponent(),
+                                                  IdeBundle.message("warning.text.0.do.you.want.to.continue", StringUtil.join(errors, "\n")),
+                                                  IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
+      if (answer != 0) {
+        return false;
+      }
+    }
+    return true;
   }
 
   protected void onFinished(final List<ModuleDescriptor> moduleDescriptors, final boolean canceled) {

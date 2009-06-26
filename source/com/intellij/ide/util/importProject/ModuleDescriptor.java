@@ -1,7 +1,10 @@
 package com.intellij.ide.util.importProject;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.ide.highlighter.ModuleFileType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
@@ -123,5 +126,17 @@ public class ModuleDescriptor {
 
   public void clearLibraryFiles() {
     myLibraryFiles.clear();
+  }
+
+  @NotNull
+  public String computeModuleFilePath() throws InvalidDataException {
+    final String name = getName();
+    final Set<File> contentRoots = getContentRoots();
+    if (contentRoots.size() > 0) {
+      return contentRoots.iterator().next().getPath() + File.separator + name + ModuleFileType.DOT_DEFAULT_EXTENSION;
+    }
+    else {
+      throw new InvalidDataException("Module " + name + " has no content roots and will not be created.");
+    }
   }
 }

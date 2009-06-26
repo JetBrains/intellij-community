@@ -1,7 +1,6 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.importProject.LibraryDescriptor;
 import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.importProject.ModuleInsight;
@@ -178,16 +177,16 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
                              final Map<LibraryDescriptor, Library> projectLibs, final ModifiableModuleModel moduleModel) 
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
 
-    final String name = descriptor.getName();
-    final String moduleFilePath;
-    final Set<File> contentRoots = descriptor.getContentRoots();
-    if (contentRoots.size() > 0) {
-      moduleFilePath = contentRoots.iterator().next().getPath() + File.separator + name + ModuleFileType.DOT_DEFAULT_EXTENSION;
+    final String moduleFilePath = descriptor.computeModuleFilePath();
+    final File moduleFile = new File(moduleFilePath);
+    if (moduleFile.exists()) {
+      FileUtil.delete(moduleFile);
+      final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(moduleFile);
+      if (file != null) {
+        file.refresh(false, false);
+      }
     }
-    else {
-      throw new InvalidDataException("Module " + name + " has no content roots and will not be created");
-    }
-    
+
     final Module module = moduleModel.newModule(moduleFilePath, StdModuleTypes.JAVA);
     final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
     setupRootModel(descriptor, modifiableModel, sourceRootToPrefixMap, projectLibs);
