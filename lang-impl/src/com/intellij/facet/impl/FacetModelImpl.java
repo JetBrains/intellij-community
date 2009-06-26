@@ -46,7 +46,7 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
   }
 
   public void removeFacet(Facet facet) {
-    if (myFacets == null || !myFacets.remove(facet)) {
+    if (!myFacets.remove(facet)) {
       LOG.error("Facet " + facet + " [" + facet.getTypeId() + "] not found");
     }
     myFacet2NewName.remove(facet);

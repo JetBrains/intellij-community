@@ -319,11 +319,12 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
 
   public List<Facet> removeAllFacets(final Module module) {
     List<Facet> facets = new ArrayList<Facet>();
-    FacetModel facetModel = getFacetModel(module);
+    FacetModel facetModel = getOrCreateModifiableModel(module);
     for (Facet facet : facetModel.getAllFacets()) {
       if (!myCreatedFacets.contains(facet)) {
         myFacetsToDispose.add(facet);
       }
+      LOG.assertTrue(facet.getModule().equals(module), module + " expected but " + facet.getModule() + " found");
       facets.addAll(removeFacet(facet));
     }
     mySharedModuleData.remove(module);
