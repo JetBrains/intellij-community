@@ -27,6 +27,9 @@ public class Splitter {
   @NonNls
   /*private static final Pattern WORD = Pattern.compile("\\b\\p{L}+'?\\p{L}*\\b");*/
   private static final Pattern WORD = Pattern.compile("\\b\\p{Alpha}*'?\\p{Alpha}");
+
+  private static final Pattern EXTENDED_WORD = Pattern.compile("\\b\\p{Alpha}*'?\\p{Alpha}(_*\\p{Alpha})*");
+
   private static final String WORD_SPLITTER = "\\s+|<[^>]+>";
 
 
@@ -48,20 +51,20 @@ public class Splitter {
     if (text == null || StringUtil.isEmpty(text)) {
       return null;
     }
- 
-    int i = Math.max(text.indexOf("<!--"),text.indexOf("<%--"));
-    i = (i>-1)?i+4:0;
+
+    int i = Math.max(text.indexOf("<!--"), text.indexOf("<%--"));
+    i = (i > -1) ? i + 4 : 0;
     List<CheckArea> results = new ArrayList<CheckArea>();
     String[] pieces = text.substring(i).split(WORD_SPLITTER);
     for (String s : pieces) {
       if (s.length() > 0) {
-        int p1 = text.indexOf(s,i);
+        int p1 = text.indexOf(s, i);
         TextRange range = TextRange.from(p1, s.length());
         List<CheckArea> areaList = splitNonSpace(text, range);
         if (areaList != null) {
           results.addAll(areaList);
         }
-        i += (range.getEndOffset()-range.getStartOffset());
+        i += (range.getEndOffset() - range.getStartOffset());
       }
     }
     return (results.size() == 0) ? null : results;
@@ -76,34 +79,27 @@ public class Splitter {
     return splitWord(text, range);
   }
 
-  @Nullable
-  private static List<CheckArea> splitWord(String text, TextRange range) {
-    if (range.getLength() <= 1) {
-      return null;
-    }
 
+  @NotNull
+  private static List<CheckArea> splitSimpleWord(String text, TextRange range) {
     List<CheckArea> results = new ArrayList<CheckArea>();
+    if (text==null || range==null || range.getLength()<1){
+      return results;
+    }
     String word = text.substring(range.getStartOffset(), range.getEndOffset());
     String[] words = NameUtil.splitNameIntoWords(word);
-    if (words == null) {
+    if (words == null || words.length==0) {
       return results;
     }
 
     if (words.length == 1) {
       Matcher matcher = WORD.matcher(words[0]);
-      Matcher specialMatcher = SPECIAL.matcher(words[0]);
-      if (specialMatcher.find()) {
-        TextRange found = matcherRange(range, specialMatcher);
-        addWord(text, results, true, found);
-        return results;
-      }
-      else if (matcher.find()) {
+      if (matcher.find()) {
         TextRange found = matcherRange(range, matcher);
         addWord(text, results, false, found);
-        return results;
       }
+      return results;
     }
-
 
     boolean isCapitalized = Strings.isCapitalized(words[0]);
     boolean containsShortWord = containsShortWord(words);
@@ -128,6 +124,33 @@ public class Splitter {
       index = end;
     }
     return results;
+
+  }
+
+  @Nullable
+  private static List<CheckArea> splitWord(String text, TextRange range) {
+    if (StringUtil.isEmpty(text) || range.getLength() <= 1) {
+      return null;
+    }
+
+    List<CheckArea> results = new ArrayList<CheckArea>();
+    String word = text.substring(range.getStartOffset(), range.getEndOffset());
+
+    Matcher specialMatcher = SPECIAL.matcher(word);
+    if (specialMatcher.find()) {
+      TextRange found = matcherRange(range, specialMatcher);
+      addWord(text, results, true, found);
+      return results;
+    }
+
+    Matcher extendedMatcher = EXTENDED_WORD.matcher(word);
+    if (extendedMatcher.find()) {
+      TextRange found = matcherRange(range, extendedMatcher);
+      results.addAll(splitSimpleWord(text, found));
+    }
+
+    return results;
+
   }
 
   private static void addWord(String text, List<CheckArea> results, boolean flag, TextRange found) {

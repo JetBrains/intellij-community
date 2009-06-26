@@ -50,6 +50,7 @@ public class SplitterTest extends TestCase {
     correctIgnored(checkAreas, text, new String[]{});
   }
 
+
   public void testWordWithApostrophe2() {
     String text = "customers'";
     List<CheckArea> checkAreas = Splitter.splitText(text);
@@ -64,11 +65,20 @@ public class SplitterTest extends TestCase {
     correctIgnored(checkAreas, text, new String[]{});
   }
 
+  
+
   public void testConstantName() {
     String text = "TEST_CONSTANT";
     List<CheckArea> checkAreas = Splitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"TEST","CONSTANT"});
     correctIgnored(checkAreas, text, new String[]{});
+  }
+
+  public void testLongConstantName() {
+    String text = "TEST_VERY_VERY_LONG_AND_COMPLEX_CONSTANT";
+    List<CheckArea> checkAreas = Splitter.splitText(text);
+    correctListToCheck(checkAreas, text, new String[]{"TEST","VERY","VERY","LONG","COMPLEX","CONSTANT"});
+    correctIgnored(checkAreas, text, new String[]{"AND"});
   }
 
    public void testJavaComments() {
@@ -148,6 +158,45 @@ public class SplitterTest extends TestCase {
    correctListToCheck(checkAreas, text, new String[]{});
    correctIgnored(checkAreas, text, new String[]{});
  }
+
+  public void testWordBeforeDelimeter() {
+    String text = "badd,";
+    List<CheckArea> checkAreas = Splitter.splitText(text);
+    correctListToCheck(checkAreas, text, new String[]{"badd"});
+    correctIgnored(checkAreas, text, new String[]{});
+  }
+  public void testWordAfterDelimeter() {
+    String text = ",badd";
+    List<CheckArea> checkAreas = Splitter.splitText(text);
+    correctListToCheck(checkAreas, text, new String[]{"badd"});
+    correctIgnored(checkAreas, text, new String[]{});
+  }
+
+  public void testWordInCapsBeforeDelimeter() {
+     String text = "BADD,";
+     List<CheckArea> checkAreas = Splitter.splitText(text);
+     correctListToCheck(checkAreas, text, new String[]{"BADD"});
+     correctIgnored(checkAreas, text, new String[]{});
+   }
+   public void testWordInCapsAfterDelimeter() {
+     String text = ",BADD";
+     List<CheckArea> checkAreas = Splitter.splitText(text);
+     correctListToCheck(checkAreas, text, new String[]{"BADD"});
+     correctIgnored(checkAreas, text, new String[]{});
+   }
+   public void testWordInCapsAfterDelimeter2() {
+     String text = "BADD;";
+     List<CheckArea> checkAreas = Splitter.splitText(text);
+     correctListToCheck(checkAreas, text, new String[]{"BADD"});
+     correctIgnored(checkAreas, text, new String[]{});
+   }
+   public void testWordInCapsAfterDelimeter3() {
+     String text = ";BADD;";
+     List<CheckArea> checkAreas = Splitter.splitText(text);
+     correctListToCheck(checkAreas, text, new String[]{"BADD"});
+     correctIgnored(checkAreas, text, new String[]{});
+   }
+
 
   @Nullable
   private static List<String> wordsToCheck(List<CheckArea> toCheck, String text) {
