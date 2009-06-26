@@ -56,7 +56,7 @@ public class FindUtil {
 
   private FindUtil() {}
 
-  private static enum Direction {
+  private enum Direction {
     UP, DOWN
   }
 
@@ -155,12 +155,7 @@ public class FindUtil {
         offset = editor.getCaretModel().getOffset();
       }
       else {
-        if (model.isForward()) {
-          offset = 0;
-        }
-        else {
-          offset = editor.getDocument().getTextLength();
-        }
+        offset = model.isForward() ? 0 : editor.getDocument().getTextLength();
       }
     }
     else {
@@ -172,12 +167,7 @@ public class FindUtil {
         return;
       }
 
-      if (model.isForward()) {
-        offset = editor.getSelectionModel().getSelectionStart();
-      }
-      else {
-        offset = editor.getSelectionModel().getSelectionEnd();
-      }
+      offset = model.isForward() ? editor.getSelectionModel().getSelectionStart() : editor.getSelectionModel().getSelectionEnd();
     }
 
     findManager.setFindNextModel(null);
@@ -213,7 +203,7 @@ public class FindUtil {
         }
       }
     }
-    final UsageTarget[] usageTargets = new UsageTarget[]{ new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind()) };
+    final UsageTarget[] usageTargets = { new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind()) };
     final UsageViewPresentation usageViewPresentation = FindInProjectUtil.setupViewPresentation(false, findModel);
     UsageViewManager.getInstance(project).showUsages(usageTargets, usages.toArray(new Usage[usages.size()]), usageViewPresentation);
   }
@@ -352,12 +342,7 @@ public class FindUtil {
         }
       }
       else {
-        if (model.isForward()) {
-          offset = 0;
-        }
-        else {
-          offset = editor.getDocument().getTextLength();
-        }
+        offset = model.isForward() ? 0 : editor.getDocument().getTextLength();
       }
     }
     else {
@@ -369,12 +354,7 @@ public class FindUtil {
         return false;
       }
 
-      if (model.isForward()) {
-        offset = editor.getSelectionModel().getSelectionStart();
-      }
-      else {
-        offset = editor.getSelectionModel().getSelectionEnd();
-      }
+      offset = model.isForward() ? editor.getSelectionModel().getSelectionStart() : editor.getSelectionModel().getSelectionEnd();
     }
 
     if (s != null && editor.getSelectionModel().hasSelection() && s.equals(model.getStringToFind())) {
@@ -460,14 +440,13 @@ public class FindUtil {
       if (toReplace == null) break;
 
       boolean reallyReplace = toPrompt;
-      TextRange textRange = doReplace(project, document, model, result, toReplace, reallyReplace);
-      if (!reallyReplace) {
-        rangesToChange.add(Pair.create(textRange,toReplace));
-      }
+      TextRange textRange = doReplace(project, document, model, result, toReplace, reallyReplace, rangesToChange);
 
-      offset = model.isForward()
-               ? textRange.getEndOffset()
-               : textRange.getStartOffset();
+      int newOffset = model.isForward() ? textRange.getEndOffset() : textRange.getStartOffset();
+      if (newOffset == offset) {
+        newOffset += model.isForward() ? 1 : -1;
+      }
+      offset = newOffset;
       occurrences++;
 
       //[SCR 7258]
@@ -480,7 +459,6 @@ public class FindUtil {
 
     if (replaced) {
       if (!toPrompt) {
-        int offsetBefore = 0;
         CharSequence text = document.getCharsSequence();
         final StringBuilder newText = new StringBuilder(document.getTextLength());
         Collections.sort(rangesToChange, new Comparator<Pair<TextRange, String>>() {
@@ -488,6 +466,7 @@ public class FindUtil {
             return o1.getFirst().getStartOffset() - o2.getFirst().getStartOffset();
           }
         });
+        int offsetBefore = 0;
         for (Pair<TextRange, String> pair : rangesToChange) {
           TextRange range = pair.getFirst();
           String replace = pair.getSecond();
@@ -598,7 +577,7 @@ public class FindUtil {
     private final Editor myEditor;
     private final RangeHighlighter mySegmentHighlighter;
 
-    public MyListener(Editor editor, RangeHighlighter segmentHighlighter) {
+    private MyListener(Editor editor, RangeHighlighter segmentHighlighter) {
       myEditor = editor;
       mySegmentHighlighter = segmentHighlighter;
     }
@@ -686,13 +665,15 @@ public class FindUtil {
                                0, false);
   }
 
-  private static TextRange doReplace(final Project project, final Document document, final FindModel model, FindResult result, @NotNull final String stringToReplace, boolean reallyReplace) {
+  private static TextRange doReplace(final Project project, final Document document, final FindModel model, FindResult result, @NotNull final String stringToReplace,
+                                     boolean reallyReplace,
+                                     List<Pair<TextRange, String>> rangesToChange) {
     final int startOffset = result.getStartOffset();
     final int endOffset = result.getEndOffset();
 
     int newOffset;
+    final String converted = StringUtil.convertLineSeparators(stringToReplace);
     if (reallyReplace) {
-      final String converted = StringUtil.convertLineSeparators(stringToReplace);
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -706,6 +687,9 @@ public class FindUtil {
       newOffset = startOffset + converted.length();
     }
     else {
+      TextRange textRange = new TextRange(startOffset, endOffset);
+      rangesToChange.add(Pair.create(textRange,converted));
+
       newOffset = endOffset;
     }
 
