@@ -49,10 +49,12 @@ public class MockDocument implements DocumentEx {
     return getText();
   }
 
+  @NotNull
   public char[] getChars() {
     return getText().toCharArray();
   }
 
+  @NotNull
   public CharSequence getCharsSequence() {
     return getText();
   }
@@ -77,7 +79,7 @@ public class MockDocument implements DocumentEx {
     return myText.length();
   }
 
-  public void insertString(int offset, CharSequence s) {
+  public void insertString(int offset, @NotNull CharSequence s) {
     myText.insert(offset, s);
   }
 
@@ -85,7 +87,7 @@ public class MockDocument implements DocumentEx {
     myText.delete(startOffset, endOffset);
   }
 
-  public void replaceString(int startOffset, int endOffset, CharSequence s) {
+  public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
     myText.replace(startOffset, endOffset, s.toString());
     myModStamp = LocalTimeCounter.currentTime();
   }
@@ -101,23 +103,26 @@ public class MockDocument implements DocumentEx {
   public void fireReadOnlyModificationAttempt() {
   }
 
-  public void addDocumentListener(DocumentListener listener) {
+  public void addDocumentListener(@NotNull DocumentListener listener) {
   }
 
-  public void addDocumentListener(DocumentListener listener, Disposable parentDisposable) {
+  public void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable) {
   }
 
-  public void removeDocumentListener(DocumentListener listener) {
+  public void removeDocumentListener(@NotNull DocumentListener listener) {
   }
 
+  @NotNull
   public RangeMarker createRangeMarker(int startOffset, int endOffset) {
     return null;
   }
 
+  @NotNull
   public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
     return null;
   }
 
+  @NotNull
   public MarkupModel getMarkupModel() {
     return null;
   }
@@ -127,10 +132,10 @@ public class MockDocument implements DocumentEx {
     return new EmptyMarkupModel(this);
   }
 
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
   }
 
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
   }
 
   @SuppressWarnings({"unchecked"})
@@ -174,11 +179,12 @@ public class MockDocument implements DocumentEx {
   public void stopGuardedBlockChecking() {
   }
 
+  @NotNull
   public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
     return null;
   }
 
-  public void removeGuardedBlock(RangeMarker block) {
+  public void removeGuardedBlock(@NotNull RangeMarker block) {
   }
 
   public RangeMarker getOffsetGuard(int offset) {
@@ -219,10 +225,11 @@ public class MockDocument implements DocumentEx {
   public void setCyclicBufferSize(int bufferSize) {
   }
 
-  public void setText(final CharSequence text) {
+  public void setText(@NotNull final CharSequence text) {
   }
 
-  public RangeMarker createRangeMarker(final TextRange textRange) {
+  @NotNull
+  public RangeMarker createRangeMarker(@NotNull final TextRange textRange) {
     return createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
   }
 

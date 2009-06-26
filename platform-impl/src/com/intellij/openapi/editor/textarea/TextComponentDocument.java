@@ -35,10 +35,12 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
     }
   }
 
+  @NotNull
   public CharSequence getCharsSequence() {
     return getText();
   }
 
+  @NotNull
   public char[] getChars() {
     throw new UnsupportedOperationException("Not implemented");
   }
@@ -63,7 +65,7 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
     return getTextLength();
   }
 
-  public void insertString(final int offset, final CharSequence s) {
+  public void insertString(final int offset, @NotNull final CharSequence s) {
     try {
       myTextComponent.getDocument().insertString(offset, s.toString(), null);
     }
@@ -81,7 +83,7 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
     }
   }
 
-  public void replaceString(final int startOffset, final int endOffset, final CharSequence s) {
+  public void replaceString(final int startOffset, final int endOffset, @NotNull final CharSequence s) {
     final javax.swing.text.Document document = myTextComponent.getDocument();
     try {
       document.remove(startOffset, endOffset-startOffset);
@@ -104,26 +106,29 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  public void addDocumentListener(final DocumentListener listener) {
+  public void addDocumentListener(@NotNull final DocumentListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  public void addDocumentListener(final DocumentListener listener, final Disposable parentDisposable) {
+  public void addDocumentListener(@NotNull final DocumentListener listener, @NotNull final Disposable parentDisposable) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  public void removeDocumentListener(final DocumentListener listener) {
+  public void removeDocumentListener(@NotNull final DocumentListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @NotNull
   public RangeMarker createRangeMarker(final int startOffset, final int endOffset) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @NotNull
   public RangeMarker createRangeMarker(final int startOffset, final int endOffset, final boolean surviveOnExternalChange) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @NotNull
   public MarkupModel getMarkupModel() {
     throw new UnsupportedOperationException("Not implemented");
   }
@@ -133,11 +138,11 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  public void addPropertyChangeListener(final PropertyChangeListener listener) {
+  public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  public void removePropertyChangeListener(final PropertyChangeListener listener) {
+  public void removePropertyChangeListener(@NotNull final PropertyChangeListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
@@ -145,11 +150,12 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @NotNull
   public RangeMarker createGuardedBlock(final int startOffset, final int endOffset) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  public void removeGuardedBlock(final RangeMarker block) {
+  public void removeGuardedBlock(@NotNull final RangeMarker block) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
@@ -173,11 +179,12 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  public void setText(final CharSequence text) {
+  public void setText(@NotNull final CharSequence text) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  public RangeMarker createRangeMarker(final TextRange textRange) {
+  @NotNull
+  public RangeMarker createRangeMarker(@NotNull final TextRange textRange) {
     throw new UnsupportedOperationException("Not implemented");
   }
 

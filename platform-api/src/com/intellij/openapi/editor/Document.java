@@ -58,12 +58,12 @@ public interface Document extends UserDataHolder {
    * @return inplace document content.
    * @see #getTextLength()
    */
-  CharSequence getCharsSequence();
+  @NotNull CharSequence getCharsSequence();
 
   /**
    * @deprecated Use {@link #getCharsSequence()} or {@link #getText()} instead.
    */
-  char[] getChars();
+  @NotNull char[] getChars();
 
   /**
    * Returns the length of the document text.
@@ -114,7 +114,7 @@ public interface Document extends UserDataHolder {
    * @throws ReadOnlyModificationException if the document is read-only.
    * @throws ReadOnlyFragmentModificationException if the fragment to be modified is covered by a guarded block.
    */
-  void insertString(int offset, CharSequence s);
+  void insertString(int offset, @NotNull CharSequence s);
 
   /**
    * Deletes the specified range of text from the document.
@@ -136,7 +136,7 @@ public interface Document extends UserDataHolder {
    * @throws ReadOnlyModificationException if the document is read-only.
    * @throws ReadOnlyFragmentModificationException if the fragment to be modified is covered by a guarded block.
    */
-  void replaceString(int startOffset, int endOffset, CharSequence s);
+  void replaceString(int startOffset, int endOffset, @NotNull CharSequence s);
 
   /**
    * Checks if the document text is read-only.
@@ -168,16 +168,16 @@ public interface Document extends UserDataHolder {
    *
    * @param listener the listener instance.
    */
-  void addDocumentListener(DocumentListener listener);
+  void addDocumentListener(@NotNull DocumentListener listener);
 
-  void addDocumentListener(DocumentListener listener, Disposable parentDisposable);
+  void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable);
 
   /**
    * Removes a listener for receiving notifications about changes in the document content.
    *
    * @param listener the listener instance.
    */
-  void removeDocumentListener(DocumentListener listener);
+  void removeDocumentListener(@NotNull DocumentListener listener);
 
   /**
    * Creates a range marker which points to the specified range of text in the document and
@@ -188,7 +188,7 @@ public interface Document extends UserDataHolder {
    * @param endOffset the end offset for the range of text covered by the marker.
    * @return the marker instance.
    */
-  RangeMarker createRangeMarker(int startOffset, int endOffset);
+  @NotNull RangeMarker createRangeMarker(int startOffset, int endOffset);
 
   /**
    * Creates a range marker which points to the specified range of text in the document and
@@ -200,12 +200,12 @@ public interface Document extends UserDataHolder {
    * @param surviveOnExternalChange if true, the marker is not invalidated by external changes.
    * @return the marker instance.
    */
-  RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange);
+  @NotNull RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange);
 
   /**
    * @deprecated use {@link #getMarkupModel(com.intellij.openapi.project.Project)} instead.
    */
-  MarkupModel getMarkupModel();
+  @NotNull MarkupModel getMarkupModel();
 
   /**
    * Returns the markup model for the specified project. A document can have multiple markup
@@ -226,7 +226,7 @@ public interface Document extends UserDataHolder {
    *
    * @param listener the listener instance.
    */
-  void addPropertyChangeListener(PropertyChangeListener listener);
+  void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
 
   /**
    * Removes a listener for receiving notifications about changes in the properties of the document
@@ -234,7 +234,7 @@ public interface Document extends UserDataHolder {
    *
    * @param listener the listener instance.
    */
-  void removePropertyChangeListener(PropertyChangeListener listener);
+  void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
 
   /**
    * Marks the document as read-only or read/write. This method only modifies the flag stored
@@ -257,7 +257,7 @@ public interface Document extends UserDataHolder {
    * @see #startGuardedBlockChecking()
    * @see com.intellij.openapi.editor.actionSystem.EditorActionManager#setReadonlyFragmentModificationHandler(com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler) 
    */
-  RangeMarker createGuardedBlock(int startOffset, int endOffset);
+  @NotNull RangeMarker createGuardedBlock(int startOffset, int endOffset);
 
   /**
    * Removes a marker marking a range of text in the document as read-only.
@@ -265,7 +265,7 @@ public interface Document extends UserDataHolder {
    * @param block the marker to remove.
    * @see #createGuardedBlock(int, int)
    */
-  void removeGuardedBlock(RangeMarker block);
+  void removeGuardedBlock(@NotNull RangeMarker block);
 
   /**
    * Returns the read-only marker covering the specified offset in the document.
@@ -311,9 +311,9 @@ public interface Document extends UserDataHolder {
    */
   void setCyclicBufferSize(int bufferSize);
 
-  void setText(final CharSequence text);
+  void setText(@NotNull final CharSequence text);
 
-  RangeMarker createRangeMarker(final TextRange textRange);
+  @NotNull RangeMarker createRangeMarker(@NotNull TextRange textRange);
 
   int getLineSeparatorLength(int line);
 }

@@ -110,6 +110,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myText.getChars();
   }
 
+  @NotNull
   public char[] getChars() {
     return CharArrayUtil.fromSequence(getCharsSequence());
   }
@@ -120,6 +121,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myLineSet.documentCreated(event);
   }
 
+  @NotNull
   public MarkupModel getMarkupModel() {
     return getMarkupModel(null);
   }
@@ -201,6 +203,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
+  @NotNull
   public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
     LOG.assertTrue(startOffset <= endOffset, "Should be startOffset <= endOffset");
     RangeMarker block = createRangeMarker(startOffset, endOffset, true);
@@ -208,7 +211,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return block;
   }
 
-  public void removeGuardedBlock(RangeMarker block) {
+  public void removeGuardedBlock(@NotNull RangeMarker block) {
     myGuardedBlocks.remove(block);
   }
 
@@ -253,11 +256,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
            || s1 == s2 && e1 == e2;
   }
 
+  @NotNull
   public RangeMarker createRangeMarker(int startOffset, int endOffset) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     return new RangeMarkerImpl(this, startOffset, endOffset);
   }
 
+  @NotNull
   public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     if (!(0 <= startOffset && startOffset <= endOffset && endOffset <= getTextLength())) {
@@ -286,7 +291,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myDocumentListeners.size();
   }
 
-  public void insertString(int offset, CharSequence s) {
+  public void insertString(int offset, @NotNull CharSequence s) {
     if (offset < 0) throw new IndexOutOfBoundsException("Wrong offset: " + offset);
     if (offset > getTextLength()) {
       throw new IndexOutOfBoundsException("Wrong offset: " + offset +"; documentLength: "+getTextLength()+ "; " + s.subSequence(Math.max(0, getTextLength() - 20), getTextLength()));
@@ -321,7 +326,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myText.remove(startOffset, endOffset,sToDelete);
   }
 
-  public void replaceString(int startOffset, int endOffset, CharSequence s) {
+  public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
     replaceString(startOffset, endOffset, s, LocalTimeCounter.currentTime(), startOffset==0 && endOffset==getTextLength());
   }
 
@@ -521,19 +526,20 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myText.getCharArray();
   }
 
+  @NotNull
   public CharSequence getCharsSequence() {
     assertReadAccessToDocumentsAllowed();
     return myText.getCharArray();
   }
 
 
-  public void addDocumentListener(DocumentListener listener) {
+  public void addDocumentListener(@NotNull DocumentListener listener) {
     myCachedDocumentListeners = null;
     LOG.assertTrue(!myDocumentListeners.contains(listener), listener);
     myDocumentListeners.add(listener);
   }
 
-  public void addDocumentListener(final DocumentListener listener, Disposable parentDisposable) {
+  public void addDocumentListener(@NotNull final DocumentListener listener, @NotNull Disposable parentDisposable) {
     addDocumentListener(listener);
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
@@ -542,7 +548,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     });
   }
 
-  public void removeDocumentListener(DocumentListener listener) {
+  public void removeDocumentListener(@NotNull DocumentListener listener) {
     myCachedDocumentListeners = null;
     boolean success = myDocumentListeners.remove(listener);
     LOG.assertTrue(success);
@@ -628,11 +634,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return getMarkupModel(project, true);
   }
 
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeSupport.addPropertyChangeListener(listener);
   }
 
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
 
@@ -669,7 +675,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myText.setBufferSize(bufferSize);
   }
 
-  public void setText(final CharSequence text) {
+  public void setText(@NotNull final CharSequence text) {
     Runnable runnable = new Runnable() {
       public void run() {
         replaceString(0, getTextLength(), text, LocalTimeCounter.currentTime(), true);
@@ -685,7 +691,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     clearLineModificationFlags();
   }
 
-  public RangeMarker createRangeMarker(final TextRange textRange) {
+  @NotNull
+  public RangeMarker createRangeMarker(@NotNull final TextRange textRange) {
     return createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
   }
 

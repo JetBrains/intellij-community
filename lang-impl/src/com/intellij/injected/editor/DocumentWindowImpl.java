@@ -119,10 +119,12 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return text.toString();
   }
 
+  @NotNull
   public CharSequence getCharsSequence() {
     return getText();
   }
 
+  @NotNull
   public char[] getChars() {
     return CharArrayUtil.fromSequence(getText());
   }
@@ -180,7 +182,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return null;
   }
 
-  public void insertString(final int offset, CharSequence s) {
+  public void insertString(final int offset, @NotNull CharSequence s) {
     LOG.assertTrue(offset >= myShreds.get(0).prefix.length());
     LOG.assertTrue(offset <= getTextLength() - myShreds.get(myShreds.size() - 1).suffix.length());
     if (isOneLine()) {
@@ -221,7 +223,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     }
   }
 
-  public void replaceString(int startOffset, int endOffset, CharSequence s) {
+  public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
     if (isOneLine()) {
       s = StringUtil.replace(s.toString(), "\n", "");
     }
@@ -251,24 +253,26 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     myDelegate.fireReadOnlyModificationAttempt();
   }
 
-  public void addDocumentListener(final DocumentListener listener) {
+  public void addDocumentListener(@NotNull final DocumentListener listener) {
     myDelegate.addDocumentListener(listener);
   }
 
-  public void addDocumentListener(DocumentListener listener, Disposable parentDisposable) {
+  public void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable) {
     myDelegate.addDocumentListener(listener, parentDisposable);
   }
 
-  public void removeDocumentListener(final DocumentListener listener) {
+  public void removeDocumentListener(@NotNull final DocumentListener listener) {
     myDelegate.removeDocumentListener(listener);
   }
 
+  @NotNull
   public RangeMarker createRangeMarker(final int startOffset, final int endOffset) {
     TextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
     RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange);
     return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker);
   }
 
+  @NotNull
   public RangeMarker createRangeMarker(final int startOffset, final int endOffset, final boolean surviveOnExternalChange) {
     if (!surviveOnExternalChange) {
       return createRangeMarker(startOffset, endOffset);
@@ -278,6 +282,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return myDelegate.createRangeMarker(hostRange.getStartOffset(), hostRange.getEndOffset(), surviveOnExternalChange);
   }
 
+  @NotNull
   public MarkupModel getMarkupModel() {
     //noinspection deprecation
     return new MarkupModelWindow((MarkupModelEx)myDelegate.getMarkupModel(), this);
@@ -288,11 +293,11 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return new MarkupModelWindow((MarkupModelEx)myDelegate.getMarkupModel(project), this);
   }
 
-  public void addPropertyChangeListener(final PropertyChangeListener listener) {
+  public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener) {
     myDelegate.addPropertyChangeListener(listener);
   }
 
-  public void removePropertyChangeListener(final PropertyChangeListener listener) {
+  public void removePropertyChangeListener(@NotNull final PropertyChangeListener listener) {
     myDelegate.removePropertyChangeListener(listener);
   }
 
@@ -300,12 +305,13 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     myDelegate.setReadOnly(isReadOnly);
   }
 
+  @NotNull
   public RangeMarker createGuardedBlock(final int startOffset, final int endOffset) {
     TextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
     return myDelegate.createGuardedBlock(hostRange.getStartOffset(), hostRange.getEndOffset());
   }
 
-  public void removeGuardedBlock(final RangeMarker block) {
+  public void removeGuardedBlock(@NotNull final RangeMarker block) {
     myDelegate.removeGuardedBlock(block);
   }
 
@@ -331,7 +337,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     myDelegate.setCyclicBufferSize(bufferSize);
   }
 
-  public void setText(CharSequence text) {
+  public void setText(@NotNull CharSequence text) {
     LOG.assertTrue(text.toString().startsWith(myShreds.get(0).prefix));
     LOG.assertTrue(text.toString().endsWith(myShreds.get(myShreds.size() - 1).suffix));
     if (isOneLine()) {
@@ -341,8 +347,10 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     assert changes.length == myShreds.size();
     for (int i = 0; i < changes.length; i++) {
       String change = changes[i];
-      RangeMarker hostRange = myShreds.get(i).getHostRangeMarker();
-      myDelegate.replaceString(hostRange.getStartOffset(), hostRange.getEndOffset(), change);
+      if (change != null) {
+        RangeMarker hostRange = myShreds.get(i).getHostRangeMarker();
+        myDelegate.replaceString(hostRange.getStartOffset(), hostRange.getEndOffset(), change);
+      }
     }
   }
 
@@ -356,7 +364,8 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return markers;
   }
 
-  public RangeMarker createRangeMarker(final TextRange textRange) {
+  @NotNull
+  public RangeMarker createRangeMarker(@NotNull final TextRange textRange) {
     TextRange hostRange = injectedToHost(new ProperTextRange(textRange));
     RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange);
     return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker);
