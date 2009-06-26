@@ -82,6 +82,7 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
                                              final int index,
                                              final boolean selected,
                                              final boolean hasFocus) {
+          if (value == null) return;
           if (value == EMPTY_PROJECT_GENERATOR) {
             append("Empty project", SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
