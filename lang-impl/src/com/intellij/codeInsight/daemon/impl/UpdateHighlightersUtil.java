@@ -301,6 +301,10 @@ public class UpdateHighlightersUtil {
     TextRange toFind = new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset());
     int i = Collections.binarySearch(ranges, toFind, BY_START_OFFSET_OR_CONTAINS);
     if (i<0) return false;
+    Document document = highlighter.getDocument();
+    if (highlighter.getEndOffset() == document.getTextLength() && ranges.get(ranges.size()-1).getEndOffset() == document.getTextLength()) {
+      return true;
+    }
     TextRange containing = ranges.get(i);
     return containing.contains(toFind.getStartOffset());
   }
