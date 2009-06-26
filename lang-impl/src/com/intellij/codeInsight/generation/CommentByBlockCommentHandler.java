@@ -364,6 +364,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     final int offset = range.getStartOffset();
     final IntArrayList toReplaceWithComments = new IntArrayList();
     final IntArrayList prefixes = new IntArrayList();
+    if (range.getLength() < 0) return; // TODO: reproduce and fix this case
     final String text = document.getCharsSequence().subSequence(range.getStartOffset(), range.getEndOffset()).toString();
     final String commentedPrefix = commenter.getCommentedBlockCommentPrefix();
     final String commentedSuffix = commenter.getCommentedBlockCommentSuffix();
