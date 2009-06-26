@@ -50,14 +50,14 @@ public class ExpectedHighlightingData {
   private final PsiFile myFile;
   @NonNls private static final String ANY_TEXT = "*";
 
-  protected static class ExpectedHighlightingSet {
+  public static class ExpectedHighlightingSet {
     private final boolean endOfLine;
     final boolean enabled;
     final Set<HighlightInfo> infos;
     final HighlightInfoType defaultErrorType;
     final HighlightSeverity severity;
 
-    protected ExpectedHighlightingSet(HighlightInfoType defaultErrorType, HighlightSeverity severity, boolean endOfLine, boolean enabled) {
+    public ExpectedHighlightingSet(HighlightInfoType defaultErrorType, HighlightSeverity severity, boolean endOfLine, boolean enabled) {
       this.endOfLine = endOfLine;
       this.enabled = enabled;
       infos = new THashSet<HighlightInfo>();
