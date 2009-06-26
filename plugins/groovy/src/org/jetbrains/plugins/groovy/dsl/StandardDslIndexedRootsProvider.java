@@ -32,9 +32,11 @@ public class StandardDslIndexedRootsProvider implements IndexedRootsProvider {
   public StandardDslIndexedRootsProvider() {
     final VirtualFile parent = VfsUtil.findFileByURL(Marker.class.getResource("Marker.class")).getParent();
     //RefreshQueue.getInstance().refresh(true, true, null, parent);
-    for (VirtualFile file : parent.getChildren()) {
-      if ("gdsl".equals(file.getExtension())) {
-        ourDsls.add(file.getUrl());
+    if (parent != null) {
+      for (VirtualFile file : parent.getChildren()) {
+        if ("gdsl".equals(file.getExtension())) {
+          ourDsls.add(file.getUrl());
+        }
       }
     }
   }
