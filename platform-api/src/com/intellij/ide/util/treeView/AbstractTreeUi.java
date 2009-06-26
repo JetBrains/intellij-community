@@ -8,10 +8,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.ui.LoadingNode;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -34,6 +34,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.security.AccessControlException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -233,9 +234,14 @@ class AbstractTreeUi {
   }
 
   private void disposeClearanceService() {
-    if (ourClearanceService != null) {
-      ourClearanceService.shutdown();
-      ourClearanceService = null;
+    try {
+      if (ourClearanceService != null) {
+        ourClearanceService.shutdown();
+        ourClearanceService = null;
+      }
+    }
+    catch (AccessControlException e) {
+      LOG.warn(e);
     }
   }
 
