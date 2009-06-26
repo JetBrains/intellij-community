@@ -1,9 +1,10 @@
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,8 +14,8 @@ import java.io.IOException;
  * @author yole
  */
 public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl implements JavaCodeInsightTestFixture {
-  public JavaCodeInsightTestFixtureImpl(IdeaProjectTestFixture projectFixture) {
-    super(projectFixture);
+  public JavaCodeInsightTestFixtureImpl(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirFixture) {
+    super(projectFixture, tempDirFixture);
   }
 
   public JavaPsiFacade getJavaFacade() {

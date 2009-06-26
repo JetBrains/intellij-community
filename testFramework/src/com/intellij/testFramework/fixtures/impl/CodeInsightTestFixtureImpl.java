@@ -127,14 +127,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NonNls private static final String XXX = "XXX";
   private PsiElement myFileContext;
 
-  public CodeInsightTestFixtureImpl(IdeaProjectTestFixture projectFixture) {
+  public CodeInsightTestFixtureImpl(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
-    if (projectFixture instanceof LightIdeaTestFixture) {
-      myTempDirFixture = new LightTempDirTestFixtureImpl();
-    }
-    else {
-      myTempDirFixture = new TempDirTestFixtureImpl();
-    }
+    myTempDirFixture = tempDirTestFixture;
   }
 
   public void setTestDataPath(String dataPath) {

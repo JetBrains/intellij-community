@@ -19,7 +19,7 @@ public class JavaTestFixtureFactoryImpl extends JavaTestFixtureFactory {
   }
 
   public JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture) {
-    return new JavaCodeInsightTestFixtureImpl(projectFixture);
+    return new JavaCodeInsightTestFixtureImpl(projectFixture, new TempDirTestFixtureImpl());
   }
 
   public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder() {

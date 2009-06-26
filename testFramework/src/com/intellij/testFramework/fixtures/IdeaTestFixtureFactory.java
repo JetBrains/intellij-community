@@ -57,5 +57,7 @@ public abstract class IdeaTestFixtureFactory {
 
   public abstract CodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture);
 
+  public abstract CodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirFixture);
+
   public abstract TempDirTestFixture createTempDirTestFixture();
 }
