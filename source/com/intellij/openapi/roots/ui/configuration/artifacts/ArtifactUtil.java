@@ -108,7 +108,9 @@ public class ArtifactUtil {
     else if (element instanceof ComplexPackagingElement<?> && processSubstituions) {
       final List<? extends PackagingElement<?>> substitution = ((ComplexPackagingElement<?>)element).getSubstitution(resolvingContext,
                                                                                                                      artifactType);
-      return processElements(substitution, type, processor, resolvingContext, processSubstituions, artifactType);
+      if (substitution != null) {
+        return processElements(substitution, type, processor, resolvingContext, processSubstituions, artifactType);
+      }
     }
     return true;
   }
