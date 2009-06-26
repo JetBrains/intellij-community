@@ -338,7 +338,7 @@ public class SvnVcs extends AbstractVcs {
 
       if (workingCopyChecker.upgradeNeeded()) {
         final Notifications notifications = myProject.getMessageBus().syncPublisher(Notifications.TOPIC);
-        notifications.register(UPGRADE_SUBVERSION_FORMAT, NotificationDisplayType.BALOON, false);
+        notifications.register(UPGRADE_SUBVERSION_FORMAT, NotificationDisplayType.BALLOON, false);
         final String title = SvnBundle.message("upgrade.format.to16.question.title");
         notifications.notify(UPGRADE_SUBVERSION_FORMAT, title, title, NotificationType.INFORMATION, new NotificationListener() {
           @NotNull
