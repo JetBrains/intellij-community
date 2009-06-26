@@ -149,7 +149,7 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
   }
 
   private void notifyByBaloon(final Notification notification, final NotificationSettings settings) {
-    if (NotificationDisplayType.BALOON.equals(settings.getDisplayType())) {
+    if (NotificationDisplayType.BALLOON.equals(settings.getDisplayType())) {
       final String html = String.format("%s", notification.getName());
 
       final Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(html, notification.getIcon(),

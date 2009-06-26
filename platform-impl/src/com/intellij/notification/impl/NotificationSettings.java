@@ -1,8 +1,9 @@
 package com.intellij.notification.impl;
 
 import com.intellij.notification.NotificationDisplayType;
-import org.jetbrains.annotations.NotNull;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author spleaner
@@ -41,12 +42,24 @@ public class NotificationSettings {
     return myCanDisable;
   }
 
+  @Nullable
   public static NotificationSettings load(@NotNull final Element element) {
     final String enabledValue = element.getAttributeValue("enabled");
     final boolean enabled = enabledValue == null || Boolean.valueOf(enabledValue).booleanValue();
 
+    final String displayTypeString = element.getAttributeValue("displayType");
+    NotificationDisplayType displayType = NotificationDisplayType.BALLOON;
+    if (displayTypeString != null) {
+      try {
+        displayType = NotificationDisplayType.valueOf(displayTypeString.toUpperCase());
+      }
+      catch (IllegalArgumentException e) {
+        displayType = NotificationDisplayType.BALLOON;
+      }
+    }
+
     return new NotificationSettings(element.getAttributeValue("component"),
-        NotificationDisplayType.valueOf(element.getAttributeValue("displayType")),
+        displayType,
         enabled, Boolean.valueOf(element.getAttributeValue("canDisable")).booleanValue());
   }
 

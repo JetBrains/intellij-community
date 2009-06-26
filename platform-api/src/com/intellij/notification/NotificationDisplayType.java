@@ -5,11 +5,7 @@ package com.intellij.notification;
  */
 public enum NotificationDisplayType {
 
-  BALOON {
-    @Override
-    public String toString() {
-      return "Balloon";
-    }},
+  BALLOON,
   ICON
 
 }
