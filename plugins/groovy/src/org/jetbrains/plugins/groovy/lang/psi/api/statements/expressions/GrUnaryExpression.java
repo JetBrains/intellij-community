@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
@@ -25,5 +26,5 @@ public interface GrUnaryExpression extends GrExpression {
 
   IElementType getOperationTokenType();
 
-  GrExpression getOperand();
+  @Nullable GrExpression getOperand();
 }

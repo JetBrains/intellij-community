@@ -287,9 +287,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   @Override
   public void visitUnaryExpression(GrUnaryExpression expression) {
-    myNegate = !myNegate;
-    expression.getOperand().accept(this);
-    myNegate = !myNegate;
+    final GrExpression operand = expression.getOperand();
+    if (operand != null) {
+      myNegate = !myNegate;
+      operand.accept(this);
+      myNegate = !myNegate;
+    }
   }
 
   @Override
