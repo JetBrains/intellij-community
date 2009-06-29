@@ -10,24 +10,44 @@ import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.profile.Profile;
+import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author cdr
 */
 public class WholeFileLocalInspectionsPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
-  public WholeFileLocalInspectionsPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
+  private Map<PsiFile, Boolean> myFileTools = new ConcurrentWeakHashMap<PsiFile, Boolean>();
+  private ProfileChangeAdapter myProfilesListener = new ProfileChangeAdapter() {
+    @Override
+    public void profileChanged(Profile profile) {
+      myFileTools.clear();
+    }
+
+    @Override
+    public void profileActivated(Profile oldProfile, Profile profile) {
+      myFileTools.clear();
+    }
+  };
+  public InspectionProjectProfileManager myProfileManager;
+
+  public WholeFileLocalInspectionsPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar,
+                                              final InspectionProjectProfileManager profileManager) {
     super(project);
     // can run in the same time with LIP, but should start after it, since I believe whole-file inspections would run longer
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.LOCAL_INSPECTIONS}, true, -1);
+    myProfileManager = profileManager;
   }
 
   @NonNls
@@ -36,10 +56,24 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
     return "WholeFileLocalInspectionsPassFactory";
   }
 
+  @Override
+  public void initComponent() {
+    super.initComponent();
+    myProfileManager.addProfilesListener(myProfilesListener);
+  }
+
+  @Override
+  public void disposeComponent() {
+    super.disposeComponent();
+
+    myProfileManager.removeProfilesListener(myProfilesListener);
+    myFileTools.clear();
+  }
+
   @Nullable
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
+  public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.LOCAL_INSPECTIONS);
-    if (textRange == null || !wholeFileToolsDefined(file)) return null;
+    if (textRange == null || (myFileTools.containsKey(file) && !myFileTools.get(file))) return null;
     return new LocalInspectionsPass(file, editor.getDocument(), 0, file.getTextLength()) {
       List<LocalInspectionTool> getInspectionTools(InspectionProfileWrapper profile) {
         List<LocalInspectionTool> tools = super.getInspectionTools(profile);
@@ -47,6 +81,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
         for (LocalInspectionTool tool : tools) {
           if (tool.runForWholeFile()) result.add(tool);
         }
+        myFileTools.put(file, !result.isEmpty());
         return result;
       }
 
@@ -56,12 +91,4 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
     };
   }
 
-  private boolean wholeFileToolsDefined(PsiFile file) {
-    final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper();
-    final List<LocalInspectionTool> tools = profile.getHighlightingLocalInspectionTools(file);
-    for (LocalInspectionTool tool : tools) {
-      if (tool.runForWholeFile()) return true;
-    }
-    return false;
-  }
 }

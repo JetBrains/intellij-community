@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.ExternalizableScheme;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -402,7 +403,14 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
             myBaseProfile.initInspectionTools();
           }
 
-          final InspectionTool[] tools = myRegistrar.createTools();
+          final InspectionTool[] tools;
+          try {
+            tools = myRegistrar.createTools();
+          }
+          catch (ProcessCanceledException e) {
+            myInitialized.set(false);
+            return;
+          }
           for (InspectionTool tool : tools) {
             final String shortName = tool.getShortName();
             HighlightDisplayKey key = HighlightDisplayKey.find(shortName);

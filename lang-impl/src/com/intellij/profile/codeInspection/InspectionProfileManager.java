@@ -298,7 +298,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
 
   public void fireProfileChanged(final Profile oldProfile, final Profile profile, final NamedScope scope) {
     for (ProfileChangeAdapter adapter : myProfileChangeAdapters) {
-      adapter.profileActivated(scope, oldProfile, profile);
+      adapter.profileActivated(oldProfile, profile);
     }
   }
 

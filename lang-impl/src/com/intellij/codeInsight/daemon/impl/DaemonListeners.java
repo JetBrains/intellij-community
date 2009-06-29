@@ -26,9 +26,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
@@ -37,13 +37,15 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
@@ -363,7 +365,7 @@ public class DaemonListeners implements Disposable {
       myDaemonCodeAnalyzer.restart();
     }
 
-    public void profileActivated(NamedScope scope, Profile oldProfile, Profile profile) {
+    public void profileActivated(Profile oldProfile, Profile profile) {
       myDaemonCodeAnalyzer.restart();
     }
   }

@@ -23,13 +23,12 @@ import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -115,7 +114,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       }
     };
     final ProfileChangeAdapter profileChangeAdapter = new ProfileChangeAdapter() {
-      public void profileActivated(@Nullable NamedScope scope, Profile oldProfile, Profile profile) {
+      public void profileActivated(Profile oldProfile, Profile profile) {
         dropAnnotationsCache();
       }
 

@@ -57,6 +57,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
 
   protected Map<String, Profile> myProfiles = new HashMap<String, Profile>();
   protected final DependencyValidationManager myHolder;
+  protected List<ProfileChangeAdapter> myProfilesListener = new ArrayList<ProfileChangeAdapter>();
 
   public DefaultProjectProfileManager(final Project project, final String profileType, final DependencyValidationManager holder) {
     myProject = project;
@@ -72,6 +73,9 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
 
   public void updateProfile(Profile profile) {
     myProfiles.put(profile.getName(), profile);
+    for (ProfileChangeAdapter profileChangeAdapter : myProfilesListener) {
+      profileChangeAdapter.profileChanged(profile);
+    }
   }
 
 
@@ -154,8 +158,12 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   }
 
   public void setProjectProfile(final String projectProfile) {
+    final String profileName = PROJECT_PROFILE;
     PROJECT_PROFILE = projectProfile;
     USE_PROJECT_PROFILE = projectProfile != null;
+    for (ProfileChangeAdapter adapter : myProfilesListener) {
+      adapter.profileActivated(profileName != null ? getProfile(profileName) : null, projectProfile != null ?  getProfile(projectProfile) : null);
+    }
   }
 
   @NotNull
@@ -176,6 +184,14 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     final Profile profile = myProfiles.get(PROJECT_PROFILE);
     profile.setProfileManager(this);
     return profile;
+  }
+
+  public void addProfilesListener(ProfileChangeAdapter profilesListener) {
+    myProfilesListener.add(profilesListener);
+  }
+
+  public void removeProfilesListener(ProfileChangeAdapter profilesListener) {
+    myProfilesListener.remove(profilesListener);
   }
 
   public static class ProfileStateSplitter implements StateSplitter {

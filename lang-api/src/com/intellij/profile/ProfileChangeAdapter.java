@@ -15,14 +15,11 @@
  */
 package com.intellij.profile;
 
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import org.jetbrains.annotations.Nullable;
-
 /**
  * User: anna
  * Date: 20-Nov-2005
  */
 public abstract class ProfileChangeAdapter {
   public void profileChanged(Profile profile){}
-  public void profileActivated(@Nullable NamedScope scope, Profile oldProfile, Profile profile){}
+  public void profileActivated(Profile oldProfile, Profile profile){}
 }
