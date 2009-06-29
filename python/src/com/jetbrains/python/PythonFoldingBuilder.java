@@ -21,6 +21,7 @@ import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +35,7 @@ import java.util.List;
  * Time: 22:21:09
  * To change this template use File | Settings | File Templates.
  */
-public class PythonFoldingBuilder implements FoldingBuilder {
+public class PythonFoldingBuilder implements FoldingBuilder, DumbAware {
     @NotNull
     public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
         List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
