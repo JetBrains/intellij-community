@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
@@ -90,7 +89,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private final JLabel myAdComponent;
   private volatile String myAdText;
   private volatile int myLookupWidth = 50;
-  private static final int LOOKUP_HEIGHT = 11;
+  private static final int LOOKUP_HEIGHT = Integer.getInteger("idea.lookup.height", 11).intValue();
 
   public LookupImpl(Project project, Editor editor, LookupElement[] items, @Nullable LookupItemPreferencePolicy itemPreferencePolicy){
     super(new JPanel(new BorderLayout()));
