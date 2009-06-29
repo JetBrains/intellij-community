@@ -223,6 +223,8 @@ public class FileBasedIndex implements ApplicationComponent {
 
       vfManager.registerRefreshUpdater(myChangedFilesUpdater);
       myFileContentAttic = new FileContentStorage(new File(PathManager.getIndexRoot(), "updates.tmp"));
+
+      registerIndexableSet(new AdditionalIndexableFileSet());
     }
     finally {
       ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
