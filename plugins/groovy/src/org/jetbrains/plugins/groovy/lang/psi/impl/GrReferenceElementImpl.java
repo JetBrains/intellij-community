@@ -112,7 +112,7 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
   }
 
   private boolean mayInsertImport() {
-    return PsiTreeUtil.getParentOfType(this, GrDocComment.class) == null && !(getContainingFile() instanceof GroovyCodeFragment);
+    return PsiTreeUtil.getParentOfType(this, GrDocComment.class) == null && !(getContainingFile() instanceof GroovyCodeFragment) && PsiTreeUtil.getParentOfType(this, GrImportStatement.class) == null;
   }
 
   private PsiElement bindWithQualifiedRef(String qName) {
