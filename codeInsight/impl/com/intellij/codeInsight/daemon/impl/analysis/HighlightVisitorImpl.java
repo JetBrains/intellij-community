@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -33,7 +34,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
+public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor, DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl");
 
   private final PsiResolveHelper myResolveHelper;
@@ -42,9 +43,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private RefCountHolder myRefCountHolder;
 
-  // map codeBlock->List of PsiReferenceExpression of uninitailized final variables
+  // map codeBlock->List of PsiReferenceExpression of uninitialized final variables
   private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new THashMap<PsiElement, Collection<PsiReferenceExpression>>();
-  // map codeBlock->List of PsiReferenceExpression of extra initailization of final variable
+  // map codeBlock->List of PsiReferenceExpression of extra initialization of final variable
   private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>();
   private final Map<PsiParameter, Boolean> myParameterIsReassigned = new THashMap<PsiParameter, Boolean>();
 
