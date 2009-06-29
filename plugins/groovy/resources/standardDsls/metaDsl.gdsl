@@ -1,0 +1,6 @@
+enhanceScript(extension:"gdsl") {
+  method name:"method", type:"void", params:[args:[:]]
+  method name:"property", type:"void", params:[args:[:]]
+
+  method name:"enhanceScript", type:"void", params:[args:[:], action:{}]
+}

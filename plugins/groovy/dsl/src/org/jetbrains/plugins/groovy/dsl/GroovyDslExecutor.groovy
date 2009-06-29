@@ -28,7 +28,7 @@ public class GroovyDslExecutor {
     mc.enhanceClass = {Map args, Closure enh ->
       enh.resolveStrategy = Closure.DELEGATE_FIRST
       myClassEnhancers << {
-        ClassWrapper cw, GroovyEnhancerConsumer c ->
+        ClassDescriptor cw, GroovyEnhancerConsumer c ->
         if (!args.className || cw.isInheritor(args.className)) {
           runEnhancer enh, new EnhancerDelegate(consumer:c)
         }

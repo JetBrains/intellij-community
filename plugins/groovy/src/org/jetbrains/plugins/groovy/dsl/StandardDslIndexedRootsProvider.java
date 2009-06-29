@@ -15,33 +15,38 @@
  */
 package org.jetbrains.plugins.groovy.dsl;
 
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtil;
 import com.intellij.util.indexing.IndexedRootsProvider;
-import gnu.trove.THashSet;
-import standardDsls.Marker;
 
+import java.io.File;
+import java.util.Collections;
 import java.util.Set;
 
 /**
  * @author peter
  */
 public class StandardDslIndexedRootsProvider implements IndexedRootsProvider {
-  private final Set<String> ourDsls = new THashSet<String>();
+  private final String ourDslsDir;
 
   public StandardDslIndexedRootsProvider() {
-    final VirtualFile parent = VfsUtil.findFileByURL(Marker.class.getResource("Marker.class")).getParent();
-    //RefreshQueue.getInstance().refresh(true, true, null, parent);
-    if (parent != null) {
-      for (VirtualFile file : parent.getChildren()) {
-        if ("gdsl".equals(file.getExtension())) {
-          ourDsls.add(file.getUrl());
-        }
-      }
+    final File jarPath = new File(PathUtil.getJarPathForClass(StandardDslIndexedRootsProvider.class));
+    String dirPath;
+    if (jarPath.isFile()) { //jar
+      dirPath = new File(jarPath.getParentFile(), "standardDsls").getAbsolutePath();
+    } else {
+      dirPath = new File(jarPath, "standardDsls").getAbsolutePath();
     }
+
+    final VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByPath(dirPath);
+    assert parent != null;
+    parent.getChildren();
+    ourDslsDir = parent.getUrl();
+    parent.refresh(true, true);
   }
 
   public Set<String> getRootsToIndex() {
-    return ourDsls;
+    return Collections.singleton(ourDslsDir);
   }
 }
