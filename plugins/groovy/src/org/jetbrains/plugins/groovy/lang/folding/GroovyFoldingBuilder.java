@@ -20,6 +20,7 @@ import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
@@ -36,7 +37,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes {
+public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes, DumbAware {
 
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
