@@ -100,13 +100,6 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
     return getArtifactManager().getArtifacts();
   }
 
-  private Artifact addArtifact(String name) {
-    final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
-    final ModifiableArtifact artifact = model.addArtifact(name, PlainArtifactType.getInstance());
-    model.commit();
-    return artifact;
-  }
-
   private MyArtifactListener subscribe() {
     final MyArtifactListener listener = new MyArtifactListener();
     myProject.getMessageBus().connect().subscribe(ArtifactManager.TOPIC, listener);
