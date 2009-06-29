@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import static com.jetbrains.python.PyBundle.message;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 
 /**
  * Created by IntelliJ IDEA.
@@ -101,7 +102,9 @@ public class AssignTargetAnnotator extends PyAnnotator {
     public void visitPyTargetExpression(final PyTargetExpression node) {
       String targetName = node.getName();
       if (targetName != null && targetName.equals(PyNames.NONE)) {
-        getHolder().createErrorAnnotation(node, (_op == Operation.Delete) ? DELETING_NONE : ASSIGNMENT_TO_NONE);
+        if (node.getContainingFile() != PyBuiltinCache.getInstance(node.getProject()).getBuiltinsFile()){
+          getHolder().createErrorAnnotation(node, (_op == Operation.Delete) ? DELETING_NONE : ASSIGNMENT_TO_NONE);
+        }
       }
     }
 
