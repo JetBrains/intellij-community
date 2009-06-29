@@ -1,0 +1,3 @@
+enhanceScript(extension:"zzz") {
+  pro<caret>
+}
