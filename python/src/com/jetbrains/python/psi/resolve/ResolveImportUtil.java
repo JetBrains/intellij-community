@@ -11,10 +11,12 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportResolver;
+import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -459,6 +461,19 @@ public class ResolveImportUtil {
   }
 
 
+  private static void addImportedNames(PyImportElement[] import_elts, Collection<String> names_already) {
+    if (import_elts != null && names_already != null) {
+      for (PyImportElement ielt : import_elts) {
+        String s;
+        PyReferenceExpression ref = ielt.getImportReference();
+        if (ref != null) {
+          s = ref.getReferencedName();
+          if (s != null) names_already.add(s);
+        }
+      }
+    }
+  }
+
   /**
    * Finds reasonable names to import to complete a patrial name.
    * @param partial_ref reference containing the partial name.
@@ -466,28 +481,49 @@ public class ResolveImportUtil {
    */
   public static Object[] suggestImportVariants(final PyReferenceExpression partial_ref) {
     List<Object> variants = new ArrayList<Object>();
+    if (partial_ref == null) return variants.toArray();
     // are we in "import _" or "from foo import _"?
-    PyFromImportStatement maybe_from_import = PsiTreeUtil.getParentOfType(partial_ref, PyFromImportStatement.class);
-    if (maybe_from_import != null) {
-      if (partial_ref.getParent() != maybe_from_import) { // in "from foo import _"
-        PyReferenceExpression src = maybe_from_import.getImportSource();
-        if (src != null) {
-          PsiElement mod = src.resolve();
-          if (mod != null) {
-            final VariantsProcessor processor = new VariantsProcessor();
-            PyResolveUtil.treeCrawlUp(processor, true, mod);
-            /*
-            for (LookupElement le : processor.getResult()) {
-              if (le.getObject() instanceof PsiNamedElement) variants.add(le);
-              else variants.add(le.toString()); // NOTE: a rather silly way to handle assignment targets
+    PyFromImportStatement from_import = PsiTreeUtil.getParentOfType(partial_ref, PyFromImportStatement.class);
+    if (from_import != null && partial_ref.getParent() != from_import) { // in "from foo import _"
+      PyReferenceExpression src = from_import.getImportSource();
+      if (src != null) {
+        PsiElement mod_candidate = src.resolve();
+        if (mod_candidate instanceof PyExpression) {
+          final Set<String> names_already = new java.util.HashSet<String>();
+          // don't propose already imported items
+          addImportedNames(from_import.getImportElements(), names_already);
+          // collect what's within module file
+          final VariantsProcessor processor = new VariantsProcessor(new PyResolveUtil.FilterNameNotIn(names_already));
+          PyResolveUtil.treeCrawlUp(processor, true, mod_candidate);
+          variants.addAll(processor.getResultList());
+          // try to collect submodules
+          PyExpression module = (PyExpression)mod_candidate;
+          PyType qualifierType = module.getType();
+          if (qualifierType != null) {
+            ProcessingContext ctx = new ProcessingContext();
+            for (Object ex : variants) { // just in case: file's definitions shadow submodules
+              if (ex instanceof PyReferenceExpression) {
+                names_already.add(((PyReferenceExpression)ex).getReferencedName());
+              }
             }
-            */
-            return processor.getResult();
+            // collect submodules
+            ctx.put(PyType.CTX_NAMES, names_already);
+            Collections.addAll(variants, qualifierType.getCompletionVariants(partial_ref, ctx));
           }
+          return variants.toArray();
         }
       }
     }
     // in "import _" or "from _ import"
+    // don't propose already imported names
+    final Set<String> names_already = new java.util.HashSet<String>();
+    if (from_import != null) addImportedNames(from_import.getImportElements(), names_already);
+    else {
+      PyImportStatement import_stmt = PsiTreeUtil.getParentOfType(partial_ref, PyImportStatement.class);
+      if (import_stmt != null) {
+        addImportedNames(import_stmt.getImportElements(), names_already);
+      }
+    }
     // look in builtins
     DataContext dataContext = DataManager.getInstance().getDataContext();
     // look at current dir
@@ -500,14 +536,14 @@ public class ResolveImportUtil {
             if (a_file.isDirectory()) {
               if (a_file.findChild(INIT_PY) != null) {
                 final String name = a_file.getName();
-                if (PyUtil.isIdentifier(name)) variants.add(name);
+                if (PyUtil.isIdentifier(name) && !names_already.contains(name)) variants.add(name);
               }
             }
             else { // plain file
               String fname = a_file.getName();
               if (fname.endsWith(PY_SUFFIX)) {
                 final String name = fname.substring(0, fname.length() - PY_SUFFIX.length());
-                if (PyUtil.isIdentifier(name)) variants.add(name);
+                if (PyUtil.isIdentifier(name) && !names_already.contains(name)) variants.add(name);
               }
             }
           }
@@ -520,7 +556,7 @@ public class ResolveImportUtil {
     if (module != null) {
       ModuleRootManager.getInstance(module).processOrder(new SdkRootVisitingPolicy(visitor), null);
       for (String name : visitor.getResult()) {
-        if (PyUtil.isIdentifier(name)) variants.add(name); // to thwart stuff like "__phello__.foo"
+        if (PyUtil.isIdentifier(name) && !names_already.contains(name)) variants.add(name); // to thwart stuff like "__phello__.foo"
       }
     }
 

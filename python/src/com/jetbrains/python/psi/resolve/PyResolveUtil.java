@@ -20,12 +20,14 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveState;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -296,6 +298,9 @@ public class PyResolveUtil {
     boolean accept(Object target);
   }
 
+  /**
+   * Accepts only targets that are not the given object.
+   */
   public static class FilterNotInstance implements Filter {
     Object instance;
 
@@ -305,6 +310,36 @@ public class PyResolveUtil {
 
     public boolean accept(final Object target) {
       return (instance != target);
+    }
+  }
+
+  /**
+   * Accepts only names not contained in a given collection.
+   */
+  public static class FilterNameNotIn implements Filter {
+    private Collection<String> myNames;
+
+    public FilterNameNotIn(Collection<String> names) {
+      myNames = names;
+    }
+
+    public boolean accept(Object target) {
+      if (target instanceof PsiNamedElement) {
+        return !myNames.contains(((PsiNamedElement)target).getName());
+      }
+      else if (target instanceof PyReferenceExpression) {
+        return !myNames.contains(((PyReferenceExpression)target).getReferencedName());
+      }
+      else if (target instanceof NameDefiner) {
+        NameDefiner definer = (NameDefiner)target;
+        for (PyElement expr : definer.iterateNames()) {
+          if (expr != null) {
+            String referencedName = expr.getName();
+            if (myNames.contains(referencedName)) return false;
+          }
+        }
+      }
+      return true; // nothing failed us
     }
   }
 

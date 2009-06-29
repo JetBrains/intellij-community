@@ -28,13 +28,13 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PythonDosStringFinder;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.PythonDosStringFinder;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
-import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
-  protected PyClassType myType;
+  protected PyType myType;
 
   public PyFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, PythonLanguage.getInstance());
@@ -230,10 +230,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public PyType getType() {
-    if (myType == null) {
-      PyClass the_class = PyBuiltinCache.getInstance(getProject()).getClass("object"); // TODO: generate a skel for module
-      if (the_class != null) myType = new PyClassType(the_class, false); // 'module' is an instance of 'object'
-    }
+    if (myType == null) myType = new PyModuleType(this);
     return myType;
   }
 
