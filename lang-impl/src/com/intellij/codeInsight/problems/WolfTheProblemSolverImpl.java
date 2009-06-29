@@ -303,7 +303,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
           };
         }
       };
-      pass.doCollectInformation(progressIndicator);
+      pass.collectInformation(progressIndicator);
     }
     catch (HaveGotErrorException e) {
       ProblemImpl problem = new ProblemImpl(file, e.myHighlightInfo, e.myHasErrorElement);
