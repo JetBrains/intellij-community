@@ -43,10 +43,11 @@ public class JavaMethodMergingContributor extends CompletionContributor {
             }
 
             allMethodItems.add(item);
-            PsiMethod method = (PsiMethod)o;
-            String name = method.getName() + "#" + item.getUserData(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE);
-            LookupElement existing = methodNameToItem.get(name);
-            ArrayList<PsiMethod> allMethods;
+            final PsiMethod method = (PsiMethod)o;
+            final JavaChainLookupElement chain = item.as(JavaChainLookupElement.class);
+            final String name = method.getName() + "#" + (chain == null ? "" : chain.getQualifier().getLookupString());
+            final LookupElement existing = methodNameToItem.get(name);
+            final ArrayList<PsiMethod> allMethods;
             if (existing != null) {
               if (((PsiMethod)existing.getObject()).getParameterList().getParametersCount() == 0 && method.getParameterList().getParametersCount() > 0) {
                 methodNameToItem.put(name, item);

@@ -20,10 +20,12 @@ import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.getters.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -136,17 +138,11 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
           }
         }
 
-        final PsiExpression expr = PsiTreeUtil.getParentOfType(position, PsiExpression.class);
-        if (expr != null) {
-          final Map<PsiExpression,PsiType> map = GuessManager.getInstance(position.getProject()).getDataFlowExpressionTypes(expr);
-          for (final PsiExpression expression : map.keySet()) {
-            final PsiType castType = map.get(expression);
-            final PsiType baseType = expression.getType();
-            if (expectedType.isAssignableFrom(castType) && (baseType == null || !expectedType.isAssignableFrom(baseType))) {
-              result.addElement(new CastingLookupElementDecorator(new ExpressionLookupItem(expression), castType));
-            }
+        processDataflowExpressionTypes(position, expectedType, new Consumer<CastingLookupElementDecorator>() {
+          public void consume(CastingLookupElementDecorator castingLookupElementDecorator) {
+            result.addElement(castingLookupElementDecorator);
           }
-        }
+        });
       }
     });
 
@@ -157,6 +153,20 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
       }
     });
 
+  }
+
+  public static void processDataflowExpressionTypes(PsiElement position, @Nullable PsiType expectedType, Consumer<CastingLookupElementDecorator> consumer) {
+    final PsiExpression expr = PsiTreeUtil.getParentOfType(position, PsiExpression.class);
+    if (expr != null) {
+      final Map<PsiExpression,PsiType> map = GuessManager.getInstance(position.getProject()).getDataFlowExpressionTypes(expr);
+      for (final PsiExpression expression : map.keySet()) {
+        final PsiType castType = map.get(expression);
+        final PsiType baseType = expression.getType();
+        if (expectedType == null || (expectedType.isAssignableFrom(castType) && (baseType == null || !expectedType.isAssignableFrom(baseType)))) {
+          consumer.consume(new CastingLookupElementDecorator(new ExpressionLookupItem(expression), castType));
+        }
+      }
+    }
   }
 
   private static boolean isClassType(final PsiType type, final String className) {

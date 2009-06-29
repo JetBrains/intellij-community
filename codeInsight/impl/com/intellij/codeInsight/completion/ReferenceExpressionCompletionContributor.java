@@ -31,6 +31,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -103,6 +104,12 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
             for (final LookupElement baseItem : JavaSmartCompletionContributor.completeReference(element, reference, baseFilter, false)) {
               addSecondCompletionVariants(element, reference, baseItem, parameters, result);
             }
+
+            BasicExpressionCompletionContributor.processDataflowExpressionTypes(element, null, new Consumer<CastingLookupElementDecorator>() {
+              public void consume(CastingLookupElementDecorator baseItem) {
+                addSecondCompletionVariants(element, reference, baseItem, parameters, result);
+              }
+            });
           }
         }
       }
@@ -112,26 +119,21 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
   private static void addSecondCompletionVariants(PsiElement element, PsiReference reference, LookupElement baseItem,
                                                   JavaSmartCompletionParameters parameters, CompletionResultSet result) {
     final Object object = baseItem.getObject();
-    final String prefix = getItemText(object);
-    if (prefix == null) return;
 
-    final PsiSubstitutor substitutor = (PsiSubstitutor)((LookupItem)baseItem).getAttribute(LookupItem.SUBSTITUTOR);
     try {
-      PsiType itemType = object instanceof PsiVariable ? ((PsiVariable) object).getType() :
-                         object instanceof PsiMethod ? ((PsiMethod) object).getReturnType() : null;
-      if (substitutor != null) {
-        itemType = substitutor.substitute(itemType);
-      }
+      PsiType itemType = JavaCompletionUtil.getLookupElementType(baseItem);
       if (itemType == null) return;
 
       final PsiElement qualifier = getQualifier(reference.getElement());
       final PsiType expectedType = parameters.getExpectedType();
       if (!OBJECT_METHOD_PATTERN.accepts(object) || allowGetClass(object, parameters)) {
         if (!itemType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-          addChainedCallVariants(element, getReferenceFilter(element, true, true), prefix, substitutor, qualifier, result, itemType,
-                                 expectedType);
+          addChainedCallVariants(element, baseItem, result, itemType, expectedType);
         }
       }
+
+      final String prefix = getItemText(object);
+      if (prefix == null) return;
 
       addArraysAsListConversions(element, prefix, itemType, result, qualifier, expectedType);
 
@@ -304,50 +306,46 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
     return containsMethodCalls(getQualifier(qualifier));
   }
 
-  private static void addChainedCallVariants(final PsiElement element, final ElementFilter qualifierFilter, final String prefix, final PsiSubstitutor substitutor,
-                                             final PsiElement qualifier,
+  private static void addChainedCallVariants(final PsiElement place, final LookupElement qualifierItem,
                                              final CompletionResultSet result,
                                              PsiType qualifierType,
                                              final PsiType expectedType) throws IncorrectOperationException {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
-    final PsiExpression ref = elementFactory.createExpressionFromText(getQualifierText(qualifier) + prefix + ".xxx", element);
-    String beautifulPrefix = prefix.endsWith(" )") ? prefix.substring(0, prefix.length() - 2) + ")" : prefix;
-    for (final LookupElement item : JavaSmartCompletionContributor.completeReference(element, (PsiReferenceExpression)ref, qualifierFilter, false)) {
-      if (item.getObject() instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)item.getObject();
-        if (psiMethod().withName("toArray").withParameterCount(1)
-            .definedInClass(CommonClassNames.JAVA_UTIL_COLLECTION).accepts(method)) {
-          continue;
-        }
-        final PsiMethod parentMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-        if (isUselessObjectMethod(method, parentMethod, qualifierType)) {
-          continue;
-        }
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(place.getProject()).getElementFactory();
+    final JavaCodeFragment block = elementFactory.createCodeBlockCodeFragment(qualifierType.getCanonicalText() + " xxx; xxx.xxx;", place, false);
+    final PsiReferenceExpression mockRef = (PsiReferenceExpression) ((PsiExpressionStatement)block.getChildren()[2]).getExpression();
 
-        final PsiType type = method.getReturnType();
-        if (type instanceof PsiClassType) {
-          final PsiClassType classType = (PsiClassType)type;
-          final PsiClass psiClass = classType.resolve();
-          if (psiClass instanceof PsiTypeParameter && method.getTypeParameterList() == psiClass.getParent()) {
-            final PsiTypeParameter typeParameter = (PsiTypeParameter)psiClass;
-            if (typeParameter.getExtendsListTypes().length == 0) continue;
-            if (!expectedType.isAssignableFrom(TypeConversionUtil.typeParameterErasure(typeParameter))) continue;
-          }
-        }
-
-        final QualifiedMethodLookupItem newItem = new QualifiedMethodLookupItem(method, beautifulPrefix);
-        final PsiSubstitutor newSubstitutor = (PsiSubstitutor)((LookupItem)item).getAttribute(LookupItem.SUBSTITUTOR);
-        if (substitutor != null || newSubstitutor != null) {
-          newItem.setAttribute(LookupItem.SUBSTITUTOR, substitutor == null ? newSubstitutor :
-                                                       newSubstitutor == null ? substitutor : substitutor.putAll(newSubstitutor));
-        }
-        result.addElement(newItem);
-      } else {
-        item.putUserData(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE, beautifulPrefix + ".");
-        ((LookupItem)item).setLookupString(beautifulPrefix + "." + item.getLookupString());
-        result.addElement(item);
+    final ElementFilter filter = getReferenceFilter(place, true, true);
+    for (final LookupElement item : JavaSmartCompletionContributor.completeReference(place, mockRef, filter, false)) {
+      if (shoudChain(place, qualifierType, expectedType, item)) {
+        result.addElement(new JavaChainLookupElement(qualifierItem, item));
       }
     }
+  }
+
+  private static boolean shoudChain(PsiElement element, PsiType qualifierType, PsiType expectedType, LookupElement item) {
+    if (item.getObject() instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)item.getObject();
+      if (psiMethod().withName("toArray").withParameterCount(1)
+                     .definedInClass(CommonClassNames.JAVA_UTIL_COLLECTION).accepts(method)) {
+        return false;
+      }
+      final PsiMethod parentMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+      if (isUselessObjectMethod(method, parentMethod, qualifierType)) {
+        return false;
+      }
+
+      final PsiType type = method.getReturnType();
+      if (type instanceof PsiClassType) {
+        final PsiClassType classType = (PsiClassType)type;
+        final PsiClass psiClass = classType.resolve();
+        if (psiClass instanceof PsiTypeParameter && method.getTypeParameterList() == psiClass.getParent()) {
+          final PsiTypeParameter typeParameter = (PsiTypeParameter)psiClass;
+          if (typeParameter.getExtendsListTypes().length == 0) return false;
+          if (!expectedType.isAssignableFrom(TypeConversionUtil.typeParameterErasure(typeParameter))) return false;
+        }
+      }
+    }
+    return true;
   }
 
   private static boolean isUselessObjectMethod(PsiMethod method, PsiMethod parentMethod, PsiType qualifierType) {
@@ -360,7 +358,8 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
     }
 
     if ("toString".equals(method.getName())) {
-      if (qualifierType.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUFFER) || InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER)) {
+      if (qualifierType.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUFFER) ||
+          InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER)) {
         return false;
       }
     }
