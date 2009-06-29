@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
@@ -13,7 +14,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.SystemNotifications;
 import org.jetbrains.annotations.Nls;
@@ -80,6 +80,10 @@ public class ProgressManagerImpl extends ProgressManager {
         }
       }
     }
+  }
+
+  public static void canceled() {
+    ourNeedToCheckCancel = true;
   }
 
   private static class NonCancelableIndicator extends EmptyProgressIndicator implements NonCancelableSection {

@@ -8,9 +8,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -18,7 +19,6 @@ import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.patterns.PsiJavaPatterns;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -180,6 +180,8 @@ public class AllClassesGetter {
     //noinspection AutoUnboxing
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
+        ProgressManager.getInstance().checkCanceled();
+
         if (lookingForAnnotations && !psiClass.isAnnotationType()) return false;
 
         if (JavaCompletionUtil.isInExcludedPackage(psiClass)) return false;

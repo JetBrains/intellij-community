@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.containers.ContainerUtil;
@@ -150,6 +151,8 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
 
   public void cancel() {
     myCanceled = true;
+
+    ProgressManagerImpl.canceled();
 
     delegateRunningChange(CANCEL_ACTION);
   }
