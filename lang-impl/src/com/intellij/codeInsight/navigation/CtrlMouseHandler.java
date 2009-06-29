@@ -265,6 +265,10 @@ public class CtrlMouseHandler implements ProjectComponent {
     public abstract boolean isValid(Document document);
   }
 
+  private static void showDumbModeNotification(final Project project) {
+    DumbService.getInstance(project).showDumbModeNotification("Element information is not available during index update");
+  }
+
   private static class InfoSingle extends Info {
     @NotNull private final PsiElement myTargetElement;
 
@@ -285,7 +289,7 @@ public class CtrlMouseHandler implements ProjectComponent {
         return generateInfo(myTargetElement);
       }
       catch (IndexNotReadyException e) {
-        DumbService.getInstance(myTargetElement.getProject()).showDumbModeNotification("Element information is not available during index update");
+        showDumbModeNotification(myTargetElement.getProject());
         return null;
       }
     }
@@ -438,7 +442,14 @@ public class CtrlMouseHandler implements ProjectComponent {
 
     public void execute(BrowseMode browseMode) {
       myBrowseMode = browseMode;
-      Info info = getInfoAt(myEditor, myPosition, myBrowseMode);
+      final Info info;
+      try {
+        info = getInfoAt(myEditor, myPosition, myBrowseMode);
+      }
+      catch (IndexNotReadyException e) {
+        showDumbModeNotification(myProject);
+        return;
+      }
       if (info == null) return;
 
       Component internalComponent = myEditor.getContentComponent();
