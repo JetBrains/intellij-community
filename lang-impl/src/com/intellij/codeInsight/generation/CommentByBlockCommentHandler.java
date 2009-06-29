@@ -471,7 +471,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
         break;
       }
       position = start;
-      int end = getNearest(text, commentSuffix, position) + commentSuffix.length();
+      int end = getNearest(text, commentSuffix, position + commentPrefix.length()) + commentSuffix.length();
       position = end;
       Pair<TextRange, TextRange> pair = findCommentBlock(new TextRange(start + startOffset, end + startOffset), commentPrefix, commentSuffix);
       ranges.add(pair);
