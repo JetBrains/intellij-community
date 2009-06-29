@@ -25,6 +25,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -354,6 +355,18 @@ public class MavenProjectImporter {
         }
 
         Module module = myModuleModel.findModuleByName(name);
+        if (module == null) {
+          // todo: IDEADEV-30669 hook
+          String message = "Module " + name + "not found.";
+          message += "\nmavenProject=" + each.getFile();
+          module = myMavenProjectToModule.get(each);
+          message += "\nmyMavenProjectToModule=" + (module == null ? null : module.getName());
+          message += "\nmyMavenProjectToModuleName=" + myMavenProjectToModuleName.get(each);
+          message += "\nmyMavenProjectToModulePath=" + myMavenProjectToModulePath.get(each);
+          MavenLog.LOG.error(message);
+          return;
+        }
+
         myModuleModel.setModuleGroupPath(module, groups.isEmpty() ? null : groups.toArray(new String[groups.size()]));
       }
 
