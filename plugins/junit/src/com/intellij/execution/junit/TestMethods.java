@@ -104,10 +104,14 @@ public class TestMethods extends TestMethod {
     for (AbstractTestProxy failedTest : myFailedTests) {
       Location location = failedTest.getLocation(project);
       if (!(location instanceof MethodLocation)) continue;
+      if (JUnitUtil.isJUnit4TestClass(((MethodLocation)location).getContainingClass())) {
+        myJavaParameters.getProgramParametersList().add(JUnitStarter.JUNIT4_PARAMETER);
+        return;
+      }
       PsiMethod method = ((MethodLocation)location).getPsiElement();
       if (JUnitUtil.isTestAnnotated(method)) {
         myJavaParameters.getProgramParametersList().add(JUnitStarter.JUNIT4_PARAMETER);
-        break;
+        return;
       }
     }
   }

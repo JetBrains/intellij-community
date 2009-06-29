@@ -52,6 +52,10 @@ class TestMethod extends TestObject {
   protected void addJUnit4Parameter(final JUnitConfiguration.Data data, Project project) {
     Location<PsiClass> classLocation = PsiClassLocationUtil.fromClassQualifiedName(project, data.getMainClassPsiName());
     PsiClass aClass = classLocation.getPsiElement();
+    if (JUnitUtil.isJUnit4TestClass(aClass)) {
+      myJavaParameters.getProgramParametersList().add(JUnitStarter.JUNIT4_PARAMETER);
+      return;
+    }
     final String methodName = data.getMethodName();
     PsiMethod[] methods = aClass.findMethodsByName(methodName, true);
     for (PsiMethod method : methods) {
