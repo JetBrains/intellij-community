@@ -136,11 +136,23 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     return myResolveTargetKinds.contains(resolveKind);
   }
 
-  public boolean shouldProcess(Class elementClass) {
-    if (PsiMethod.class.isAssignableFrom(elementClass)) return shouldProcess(METHOD);
-    if (PsiVariable.class.isAssignableFrom(elementClass)) return shouldProcess(PROPERTY);
-    if (PsiPackage.class.isAssignableFrom(elementClass)) return shouldProcess(PACKAGE);
-    if (PsiClass.class.isAssignableFrom(elementClass)) return shouldProcess(CLASS);
+  public boolean shouldProcess(DeclaractionKind kind) {
+    switch (kind) {
+      case CLASS:
+        return shouldProcess(CLASS);
+
+      case ENUM_CONST:
+      case VARIABLE:
+      case FIELD:
+        return shouldProcess(PROPERTY);
+
+      case METHOD:
+        return shouldProcess(METHOD);
+
+      case PACKAGE:
+        return shouldProcess(PACKAGE);
+    }
+
     return false;
   }
 
