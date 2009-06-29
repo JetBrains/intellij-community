@@ -57,15 +57,25 @@ public class MyPsiUtil {
         return false;
     }
 
+    @NotNull
     public static PsiElement getNameElement(@NotNull XmlTag tag) {
+        final PsiElement element = findNameElement(tag);
+        if (element != null) {
+            return element;
+        }
+        LOG.error("Name element not found for " + tag);
+        return tag;
+    }
+
+    @Nullable
+    public static PsiElement findNameElement(@NotNull XmlTag tag) {
         PsiElement[] children = tag.getChildren();
         for (PsiElement child : children) {
             if (isNameElement(child)) {
                 return child;
             }
         }
-        LOG.error("Name element not found for " + tag);
-        return tag;
+        return null;
     }
 
     public static boolean isNameElement(@Nullable PsiElement child) {

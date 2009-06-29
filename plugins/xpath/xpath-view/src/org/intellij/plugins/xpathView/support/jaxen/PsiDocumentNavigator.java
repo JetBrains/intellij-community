@@ -20,6 +20,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.*;
+import com.intellij.lang.StdLanguages;
+
 import org.intellij.plugins.xpathView.util.MyPsiUtil;
 import org.jaxen.DefaultNavigator;
 import org.jaxen.FunctionCallException;
@@ -273,7 +275,12 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         if (LOG.isDebugEnabled()) {
             LOG.debug("enter: isElement(): " + object + " = " + b);
         }
-        return b;
+        return b && isSupportedElement((XmlTag)object);
+    }
+
+    private static boolean isSupportedElement(XmlTag object) {
+        // optimization: all tags from XML language are supported, but some from other languages (JSP, see IDEADEV-37939) are not
+        return object.getLanguage() == StdLanguages.XML || MyPsiUtil.findNameElement(object) != null;
     }
 
     public boolean isAttribute(Object object) {
