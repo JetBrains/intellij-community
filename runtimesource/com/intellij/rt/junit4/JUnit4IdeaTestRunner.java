@@ -119,7 +119,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
         }
       }
       description = failedTestsDescription;
-      if (failedTestsDescription.testCount() == 1 && filterDescription.startsWith("Method")) {
+      if (!failedTestsDescription.isTest() && failedTestsDescription.testCount() == 1 && filterDescription.startsWith("Method")) {
         description = (Description)failedTestsDescription.getChildren().get(0);
       }
     }
