@@ -1,0 +1,22 @@
+[].each {@#2}
+-----
+Groovy script
+  Method call
+    Reference expression
+      Generalized list
+        PsiElement([)('[')
+        PsiElement(])(']')
+      PsiElement(.)('.')
+      PsiElement(identifier)('each')
+    PsiWhiteSpace(' ')
+    Arguments
+      <empty list>
+    Closable block
+      PsiElement({)('{')
+      Parameter list
+        <empty list>
+      PsiErrorElement:';', '}' or new line expected
+        PsiElement(@)('@')
+        PsiElement(wrong token)('#')
+        PsiElement(Integer)('2')
+      PsiElement(})('}')

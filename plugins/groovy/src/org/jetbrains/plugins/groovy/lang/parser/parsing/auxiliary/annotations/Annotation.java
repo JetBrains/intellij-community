@@ -32,17 +32,21 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 public class Annotation implements GroovyElementTypes {
   public static boolean parse(PsiBuilder builder) {
+    if (builder.getTokenType() != mAT) {
+      return false;
+    }
 
     PsiBuilder.Marker annMarker = builder.mark();
+    builder.advanceLexer();
 
-    if (!ParserUtils.getToken(builder, mAT)) {
+    if (builder.getTokenType() == kINTERFACE) {
       annMarker.rollbackTo();
       return false;
     }
 
-
     if (!ReferenceElement.parseReferenceElement(builder)) {
-      annMarker.rollbackTo();
+      builder.error("Annotation name expected");
+      annMarker.drop();
       return false;
     }
 
