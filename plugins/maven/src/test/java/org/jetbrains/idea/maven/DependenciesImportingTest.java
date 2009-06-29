@@ -116,7 +116,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     importProject();
     assertModuleLibDeps("project", "Maven: group:lib:1");
-    
+
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version" + // incomplete tag
@@ -1259,6 +1259,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "  </repository>" +
                   "</repositories>");
 
+    assertModuleLibDeps("project", "Maven: com.adobe.flex.framework:framework:swc:3.2.0.3959");
     assertModuleLibDep("project", "Maven: com.adobe.flex.framework:framework:swc:3.2.0.3959",
                        "jar://" + getRepositoryPath() + "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959.swc!/",
                        "jar://" + getRepositoryPath() + "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959-sources.jar!/",
@@ -1277,6 +1278,39 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + getRepositoryPath() + "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959-sources.jar!/",
                        "jar://" + getRepositoryPath() +
                        "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959-javadoc.jar!/");
+  }
+
+  public void testUpdateRootEntriesWithActualPathForDependenciesWithClassifiers() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>org.testng</groupId>" +
+                  "    <artifactId>testng</artifactId>" +
+                  "    <version>5.8</version>" +
+                  "    <classifier>jdk15</classifier>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertModuleLibDeps("project", "Maven: org.testng:testng:jdk15:5.8", "Maven: junit:junit:3.8.1");
+    assertModuleLibDep("project", "Maven: org.testng:testng:jdk15:5.8",
+                       "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15.jar!/",
+                       "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15-javadoc.jar!/");
+
+    myProjectsManager.listenForExternalChanges(); // to recognize repository change
+    setRepositoryPath(new File(myDir, "__repo").getPath());
+
+    myProjectsManager.scheduleResolveAllInTests();
+
+    resolveDependenciesAndImport();
+
+    assertModuleLibDep("project", "Maven: org.testng:testng:jdk15:5.8",
+                       "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15.jar!/",
+                       "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15-javadoc.jar!/");
   }
 
   public void testRemovingUnusedLibraries() throws Exception {

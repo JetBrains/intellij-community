@@ -138,10 +138,10 @@ public class MavenArtifact implements Serializable {
   }
 
   public String getRelativePath() {
-    return getRelativePathForClassifier(myClassifier);
+    return getRelativePathForClassifier(null);
   }
 
-  public String getRelativePathForClassifier(String classifier) {
+  public String getRelativePathForClassifier(String extraClassifier) {
     StringBuilder result = new StringBuilder();
     result.append(myGroupId.replace('.', '/'));
     result.append('/');
@@ -152,9 +152,14 @@ public class MavenArtifact implements Serializable {
     result.append(myArtifactId);
     result.append('-');
     result.append(myVersion);
-    if (classifier != null) {
+    if (myClassifier != null) {
       result.append('-');
-      result.append(classifier);
+      result.append(myClassifier);
+    }
+
+    if (extraClassifier != null) {
+      result.append('-');
+      result.append(extraClassifier);
       result.append(".jar");
     }
     else {
@@ -166,17 +171,17 @@ public class MavenArtifact implements Serializable {
   }
 
   public String getUrl() {
-    return getUrlForClassifier(myClassifier);
+    return getUrlForClassifier(null);
   }
 
-  public String getUrlForClassifier(String classifier) {
+  public String getUrlForClassifier(String extraClassifier) {
     String path = getPath();
 
-    if (classifier != null) {
+    if (extraClassifier != null) {
       int dotPos = path.lastIndexOf(".");
       if (dotPos != -1) {// sometimes path doesn't contain '.'; but i can't find any reason.
         String withoutExtension = path.substring(0, dotPos);
-        path = MessageFormat.format("{0}-{1}.jar", withoutExtension, classifier);
+        path = MessageFormat.format("{0}-{1}.jar", withoutExtension, extraClassifier);
       }
     }
     return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, path) + JarFileSystem.JAR_SEPARATOR;
