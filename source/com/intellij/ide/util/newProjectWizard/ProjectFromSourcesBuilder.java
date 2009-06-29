@@ -6,6 +6,7 @@ import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.importProject.ModuleInsight;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
@@ -178,14 +179,7 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
 
     final String moduleFilePath = descriptor.computeModuleFilePath();
-    final File moduleFile = new File(moduleFilePath);
-    if (moduleFile.exists()) {
-      FileUtil.delete(moduleFile);
-      final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(moduleFile);
-      if (file != null) {
-        file.refresh(false, false);
-      }
-    }
+    ModuleBuilder.deleteModuleFile(moduleFilePath);
 
     final Module module = moduleModel.newModule(moduleFilePath, StdModuleTypes.JAVA);
     final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();

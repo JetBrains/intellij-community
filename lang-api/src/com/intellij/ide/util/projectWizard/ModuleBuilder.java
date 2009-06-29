@@ -31,6 +31,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.EventDispatcher;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -94,6 +97,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     LOG.assertTrue(myName != null);
     LOG.assertTrue(myModuleFilePath != null);
 
+    deleteModuleFile(myModuleFilePath);
     final ModuleType moduleType = getModuleType();
     final Module module = moduleModel.newModule(myModuleFilePath, moduleType);
     final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
@@ -189,6 +193,17 @@ public abstract class ModuleBuilder extends ProjectBuilder{
       }
     }
     return result.get();
+  }
+
+  public static void deleteModuleFile(String moduleFilePath) {
+    final File moduleFile = new File(moduleFilePath);
+    if (moduleFile.exists()) {
+      FileUtil.delete(moduleFile);
+      final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(moduleFile);
+      if (file != null) {
+        file.refresh(false, false);
+      }
+    }
   }
 
   public static abstract class ModuleConfigurationUpdater {
