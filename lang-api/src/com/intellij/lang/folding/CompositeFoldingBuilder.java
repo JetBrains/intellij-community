@@ -19,6 +19,7 @@ package com.intellij.lang.folding;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,7 @@ import java.util.List;
  * @see com.intellij.lang.folding.LanguageFolding
  * @since 9.0
  */
-public class CompositeFoldingBuilder extends FoldingBuilderEx {
+public class CompositeFoldingBuilder extends FoldingBuilderEx implements DumbAware {
   public static final Key<FoldingBuilder> FOLDING_BUILDER = new Key<FoldingBuilder>("FOLDING_BUILDER");
   private final List<FoldingBuilder> myBuilders;
 

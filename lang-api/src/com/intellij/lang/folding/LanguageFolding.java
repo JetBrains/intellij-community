@@ -20,6 +20,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 
 import java.util.List;
@@ -63,6 +65,10 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
   }
 
   public static FoldingDescriptor[] buildFoldingDescriptors(FoldingBuilder builder, PsiElement root, Document document, boolean quick) {
+    if (!(builder instanceof DumbAware) && DumbService.getInstance(root.getProject()).isDumb()) {
+      return FoldingDescriptor.EMPTY;
+    }
+
     if (builder instanceof FoldingBuilderEx) {
       return ((FoldingBuilderEx)builder).buildFoldRegions(root, document, quick);
     }
