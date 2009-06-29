@@ -73,7 +73,7 @@ public class GroovyInstanceMethodNamingConventionInspection extends ConventionIn
 
     public void visitMethod(GrMethod grMethod) {
       super.visitMethod(grMethod);
-      if (grMethod.hasModifierProperty(PsiModifier.STATIC)) {
+      if (grMethod.hasModifierProperty(PsiModifier.STATIC) || grMethod.isConstructor()) {
         return;
       }
       final String name = grMethod.getName();
