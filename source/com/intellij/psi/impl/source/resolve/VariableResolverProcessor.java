@@ -11,7 +11,6 @@ import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.JavaVariableConflictResolver;
 import com.intellij.psi.scope.processor.ConflictFilterProcessor;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
 
 /**
@@ -66,8 +65,9 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
     add(new CandidateInfo(element, substitutor, myPlace, myAccessClass, staticProblem, myCurrentFileContext));
   }
 
-  public boolean shouldProcess(Class elementClass) {
-    return ReflectionCache.isAssignable(PsiVariable.class, elementClass);
+
+  public boolean shouldProcess(DeclaractionKind kind) {
+    return kind == DeclaractionKind.VARIABLE || kind == DeclaractionKind.FIELD || kind == DeclaractionKind.ENUM_CONST;
   }
 
   public boolean execute(PsiElement element, ResolveState state) {

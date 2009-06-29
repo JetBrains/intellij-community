@@ -7,25 +7,25 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.BaseScopeProcessor;
-import com.intellij.psi.scope.NameHint;
-import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.psi.scope.BaseScopeProcessor;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
@@ -841,10 +841,10 @@ public class JavaCompletionUtil {
         return member.getName();
       }
 
-      public boolean shouldProcess(Class elementClass) {
-        return member instanceof PsiEnumConstant ? elementClass == PsiEnumConstant.class :
-               member instanceof PsiField ? elementClass == PsiField.class :
-               elementClass == PsiMethod.class;
+      public boolean shouldProcess(DeclaractionKind kind) {
+        return member instanceof PsiEnumConstant ? kind == DeclaractionKind.ENUM_CONST :
+               member instanceof PsiField ? kind == DeclaractionKind.FIELD :
+               kind == DeclaractionKind.METHOD;
       }
 
       @Override

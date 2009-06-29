@@ -152,8 +152,28 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     return myResults;
   }
 
-  public boolean shouldProcess(Class elementClass){
-    return myFilter.isClassAcceptable(elementClass);
+  public boolean shouldProcess(DeclaractionKind kind) {
+    switch (kind) {
+      case CLASS:
+        return myFilter.isClassAcceptable(PsiClass.class);
+
+      case FIELD:
+        return myFilter.isClassAcceptable(PsiField.class);
+
+      case METHOD:
+        return myFilter.isClassAcceptable(PsiMethod.class);
+
+      case PACKAGE:
+        return myFilter.isClassAcceptable(PsiPackage.class);
+
+      case VARIABLE:
+        return myFilter.isClassAcceptable(PsiVariable.class);
+
+      case ENUM_CONST:
+        return myFilter.isClassAcceptable(PsiEnumConstant.class);
+    }
+
+    return false;
   }
 
   @Override

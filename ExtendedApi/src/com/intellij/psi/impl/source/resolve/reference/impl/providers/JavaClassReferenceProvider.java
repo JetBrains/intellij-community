@@ -113,7 +113,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
     final ElementClassHint hint = processor.getHint(ElementClassHint.KEY);
     if (position == null) return;
-    if (hint == null || hint.shouldProcess(PsiPackage.class) || hint.shouldProcess(PsiClass.class)) {
+    if (hint == null || hint.shouldProcess(ElementClassHint.DeclaractionKind.PACKAGE) || hint.shouldProcess(ElementClassHint.DeclaractionKind.CLASS)) {
       final List<PsiElement> cachedPackages = getDefaultPackages();
       for (final PsiElement psiPackage : cachedPackages) {
         if (!processor.execute(psiPackage, ResolveState.initial())) return;

@@ -455,7 +455,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
     final Condition<String> prefixMatcher = processor.getHint(JavaCompletionProcessor.NAME_FILTER);
 
-    if (classHint == null || classHint.shouldProcess(PsiClass.class)) {
+    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.CLASS)) {
       NameHint nameHint = processor.getHint(NameHint.KEY);
       if (nameHint != null) {
         if (processClassesByName(processor, state, place, scope, migration, nameHint.getName(state))) return false;
@@ -479,7 +479,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
         }
       }
     }
-    if (classHint == null || classHint.shouldProcess(PsiPackage.class)) {
+    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.PACKAGE)) {
       NameHint nameHint = processor.getHint(NameHint.KEY);
       if (nameHint != null) {
         PsiPackage aPackage = findSubPackageByName(nameHint.getName(state), scope);

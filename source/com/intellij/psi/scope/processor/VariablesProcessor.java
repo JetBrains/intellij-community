@@ -8,7 +8,6 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
-import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
 
 import java.util.List;
@@ -31,8 +30,8 @@ public abstract class VariablesProcessor extends BaseScopeProcessor implements E
 
   protected abstract boolean check(PsiVariable var, ResolveState state);
 
-  public boolean shouldProcess(Class elementClass) {
-    return ReflectionCache.isAssignable(PsiVariable.class, elementClass);
+  public boolean shouldProcess(DeclaractionKind kind) {
+    return kind == DeclaractionKind.VARIABLE || kind == DeclaractionKind.FIELD || kind == DeclaractionKind.ENUM_CONST;
   }
 
   /** Always return true since we wanna get all vars in scope */

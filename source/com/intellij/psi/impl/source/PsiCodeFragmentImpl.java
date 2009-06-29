@@ -156,7 +156,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
                                      @NotNull PsiElement place) {
     final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
-    if (classHint == null || classHint.shouldProcess(PsiClass.class)) {
+    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.CLASS)) {
       final NameHint nameHint = processor.getHint(NameHint.KEY);
       final String name = nameHint != null ? nameHint.getName(state) : null;
       if (name != null) {

@@ -254,7 +254,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
     final NameHint nameHint = processor.getHint(NameHint.KEY);
     final String name = nameHint != null ? nameHint.getName(state) : null;
-    if (classHint == null || classHint.shouldProcess(PsiClass.class)){
+    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.CLASS)){
       if(processor instanceof ClassResolverProcessor){
         // Some speedup
         final JavaResolveResult[] guessClass = getGuess(name);
@@ -310,7 +310,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       }
     }
 
-    if(classHint == null || classHint.shouldProcess(PsiPackage.class)){
+    if(classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.PACKAGE)){
       final PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
       processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, rootPackage);
       if(rootPackage != null) rootPackage.processDeclarations(processor, state, null, place);
@@ -352,7 +352,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       staticImportProcessor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, null);
     }
 
-    if (classHint == null || classHint.shouldProcess(PsiClass.class)){
+    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.CLASS)){
       processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, null);
 
       PsiJavaCodeReferenceElement[] implicitlyImported = getImplicitlyImportedPackageReferences();

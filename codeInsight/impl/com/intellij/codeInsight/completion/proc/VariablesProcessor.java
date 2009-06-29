@@ -15,7 +15,6 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
-import com.intellij.util.ReflectionCache;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,8 +42,8 @@ public class VariablesProcessor
     myResultList = lst;
   }
 
-  public boolean shouldProcess(Class elementClass) {
-    return ReflectionCache.isAssignable(PsiVariable.class, elementClass);
+  public boolean shouldProcess(DeclaractionKind kind) {
+    return kind == DeclaractionKind.VARIABLE || kind == DeclaractionKind.FIELD || kind == DeclaractionKind.ENUM_CONST;
   }
 
   /** Always return true since we wanna get all vars in scope */

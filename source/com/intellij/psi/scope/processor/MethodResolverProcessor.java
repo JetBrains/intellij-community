@@ -7,7 +7,6 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
-import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
 
 public class MethodResolverProcessor extends MethodCandidatesProcessor implements ElementClassHint {
@@ -30,10 +29,9 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor implement
     super(place, resolvers, new SmartList<CandidateInfo>());
   }
 
-  public boolean shouldProcess(Class elementClass) {
-    return ReflectionCache.isAssignable(PsiMethod.class, elementClass);
+  public boolean shouldProcess(DeclaractionKind kind) {
+    return kind == DeclaractionKind.METHOD;
   }
-
 
   public void handleEvent(Event event, Object associated) {
     if (event == JavaScopeProcessorEvent.CHANGE_LEVEL) {

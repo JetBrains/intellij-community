@@ -9,7 +9,6 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
 
 import java.util.Iterator;
@@ -63,8 +62,8 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     return myClassName;
   }
 
-  public boolean shouldProcess(Class elementClass) {
-    return ReflectionCache.isAssignable(PsiClass.class, elementClass);
+  public boolean shouldProcess(DeclaractionKind kind) {
+    return kind == DeclaractionKind.CLASS;
   }
 
   private boolean myStaticContext = false;
