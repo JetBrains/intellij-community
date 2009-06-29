@@ -19,6 +19,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -30,7 +31,7 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
   private NotificationsListPanel myPopup;
 
   private BlinkIconWrapper myCurrentIcon;
-  private boolean myBlinkIcon = false;
+  private boolean myBlinkIcon = true;
   private IdeNotificationArea myArea;
   private Notification myLatest;
 
@@ -88,7 +89,8 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
 
     if (myPopup.showOrHide()) {
       myBlinkIcon = false;
-    } else {
+    }
+    else {
       myPopup.clear();
       myPopup = null;
     }
@@ -107,7 +109,7 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
         setIcon(myCurrentIcon);
 
         if (add) {
-          myBlinkIcon = myPopup != null && !myPopup.isShowing();
+          myBlinkIcon = myPopup == null || !myPopup.isShowing();
           notifyByBaloon(latest, settings);
         }
 
@@ -116,7 +118,8 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
 
       setForeground(Color.BLACK);
       setText(String.format("%d", count));
-    } else {
+    }
+    else {
       myCurrentIcon = new BlinkIconWrapper(EMPTY_ICON, false);
       setIcon(myCurrentIcon);
       setForeground(getBackground());
@@ -152,20 +155,20 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
     if (NotificationDisplayType.BALLOON.equals(settings.getDisplayType())) {
       final String html = String.format("%s", notification.getName());
 
-      final Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(html, notification.getIcon(),
-          notification.getBackgroundColor(), null)
-          .setCloseButtonEnabled(true).setShowCallout(false).setFadeoutTime(3000).setHideOnClickOutside(false).setHideOnKeyOutside(false).setHideOnFrameResize(false)
-          .setClickHandler(new ActionListener() {
-            public void actionPerformed(final ActionEvent e) {
-              performNotificationAction(notification);
-            }
-          }, true).createBalloon();
+      final Balloon balloon =
+        JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(html, notification.getIcon(), notification.getBackgroundColor(), null)
+          .setCloseButtonEnabled(true).setShowCallout(false).setFadeoutTime(3000).setHideOnClickOutside(false).setHideOnKeyOutside(false)
+          .setHideOnFrameResize(false).setClickHandler(new ActionListener() {
+          public void actionPerformed(final ActionEvent e) {
+            performNotificationAction(notification);
+          }
+        }, true).createBalloon();
 
       final Runnable show = new Runnable() {
         public void run() {
           final Window window = SwingUtilities.getWindowAncestor(NotificationComponent.this);
           if (window instanceof IdeFrameImpl) {
-            final BalloonLayout balloonLayout = ((IdeFrameImpl) window).getBalloonLayout();
+            final BalloonLayout balloonLayout = ((IdeFrameImpl)window).getBalloonLayout();
             balloonLayout.add(balloon);
           }
         }
@@ -204,6 +207,7 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
     private Icon myOriginal;
     private boolean myPaint;
     private boolean myBlink;
+    private BufferedImage myGrayscaleImage;
 
     private BlinkIconWrapper(@NotNull final Icon original, final boolean blink) {
       myOriginal = original;
@@ -223,7 +227,30 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
     }
 
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      if (!myBlink || !myBlinkIcon || myPaint) {
+      if (!myBlinkIcon) {
+        if (myGrayscaleImage == null) {
+          myGrayscaleImage = new BufferedImage(myOriginal.getIconWidth(), myOriginal.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+          myOriginal.paintIcon(c, myGrayscaleImage.createGraphics(), 0, 0);
+
+          for (int _x = 0; _x < myGrayscaleImage.getWidth(); _x++) {
+            for (int _y = 0; _y < myGrayscaleImage.getHeight(); _y++) {
+              int argb = myGrayscaleImage.getRGB(_x, _y);
+
+              int a = (argb >> 24) & 0xff;
+              int r = (argb >> 16) & 0xff;
+              int _g = (argb >> 8) & 0xff;
+              int b = (argb) & 0xff;
+
+              int l = (int)(.299 * r + .587 * _g + .114 * b); //luminance
+
+              myGrayscaleImage.setRGB(_x, _y, (a << 24) + (l << 16) + (l << 8) + l);
+            }
+          }
+        }
+
+        g.drawImage(myGrayscaleImage, x, y, null);
+      }
+      else if (!myBlink || !myPaint) {
         myOriginal.paintIcon(c, g, x, y);
       }
     }
