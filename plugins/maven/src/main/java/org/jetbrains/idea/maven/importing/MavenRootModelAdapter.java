@@ -7,7 +7,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenArtifact;
@@ -18,7 +17,6 @@ import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.utils.Url;
 
 import java.io.File;
-import java.text.MessageFormat;
 
 public class MavenRootModelAdapter {
   private static final String MAVEN_LIB_PREFIX = "Maven: ";
@@ -228,45 +226,11 @@ public class MavenRootModelAdapter {
       }
     }
 
-    String newUrl = makeUrl(artifact, classifier);
-    if (newUrl != null) {
-      libraryModel.addRoot(newUrl, type);
-    }
+    libraryModel.addRoot(artifact.getUrlForClassifier(classifier), type);
   }
 
   private boolean isRepositoryUrl(MavenArtifact artifact, String url, String classifier) {
-    StringBuilder relPath = new StringBuilder();
-    relPath.append(artifact.getGroupId().replace('.', '/'));
-    relPath.append('/');
-    relPath.append(artifact.getArtifactId());
-    relPath.append('/');
-    relPath.append(artifact.getVersion());
-    relPath.append('/');
-    relPath.append(artifact.getArtifactId());
-    relPath.append('-');
-    relPath.append(artifact.getVersion());
-    if (classifier != null) {
-      relPath.append('-');
-      relPath.append(classifier);
-    }
-    relPath.append(".jar!/");
-    return url.endsWith(relPath.toString());
-  }
-
-  @Nullable
-  private String makeUrl(MavenArtifact artifact, String classifier) {
-    String path = artifact.getPath();
-
-    if (classifier != null) {
-      int dotPos = path.lastIndexOf(".");
-      if (dotPos == -1) return null; // somethimes path doesn't contain '.'; but i can't find any sensible reason.
-
-      String withoutExtension = path.substring(0, dotPos);
-      path = MessageFormat.format("{0}-{1}.jar", withoutExtension, classifier);
-    }
-
-    String normalizedPath = FileUtil.toSystemIndependentName(path);
-    return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, normalizedPath) + JarFileSystem.JAR_SEPARATOR;
+    return url.endsWith(artifact.getRelativePathForClassifier(classifier));
   }
 
   public static boolean isChangedByUser(Library library) {

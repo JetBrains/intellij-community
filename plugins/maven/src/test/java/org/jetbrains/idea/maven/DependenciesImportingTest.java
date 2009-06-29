@@ -1223,6 +1223,62 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
   }
 
+  public void testUpdateRootEntriesWithActualPathForNonJarDependencies() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>swf</packaging>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>com.adobe.flex.framework</groupId>" +
+                  "    <artifactId>framework</artifactId>" +
+                  "    <version>3.2.0.3959</version>" +
+                  "    <type>swc</type>" +
+                  "  </dependency>" +
+                  "</dependencies>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>info.flex-mojos</groupId>" +
+                  "      <artifactId>flex-compiler-mojo</artifactId>" +
+                  "      <version>2.0M10</version>" +
+                  "      <extensions>true</extensions>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>" +
+
+                  "<repositories>" +
+                  "  <repository>" +
+                  "    <id>flex-mojos-repository</id>" +
+                  "    <url>http://svn.sonatype.org/flexmojos/repository/</url>" +
+                  "    <releases>" +
+                  "      <enabled>true</enabled>" +
+                  "    </releases>" +
+                  "  </repository>" +
+                  "</repositories>");
+
+    assertModuleLibDep("project", "Maven: com.adobe.flex.framework:framework:swc:3.2.0.3959",
+                       "jar://" + getRepositoryPath() + "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959.swc!/",
+                       "jar://" + getRepositoryPath() + "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959-sources.jar!/",
+                       "jar://" + getRepositoryPath() +
+                       "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959-javadoc.jar!/");
+
+    myProjectsManager.listenForExternalChanges(); // to recognize repository change
+    setRepositoryPath(new File(myDir, "__repo").getPath());
+
+    myProjectsManager.scheduleResolveAllInTests();
+
+    resolveDependenciesAndImport();
+
+    assertModuleLibDep("project", "Maven: com.adobe.flex.framework:framework:swc:3.2.0.3959",
+                       "jar://" + getRepositoryPath() + "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959.swc!/",
+                       "jar://" + getRepositoryPath() + "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959-sources.jar!/",
+                       "jar://" + getRepositoryPath() +
+                       "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959-javadoc.jar!/");
+  }
+
   public void testRemovingUnusedLibraries() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

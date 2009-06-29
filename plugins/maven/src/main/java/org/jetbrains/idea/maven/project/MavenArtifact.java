@@ -16,6 +16,9 @@
 
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.jetbrains.idea.maven.embedder.CustomArtifact;
@@ -24,6 +27,7 @@ import org.jetbrains.idea.maven.utils.MavenConstants;
 
 import java.io.File;
 import java.io.Serializable;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -130,7 +134,52 @@ public class MavenArtifact implements Serializable {
   }
 
   public String getPath() {
-    return myFile.getPath();
+    return FileUtil.toSystemIndependentName(myFile.getPath());
+  }
+
+  public String getRelativePath() {
+    return getRelativePathForClassifier(myClassifier);
+  }
+
+  public String getRelativePathForClassifier(String classifier) {
+    StringBuilder result = new StringBuilder();
+    result.append(myGroupId.replace('.', '/'));
+    result.append('/');
+    result.append(myArtifactId);
+    result.append('/');
+    result.append(myVersion);
+    result.append('/');
+    result.append(myArtifactId);
+    result.append('-');
+    result.append(myVersion);
+    if (classifier != null) {
+      result.append('-');
+      result.append(classifier);
+      result.append(".jar");
+    }
+    else {
+      result.append(".");
+      result.append(myExtension);
+    }
+    result.append("!/");
+    return result.toString();
+  }
+
+  public String getUrl() {
+    return getUrlForClassifier(myClassifier);
+  }
+
+  public String getUrlForClassifier(String classifier) {
+    String path = getPath();
+
+    if (classifier != null) {
+      int dotPos = path.lastIndexOf(".");
+      if (dotPos != -1) {// sometimes path doesn't contain '.'; but i can't find any reason.
+        String withoutExtension = path.substring(0, dotPos);
+        path = MessageFormat.format("{0}-{1}.jar", withoutExtension, classifier);
+      }
+    }
+    return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, path) + JarFileSystem.JAR_SEPARATOR;
   }
 
   public List<String> getTrail() {

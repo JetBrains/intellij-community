@@ -5,7 +5,7 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.idea.maven.dom.MavenArtifactCoordinatesVersionConverter;
 
-public interface MavenDomArtifactCoordinates extends MavenDomShortMavenArtifactCoordinates {
+public interface MavenDomArtifactCoordinates extends MavenDomShortArtifactCoordinates {
   @Required
   @Convert(MavenArtifactCoordinatesVersionConverter.class)
   GenericDomValue<String> getVersion();

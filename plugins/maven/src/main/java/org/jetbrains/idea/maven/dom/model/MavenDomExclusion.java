@@ -5,5 +5,5 @@ package org.jetbrains.idea.maven.dom.model;
 
 import org.jetbrains.idea.maven.dom.MavenDomElement;
 
-public interface MavenDomExclusion extends MavenDomElement, MavenDomShortMavenArtifactCoordinates {
+public interface MavenDomExclusion extends MavenDomElement, MavenDomShortArtifactCoordinates {
 }

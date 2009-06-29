@@ -3,20 +3,23 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates;
-import org.jetbrains.idea.maven.dom.model.MavenDomShortMavenArtifactCoordinates;
+import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
 import org.jetbrains.idea.maven.project.MavenId;
 
 public class MavenArtifactCoordinatesHelper {
   public static MavenId getId(ConvertContext context) {
-    MavenDomShortMavenArtifactCoordinates coords = (MavenDomShortMavenArtifactCoordinates)context.getInvocationElement().getParent();
+    MavenDomShortArtifactCoordinates coords = (MavenDomShortArtifactCoordinates)context.getInvocationElement().getParent();
+    return getId(coords);
+  }
+
+  public static MavenId getId(MavenDomShortArtifactCoordinates coords) {
     String version = "";
     if (coords instanceof MavenDomArtifactCoordinates) {
       version = resolveProperties(((MavenDomArtifactCoordinates)coords).getVersion());
     }
-    MavenId result = new MavenId(resolveProperties(coords.getGroupId()),
-                                 resolveProperties(coords.getArtifactId()),
-                                 version);
-    return result;
+    return new MavenId(resolveProperties(coords.getGroupId()),
+                       resolveProperties(coords.getArtifactId()),
+                       version);
   }
 
   private static String resolveProperties(GenericDomValue<String> value) {

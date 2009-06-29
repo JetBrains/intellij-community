@@ -6,7 +6,7 @@ import com.intellij.util.xml.Required;
 import org.jetbrains.idea.maven.dom.MavenArtifactCoordinatesArtifactIdConverter;
 import org.jetbrains.idea.maven.dom.MavenArtifactCoordinatesGroupIdConverter;
 
-public interface MavenDomShortMavenArtifactCoordinates {
+public interface MavenDomShortArtifactCoordinates {
   @Required
   @Convert(MavenArtifactCoordinatesGroupIdConverter.class)
   GenericDomValue<String> getGroupId();
