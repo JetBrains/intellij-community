@@ -6,6 +6,8 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -13,6 +15,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.JavaMethod;
 import com.intellij.util.xml.reflect.*;
+import com.intellij.semantic.SemService;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -70,6 +73,8 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
 
 
         if (registrar != null) {
+          final SemService semService = SemService.getSemService(myProject);
+
           final List<DomExtensionImpl> fixeds = registrar.getFixeds();
           final List<DomExtensionImpl> collections = registrar.getCollections();
           final List<DomExtensionImpl> attributes = registrar.getAttributes();
@@ -78,13 +83,19 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
             for (final DomExtensionImpl extension : attributes) {
               newAttributes.addDescription(extension.addAnnotations(new AttributeChildDescriptionImpl(extension.getXmlName(), extension.getType())));
             }
+            for (XmlAttribute attribute : ((XmlTag)element).getAttributes()) {
+              semService.clearCachedSemElements(attribute);
+            }
             myAttributes = newAttributes;
           }
+
+          boolean clearSubTags = false;
           if (!fixeds.isEmpty()) {
             ChildrenDescriptionsHolder<FixedChildDescriptionImpl> newFixeds = new ChildrenDescriptionsHolder<FixedChildDescriptionImpl>(myStaticGenericInfo.getFixed());
             for (final DomExtensionImpl extension : fixeds) {
               newFixeds.addDescription(extension.addAnnotations(new FixedChildDescriptionImpl(extension.getXmlName(), extension.getType(), extension.getCount(), ArrayUtil.EMPTY_COLLECTION_ARRAY)));
             }
+            clearSubTags = true;
             myFixeds = newFixeds;
           }
           if (!collections.isEmpty()) {
@@ -92,13 +103,22 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
             for (final DomExtensionImpl extension : collections) {
               newCollections.addDescription(extension.addAnnotations(new CollectionChildDescriptionImpl(extension.getXmlName(), extension.getType(), Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST)));
             }
+            clearSubTags = true;
             myCollections = newCollections;
           }
 
           final DomExtensionImpl extension = registrar.getCustomChildrenType();
           if (extension != null) {
             myCustomChildren = new CustomDomChildrenDescriptionImpl(null, extension.getType());
+            clearSubTags = true;
           }
+
+          if (clearSubTags) {
+            for (XmlTag tag : ((XmlTag)element).getSubTags()) {
+              semService.clearCachedSemElements(tag);
+            }
+          }
+
         }
         myInitialized = true;
       }

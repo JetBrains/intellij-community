@@ -683,7 +683,11 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     List<DomElement> elements = new ArrayList<DomElement>(subTags.size());
     for (XmlTag subTag : subTags) {
       final SemKey<? extends DomInvocationHandler> key = description instanceof CustomDomChildrenDescription ? DomManagerImpl.DOM_CUSTOM_HANDLER_KEY : DomManagerImpl.DOM_COLLECTION_HANDLER_KEY;
-      elements.add(myManager.getSemService().getSemElement(key, subTag).getProxy());
+      final DomInvocationHandler semElement = myManager.getSemService().getSemElement(key, subTag);
+      if (semElement == null) {
+        myManager.getSemService().getSemElement(key, subTag);
+      }
+      elements.add(semElement.getProxy());
     }
     return Collections.unmodifiableList(elements);
   }

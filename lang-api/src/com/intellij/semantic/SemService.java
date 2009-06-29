@@ -35,6 +35,8 @@ public abstract class SemService {
 
   public abstract <T extends SemElement> void setCachedSemElement(SemKey<T> key, @NotNull PsiElement psi, @Nullable T semElement);
 
+  public abstract <T extends SemElement> void clearCachedSemElements(@NotNull PsiElement psi);
+
   public abstract void clearCache();
 
   /**

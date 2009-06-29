@@ -222,7 +222,12 @@ public class SemServiceImpl extends SemService{
   public <T extends SemElement> void setCachedSemElement(SemKey<T> key, @NotNull PsiElement psi, @Nullable T semElement) {
     cacheOrGetMap(psi).put(key, ContainerUtil.<SemElement>createMaybeSingletonList(semElement));
   }
-                    
+
+  @Override
+  public <T extends SemElement> void clearCachedSemElements(@NotNull PsiElement psi) {
+    myCache.remove(psi);
+  }
+
   private ConcurrentMap<SemKey, List<SemElement>> cacheOrGetMap(PsiElement psi) {
     ConcurrentMap<SemKey, List<SemElement>> map = myCache.get(psi);
     if (map == null) {
