@@ -202,9 +202,10 @@ public class HighlightNamesUtil {
                                   : aClass.getModifierList() == null ? aClass.getNameIdentifier() : aClass.getModifierList();
     if(psiElement == null) return new TextRange(aClass.getTextRange().getStartOffset(), aClass.getTextRange().getStartOffset());
     int start = stripAnnotationsFromModifierList(psiElement);
-    TextRange endTextRange = (aClass instanceof PsiAnonymousClass
-                              ? ((PsiAnonymousClass)aClass).getBaseClassReference()
-                              : aClass.getImplementsList()).getTextRange();
+    PsiElement endElement = aClass instanceof PsiAnonymousClass ?
+                            ((PsiAnonymousClass)aClass).getBaseClassReference() :
+                            aClass.getImplementsList();
+    TextRange endTextRange = endElement == null ? null : endElement.getTextRange();
     int end = endTextRange == null ? start : endTextRange.getEndOffset();
     return new TextRange(start, end);
   }
