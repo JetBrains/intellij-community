@@ -232,7 +232,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public boolean holdsReadLock() {
-    return myActionsLock.isReadLockAcquired(Thread.currentThread());
+    return myActionsLock.isReadLockAcquired();
   }
 
   @Override
@@ -564,7 +564,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       return;
     }
 
-    if (myActionsLock.isReadLockAcquired(Thread.currentThread())) {
+    if (myActionsLock.isReadLockAcquired()) {
       LOG.error("Calling invokeAndWait from read-action leads to possible deadlock.");
     }
 
@@ -809,8 +809,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     Thread currentThread = Thread.currentThread();
     return ourDispatchThread == currentThread ||
            isExceptionalThreadWithReadAccess() ||
-           myActionsLock.isReadLockAcquired(currentThread) ||
-           myActionsLock.isWriteLockAcquired(currentThread) ||
+           myActionsLock.isReadLockAcquired() ||
+           myActionsLock.isWriteLockAcquired() ||
            isDispatchThread();
   }
 

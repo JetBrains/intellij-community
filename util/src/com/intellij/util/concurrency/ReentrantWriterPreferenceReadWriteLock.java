@@ -72,6 +72,28 @@ public class ReentrantWriterPreferenceReadWriteLock extends WriterPreferenceRead
 
   private final ThreadToCountMap readers_ = new ThreadToCountMap();
 
+  private final ThreadLocal<Boolean> hasReadLock = new ThreadLocal<Boolean>() {
+    @Override
+    protected Boolean initialValue() {
+      return Boolean.FALSE;
+    }
+  };
+
+  private final ThreadLocal<Boolean> hasWriteLock = new ThreadLocal<Boolean>() {
+    @Override
+    protected Boolean initialValue() {
+      return Boolean.FALSE;
+    }
+  };
+
+  public boolean isReadLockAcquired() {
+    return hasReadLock.get();
+  }
+
+  public boolean isWriteLockAcquired() {
+    return hasWriteLock.get();
+  }
+
   public synchronized boolean isReadLockAcquired(Thread thread){
     return readers_.get(thread) > 0;
   }
@@ -96,6 +118,7 @@ public class ReentrantWriterPreferenceReadWriteLock extends WriterPreferenceRead
       return true;
     }
     else if (allowReader()) {
+      hasReadLock.set(true);
       readers_.put(t, 1);
       ++activeReaders_;
       return true;
@@ -114,6 +137,7 @@ public class ReentrantWriterPreferenceReadWriteLock extends WriterPreferenceRead
           (readers_.size() == 1 &&
            readers_.get(Thread.currentThread()) > 0)) {
         activeWriter_ = Thread.currentThread();
+        hasWriteLock.set(true);
         writeHolds_ = 1;
         return true;
       }
@@ -135,6 +159,7 @@ public class ReentrantWriterPreferenceReadWriteLock extends WriterPreferenceRead
     }
     else {
       readers_.put(t, 0);
+      hasReadLock.set(false);
 
       if (writeHolds_ > 0) { // a write lock is still held by current thread
         return null;
@@ -155,6 +180,7 @@ public class ReentrantWriterPreferenceReadWriteLock extends WriterPreferenceRead
       return null;
     else {
       activeWriter_ = null;
+      hasWriteLock.set(false);
       if (waitingReaders_ > 0 && allowReader())
         return readerLock_;
       else if (waitingWriters_ > 0)
