@@ -33,6 +33,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.TableScrollingUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
@@ -323,6 +324,7 @@ public class ShowUsagesAction extends AnAction {
         return true;
       }
     };
+    TableScrollingUtil.installActions(table);
     final Vector<Object> data = new Vector<Object>();
     setModel(table, usages, visibleNodes, usageView, data);
 

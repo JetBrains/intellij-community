@@ -30,7 +30,7 @@ import java.util.List;
 public class ListUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.ListUtil");
 
-  public static abstract class Updatable {
+  public abstract static class Updatable {
     private final JButton myButton;
     private boolean myEnabled = true;
 
@@ -50,20 +50,20 @@ public class ListUtil {
     protected abstract void update();
   }
 
-  public static java.util.List removeSelectedItems(JList list) {
+  public static List removeSelectedItems(JList list) {
     return removeSelectedItems(list, null);
   }
 
-  public static java.util.List removeIndices(JList list, int[] indices) {
+  public static List removeIndices(JList list, int[] indices) {
     return removeIndices(list, indices, null);
   }
 
-  public static <T> java.util.List<T> removeSelectedItems(JList list, Condition<T> condition) {
+  public static <T> List<T> removeSelectedItems(JList list, Condition<T> condition) {
     int[] idxs = list.getSelectedIndices();
     return removeIndices(list, idxs, condition);
   }
 
-  private static <T> java.util.List<T> removeIndices(JList list, int[] idxs, Condition<T> condition) {
+  private static <T> List<T> removeIndices(JList list, int[] idxs, Condition<T> condition) {
     if (idxs.length == 0) {
       return new ArrayList<T>(0);
     }
@@ -193,10 +193,10 @@ public class ListUtil {
     return addRemoveListener(button, list, null);
   }
 
-  public static Updatable addRemoveListener(final JButton button, final JList list, final RemoveNotification notification) {
+  public static Updatable addRemoveListener(final JButton button, final JList list, final RemoveNotification<String> notification) {
     button.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final java.util.List items = removeSelectedItems(list);
+        final List<String> items = removeSelectedItems(list);
         if (notification != null)
           notification.itemsRemoved(items);
         list.requestFocusInWindow();

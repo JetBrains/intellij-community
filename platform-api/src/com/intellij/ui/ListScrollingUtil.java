@@ -26,6 +26,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
 
 public class ListScrollingUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.ListScrollingUtil");
@@ -78,6 +79,7 @@ public class ListScrollingUtil {
 
   public static void movePageUp(JList list) {
     int visible = getVisibleRowCount(list);
+    ListSelectionModel selectionModel = list.getSelectionModel();
     if (visible <= 0) {
       moveHome(list);
       return;
@@ -100,7 +102,7 @@ public class ListScrollingUtil {
       return;
     }
     list.scrollRectToVisible(cellBounds);
-    list.setSelectedIndex(index);
+    selectionModel.setSelectionInterval(index,index);
     list.ensureIndexIsVisible(index);
   }
 
@@ -143,7 +145,8 @@ public class ListScrollingUtil {
   public static void ensureIndexIsVisible(JList list, int index, int moveDirection) {
     int visible = getVisibleRowCount(list);
     int size = list.getModel().getSize();
-    int top, bottom;
+    int top;
+    int bottom;
     if (moveDirection == 0) {
       top = index - (visible - 1) / ROW_PADDING;
       bottom = top + visible - 1;
@@ -193,10 +196,10 @@ public class ListScrollingUtil {
     }
     ensureIndexIsVisible(list, indexToSelect, +1);
     if (selectionModel.getSelectionMode() == ListSelectionModel.SINGLE_SELECTION) {
-      list.setSelectedIndex(indexToSelect);
+      selectionModel.setSelectionInterval(indexToSelect,indexToSelect);
     }
     else {
-      if ((modifiers & KeyEvent.SHIFT_DOWN_MASK) == 0) {
+      if ((modifiers & InputEvent.SHIFT_DOWN_MASK) == 0) {
         selectionModel.removeSelectionInterval(selectionModel.getMinSelectionIndex(), selectionModel.getMaxSelectionIndex());
       }
       selectionModel.addSelectionInterval(indexToSelect, indexToSelect);
@@ -205,7 +208,8 @@ public class ListScrollingUtil {
 
   public static void moveUp(JList list, int modifiers) {
     int size = list.getModel().getSize();
-    int index = list.getSelectedIndex();
+    final ListSelectionModel selectionModel = list.getSelectionModel();
+    int index = selectionModel.getMinSelectionIndex();
     boolean cycleScrolling = UISettings.getInstance().CYCLE_SCROLLING;
     int indexToSelect;
     if (index > 0) {
@@ -218,12 +222,11 @@ public class ListScrollingUtil {
       return;
     }
     ensureIndexIsVisible(list, indexToSelect, -1);
-    if (list.getSelectionMode() == ListSelectionModel.SINGLE_SELECTION) {
-      list.setSelectedIndex(indexToSelect);
+    if (selectionModel.getSelectionMode() == ListSelectionModel.SINGLE_SELECTION) {
+      selectionModel.setSelectionInterval(indexToSelect, indexToSelect);
     }
     else {
-      final ListSelectionModel selectionModel = list.getSelectionModel();
-      if ((modifiers & KeyEvent.SHIFT_DOWN_MASK) == 0) {
+      if ((modifiers & InputEvent.SHIFT_DOWN_MASK) == 0) {
         selectionModel.removeSelectionInterval(selectionModel.getMinSelectionIndex(), selectionModel.getMaxSelectionIndex());
       }
       selectionModel.addSelectionInterval(indexToSelect, indexToSelect);
@@ -231,32 +234,33 @@ public class ListScrollingUtil {
   }
 
   public static void installActions(final JList list) {
-    list.getActionMap().put(SCROLLUP_ACTION_ID, new AbstractAction() {
+    ActionMap actionMap = list.getActionMap();
+    actionMap.put(SCROLLUP_ACTION_ID, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         movePageUp(list);
       }
     });
-    list.getActionMap().put(SCROLLDOWN_ACTION_ID, new AbstractAction() {
+    actionMap.put(SCROLLDOWN_ACTION_ID, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         movePageDown(list);
       }
     });
-    list.getActionMap().put(SELECT_PREVIOUS_ROW_ACTION_ID, new AbstractAction() {
+    actionMap.put(SELECT_PREVIOUS_ROW_ACTION_ID, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         moveUp(list, e.getModifiers());
       }
     });
-    list.getActionMap().put(SELECT_NEXT_ROW_ACTION_ID, new AbstractAction() {
+    actionMap.put(SELECT_NEXT_ROW_ACTION_ID, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         moveDown(list, e.getModifiers());
       }
     });
-    list.getActionMap().put(SELECT_LAST_ROW_ACTION_ID, new AbstractAction() {
+    actionMap.put(SELECT_LAST_ROW_ACTION_ID, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         moveEnd(list);
       }
     });
-    list.getActionMap().put(SELECT_FIRST_ROW_ACTION_ID, new AbstractAction() {
+    actionMap.put(SELECT_FIRST_ROW_ACTION_ID, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         moveHome(list);
       }
