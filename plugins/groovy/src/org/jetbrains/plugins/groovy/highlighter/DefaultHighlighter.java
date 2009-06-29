@@ -104,8 +104,14 @@ public class DefaultHighlighter {
   public static TextAttributesKey DOC_COMMENT_TAG = TextAttributesKey.createTextAttributesKey(DOC_COMMENT_TAG_ID,
       SyntaxHighlighterColors.DOC_COMMENT_TAG.getDefaultAttributes());
 
-  public static TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey(KEYWORD_ID,
-      SyntaxHighlighterColors.KEYWORD.getDefaultAttributes());
+  public static final TextAttributes KEYWORD_ATTRIBUTES = SyntaxHighlighterColors.KEYWORD.getDefaultAttributes().clone();
+  static{
+
+    KEYWORD_ATTRIBUTES.setForegroundColor(new Color(0, 0, 67));
+    KEYWORD_ATTRIBUTES.setFontType(Font.BOLD);
+  }
+
+  public static TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey(KEYWORD_ID, KEYWORD_ATTRIBUTES);
 
   public static TextAttributesKey NUMBER = TextAttributesKey.createTextAttributesKey(NUMBER_ID,
       SyntaxHighlighterColors.NUMBER.getDefaultAttributes());
