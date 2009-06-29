@@ -27,9 +27,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.*;
 
 public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   private ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
@@ -372,6 +372,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean ALIGN_MULTILINE_PARAMETERS = true;
   public boolean ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
   public boolean ALIGN_MULTILINE_FOR = true;
+  public boolean INDENT_WHEN_CASES = true;
 
   public boolean ALIGN_MULTILINE_BINARY_OPERATION = false;
   public boolean ALIGN_MULTILINE_ASSIGNMENT = false;
