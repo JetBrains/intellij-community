@@ -442,34 +442,4 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
     return needSpace ? " " : "";
   }
 
-  private static class QualifiedMethodLookupItem extends JavaMethodCallElement {
-    private final String myQualifier;
-
-    public QualifiedMethodLookupItem(final PsiMethod method, @NotNull final String qualifier) {
-      super(method);
-      myQualifier = qualifier;
-      setLookupString(qualifier + "." + method.getName());
-      putUserData(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE, qualifier + ".");
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (!(o instanceof QualifiedMethodLookupItem)) return false;
-      if (!super.equals(o)) return false;
-
-      final QualifiedMethodLookupItem that = (QualifiedMethodLookupItem)o;
-
-      if (myQualifier != null ? !myQualifier.equals(that.myQualifier) : that.myQualifier != null) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + (myQualifier != null ? myQualifier.hashCode() : 0);
-      return result;
-    }
-  }
 }

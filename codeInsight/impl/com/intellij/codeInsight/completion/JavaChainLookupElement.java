@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +55,17 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     return result;
   }
 
+  @NotNull
+  @Override
+  public String toString() {
+    String qualifierText = myQualifier.toString();
+    if (myQualifier.getObject() instanceof PsiMethod) {
+      qualifierText += "()";
+    }
+    return qualifierText + "." + getDelegate();
+  }
+
+
   @Override
   public void renderElement(LookupElementPresentation presentation) {
     final MemorizingLookupElementPresentation qualifierPresentation = new MemorizingLookupElementPresentation(presentation);
@@ -76,6 +88,8 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
 
   @Override
   public void handleInsert(InsertionContext context) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_CHAIN);
+
     final Document document = context.getEditor().getDocument();
     document.replaceString(context.getStartOffset(), context.getTailOffset(), ";");
     final InsertionContext qualifierContext = CompletionUtil.emulateInsertion(context, context.getStartOffset(), myQualifier, (char)0);
@@ -116,24 +130,24 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     return true;
   }
 
+  @NotNull
+  private LookupElement getComparableQualifier() {
+    final CastingLookupElementDecorator casting = myQualifier.as(CastingLookupElementDecorator.class);
+    return casting == null ? myQualifier : casting.getDelegate();
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
 
-    JavaChainLookupElement that = (JavaChainLookupElement)o;
-
-    if (!myQualifier.equals(that.myQualifier)) return false;
-
-    return true;
+    return getComparableQualifier().equals(((JavaChainLookupElement)o).getComparableQualifier());
   }
 
   @Override
   public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + myQualifier.hashCode();
-    return result;
+    return 31 * super.hashCode() + getComparableQualifier().hashCode();
   }
 
   public PsiType getType() {

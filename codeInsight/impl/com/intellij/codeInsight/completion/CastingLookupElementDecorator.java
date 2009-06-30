@@ -52,6 +52,11 @@ public class CastingLookupElementDecorator extends LookupElementDecorator<Lookup
   }
 
   @Override
+  public String toString() {
+    return "(" + myCastItem.getLookupString() + ")" + getDelegate().getLookupString();
+  }
+
+  @Override
   public void handleInsert(InsertionContext context) {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(context.getProject());
     String spaceWithin = settings.SPACE_WITHIN_CAST_PARENTHESES ? " " : "";

@@ -156,17 +156,43 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
   }
 
   public static void processDataflowExpressionTypes(PsiElement position, @Nullable PsiType expectedType, Consumer<CastingLookupElementDecorator> consumer) {
-    final PsiExpression expr = PsiTreeUtil.getParentOfType(position, PsiExpression.class);
-    if (expr != null) {
-      final Map<PsiExpression,PsiType> map = GuessManager.getInstance(position.getProject()).getDataFlowExpressionTypes(expr);
-      for (final PsiExpression expression : map.keySet()) {
-        final PsiType castType = map.get(expression);
-        final PsiType baseType = expression.getType();
-        if (expectedType == null || (expectedType.isAssignableFrom(castType) && (baseType == null || !expectedType.isAssignableFrom(baseType)))) {
-          consumer.consume(new CastingLookupElementDecorator(new ExpressionLookupItem(expression), castType));
+    final PsiExpression context = PsiTreeUtil.getParentOfType(position, PsiExpression.class);
+    if (context == null) return;
+
+    final Map<PsiExpression,PsiType> map = GuessManager.getInstance(position.getProject()).getDataFlowExpressionTypes(context);
+    for (final PsiExpression expression : map.keySet()) {
+      final PsiType castType = map.get(expression);
+      final PsiType baseType = expression.getType();
+      if (expectedType == null || (expectedType.isAssignableFrom(castType) && (baseType == null || !expectedType.isAssignableFrom(baseType)))) {
+        consumer.consume(new CastingLookupElementDecorator(expressionToLookupElement(expression), castType));
+      }
+    }
+  }
+
+  @NotNull
+  private static LookupElement expressionToLookupElement(@NotNull PsiExpression expression) {
+    if (expression instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression refExpr = (PsiReferenceExpression)expression;
+      if (!refExpr.isQualified()) {
+        final PsiElement target = refExpr.resolve();
+        if (target instanceof PsiVariable) {
+          final LookupItem item = LookupItemUtil.objectToLookupItem(target);
+          item.setAttribute(LookupItem.SUBSTITUTOR, PsiSubstitutor.EMPTY);
+          return item;
         }
       }
     }
+    if (expression instanceof PsiMethodCallExpression) {
+      final PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      if (!call.getMethodExpression().isQualified()) {
+        final PsiMethod method = call.resolveMethod();
+        if (method != null) {
+          return new JavaMethodCallElement(method);
+        }
+      }
+    }
+
+    return new ExpressionLookupItem(expression);
   }
 
   private static boolean isClassType(final PsiType type, final String className) {

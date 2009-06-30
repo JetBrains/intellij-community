@@ -44,7 +44,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   public static final Object SUBSTITUTOR = Key.create("SUBSTITUTOR");
   public static final Object TYPE = Key.create("TYPE");
   public static final Object INDICATE_ANONYMOUS = Key.create("INDICATE ANONYMOUS");
-  public static final Key<String> INSERT_TYPE_PARAMS = Key.create("INSERT_TYPE_PARAMS");
 
   public static final Key<Comparable[]> WEIGHT = Key.create("WEIGHT");
 

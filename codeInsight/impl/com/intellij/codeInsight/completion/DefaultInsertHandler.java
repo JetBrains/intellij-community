@@ -53,10 +53,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
   public void handleInsert(final InsertionContext context, LookupElement item) {
     super.handleInsert(context, item);
 
-    if (item.getUserData(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE) != null) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_CHAIN);
-    }
-
     handleInsertInner(context, (LookupItem)item, context.getCompletionChar());
   }
 
@@ -175,7 +171,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
   private void qualifyIfNeeded() {
     try{
-      if (myLookupItem.getObject() instanceof PsiField && myLookupItem.getUserData(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE) == null) {
+      if (myLookupItem.getObject() instanceof PsiField) {
         PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
         PsiReference reference = myFile.findReferenceAt(myContext.getStartOffset());
         if (reference instanceof PsiReferenceExpression && !((PsiReferenceExpression) reference).isQualified()) {

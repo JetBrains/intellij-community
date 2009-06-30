@@ -82,13 +82,7 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
       }
     }
 
-    if (StringUtil.isEmpty(name)) return "";
-
-    final String prefix = item.getUserData(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE);
-    if (StringUtil.isNotEmpty(prefix)) {
-      return prefix + name;
-    }
-    return name;
+    return StringUtil.notNullize(name);
   }
 
   @Nullable
