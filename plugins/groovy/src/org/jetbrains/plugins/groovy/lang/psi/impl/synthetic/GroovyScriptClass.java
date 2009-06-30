@@ -49,7 +49,7 @@ import java.util.List;
 /**
  * @author ven
  */
-public class GroovyScriptClass extends LightElement implements GrMemberOwner {
+public class GroovyScriptClass extends LightElement implements GrMemberOwner, SyntheticElement {
   private String myQualifiedName;
   private String myName;
   private final GroovyFile myFile;
@@ -57,7 +57,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner {
   private final PsiMethod myRunMethod;
   private static final String MAIN_METHOD_TEXT = "public static final void main(java.lang.String[] args) {}";
   private static final String RUN_METHOD_TEXT = "public java.lang.Object run() {return null;}";
-
+                                                            
   public GroovyScriptClass(GroovyFile file) {
     super(file.getManager(), file.getLanguage());
     myFile = file;
