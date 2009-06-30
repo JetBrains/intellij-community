@@ -53,7 +53,7 @@ public class ControlFlowFactory {
     private final long modificationCount;
     private final ControlFlow controlFlow;
 
-    public ControlFlowContext(boolean evaluateConstantIfCondition, @NotNull ControlFlowPolicy policy, long modificationCount, ControlFlow controlFlow) {
+    private ControlFlowContext(boolean evaluateConstantIfCondition, @NotNull ControlFlowPolicy policy, long modificationCount, ControlFlow controlFlow) {
       this.evaluateConstantIfCondition = evaluateConstantIfCondition;
       this.policy = policy;
       this.modificationCount = modificationCount;
