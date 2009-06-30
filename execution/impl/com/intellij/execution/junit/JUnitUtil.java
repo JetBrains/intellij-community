@@ -25,7 +25,7 @@ public class JUnitUtil {
   @NonNls private static final String TESTCASE_CLASS = "junit.framework.TestCase";
   @NonNls private static final String TEST_INTERFACE = "junit.framework.Test";
   @NonNls private static final String TESTSUITE_CLASS = "junit.framework.TestSuite";
-  private static final String RUN_WITH = "org.junit.runner.RunWith";
+  @NonNls public static final String RUN_WITH = "org.junit.runner.RunWith";
 
   public static boolean isSuiteMethod(final PsiMethod psiMethod) {
     if (psiMethod == null) return false;
