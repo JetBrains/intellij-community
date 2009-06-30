@@ -371,6 +371,26 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testSimpleArrayAccess() throws Exception {
+    doTest();
+  }
+
+  public void testArrayAccess() throws Exception {
+    doTest();
+  }
+
+  public void testArrayAccess1() throws Exception {
+    doTest();
+  }
+
+  public void testArrayAccessWithDuplicates() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testVerboseArrayAccess() throws Exception {
+    doTest();
+  }
+
   private void doPrepareErrorTest(final String expectedMessage) throws Exception {
     String expectedError = null;
     try {

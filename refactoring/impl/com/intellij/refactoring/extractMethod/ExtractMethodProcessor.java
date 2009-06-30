@@ -2,7 +2,6 @@ package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInspection.dataFlow.RunnerResult;
 import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
@@ -24,7 +23,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -45,9 +44,6 @@ import com.intellij.refactoring.util.duplicates.VariableReturnValue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
-import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,11 +79,8 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected PsiClass myTargetClass; // class to create the extracted method in
   private PsiElement myAnchor; // anchor to insert extracted method after it
 
-  protected ControlFlow myControlFlow; // control flow of myCodeFragment
-  private int myFlowStart; // offset in control flow corresponding to the start of the code to be extracted
-  private int myFlowEnd; // offset in control flow corresponding to position just after the end of the code to be extracted
-
-  protected List<PsiVariable> myInputVariables; // input variables
+  protected ControlFlowWrapper myControlFlowWrapper;
+  protected InputVariables myInputVariables; // input variables
   protected PsiVariable[] myOutputVariables; // output variables
   protected PsiVariable myOutputVariable; // the only output variable
   private Collection<PsiStatement> myExitStatements;
@@ -174,20 +167,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myIsChainedConstructor = isChainedConstructor;
   }
 
-  private boolean areExitStatementsTheSame() {
-    if (myExitStatements.isEmpty()) return false;
-    PsiStatement first = null;
-    for (PsiStatement statement : myExitStatements) {
-      if (first == null) {
-        first = statement;
-        continue;
-      }
-      if (!PsiEquivalenceUtil.areElementsEquivalent(first, statement)) return false;
-    }
 
-    myFirstExitStatementCopy = (PsiStatement)first.copy();
-    return true;
-  }
 
   /**
    * Invoked in atomic action
@@ -213,111 +193,28 @@ public class ExtractMethodProcessor implements MatchProvider {
       myCodeFragmentMember = ControlFlowUtil.findCodeFragment(codeFragment.getContext()).getParent();
     }
 
+    myControlFlowWrapper = new ControlFlowWrapper(myProject, codeFragment, myElements);
+
     try {
-      myControlFlow = ControlFlowFactory.getInstance(myProject).getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false, true);
-    }
-    catch (AnalysisCanceledException e) {
-      throw new PrepareFailedException(RefactoringBundle.message("extract.method.control.flow.analysis.failed"), e.getErrorElement());
-    }
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(myControlFlow.toString());
-    }
-
-    calculateFlowStartAndEnd();
-
-    IntArrayList exitPoints = new IntArrayList();
-
-    myExitStatements = ControlFlowUtil.findExitPointsAndStatements(myControlFlow, myFlowStart, myFlowEnd, exitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("exit points:");
-      for (int i = 0; i < exitPoints.size(); i++) {
-        LOG.debug("  " + exitPoints.get(i));
+      myExitStatements = myControlFlowWrapper.prepareExitStatements(myElements);
+      if (myControlFlowWrapper.isGenerateConditionalExit()) {
+        myGenerateConditionalExit = true;
+      } else {
+        myHasReturnStatement = myExpression == null && myControlFlowWrapper.isReturnPresentBetween();
       }
-      LOG.debug("exit statements:");
-      for (PsiStatement exitStatement : myExitStatements) {
-        LOG.debug("  " + exitStatement);
-      }
+      myFirstExitStatementCopy = myControlFlowWrapper.getFirstExitStatementCopy();
     }
-    if (exitPoints.isEmpty()) {
-      // if the fragment never exits assume as if it exits in the end
-      exitPoints.add(myControlFlow.getEndOffset(myElements[myElements.length - 1]));
+    catch (ControlFlowWrapper.ExitStatementsNotSameException e) {
+      myExitStatements = myControlFlowWrapper.getExitStatements();
+      showMultipleExitPointsMessage();
+      return false;
     }
 
-    if (exitPoints.size() != 1) {
-      if (!areExitStatementsTheSame()) {
-        showMultipleExitPointsMessage();
-        return false;
-      }
-      myGenerateConditionalExit = true;
-    }
-    else {
-      myHasReturnStatement = myExpression == null && ControlFlowUtil.returnPresentBetween(myControlFlow, myFlowStart, myFlowEnd);
-      //myHasReturnStatement = myExpression == null &&
-      //                       (ControlFlowUtil.getCompletionReasons(myControlFlow, myFlowStart, myFlowEnd) & ControlFlowUtil.RETURN_COMPLETION_REASON) != 0;
+    myOutputVariables = myControlFlowWrapper.getOutputVariables();
+    final List<PsiVariable> inputVariables = myControlFlowWrapper.getInputVariables(codeFragment);
+    chooseTargetClass(inputVariables);
 
-    }
-
-    myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, exitPoints.toArray());
-    if (myGenerateConditionalExit) {
-      //variables declared in selected block used in return statements are to be considered output variables when extracting guard methods
-      final Set<PsiVariable> outputVariables = new HashSet<PsiVariable>(Arrays.asList(myOutputVariables));
-      for (PsiStatement statement : myExitStatements) {
-        statement.accept(new JavaRecursiveElementVisitor() {
-
-          @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            final PsiElement resolved = expression.resolve();
-            if (resolved instanceof PsiVariable) {
-              final PsiVariable variable = (PsiVariable)resolved;
-              if (isWrittenInside(variable)) {
-                outputVariables.add(variable);
-              }
-            }
-          }
-
-          private boolean isWrittenInside(final PsiVariable variable) {
-            final List<Instruction> instructions = myControlFlow.getInstructions();
-            for (int i = myFlowStart; i < myFlowEnd; i++) {
-              Instruction instruction = instructions.get(i);
-              if (instruction instanceof WriteVariableInstruction &&
-                  variable.equals(((WriteVariableInstruction)instruction).variable)) return true;
-            }
-
-            return false;
-          }
-        });
-      }
-
-      myOutputVariables = outputVariables.toArray(new PsiVariable[outputVariables.size()]);
-    }
-    Arrays.sort(myOutputVariables, PsiUtil.BY_POSITION);
-
-    final List<PsiVariable> inputVariables = ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd);
-    if (myGenerateConditionalExit) {
-      List<PsiVariable> inputVariableList = new ArrayList<PsiVariable>(inputVariables);
-      removeParametersUsedInExitsOnly(codeFragment, myExitStatements, myControlFlow, myFlowStart, myFlowEnd, inputVariableList);
-      myInputVariables = inputVariableList;
-    }
-    else {
-      myInputVariables = inputVariables;
-    }
-
-    //varargs variables go last, otherwise order is induced by original ordering
-    Collections.sort(myInputVariables, new Comparator<PsiVariable>() {
-      public int compare(final PsiVariable v1, final PsiVariable v2) {
-        if (v1.getType() instanceof PsiEllipsisType) {
-          return 1;
-        }
-        if (v2.getType() instanceof PsiEllipsisType) {
-          return -1;
-        }
-        return v1.getTextOffset() - v2.getTextOffset();
-      }
-    });
-
-    chooseTargetClass();
+    myInputVariables = new InputVariables(inputVariables, myProject, new LocalSearchScope(myElements), true);
 
     PsiType expressionType = null;
     if (myExpression != null) {
@@ -415,11 +312,11 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     if (myExpression != null) {
-      myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), myInputVariables, new ArrayList<PsiVariable>());
+      myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), myInputVariables.copy(), new ArrayList<PsiVariable>());
       myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
     }
     else if (elements.size() > 0){
-      myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), myInputVariables, myOutputVariable != null ? new VariableReturnValue(myOutputVariable) : null, Arrays.asList(myOutputVariables));
+      myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), myInputVariables.copy(), myOutputVariable != null ? new VariableReturnValue(myOutputVariable) : null, Arrays.asList(myOutputVariables));
       myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
     } else {
       myDuplicates = new ArrayList<Match>();
@@ -530,43 +427,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return isExtracted;
   }
 
-  private static void removeParametersUsedInExitsOnly(PsiElement codeFragment,
-                                               Collection<PsiStatement> exitStatements,
-                                               ControlFlow controlFlow,
-                                               int startOffset,
-                                               int endOffset,
-                                               List<PsiVariable> inputVariables) {
-    LocalSearchScope scope = new LocalSearchScope(codeFragment);
-    Variables:
-    for (Iterator<PsiVariable> iterator = inputVariables.iterator(); iterator.hasNext();) {
-      PsiVariable variable = iterator.next();
-      for (PsiReference ref : ReferencesSearch.search(variable, scope)) {
-        PsiElement element = ref.getElement();
-        int elementOffset = controlFlow.getStartOffset(element);
-        if (elementOffset >= startOffset && elementOffset <= endOffset) {
-          if (!isInExitStatements(element, exitStatements)) continue Variables;
-        }
-        if (elementOffset == -1) { //references in local/anonymous classes should not be skipped
-          final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-          if (psiClass != null) {
-            final TextRange textRange = psiClass.getTextRange();
-            if (controlFlow.getElement(startOffset).getTextOffset() <= textRange.getStartOffset() &&
-                textRange.getEndOffset() <= controlFlow.getElement(endOffset).getTextRange().getEndOffset()) {
-              continue Variables;
-            }
-          }
-        }
-      }
-      iterator.remove();
-    }
-  }
 
-  private static boolean isInExitStatements(PsiElement element, Collection<PsiStatement> exitStatements) {
-    for (PsiStatement exitStatement : exitStatements) {
-      if (PsiTreeUtil.isAncestor(exitStatement, element, false)) return true;
-    }
-    return false;
-  }
 
   private boolean shouldBeStatic() {
     for(PsiElement element: myElements) {
@@ -595,7 +456,8 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   protected void apply(final AbstractExtractDialog dialog) {
     myMethodName = dialog.getChosenMethodName();
-    myVariableDatum = dialog.getChosenParameters();
+    final List<ParameterTablePanel.VariableData> datas = dialog.getChosenParameters().getInputVariables();
+    myVariableDatum = datas.toArray(new ParameterTablePanel.VariableData[datas.size()]);
     myStatic |= dialog.isMakeStatic();
     myIsChainedConstructor = dialog.isChainedConstructor();
     myMethodVisibility = dialog.getVisibility();
@@ -620,11 +482,9 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public void testRun() throws IncorrectOperationException {
     myMethodName = myInitialMethodName;
-    myVariableDatum = new ParameterTablePanel.VariableData[myInputVariables.size()];
-    for (int i = 0; i < myInputVariables.size(); i++) {
-      myVariableDatum[i] = new ParameterTablePanel.VariableData(myInputVariables.get(i), myInputVariables.get(i).getType());
-      myVariableDatum[i].passAsParameter = true;
-      myVariableDatum[i].name = myInputVariables.get(i).getName();
+    myVariableDatum = new ParameterTablePanel.VariableData[myInputVariables.getInputVariables().size()];
+    for (int i = 0; i < myInputVariables.getInputVariables().size(); i++) {
+      myVariableDatum[i] = myInputVariables.getInputVariables().get(i);
     }
 
     doRefactoring();
@@ -661,6 +521,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void doExtract() throws IncorrectOperationException {
+     myInputVariables.replaceWrappedReferences();
     renameInputVariables();
 
     PsiMethod newMethod = generateEmptyMethod(myThrownExceptions, myStatic);
@@ -694,50 +555,12 @@ public class ExtractMethodProcessor implements MatchProvider {
         hasNormalExit = true;
       }
 
-      PsiStatement exitStatementCopy = null;
-      // replace all exit-statements such as break's or continue's with appropriate return
-      for (PsiStatement exitStatement : myExitStatements) {
-        if (exitStatement instanceof PsiReturnStatement) {
-          if (!myGenerateConditionalExit) continue;
-        }
-        else if (exitStatement instanceof PsiBreakStatement) {
-          PsiStatement statement = ((PsiBreakStatement)exitStatement).findExitedStatement();
-          if (statement == null) continue;
-          int startOffset = myControlFlow.getStartOffset(statement);
-          int endOffset = myControlFlow.getEndOffset(statement);
-          if (myFlowStart <= startOffset && endOffset <= myFlowEnd) continue;
-        }
-        else if (exitStatement instanceof PsiContinueStatement) {
-          PsiStatement statement = ((PsiContinueStatement)exitStatement).findContinuedStatement();
-          if (statement == null) continue;
-          int startOffset = myControlFlow.getStartOffset(statement);
-          int endOffset = myControlFlow.getEndOffset(statement);
-          if (myFlowStart <= startOffset && endOffset <= myFlowEnd) continue;
-        }
-        else {
-          LOG.assertTrue(false, exitStatement);
-          continue;
-        }
+      PsiStatement exitStatementCopy = myControlFlowWrapper.getExitStatementCopy(returnStatement, myElements);
 
-        int index = -1;
-        for (int j = 0; j < myElements.length; j++) {
-          if (exitStatement.equals(myElements[j])) {
-            index = j;
-            break;
-          }
-        }
-        if (exitStatementCopy == null) {
-          if (needExitStatement(exitStatement)) {
-            exitStatementCopy = (PsiStatement)exitStatement.copy();
-          }
-        }
-        PsiElement result = exitStatement.replace(returnStatement);
-        if (index >= 0) {
-          myElements[index] = result;
-        }
-      }
 
-      declareNecessaryVariablesInsideBody(myFlowStart, myFlowEnd, body);
+      declareNecessaryVariablesInsideBody(body);
+
+
 
       if (myNeedChangeContext) {
         for (PsiElement element : myElements) {
@@ -822,7 +645,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         addToMethodCallLocation(exitStatementCopy);
       }
 
-      declareNecessaryVariablesAfterCall(myFlowEnd, myOutputVariable);
+      declareNecessaryVariablesAfterCall(myOutputVariable);
 
       deleteExtracted();
     }
@@ -853,18 +676,6 @@ public class ExtractMethodProcessor implements MatchProvider {
       ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringUtil.createThisExpression(myManager, null));
     }
 
-  }
-
-  private boolean needExitStatement(final PsiStatement exitStatement) {
-    if (exitStatement instanceof PsiContinueStatement) {
-      //IDEADEV-11748
-      PsiStatement statement = ((PsiContinueStatement)exitStatement).findContinuedStatement();
-      if (statement == null) return true;
-      if (statement instanceof PsiLoopStatement) statement = ((PsiLoopStatement)statement).getBody();
-      int endOffset = myControlFlow.getEndOffset(statement);
-      return endOffset > myFlowEnd;
-    }
-    return true;
   }
 
   private void adjustFinalParameters(final PsiMethod method) throws IncorrectOperationException {
@@ -986,34 +797,6 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-
-  private void calculateFlowStartAndEnd() {
-    myFlowStart = -1;
-    int index = 0;
-    while (index < myElements.length) {
-      myFlowStart = myControlFlow.getStartOffset(myElements[index]);
-      if (myFlowStart >= 0) break;
-      index++;
-    }
-    if (myFlowStart < 0) {
-      // no executable code
-      myFlowStart = 0;
-      myFlowEnd = 0;
-    }
-    else {
-      index = myElements.length - 1;
-      while (true) {
-        myFlowEnd = myControlFlow.getEndOffset(myElements[index]);
-        if (myFlowEnd >= 0) break;
-        index--;
-      }
-    }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("start offset:" + myFlowStart);
-      LOG.debug("end offset:" + myFlowEnd);
-    }
-  }
-
   private void renameInputVariables() throws IncorrectOperationException {
     for (ParameterTablePanel.VariableData data : myVariableDatum) {
       PsiVariable variable = data.variable;
@@ -1125,7 +908,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           if (count > 0) {
             buffer.append(",");
           }
-          buffer.append(data.variable.getName());
+          myInputVariables.appendCallArguments(data, buffer);
           count++;
         }
       }
@@ -1143,10 +926,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     return expr;
   }
 
-  private void declareNecessaryVariablesInsideBody(int start, int end, PsiCodeBlock body) throws IncorrectOperationException {
-    List<PsiVariable> usedVariables = ControlFlowUtil.getUsedVariables(myControlFlow, start, end);
+  private void declareNecessaryVariablesInsideBody(PsiCodeBlock body) throws IncorrectOperationException {
+    List<PsiVariable> usedVariables = myControlFlowWrapper.getUsedVariablesInBody();
     for (PsiVariable variable : usedVariables) {
-      boolean toDeclare = !isDeclaredInside(variable) && !myInputVariables.contains(variable);
+      boolean toDeclare = !isDeclaredInside(variable) && myInputVariables.toDeclareInsideBody(variable);
       if (toDeclare) {
         String name = variable.getName();
         PsiDeclarationStatement statement = myElementFactory.createVariableDeclarationStatement(name, variable.getType(), null);
@@ -1155,9 +938,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  protected void declareNecessaryVariablesAfterCall(int end, PsiVariable outputVariable) throws IncorrectOperationException {
-    List<PsiVariable> usedVariables = ControlFlowUtil.getUsedVariables(myControlFlow, end, myControlFlow.getSize());
-    Collection<ControlFlowUtil.VariableInfo> reassigned = ControlFlowUtil.getInitializedTwice(myControlFlow, end, myControlFlow.getSize());
+  protected void declareNecessaryVariablesAfterCall(PsiVariable outputVariable) throws IncorrectOperationException {
+    List<PsiVariable> usedVariables = myControlFlowWrapper.getUsedVariables();
+    Collection<ControlFlowUtil.VariableInfo> reassigned = myControlFlowWrapper.getInitializedTwice();
     for (PsiVariable variable : usedVariables) {
       boolean toDeclare = isDeclaredInside(variable) && !variable.equals(outputVariable);
       if (toDeclare) {
@@ -1199,7 +982,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return variable.getName();
   }
 
-  private void chooseTargetClass() {
+  private void chooseTargetClass(List<PsiVariable> inputVariables) {
     myNeedChangeContext = false;
     myTargetClass = myCodeFragmentMember instanceof PsiMember
                     ? ((PsiMember)myCodeFragmentMember).getContainingClass()
@@ -1225,7 +1008,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         }
         if (success) {
           myTargetClass = newTargetClass;
-          myInputVariables = new ArrayList<PsiVariable>(ContainerUtil.concat(myInputVariables, array));
+          inputVariables.addAll(array);
           myNeedChangeContext = true;
         }
       }

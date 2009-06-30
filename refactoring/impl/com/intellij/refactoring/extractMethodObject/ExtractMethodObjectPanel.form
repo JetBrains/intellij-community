@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.refactoring.extractMethodObject.ExtractMethodObjectDialog">
   <grid id="27dc6" binding="myWholePanel" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="20" y="320" width="509" height="288"/>
+      <xy x="20" y="320" width="509" height="310"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -159,7 +159,7 @@
       </grid>
       <scrollpane id="54db0">
         <constraints>
-          <grid row="9" column="0" row-span="1" col-span="3" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="10" column="0" row-span="1" col-span="3" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag top="5" left="5" bottom="0" right="0" weightx="0.0" weighty="0.5"/>
         </constraints>
         <properties>
@@ -186,7 +186,7 @@
       </grid>
       <component id="bec51" class="com.intellij.ui.TitledSeparator">
         <constraints>
-          <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
           <gridbag top="10" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
@@ -200,6 +200,15 @@
         </constraints>
         <properties>
           <text value="Parameters"/>
+        </properties>
+      </component>
+      <component id="9c206" class="javax.swing.JCheckBox" binding="myFoldCb" default-binding="true">
+        <constraints>
+          <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/RefactoringBundle" key="declare.folded.parameters"/>
         </properties>
       </component>
     </children>

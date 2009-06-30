@@ -120,10 +120,7 @@ public final class Match {
             myChangedParams.put(psiVariable, new PsiEllipsisType(parameterType));
           }
         } else {
-          if (!parameterType.isAssignableFrom(type)) return false;
-          if (!psiVariable.getType().isAssignableFrom(type)) {
-            myChangedParams.put(psiVariable, parameterType);
-          }
+          if (!parameterType.isAssignableFrom(type)) return false;  //todo
         }
       }
       final List<PsiElement> values = new ArrayList<PsiElement>();

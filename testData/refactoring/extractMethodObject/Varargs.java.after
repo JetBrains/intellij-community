@@ -10,7 +10,7 @@ class Test {
     private class InnerClass<T> {
         private T[] t;
 
-        public InnerClass(T... t) {
+        public InnerClass(T[] t) {
             this.t = t;
         }
 

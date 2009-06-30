@@ -631,7 +631,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
 
     @Override
-    protected void declareNecessaryVariablesAfterCall(final int end, final PsiVariable outputVariable) throws IncorrectOperationException {
+    protected void declareNecessaryVariablesAfterCall(final PsiVariable outputVariable) throws IncorrectOperationException {
       if (myMultipleExitPoints) {
         final String object = StringUtil.decapitalize(myInnerClassName);
         final PsiStatement methodCallStatement = PsiTreeUtil.getParentOfType(getMethodCall(), PsiStatement.class);
@@ -639,9 +639,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         methodCallStatement.replace(
           myElementFactory.createStatementFromText(myInnerClassName + " " + object + " = " + getMethodCall().getText() + ";", myInnerMethod));
 
-        final List<PsiVariable> usedVariables = ControlFlowUtil.getUsedVariables(myControlFlow, end, myControlFlow.getSize());
-        Collection<ControlFlowUtil.VariableInfo> reassigned =
-          ControlFlowUtil.getInitializedTwice(myControlFlow, end, myControlFlow.getSize());
+        final List<PsiVariable> usedVariables = myControlFlowWrapper.getUsedVariables();
+        Collection<ControlFlowUtil.VariableInfo> reassigned = myControlFlowWrapper.getInitializedTwice();
         for (PsiVariable variable : usedVariables) {
           String name = variable.getName();
           LOG.assertTrue(name != null);
@@ -668,7 +667,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         }
       }
       else {
-        super.declareNecessaryVariablesAfterCall(end, outputVariable);
+        super.declareNecessaryVariablesAfterCall(outputVariable);
       }
     }
 

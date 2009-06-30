@@ -36,6 +36,10 @@ public abstract class ParameterTablePanel extends JPanel {
   private final JButton myDownButton;
   private final JComboBox myTypeRendererCombo;
 
+  public VariableData[] getVariableData() {
+    return myVariableData;
+  }
+
   public static class VariableData {
     public final PsiVariable variable;
     public PsiType type;
@@ -80,21 +84,21 @@ public abstract class ParameterTablePanel extends JPanel {
     myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_NAME_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        VariableData data = myVariableData[row];
+        VariableData data = getVariableData()[row];
         setText(data.name);
         return this;
       }
     });
 
-    myParameterTypeSelectors = new TypeSelector[myVariableData.length];
+    myParameterTypeSelectors = new TypeSelector[getVariableData().length];
     for (int i = 0; i < myParameterTypeSelectors.length; i++) {
-      final PsiExpression[] occurrences = findVariableOccurrences(scopeElements, myVariableData[i].variable);
-      final TypeSelectorManager manager = new TypeSelectorManagerImpl(myProject, myVariableData[i].type, occurrences, areTypesDirected());
+      final PsiExpression[] occurrences = findVariableOccurrences(scopeElements, getVariableData()[i].variable);
+      final TypeSelectorManager manager = new TypeSelectorManagerImpl(myProject, getVariableData()[i].type, occurrences, areTypesDirected());
       myParameterTypeSelectors[i] = manager.getTypeSelector();
-      myVariableData[i].type = myParameterTypeSelectors[i].getSelectedType(); //reverse order
+      getVariableData()[i].type = myParameterTypeSelectors[i].getSelectedType(); //reverse order
     }
 
-    myTypeRendererCombo = new JComboBox(myVariableData);
+    myTypeRendererCombo = new JComboBox(getVariableData());
     myTypeRendererCombo.setOpaque(true);
     myTypeRendererCombo.setBorder(null);
 
@@ -132,7 +136,7 @@ public abstract class ParameterTablePanel extends JPanel {
         }
 
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        VariableData data = myVariableData[row];
+        VariableData data = getVariableData()[row];
         setText(data.type.getPresentableText());
         return this;
       }
@@ -151,13 +155,13 @@ public abstract class ParameterTablePanel extends JPanel {
         if (rows.length > 0) {
           boolean valueToBeSet = false;
           for (int row : rows) {
-            if (!myVariableData[row].passAsParameter) {
+            if (!getVariableData()[row].passAsParameter) {
               valueToBeSet = true;
               break;
             }
           }
           for (int row : rows) {
-            myVariableData[row].passAsParameter = valueToBeSet;
+            getVariableData()[row].passAsParameter = valueToBeSet;
           }
           myTableModel.fireTableRowsUpdated(rows[0], rows[rows.length - 1]);
           TableUtil.selectRows(myTable, rows);
@@ -262,7 +266,7 @@ public abstract class ParameterTablePanel extends JPanel {
         updateMoveButtons();
       }
     });
-    if (myVariableData.length <= 1) {
+    if (getVariableData().length <= 1) {
       myUpButton.setEnabled(false);
       myDownButton.setEnabled(false);
     }
@@ -289,9 +293,9 @@ public abstract class ParameterTablePanel extends JPanel {
 
   private void updateMoveButtons() {
     int row = myTable.getSelectedRow();
-    if (0 <= row && row < myVariableData.length) {
+    if (0 <= row && row < getVariableData().length) {
       myUpButton.setEnabled(row > 0);
-      myDownButton.setEnabled(row < myVariableData.length - 1);
+      myDownButton.setEnabled(row < getVariableData().length - 1);
     }
     else {
       myUpButton.setEnabled(false);
@@ -301,19 +305,19 @@ public abstract class ParameterTablePanel extends JPanel {
 
   private void moveSelectedItem(int moveIncrement) {
     int row = myTable.getSelectedRow();
-    if (row < 0 || row >= myVariableData.length) return;
+    if (row < 0 || row >= getVariableData().length) return;
     int targetRow = row + moveIncrement;
-    if (targetRow < 0 || targetRow >= myVariableData.length) return;
+    if (targetRow < 0 || targetRow >= getVariableData().length) return;
 
-    VariableData currentItem = myVariableData[row];
-    myVariableData[row] = myVariableData[targetRow];
-    myVariableData[targetRow] = currentItem;
+    VariableData currentItem = getVariableData()[row];
+    getVariableData()[row] = getVariableData()[targetRow];
+    getVariableData()[targetRow] = currentItem;
 
     TypeSelector currentSelector = myParameterTypeSelectors[row];
     myParameterTypeSelectors[row] = myParameterTypeSelectors[targetRow];
     myParameterTypeSelectors[targetRow] = currentSelector;
     
-    myTypeRendererCombo.setModel(new DefaultComboBoxModel(myVariableData));
+    myTypeRendererCombo.setModel(new DefaultComboBoxModel(getVariableData()));
 
     myTableModel.fireTableRowsUpdated(Math.min(targetRow, row), Math.max(targetRow, row));
     myTable.getSelectionModel().setSelectionInterval(targetRow, targetRow);
@@ -337,7 +341,7 @@ public abstract class ParameterTablePanel extends JPanel {
     public static final int PARAMETER_NAME_COLUMN = 2;
 
     public int getRowCount() {
-      return myVariableData.length;
+      return getVariableData().length;
     }
 
     public int getColumnCount() {
@@ -347,13 +351,13 @@ public abstract class ParameterTablePanel extends JPanel {
     public Object getValueAt(int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case CHECKMARK_COLUMN: {
-          return myVariableData[rowIndex].passAsParameter ? Boolean.TRUE : Boolean.FALSE;
+          return getVariableData()[rowIndex].passAsParameter ? Boolean.TRUE : Boolean.FALSE;
         }
         case PARAMETER_NAME_COLUMN: {
-          return myVariableData[rowIndex].name;
+          return getVariableData()[rowIndex].name;
         }
         case PARAMETER_TYPE_COLUMN: {
-          return myVariableData[rowIndex].type.getPresentableText();
+          return getVariableData()[rowIndex].type.getPresentableText();
         }
       }
       assert false;
@@ -363,14 +367,14 @@ public abstract class ParameterTablePanel extends JPanel {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case CHECKMARK_COLUMN: {
-          myVariableData[rowIndex].passAsParameter = ((Boolean)aValue).booleanValue();
+          getVariableData()[rowIndex].passAsParameter = ((Boolean)aValue).booleanValue();
           fireTableRowsUpdated(rowIndex, rowIndex);
           myTable.getSelectionModel().setSelectionInterval(rowIndex, rowIndex);
           updateSignature();
           break;
         }
         case PARAMETER_NAME_COLUMN: {
-          VariableData data = myVariableData[rowIndex];
+          VariableData data = getVariableData()[rowIndex];
           String name = (String)aValue;
           if (JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(name)) {
             data.name = name;
@@ -379,7 +383,7 @@ public abstract class ParameterTablePanel extends JPanel {
           break;
         }
         case PARAMETER_TYPE_COLUMN: {
-          VariableData data = myVariableData[rowIndex];
+          VariableData data = getVariableData()[rowIndex];
           data.type = (PsiType)aValue;
           updateSignature();
           break;
@@ -392,9 +396,9 @@ public abstract class ParameterTablePanel extends JPanel {
         case CHECKMARK_COLUMN:
           return isEnabled();
         case PARAMETER_NAME_COLUMN:
-          return isEnabled() && myVariableData[rowIndex].passAsParameter;
+          return isEnabled() && getVariableData()[rowIndex].passAsParameter;
         case PARAMETER_TYPE_COLUMN:
-          return isEnabled() && myVariableData[rowIndex].passAsParameter && !(myParameterTypeSelectors[rowIndex].getComponent() instanceof JLabel);
+          return isEnabled() && getVariableData()[rowIndex].passAsParameter && !(myParameterTypeSelectors[rowIndex].getComponent() instanceof JLabel);
         default:
           return false;
       }

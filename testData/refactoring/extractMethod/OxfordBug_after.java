@@ -3,13 +3,13 @@ class OxfordBug {
         int i = 0;
         while (i < n) {
             i++;
-            n = newMethod(m, n, i);
+            n = newMethod(m, n, i == m);
         }
         return n;
     }
 
-    private int newMethod(int m, int n, int i) throws Exception {
-        if (i == m) {
+    private int newMethod(int m, int n, boolean b) throws Exception {
+        if (b) {
             n += m;
             throw new Exception("" + n);
         }

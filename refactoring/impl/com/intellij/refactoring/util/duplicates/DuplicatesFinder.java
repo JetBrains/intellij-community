@@ -9,13 +9,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -29,16 +28,16 @@ import java.util.*;
  */
 public class DuplicatesFinder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.duplicates.DuplicatesFinder");
-  private static final Key<Pair<PsiVariable, PsiType>> PARAMETER = Key.create("PARAMETER");
+  public static final Key<Pair<PsiVariable, PsiType>> PARAMETER = Key.create("PARAMETER");
   private final PsiElement[] myPattern;
-  private List<? extends PsiVariable> myParameters;
+  private InputVariables myParameters;
   private final List<? extends PsiVariable> myOutputParameters;
   private final List<PsiElement> myPatternAsList;
   private boolean myMultipleExitPoints = false;
   private final ReturnValue myReturnValue;
 
   public DuplicatesFinder(PsiElement[] pattern,
-                          List<? extends PsiVariable> parameters,
+                          InputVariables parameters,
                           ReturnValue returnValue,
                           List<? extends PsiVariable> outputParameters
   ) {
@@ -71,8 +70,7 @@ public class DuplicatesFinder {
       myMultipleExitPoints = exitPoints.size() > 1;
 
       if (myMultipleExitPoints) {
-        myParameters = new ArrayList<PsiVariable>(myParameters); //to allow removal of items from the otherwise readonly list
-        removeParametersUsedInExitsOnly(codeFragment, exitStatements, controlFlow, startOffset, endOffset);
+        myParameters.removeParametersUsedInExitsOnly(codeFragment, exitStatements, controlFlow, startOffset, endOffset);
       }
     }
     catch (AnalysisCanceledException e) {
@@ -80,33 +78,12 @@ public class DuplicatesFinder {
   }
 
   public DuplicatesFinder(final PsiElement[] pattern,
-                          final List<? extends PsiVariable> psiParameters,
+                          final InputVariables psiParameters,
                           final List<? extends PsiVariable> psiVariables) {
     this(pattern, psiParameters, null, psiVariables);
   }
 
-  private void removeParametersUsedInExitsOnly(PsiElement codeFragment, Collection<PsiStatement> exitStatements, ControlFlow controlFlow, int startOffset, int endOffset) {
-    LocalSearchScope scope = new LocalSearchScope(codeFragment);
-    Variables:
-    for (Iterator<? extends PsiVariable> iterator = myParameters.iterator(); iterator.hasNext();) {
-      PsiVariable variable = iterator.next();
-      for (PsiReference ref : ReferencesSearch.search(variable, scope)) {
-        PsiElement element = ref.getElement();
-        int elementOffset = controlFlow.getStartOffset(element);
-        if (elementOffset >= startOffset && elementOffset <= endOffset) {
-          if (!isInExitStatements(element, exitStatements)) continue Variables;
-        }
-      }
-      iterator.remove();
-    }
-  }
 
-  private static boolean isInExitStatements(PsiElement element, Collection<PsiStatement> exitStatements) {
-    for (PsiStatement exitStatement : exitStatements) {
-      if (PsiTreeUtil.isAncestor(exitStatement, element, false)) return true;
-    }
-    return false;
-  }
 
 
   public List<Match> findDuplicates(PsiElement scope) {
@@ -122,33 +99,13 @@ public class DuplicatesFinder {
       patternComponent.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           final PsiElement element = reference.resolve();
-          if (element instanceof PsiVariable && myParameters.contains(element)) {
+          if (element instanceof PsiVariable) {
             final PsiVariable variable = (PsiVariable)element;
             PsiType type = variable.getType();
-            final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(reference, PsiMethodCallExpression.class);
-            if (methodCallExpression != null) {
-              int idx = ArrayUtil.find(methodCallExpression.getArgumentList().getExpressions(), reference);
-              if (idx > -1) {
-                final PsiMethod psiMethod = methodCallExpression.resolveMethod();
-                if (psiMethod != null) {
-                  final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-                  if (idx >= parameters.length) { //vararg parameter
-                    idx = parameters.length - 1;
-                    if (idx >= 0) { //incomplete code
-                      type = parameters[idx].getType();
-                    }
-                  }
-                  if (type instanceof PsiEllipsisType) {
-                    type = ((PsiEllipsisType)type).getComponentType();
-                  }
-                }
-              }
+            myParameters.annotateWithParameter(reference);
+            if (myOutputParameters.contains(element)) {
+              reference.putUserData(PARAMETER, Pair.create(variable, type));
             }
-            reference.putUserData(PARAMETER, Pair.create(variable, type));
-          }
-          if (element instanceof PsiVariable && myOutputParameters.contains(element)) {
-            final PsiVariable psiVariable = (PsiVariable)element;
-            reference.putUserData(PARAMETER, Pair.create(psiVariable, psiVariable.getType()));
           }
           PsiElement qualifier = reference.getQualifier();
           if (qualifier != null) {

@@ -3,7 +3,7 @@ class Test {
       int i = 0;
         int j = 0;
 
-       Inner inner = new Inner(i, j).invoke();
+       Inner inner = new Inner(i + j, j).invoke();
        j = inner.getJ();
        int k = inner.getK();
         
@@ -30,7 +30,7 @@ class Test {
         }
 
         public Inner invoke() {
-            k = i + j;
+            k = i;
             j = 9;
             return this;
         }
