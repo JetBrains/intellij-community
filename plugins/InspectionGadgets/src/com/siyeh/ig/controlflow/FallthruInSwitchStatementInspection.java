@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,8 +68,8 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
                 throws IncorrectOperationException {
             final PsiSwitchLabelStatement labelStatement =
                     (PsiSwitchLabelStatement) descriptor.getPsiElement();
-            final PsiManager manager = labelStatement.getManager();
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiElementFactory factory = psiFacade.getElementFactory();
             final PsiStatement breakStatement =
                     factory.createStatementFromText("break;", labelStatement);
             final PsiElement parent = labelStatement.getParent();
