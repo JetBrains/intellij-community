@@ -1,23 +1,24 @@
 package com.intellij.psi.impl;
 
+import com.intellij.lang.*;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.*;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import com.intellij.lang.*;
-import com.intellij.lexer.Lexer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -178,11 +179,11 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     if (returnType == PsiType.NULL) {
       throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
     }
-    @NonNls String text = "class _Dummy_ {\n public void " + name + "(){}\n}";
+    @NonNls String text = "class _Dummy_ {\n public " + returnType.getCanonicalText() + " " + name + "(){}\n}";
     PsiJavaFile aFile = createDummyJavaFile(text);
     PsiClass aClass = aFile.getClasses()[0];
     PsiMethod method = aClass.getMethods()[0];
-    method.getReturnTypeElement().replace(createTypeElement(returnType));
+    JavaCodeStyleManager.getInstance(myManager.getProject()).shortenClassReferences(method);
     return (PsiMethod)CodeStyleManager.getInstance(myManager.getProject()).reformat(method);
   }
 
@@ -218,17 +219,14 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     }
     final FileElement treeHolder = DummyHolderFactory.createHolder(myManager, null).getTreeElement();
     final CompositeElement treeElement =
-    getJavaParsingContext(treeHolder).getDeclarationParsing().parseParameterText(PsiKeyword.INT + " " + name);
+    getJavaParsingContext(treeHolder).getDeclarationParsing().parseParameterText(type.getCanonicalText() + " " + name);
     treeHolder.rawAddChildren(treeElement);
-
-    TreeElement typeElement = ChangeUtil.copyToElement(createTypeElement(type));
-    treeElement.replaceChild(treeElement.findChildByRole(ChildRole.TYPE), typeElement);
-    ChangeUtil.decodeInformation(typeElement);
 
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myManager.getProject());
     PsiParameter parameter = (PsiParameter)SourceTreeToPsiMap.treeElementToPsi(treeElement);
     PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(myManager.getProject()).GENERATE_FINAL_PARAMETERS);
     treeElement.acceptTree(new GeneratedMarkerVisitor());
+    JavaCodeStyleManager.getInstance(myManager.getProject()).shortenClassReferences(parameter);
     return (PsiParameter)codeStyleManager.reformat(parameter);
   }
 
