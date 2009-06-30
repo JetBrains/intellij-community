@@ -82,7 +82,6 @@
 
     <roots.watchedRootsProvider implementation="org.jetbrains.plugins.grails.GrailsWatchedRootProvider"/>
 
-    <gotoClassContributor implementation="org.jetbrains.plugins.groovy.gotoclass.GroovyGoToClassContributor"/>
     <gotoSymbolContributor implementation="org.jetbrains.plugins.groovy.gotoclass.GroovyGoToSymbolContributor"/>
     <lang.refactoringSupport language="Groovy"
                              implementationClass="org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSupportProvider"/>
