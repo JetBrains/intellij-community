@@ -31,7 +31,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     PyArgumentList arglist = findArgumentList(context);
     if (arglist != null) {
       PyArgumentList.AnalysisResult result = arglist.analyzeCall();
-      if (result != null) {
+      if (result != null && result.getMarkedFunction() != null) {
         context.setItemsToShow(new Object[] { result });
         return arglist;
       }
@@ -71,13 +71,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   public void updateUI(final PyArgumentList.AnalysisResult result, final ParameterInfoUIContext context) {
     if (result == null) return;
     PyMarkedFunction marked = result.getMarkedFunction();
-    if (marked == null) { // say something sane, don't show a blank
-      String[] param_texts = new String[]{"<failed to determine>"};
-      EnumSet[] flags = new EnumSet[]{EnumSet.of(ParameterInfoUIContextEx.Flag.DISABLE)};
-      final ParameterInfoUIContextEx pic = (ParameterInfoUIContextEx)context;
-      pic.setupUIComponentPresentation(param_texts, flags, context.getDefaultParameterColor());
-      return;
-    }
+    assert marked != null : "findElementForParameterInfo() did it wrong!";
     final PyFunction py_function = marked.getFunction();
     if (py_function == null) return; // resolution failed
     final PyParameter[] params = py_function.getParameterList().getParameters();
