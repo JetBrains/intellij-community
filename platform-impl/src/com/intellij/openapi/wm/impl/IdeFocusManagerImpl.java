@@ -62,4 +62,11 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   }
 
 
+  public ActionCallback requestDefaultFocus(boolean forced) {
+    return myToolWindowManager.requestDefaultFocus(forced);
+  }
+
+  public boolean isFocusBeingTransferred() {
+    return !myToolWindowManager.isFocusTransferReady();
+  }
 }

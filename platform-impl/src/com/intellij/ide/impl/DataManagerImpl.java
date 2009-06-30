@@ -203,7 +203,11 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     }
     Window activeWindow = myWindowManager.getMostRecentFocusedWindow();
     if (activeWindow == null) {
-      return null;
+      activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+      if (activeWindow == null) {
+        activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+        if (activeWindow == null) return null;
+      }
     }
     // try to find first parent window that has focus
     Window window = activeWindow;
@@ -218,6 +222,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     if (focusedComponent == null) {
       focusedComponent = activeWindow;
     }
+
     return focusedComponent;
   }
 

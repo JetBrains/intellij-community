@@ -66,6 +66,10 @@ public abstract class IdeFocusManager {
 
   public abstract void suspendKeyProcessingUntil(@NotNull ActionCallback done);
 
+  public abstract boolean isFocusBeingTransferred();
+
+  public abstract ActionCallback requestDefaultFocus(boolean forced);
+
   public static IdeFocusManager getInstance(@NotNull Project project) {
     if (project.isDisposed() || !project.isInitialized()) return PassThroughtIdeFocusManager.getInstance();
     return project.getComponent(IdeFocusManager.class);

@@ -17,10 +17,12 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.Alarm;
 import com.intellij.util.ProfilingUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +33,7 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -63,7 +66,8 @@ public class IdeEventQueue extends EventQueue {
 
   private long myIdleTime;
 
-  private final Map<Runnable, MyFireIdleRequest> myListener2Request = new HashMap<Runnable, MyFireIdleRequest>(); // IdleListener -> MyFireIdleRequest
+  private final Map<Runnable, MyFireIdleRequest> myListener2Request = new HashMap<Runnable, MyFireIdleRequest>();
+  // IdleListener -> MyFireIdleRequest
 
   private final IdeKeyEventDispatcher myKeyEventDispatcher = new IdeKeyEventDispatcher();
 
@@ -115,6 +119,7 @@ public class IdeEventQueue extends EventQueue {
   private static class IdeEventQueueHolder {
     private static final IdeEventQueue INSTANCE = new IdeEventQueue();
   }
+
   public static IdeEventQueue getInstance() {
     return IdeEventQueueHolder.INSTANCE;
   }
@@ -230,6 +235,7 @@ public class IdeEventQueue extends EventQueue {
       myActivityListeners.add(runnable);
     }
   }
+
   public void addActivityListener(@NotNull final Runnable runnable, Disposable parentDisposable) {
     synchronized (myLock) {
       ContainerUtil.add(runnable, myActivityListeners, parentDisposable);
@@ -408,6 +414,8 @@ public class IdeEventQueue extends EventQueue {
 
     if (processAppActivationEvents(e)) return;
 
+    fixStickyFocusedComponents(e);
+
     if (!myPopupManager.isPopupActive()) {
       enterSuspendModeIfNeeded(e);
     }
@@ -433,8 +441,11 @@ public class IdeEventQueue extends EventQueue {
           int timeout = request.getTimeout();
           myIdleRequestsAlarm.addRequest(request, timeout, ModalityState.NON_MODAL);
         }
-        if (KeyEvent.KEY_PRESSED == e.getID() || KeyEvent.KEY_TYPED == e.getID() || MouseEvent.MOUSE_PRESSED == e.getID() ||
-            MouseEvent.MOUSE_RELEASED == e.getID() || MouseEvent.MOUSE_CLICKED == e.getID()) {
+        if (KeyEvent.KEY_PRESSED == e.getID() ||
+            KeyEvent.KEY_TYPED == e.getID() ||
+            MouseEvent.MOUSE_PRESSED == e.getID() ||
+            MouseEvent.MOUSE_RELEASED == e.getID() ||
+            MouseEvent.MOUSE_CLICKED == e.getID()) {
           addIdleTimeCounterRequest();
           for (Runnable activityListener : myActivityListeners) {
             activityListener.run();
@@ -485,6 +496,67 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
+  private void fixStickyFocusedComponents(AWTEvent e) {
+    if (!(e instanceof InputEvent)) return;
+
+    final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    final Window wnd = mgr.getActiveWindow();
+    Window showingWindow = wnd;
+
+    if (Registry.is("actionSystem.fixStickyFocusedWindows")) {
+      if (wnd != null && !wnd.isShowing()) {
+        while (showingWindow != null) {
+          if (showingWindow.isShowing()) break;
+          showingWindow = (Window)showingWindow.getParent();
+        }
+
+        if (showingWindow == null) {
+          final Frame[] allFrames = Frame.getFrames();
+          for (Frame each : allFrames) {
+            if (each.isShowing()) {
+              showingWindow = each;
+              break;
+            }
+          }
+        }
+
+
+        if (showingWindow != null && showingWindow != wnd) {
+          final Method setActive =
+            ReflectionUtil.findMethod(KeyboardFocusManager.class.getDeclaredMethods(), "setGlobalActiveWindow", Window.class);
+          if (setActive != null) {
+            try {
+              setActive.setAccessible(true);
+              setActive.invoke(mgr, (Window)showingWindow);
+            }
+            catch (Exception exc) {
+              LOG.info(exc);
+            }
+          }
+        }
+      }
+    }
+
+    if (Registry.is("actionSystem.fixNullFocusedComponent")) {
+      final Component focusOwner = mgr.getFocusOwner();
+      if (focusOwner == null) {
+        if (showingWindow != null) {
+          final IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(showingWindow);
+          fm.doWhenFocusSettlesDown(new Runnable() {
+            public void run() {
+              if (mgr.getFocusOwner() == null) {
+                final Application app = ApplicationManager.getApplication();
+                if (app != null && app.isActive()) {
+                  fm.requestDefaultFocus(false);
+                }
+              }
+            }
+          });
+        }
+      }
+    }
+  }
+
   private void enterSuspendModeIfNeeded(AWTEvent e) {
     if (e instanceof KeyEvent) {
       if (!mySuspendMode && shallEnterSuspendMode()) {
@@ -494,7 +566,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private boolean shallEnterSuspendMode() {
-    return peekEvent(WindowEvent.WINDOW_OPENED) != null; 
+    return peekEvent(WindowEvent.WINDOW_OPENED) != null;
   }
 
   private static boolean processAppActivationEvents(AWTEvent e) {
@@ -510,7 +582,8 @@ public class IdeEventQueue extends EventQueue {
         if (we.getOppositeWindow() == null && !appImpl.isActive()) {
           consumed = appImpl.tryToApplyActivationState(true, we.getWindow());
         }
-      } else if (we.getID() == WindowEvent.WINDOW_LOST_FOCUS && we.getWindow() != null) {
+      }
+      else if (we.getID() == WindowEvent.WINDOW_LOST_FOCUS && we.getWindow() != null) {
         if (we.getOppositeWindow() == null && appImpl.isActive()) {
           consumed = appImpl.tryToApplyActivationState(false, we.getWindow());
         }
@@ -526,8 +599,9 @@ public class IdeEventQueue extends EventQueue {
       super.dispatchEvent(e);
     }
     catch (ProcessCanceledException pce) {
-      throw pce;      
-    } catch (Throwable exc) {
+      throw pce;
+    }
+    catch (Throwable exc) {
       LOG.error("Error during dispatching of " + e, exc);
     }
   }

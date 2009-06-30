@@ -43,4 +43,12 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   public void suspendKeyProcessingUntil(@NotNull ActionCallback done) {
   }
 
+  @Override
+  public boolean isFocusBeingTransferred() {
+    return false;
+  }
+
+  public ActionCallback requestDefaultFocus(boolean forced) {
+    return new ActionCallback.Done();
+  }
 }

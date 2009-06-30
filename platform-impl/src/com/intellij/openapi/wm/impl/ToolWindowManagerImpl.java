@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -28,7 +29,6 @@ import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -49,7 +49,6 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
 
@@ -175,6 +174,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
             }
           }
         }
+
         return false;
       }
     }, myProject);
@@ -1617,6 +1617,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }.saveAllocation(), true);
   }
 
+
   /**
    * This command creates and shows <code>FloatingDecorator</code>.
    */
@@ -1872,6 +1873,25 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return requestFocus(new FocusCommand.ByComponent(c), forced);
   }
 
+  public ActionCallback requestDefaultFocus(final boolean forced) {
+    return requestFocus(new FocusCommand() {
+      public ActionCallback run() {
+        return processDefaultFocusRequest(forced);
+      }
+    }, forced);
+  }
+
+  private ActionCallback processDefaultFocusRequest(boolean forced) {
+    if (ModalityState.NON_MODAL.equals(ModalityState.current())) {
+      if (myEditorComponentActive) {
+        activateEditorComponent(forced);
+      } else {
+        activateToolWindow(getActiveToolWindowId(), forced, false);
+      }
+    }
+    return new ActionCallback.Done();
+  }
+
   public ActionCallback requestFocus(final FocusCommand command, final boolean forced) {
     final ActionCallback result = new ActionCallback();
 
@@ -1908,8 +1928,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       myForcedFocusRequestsAlarm.cancelAllRequests();
       setLastEffectiveForcedRequest(command);
     }
-
-    fixStickingDialogs();
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
@@ -1961,27 +1979,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void forceFinishFocusSettledown(FocusCommand cmd, ActionCallback cmdCallback) {
     rejectCommand(cmd, cmdCallback);
     myUnforcedRequestFocusCmd = null;
-  }
-
-  private void fixStickingDialogs() {
-    if (!Patches.STICKY_DIALOGS) return;
-
-    final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    final Window wnd = mgr.getActiveWindow();
-    if (wnd != null && !wnd.isShowing() && wnd.getParent() instanceof Window) {
-      final Container parent = wnd.getParent();
-      final Method setActive =
-        ReflectionUtil.findMethod(KeyboardFocusManager.class.getDeclaredMethods(), "setGlobalActiveWindow", Window.class);
-      if (setActive != null) {
-        try {
-          setActive.setAccessible(true);
-          setActive.invoke(mgr, (Window)parent);
-        }
-        catch (Exception e) {
-          LOG.info(e);
-        }
-      }
-    }
   }
 
   private boolean checkForRejectOrByPass(final FocusCommand cmd, final boolean forced, final ActionCallback result) {
@@ -2088,13 +2085,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     @Override
     public void applicationDeactivated(IdeFrame ideFrame) {
-      Component c = getLastFocusedProjectComponent();
-      if (c == null) {
-        final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        if (isProjectComponent(owner)) {
-          c = owner;
-        }
+      Component c;
+      final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      if (isProjectComponent(owner)) {
+        c = owner;
+      } else {
+        c = getLastFocusedProjectComponent();
       }
+
       myFocusedComponentOnDeactivation = c != null ? new WeakReference<Component>(c) : null;
     }
 
@@ -2113,10 +2111,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         if (ideFrame == myWindowManager.getFrame(myProject)) {
           final Component owner = mgr.getFocusOwner();
           Component old = myFocusedComponentOnDeactivation != null ? myFocusedComponentOnDeactivation.get() : null;
-
-          if (old == null || !old.isShowing()) {
-            old = IdeFocusTraversalPolicy.getPreferredFocusedComponent(((IdeFrameImpl)ideFrame).getRootPane());
-          }
 
           if (owner == null && old != null && old.isShowing()) {
             requestFocus(old, false);

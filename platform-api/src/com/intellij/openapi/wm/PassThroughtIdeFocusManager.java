@@ -47,8 +47,17 @@ public class PassThroughtIdeFocusManager extends IdeFocusManager {
     return false;
   }
 
+  public ActionCallback requestDefaultFocus(boolean forced) {
+    return new ActionCallback.Done();
+  }
+
   @Override
   public void suspendKeyProcessingUntil(@NotNull ActionCallback done) {
+  }
+
+  @Override
+  public boolean isFocusBeingTransferred() {
+    return false;
   }
 
 }

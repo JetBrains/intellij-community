@@ -136,12 +136,6 @@ public class Patches {
   public static final boolean SUN_BUG_ID_6209673 = SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.5") || SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.6");
 
   /**
-   * Under Linux (Ubutnu) modal dialogs may occasinally be left as "active" even after disposal. It this happens
-   * it's no longer possible to focus anything in the UI.
-   */
-  public static boolean STICKY_DIALOGS = SystemInfo.isLinux;
-
-  /**
    * Under Linux (Ubuntu) invoking "requestFocus" may (probably) activate inactive app. To investigate if it's really true. 
    */
   public static final boolean REQUEST_FOCUS_MAY_ACTIVATE_APP = SystemInfo.isLinux;
