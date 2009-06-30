@@ -37,12 +37,13 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
   }
 
   public void handleInsert(final InsertionContext context, final LookupItem<PsiMethod> item) {
-    context.setAddCompletionChar(false);
     final Editor editor = context.getEditor();
     final char completionChar = context.getCompletionChar();
-    TailType tailType = getTailType(item, editor, completionChar);
+    final TailType tailType = getTailType(item, context);
     final Document document = editor.getDocument();
     final PsiFile file = context.getFile();
+
+    context.setAddCompletionChar(false);
 
     final LookupElement[] allItems = context.getElements();
     boolean signatureSelected = allItems.length > 1 || item.getUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null;
@@ -85,7 +86,8 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
   }
 
   @NotNull
-  private static TailType getTailType(final LookupItem item, final Editor editor, final char completionChar) {
+  private static TailType getTailType(final LookupItem item, InsertionContext context) {
+    final char completionChar = context.getCompletionChar();
     if (completionChar == '!') return item.getTailType();
     if (completionChar == '(') {
       final PsiMethod psiMethod = (PsiMethod)item.getObject();
@@ -93,7 +95,11 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
              ? TailType.NONE : TailType.SEMICOLON;
     }
     if (completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) return TailType.SMART_COMPLETION;
-    return LookupItem.handleCompletionChar(editor, item, completionChar);
+    if (!context.shouldAddCompletionChar()) {
+      return TailType.NONE;
+    }
+
+    return LookupItem.handleCompletionChar(context.getEditor(), item, completionChar);
   }
 
   private static boolean isToInsertParenth(PsiElement place){
