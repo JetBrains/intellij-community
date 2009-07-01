@@ -17,8 +17,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.XmlSchemaProvider;
-import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -46,7 +46,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   private final Map<String, Map<String,String>> myResources = new HashMap<String, Map<String, String>>();
   private final Set<String> myResourceLocations = new HashSet<String>();
 
-  private final Map<String, XmlNSDescriptorImpl> myImplicitNamespaces = new THashMap<String, XmlNSDescriptorImpl>();
+  private final Map<String, XmlNSDescriptor> myImplicitNamespaces = new THashMap<String, XmlNSDescriptor>();
   private final Set<String> myIgnoredResources = new HashSet<String>();
 
   private final NotNullLazyValue<Map<String, Map<String,String>>> myStdResources = new NotNullLazyValue<Map<String, Map<String, String>>>() {
@@ -338,7 +338,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     }
   }
 
-  public void addImplicitNamespace(@NotNull final String ns, @NotNull XmlNSDescriptorImpl descriptor, Disposable parentDisposable) {
+  public void addImplicitNamespace(@NotNull final String ns, @NotNull XmlNSDescriptor descriptor, Disposable parentDisposable) {
     myImplicitNamespaces.put(ns, descriptor);
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
@@ -348,7 +348,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   @Nullable
-  public XmlNSDescriptorImpl getImplicitNamespaceDescriptor(@NotNull final String ns) {
+  public XmlNSDescriptor getImplicitNamespaceDescriptor(@NotNull final String ns) {
     return myImplicitNamespaces.get(ns);
   }
 
