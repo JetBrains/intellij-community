@@ -268,6 +268,7 @@ class ModuleRedeclarator(object):
   }
 
   if version[0] < 3:
+    PREDEFINED_BUILTIN_SIGS[("unicode", "__init__")] = "(self, x, encoding=None, errors='strict')" # overrides a fake
     PREDEFINED_BUILTIN_SIGS[("super", "__init__")] = "(self, type1, type2=None)"
   else:
     PREDEFINED_BUILTIN_SIGS[("super", "__init__")] = "(self, type1=None, type2=None)"
@@ -280,6 +281,10 @@ class ModuleRedeclarator(object):
 
   # This is a list of builtin classes to use fake init
   FAKE_BUILTIN_INITS = (tuple, type, int, str)
+  if version[0] < 3:
+    import __builtin__ as b2
+    FAKE_BUILTIN_INITS = FAKE_BUILTIN_INITS + (getattr(b2, "unicode"),)
+    del b2
 
   # Some builtin methods are decorated, but this is hard to detect.
   # {("class_name", "method_name"): "@decorator"}
