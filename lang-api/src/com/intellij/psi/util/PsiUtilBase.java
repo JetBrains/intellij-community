@@ -561,7 +561,7 @@ public class PsiUtilBase {
       return -1;
     }
     final PsiElement context = containingFile.getContext();
-    if (context == null) {
+    if (!(context instanceof PsiLanguageInjectionHost)) {
       return 0;
     }
     final int[] result = new int[1];
