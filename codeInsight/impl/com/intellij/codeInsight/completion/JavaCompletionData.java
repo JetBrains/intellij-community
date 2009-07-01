@@ -3,25 +3,18 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PlatformPatterns;
-import com.intellij.patterns.PsiElementPattern;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.patterns.*;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import static com.intellij.patterns.StandardPatterns.not;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.classes.AssignableFromContextFilter;
 import com.intellij.psi.filters.classes.EnumOrAnnotationTypeFilter;
 import com.intellij.psi.filters.classes.InterfaceFilter;
-import com.intellij.psi.filters.classes.ThisOrAnyInnerFilter;
-import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
-import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.element.ReferenceOnFilter;
 import com.intellij.psi.filters.position.*;
-import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.filters.types.TypeCodeFragmentIsVoidEnabledFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.jsp.JspElementType;
@@ -33,6 +26,95 @@ public class JavaCompletionData extends JavaAwareCompletionData{
 
   private static final @NonNls String[] ourBlockFinalizers = {"{", "}", ";", ":", "else"};
   private static final PsiElementPattern.Capture<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");
+  public static final LeftNeighbour INSTANCEOF_PLACE = new LeftNeighbour(new OrFilter(
+      new ReferenceOnFilter(new ClassFilter(PsiVariable.class)),
+      new TextFilter(PsiKeyword.THIS),
+      new AndFilter(new TextFilter(")"), new ParentElementFilter(new AndFilter(
+        new ClassFilter(PsiTypeCastExpression.class, false),
+        new OrFilter(
+          new ParentElementFilter(new ClassFilter(PsiExpression.class)),
+          new ClassFilter(PsiExpression.class))))),
+      new AndFilter(new TextFilter("]"), new ParentElementFilter(new ClassFilter(PsiArrayAccessExpression.class)))));
+  public static final PsiJavaElementPattern.Capture<PsiElement> AFTER_FINAL =
+    PsiJavaPatterns.psiElement().afterLeaf(PsiKeyword.FINAL).inside(PsiDeclarationStatement.class);
+  public static final LeftNeighbour AFTER_TRY_BLOCK = new LeftNeighbour(new AndFilter(
+    new TextFilter("}"),
+    new ParentElementFilter(new AndFilter(
+      new LeftNeighbour(new TextFilter(PsiKeyword.TRY)),
+      new ParentElementFilter(new ClassFilter(PsiTryStatement.class)))
+)));
+  public static final PsiJavaElementPattern.Capture<PsiElement> INSIDE_PARAMETER_LIST =
+    PsiJavaPatterns.psiElement().inside(PsiParameterList.class).and(new FilterPattern(new LeftNeighbour(
+    new OrFilter(new TextFilter("(", ",", PsiKeyword.FINAL), new SuperParentFilter(new ClassFilter(PsiAnnotation.class))))));
+
+  private static final AndFilter START_OF_CODE_FRAGMENT = new AndFilter(
+    new ScopeFilter(new AndFilter(
+      new ClassFilter(JavaCodeFragment.class),
+      new ClassFilter(PsiExpressionCodeFragment.class, false),
+      new ClassFilter(PsiJavaCodeReferenceCodeFragment.class, false),
+      new ClassFilter(PsiTypeCodeFragment.class, false)
+    )),
+    new StartElementFilter()
+  );
+
+  static final ElementFilter END_OF_BLOCK = new OrFilter(
+    new AndFilter(
+      new LeftNeighbour(
+          new OrFilter(
+              new AndFilter (
+                  new TextFilter(ourBlockFinalizers),
+                  new NotFilter (
+                    new SuperParentFilter(new ClassFilter(PsiAnnotation.class))
+                  )
+              ),
+              new TextFilter("*/"),
+              new TokenTypeFilter(JspElementType.HOLDER_TEMPLATE_DATA),
+              new ClassFilter(OuterLanguageElement.class),
+              new AndFilter(
+                  new TextFilter(")"),
+                  new NotFilter(
+                      new OrFilter(
+                          new ParentElementFilter(new ClassFilter(PsiExpressionList.class)),
+                          new ParentElementFilter(new ClassFilter(PsiParameterList.class)),
+                          new ParentElementFilter(new ClassFilter(PsiTypeCastExpression.class))
+                      )
+                  )
+              ))),
+      new NotFilter(new TextFilter("."))
+    ),
+    START_OF_CODE_FRAGMENT
+  );
+
+  static final AndFilter START_SWITCH = new AndFilter(END_OF_BLOCK, new LeftNeighbour(
+        new AndFilter(new TextFilter("{"), new ParentElementFilter(new ClassFilter(PsiSwitchStatement.class), 2))));
+
+  private static final ElementPattern<Object> SUPER_OR_THIS_PATTERN =
+    and(JavaSmartCompletionContributor.INSIDE_EXPRESSION,
+        not(psiElement().afterLeaf(PsiKeyword.CASE)),
+        not(psiElement().afterLeaf(psiElement().withText(".").afterLeaf(PsiKeyword.THIS, PsiKeyword.SUPER))),
+        not(new FilterPattern(START_SWITCH)));
+
+
+  protected static final AndFilter CLASS_START = new AndFilter(
+    new OrFilter(
+      END_OF_BLOCK,
+      new PatternFilter(psiElement().afterLeaf(
+        or(
+          psiElement().withoutText(".").inside(psiElement(PsiModifierList.class)),
+          psiElement().isNull())))
+    ),
+    new PatternFilter(not(psiElement().afterLeaf("@"))));
+
+  private static final String[] PRIMITIVE_TYPES = new String[]{
+    PsiKeyword.SHORT, PsiKeyword.BOOLEAN,
+    PsiKeyword.DOUBLE, PsiKeyword.LONG,
+    PsiKeyword.INT, PsiKeyword.FLOAT,
+    PsiKeyword.VOID, PsiKeyword.CHAR, PsiKeyword.BYTE
+  };
+
+  final static ElementFilter CLASS_BODY = new OrFilter(
+    new AfterElementFilter(new TextFilter("{")),
+    new ScopeFilter(new ClassFilter(JspClassLevelDeclarationStatement.class)));
 
   public JavaCompletionData(){
     declareCompletionSpaces();
@@ -51,11 +133,21 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     initVariantsInFileScope();
     initVariantsInClassScope();
     initVariantsInMethodScope();
-    initVariantsInFieldScope();
 
     defineScopeEquivalence(PsiMethod.class, PsiClassInitializer.class);
     defineScopeEquivalence(PsiMethod.class, JavaCodeFragment.class);
   }
+
+  public static final AndFilter DECLARATION_START = new AndFilter(
+    CLASS_BODY,
+    new OrFilter(
+      END_OF_BLOCK,
+      new LeftNeighbour(new OrFilter(
+        new SuperParentFilter(new ClassFilter(PsiModifierList.class)),
+        new AndFilter (new TokenTypeFilter(JavaTokenType.GT),
+                       new SuperParentFilter(new ClassFilter(PsiTypeParameterList.class)))))
+    ),
+    new PatternFilter(not(PlatformPatterns.psiElement().afterLeaf(PlatformPatterns.psiElement().withText("@")))));
 
   private void declareCompletionSpaces() {
     declareFinalScope(PsiFile.class);
@@ -178,83 +270,16 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       registerVariant(variant);
     }
 
-// Completion after extends in interface, type parameter and implements in class
-// position
-    {
-      final ElementFilter position = new AndFilter(
-        new NotFilter(CLASS_BODY),
-        new OrFilter(
-            new AndFilter(
-                new LeftNeighbour(new TextFilter(PsiKeyword.EXTENDS, ",")),
-                new ScopeFilter(new InterfaceFilter())
-            ),
-            new AndFilter(
-                new LeftNeighbour(new TextFilter(PsiKeyword.EXTENDS, "&")),
-                new ScopeFilter(new ClassFilter(PsiTypeParameter.class))
-            ),
-            new LeftNeighbour(new TextFilter(PsiKeyword.IMPLEMENTS, ",")))
-      );
-// completion
-      final OrFilter flags = new OrFilter();
-      flags.addFilter(new ThisOrAnyInnerFilter(
-        new AndFilter(
-            new ClassFilter(PsiClass.class),
-            new NotFilter(new AssignableFromContextFilter()),
-            new InterfaceFilter())
-      ));
-      flags.addFilter(new ClassFilter(PsiPackage.class));
-      CompletionVariant variant = new CompletionVariant(position);
-      variant.includeScopeClass(PsiClass.class, true);
-      variant.excludeScopeClass(PsiAnonymousClass.class);
-      variant.addCompletionFilter(new ElementExtractorFilter(flags));
 
-      registerVariant(variant);
-    }
-// Completion for classes in class extends
-// position
-    {
-      final ElementFilter position = new AndFilter(
-        new NotFilter(CLASS_BODY),
-        new AndFilter(
-            new LeftNeighbour(new TextFilter(PsiKeyword.EXTENDS)),
-            new ScopeFilter(new NotFilter(new InterfaceFilter())))
-      );
-
-// completion
-      final CompletionVariant variant = new CompletionVariant(position);
-      variant.includeScopeClass(PsiClass.class, true);
-      variant.excludeScopeClass(PsiAnonymousClass.class);
-      variant.addCompletionFilter(new ElementExtractorFilter(new ThisOrAnyInnerFilter(
-          new AndFilter(
-              new ClassFilter(PsiClass.class),
-              new NotFilter(new AssignableFromContextFilter()),
-              new NotFilter(new InterfaceFilter()),
-              new ModifierFilter(PsiModifier.FINAL, false))
-        )));
-      variant.addCompletionFilter(new ElementExtractorFilter(new ClassFilter(PsiPackage.class)));
-
-      registerVariant(variant);
-    }
     {
 // declaration start
 // position
-      final CompletionVariant variant = new CompletionVariant(PsiClass.class, new AndFilter(
-        CLASS_BODY,
-        new OrFilter(
-          END_OF_BLOCK,
-          new LeftNeighbour(new OrFilter(
-            new SuperParentFilter(new ClassFilter(PsiModifierList.class)),
-            new AndFilter (new TokenTypeFilter(JavaTokenType.GT),
-                           new SuperParentFilter(new ClassFilter(PsiTypeParameterList.class)))))
-        ),
-        new PatternFilter(not(PlatformPatterns.psiElement().afterLeaf(PlatformPatterns.psiElement().withText("@"))))));
+      final CompletionVariant variant = new CompletionVariant(PsiClass.class, DECLARATION_START);
       variant.includeScopeClass(JspClassLevelDeclarationStatement.class);
 
 // completion
       addPrimitiveTypes(variant);
       variant.addCompletion(PsiKeyword.VOID);
-      variant.addCompletionFilter(new ElementExtractorFilter(new ClassFilter(PsiClass.class)));
-      variant.addCompletionFilter(new ElementExtractorFilter(new ClassFilter(PsiPackage.class)));
 
       registerVariant(variant);
     }
@@ -272,12 +297,9 @@ public class JavaCompletionData extends JavaAwareCompletionData{
   private void initVariantsInMethodScope() {
     {
 // parameters list completion
-      final CompletionVariant variant = new CompletionVariant(
-        new LeftNeighbour(new OrFilter(new TextFilter("(", ",", PsiKeyword.FINAL),
-                                       new SuperParentFilter(new ClassFilter(PsiAnnotation.class)))));
+      final CompletionVariant variant = new CompletionVariant(INSIDE_PARAMETER_LIST);
       variant.includeScopeClass(PsiParameterList.class, true);
       addPrimitiveTypes(variant);
-      variant.addCompletionFilter(new ElementExtractorFilter(new ClassFilter(PsiClass.class)));
       registerVariant(variant);
     }
 
@@ -298,23 +320,6 @@ public class JavaCompletionData extends JavaAwareCompletionData{
 //in annotation methods
       variant = new CompletionVariant(PsiAnnotationMethod.class, position);
       variant.addCompletion(PsiKeyword.DEFAULT);
-      registerVariant(variant);
-    }
-
-    {
-// Completion for classes in method throws section
-// position
-      final ElementFilter position = new AndFilter(
-        new LeftNeighbour(new TextFilter(PsiKeyword.THROWS, ",")),
-        new InsideElementFilter(new ClassFilter(PsiReferenceList.class))
-      );
-
-// completion
-      final CompletionVariant variant = new CompletionVariant(position);
-      variant.includeScopeClass(PsiMethod.class, true);
-      variant.addCompletionFilter(new ElementExtractorFilter(new ThisOrAnyInnerFilter(new AssignableFromFilter("java.lang.Throwable"))));
-      variant.addCompletionFilter(new ElementExtractorFilter(new ClassFilter(PsiPackage.class)));
-
       registerVariant(variant);
     }
 
@@ -340,41 +345,20 @@ public class JavaCompletionData extends JavaAwareCompletionData{
 
     {
 // instanceof keyword
-      final ElementFilter position = new LeftNeighbour(new OrFilter(
-          new ReferenceOnFilter(new ClassFilter(PsiVariable.class)),
-          new TextFilter(PsiKeyword.THIS),
-          new AndFilter(new TextFilter(")"), new ParentElementFilter(new AndFilter(
-            new ClassFilter(PsiTypeCastExpression.class, false),
-            new OrFilter(
-              new ParentElementFilter(new ClassFilter(PsiExpression.class)),
-              new ClassFilter(PsiExpression.class))))),
-          new AndFilter(new TextFilter("]"), new ParentElementFilter(new ClassFilter(PsiArrayAccessExpression.class)))));
+      final ElementFilter position = INSTANCEOF_PLACE;
       final CompletionVariant variant = new CompletionVariant(position);
       variant.includeScopeClass(PsiExpression.class, true);
       variant.includeScopeClass(PsiMethod.class);
-      variant.addCompletionFilter(new FalseFilter());
       variant.addCompletion(PsiKeyword.INSTANCEOF);
 
       registerVariant(variant);
     }
 
     {
-// after instanceof keyword
-      final ElementFilter position = new PreviousElementFilter(new TextFilter(PsiKeyword.INSTANCEOF));
-      final CompletionVariant variant = new CompletionVariant(position);
-      variant.includeScopeClass(PsiExpression.class, true);
-      variant.addCompletionFilter(new ElementExtractorFilter(new ClassFilter(PsiClass.class)));
-
-      registerVariant(variant);
-    }
-
-    {
 // after final keyword
-      final ElementFilter position = new AndFilter(new SuperParentFilter(new ClassFilter(PsiCodeBlock.class)),
-                                                   new LeftNeighbour(new TextFilter(PsiKeyword.FINAL)));
+      final ElementFilter position = new PatternFilter(AFTER_FINAL);
       final CompletionVariant variant = new CompletionVariant(position);
       variant.includeScopeClass(PsiDeclarationStatement.class, true);
-      variant.addCompletionFilter(new ElementExtractorFilter(new ClassFilter(PsiClass.class)));
       addPrimitiveTypes(variant);
 
       registerVariant(variant);
@@ -399,17 +383,12 @@ public class JavaCompletionData extends JavaAwareCompletionData{
 
 // Catch/Finally completion
     {
-      final ElementFilter position = new LeftNeighbour(new AndFilter(
-        new TextFilter("}"),
-        new ParentElementFilter(new AndFilter(
-          new LeftNeighbour(new TextFilter(PsiKeyword.TRY)),
-          new ParentElementFilter(new ClassFilter(PsiTryStatement.class))))));
+      final ElementFilter position = AFTER_TRY_BLOCK;
 
       final CompletionVariant variant = new CompletionVariant(position);
       variant.includeScopeClass(PsiCodeBlock.class, true);
       variant.addCompletion(PsiKeyword.CATCH, TailTypes.CATCH_LPARENTH);
       variant.addCompletion(PsiKeyword.FINALLY, TailTypes.FINALLY_LBRACE);
-      variant.addCompletionFilter(new FalseFilter());
       registerVariant(variant);
     }
 
@@ -428,21 +407,6 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       variant.includeScopeClass(PsiCodeBlock.class, false);
       variant.addCompletion(PsiKeyword.CATCH, TailTypes.CATCH_LPARENTH);
       variant.addCompletion(PsiKeyword.FINALLY, TailTypes.FINALLY_LBRACE);
-      //variant.addCompletionFilter(new FalseFilter());
-      registerVariant(variant);
-    }
-
-    {
-// Completion for catches
-      final CompletionVariant variant = new CompletionVariant(PsiTryStatement.class, new PreviousElementFilter(new AndFilter(
-        new ParentElementFilter(new ClassFilter(PsiTryStatement.class)),
-        new TextFilter("(")
-      )));
-      variant.includeScopeClass(PsiParameter.class);
-
-      variant.addCompletionFilter(new ElementExtractorFilter(new ThisOrAnyInnerFilter(new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE))));
-      variant.addCompletionFilter(new ElementExtractorFilter(new ClassFilter(PsiPackage.class)));
-
       registerVariant(variant);
     }
 
@@ -518,7 +482,6 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       variant.includeScopeClass(PsiElement.class, false);
       variant.addCompletion(PsiKeyword.CASE, TailType.SPACE);
       variant.addCompletion(PsiKeyword.DEFAULT, TailType.CASE_COLON);
-      variant.addCompletionFilter(TrueFilter.INSTANCE);
       registerVariant(variant);
     }
 
@@ -527,51 +490,6 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       variant.includeScopeClass(PsiElement.class, true);
       variant.addCompletion(PsiKeyword.CASE, TailType.SPACE);
       variant.addCompletion(PsiKeyword.DEFAULT, TailType.CASE_COLON);
-      variant.addCompletionFilter(new FalseFilter());
-      registerVariant(variant);
-    }
-
-    {
-// after new
-      final CompletionVariant variant = new CompletionVariant(new LeftNeighbour(new TextFilter(PsiKeyword.NEW)));
-      variant.includeScopeClass(PsiNewExpression.class, true);
-      variant.addCompletionFilter(new ElementExtractorFilter(new ClassFilter(PsiClass.class)));
-
-      registerVariant(variant);
-    }
-
-
-    {
-      final CompletionVariant variant = new CompletionVariant(new AndFilter(
-        new ScopeFilter(new ParentElementFilter(new ClassFilter(PsiThrowStatement.class))),
-        new ParentElementFilter(new ClassFilter(PsiNewExpression.class)))
-      );
-      variant.includeScopeClass(PsiNewExpression.class, false);
-      variant.addCompletionFilter(new ElementExtractorFilter(new ThisOrAnyInnerFilter(new AssignableFromFilter("java.lang.Throwable"))));
-
-      registerVariant(variant);
-    }
-
-    {
-// completion in reference parameters
-      final CompletionVariant variant = new CompletionVariant(TrueFilter.INSTANCE);
-      variant.includeScopeClass(PsiReferenceParameterList.class, true);
-      variant.addCompletionFilter(new ElementExtractorFilter(new ClassFilter(PsiClass.class)));
-
-      registerVariant(variant);
-    }
-
-    {
-// completion in annotation parameter list
-      final CompletionVariant variant = new CompletionVariant(TrueFilter.INSTANCE);
-      variant.includeScopeClass(PsiAnnotationParameterList.class, true);
-      variant.addCompletionFilter(new ElementExtractorFilter(new OrFilter(new ClassFilter(PsiAnnotationMethod.class),
-                       new ClassFilter(PsiClass.class),
-                       new ClassFilter(PsiPackage.class),
-                       new AndFilter(
-                         new ClassFilter(PsiField.class),
-                         new ModifierFilter(PsiModifier.STATIC, PsiModifier.FINAL)))));
-
       registerVariant(variant);
     }
 
@@ -591,19 +509,6 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       variant.addCompletion(PsiKeyword.FALSE, TailType.NONE);
       variant.includeScopeClass(PsiExpressionList.class);
       variant.includeScopeClass(PsiStatement.class);
-      registerVariant(variant);
-    }
-  }
-
-  private void initVariantsInFieldScope() {
-    {
-// completion in initializer
-      final CompletionVariant variant = new CompletionVariant(new AfterElementFilter(new TextFilter("=")));
-      variant.includeScopeClass(PsiVariable.class, false);
-      variant.addCompletionFilter(new ElementExtractorFilter(new OrFilter(
-          new ClassFilter(PsiVariable.class, false),
-          new ExcludeDeclaredFilter(new ClassFilter(PsiVariable.class))
-        )));
       registerVariant(variant);
     }
   }
@@ -631,75 +536,6 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     variant.addCompletion(PsiKeyword.NEW, TailType.SPACE);
     variant.addCompletion(PsiKeyword.ASSERT, TailType.SPACE);
   }
-
-  private static final AndFilter START_OF_CODE_FRAGMENT = new AndFilter(
-    new ScopeFilter(new AndFilter(
-      new ClassFilter(JavaCodeFragment.class),
-      new ClassFilter(PsiExpressionCodeFragment.class, false),
-      new ClassFilter(PsiJavaCodeReferenceCodeFragment.class, false),
-      new ClassFilter(PsiTypeCodeFragment.class, false)
-    )),
-    new StartElementFilter()
-  );
-
-  static final ElementFilter END_OF_BLOCK = new OrFilter(
-    new AndFilter(
-      new LeftNeighbour(
-          new OrFilter(
-              new AndFilter (
-                  new TextFilter(ourBlockFinalizers),
-                  new NotFilter (
-                    new SuperParentFilter(new ClassFilter(PsiAnnotation.class))
-                  )
-              ),
-              new TextFilter("*/"),
-              new TokenTypeFilter(JspElementType.HOLDER_TEMPLATE_DATA),
-              new ClassFilter(OuterLanguageElement.class),
-              new AndFilter(
-                  new TextFilter(")"),
-                  new NotFilter(
-                      new OrFilter(
-                          new ParentElementFilter(new ClassFilter(PsiExpressionList.class)),
-                          new ParentElementFilter(new ClassFilter(PsiParameterList.class)),
-                          new ParentElementFilter(new ClassFilter(PsiTypeCastExpression.class))
-                      )
-                  )
-              ))),
-      new NotFilter(new TextFilter("."))
-    ),
-    START_OF_CODE_FRAGMENT
-  );
-
-  private static final AndFilter START_SWITCH = new AndFilter(END_OF_BLOCK, new LeftNeighbour(
-        new AndFilter(new TextFilter("{"), new ParentElementFilter(new ClassFilter(PsiSwitchStatement.class), 2))));
-
-  private static final ElementPattern<Object> SUPER_OR_THIS_PATTERN =
-    and(JavaSmartCompletionContributor.INSIDE_EXPRESSION,
-        not(psiElement().afterLeaf(PsiKeyword.CASE)),
-        not(psiElement().afterLeaf(psiElement().withText(".").afterLeaf(PsiKeyword.THIS, PsiKeyword.SUPER))),
-        not(new FilterPattern(START_SWITCH)));
-
-
-  protected static final AndFilter CLASS_START = new AndFilter(
-    new OrFilter(
-      END_OF_BLOCK,
-      new PatternFilter(psiElement().afterLeaf(
-        or(
-          psiElement().withoutText(".").inside(psiElement(PsiModifierList.class)),
-          psiElement().isNull())))
-    ),
-    new PatternFilter(not(psiElement().afterLeaf("@"))));
-
-  private static final String[] PRIMITIVE_TYPES = new String[]{
-    PsiKeyword.SHORT, PsiKeyword.BOOLEAN,
-    PsiKeyword.DOUBLE, PsiKeyword.LONG,
-    PsiKeyword.INT, PsiKeyword.FLOAT,
-    PsiKeyword.VOID, PsiKeyword.CHAR, PsiKeyword.BYTE
-  };
-
-  private final static ElementFilter CLASS_BODY = new OrFilter(
-    new AfterElementFilter(new TextFilter("{")),
-    new ScopeFilter(new ClassFilter(JspClassLevelDeclarationStatement.class)));
 
   @Override
   public void fillCompletions(CompletionParameters parameters, CompletionResultSet result) {

@@ -4,19 +4,19 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
+import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NullableLazyKey;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
+import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
@@ -213,7 +213,10 @@ public class JavaCompletionUtil {
     }
   }
 
-  public static void highlightMemberOfContainer(final LookupItem item) {
+  public static void highlightMemberOfContainer(@Nullable final LookupItem item) {
+    if (item == null) {
+      return;
+    }
     Object o = item.getObject();
     PsiType qualifierType = getQualifierType(item);
     if (qualifierType == null) return;
@@ -856,5 +859,40 @@ public class JavaCompletionUtil {
 
     PsiType rawType = member instanceof PsiField ? ((PsiField) member).getType() : ((PsiMethod) member).getReturnType();
     return subst.get().substitute(rawType);
+  }
+
+  public static Set<LookupElement> processJavaReference(PsiElement element, PsiJavaReference javaReference, ElementFilter elementFilter,
+                                                        final boolean checkAccess, @Nullable final PrefixMatcher matcher) {
+    final THashSet<LookupElement> set = new THashSet<LookupElement>();
+    final Condition<String> nameCondition = matcher == null ? null : new Condition<String>() {
+      public boolean value(String s) {
+        return matcher.prefixMatches(s);
+      }
+    };
+    final JavaCompletionProcessor processor = new JavaCompletionProcessor(element, elementFilter, checkAccess, nameCondition);
+    javaReference.processVariants(processor);
+
+    for (CompletionElement completionElement : processor.getResults()) {
+      addLookupItem(set, completionElement.getElement(), completionElement.getSubstitutor(), completionElement.getQualifier());
+    }
+    return set;
+  }
+
+  static void addLookupItem(Set<LookupElement> set, @NotNull Object completion, @Nullable PsiSubstitutor substitutor,
+                                    @Nullable PsiType qualifier) {
+    assert !(completion instanceof LookupElement);
+
+    LookupItem<?> ret = LookupItemUtil.objectToLookupItem(completion);
+    if(ret == null) return;
+
+    if (substitutor != null) {
+      ret.setAttribute(LookupItem.SUBSTITUTOR, substitutor);
+    }
+
+    if (qualifier != null) {
+      ret.setAttribute(QUALIFIER_TYPE_ATTR, qualifier);
+    }
+
+    set.add(ret);
   }
 }

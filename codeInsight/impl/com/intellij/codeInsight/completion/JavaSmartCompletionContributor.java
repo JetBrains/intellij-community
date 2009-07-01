@@ -5,8 +5,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.completion.scope.CompletionElement;
-import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.application.ApplicationManager;
@@ -55,12 +53,12 @@ import java.util.*;
 public class JavaSmartCompletionContributor extends CompletionContributor {
   private static final ElementExtractorFilter THROWABLES_FILTER = new ElementExtractorFilter(new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE));
   @NonNls private static final String EXCEPTION_TAG = "exception";
-  private static final ElementPattern<PsiElement> AFTER_NEW =
+  static final ElementPattern<PsiElement> AFTER_NEW =
       psiElement().afterLeaf(
           psiElement().withText(PsiKeyword.NEW).andNot(
               psiElement().afterLeaf(
                   psiElement().withText(PsiKeyword.THROW))));
-  private static final ElementPattern<PsiElement> AFTER_THROW_NEW =
+  static final ElementPattern<PsiElement> AFTER_THROW_NEW =
       psiElement().afterLeaf(
           psiElement().withText(PsiKeyword.NEW).afterLeaf(
               psiElement().withText(PsiKeyword.THROW)));
@@ -561,9 +559,9 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     }
 
     if (reference instanceof PsiJavaReference) {
-      final THashSet<LookupElement> set = new THashSet<LookupElement>();
       final PsiJavaReference javaReference = (PsiJavaReference)reference;
-      final JavaCompletionProcessor processor = new JavaCompletionProcessor(element, new ElementFilter() {
+
+      return JavaCompletionUtil.processJavaReference(element, javaReference, new ElementFilter() {
         public boolean isAcceptable(Object element, PsiElement context) {
           return filter.isAcceptable(element, context);
         }
@@ -580,34 +578,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                  ReflectionCache.isAssignable(CandidateInfo.class, hintClass) ||
                  ReflectionCache.isAssignable(PsiKeyword.class, hintClass);
         }
-      }, true);
-      javaReference.processVariants(processor);
-
-      for (CompletionElement completionElement : processor.getResults()) {
-        addLookupItem(set, completionElement.getElement(), completionElement.getSubstitutor(), completionElement.getQualifier());
-      }
-      return set;
+      }, true, null);
     }
 
     return Collections.emptySet();
-  }
-
-  private static void addLookupItem(Set<LookupElement> set, @NotNull Object completion, @Nullable PsiSubstitutor substitutor,
-                                    @Nullable PsiType qualifier) {
-    assert !(completion instanceof LookupElement);
-
-    LookupItem<?> ret = LookupItemUtil.objectToLookupItem(completion);
-    if(ret == null) return;
-
-    if (substitutor != null) {
-      ret.setAttribute(LookupItem.SUBSTITUTOR, substitutor);
-    }
-
-    if (qualifier != null) {
-      ret.setAttribute(JavaCompletionUtil.QUALIFIER_TYPE_ATTR, qualifier);
-    }
-
-    set.add(ret);
   }
 
   @Override

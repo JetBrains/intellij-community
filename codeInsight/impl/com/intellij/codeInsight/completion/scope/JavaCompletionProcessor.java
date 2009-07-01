@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -15,6 +14,7 @@ import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.util.PsiUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,12 +44,12 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   private final Condition<String> myMatcher;
   private final boolean myCheckAccess;
 
-  public JavaCompletionProcessor(PsiElement element, ElementFilter filter, final boolean checkAccess) {
+  public JavaCompletionProcessor(PsiElement element, ElementFilter filter, final boolean checkAccess, @Nullable Condition<String> nameCondition) {
     myCheckAccess = checkAccess;
     mySettings = CodeInsightSettings.getInstance();
     myResults = new ArrayList<CompletionElement>();
     myElement = element;
-    myMatcher = element.getUserData(JavaCompletionContributor.NAME_FILTER);
+    myMatcher = nameCondition;
     myFilter = filter;
     PsiElement scope = element;
     if (JavaResolveUtil.isInJavaDoc(myElement)) myMembersFlag = true;

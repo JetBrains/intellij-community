@@ -8,19 +8,17 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import static com.intellij.patterns.StandardPatterns.character;
-import static com.intellij.patterns.StandardPatterns.not;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +47,7 @@ public class JavaAwareCompletionData extends CompletionData{
                                    final ElementFilter filter,
                                    final CompletionVariant variant,
                                    final boolean checkAccess) {
-    final JavaCompletionProcessor processor = new JavaCompletionProcessor(position, filter, checkAccess);
+    final JavaCompletionProcessor processor = new JavaCompletionProcessor(position, filter, checkAccess, null);
 
     if (reference instanceof PsiMultiReference) {
       int javaReferenceStart = -1;
@@ -145,18 +143,6 @@ public class JavaAwareCompletionData extends CompletionData{
     }
 
     return null;
-  }
-
-  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
-  public static String findPrefixStatic(PsiElement insertedElement, int offsetInFile) {
-    if(insertedElement == null) return "";
-
-    final String prefix = getReferencePrefix(insertedElement, offsetInFile);
-    if (prefix != null) return prefix;
-
-    if (insertedElement instanceof PsiPlainText) return "";
-
-    return findPrefixDefault(insertedElement, offsetInFile, not(character().javaIdentifierPart()));
   }
 
   protected void addLookupItem(Set<LookupElement> set, TailType tailType, @NotNull Object completion, final PsiFile file, final CompletionVariant variant) {

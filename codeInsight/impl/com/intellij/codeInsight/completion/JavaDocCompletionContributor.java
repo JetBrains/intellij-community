@@ -65,7 +65,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
         if (ref instanceof PsiJavaReference) {
           result.stopHere();
 
-          final JavaCompletionProcessor processor = new JavaCompletionProcessor(position, TrueFilter.INSTANCE, false);
+          final JavaCompletionProcessor processor = new JavaCompletionProcessor(position, TrueFilter.INSTANCE, false, null);
           ((PsiJavaReference) ref).processVariants(processor);
 
           for (final CompletionElement _item : processor.getResults()) {

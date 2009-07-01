@@ -4,14 +4,13 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.LeftNeighbour;
-import com.intellij.psi.filters.position.ParentElementFilter;
-import com.intellij.psi.filters.position.PositionElementFilter;
 import com.intellij.psi.filters.position.SuperParentFilter;
 
 /**
  * @author ven
  */
 public class Java15CompletionData extends JavaCompletionData {
+
   protected void initVariantsInFileScope() {
     super.initVariantsInFileScope();
     //static keyword in static import
@@ -45,29 +44,6 @@ public class Java15CompletionData extends JavaCompletionData {
       registerVariant(variant);
     }
 
-    {
-      final ElementFilter position = new ScopeFilter(new ParentElementFilter(new AndFilter(
-        new ClassFilter(PsiSwitchLabelStatement.class),
-        new ParentElementFilter(
-          new PositionElementFilter() {
-            public boolean isAcceptable(Object element, PsiElement context) {
-              if (!(element instanceof PsiSwitchStatement)) return false;
-              final PsiExpression expression = ((PsiSwitchStatement)element).getExpression();
-              if(expression == null) return false;
-              final PsiType type = expression.getType();
-              return type instanceof PsiClassType;
-            }
-          }, 2)
-      )));
-      final CompletionVariant variant = new CompletionVariant(PsiReferenceExpression.class, position);
-      variant.addCompletionFilter(new ElementExtractorFilter(new ClassFilter(PsiField.class) {
-        @Override
-        public boolean isAcceptable(Object element, PsiElement context) {
-          return element instanceof PsiEnumConstant;
-        }
-      }), TailType.createSimpleTailType(':'));
-      registerVariant(variant);
-    }
   }
 
   protected void initVariantsInClassScope() {
