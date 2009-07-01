@@ -217,7 +217,8 @@ public class DaemonListeners implements Disposable {
 
     myModalityStateListener = new ModalityStateListener() {
       public void beforeModalityStateChanged(boolean entering) {
-        stopDaemon(entering);
+        // before showing dialog we are in non-modal context yet, and before closing dialog we are still in modal context
+        stopDaemon(LaterInvocator.isInModalContext());
       }
     };
     LaterInvocator.addModalityStateListener(myModalityStateListener);
