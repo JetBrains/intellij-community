@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.inspections.PyMethodParametersInspection;
 import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,6 +28,10 @@ public class QuickFixTest extends DaemonAnalyzerTestCase {
 
   public void testAddImport() throws Exception {
     doInspectionTest("AddImport.py", PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.add.import"), true, true);
+  }
+
+  public void testAddImportDoc() throws Exception {
+    doInspectionTest("AddImportDoc.py", PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.add.import"), true, true);
   }
 
   public void testQualifyByImport() throws Exception {
@@ -108,13 +113,13 @@ public class QuickFixTest extends DaemonAnalyzerTestCase {
     doDoTest(checkWarnings, checkInfos);
   }
 
-  protected String getTestDataPath() {
+  protected @NonNls String getTestDataPath() {
     return PathManager.getHomePath() + "/plugins/python/testData/inspections/";
   }
 
-  protected void doInspectionTest(String testFileName,
+  protected void doInspectionTest(@NonNls String testFileName,
                                   final Class inspectionClass,
-                                  String quickFixName,
+                                  @NonNls String quickFixName,
                                   boolean applyFix,
                                   boolean available
   ) throws Exception {
@@ -130,9 +135,9 @@ public class QuickFixTest extends DaemonAnalyzerTestCase {
    * @param available true if the fix should be available, false if it should be explicitly not available.
    * @throws Exception
    */
-  protected void doInspectionTest(String[] testFiles,
+  protected void doInspectionTest(@NonNls String[] testFiles,
                                   final Class inspectionClass,
-                                  String quickFixName,
+                                  @NonNls String quickFixName,
                                   boolean applyFix,
                                   boolean available
   ) throws Exception {
@@ -184,7 +189,7 @@ public class QuickFixTest extends DaemonAnalyzerTestCase {
   }
 
   // Turns "name.ext" to "name_insertion.ext"
-  private String graftBeforeExt(String name, String insertion) {
+  private @NonNls String graftBeforeExt(String name, String insertion) {
     int dotpos = name.indexOf('.');
     if (dotpos < 0) dotpos = name.length();
     return name.substring(0, dotpos) +  insertion + name.substring(dotpos, name.length());
