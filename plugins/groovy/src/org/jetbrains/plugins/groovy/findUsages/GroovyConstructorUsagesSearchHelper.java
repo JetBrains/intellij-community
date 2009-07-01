@@ -126,7 +126,7 @@ public class GroovyConstructorUsagesSearchHelper {
 
 
     PsiManager manager = constructor.getManager();
-    if (manager.areElementsEquivalent(usage, constructor)) return;
+    if (manager.areElementsEquivalent(usage, constructor) || manager.areElementsEquivalent(constructor.getContainingClass(), usage.getContainingClass())) return;
     processor.process(new LightMemberReference(manager, usage, PsiSubstitutor.EMPTY) {
       public PsiElement getElement() {
         return usage;
@@ -136,10 +136,6 @@ public class GroovyConstructorUsagesSearchHelper {
         if (usage instanceof PsiClass) {
           PsiIdentifier identifier = ((PsiClass)usage).getNameIdentifier();
           if (identifier != null) return TextRange.from(identifier.getStartOffsetInParent(), identifier.getTextLength());
-        }
-        else if (usage instanceof PsiField) {
-          PsiIdentifier identifier = ((PsiField)usage).getNameIdentifier();
-          return TextRange.from(identifier.getStartOffsetInParent(), identifier.getTextLength());
         }
         else if (usage instanceof PsiMethod) {
           PsiIdentifier identifier = ((PsiMethod)usage).getNameIdentifier();

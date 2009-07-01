@@ -77,7 +77,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
         if (resolvedMethod != null) {
           final PsiParameter[] parameters = resolvedMethod.getParameterList().getParameters();
           if (parameters.length > 0) {
-            if (PsiUtil.getMapType(resolvedMethod.getManager(), resolvedMethod.getResolveScope()).isAssignableFrom(parameters[0].getType())) {
+            if (PsiUtil.createMapType(resolvedMethod.getManager(), resolvedMethod.getResolveScope()).isAssignableFrom(parameters[0].getType())) {
               //call with named argument, not setting property
               return null;
             }

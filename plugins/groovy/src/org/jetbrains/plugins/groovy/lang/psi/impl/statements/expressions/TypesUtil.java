@@ -62,9 +62,11 @@ public class TypesUtil {
       MethodResolverProcessor processor =
         new MethodResolverProcessor(operatorName, place, false, thisType, argumentTypes, PsiType.EMPTY_ARRAY);
       if (thisType instanceof PsiClassType) {
-        final PsiClass lClass = ((PsiClassType)thisType).resolve();
+        final PsiClassType classtype = (PsiClassType)thisType;
+        final PsiClassType.ClassResolveResult resolveResult = classtype.resolveGenerics();
+        final PsiClass lClass = resolveResult.getElement();
         if (lClass != null) {
-          lClass.processDeclarations(processor, ResolveState.initial(), null, place);
+          lClass.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, resolveResult.getSubstitutor()), null, place);
         }
       }
 

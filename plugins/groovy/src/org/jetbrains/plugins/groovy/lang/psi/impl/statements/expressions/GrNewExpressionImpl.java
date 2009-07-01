@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +47,8 @@ import java.util.List;
  * @author ilyas
  */
 public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewExpression {
+  private final PsiType[] myMapArguments = new PsiType[]{PsiUtil.createMapType(getManager(), getResolveScope())};
+
   public GrNewExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -106,7 +109,27 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     final GroovyResolveResult[] classResults = ref.multiResolve(false);
     if (classResults.length == 0) return GroovyResolveResult.EMPTY_ARRAY;
 
-    final PsiType[] argTypes = PsiUtil.getArgumentTypes(ref, true, false);
+    if (getNamedArguments().length > 0 && getArgumentList().getExpressionArguments().length == 0) {
+      GroovyResolveResult[] constructorResults = getCandidates(ref, classResults, myMapArguments); //one Map parameter, actually
+      for (GroovyResolveResult result : constructorResults) {
+        if (result.getElement() instanceof PsiMethod) {
+          PsiMethod constructor = (PsiMethod)result.getElement();
+          final PsiParameter[] parameters = constructor.getParameterList().getParameters();
+          if (parameters.length == 1 && InheritanceUtil.isInheritor(parameters[0].getType(), CommonClassNames.JAVA_UTIL_MAP)) {
+            return constructorResults;
+          }
+        }
+      }
+      final GroovyResolveResult[] emptyConstructors = getCandidates(ref, classResults, PsiType.EMPTY_ARRAY);
+      if (emptyConstructors.length > 0) {
+        return emptyConstructors;
+      }
+    }
+
+    return getCandidates(ref, classResults, PsiUtil.getArgumentTypes(ref, false, false));
+  }
+
+  private GroovyResolveResult[] getCandidates(GrCodeReferenceElement ref, GroovyResolveResult[] classResults, PsiType[] argTypes) {
     List<GroovyResolveResult> constructorResults = new ArrayList<GroovyResolveResult>();
     for (GroovyResolveResult classResult : classResults) {
       final PsiElement element = classResult.getElement();

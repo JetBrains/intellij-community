@@ -285,7 +285,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   private static boolean firstOwnerParameterMustBeMap(final GrParametersOwner owner) {
     final GrParameter first = getFirstParameter(owner);
     final PsiType type = first.getTypeGroovy();
-    final PsiClassType mapType = PsiUtil.getMapType(owner.getManager(), GlobalSearchScope.allScope(owner.getProject()));
+    final PsiClassType mapType = PsiUtil.createMapType(owner.getManager(), GlobalSearchScope.allScope(owner.getProject()));
     // First parameter may be used as map
     return type == null || type.isConvertibleFrom(mapType);
   }

@@ -198,7 +198,7 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
 
   @Nullable
   public PsiIdentifier getNameIdentifier() {
-    return new JavaIdentifier(getManager(), getContainingFile(), getNameIdentifierGroovy());
+    return new JavaIdentifier(getManager(), getNameIdentifierGroovy());
   }
 
   public PsiElement getScope() {

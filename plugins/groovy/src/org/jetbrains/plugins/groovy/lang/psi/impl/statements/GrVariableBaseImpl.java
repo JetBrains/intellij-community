@@ -266,7 +266,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
   @NotNull
   public PsiIdentifier getNameIdentifier() {
     PsiElement nameId = getNameIdentifierGroovy();
-    return new JavaIdentifier(getManager(), getContainingFile(), nameId);
+    return new JavaIdentifier(getManager(), nameId);
   }
 
   @Nullable

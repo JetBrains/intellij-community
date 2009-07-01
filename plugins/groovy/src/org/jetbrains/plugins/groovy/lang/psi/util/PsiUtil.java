@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
@@ -62,6 +63,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 import java.util.*;
 
@@ -143,7 +146,7 @@ public class PsiUtil {
 
     if (parameterTypes.length - 1 == argumentTypes.length) {
       final PsiType firstType = parameterTypes[0];
-      final PsiClassType mapType = getMapType(method.getManager(), scope);
+      final PsiClassType mapType = createMapType(method.getManager(), scope);
       if (mapType.isAssignableFrom(firstType)) {
         final PsiType[] trimmed = new PsiType[parameterTypes.length - 1];
         System.arraycopy(parameterTypes, 1, trimmed, 0, trimmed.length);
@@ -188,8 +191,8 @@ public class PsiUtil {
     return result.toArray(new PsiType[result.size()]);
   }
 
-  public static PsiClassType getMapType(PsiManager manager, GlobalSearchScope scope) {
-    return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.util.Map", scope);
+  public static PsiClassType createMapType(PsiManager manager, GlobalSearchScope scope) {
+    return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, scope);
   }
 
   @Nullable
@@ -208,7 +211,6 @@ public class PsiUtil {
   // Returns arguments types not including Map for named arguments
   @Nullable
   public static PsiType[] getArgumentTypes(PsiElement place, boolean forConstructor, boolean nullAsBottom) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(place.getProject()).getElementFactory();
     PsiElement parent = place.getParent();
     if (parent instanceof GrCallExpression) {
       List<PsiType> result = new ArrayList<PsiType>();
@@ -217,7 +219,7 @@ public class PsiUtil {
       if (!forConstructor) {
         GrNamedArgument[] namedArgs = call.getNamedArguments();
         if (namedArgs.length > 0) {
-          result.add(factory.createTypeByFQClassName("java.util.HashMap", place.getResolveScope()));
+          result.add(createMapType(place.getManager(), place.getResolveScope()));
         }
       }
 
@@ -248,7 +250,7 @@ public class PsiUtil {
       GrNamedArgument[] namedArgs = argList != null ? argList.getNamedArguments() : GrNamedArgument.EMPTY_ARRAY;
       final ArrayList<PsiType> result = new ArrayList<PsiType>();
       if (namedArgs.length > 0) {
-        result.add(factory.createTypeByFQClassName("java.util.HashMap", place.getResolveScope()));
+        result.add(createMapType(place.getManager(), place.getResolveScope()));
       }
       for (int i = 0; i < args.length; i++) {
         PsiType argType = getArgumentType(args[i]);
@@ -265,7 +267,7 @@ public class PsiUtil {
 
       List<PsiType> result = new ArrayList<PsiType>();
       if (argList.getNamedArguments().length > 0) {
-        result.add(factory.createTypeByFQClassName("java.util.HashMap", place.getResolveScope()));
+        result.add(createMapType(place.getManager(), place.getResolveScope()));
       }
 
       GrExpression[] expressions = argList.getExpressionArguments();
@@ -633,6 +635,107 @@ public class PsiUtil {
     }
 
     return result.toArray(new PsiType[result.size()]);
+  }
+
+  public static boolean isRawMethodCall(GrMethodCallExpression call) {
+    final GroovyResolveResult[] resolveResults = call.getMethodVariants();
+    if (resolveResults.length == 0) return false;
+    final PsiElement element = resolveResults[0].getElement();
+    if (element != null) {
+      PsiType returnType = ((PsiMethod)element).getReturnType();
+      return isRawMemberAccess(resolveResults[0].getSubstitutor(), returnType);
+    }
+    return false;
+  }
+
+  public static boolean isRawFieldAccess(GrReferenceExpression ref) {
+    PsiElement element = null;
+    final GroovyResolveResult[] resolveResults = ref.multiResolve(false);
+    if (resolveResults.length == 0) return false;
+    final GroovyResolveResult resolveResult = resolveResults[0];
+    if (resolveResult != null) {
+      element = resolveResult.getElement();
+    }
+
+    if (!(element instanceof PsiField || element instanceof GrAccessorMethod)) {
+      return false;
+    }
+
+    return isRawMemberAccess(resolveResult.getSubstitutor(), ref.getType());
+  }
+
+  private static boolean isRawIndexPropertyAccess(GrIndexProperty expr) {
+    final GrExpression qualifier = expr.getSelectedExpression();
+    final PsiType qualifierType = qualifier.getType();
+    if (qualifierType instanceof PsiClassType) {
+
+      if (InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_LIST)) {
+        return com.intellij.psi.util.PsiUtil.extractIterableTypeParameter(qualifierType, false) == null;
+      }
+
+      if (InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_MAP)) {
+        return com.intellij.psi.util.PsiUtil.substituteTypeParameter(qualifierType, CommonClassNames.JAVA_UTIL_MAP, 1, false) == null;
+      }
+      PsiClassType classType = (PsiClassType)qualifierType;
+      final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+      GrExpression[] arguments = expr.getArgumentList().getExpressionArguments();
+      PsiType[] argTypes = new PsiType[arguments.length];
+      for (int i = 0; i < arguments.length; i++) {
+        PsiType argType = arguments[i].getType();
+        if (argType == null) argType = TypesUtil.getJavaLangObject(expr);
+        argTypes[i] = argType;
+      }
+
+      MethodResolverProcessor processor = new MethodResolverProcessor("getAt", expr, false, qualifierType, argTypes, PsiType.EMPTY_ARRAY);
+
+      final PsiClass qClass = resolveResult.getElement();
+      if (qClass != null) {
+        qClass.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY), null, expr);
+      }
+
+      ResolveUtil.processNonCodeMethods(qualifierType, processor, expr.getProject(), expr, false);
+      final GroovyResolveResult[] candidates = processor.getCandidates();
+      PsiType type = null;
+      if (candidates.length == 1) {
+        final PsiElement element = candidates[0].getElement();
+        if (element instanceof PsiMethod) {
+          type = ((PsiMethod)element).getReturnType();
+        }
+      }
+      return isRawMemberAccess(resolveResult.getSubstitutor(), type);
+    }
+    return false;
+  }
+
+  public static boolean isRawClassMemberAccess(GrExpression expr) {
+    while (expr instanceof GrParenthesizedExpression) {
+      expr = ((GrParenthesizedExpression)expr).getOperand();
+    }
+
+    if (expr instanceof GrMethodCallExpression) {
+      return isRawMethodCall((GrMethodCallExpression)expr);
+    }
+    if (expr instanceof GrReferenceExpression) {
+      return isRawFieldAccess((GrReferenceExpression)expr);
+    }
+    if (expr instanceof GrIndexProperty) {
+      return isRawIndexPropertyAccess((GrIndexProperty)expr);
+    }
+    return false;
+  }
+
+  private static boolean isRawMemberAccess(PsiSubstitutor substitutor, PsiType memberType) {
+    if (memberType instanceof PsiClassType) {
+      final PsiClass returnClass = ((PsiClassType)memberType).resolve();
+      if (returnClass instanceof PsiTypeParameter) {
+        final PsiTypeParameter typeParameter = (PsiTypeParameter)returnClass;
+        final PsiType substitutedType = substitutor.substitute(typeParameter);
+        if (substitutedType == null) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public static boolean isNewLine(PsiElement element) {

@@ -166,4 +166,9 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
   public boolean isSoft() {
     return false;
   }
+
+  @Override
+  public PsiReference getReference() {
+    return this;
+  }
 }

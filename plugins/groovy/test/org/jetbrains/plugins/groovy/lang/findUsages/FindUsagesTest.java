@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.lang.findUsages;
 
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -88,6 +89,20 @@ public class FindUsagesTest extends UsefulTestCase {
     doConstructorTest("A.groovy", 2);
   }
 
+  public void testConstructorUsageInNewExpression() throws Throwable {
+    doTestImpl("ConstructorUsageInNewExpression.groovy", 3);
+  }
+
+  public void testGotoConstructor() throws Throwable {
+    myFixture.configureByFile("GotoConstructor.groovy");
+    final TargetElementUtilBase utilBase = TargetElementUtilBase.getInstance();
+    final PsiElement target = utilBase.findTargetElement(myFixture.getEditor(), utilBase.getReferenceSearchFlags());
+    assertNotNull(target);
+    assertInstanceOf(target, PsiMethod.class);
+    assertTrue(((PsiMethod)target).isConstructor());
+    assertTrue(((PsiMethod)target).getParameterList().getParametersCount() == 0);
+  }
+
   public void testSetter1() throws Throwable {
     doTestImpl("A.groovy", 2);
   }
@@ -135,8 +150,9 @@ public class FindUsagesTest extends UsefulTestCase {
     final Query<PsiReference> query;
     final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myFixture.getProject());
     if (resolved instanceof PsiMethod) {
-      query = MethodReferencesSearch.search((PsiMethod) resolved, projectScope, true);
-    } else {
+      query = MethodReferencesSearch.search((PsiMethod)resolved, projectScope, true);
+    }
+    else {
       query = ReferencesSearch.search(resolved, projectScope);
     }
 
@@ -157,8 +173,9 @@ public class FindUsagesTest extends UsefulTestCase {
     final Query<PsiReference> query;
     final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myFixture.getProject());
     if (resolved instanceof PsiMethod) {
-      query = MethodReferencesSearch.search((PsiMethod) resolved, projectScope, true);
-    } else {
+      query = MethodReferencesSearch.search((PsiMethod)resolved, projectScope, true);
+    }
+    else {
       query = ReferencesSearch.search(resolved, projectScope);
     }
 

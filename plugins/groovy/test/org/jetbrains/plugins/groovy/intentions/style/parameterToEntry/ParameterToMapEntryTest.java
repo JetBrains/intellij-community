@@ -8,10 +8,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.fixtures.*;
 import junit.framework.Assert;
 import org.jetbrains.plugins.grails.fileType.GspFileType;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -33,9 +30,8 @@ public class ParameterToMapEntryTest extends UsefulTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> builder = fixtureFactory.createFixtureBuilder();
-    myFixture = fixtureFactory.createCodeInsightFixture(builder.getFixture());
+    final TestFixtureBuilder<IdeaProjectTestFixture> builder = JavaTestFixtureFactory.createFixtureBuilder();
+    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(builder.getFixture());
     final JavaModuleFixtureBuilder moduleBuilder = builder.addModule(JavaModuleFixtureBuilder.class);
     moduleBuilder.addJdk(TestUtils.getMockJdkHome());
     myFixture.setTestDataPath(TestUtils.getTestDataPath() + "/paramToMap" + "/" + getTestName(true));

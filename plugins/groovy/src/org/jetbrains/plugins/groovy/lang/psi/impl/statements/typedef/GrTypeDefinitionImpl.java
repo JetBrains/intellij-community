@@ -99,6 +99,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
       return psiClassType.equalsToText(DEFAULT_BASE_CLASS_NAME);
     }
   };
+  private final PsiClassType[] myDefaultSuperTypes = new PsiClassType[]{getBaseClassType()};
 
   public GrTypeDefinitionImpl(@NotNull ASTNode node) {
     super(node);
@@ -259,14 +260,14 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
         if (fieldInfo != null) {
           final PsiElement element = fieldInfo.getElement();
           if (!isSameDeclaration(place, element)) { //the same variable declaration
-            if (!processor.execute(element, ResolveState.initial().put(PsiSubstitutor.KEY, fieldInfo.getSubstitutor()))) return false;
+            if (!processor.execute(element, ResolveState.initial().put(PsiSubstitutor.KEY, state.get(PsiSubstitutor.KEY)))) return false;
           }
         }
       } else {
         for (CandidateInfo info : fieldsMap.values()) {
           final PsiElement element = info.getElement();
           if (!isSameDeclaration(place, element)) {  //the same variable declaration
-            if (!processor.execute(element, ResolveState.initial().put(PsiSubstitutor.KEY, info.getSubstitutor()))) return false;
+            if (!processor.execute(element, ResolveState.initial().put(PsiSubstitutor.KEY, state.get(PsiSubstitutor.KEY)))) return false;
           }
         }
       }
@@ -281,7 +282,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
             PsiMethod method = (PsiMethod)info.getElement();
             if (!isSameDeclaration(place, method) &&
                 isMethodVisible(isPlaceGroovy, method) &&
-                !processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY))) {
+                !processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, state.get(PsiSubstitutor.KEY)))) {
               return false;
             }
           }
@@ -293,7 +294,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
             PsiMethod method = (PsiMethod)info.getElement();
             if (!isSameDeclaration(place, method) &&
                 isMethodVisible(isPlaceGroovy, method) &&
-                !processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY))) {
+                !processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, state.get(PsiSubstitutor.KEY)))) {
               return false;
             }
           }
@@ -309,7 +310,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
             if (info != null) {
               final PsiElement field = info.getElement();
               if (field instanceof GrField && ((GrField)field).isProperty() && isPropertyReference(place, (PsiField)field, isGetter)) {
-                if (!processor.execute(field, ResolveState.initial().put(PsiSubstitutor.KEY, info.getSubstitutor()))) return false;
+                if (!processor.execute(field, ResolveState.initial().put(PsiSubstitutor.KEY, state.get(PsiSubstitutor.KEY)))) return false;
               }
             }
           }
@@ -414,6 +415,15 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
     return extendsTypes.toArray(new PsiClassType[extendsTypes.size()]);
   }
 
+  private PsiClassType getBaseClassType() {
+    if (isEnum()) {
+      return JavaPsiFacade.getInstance((getProject())).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_ENUM, getResolveScope());
+    }
+    else {
+      return JavaPsiFacade.getInstance((getProject())).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, getResolveScope());
+    }
+  }
+
   private static List<PsiClassType> getReferenceListTypes(@Nullable GrReferenceList list) {
     final ArrayList<PsiClassType> types = new ArrayList<PsiClassType>();
     if (list != null) {
@@ -430,37 +440,42 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
     if (!isInterface() &&
         !ContainerUtil.or(implementsTypes, IS_GROOVY_OBJECT) &&
         !ContainerUtil.or(getReferenceListTypes(getExtendsClause()), IS_GROOVY_OBJECT)) {
-      implementsTypes.add(getDefaultBaseType());
+      implementsTypes.add(getGroovyObjectType());
     }
     return implementsTypes.toArray(new PsiClassType[implementsTypes.size()]);
   }
 
-  private PsiClassType getDefaultBaseType() {
+  private PsiClassType getGroovyObjectType() {
     return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(DEFAULT_BASE_CLASS_NAME, getResolveScope());
+  }
+
+  private PsiClass getBaseClass() {
+    if (isEnum()) {
+      return JavaPsiFacade.getInstance((getProject())).findClass(CommonClassNames.JAVA_LANG_ENUM, getResolveScope());
+    }
+    else {
+      return JavaPsiFacade.getInstance(getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, getResolveScope());
+    }
   }
 
   @Nullable
   public final PsiClass getSuperClass() {
-    final PsiClassType[] superTypes = getSuperTypes();
-    if (superTypes.length > 0) {
-      return superTypes[0].resolve();
-    }
-    return null;
+    final PsiClassType[] extendsList = getExtendsListTypes();
+    if (extendsList.length==0) return getBaseClass();
+    final PsiClass superClass = extendsList[0].resolve();
+    return superClass != null
+           ? superClass
+           : getBaseClass();
   }
 
   public PsiClass[] getInterfaces() {
-    GrImplementsClause implementsClause = findChildByClass(GrImplementsClause.class);
-    if (implementsClause != null) {
-      final GrCodeReferenceElement[] refs = implementsClause.getReferenceElements();
-      List<PsiClass> result = new ArrayList<PsiClass>(refs.length);
-      for (GrCodeReferenceElement ref : refs) {
-        final PsiElement resolved = ref.resolve();
-        if (resolved instanceof PsiClass) result.add((PsiClass)resolved);
-      }
-
-      return result.toArray(new PsiClass[result.size()]);
+    final PsiClassType[] implementsListTypes = getImplementsListTypes();
+    List<PsiClass> result = new ArrayList<PsiClass>(implementsListTypes.length);
+    for (PsiClassType type : implementsListTypes) {
+      final PsiClass psiClass = type.resolve();
+      if (psiClass != null) result.add(psiClass);
     }
-    return PsiClass.EMPTY_ARRAY;
+    return result.toArray(new PsiClass[result.size()]);
   }
 
   @NotNull
@@ -479,7 +494,12 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @NotNull
   public final PsiClassType[] getSuperTypes() {
-    return ArrayUtil.mergeArrays(getExtendsListTypes(), getImplementsListTypes(), PsiClassType.class);
+    PsiClassType[] extendsList = getExtendsListTypes();
+    if (extendsList.length == 0) {
+      extendsList = myDefaultSuperTypes;
+    }
+
+    return ArrayUtil.mergeArrays(extendsList, getImplementsListTypes(), PsiClassType.class);
   }
 
   @NotNull
@@ -771,7 +791,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @Nullable
   public PsiIdentifier getNameIdentifier() {
-    return new JavaIdentifier(getManager(), getContainingFile(), getNameIdentifierGroovy());
+    return new JavaIdentifier(getManager(), getNameIdentifierGroovy());
   }
 
   public PsiElement getScope() {

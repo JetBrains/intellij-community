@@ -8,6 +8,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection;
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
 
 import java.io.IOException;
 
@@ -83,6 +84,31 @@ public class GroovyHighlightingTest extends JavaCodeInsightFixtureTestCase {
 
   public void testDontSimplifyString() throws Throwable {
     myFixture.enableInspections(new GroovyTrivialIfInspection(), new GroovyTrivialConditionalInspection());
+    doTest();
+  }
+
+  public void testRawMethodAccess() throws Throwable {
+    myFixture.enableInspections(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection());
+    doTest();
+  }
+
+  public void testRawFieldAccess() throws Throwable {
+    myFixture.enableInspections(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection());
+    doTest();
+  }
+  
+  public void testRawArrayStyleAccess() throws Throwable {
+    myFixture.enableInspections(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection());
+    doTest();
+  }
+
+  public void testRawArrayStyleAccessToMap() throws Throwable {
+    myFixture.enableInspections(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection());
+    doTest();
+  }
+
+  public void testRawArrayStyleAccessToList() throws Throwable {
+    myFixture.enableInspections(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection());
     doTest();
   }
 

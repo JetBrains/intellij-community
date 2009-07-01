@@ -211,7 +211,7 @@ public class GroovyAnnotator implements Annotator {
           final PsiType methodType = method.getReturnType();
           final PsiType returnType = ((GrExpression)lastStatement).getType();
           if (returnType != null && methodType != null && !PsiType.VOID.equals(methodType)) {
-            checkAssignability(holder, methodType, returnType, lastStatement);
+            checkAssignability(holder, methodType, (GrExpression)lastStatement, lastStatement);
           }
         }
       }
@@ -531,7 +531,7 @@ public class GroovyAnnotator implements Annotator {
                 holder.createErrorAnnotation(value, GroovyBundle.message("cannot.return.from.void.method"));
               }
               else if (returnType != null) {
-                checkAssignability(holder, methodType, returnType, value);
+                checkAssignability(holder, methodType, value, value);
               }
             }
           }
@@ -553,7 +553,7 @@ public class GroovyAnnotator implements Annotator {
             final PsiClassType listType = JavaPsiFacade.getInstance(namedArgument.getProject()).getElementFactory()
               .createTypeByFQClassName("java.util.List", namedArgument.getResolveScope());
             if (listType.isAssignableFrom(argType)) return; //this is constructor arguments list
-            checkAssignability(holder, expectedType, argType, namedArgument);
+            checkAssignability(holder, expectedType, expr, namedArgument);
           }
         }
       }
@@ -579,13 +579,16 @@ public class GroovyAnnotator implements Annotator {
             if (clazz != null && "java.util.List".equals(clazz.getQualifiedName())) {
               final PsiType[] types = pct.getParameters();
               if (types.length == 1 && types[0] != null && rType != null) {
-                checkAssignability(holder, types[0], rType, rValue);
+                checkAssignability(holder, types[0], rValue, rValue);
               }
             }
             return;
           }
+          if (lValue instanceof GrReferenceExpression && ((GrReferenceExpression)lValue).resolve() instanceof GrReferenceExpression) { //lvalue is not-declared variable
+            return;
+          }
           if (lType != null && rType != null) {
-            checkAssignability(holder, lType, rType, rValue);
+            checkAssignability(holder, lType, rValue, rValue);
           }
         }
       }
@@ -626,14 +629,17 @@ public class GroovyAnnotator implements Annotator {
     if (initializer != null) {
       PsiType rType = initializer.getType();
       if (rType != null) {
-        checkAssignability(holder, varType, rType, initializer);
+        checkAssignability(holder, varType, initializer, initializer);
       }
     }
   }
 
-  private static void checkAssignability(AnnotationHolder holder, @NotNull PsiType lType, @NotNull PsiType rType, GroovyPsiElement element) {
-    if (!TypesUtil.isAssignable(lType, rType, element.getManager(), element.getResolveScope())) {
-      holder.createWarningAnnotation(element, GroovyBundle.message("cannot.assign", rType.getInternalCanonicalText(), lType.getInternalCanonicalText()));
+  private static void checkAssignability(AnnotationHolder holder, @NotNull PsiType expectedType, @NotNull GrExpression expression, GroovyPsiElement element) {
+    if (PsiUtil.isRawClassMemberAccess(expression)) return; //GRVY-2197
+    final PsiType rType = expression.getType();
+    if (!TypesUtil.isAssignable(expectedType, rType, element.getManager(), element.getResolveScope())) {
+      holder.createWarningAnnotation(element, GroovyBundle.message("cannot.assign", rType.getInternalCanonicalText(),
+                                                                   expectedType.getInternalCanonicalText()));
     }
   }
 

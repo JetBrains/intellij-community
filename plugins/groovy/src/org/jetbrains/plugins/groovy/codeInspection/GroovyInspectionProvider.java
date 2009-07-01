@@ -57,6 +57,7 @@ public class GroovyInspectionProvider implements InspectionToolProvider, Applica
         GroovyAssignmentToMethodParameterInspection.class,
         GroovyNestedAssignmentInspection.class,
         GroovySillyAssignmentInspection.class,
+        GroovyUncheckedAssignmentOfMemberOfRawTypeInspection.class,
 
         GroovyContinueOrBreakFromFinallyBlockInspection.class,
         GroovyReturnFromFinallyBlockInspection.class,

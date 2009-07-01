@@ -40,7 +40,7 @@ public class GroovyCompletionTest extends JavaCodeInsightFixtureTestCase {
 
 
   public void testFinishMethodWithLParen() throws Throwable {
-    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "getBar", "getFoo");
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "getBar", "getClass", "getFoo");
     myFixture.type('(');
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }

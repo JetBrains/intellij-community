@@ -24,35 +24,23 @@ import com.intellij.psi.impl.light.LightIdentifier;
  * @author ven
  */
 public class JavaIdentifier extends LightIdentifier {
-  private final PsiFile myFile;
-  private final TextRange myRange;
-  private final int myStartOffsetInParent;
+  private final PsiElement myElement;
 
-  public JavaIdentifier(PsiManager manager, PsiFile file, PsiElement element) {
+  public JavaIdentifier(PsiManager manager, PsiElement element) {
     super(manager, element.getText());
-    myFile = file;
-    int startOffset=0;
-    int len=element.getTextLength();
-    if (element.getContainingFile()!=null) {
-      while (!(element instanceof PsiFile)) {
-        startOffset+=element.getStartOffsetInParent();
-        element=element.getParent();
-      }
-    }
-    myRange = TextRange.from(startOffset, len);
-    myStartOffsetInParent = element.getStartOffsetInParent();
+    myElement=element;
   }
 
   public TextRange getTextRange() {
-    return myRange;
+    return myElement.getTextRange();
   }
 
   public PsiFile getContainingFile() {
-    return myFile;
+    return myElement.getContainingFile();
   }
 
   @Override
   public int getStartOffsetInParent() {
-    return myStartOffsetInParent;
+    return myElement.getStartOffsetInParent();
   }
 }
