@@ -17,6 +17,8 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -29,6 +31,7 @@ import com.jetbrains.python.PythonDosStringFinder;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -169,5 +172,52 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   public boolean mustResolveOutside() {
     return false; 
+  }
+
+  /**
+   * Shows function name with parameter list.
+   * <br/><i>Note that nested tuple parameters are flattened!</i>
+   * Needs to be fixed on PSI and stub level first. 
+   * @return the presentation
+   */
+  @Override
+  public ItemPresentation getPresentation() {
+    return new ItemPresentation() {
+      public String getPresentableText() {
+        @NonNls StringBuilder sb = new StringBuilder();
+        /* too much detail hurts
+        sb.append(getElementLocation()).append("\n");
+        PyDecoratorList deco_list = getDecoratorList();
+        if (deco_list != null) {
+          for (PyDecorator deco : deco_list.getDecorators()) {
+            sb.append("@").append(PyUtil.getReadableRepr(deco.getCallee(), true));
+            if (deco.getArgumentList().getArguments() != null) sb.append("(...)");  // XXX fails to detect absent arglist!
+            sb.append("\n");
+          }
+        }
+        */
+        final String name = getName();
+        sb.append(name != null ? name : "<none>");
+        PyParameter[] params = getParameterList().getParameters();
+        String[] par_names = new String[params.length];
+        for (int i = 0; i < params.length; i += 1) par_names[i] = (params[i].getRepr(true));
+        sb.append("(");
+        PyUtil.joinSubarray(par_names, 0, par_names.length, ", ", sb);
+        sb.append(")");
+        return sb.toString();
+      }
+
+      public String getLocationString() {
+        return getElementLocation();
+      }
+
+      public Icon getIcon(final boolean open) {
+        return PyFunctionImpl.this.getIcon(0);
+      }
+
+      public TextAttributesKey getTextAttributesKey() {
+        return null;
+      }
+    };
   }
 }

@@ -86,7 +86,7 @@ class ImportCandidateHolder {
   }
 
   public String getPresentableText(String myName) {
-    StringBuffer sb = new StringBuffer(getQualifiedName(myName, myPath, myImportElement));
+    StringBuilder sb = new StringBuilder(getQualifiedName(myName, myPath, myImportElement));
     PsiElement parent = null;
     if (myImportElement != null) {
       parent = myImportElement.getParent();

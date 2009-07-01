@@ -266,7 +266,7 @@ public class PyUtil {
    * @return target (for easy chaining)
    */
   @NotNull
-  public static StringBuffer joinSubarray(@NotNull String[] what, int from, int upto, @NotNull String separator, @NotNull StringBuffer target) {
+  public static StringBuilder joinSubarray(@NotNull String[] what, int from, int upto, @NotNull String separator, @NotNull StringBuilder target) {
     boolean made_step = false;
     for (int i = from; i <= upto; i+=1) {
       if (i >= what.length) break; // safety
