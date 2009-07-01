@@ -10,11 +10,8 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -243,8 +240,10 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
     myImportingQueue = new MavenMergingUpdateQueue(getComponentName() + ": Importing queue", IMPORT_DELAY, !isUnitTestMode(), myProject);
     myImportingQueue.setPassThrough(false); // by default in unit-test mode it executes request right-away
+
     myImportingQueue.makeUserAware(myProject);
     myImportingQueue.makeDumbAware(myProject);
+    myImportingQueue.makeModalAware(myProject);
 
     mySchedulesQueue = new MavenMergingUpdateQueue(getComponentName() + ": Schedules queue", 1000, true, myProject);
     mySchedulesQueue.setPassThrough(false);
@@ -293,7 +292,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       @Override
       public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
         if (project.hasErrors()) return;
-        
+
         if (project.hasUnresolvedPlugins()) {
           schedulePluginsResolving(project, nativeMavenProject);
         }
@@ -437,16 +436,12 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   public MavenProject findProject(Module module) {
-    VirtualFile f = findPomFile(module);
+    VirtualFile f = findPomFile(module, new MavenDefaultModelsProvider(myProject));
     return f == null ? null : findProject(f);
   }
 
-  public Module findModule(MavenProject project) {
-    return ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(project.getFile());
-  }
-
-  private VirtualFile findPomFile(Module module) {
-    for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
+  private VirtualFile findPomFile(Module module, MavenModelsProvider modelsProvider) {
+    for (VirtualFile root : modelsProvider.getContentRoots(module)) {
       final VirtualFile virtualFile = root.findChild(MavenConstants.POM_XML);
       if (virtualFile != null) {
         return virtualFile;
@@ -587,9 +582,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     runWhenFullyOpen(new Runnable() {
       public void run() {
         for (MavenProject each : projects) {
-          myArtifactsDownloadingProcessor.scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(each,
-                                                                                                          myProjectsTree
-          ));
+          myArtifactsDownloadingProcessor.scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(each, myProjectsTree));
         }
       }
     });
@@ -739,7 +732,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     return importProjects(new MavenDefaultModifiableModelsProvider(myProject));
   }
 
-  public List<Module> importProjects(final MavenModifiableModelsProvider modifiableModelsProvider) {
+  public List<Module> importProjects(final MavenModifiableModelsProvider modelsProvider) {
     final Set<MavenProject> projectsToImport;
     synchronized (myProjectsToImport) {
       projectsToImport = new THashSet<MavenProject>(myProjectsToImport);
@@ -755,9 +748,9 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       public void run() {
         importer.set(new MavenProjectImporter(myProject,
                                               myProjectsTree,
-                                              getFileToModuleMapping(),
+                                              getFileToModuleMapping(modelsProvider),
                                               projectsToImport,
-                                              modifiableModelsProvider,
+                                              modelsProvider,
                                               getImportingSettings()));
         postTasks.set(importer.get().importProject());
       }
@@ -774,8 +767,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       }).waitFor();
     }
 
-    long after = System.currentTimeMillis();
-    System.out.println("imported in : " + (after - before) + "ms");
+    long importTime = System.currentTimeMillis() - before;
+    System.out.println("Import/Commit time: " + importTime + "/" + modelsProvider.getCommitTime() + " ms");
 
     VirtualFileManager.getInstance().refresh(isNormalProject());
     schedulePostImportTasts(postTasks.get());
@@ -786,17 +779,17 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     return importer.get().getCreatedModules();
   }
 
-  private Map<VirtualFile, Module> getFileToModuleMapping() {
+  private Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {
     Map<VirtualFile, Module> result = new THashMap<VirtualFile, Module>();
-    for (Module each : ModuleManager.getInstance(myProject).getModules()) {
-      VirtualFile f = findPomFile(each);
+    for (Module each : modelsProvider.getModules()) {
+      VirtualFile f = findPomFile(each, modelsProvider);
       if (f != null) result.put(f, each);
     }
     return result;
   }
 
   private List<VirtualFile> collectAllAvailablePomFiles() {
-    List<VirtualFile> result = new ArrayList<VirtualFile>(getFileToModuleMapping().keySet());
+    List<VirtualFile> result = new ArrayList<VirtualFile>(getFileToModuleMapping(new MavenDefaultModelsProvider(myProject)).keySet());
 
     VirtualFile pom = myProject.getBaseDir().findChild(MavenConstants.POM_XML);
     if (pom != null) result.add(pom);

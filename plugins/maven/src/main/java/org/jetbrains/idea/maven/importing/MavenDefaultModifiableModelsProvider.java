@@ -22,6 +22,7 @@ import java.util.Collection;
 public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableModelsProvider {
   private final Project myProject;
   private final LibraryTable.ModifiableModel myLibrariesModel;
+  private volatile long myCommitTime;
 
   public MavenDefaultModifiableModelsProvider(Project project) {
     myProject = project;
@@ -96,7 +97,10 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
       }
     }.execute();
 
-    long time = System.currentTimeMillis() - before;
-    System.out.println("Commit Time: " + time);
+    myCommitTime = System.currentTimeMillis() - before;
+  }
+
+  public long getCommitTime() {
+    return myCommitTime;
   }
 }

@@ -61,7 +61,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     return true;
   }
 
-  public List<Module> commit(final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
+  public List<Module> commit(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
     MavenWorkspaceSettings settings = project.getComponent(MavenWorkspaceSettingsComponent.class).getState();
 
     settings.generalSettings = getGeneralSettings();
@@ -88,7 +88,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     getParameters().myMavenProjectTree = null;
 
     getParameters().myImportRoot = FileFinder.refreshRecursively(root);
-    if (getImportRoot() == null) return false;
+    if (getParameters().myImportRoot == null) return false;
 
     return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
       public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {

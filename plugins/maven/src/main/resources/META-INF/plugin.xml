@@ -140,6 +140,7 @@
     <action id="Maven.RemoveManagedFiles" class="org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction"
             text="Remove Project" description="Remove selected Maven projects from project tree"
             icon="/general/remove.png">
+      <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
     </action>
 
     <action id="Maven.IgnoreProject"
@@ -266,8 +267,9 @@
       <reference id="EditSource"/>
       <reference id="Maven.IgnoreProject"/>
     </group>
-    
-    <group id="Maven.EditorProjectMenu" class="org.jetbrains.idea.maven.project.actions.MavenEditorActionGroup" popup="true" text="Maven" icon="/images/mavenLogo.png">
+
+    <group id="Maven.EditorProjectMenu" class="org.jetbrains.idea.maven.project.actions.MavenEditorActionGroup" popup="true" text="Maven"
+           icon="/images/mavenLogo.png">
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
 
       <reference ref="Maven.BaseProjectMenu"/>

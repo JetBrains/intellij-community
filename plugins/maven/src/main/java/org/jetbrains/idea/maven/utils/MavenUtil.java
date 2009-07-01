@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -40,6 +41,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Future;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -104,6 +107,11 @@ public class MavenUtil {
     }
 
     runDumbAware(project, r);
+  }
+
+  public static boolean isInModalContext() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return false;
+    return LaterInvocator.isInModalContext();
   }
 
   public static File getPluginSystemDir(String folder) {
@@ -254,80 +262,76 @@ public class MavenUtil {
   public static MavenTaskHandler runInBackground(final Project project,
                                                  final String title,
                                                  final boolean cancellable,
-                                                 MavenTask task) {
-    final Semaphore startSemaphore = new Semaphore();
+                                                 final MavenTask task) {
     final Semaphore finishSemaphore = new Semaphore();
-    final ProgressIndicator[] indicator = new ProgressIndicator[1];
+    final MavenProgressIndicator indicator = new MavenProgressIndicator();
 
-    startSemaphore.down();
     finishSemaphore.down();
 
-    final MavenTask[] taskHolder = new MavenTask[]{task};
-    final boolean[] isCancelled = new boolean[1];
-
-    invokeLater(project, new Runnable() {
+    Runnable runnable = new Runnable() {
       public void run() {
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, title, cancellable) {
-          public void run(@NotNull ProgressIndicator i) {
-            try {
-              indicator[0] = i;
-              startSemaphore.up();
-              taskHolder[0].run(new MavenProgressIndicator(i));
-            }
-            catch (MavenProcessCanceledException ignore) {
-              isCancelled[0] = true;
-            }
-            catch (ProcessCanceledException ignore) {
-              isCancelled[0] = true;
-            }
-            finally {
-              finishSemaphore.up();
-              taskHolder[0] = null; // memory leaks prevention
-            }
-          }
-
-          @Override
-          public boolean shouldStartInBackground() {
-            return true;
-          }
-        });
+        try {
+          task.run(indicator);
+        }
+        catch (MavenProcessCanceledException ignore) {
+          indicator.cancel();
+        }
+        catch (ProcessCanceledException ignore) {
+          indicator.cancel();
+        }
+        finally {
+          finishSemaphore.up();
+        }
       }
-    });
+    };
 
-    return new MavenTaskHandler(startSemaphore, finishSemaphore, isCancelled, indicator);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      runnable.run();
+    }
+    else {
+      final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
+      invokeLater(project, new Runnable() {
+        public void run() {
+          if (future.isDone()) return;
+
+          new Task.Backgroundable(project, title, cancellable) {
+            public void run(@NotNull ProgressIndicator i) {
+              indicator.addIndicator(i);
+              try {
+                future.get();
+              }
+              catch (InterruptedException e) {
+              }
+              catch (ExecutionException e) {
+              }
+            }
+          }.queue();
+        }
+      });
+    }
+
+    return new MavenTaskHandler(finishSemaphore, indicator);
   }
 
   public static class MavenTaskHandler {
-    private final Semaphore myStartSemaphore;
     private final Semaphore myFinishSemaphore;
-    private final boolean[] myCancelled;
-    private final ProgressIndicator[] myIndicator;
+    private final MavenProgressIndicator myIndicator;
 
-    private MavenTaskHandler(Semaphore startSemaphore,
-                             Semaphore finishSemaphore,
-                             boolean[] cancelled,
-                             ProgressIndicator[] indicator) {
-      myStartSemaphore = startSemaphore;
+    private MavenTaskHandler(Semaphore finishSemaphore, MavenProgressIndicator indicator) {
       myFinishSemaphore = finishSemaphore;
-      myCancelled = cancelled;
       myIndicator = indicator;
     }
 
     public void stop() {
-      myStartSemaphore.waitFor();
-      myIndicator[0].cancel();
+      myIndicator.cancel();
     }
 
     public void waitFor() {
       myFinishSemaphore.waitFor();
     }
 
-    public boolean waitFor(long timeout) {
-      return myFinishSemaphore.waitFor(timeout);
-    }
-
     public boolean isCancelled() {
-      return myCancelled[0];
+      return myIndicator.isCanceled();
     }
   }
 }

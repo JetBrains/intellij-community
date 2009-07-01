@@ -39,11 +39,12 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   public static final Collection<String> BASIC_PHASES = MavenEmbedderFactory.getBasicPhasesList();
   public static final Collection<String> PHASES = MavenEmbedderFactory.getPhasesList();
 
-  private static final Comparator<SimpleNode> NODE_COMPARATOR = new Comparator<SimpleNode>() {
-    public int compare(SimpleNode o1, SimpleNode o2) {
+  private static final Comparator<CustomNode> NODE_COMPARATOR = new Comparator<CustomNode>() {
+    public int compare(CustomNode o1, CustomNode o2) {
       if (o1 instanceof ProfilesNode) return -1;
       if (o2 instanceof ProfilesNode) return 1;
-      return o1.getName().compareToIgnoreCase(o2.getName());
+
+      return o1.getTemplateName().compareToIgnoreCase(o2.getTemplateName());
     }
   };
 
@@ -269,7 +270,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     return nodes;
   }
 
-  private static <T extends SimpleNode> void insertSorted(List<T> list, T newObject) {
+  private static <T extends CustomNode> void insertSorted(List<T> list, T newObject) {
     int pos = Collections.binarySearch(list, newObject, NODE_COMPARATOR);
     list.add(pos >= 0 ? pos : -pos - 1, newObject);
   }
@@ -377,6 +378,18 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       return result;
     }
 
+    public String getTemplateName() {
+      if (getTemplatePresentation().getColoredText().size() > 0) {
+        StringBuilder result = new StringBuilder("");
+        for (ColoredFragment each : getTemplatePresentation().getColoredText()) {
+          result.append(each.getText());
+        }
+        return result.toString();
+      } else {
+        return myName;
+      }
+    }
+
     public void setNodeErrorLevel(ErrorLevel level) {
       if (myNodeErrorLevel == level) return;
       myNodeErrorLevel = level;
@@ -387,6 +400,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         each.updateNameAndDescription();
         each = each.myStructuralParent;
       }
+
+
     }
 
     protected abstract void updateNameAndDescription();
@@ -406,13 +421,13 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       if (showDescriptions() && !StringUtil.isEmptyOrSpaces(hint)) {
         addColoredFragment(" (" + hint + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
-      getPresentation().setTooltip(tooltip);
+      getTemplatePresentation().setTooltip(tooltip);
     }
 
     protected void setNameAndTooltip(String name, String tooltip, SimpleTextAttributes attribs) {
       clearColoredText();
       addColoredFragment(name, prepareAttribs(attribs));
-      getPresentation().setTooltip(tooltip);
+      getTemplatePresentation().setTooltip(tooltip);
     }
 
     private SimpleTextAttributes prepareAttribs(SimpleTextAttributes from) {

@@ -5,7 +5,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.runner.SoutMavenConsole;
-import org.jetbrains.idea.maven.utils.*;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.utils.MavenTask;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -130,22 +133,29 @@ public class MavenProjectsProcessor {
           MavenProjectsProcessorTask task;
           int queueSize;
           int counter = 0;
-          
+
           synchronized (myQueue) {
-            task = myQueue.poll();
+            task = myQueue.peek();
             queueSize = myQueue.size();
           }
           if (isStopped || task == null) return;
-          indicator.checkCanceled();
+          try {
+            indicator.checkCanceled();
 
-          indicator.getIndicator().setIndeterminate(false);
-          indicator.setFraction(counter++ / (double)(counter + queueSize));
+            indicator.getIndicator().setIndeterminate(false);
+            indicator.setFraction(counter++ / (double)(counter + queueSize));
 
-          String text = myTitle;
-          if (queueSize > 0) text += " (" + queueSize + " in queue)";
-          indicator.setText(text);
+            String text = myTitle;
+            if (queueSize > 0) text += " (" + (queueSize + 1) + " in queue)";
+            indicator.setText(text);
 
-          task.perform(myProject, myEmbeddersManager, new SoutMavenConsole(), indicator);
+            task.perform(myProject, myEmbeddersManager, new SoutMavenConsole(), indicator);
+          }
+          finally {
+            synchronized (myQueue) {
+              myQueue.poll(); // remove the completed task from the queue
+            }
+          }
         }
       }
     });

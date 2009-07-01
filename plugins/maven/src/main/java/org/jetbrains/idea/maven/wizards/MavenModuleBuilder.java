@@ -84,7 +84,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
     MavenUtil.runWhenInitialized(project, new DumbAwareRunnable() {
       public void run() {
-        final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+        MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
         manager.addManagedFiles(Collections.singletonList(pom));
 
         if (myArchetype == null) {

@@ -5,6 +5,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashMap;
 
 import java.util.Map;
@@ -56,4 +57,12 @@ public abstract class MavenBaseModifiableModelsProvider implements MavenModifiab
   protected abstract ModifiableFacetModel doGetFacetModel(Module module);
 
   protected abstract Library.ModifiableModel doGetLibraryModel(Library library);
+
+  public Module[] getModules() {
+    return getModuleModel().getModules();
+  }
+
+  public VirtualFile[] getContentRoots(Module module) {
+    return getRootModel(module).getContentRoots();
+  }
 }
