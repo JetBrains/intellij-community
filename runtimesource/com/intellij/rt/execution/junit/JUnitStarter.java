@@ -4,9 +4,7 @@ import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import com.intellij.rt.junit3.JUnit3IdeaTestRunner;
 import junit.textui.TestRunner;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.Vector;
 
 /**
@@ -56,6 +54,21 @@ public class JUnitStarter {
         isJunit4 = true;
       }
       else {
+        if (arg.startsWith("@")) {
+          while(new File(arg.substring(1)).length() == 0); //wait for test cases
+          try {
+            BufferedReader reader = new BufferedReader(new FileReader(arg.substring(1)));
+            try {
+              isJunit4 |= JUNIT4_PARAMETER.equals(reader.readLine());
+            }
+            finally {
+              reader.close();
+            }
+          }
+          catch (IOException e) {
+            e.printStackTrace();
+          }
+        }
         result.addElement(arg);
       }
     }

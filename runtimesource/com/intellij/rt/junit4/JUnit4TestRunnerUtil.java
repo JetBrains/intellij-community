@@ -29,6 +29,7 @@ public class JUnit4TestRunnerUtil {
           final Map classMethods = new HashMap();
           BufferedReader reader = new BufferedReader(new FileReader(suiteClassName.substring(1)));
           try {
+            reader.readLine(); //skip junit4/junit3 parameter
             final String packageName = reader.readLine();
             String line;
 

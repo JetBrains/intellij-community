@@ -35,6 +35,7 @@ public class TestRunnerUtil {
           BufferedReader reader = new BufferedReader(new FileReader(suiteClassName.substring(1)));
           Vector vector;
           try {
+            reader.readLine(); //skip junit4/junit3 parameter
             suiteName = reader.readLine();
             vector = new Vector();
             String line;
