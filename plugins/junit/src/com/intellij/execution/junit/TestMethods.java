@@ -97,7 +97,7 @@ public class TestMethods extends TestMethod {
         }
         return null;
       }
-    }, data.getPackageName());
+    }, data.getPackageName(), true, false);
 
   }
   protected void addJUnit4Parameter(final JUnitConfiguration.Data data, Project project) {

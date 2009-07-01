@@ -16,10 +16,7 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.execution.CantRunException;
-import com.intellij.execution.ConfigurationUtil;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionException;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
@@ -28,16 +25,21 @@ import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.rt.execution.junit.JUnitStarter;
+import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 
 public class TestPackage extends TestObject {
@@ -66,30 +68,43 @@ public class TestPackage extends TestObject {
     final ExecutionException[] exception = new ExecutionException[1];
     findTestsWithProgress(new FindCallback() {
       public void found(@NotNull final Collection<PsiClass> classes, final boolean isJunit4) {
-        if (classes.isEmpty()) {
-          exception[0] = new CantRunException(ExecutionBundle.message("no.tests.found.in.package.error.message", packageName));
-          return;
-        }
-
-        if (isJunit4) {
-          myJavaParameters.getProgramParametersList().add(JUnitStarter.JUNIT4_PARAMETER);
-        }
-
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            try {
-              myConfiguration.configureClasspath(myJavaParameters);
+        addClassesListToJavaParameters(classes, new Function<PsiElement, String>() {
+          @Nullable
+          public String fun(PsiElement element) {
+            if (element instanceof PsiClass) {
+              return JavaExecutionUtil.getRuntimeQualifiedName((PsiClass)element);
             }
-            catch (CantRunException e) {
-              exception[0] = e;
+            else if (element instanceof PsiMethod) {
+              PsiMethod method = (PsiMethod)element;
+              return JavaExecutionUtil.getRuntimeQualifiedName(method.getContainingClass()) + "," + method.getName();
+            }
+            else {
+              return null;
             }
           }
-        });
-        addClassesListToJavaParameters(classes, packageName);
+        }, packageName, false, isJunit4);
       }
     }, filter);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        try {
+          myConfiguration.configureClasspath(myJavaParameters);
+        }
+        catch (CantRunException e) {
+          exception[0] = e;
+        }
+      }
+    });
     if (exception[0] != null) {
       throw exception[0];
+    }
+    try {
+      myTempFile = File.createTempFile("idea_junit", ".tmp");
+      myTempFile.deleteOnExit();
+      myJavaParameters.getProgramParametersList().add("@" + myTempFile.getAbsolutePath());
+    }
+    catch (IOException e) {
+      LOG.error(e);
     }
   }
 
@@ -157,13 +172,17 @@ public class TestPackage extends TestObject {
 
     final THashSet<PsiClass> classes = new THashSet<PsiClass>();
     final boolean[] isJunit4 = new boolean[1];
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        isJunit4[0] = ConfigurationUtil.findAllTestClasses(classFilter, classes);
+    ProgressManager.getInstance().run(new Task.Backgroundable(classFilter.getProject(), ExecutionBundle.message("seaching.test.progress.title"), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+         isJunit4[0] = ConfigurationUtil.findAllTestClasses(classFilter, classes);
       }
-    }, ExecutionBundle.message("seaching.test.progress.title"), true, classFilter.getProject());
 
-    callback.found(classes, isJunit4[0]);
+      @Override
+      public void onSuccess() {
+         callback.found(classes, isJunit4[0]);
+      }
+    });
   }
 
   private static boolean isSyncSearch() {

@@ -18,6 +18,8 @@ package com.intellij.execution;
 
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestClassFilter;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -27,6 +29,7 @@ import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Processor;
 import junit.runner.BaseTestRunner;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -45,14 +48,24 @@ public class ConfigurationUtil {
     }));
 
     // classes having suite() method
-    final PsiMethod[] suiteMethods = JavaPsiFacade.getInstance(manager.getProject()).getShortNamesCache().getMethodsByName(BaseTestRunner.SUITE_METHODNAME, scope);
+    final PsiMethod[] suiteMethods = ApplicationManager.getApplication().runReadAction(
+        new Computable<PsiMethod[]>() {
+          public PsiMethod[] compute() {
+            return JavaPsiFacade.getInstance(manager.getProject()).getShortNamesCache().getMethodsByName(BaseTestRunner.SUITE_METHODNAME, scope);
+          }
+        }
+    );
     for (final PsiMethod method : suiteMethods) {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) continue;
       if (containingClass instanceof PsiAnonymousClass) continue;
       if (containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) continue;
       if (containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) continue;
-      if (JUnitUtil.isSuiteMethod(method)) {
+      if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        public Boolean compute() {
+          return JUnitUtil.isSuiteMethod(method);
+        }
+      }).booleanValue()) {
         found.add(containingClass);
       }
     }
@@ -68,29 +81,41 @@ public class ConfigurationUtil {
                                                          final boolean isMethod) {
     final Ref<Boolean> isJUnit4 = new Ref<Boolean>(Boolean.FALSE);
     // annotated with @Test
-    PsiClass testAnnotation = JavaPsiFacade.getInstance(manager.getProject()).findClass(annotation, GlobalSearchScope.allScope(manager.getProject()));
-    if (testAnnotation != null) {
-      AnnotatedMembersSearch.search(testAnnotation, scope).forEach(new Processor<PsiMember>() {
-        public boolean process(final PsiMember annotated) {
-          PsiClass containingClass = annotated instanceof PsiClass ? (PsiClass)annotated : annotated.getContainingClass();
-          if (containingClass != null && annotated instanceof PsiMethod == isMethod) {
-            if (testClassFilter.isAccepted(containingClass)) {
-              found.add(containingClass);
-              isJUnit4.set(Boolean.TRUE);
-            }
-            ClassInheritorsSearch.search(containingClass, scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
-              public boolean execute(final PsiClass aClass) {
-                if (testClassFilter.isAccepted(aClass)) {
-                  found.add(aClass);
-                  isJUnit4.set(Boolean.TRUE);
-                }
-                return true;
-              }
-            }));
+    final PsiClass testAnnotation = ApplicationManager.getApplication().runReadAction(
+        new Computable<PsiClass>() {
+          @Nullable
+          public PsiClass compute() {
+            return JavaPsiFacade.getInstance(manager.getProject()).findClass(annotation, GlobalSearchScope.allScope(manager.getProject()));
           }
-          return true;
         }
-      });
+    );
+    if (testAnnotation != null) {
+     ApplicationManager.getApplication().runReadAction(new Runnable() {
+         public void run(){
+              AnnotatedMembersSearch.search(testAnnotation, scope).forEach(new Processor<PsiMember>() {
+             public boolean process(final PsiMember annotated) {
+               PsiClass containingClass = annotated instanceof PsiClass ? (PsiClass)annotated : annotated.getContainingClass();
+               if (containingClass != null && annotated instanceof PsiMethod == isMethod) {
+                 if (testClassFilter.isAccepted(containingClass)) {
+                   found.add(containingClass);
+                   isJUnit4.set(Boolean.TRUE);
+                 }
+                 ClassInheritorsSearch.search(containingClass, scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
+                   public boolean execute(final PsiClass aClass) {
+                     if (testClassFilter.isAccepted(aClass)) {
+                       found.add(aClass);
+                       isJUnit4.set(Boolean.TRUE);
+                     }
+                     return true;
+                   }
+                 }));
+               }
+               return true;
+             }
+           });
+         }
+     });
+
     }
 
     return isJUnit4.get().booleanValue();

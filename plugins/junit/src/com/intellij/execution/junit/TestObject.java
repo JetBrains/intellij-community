@@ -42,14 +42,11 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Getter;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -58,7 +55,7 @@ import java.io.PrintWriter;
 import java.util.Collection;
 
 public abstract class TestObject implements JavaCommandLine {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.TestObject");
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.TestObject");
 
   private static final String MESSAGE = ExecutionBundle.message("configuration.not.speficied.message");
 
@@ -67,7 +64,7 @@ public abstract class TestObject implements JavaCommandLine {
   protected final JUnitConfiguration myConfiguration;
   private final RunnerSettings myRunnerSettings;
   private final ConfigurationPerRunnerSettings myConfigurationSettings;
-  private File myTempFile = null;
+  protected File myTempFile = null;
   private CoverageSuite myCurrentCoverageSuite;
 
   public static TestObject fromString(final String id,
@@ -244,14 +241,19 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
 
-  protected void addClassesListToJavaParameters(Collection<? extends PsiElement> elements, Function<PsiElement, String> nameFunction, String packageName) {
+  protected void addClassesListToJavaParameters(Collection<? extends PsiElement> elements, Function<PsiElement, String> nameFunction, String packageName,
+                                                boolean createTempFile,
+                                                boolean junit4) {
     try {
-      myTempFile = File.createTempFile("idea_junit", ".tmp");
-      myTempFile.deleteOnExit();
-      myJavaParameters.getProgramParametersList().add("@" + myTempFile.getAbsolutePath());
+      if (createTempFile) {
+        myTempFile = File.createTempFile("idea_junit", ".tmp");
+        myTempFile.deleteOnExit();
+        myJavaParameters.getProgramParametersList().add("@" + myTempFile.getAbsolutePath());
+      }
 
       final PrintWriter writer = new PrintWriter(new FileWriter(myTempFile));
       try {
+        writer.println(junit4 ? JUnitStarter.JUNIT4_PARAMETER : "-junit3");
         writer.println(packageName);
         for (final PsiElement element : elements) {
           final String name = nameFunction.fun(element);
@@ -269,24 +271,6 @@ public abstract class TestObject implements JavaCommandLine {
     catch (IOException e) {
       LOG.error(e);
     }
-  }
-
-  protected void addClassesListToJavaParameters(Collection<? extends PsiElement> elements, String packageName) {
-    addClassesListToJavaParameters(elements, new Function<PsiElement, String>() {
-      @Nullable
-      public String fun(PsiElement element) {
-          if (element instanceof PsiClass) {
-            return JavaExecutionUtil.getRuntimeQualifiedName((PsiClass)element);
-          }
-          else if (element instanceof PsiMethod){
-            PsiMethod method = (PsiMethod)element;
-            return JavaExecutionUtil.getRuntimeQualifiedName(method.getContainingClass()) + "," + method.getName();
-          }
-          else {
-            return null;
-          }
-      }
-    }, packageName);
   }
 
   public void clear() {
