@@ -182,6 +182,8 @@ public class AllClassesGetter {
       public Boolean compute() {
         ProgressManager.getInstance().checkCanceled();
 
+        if (!context.isValid() || !psiClass.isValid()) return false;
+
         if (lookingForAnnotations && !psiClass.isAnnotationType()) return false;
 
         if (JavaCompletionUtil.isInExcludedPackage(psiClass)) return false;
