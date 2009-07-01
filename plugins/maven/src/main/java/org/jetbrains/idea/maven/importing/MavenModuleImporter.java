@@ -69,7 +69,7 @@ public class MavenModuleImporter {
   }
 
   private void configFolders() {
-    new MavenFoldersConfigurator(myMavenProject, mySettings, myRootModelAdapter).config();
+    new MavenFoldersImporter(myMavenProject, mySettings, myRootModelAdapter).config();
   }
 
   private void configDependencies() {

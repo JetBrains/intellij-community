@@ -16,7 +16,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MavenFoldersConfigurator {
+public class MavenFoldersImporter {
   private MavenProject myMavenProject;
   private MavenImportingSettings myImportingSettings;
   private MavenRootModelAdapter myModel;
@@ -33,7 +33,7 @@ public class MavenFoldersConfigurator {
           if (mavenProject == null) continue;
 
           MavenRootModelAdapter a = new MavenRootModelAdapter(mavenProject, each, new MavenDefaultModifiableModelsProvider(project));
-          new MavenFoldersConfigurator(mavenProject, settings, a).config(updateTargetFoldersOnly);
+          new MavenFoldersImporter(mavenProject, settings, a).config(updateTargetFoldersOnly);
 
           ModifiableRootModel model = a.getRootModel();
           if (model.isChanged()) {
@@ -52,7 +52,7 @@ public class MavenFoldersConfigurator {
     });
   }
 
-  public MavenFoldersConfigurator(MavenProject mavenProject, MavenImportingSettings settings, MavenRootModelAdapter model) {
+  public MavenFoldersImporter(MavenProject mavenProject, MavenImportingSettings settings, MavenRootModelAdapter model) {
     myMavenProject = mavenProject;
     myImportingSettings = settings;
     myModel = model;

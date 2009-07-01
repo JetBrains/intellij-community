@@ -28,7 +28,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
-import org.jetbrains.idea.maven.importing.MavenFoldersConfigurator;
+import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.runner.SoutMavenConsole;
@@ -722,7 +722,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   private void updateProjectFolders(final boolean targetFoldersOnly) {
     MavenUtil.invokeLater(myProject, new Runnable() {
       public void run() {
-        MavenFoldersConfigurator.updateProjectFolders(myProject, targetFoldersOnly);
+        MavenFoldersImporter.updateProjectFolders(myProject, targetFoldersOnly);
         VirtualFileManager.getInstance().refresh(false);
       }
     });

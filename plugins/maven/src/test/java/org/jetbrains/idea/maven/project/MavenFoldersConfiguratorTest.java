@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
-import org.jetbrains.idea.maven.importing.MavenFoldersConfigurator;
+import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 
 import java.io.File;
@@ -128,7 +128,7 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
                             new File(myProjectRoot.getPath(), "target/my-test-classes").getPath());
     adapter.getRootModel().commit();
 
-    MavenFoldersConfigurator.updateProjectFolders(myProject, true);
+    MavenFoldersImporter.updateProjectFolders(myProject, true);
 
     ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule("project"));
     CompilerModuleExtension compiler = rootManager.getModuleExtension(CompilerModuleExtension.class);
@@ -199,6 +199,6 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
   }
 
   private void updateProjectFolders() throws MavenException {
-    MavenFoldersConfigurator.updateProjectFolders(myProject, false);
+    MavenFoldersImporter.updateProjectFolders(myProject, false);
   }
 }
