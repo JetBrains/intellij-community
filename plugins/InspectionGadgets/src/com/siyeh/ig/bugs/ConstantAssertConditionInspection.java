@@ -45,10 +45,10 @@ public class ConstantAssertConditionInspection extends BaseInspection {
 
     @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new ConstantValueAssertVisitor();
+        return new ConstantAssertConditionVisitor();
     }
 
-    private static class ConstantValueAssertVisitor
+    private static class ConstantAssertConditionVisitor
             extends BaseInspectionVisitor {
 
         @Override
