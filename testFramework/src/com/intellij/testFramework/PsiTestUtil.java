@@ -142,7 +142,7 @@ import java.util.Collection;
         for (String jar : jarArr) {
           final String path = libPath + jar;
           final VirtualFile root = JarFileSystem.getInstance().refreshAndFindFileByPath(path + "!/");
-          assert root != null;
+          assert root != null : "Library root folder not found: " + path + "!/";
           libraryModel.addRoot(root, OrderRootType.CLASSES);
         }
         libraryModel.commit();
