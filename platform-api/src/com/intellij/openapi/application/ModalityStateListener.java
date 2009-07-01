@@ -18,5 +18,5 @@ package com.intellij.openapi.application;
 import java.util.EventListener;
 
 public interface ModalityStateListener extends EventListener{
-  void beforeModalityStateChanged();
+  void beforeModalityStateChanged(boolean entering);
 }

@@ -35,7 +35,7 @@ public class EditorFactoryImpl extends EditorFactory {
   private final ArrayList<Editor> myEditors = new ArrayList<Editor>();
   private static final Key<String> EDITOR_CREATOR = new Key<String>("Editor creator");
   private final ModalityStateListener myModalityStateListener = new ModalityStateListener() {
-    public void beforeModalityStateChanged() {
+    public void beforeModalityStateChanged(boolean entering) {
       for (Editor editor : myEditors) {
         ((EditorImpl)editor).beforeModalityStateChanged();
       }

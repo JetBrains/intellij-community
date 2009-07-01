@@ -163,7 +163,7 @@ public class LaterInvocator {
     }
 
     if (!IS_TEST_MODE) {
-      ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged();
+      ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true);
     }
 
     ourModalEntities.add(modalEntity);
@@ -179,7 +179,7 @@ public class LaterInvocator {
     }
 
     if (!IS_TEST_MODE) {
-      ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged();
+      ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false);
     }
 
     boolean removed = ourModalEntities.remove(modalEntity);
