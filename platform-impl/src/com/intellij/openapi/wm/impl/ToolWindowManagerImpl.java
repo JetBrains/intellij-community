@@ -1883,10 +1883,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private ActionCallback processDefaultFocusRequest(boolean forced) {
     if (ModalityState.NON_MODAL.equals(ModalityState.current())) {
-      if (myEditorComponentActive) {
+      final String activeId = getActiveToolWindowId();
+      if (myEditorComponentActive || activeId == null || getToolWindow(activeId) == null) {
         activateEditorComponent(forced);
       } else {
-        activateToolWindow(getActiveToolWindowId(), forced, false);
+        activateToolWindow(activeId, forced, false);
       }
     }
     return new ActionCallback.Done();
