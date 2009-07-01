@@ -1,7 +1,5 @@
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -72,35 +70,30 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
   @Nullable
   protected PsiElement getReferenceOrReferencedElement(PsiFile file, Editor editor, int flags, int offset) {
-    PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
-    if (ref == null) return null;
-    PsiManager manager = file.getManager();
-
-    final PsiElement referenceElement = ref.getElement();
-    PsiElement refElement;
-    if (ref instanceof PsiJavaReference) {
-      refElement = ((PsiJavaReference)ref).advancedResolve(true).getElement();
-    }
-    else {
-      refElement = ref.resolve();
-    }
-
+    PsiElement refElement = super.getReferenceOrReferencedElement(file, editor, flags, offset);
+    PsiReference ref = null;
     if (refElement == null) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        DaemonCodeAnalyzer.getInstance(manager.getProject()).updateVisibleHighlighters(editor);
+      ref = TargetElementUtilBase.findReference(editor, offset);
+      if (ref instanceof PsiJavaReference) {
+        refElement = ((PsiJavaReference)ref).advancedResolve(true).getElement();
       }
-      return null;
     }
-    else {
+
+    if (refElement != null) {
       if ((flags & NEW_AS_CONSTRUCTOR) != 0) {
-        PsiElement parent = referenceElement.getParent();
-        if (parent instanceof PsiAnonymousClass) {
-          parent = parent.getParent();
+        if (ref == null) {
+          ref = TargetElementUtilBase.findReference(editor, offset);
         }
-        if (parent instanceof PsiNewExpression) {
-          PsiMethod constructor = ((PsiNewExpression)parent).resolveConstructor();
-          if (constructor != null) {
-            refElement = constructor;
+        if (ref != null) {
+          PsiElement parent = ref.getElement().getParent();
+          if (parent instanceof PsiAnonymousClass) {
+            parent = parent.getParent();
+          }
+          if (parent instanceof PsiNewExpression) {
+            PsiMethod constructor = ((PsiNewExpression)parent).resolveConstructor();
+            if (constructor != null) {
+              refElement = constructor;
+            }
           }
         }
       }
@@ -109,11 +102,11 @@ public class TargetElementUtil extends TargetElementUtilBase {
         if (containingFile != null && containingFile.getVirtualFile() == null) { // in mirror file of compiled class
           String qualifiedName = ((PsiClass)refElement).getQualifiedName();
           if (qualifiedName == null) return null;
-          return JavaPsiFacade.getInstance(manager.getProject()).findClass(qualifiedName, refElement.getResolveScope());
+          return JavaPsiFacade.getInstance(refElement.getProject()).findClass(qualifiedName, refElement.getResolveScope());
         }
       }
-      return refElement;
     }
+    return refElement;
   }
 
 
@@ -178,13 +171,14 @@ public class TargetElementUtil extends TargetElementUtilBase {
   public Collection<PsiElement> getTargetCandidates(final PsiReference reference) {
     PsiElement parent = reference.getElement().getParent();
     if (parent instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression callExpr = (PsiMethodCallExpression) parent;
+      PsiMethodCallExpression callExpr = (PsiMethodCallExpression)parent;
       boolean allowStatics = false;
       PsiExpression qualifier = callExpr.getMethodExpression().getQualifierExpression();
       if (qualifier == null) {
         allowStatics = true;
-      } else if (qualifier instanceof PsiJavaCodeReferenceElement) {
-        PsiElement referee = ((PsiJavaCodeReferenceElement) qualifier).advancedResolve(true).getElement();
+      }
+      else if (qualifier instanceof PsiJavaCodeReferenceElement) {
+        PsiElement referee = ((PsiJavaCodeReferenceElement)qualifier).advancedResolve(true).getElement();
         if (referee instanceof PsiClass) allowStatics = true;
       }
       PsiResolveHelper helper = JavaPsiFacade.getInstance(parent.getProject()).getResolveHelper();
