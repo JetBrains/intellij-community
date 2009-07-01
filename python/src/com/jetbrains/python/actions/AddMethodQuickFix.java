@@ -1,11 +1,22 @@
 package com.jetbrains.python.actions;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.Language;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
@@ -76,11 +87,35 @@ public class AddMethodQuickFix implements LocalQuickFix {
         meth.getStatementList().add(new_stmt);
         meth.add(generator.createFromText(project, PsiWhiteSpace.class, "\n\n")); // after the last line of method
         cls_stmt_list.add(generator.createFromText(project, PsiWhiteSpace.class, "\n\n")); // after the last method, before ours
-        cls_stmt_list.add(meth);
+        meth = (PyFunction) cls_stmt_list.add(meth);
+        showTemplateBuilder(meth);
         return;
       }
     }
     // we failed. tell about this
     PyUtil.showBalloon(project, PyBundle.message("QFIX.failed.to.add.method"), MessageType.ERROR);
+  }
+
+  private static void showTemplateBuilder(PyFunction method) {
+    final Project project = method.getProject();
+    final PsiFile psiFile = method.getContainingFile();
+    VirtualFile file = psiFile.getVirtualFile();
+    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
+    final Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+    method = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(method);
+    TextRange range = method.getTextRange();
+
+    TemplateBuilder builder = new TemplateBuilder(method);
+    PyParameter[] parameters = method.getParameterList().getParameters();
+    for (int i = 1; i < parameters.length; i++) {
+      builder.replaceElement(parameters [i], new ConstantNode(parameters [i].getName()));
+    }
+    builder.replaceElement(method.getStatementList(), new ConstantNode("pass"));
+    final Template template = builder.buildTemplate();
+
+    editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "");
+    editor.getCaretModel().moveToOffset(range.getStartOffset());
+
+    TemplateManager.getInstance(project).startTemplate(editor, template);
   }
 }
