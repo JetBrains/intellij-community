@@ -78,6 +78,7 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
    *
    * @return the module instance.
    */
+  @NotNull
   Module getOwnerModule();
 
   /**

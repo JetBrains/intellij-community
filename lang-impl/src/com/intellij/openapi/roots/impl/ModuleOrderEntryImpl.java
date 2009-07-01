@@ -91,6 +91,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     myConnection.subscribe(ProjectTopics.MODULES, new MyModuleListener());
   }
 
+  @NotNull
   public Module getOwnerModule() {
     return getRootModel().getModule();
   }

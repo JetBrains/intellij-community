@@ -92,6 +92,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
     return myRootContainers.get(type).getUrls();
   }
 
+  @NotNull
   public final Module getOwnerModule() {
     return getRootModel().getModule();
   }

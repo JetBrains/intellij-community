@@ -45,7 +45,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     return that.myModules.equals(myModules);
   }
 
-  private void buildEntries(final Module module, final Set<Module> processedModules) {
+  private void buildEntries(@NotNull final Module module, final Set<Module> processedModules) {
     if (processedModules.contains(module)) return;
 
     processedModules.add(module);

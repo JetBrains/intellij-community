@@ -45,6 +45,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
     return !isDisposed();
   }
 
+  @NotNull
   public Module getOwnerModule() {
     return getRootModel().getModule();
   }
