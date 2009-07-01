@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,6 +145,15 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
                 @Nullable PsiExpression expression,
                 @NotNull PsiExpression constantExpression,
                 @NotNull PsiElement body) {
+            final PsiType constantType = constantExpression.getType();
+            if (PsiType.DOUBLE.equals(constantType)) {
+                final Object result = ExpressionUtils.computeConstantExpression(
+                        constantExpression, false);
+                if (Double.valueOf(0.0).equals(result) ||
+                        Double.valueOf(-0.0).equals(result)) {
+                    return false;
+                }
+            }
             if (!(expression instanceof PsiReferenceExpression)) {
                 return false;
             }
