@@ -11,6 +11,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 
 public class DfaInstructionState {
+  public static final DfaInstructionState[] EMPTY_ARRAY = new DfaInstructionState[0];
   private final DfaMemoryState myBeforeMemoryState;
   private final Instruction myInstruction;
   private long myDistanceFromStart = 0;

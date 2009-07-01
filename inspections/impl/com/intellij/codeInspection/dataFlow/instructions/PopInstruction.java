@@ -13,7 +13,7 @@ import com.intellij.codeInspection.dataFlow.*;
 public class PopInstruction extends Instruction {
   public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
     memState.pop();
-    return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(getIndex() + 1), memState)};
+    return super.apply(runner, memState);
   }
 
   public String toString() {

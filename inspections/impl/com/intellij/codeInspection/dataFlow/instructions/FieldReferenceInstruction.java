@@ -28,7 +28,7 @@ public class FieldReferenceInstruction extends Instruction {
     final DfaValue qualifier = memState.pop();
     if (myIsPhysical && !memState.applyNotNull(qualifier)) {
       onInstructionProducesNPE(runner);
-      return new DfaInstructionState[0];
+      return DfaInstructionState.EMPTY_ARRAY;
     }
 
     return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(getIndex() + 1), memState)};

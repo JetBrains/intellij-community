@@ -12,7 +12,7 @@ import com.intellij.codeInspection.dataFlow.*;
 
 public class ReturnInstruction extends Instruction {
   public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
-    return new DfaInstructionState[0];
+    return DfaInstructionState.EMPTY_ARRAY;
   }
 
   public String toString() {
