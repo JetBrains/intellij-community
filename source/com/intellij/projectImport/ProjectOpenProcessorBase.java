@@ -12,12 +12,14 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
@@ -48,7 +50,7 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
   }
 
   @Nullable
-  public Icon getIcon(){
+  public Icon getIcon() {
     return getBuilder().getIcon();
   }
 
@@ -74,7 +76,7 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
   }
 
   @Nullable
-  public abstract String [] getSupportedExtensions();
+  public abstract String[] getSupportedExtensions();
 
   @Nullable
   public Project doOpenProject(@NotNull VirtualFile virtualFile, Project projectToClose, boolean forceOpenInNewFrame) {
@@ -86,23 +88,31 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
         wizardContext.setProjectName(IdeBundle.message("project.import.default.name", getName()) + ProjectFileType.DOT_DEFAULT_EXTENSION);
       }
       wizardContext.setProjectFileDirectory(virtualFile.getParent().getPath());
-      for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
-        if (projectJdk.getSdkType() instanceof JavaSdk) {
-          final String jdkVersion = projectJdk.getVersionString();
-          if (wizardContext.getProjectJdk() == null) {
-            wizardContext.setProjectJdk(projectJdk);
-          }
-          else {
-            final String version = wizardContext.getProjectJdk().getVersionString();
-            if (jdkVersion == null || (version != null && version.compareTo(jdkVersion) < 0)) {
+
+      Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+      Sdk defaultJdk = ProjectRootManager.getInstance(defaultProject).getProjectJdk();
+      if (defaultJdk != null) {
+        wizardContext.setProjectJdk(defaultJdk);
+      }
+      else {
+        for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
+          if (projectJdk.getSdkType() instanceof JavaSdk) {
+            final String jdkVersion = projectJdk.getVersionString();
+            if (wizardContext.getProjectJdk() == null) {
               wizardContext.setProjectJdk(projectJdk);
+            }
+            else {
+              final String version = wizardContext.getProjectJdk().getVersionString();
+              if (jdkVersion == null || (version != null && version.compareTo(jdkVersion) < 0)) {
+                wizardContext.setProjectJdk(projectJdk);
+              }
             }
           }
         }
       }
 
       final String projectPath = wizardContext.getProjectFileDirectory() + File.separator + wizardContext.getProjectName() +
-                                    ProjectFileType.DOT_DEFAULT_EXTENSION;
+                                 ProjectFileType.DOT_DEFAULT_EXTENSION;
       boolean shouldOpenExisting = false;
 
       File projectFile = new File(projectPath);
@@ -114,10 +124,10 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
                                                            projectFile.getParent(),
                                                            virtualFile.getName()),
                                          IdeBundle.message("title.open.project"),
-                                         new String[] {
-                                             IdeBundle.message("project.import.open.existing.reimport"),
-                                             IdeBundle.message("project.import.open.existing.openExisting"),
-                                             CommonBundle.message("button.cancel")},
+                                         new String[]{
+                                           IdeBundle.message("project.import.open.existing.reimport"),
+                                           IdeBundle.message("project.import.open.existing.openExisting"),
+                                           CommonBundle.message("button.cancel")},
                                          0,
                                          Messages.getQuestionIcon());
         if (result == 2) return null;
@@ -140,7 +150,8 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
         }
       }
       else {
-        projectToOpen = ProjectManagerEx.getInstanceEx().newProject(FileUtil.getNameWithoutExtension(projectFile), projectPath, true, false);
+        projectToOpen = ProjectManagerEx.getInstanceEx()
+          .newProject(FileUtil.getNameWithoutExtension(projectFile), projectPath, true, false);
 
         if (projectToOpen == null || !getBuilder().validate(projectToClose, projectToOpen)) {
           return null;
@@ -156,7 +167,8 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
               final String versionString = wizardContext.getProjectJdk().getVersionString();
               if (versionString != null) {
                 rootManager.setProjectJdk(wizardContext.getProjectJdk());
-                LanguageLevelProjectExtension.getInstance(projectToOpen).setLanguageLevel(NewProjectUtil.getDefaultLanguageLevel(versionString));
+                LanguageLevelProjectExtension.getInstance(projectToOpen)
+                  .setLanguageLevel(NewProjectUtil.getDefaultLanguageLevel(versionString));
               }
             }
 
