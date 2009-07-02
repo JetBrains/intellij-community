@@ -18,6 +18,10 @@ public class PreferAccessibleWeigher extends CompletionWeigher {
     final Object object = item.getObject();
     if (object instanceof PsiDocCommentOwner) {
       final PsiDocCommentOwner member = (PsiDocCommentOwner)object;
+      if (!member.isValid()) {
+        return MyEnum.NORMAL;
+      }
+
       if (!JavaPsiFacade.getInstance(member.getProject()).getResolveHelper().isAccessible(member, location.getCompletionParameters().getPosition(), null)) return MyEnum.INACCESSIBLE;
       if (member.isDeprecated()) return MyEnum.DEPRECATED;
     }
