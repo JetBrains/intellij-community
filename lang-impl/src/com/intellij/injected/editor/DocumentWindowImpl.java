@@ -153,6 +153,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
       offset -= prefix.length();
 
       RangeMarker currentRange = shred.getHostRangeMarker();
+      if (!currentRange.isValid()) continue;
       int rangeLength = currentRange.getEndOffset() - currentRange.getStartOffset();
       String rangeText = hostText.substring(currentRange.getStartOffset(), currentRange.getEndOffset());
 
