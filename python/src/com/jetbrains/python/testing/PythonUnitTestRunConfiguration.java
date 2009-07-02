@@ -3,7 +3,6 @@ package com.jetbrains.python.testing;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.Filter;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
@@ -14,12 +13,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
-import com.jetbrains.python.run.PythonTracebackFilter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Leonid Shalupov
@@ -142,9 +137,7 @@ public class PythonUnitTestRunConfiguration extends AbstractPythonRunConfigurati
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    List<Filter> filters = new ArrayList<Filter>();
-    filters.add(new PythonTracebackFilter(getProject(), getWorkingDirectory()));
-    return new PythonUnitTestCommandLineState(this, env, filters);
+    return new PythonUnitTestCommandLineState(this, env);
   }
 
   @Override

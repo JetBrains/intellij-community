@@ -3,8 +3,9 @@ import sys
 class TeamcityServiceMessages:
     quote = {"'": "|'", "|": "||", "\n": "|n", "\r": "|r", ']': '|]'}
     
-    def __init__(self, output=sys.stdout):
+    def __init__(self, output=sys.stdout, prepend_linebreak=False):
         self.output = output
+        self.prepend_linebreak = prepend_linebreak
     
     def escapeValue(self, value):
         return "".join([self.quote.get(x, x) for x in str(value)])
@@ -17,6 +18,7 @@ class TeamcityServiceMessages:
             s = s + " %s='%s'" % (k, self.escapeValue(v))
         s += "]\n"
 
+        if self.prepend_linebreak: self.output.write("\n")
         self.output.write(s)
 
     def testSuiteStarted(self, suiteName, location=None):

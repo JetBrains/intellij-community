@@ -41,6 +41,8 @@
     <configurationProducer implementation="com.jetbrains.python.testing.PythonUnitTestConfigurationProducer"/>
     <testSrcLocator implementation="com.jetbrains.python.testing.PythonUnitTestTestIdUrlProvider"/>
 
+    <configurationType implementation="com.jetbrains.python.testing.pytest.PyTestRunConfigurationType"/>
+
     <applicationService serviceInterface="com.jetbrains.python.JythonManager"
                         serviceImplementation="com.jetbrains.python.JythonManager"/>
     <projectService serviceInterface="com.jetbrains.python.psi.impl.PyBuiltinCache"
