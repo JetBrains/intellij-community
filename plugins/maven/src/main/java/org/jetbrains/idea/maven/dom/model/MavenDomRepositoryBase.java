@@ -8,8 +8,8 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
-import org.jetbrains.idea.maven.dom.MavenRepositoryLayoutConverter;
-import org.jetbrains.idea.maven.dom.MavenUrlConverter;
+import org.jetbrains.idea.maven.dom.converters.MavenRepositoryLayoutConverter;
+import org.jetbrains.idea.maven.dom.converters.MavenUrlConverter;
 
 public interface MavenDomRepositoryBase extends MavenDomElement {
   @NotNull

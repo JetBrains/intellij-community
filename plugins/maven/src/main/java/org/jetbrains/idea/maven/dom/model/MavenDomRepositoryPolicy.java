@@ -8,8 +8,8 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
-import org.jetbrains.idea.maven.dom.MavenRepositoryChecksumPolicyConverter;
-import org.jetbrains.idea.maven.dom.MavenRepositoryUpdatePolicyConverter;
+import org.jetbrains.idea.maven.dom.converters.MavenRepositoryChecksumPolicyConverter;
+import org.jetbrains.idea.maven.dom.converters.MavenRepositoryUpdatePolicyConverter;
 
 /**
  * http://maven.apache.org/POM/4.0.0:RepositoryPolicy interface.

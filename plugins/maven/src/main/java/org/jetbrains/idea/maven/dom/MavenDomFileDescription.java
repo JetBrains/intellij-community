@@ -7,7 +7,7 @@ import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.annotator.MavenDomAnnotator;
 
-public class MavenDomFileDescription<T> extends DomFileDescription<T> {
+public abstract class MavenDomFileDescription<T> extends DomFileDescription<T> {
   public MavenDomFileDescription(Class<T> rootElementClass, String rootTagName) {
     super(rootElementClass, rootTagName);
   }

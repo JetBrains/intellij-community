@@ -4,11 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
@@ -27,7 +23,7 @@ public class MavenPluginDomUtil {
     VirtualFile pluginXmlFile = getPluginXmlFile(p, pluginElement);
     if (pluginXmlFile == null) return null;
 
-    return getMavenPluginModel(p, pluginXmlFile);
+    return MavenDomUtil.getMavenPluginModel(p, pluginXmlFile);
   }
 
   private static VirtualFile getPluginXmlFile(Project p, MavenDomPlugin pluginElement) {
@@ -46,11 +42,6 @@ public class MavenPluginDomUtil {
   }
 
   private static String resolveProperties(GenericDomValue<String> value) {
-    return PropertyResolver.resolve(value);
-  }
-
-  private static MavenDomPluginModel getMavenPluginModel(Project p, VirtualFile pluginXml) {
-    PsiFile psiFile = PsiManager.getInstance(p).findFile(pluginXml);
-    return DomManager.getDomManager(p).getFileElement((XmlFile)psiFile, MavenDomPluginModel.class).getRootElement();
+    return MavenPropertyResolver.resolve(value);
   }
 }

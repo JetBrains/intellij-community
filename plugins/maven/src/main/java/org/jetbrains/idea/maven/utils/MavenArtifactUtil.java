@@ -39,7 +39,11 @@ public class MavenArtifactUtil {
   }
 
   public static boolean hasArtifactFile(File localRepository, MavenId id, String type) {
-    return getArtifactFile(localRepository, id.getGroupId(), id.getArtifactId(), id.getVersion(), type).exists();
+    return getArtifactFile(localRepository, id, type).exists();
+  }
+
+  public static File getArtifactFile(File localRepostiory, MavenId id, String type) {
+    return getArtifactFile(localRepostiory, id.getGroupId(), id.getArtifactId(), id.getVersion(), type);
   }
 
   public static File getArtifactFile(File localRepostiory, String groupId, String artifactId, String version, String type) {

@@ -7,7 +7,7 @@ import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
-import org.jetbrains.idea.maven.dom.MavenUrlConverter;
+import org.jetbrains.idea.maven.dom.converters.MavenUrlConverter;
 
 /**
  * http://maven.apache.org/POM/4.0.0:Organization interface.

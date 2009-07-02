@@ -164,12 +164,6 @@ public class MavenUtil {
            "</project>";
   }
 
-  public static MavenDomProjectModel getMavenModel(Project p, VirtualFile f) {
-    PsiFile psiFile = PsiManager.getInstance(p).findFile(f);
-    DomFileElement<MavenDomProjectModel> root = DomManager.getDomManager(p).getFileElement((XmlFile)psiFile, MavenDomProjectModel.class);
-    return root.getRootElement();
-  }
-
   public static <T extends Collection<Pattern>> T collectPattern(String text, T result) {
     String antPattern = FileUtil.convertAntToRegexp(text.trim());
     try {

@@ -8,7 +8,7 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
-import org.jetbrains.idea.maven.dom.MavenPhaseConverter;
+import org.jetbrains.idea.maven.dom.converters.MavenPhaseConverter;
 
 /**
  * http://maven.apache.org/POM/4.0.0:PluginExecution interface.

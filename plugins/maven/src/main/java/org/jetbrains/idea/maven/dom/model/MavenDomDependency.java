@@ -8,10 +8,10 @@ import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.MavenDependencyScopeConverter;
-import org.jetbrains.idea.maven.dom.MavenDependencySystemPathConverter;
+import org.jetbrains.idea.maven.dom.converters.MavenDependencyScopeConverter;
+import org.jetbrains.idea.maven.dom.converters.MavenDependencySystemPathConverter;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
-import org.jetbrains.idea.maven.dom.MavenPackagingTypeConverter;
+import org.jetbrains.idea.maven.dom.converters.MavenPackagingTypeConverter;
 
 /**
  * http://maven.apache.org/POM/4.0.0:Dependency interface.

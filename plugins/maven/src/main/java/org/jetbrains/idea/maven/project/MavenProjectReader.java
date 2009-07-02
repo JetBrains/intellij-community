@@ -32,7 +32,10 @@ import org.apache.maven.reactor.MissingModuleException;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.*;
-import org.jetbrains.idea.maven.utils.*;
+import org.jetbrains.idea.maven.utils.MavenConstants;
+import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.File;
 import java.io.IOException;
@@ -413,67 +416,52 @@ public class MavenProjectReader {
     return result;
   }
 
-  private void resolveInheritance(MavenGeneralSettings generalSettings,
+  private void resolveInheritance(final MavenGeneralSettings generalSettings,
                                   Model model,
                                   VirtualFile file,
-                                  File localRepository,
-                                  List<String> activeProfiles,
-                                  Set<VirtualFile> recursionGuard,
-                                  MavenProjectReaderProjectLocator locator) {
+                                  final File localRepository,
+                                  final List<String> activeProfiles,
+                                  final Set<VirtualFile> recursionGuard,
+                                  final MavenProjectReaderProjectLocator locator) {
     if (recursionGuard.contains(file)) return;
     recursionGuard.add(file);
 
     Parent parent = model.getParent();
     if (parent == null) return;
 
-    Model parentModel = null;
+    final String parentGroupId = parent.getGroupId();
+    final String parentArtifactId = parent.getArtifactId();
+    final String parentVersion = parent.getVersion();
 
-    String parentGroupId = parent.getGroupId();
-    String parentArtifactId = parent.getArtifactId();
-    String parentVersion = parent.getVersion();
-
-    VirtualFile parentFile = locator.findProjectFile(new MavenId(parentGroupId, parentArtifactId, parentVersion));
-    if (parentFile != null) {
-      parentModel = doReadProjectModel(generalSettings, parentFile, localRepository, activeProfiles, recursionGuard, locator).first;
-    }
-
-    if (parentModel == null) {
-      parentFile = file.getParent().findFileByRelativePath(parent.getRelativePath());
-      if (parentFile != null && parentFile.isDirectory()) {
-        parentFile = parentFile.findFileByRelativePath(MavenConstants.POM_XML);
+    Model parentModel = new MavenParentProjectFileProcessor<Model>() {
+      protected VirtualFile findManagedFile(MavenId id) {
+        return locator.findProjectFile(id);
       }
 
-      if (parentFile != null) {
-        parentModel = doReadProjectModel(generalSettings,
-                                         parentFile,
-                                         localRepository,
-                                         activeProfiles,
-                                         recursionGuard,
-                                         locator).first;
-        if (!(parentGroupId.equals(parentModel.getGroupId())
-              && parentArtifactId.equals(parentModel.getArtifactId())
-              && parentVersion.equals(parentModel.getVersion()))) {
-          parentModel = null;
+      @Override
+      protected Model processRelativeParent(VirtualFile parentFile) {
+        Model result = super.processRelativeParent(parentFile);
+        if (!(parentGroupId.equals(result.getGroupId())
+              && parentArtifactId.equals(result.getArtifactId())
+              && parentVersion.equals(result.getVersion()))) {
+          return null;
         }
+        return result;
       }
-    }
 
-    if (parentModel == null) {
-      File parentIoFile = MavenArtifactUtil.getArtifactFile(localRepository,
-                                                            parent.getGroupId(),
-                                                            parent.getArtifactId(),
-                                                            parent.getVersion(),
-                                                            "pom");
-      parentFile = LocalFileSystem.getInstance().findFileByIoFile(parentIoFile);
-      if (parentFile != null) {
-        parentModel = doReadProjectModel(generalSettings,
-                                         parentFile,
-                                         localRepository,
-                                         activeProfiles,
-                                         recursionGuard,
-                                         locator).first;
+      @Override
+      protected Model doProcessParent(VirtualFile parentFile) {
+        return doReadProjectModel(generalSettings,
+                                  parentFile,
+                                  localRepository,
+                                  activeProfiles,
+                                  recursionGuard,
+                                  locator).first;
       }
-    }
+    }.process(file,
+              new MavenId(parentGroupId, parentArtifactId, parentVersion),
+              parent.getRelativePath(),
+              localRepository);
 
     if (parentModel != null) {
       new DefaultModelInheritanceAssembler().assembleModelInheritance(model, parentModel);

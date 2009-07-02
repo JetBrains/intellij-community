@@ -7,9 +7,9 @@ import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.MavenDistributionStatusConverter;
+import org.jetbrains.idea.maven.dom.converters.MavenDistributionStatusConverter;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
-import org.jetbrains.idea.maven.dom.MavenUrlConverter;
+import org.jetbrains.idea.maven.dom.converters.MavenUrlConverter;
 
 public interface MavenDomDistributionManagement extends MavenDomElement {
   @NotNull

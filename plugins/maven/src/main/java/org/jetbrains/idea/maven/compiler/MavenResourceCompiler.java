@@ -26,7 +26,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.PropertyResolver;
+import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenResource;
@@ -326,8 +326,12 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     Set<String> cachedPaths = null;
     Set<String> otherModulesCachedPaths = new THashSet<String>();
     for (Map.Entry<String, Set<String>> eachEntry : myOutputItemsCache.entrySet()) {
-      if (eachEntry.getKey().equals(module.getName())) cachedPaths = eachEntry.getValue();
-      else otherModulesCachedPaths.addAll(eachEntry.getValue());
+      if (eachEntry.getKey().equals(module.getName())) {
+        cachedPaths = eachEntry.getValue();
+      }
+      else {
+        otherModulesCachedPaths.addAll(eachEntry.getValue());
+      }
     }
     myOutputItemsCache.put(module.getName(), currentPaths);
     if (cachedPaths == null) return;
@@ -377,11 +381,11 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
           String charset = sourceVirtualFile.getCharset().name();
           String text = new String(FileUtil.loadFileBytes(sourceFile), charset);
           String escapedCharacters = "properties".equals(sourceVirtualFile.getExtension()) ? "\\" : null;
-          text = PropertyResolver.resolve(eachItem.getModule(),
-                                          text,
-                                          eachItem.getProperties(),
-                                          eachItem.getEscapeString(),
-                                          escapedCharacters);
+          text = MavenPropertyResolver.resolve(eachItem.getModule(),
+                                               text,
+                                               eachItem.getProperties(),
+                                               eachItem.getEscapeString(),
+                                               escapedCharacters);
           FileUtil.writeToFile(outputFile, text.getBytes(charset));
         }
         else {

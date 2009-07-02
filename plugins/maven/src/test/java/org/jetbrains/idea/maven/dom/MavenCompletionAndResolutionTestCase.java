@@ -16,6 +16,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.dom.converters.PsiElementWrapper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -49,6 +50,23 @@ public abstract class MavenCompletionAndResolutionTestCase extends MavenImportin
     myCodeInsightFixture.configureFromExistingVirtualFile(f);
     CaretModel e = myCodeInsightFixture.getEditor().getCaretModel();
     return myCodeInsightFixture.getFile().findReferenceAt(e.getOffset());
+  }
+
+  protected void assertResolved(VirtualFile file, PsiElement expected) throws IOException {
+    PsiReference ref = getReferenceAtCaret(file);
+    assertNotNull(ref);
+    PsiElement resolved = ref.resolve();
+    if (resolved instanceof PsiElementWrapper) {
+      resolved = ((PsiElementWrapper)resolved).getWrappee();
+    }
+    assertEquals(expected, resolved);
+  }
+
+  protected void assertResolved(VirtualFile file, PsiElement expected, String expectedText) throws IOException {
+    PsiReference ref = getReferenceAtCaret(file);
+    assertNotNull(ref);
+    assertEquals(expected, ref.resolve());
+    assertEquals(expectedText, ref.getCanonicalText());
   }
 
   protected void assertCompletionVariants(VirtualFile f, String... expected) throws IOException {

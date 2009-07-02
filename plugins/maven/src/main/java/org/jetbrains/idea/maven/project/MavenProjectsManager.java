@@ -27,6 +27,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenModifiableModelsProvider;
@@ -816,7 +817,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
     MavenDomDependency result = new WriteCommandAction<MavenDomDependency>(myProject, "Add Maven Dependency", psiFile) {
       protected void run(Result<MavenDomDependency> result) throws Throwable {
-        MavenDomProjectModel model = MavenUtil.getMavenModel(myProject, mavenProject.getFile());
+        MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
         MavenDomDependency domDependency = model.getDependencies().addDependency();
         domDependency.getGroupId().setStringValue(artifact[0].getGroupId());
         domDependency.getArtifactId().setStringValue(artifact[0].getArtifactId());

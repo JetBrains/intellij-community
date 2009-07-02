@@ -7,7 +7,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
-import org.jetbrains.idea.maven.dom.MavenModuleConverter;
+import org.jetbrains.idea.maven.dom.converters.MavenModuleConverter;
 
 /**
  * http://maven.apache.org/POM/4.0.0:modulesElemType interface.

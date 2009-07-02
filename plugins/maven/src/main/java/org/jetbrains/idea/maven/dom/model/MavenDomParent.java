@@ -9,7 +9,7 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
-import org.jetbrains.idea.maven.dom.MavenParentRelativePathConverter;
+import org.jetbrains.idea.maven.dom.converters.MavenParentRelativePathConverter;
 
 /**
  * http://maven.apache.org/POM/4.0.0:Parent interface.

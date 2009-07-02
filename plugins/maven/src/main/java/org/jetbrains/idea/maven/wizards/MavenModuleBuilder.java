@@ -72,7 +72,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
                                     "Create new Maven module",
                                     getPsiFile(project, myAggregatorProject.getFile())) {
         protected void run() throws Throwable {
-          MavenDomProjectModel model = MavenUtil.getMavenModel(project, myAggregatorProject.getFile());
+          MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, myAggregatorProject.getFile());
           model.getPackaging().setStringValue("pom");
           MavenDomModule module = model.getModules().addModule();
           module.setValue(getPsiFile(project, pom));
@@ -112,7 +112,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     new WriteCommandAction.Simple(project, "Create new Maven module") {
       protected void run() throws Throwable {
         if (myParentProject != null) {
-          MavenDomProjectModel model = MavenUtil.getMavenModel(project, pom);
+          MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, pom);
           MavenDomUtil.updateMavenParent(model, myParentProject);
 
           if (myInheritGroupId) {
