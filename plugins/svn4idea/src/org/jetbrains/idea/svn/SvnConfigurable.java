@@ -70,6 +70,7 @@ public class SvnConfigurable implements Configurable {
   private JCheckBox myLockOnDemand;
   private JCheckBox myDetectNestedWorkingCopiesCheckBox;
   private JCheckBox myIgnoreWhitespaceDifferenciesInCheckBox;
+  private JCheckBox myShowMergeSourceInAnnotate;
 
   @NonNls private static final String HELP_ID = "project.propSubversion";
 
@@ -181,6 +182,9 @@ public class SvnConfigurable implements Configurable {
     if (configuration.IGNORE_SPACES_IN_ANNOTATE != myIgnoreWhitespaceDifferenciesInCheckBox.isSelected()) {
       return true;
     }
+    if (configuration.SHOW_MERGE_SOURCES_IN_ANNOTATE != myShowMergeSourceInAnnotate.isSelected()) {
+      return true;
+    }
     return !configuration.getConfigurationDirectory().equals(myConfigurationDirectoryText.getText().trim());
   }
 
@@ -192,6 +196,7 @@ public class SvnConfigurable implements Configurable {
     configuration.DETECT_NESTED_COPIES = myDetectNestedWorkingCopiesCheckBox.isSelected(); 
     configuration.UPDATE_LOCK_ON_DEMAND = myLockOnDemand.isSelected();
     configuration.setIgnoreSpacesInAnnotate(myIgnoreWhitespaceDifferenciesInCheckBox.isSelected());
+    configuration.SHOW_MERGE_SOURCES_IN_ANNOTATE = myShowMergeSourceInAnnotate.isSelected();
   }
 
   public void reset() {
@@ -210,6 +215,7 @@ public class SvnConfigurable implements Configurable {
     myConfigurationDirectoryLabel.setEnabled(enabled);
     myLockOnDemand.setSelected(configuration.UPDATE_LOCK_ON_DEMAND);
     myIgnoreWhitespaceDifferenciesInCheckBox.setSelected(configuration.IGNORE_SPACES_IN_ANNOTATE);
+    myShowMergeSourceInAnnotate.setSelected(configuration.SHOW_MERGE_SOURCES_IN_ANNOTATE);
   }
 
   public void disposeUIResources() {

@@ -16,13 +16,13 @@
 package org.jetbrains.idea.svn.annotate;
 
 import com.intellij.openapi.editor.EditorGutterAction;
-import com.intellij.openapi.vcs.annotate.AnnotationListener;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
+import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.SyncDateFormat;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnEntriesListener;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -36,7 +36,7 @@ import java.util.List;
 
 public class SvnFileAnnotation implements FileAnnotation {
   private final String myContents;
-  private final List<LineInfo> myLineInfos = new ArrayList<LineInfo>();
+  private final MyInfos myInfos;
   private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT));
 
   private final SvnVcs myVcs;
@@ -46,24 +46,36 @@ public class SvnFileAnnotation implements FileAnnotation {
 
   private final LineAnnotationAspect DATE_ASPECT = new LineAnnotationAspect() {
     public String getValue(int lineNumber) {
-      if (myLineInfos.size() <= lineNumber || lineNumber < 0) {
+      if (myInfos.size() <= lineNumber || lineNumber < 0) {
         return "";
       }
       else {
-        return DATE_FORMAT.format(myLineInfos.get(lineNumber).getDate());
+        return DATE_FORMAT.format(myInfos.get(lineNumber).getDate());
       }
     }
   };
 
   private final LineAnnotationAspect REVISION_ASPECT = new RevisionAnnotationAspect();
+  private final LineAnnotationAspect ORIGINAL_REVISION_ASPECT = new RevisionAnnotationAspect() {
+    @Override
+    public String getValue(int lineNumber) {
+      final long value = myInfos.originalRevision(lineNumber);
+      return (value == -1) ? "" : String.valueOf(value);
+    }
+
+    @Override
+    protected long getRevision(int lineNum) {
+      return myInfos.originalRevision(lineNum);
+    }
+  };
 
   private final LineAnnotationAspect AUTHOR_ASPECT = new LineAnnotationAspect() {
     public String getValue(int lineNumber) {
-      if (myLineInfos.size() <= lineNumber || lineNumber < 0) {
+      if (myInfos.size() <= lineNumber || lineNumber < 0) {
         return "";
       }
       else {
-        return myLineInfos.get(lineNumber).getAuthor();
+        return myInfos.get(lineNumber).getAuthor();
       }
     }
   };
@@ -79,6 +91,24 @@ public class SvnFileAnnotation implements FileAnnotation {
 
   public void setRevision(final long revision, final SvnFileRevision svnRevision) {
     myRevisionMap.put(revision, svnRevision);
+  }
+
+  private SvnFileRevision getRevision(final long revision) {
+    SvnFileRevision result = myRevisionMap.get(revision);
+    if (result != null) return result;
+
+    return null;  
+    /*          client.doLog(new File[]{ioFile}, endRevision, SVNRevision.create(1), false, false, 0,
+                       new ISVNLogEntryHandler() {
+                         public void handleLogEntry(SVNLogEntry logEntry) {
+                           if (progress != null) {
+                             progress.checkCanceled();
+                             progress.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
+                           }
+                           result.setRevision(logEntry.getRevision(), new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, url, ""));
+                         }
+                       });
+*/
   }
 
   static class LineInfo {
@@ -105,13 +135,14 @@ public class SvnFileAnnotation implements FileAnnotation {
     }
   }
 
-
   public SvnFileAnnotation(final SvnVcs vcs, final VirtualFile file, final String contents) {
     myVcs = vcs;
     myFile = file;
     myContents = contents;
     myVcs.getSvnEntriesFileListener().addListener(myListener);
     myConfiguration = SvnConfiguration.getInstance(vcs.getProject());
+
+    myInfos = new MyInfos();
   }
 
   public void addListener(AnnotationListener listener) {
@@ -133,13 +164,17 @@ public class SvnFileAnnotation implements FileAnnotation {
   }
 
   public String getToolTip(final int lineNumber) {
-    if (myLineInfos.size() <= lineNumber || lineNumber < 0) {
+    if (myInfos.size() <= lineNumber || lineNumber < 0) {
       return "";
     }
-    final LineInfo info = myLineInfos.get(lineNumber);
+    final LineInfo info = myInfos.get(lineNumber);
     SvnFileRevision svnRevision = myRevisionMap.get(info.getRevision());
     if (svnRevision != null) {
-      return "Revision " + info.getRevision() + ": " + svnRevision.getCommitMessage();
+      if (myInfos.getAnnotationSource(lineNumber).showMerged()) {
+        return "Merge source revision " + info.getRevision() + ": " + svnRevision.getCommitMessage();
+      } else {
+        return "Revision " + info.getRevision() + ": " + svnRevision.getCommitMessage();
+      }
     }
     return "";
   }
@@ -149,14 +184,28 @@ public class SvnFileAnnotation implements FileAnnotation {
   }
 
   public void appendLineInfo(final Date date, final long revision, final String author) {
-    myLineInfos.add(new LineInfo(date, revision, author));
+    myInfos.appendLineInfo(date, revision, author);
+  }
+
+  public void appendLineInfo(final Date date, final long revision, final String author,
+                             @NotNull final Date mergeDate, final long mergeRevision, @NotNull final String mergeAuthor) {
+    myInfos.appendLineInfo(date, revision, author, mergeDate, mergeRevision, mergeAuthor);
+  }
+
+  @Nullable
+  public VcsRevisionNumber originalRevision(final int lineNumber) {
+    if (myInfos.size() <= lineNumber || lineNumber < 0) {
+      return null;
+    }
+    final SvnFileRevision revision = myRevisionMap.get(myInfos.originalRevision(lineNumber));
+    return revision == null ? null : revision.getRevisionNumber();
   }
 
   public VcsRevisionNumber getLineRevisionNumber(final int lineNumber) {
-    if (myLineInfos.size() <= lineNumber || lineNumber < 0) {
+    if (myInfos.size() <= lineNumber || lineNumber < 0) {
       return null;
     }
-    final LineInfo info = myLineInfos.get(lineNumber);
+    final LineInfo info = myInfos.get(lineNumber);
     SvnFileRevision svnRevision = myRevisionMap.get(info.getRevision());
     if (svnRevision != null) {
       return svnRevision.getRevisionNumber();
@@ -174,13 +223,41 @@ public class SvnFileAnnotation implements FileAnnotation {
     return result;
   }
 
+  @Nullable
+  public AnnotationSourceSwitcher getAnnotationSourceSwitcher() {
+    return new AnnotationSourceSwitcher() {
+      @NotNull
+      public AnnotationSource getAnnotationSource(int lineNumber) {
+        return myInfos.getAnnotationSource(lineNumber);
+      }
+
+      public boolean mergeSourceAvailable(int lineNumber) {
+        return myInfos.mergeSourceAvailable(lineNumber);
+      }
+
+      @NotNull
+      public LineAnnotationAspect getRevisionAspect() {
+        return ORIGINAL_REVISION_ASPECT;
+      }
+
+      @NotNull
+      public AnnotationSource getDefaultSource() {
+        return AnnotationSource.getInstance(myConfiguration.SHOW_MERGE_SOURCES_IN_ANNOTATE);
+      }
+
+      public void switchTo(AnnotationSource source) {
+        myInfos.setShowMergeSource(source.showMerged());
+      }
+    };
+  }
+
   private class RevisionAnnotationAspect implements LineAnnotationAspect, EditorGutterAction {
     public String getValue(int lineNumber) {
-      if (myLineInfos.size() <= lineNumber || lineNumber < 0) {
+      if (myInfos.size() <= lineNumber || lineNumber < 0) {
         return "";
       }
       else {
-        return String.valueOf(myLineInfos.get(lineNumber).getRevision());
+        return String.valueOf(getRevision(lineNumber));
       }
     }
 
@@ -188,14 +265,74 @@ public class SvnFileAnnotation implements FileAnnotation {
       return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
     }
 
+    protected long getRevision(final int lineNum) {
+      return myInfos.get(lineNum).getRevision();
+    }
+
     public void doAction(int lineNum) {
-      if (lineNum >= 0 && lineNum < myLineInfos.size()) {
-        final LineInfo info = myLineInfos.get(lineNum);
-        SvnFileRevision svnRevision = myRevisionMap.get(info.getRevision());
+      if (lineNum >= 0 && lineNum < myInfos.size()) {
+        SvnFileRevision svnRevision = myRevisionMap.get(getRevision(lineNum));
         if (svnRevision != null) {
           ShowAllSubmittedFilesAction.showSubmittedFiles(myVcs.getProject(), svnRevision, myFile);        
         }
       }
+    }
+  }
+
+  private static class MyInfos {
+    private boolean myShowMergeSource;
+    private final List<LineInfo> myLineInfos;
+    private final Map<Integer, LineInfo> myMergeSourceInfos;
+
+    private MyInfos() {
+      myLineInfos = new ArrayList<LineInfo>();
+      myMergeSourceInfos = new HashMap<Integer, LineInfo>();
+    }
+
+    boolean isShowMergeSource() {
+      return myShowMergeSource;
+    }
+
+    void setShowMergeSource(boolean showMergeSource) {
+      myShowMergeSource = showMergeSource;
+    }
+
+    int size() {
+      return myLineInfos.size();
+    }
+
+    void appendLineInfo(final Date date, final long revision, final String author) {
+      myLineInfos.add(new LineInfo(date, revision, author));
+    }
+
+    void appendLineInfo(final Date date, final long revision, final String author,
+                               @NotNull final Date mergeDate, final long mergeRevision, @NotNull final String mergeAuthor) {
+      myLineInfos.add(new LineInfo(date, revision, author));
+      final int idx = myLineInfos.size() - 1;
+      myMergeSourceInfos.put(idx, new LineInfo(mergeDate, mergeRevision, mergeAuthor));
+    }
+
+    LineInfo get(final int idx) {
+      if (myShowMergeSource) {
+        final LineInfo lineInfo = myMergeSourceInfos.get(idx);
+        if (lineInfo != null) {
+          return lineInfo;
+        }
+      }
+      return myLineInfos.get(idx);
+    }
+
+    AnnotationSource getAnnotationSource(final int line) {
+      return myShowMergeSource ? AnnotationSource.getInstance(myMergeSourceInfos.containsKey(line)) : AnnotationSource.LOCAL;
+    }
+
+    public long originalRevision(final int line) {
+      if (line >= myLineInfos.size()) return -1;
+      return myLineInfos.get(line).getRevision();
+    }
+
+    public boolean mergeSourceAvailable(int lineNumber) {
+      return myMergeSourceInfos.containsKey(lineNumber);
     }
   }
 }

@@ -96,6 +96,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   public boolean IGNORE_SPACES_IN_MERGE = false;
   public boolean DETECT_NESTED_COPIES = false;
   public boolean IGNORE_SPACES_IN_ANNOTATE = true;
+  public boolean SHOW_MERGE_SOURCES_IN_ANNOTATE = true;
 
   private final Map<File, MergeRootInfo> myMergeRootInfos = new HashMap<File, MergeRootInfo>();
   private final Map<File, UpdateRootInfo> myUpdateRootInfos = new HashMap<File, UpdateRootInfo>();
