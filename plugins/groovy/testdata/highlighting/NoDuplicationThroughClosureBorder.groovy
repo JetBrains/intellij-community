@@ -3,7 +3,6 @@ class Bar {
   def foo() {
     def abc
     def x = {
-      def abc
       def owner
       println "hello"
     }

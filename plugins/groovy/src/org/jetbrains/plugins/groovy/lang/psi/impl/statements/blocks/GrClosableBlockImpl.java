@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterL
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 
@@ -75,7 +76,9 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
         if (!ResolveUtil.processElement(processor, parameter)) return false;
       }
 
-      processor.handleEvent(ResolveUtil.DECLARATION_SCOPE_PASSED, this);
+      if (processor instanceof PropertyResolverProcessor && OWNER_NAME.equals(((PropertyResolverProcessor)processor).getName())) {
+        processor.handleEvent(ResolveUtil.DECLARATION_SCOPE_PASSED, this);
+      }
 
       if (!ResolveUtil.processElement(processor, getOwner())) return false;
 

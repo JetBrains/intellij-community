@@ -30,6 +30,10 @@ public class GroovyHighlightingTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testClosureRedefiningVariable() throws Throwable {
+    doTest();
+  }
+
   private void doTest() throws Throwable {
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy");
   }
