@@ -156,14 +156,14 @@ public class SuppressManagerImpl extends SuppressManager {
           return modifierList != null ? modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME) : null;
         }
 
-        PsiElement container = PsiTreeUtil.getNonStrictParentOfType(place, PsiDocCommentOwner.class);
+        PsiDocCommentOwner container = PsiTreeUtil.getNonStrictParentOfType(place, PsiDocCommentOwner.class);
         while (true) {
           if (!(container instanceof PsiTypeParameter)) break;
           container = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class);
         }
 
         if (container != null) {
-          PsiElement element = getElementMemberSuppressedIn((PsiDocCommentOwner)container, toolId);
+          PsiElement element = getElementMemberSuppressedIn(container, toolId);
           if (element != null) return element;
         }
         PsiDocCommentOwner classContainer = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class, true);
