@@ -204,6 +204,11 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     assertTrue(ref.resolve() instanceof GrAccessorMethod);
   }
 
+  public void testClosureCall() throws Exception {
+    PsiReference ref = configureByFile("closureCall/ClosureCall.groovy");
+    assertTrue(ref.resolve() instanceof GrVariable);
+  }
+
   private void doTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();

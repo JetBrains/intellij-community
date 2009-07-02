@@ -58,10 +58,10 @@ public class MethodResolverProcessor extends ResolverProcessor {
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
+    PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
       if (method.isConstructor() != myIsConstructor) return true;
-      PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
       if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
       substitutor = obtainSubstitutor(substitutor, method);
       boolean isAccessible = isAccessible(method);
@@ -77,6 +77,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
       if (element instanceof GrField && ((GrField) element).isProperty() ||
           isClosure((PsiVariable) element)) {
         return super.execute(element, state);
+      } else {
+        myInapplicableCandidates.add(new GroovyResolveResultImpl(element, myCurrentFileResolveContext, substitutor, isAccessible((PsiVariable)element), isStaticsOK((PsiVariable)element)));
       }
     }
 
