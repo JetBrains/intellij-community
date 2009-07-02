@@ -521,7 +521,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void doExtract() throws IncorrectOperationException {
-     myInputVariables.replaceWrappedReferences();
+    myExpression = myInputVariables.replaceWrappedReferences(myElements, myExpression);
     renameInputVariables();
 
     PsiMethod newMethod = generateEmptyMethod(myThrownExceptions, myStatic);

@@ -99,13 +99,16 @@ public class InputVariables {
     return myInputVariables;
   }
 
-  public void replaceWrappedReferences() {
-    if (!myFoldingAvailable) return;
+  public PsiExpression replaceWrappedReferences(PsiElement[] elements, PsiExpression expression) {
+    if (!myFoldingAvailable) return expression;
+
+    boolean update = elements[0] == expression;
     for (ParameterTablePanel.VariableData inputVariable : myInputVariables) {
       for (PsiReference reference : ReferencesSearch.search(inputVariable.variable, myScope)) {
-        myFolding.foldParameterUsagesInBody(inputVariable, reference.getElement());
+        myFolding.foldParameterUsagesInBody(inputVariable, reference.getElement(), elements);
       }
     }
+    return update ? (PsiExpression)elements[0] : expression;
   }
 
   public boolean toDeclareInsideBody(PsiVariable variable) {

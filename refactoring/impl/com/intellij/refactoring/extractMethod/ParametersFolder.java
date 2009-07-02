@@ -13,9 +13,9 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +23,7 @@ import java.util.*;
 
 public class ParametersFolder {
   private final Map<PsiVariable, PsiExpression> myExpressions = new HashMap<PsiVariable, PsiExpression>();
-  private final Map<PsiVariable, Set<PsiExpression>> myMentionedInExpressions = new HashMap<PsiVariable, Set<PsiExpression>>();
+  private final Map<PsiVariable, List<PsiExpression>> myMentionedInExpressions = new HashMap<PsiVariable, List<PsiExpression>>();
   private final Set<String> myUsedNames = new HashSet<String>();
 
   private final Set<PsiVariable> myDeleted = new HashSet<PsiVariable>();
@@ -64,37 +64,40 @@ public class ParametersFolder {
     return false;
   }
 
-  @Nullable
-  public PsiElement foldParameterUsagesInBody(@NotNull ParameterTablePanel.VariableData data, @NotNull PsiElement element) {
-    if (myDeleted.contains(data.variable)) return null;
+  public void foldParameterUsagesInBody(@NotNull ParameterTablePanel.VariableData data, @NotNull PsiElement element,
+                                              PsiElement[] psiElements) {
+    if (myDeleted.contains(data.variable)) return;
     final PsiExpression psiExpression = myExpressions.get(data.variable);
-    if (psiExpression == null) return null;
+    if (psiExpression == null) return;
     final PsiExpression expression = findEquivalent(psiExpression, element);
-    if (expression != null) {
-      return expression.replace(JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(data.variable.getName(), element));
+    if (expression != null && expression.isValid()) {
+      final PsiExpression refExpression =
+        JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(data.variable.getName(), element);
+      for (int i = 0, psiElementsLength = psiElements.length; i < psiElementsLength; i++) {
+        PsiElement psiElement = psiElements[i];
+        if (expression == psiElement) {
+          psiElements[i] = expression.replace(refExpression);
+          return;
+        }
+      }
+      expression.replace(refExpression);
     }
-    return null;
   }
 
   public boolean isParameterFoldable(@NotNull ParameterTablePanel.VariableData data,
                                      @NotNull LocalSearchScope scope,
                                      @NotNull final List<? extends PsiVariable> inputVariables) {
-    final Set<PsiExpression> mentionedInExpressions = getMentionedExpressions(data.variable, scope);
+    final List<PsiExpression> mentionedInExpressions = getMentionedExpressions(data.variable, scope);
     if (mentionedInExpressions == null) return false;
 
-    final TObjectIntHashMap<PsiExpression> ranking = new TObjectIntHashMap<PsiExpression>();
-
-    for (PsiExpression expression : mentionedInExpressions) {
-      ranking.put(expression, findUsedVariables(data, inputVariables, expression).size());
-    }
-
-    PsiExpression mostRanked = null;
     int currenRank = 0;
-    for (Object o : ranking.keys()) {
-      final int r = ranking.get((PsiExpression)o);
-      if (r > currenRank) {
+    PsiExpression mostRanked = null;
+    for (int i = mentionedInExpressions.size() - 1; i >= 0; i--) {
+      PsiExpression expression = mentionedInExpressions.get(i);
+      final int r = findUsedVariables(data, inputVariables, expression).size();
+      if (currenRank < r) {
         currenRank = r;
-        mostRanked = (PsiExpression)o;
+        mostRanked = expression;
       }
     }
 
@@ -140,14 +143,15 @@ public class ParametersFolder {
   }
 
   @Nullable
-  private Set<PsiExpression> getMentionedExpressions(PsiVariable var, LocalSearchScope scope) {
+  private List<PsiExpression> getMentionedExpressions(PsiVariable var, LocalSearchScope scope) {
     if (myMentionedInExpressions.containsKey(var)) return myMentionedInExpressions.get(var);
-    Set<PsiExpression> expressions = null;
+    List<PsiExpression> expressions = null;
     for (PsiReference reference : ReferencesSearch.search(var, scope)) {
       PsiElement expression = reference.getElement();
       if (expressions == null) {
-        expressions = new HashSet<PsiExpression>();
+        expressions = new ArrayList<PsiExpression>();
         while (expression != null) {
+          if (PsiUtil.isAccessedForWriting((PsiExpression)expression)) return null;
           if (((PsiExpression)expression).getType() != PsiType.VOID) {
             expressions.add((PsiExpression)expression);
           }
