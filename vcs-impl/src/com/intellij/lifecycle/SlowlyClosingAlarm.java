@@ -40,7 +40,7 @@ public class SlowlyClosingAlarm implements AtomicSectionsAware, Disposable {
 
   public void dispose() {
     synchronized (myLock) {
-      myExecutorService.shutdown();
+      safelyShutdownExecutor();
       for (Future<?> future : myFutureList) {
         future.cancel(true);
       }
@@ -68,6 +68,7 @@ public class SlowlyClosingAlarm implements AtomicSectionsAware, Disposable {
   // todo maybe further allow delayed invocation
   public void addRequest(final Runnable runnable) {
     synchronized (myLock) {
+      if (myDisposeStarted) return;
       final MyWrapper wrapper = new MyWrapper(runnable);
       final Future<?> future = myExecutorService.submit(wrapper);
       wrapper.setFuture(future);
@@ -106,12 +107,22 @@ public class SlowlyClosingAlarm implements AtomicSectionsAware, Disposable {
     }
   }
 
+  private void safelyShutdownExecutor() {
+    synchronized (myLock) {
+      try {
+        myExecutorService.shutdown();
+      } catch (SecurityException e) {
+        //
+      }
+    }
+  }
+
   public void waitAndInterrupt(@Nullable final ProgressIndicator indicator) {
     final List<Future<?>> copy;
     synchronized (myLock) {
       debug("starting shutdown: " + myFutureList.size());
       myDisposeStarted = true;
-      myExecutorService.shutdown();
+      safelyShutdownExecutor();
 
       copy = new ArrayList<Future<?>>(myFutureList.size());
       for (Future<?> future : myFutureList) {
