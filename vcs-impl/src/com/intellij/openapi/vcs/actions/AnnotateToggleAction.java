@@ -5,8 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorGutterAction;
-import com.intellij.openapi.editor.TextAnnotationGutterProvider;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -30,22 +29,18 @@ import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.xml.util.XmlStringUtil;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * author: lesya
  */
 public class AnnotateToggleAction extends ToggleAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.actions.AnnotateToggleAction");
-  protected static final Key<Collection<AnnotationFieldGutter>> KEY_IN_EDITOR = Key.create("Annotations");
+  protected static final Key<Collection<ActiveAnnotationGutter>> KEY_IN_EDITOR = Key.create("Annotations");
 
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled(VcsContextFactory.SERVICE.getInstance().createContextOn(e)));
@@ -170,105 +165,192 @@ public class AnnotateToggleAction extends ToggleAction {
 
     editor.getGutter().closeAllAnnotations();
 
-    Collection<AnnotationFieldGutter> annotations = editor.getUserData(KEY_IN_EDITOR);
+    // be careful, not proxies but original items are put there (since only their presence not behaviour is important)
+    Collection<ActiveAnnotationGutter> annotations = editor.getUserData(KEY_IN_EDITOR);
     if (annotations == null) {
-      annotations = new HashSet<AnnotationFieldGutter>();
+      annotations = new HashSet<ActiveAnnotationGutter>();
       editor.putUserData(KEY_IN_EDITOR, annotations);
     }
 
-    final HighlightAnnotationsActions highlighting = new HighlightAnnotationsActions(project, file, fileAnnotation,
-                                                                                     ((EditorGutterComponentEx) editor.getGutter()));
+    final EditorGutterComponentEx editorGutterComponentEx = (EditorGutterComponentEx)editor.getGutter();
+    final HighlightAnnotationsActions highlighting = new HighlightAnnotationsActions(project, file, fileAnnotation, editorGutterComponentEx);
+    final List<AnnotationFieldGutter> gutters = new ArrayList<AnnotationFieldGutter>();
+    final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();
+    final MyAnnotationPresentation presentation = new MyAnnotationPresentation(highlighting, switcher, editorGutterComponentEx);
+
+    if (switcher != null) {
+
+      switcher.switchTo(switcher.getDefaultSource());
+      final LineAnnotationAspect revisonAspect = switcher.getRevisionAspect();
+      final MyCurrentRevisionAnnotationFieldGutter currentRevisionGutter =
+        new MyCurrentRevisionAnnotationFieldGutter(fileAnnotation, editor, revisonAspect, presentation);
+      final MyMergeSourceAvailableMarkerGutter mergeSourceGutter =
+        new MyMergeSourceAvailableMarkerGutter(fileAnnotation, editor, null, presentation);
+
+      presentation.addSourceSwitchListener(currentRevisionGutter);
+      presentation.addSourceSwitchListener(mergeSourceGutter);
+
+      currentRevisionGutter.consume(switcher.getDefaultSource());
+      mergeSourceGutter.consume(switcher.getDefaultSource());
+
+      gutters.add(currentRevisionGutter);
+      gutters.add(mergeSourceGutter);
+    }
+
     final LineAnnotationAspect[] aspects = fileAnnotation.getAspects();
     for (LineAnnotationAspect aspect : aspects) {
-      final AnnotationFieldGutter gutter = new AnnotationFieldGutter(getUpToDateLineNumber, fileAnnotation, editor, aspect, highlighting);
-      if (aspect instanceof EditorGutterAction) {
-        editor.getGutter().registerTextAnnotation(gutter, gutter);
+      final AnnotationFieldGutter gutter = new AnnotationFieldGutter(fileAnnotation, editor, aspect, presentation);
+      gutters.add(gutter);
+    }
+
+    for (AnnotationFieldGutter gutter : gutters) {
+      final AnnotationGutterLineConvertorProxy proxy = new AnnotationGutterLineConvertorProxy(getUpToDateLineNumber, gutter);
+      if (gutter.isGutterAction()) {
+        editor.getGutter().registerTextAnnotation(proxy, proxy);
       }
       else {
-        editor.getGutter().registerTextAnnotation(gutter);
+        editor.getGutter().registerTextAnnotation(proxy);
       }
       annotations.add(gutter);
     }
   }
 
-  private static class AnnotationFieldGutter implements TextAnnotationGutterProvider, EditorGutterAction {
-    private final UpToDateLineNumberProvider myGetUpToDateLineNumber;
-    private final FileAnnotation myAnnotation;
-    private final Editor myEditor;
-    private final LineAnnotationAspect myAspect;
-    private final HighlightAnnotationsActions myHighlighting;
-    private final AnnotationListener myListener;
+  // !! shown additionally only when merge
+  private static class MyCurrentRevisionAnnotationFieldGutter extends AnnotationFieldGutter implements Consumer<AnnotationSource> {
+    // merge source showing is turned on
+    private boolean myTurnedOn;
 
-    public AnnotationFieldGutter(UpToDateLineNumberProvider getUpToDateLineNumber,
-                                 FileAnnotation annotation,
-                                 Editor editor,
-                                 LineAnnotationAspect aspect,
-                                 final HighlightAnnotationsActions highlighting) {
-      myGetUpToDateLineNumber = getUpToDateLineNumber;
-      myAnnotation = annotation;
-      myEditor = editor;
-      myAspect = aspect;
-      myHighlighting = highlighting;
-
-      myListener = new AnnotationListener() {
-        public void onAnnotationChanged() {
-          myEditor.getGutter().closeAllAnnotations();
-        }
-      };
-
-      myAnnotation.addListener(myListener);
+    private MyCurrentRevisionAnnotationFieldGutter(FileAnnotation annotation,
+                                                   Editor editor,
+                                                   LineAnnotationAspect aspect,
+                                                   TextAnnotationPresentation highlighting) {
+      super(annotation, editor, aspect, highlighting);
     }
 
+    @Override
+    public ColorKey getColor(int line, Editor editor) {
+      return AnnotationSource.LOCAL.getColor();
+    }
+
+    @Override
     public String getLineText(int line, Editor editor) {
-      int currentLine = myGetUpToDateLineNumber.getLineNumber(line);
-      if (currentLine == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) return "";
-      return myAspect.getValue(currentLine);
+      final String value = myAspect.getValue(line);
+      if (String.valueOf(myAnnotation.getLineRevisionNumber(line)).equals(value)) {
+        return "";
+      }
+      // shown in merge sources mode
+      return myTurnedOn ? value : "";
     }
 
+    @Override
+    public String getToolTip(int line, Editor editor) {
+      final String text = getLineText(line, editor);
+      return ((text == null) || (text.length() == 0)) ? "" : VcsBundle.message("annotation.original.revision.text", text);
+    }
+
+    public void consume(final AnnotationSource annotationSource) {
+      myTurnedOn = annotationSource.showMerged();
+    }
+  }
+
+  private static class MyMergeSourceAvailableMarkerGutter extends AnnotationFieldGutter implements Consumer<AnnotationSource> {
+    // merge source showing is turned on
+    private boolean myTurnedOn;
+
+    private MyMergeSourceAvailableMarkerGutter(FileAnnotation annotation,
+                                               Editor editor,
+                                               LineAnnotationAspect aspect,
+                                               TextAnnotationPresentation highlighting) {
+      super(annotation, editor, aspect, highlighting);
+    }
+
+    @Override
+    public ColorKey getColor(int line, Editor editor) {
+      return AnnotationSource.LOCAL.getColor();
+    }
+
+    @Override
+    public String getLineText(int line, Editor editor) {
+      if (myTurnedOn) return "";
+      final AnnotationSourceSwitcher switcher = myAnnotation.getAnnotationSourceSwitcher();
+      if (switcher == null) return "";
+      return switcher.mergeSourceAvailable(line) ? "M" : "";
+    }
+
+    public void consume(final AnnotationSource annotationSource) {
+      myTurnedOn = annotationSource.showMerged();
+    }
+  }
+
+  private static class MyAnnotationPresentation implements TextAnnotationPresentation {
+    private final HighlightAnnotationsActions myHighlighting;
     @Nullable
-    public String getToolTip(final int line, final Editor editor) {
-      int currentLine = myGetUpToDateLineNumber.getLineNumber(line);
-      if (currentLine == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) return null;
+    private final AnnotationSourceSwitcher mySwitcher;
+    private final List<AnAction> myActions;
+    private MySwitchAnnotationSourceAction mySwitchAction;
 
-      return XmlStringUtil.escapeString(myAnnotation.getToolTip(currentLine));
-    }
+    public MyAnnotationPresentation(@NotNull final HighlightAnnotationsActions highlighting, @Nullable final AnnotationSourceSwitcher switcher,
+                                    final EditorGutterComponentEx gutter) {
+      myHighlighting = highlighting;
+      mySwitcher = switcher;
 
-    public void doAction(int line) {
-      if (myAspect instanceof EditorGutterAction) {
-        int currentLine = myGetUpToDateLineNumber.getLineNumber(line);
-        if (currentLine == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) return;
-
-        ((EditorGutterAction)myAspect).doAction(currentLine);
+      myActions = new ArrayList<AnAction>(myHighlighting.getList());
+      if (mySwitcher != null) {
+        mySwitchAction = new MySwitchAnnotationSourceAction(mySwitcher, gutter);
+        myActions.add(mySwitchAction);
       }
     }
 
-    public Cursor getCursor(final int line) {
-      if (myAspect instanceof EditorGutterAction) {
-        int currentLine = myGetUpToDateLineNumber.getLineNumber(line);
-        if (currentLine == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) return Cursor.getDefaultCursor();
+    public EditorFontType getFontType(final int line) {
+      return myHighlighting.isLineBold(line) ? EditorFontType.BOLD : EditorFontType.PLAIN;
+    }
 
-        return ((EditorGutterAction)myAspect).getCursor(currentLine);
-      } else {
-        return Cursor.getDefaultCursor();
+    public ColorKey getColor(final int line) {
+      if (mySwitcher == null) return AnnotationSource.LOCAL.getColor();
+      return mySwitcher.getAnnotationSource(line).getColor();
+    }
+
+    public List<AnAction> getActions() {
+      return myActions;
+    }
+
+    public void addSourceSwitchListener(final Consumer<AnnotationSource> listener) {
+      mySwitchAction.addSourceSwitchListener(listener);
+    }
+  }
+
+  private static class MySwitchAnnotationSourceAction extends AnAction {
+    private final static String ourShowMerged = VcsBundle.message("annotation.switch.to.merged.text");
+    private final static String ourHideMerged = VcsBundle.message("annotation.switch.to.original.text");
+    private final AnnotationSourceSwitcher mySwitcher;
+    private final EditorGutterComponentEx myGutter;
+    private final List<Consumer<AnnotationSource>> myListeners;
+    private boolean myShowMerged;
+
+    private MySwitchAnnotationSourceAction(final AnnotationSourceSwitcher switcher, final EditorGutterComponentEx gutter) {
+      mySwitcher = switcher;
+      myGutter = gutter;
+      myListeners = new ArrayList<Consumer<AnnotationSource>>();
+      myShowMerged = mySwitcher.getDefaultSource().showMerged();
+    }
+
+    public void addSourceSwitchListener(final Consumer<AnnotationSource> listener) {
+      myListeners.add(listener);
+    }
+
+    @Override
+    public void update(final AnActionEvent e) {
+      e.getPresentation().setText(myShowMerged ? ourHideMerged : ourShowMerged);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      myShowMerged = ! myShowMerged;
+      final AnnotationSource newSource = AnnotationSource.getInstance(myShowMerged);
+      mySwitcher.switchTo(newSource);
+      for (Consumer<AnnotationSource> listener : myListeners) {
+        listener.consume(newSource);
       }
-
-    }
-
-    public EditorFontType getStyle(final int line, final Editor editor) {
-      int currentLine = myGetUpToDateLineNumber.getLineNumber(line);
-      if (currentLine == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) return EditorFontType.PLAIN;
-      final boolean isBold = myHighlighting.isLineBold(currentLine);
-      return isBold ? EditorFontType.BOLD : EditorFontType.PLAIN;
-    }
-
-    public List<AnAction> getPopupActions(final Editor editor) {
-      return myHighlighting.getList();
-    }
-
-    public void gutterClosed() {
-      myAnnotation.removeListener(myListener);
-      myAnnotation.dispose();
-      myEditor.getUserData(KEY_IN_EDITOR).remove(this);
+      myGutter.revalidateMarkup();
     }
   }
 }

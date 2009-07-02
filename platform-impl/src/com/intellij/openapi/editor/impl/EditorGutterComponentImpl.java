@@ -199,6 +199,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         int logLine = myEditor.visualToLogicalPosition(new VisualPosition(j, 0)).line;
         String s = gutterProvider.getLineText(logLine, myEditor);
         final EditorFontType style = gutterProvider.getStyle(logLine, myEditor);
+        g.setColor(myEditor.getColorsScheme().getColor(gutterProvider.getColor(logLine, myEditor)));
         g.setFont(myEditor.getColorsScheme().getFont(style));
         if (s != null) {
           g.drawString(s,

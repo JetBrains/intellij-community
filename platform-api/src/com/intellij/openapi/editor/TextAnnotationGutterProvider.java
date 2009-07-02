@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,9 @@ public interface TextAnnotationGutterProvider {
   String getToolTip(int line, Editor editor);
 
   EditorFontType getStyle(int line, Editor editor);
+
+  @Nullable
+  ColorKey getColor(int line, Editor editor);
 
   /***
    * enables annotation view modifications

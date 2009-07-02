@@ -72,13 +72,20 @@ public interface FileAnnotation {
   String getAnnotatedContent();
 
   /**
-   * Get revistion number for the line.
+   * Get revision number for the line.
+   * when "show merge sources" is turned on, returns merge source revision
    *
    * @param lineNumber the line number
    * @return the revision number or null for lines that contain uncommitted changes.
    */
   @Nullable
   VcsRevisionNumber getLineRevisionNumber(int lineNumber);
+
+  /**
+   * Get revision number for the line.
+   */
+  @Nullable
+  VcsRevisionNumber originalRevision(int lineNumber);
 
   /**
    * Get all revisions that are mentioned in the annotations
@@ -88,4 +95,7 @@ public interface FileAnnotation {
    */
   @Nullable
   List<VcsFileRevision> getRevisions();
+
+  @Nullable
+  AnnotationSourceSwitcher getAnnotationSourceSwitcher();
 }

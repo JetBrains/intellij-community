@@ -138,7 +138,7 @@ public class HighlightAnnotationsActions {
 
     public boolean isBold(final int line) {
       if (mySelectedRevision != null) {
-        final VcsRevisionNumber number = myFileAnnotation.getLineRevisionNumber(line);
+        final VcsRevisionNumber number = myFileAnnotation.originalRevision(line);
         if (number != null) {
           final int compareResult = number.compareTo(mySelectedRevision.getRevisionNumber());
           return (myBefore && compareResult <= 0) || ((! myBefore) && (compareResult >= 0));

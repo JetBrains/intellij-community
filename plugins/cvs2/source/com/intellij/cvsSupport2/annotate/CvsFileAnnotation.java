@@ -36,9 +36,7 @@ import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.Annotation;
 import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
-import com.intellij.openapi.vcs.annotate.AnnotationListener;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
+import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -173,8 +171,17 @@ public class CvsFileAnnotation implements FileAnnotation{
     return null;
   }
 
+  public VcsRevisionNumber originalRevision(int lineNumber) {
+    return getLineRevisionNumber(lineNumber);
+  }
+
   @Nullable
   public List<VcsFileRevision> getRevisions() {
     return myRevisions;
   }
+
+  public AnnotationSourceSwitcher getAnnotationSourceSwitcher() {
+    return null;
+  }
+
 }
