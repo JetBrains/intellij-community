@@ -40,7 +40,7 @@ public class FileUrlProvider implements TestLocationProvider {
     final String filePath;
     final int lineNumber;
     // if line is specified
-    if (lineNoSeparatorIndex >= 0) {
+    if (lineNoSeparatorIndex > 3) {   // on Windows, paths start with /C: and that colon is not a line number separator 
       final String lineNumStr = normalizedPath.substring(lineNoSeparatorIndex + 1);
       int lineNum = 0;
       try {
