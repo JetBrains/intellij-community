@@ -29,6 +29,8 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.JavaAwareFilter;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -41,13 +43,17 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -202,16 +208,14 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
   public ExecutionResult execute(final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
-    final ProcessHandler handler = startProcess();
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return new DefaultExecutionResult(null, handler);
-    }
-
     final JUnitConsoleProperties consoleProperties = new JUnitConsoleProperties(myConfiguration);
     final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, getRunnerSettings(), getConfigurationSettings());
     consoleView.initUI();
+    final ProcessHandler handler = startProcess(consoleView);
     consoleView.attachToProcess(handler);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return new DefaultExecutionResult(null, handler);
+    }
 
     RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView.getComponent());
     rerunFailedTestsAction.init(consoleProperties, myRunnerSettings, myConfigurationSettings);
@@ -224,7 +228,7 @@ public abstract class TestObject implements JavaCommandLine {
     return new DefaultExecutionResult(consoleView, handler, rerunFailedTestsAction);
   }
 
-  private ProcessHandler startProcess() throws ExecutionException {
+  private ProcessHandler startProcess(final JUnitTreeConsoleView consoleView) throws ExecutionException {
     final ProcessHandler handler = JUnitProcessHandler.runJava(getJavaParameters(), myProject);
     handler.addProcessListener(new ProcessAdapter() {
       public void processTerminated(final ProcessEvent event) {
@@ -235,6 +239,18 @@ public abstract class TestObject implements JavaCommandLine {
         if (myCurrentCoverageSuite != null) {
           coverageDataManager.coverageGathered(myCurrentCoverageSuite);
         }
+
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+
+            final boolean hasFailed = !Filter.DEFECTIVE_LEAF.and(JavaAwareFilter.METHOD(myProject)).select(consoleView.getModel().getRoot().getAllTests()).isEmpty();
+
+            ToolWindowManager.getInstance(myProject).notifyByBalloon(
+              consoleView.getProperties().isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN,
+              hasFailed ? MessageType.ERROR : MessageType.INFO,
+              hasFailed ? ExecutionBundle.message("junit.runing.info.tests.failed.label") :  ExecutionBundle.message("junit.runing.info.tests.passed.label") , null, null);
+          }
+        });
       }
     });
     return handler;

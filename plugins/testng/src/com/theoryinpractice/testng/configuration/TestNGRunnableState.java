@@ -19,6 +19,8 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.JavaAwareFilter;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -38,12 +40,15 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -67,6 +72,7 @@ import org.testng.xml.Parser;
 import org.testng.xml.SuiteGenerator;
 import org.testng.xml.XmlSuite;
 
+import javax.swing.*;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -123,6 +129,16 @@ public class TestNGRunnableState extends JavaCommandLineState {
           CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(config.getProject());
           coverageDataManager.coverageGathered(myCurrentCoverageSuite);
         }
+
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            final boolean hasFailed = !Filter.DEFECTIVE_LEAF.and(JavaAwareFilter.METHOD(config.getProject())).select(console.getModel().getRoot().getAllTests()).isEmpty();
+            ToolWindowManager.getInstance(config.getProject()).notifyByBalloon(
+              console.getProperties().isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN,
+              hasFailed ? MessageType.ERROR : MessageType.INFO,
+              hasFailed ? "Tests failed" :  "Tests passed" , null, null);
+          }
+        });
       }
 
       @Override
