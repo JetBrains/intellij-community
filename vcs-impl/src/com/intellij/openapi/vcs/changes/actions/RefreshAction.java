@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 public class RefreshAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null) return;
     FileDocumentManager.getInstance().saveAllDocuments();
     VirtualFileManager.getInstance().refresh(true, new Runnable() {
       public void run() {
