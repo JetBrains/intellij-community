@@ -7,6 +7,7 @@ import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PythonFileType;
@@ -26,17 +27,25 @@ public class PythonRunConfigurationProducer extends RuntimeConfigurationProducer
   }
 
   protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(final Location location, final ConfigurationContext context) {
-    mySourceFile = location.getPsiElement().getContainingFile();
-    if (mySourceFile == null || mySourceFile.getFileType() != PythonFileType.INSTANCE) {
+    PsiFile script = location.getPsiElement().getContainingFile();
+    if (script == null || script.getFileType() != PythonFileType.INSTANCE) {
       return null;
     }
+    Module module = ModuleUtil.findModuleForPsiElement(script);
+    if (module != null) {
+      for (RunnableScriptFilter f : Extensions.getExtensions(RunnableScriptFilter.EP_NAME)) {
+        if (f.isRunnableScript(script, module)) {
+          return null;
+        }
+      }
+    }
+    mySourceFile = script;
 
     final Project project = mySourceFile.getProject();
     RunnerAndConfigurationSettingsImpl settings = cloneTemplateConfiguration(project, context);
     PythonRunConfiguration configuration = (PythonRunConfiguration) settings.getConfiguration();
     configuration.setScriptName(mySourceFile.getVirtualFile().getPath());
     configuration.setName(configuration.suggestedName());
-    Module module = ModuleUtil.findModuleForPsiElement(location.getPsiElement());
     if (module != null) {
       configuration.setUseModuleSdk(true);
       configuration.setModule(module);

@@ -15,10 +15,6 @@ public class PythonUnitTestCommandLineState extends PythonTestCommandLineStateBa
   private PythonUnitTestRunConfiguration myConfig;
   private static final String UTRUNNER_PY = "pycharm/utrunner.py";
 
-  public PythonUnitTestRunConfiguration getConfig() {
-    return myConfig;
-  }
-
   public PythonUnitTestCommandLineState(PythonUnitTestRunConfiguration runConfiguration, ExecutionEnvironment env) {
     super(runConfiguration, env);
     myConfig = runConfiguration;
@@ -26,9 +22,7 @@ public class PythonUnitTestCommandLineState extends PythonTestCommandLineStateBa
 
   protected void addTestRunnerParameters(GeneralCommandLine cmd) {
     cmd.addParameter(new File(PythonHelpersLocator.getHelpersRoot(), UTRUNNER_PY).getAbsolutePath());
-    for (String testSpec : getTestSpecs()) {
-      cmd.addParameter(testSpec);
-    }
+    cmd.addParameters(getTestSpecs());
   }
 
   private List<String> getTestSpecs() {

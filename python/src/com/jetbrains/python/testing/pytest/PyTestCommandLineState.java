@@ -3,6 +3,7 @@ package com.jetbrains.python.testing.pytest;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 
 import java.io.File;
@@ -27,8 +28,11 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
   }
 
   protected void addTestRunnerParameters(GeneralCommandLine cmd) {
-    cmd.addParameter("-p");
-    cmd.addParameter("pytest_teamcity");
+    cmd.addParameters("-p", "pytest_teamcity");
     cmd.addParameter(myConfiguration.getTestToRun());
+    String keywords = myConfiguration.getKeywords();
+    if (!StringUtil.isEmptyOrSpaces(keywords)) {
+      cmd.addParameters("-k", "\"" + keywords + "\"");
+    }
   }
 }

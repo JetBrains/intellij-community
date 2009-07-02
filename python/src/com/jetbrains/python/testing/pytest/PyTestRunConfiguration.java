@@ -17,7 +17,10 @@ import org.jdom.Element;
  */
 public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
   private String myTestToRun;
+  private String myKeywords;
+
   private static final String TEST_TO_RUN_FIELD = "testToRun";
+  private static final String KEYWORDS_FIELD = "keywords";
 
   public PyTestRunConfiguration(final String name, final RunConfigurationModule module, final ConfigurationFactory factory) {
     super(name, module, factory);
@@ -43,15 +46,25 @@ public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
     myTestToRun = testToRun;
   }
 
+  public String getKeywords() {
+    return myKeywords;
+  }
+
+  public void setKeywords(String keywords) {
+    myKeywords = keywords;
+  }
+
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     myTestToRun = JDOMExternalizerUtil.readField(element, TEST_TO_RUN_FIELD);
+    myKeywords = JDOMExternalizerUtil.readField(element, KEYWORDS_FIELD);
   }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     JDOMExternalizerUtil.writeField(element, TEST_TO_RUN_FIELD, myTestToRun);
+    JDOMExternalizerUtil.writeField(element, KEYWORDS_FIELD, myKeywords);
   }
 }

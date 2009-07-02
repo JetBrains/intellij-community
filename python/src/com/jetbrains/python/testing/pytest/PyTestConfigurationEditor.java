@@ -15,6 +15,7 @@ public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfigura
   private JPanel myMainPanel;
   private JPanel myCommonOptionsPlaceholder;
   private JTextField myTestToRunField;
+  private JTextField myKeywordsTextField;
   private PyCommonOptionsForm myCommonOptionsForm;
 
   public PyTestConfigurationEditor(PyTestRunConfiguration configuration) {
@@ -25,11 +26,13 @@ public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfigura
   protected void resetEditorFrom(PyTestRunConfiguration s) {
     AbstractPythonRunConfiguration.copyParams(s, myCommonOptionsForm);
     myTestToRunField.setText(s.getTestToRun());
+    myKeywordsTextField.setText(s.getKeywords());
   }
 
   protected void applyEditorTo(PyTestRunConfiguration s) throws ConfigurationException {
     AbstractPythonRunConfiguration.copyParams(myCommonOptionsForm, s);
     s.setTestToRun(myTestToRunField.getText());
+    s.setKeywords(myKeywordsTextField.getText());
   }
 
   @NotNull
