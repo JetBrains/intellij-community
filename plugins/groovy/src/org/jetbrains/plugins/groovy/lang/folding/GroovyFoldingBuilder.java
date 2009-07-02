@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -135,6 +136,6 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
   }
 
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
-    return node.getElementType() == IMPORT_STATEMENT;
+    return node.getElementType() == IMPORT_STATEMENT && JavaCodeFoldingSettings.getInstance().isCollapseImports();
   }
 }
