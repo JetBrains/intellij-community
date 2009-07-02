@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
@@ -66,8 +67,10 @@ public class CompleteReferenceExpression {
         } else
 
         if (refPParent instanceof GrApplicationStatementImpl) {
-          GrApplicationStatementImpl constructorCall = (GrApplicationStatementImpl)refPParent;
-          results = ArrayUtil.mergeArrays(results, constructorCall.getReferenceElement().multiResolve(true), GroovyResolveResult.class);
+          final GrExpression element = ((GrApplicationStatementImpl)refPParent).getFunExpression();
+          if (element instanceof GrReferenceElement) {
+            results = ArrayUtil.mergeArrays(results, ((GrReferenceElement) element).multiResolve(true), GroovyResolveResult.class);
+          }
         }
 
 
