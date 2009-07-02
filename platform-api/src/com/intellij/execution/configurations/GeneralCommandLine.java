@@ -61,7 +61,7 @@ public class GeneralCommandLine {
     addParameter("-Dfile.encoding=" + charset.name());
   }
 
-  public void addParameters(final String[] parameters) {
+  public void addParameters(final String... parameters) {
     for (String parameter : parameters) {
       addParameter(parameter);
     }
