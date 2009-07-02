@@ -124,6 +124,10 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     return myEditor;
   }
 
+  public void scrollToEnd() {
+    myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
+  }
+
   private static class TokenInfo{
     private final ConsoleViewContentType contentType;
     private int startOffset;
