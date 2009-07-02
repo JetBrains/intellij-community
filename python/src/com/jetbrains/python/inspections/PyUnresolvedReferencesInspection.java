@@ -234,7 +234,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
           unresolved = (reference.resolve() == null);
         }
         if (unresolved) {
-          StringBuffer description_buf = new StringBuffer(""); // TODO: clear description_buf logic. maybe a flag is needed instead.
+          StringBuilder description_buf = new StringBuilder(""); // TODO: clear description_buf logic. maybe a flag is needed instead.
           String text = reference.getElement().getText();
           String ref_text = reference.getRangeInElement().substring(text); // text of the part we're working with
           LocalQuickFix action = null;
@@ -269,7 +269,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
             if (s != null) description_buf.append(s);
           }
           if (description_buf.length() == 0) {
-            boolean marked_for_class = false;
+            boolean marked_qualified = false;
             if (reference instanceof PyQualifiedExpression) {
               final PyExpression qexpr = ((PyQualifiedExpression)reference).getQualifier();
               if (qexpr != null) {
@@ -279,7 +279,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
                     // this almost always means that we don't know the type, so don't show an error in this case
                     continue;
                   }
-                  if (qtype != null && qtype instanceof PyClassType) {
+                  if (qtype instanceof PyClassType) {
                     PyClass cls = ((PyClassType)qtype).getPyClass();
                     if (cls != null) {
                       if (reference.getElement().getParent() instanceof PyCallExpression) {
@@ -287,13 +287,17 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
                       }
                       else action = new AddFieldQuickFix(ref_text, cls);
                     }
+                    description_buf.append(PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", ref_text, qtype.getName()));
+                    marked_qualified = true;
                   }
-                  description_buf.append(PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", ref_text, qtype.getName()));
-                  marked_for_class = true;
+                  else {
+                    description_buf.append(PyBundle.message("INSP.cannot.find.$0.in.$1", ref_text, qtype.getName()));
+                    marked_qualified = true;
+                  }
                 }
               }
             }
-            if (! marked_for_class) {
+            if (! marked_qualified) {
               description_buf.append(PyBundle.message("INSP.unresolved.ref.$0", ref_text));
               action = new AddImportAction(reference);
             }
