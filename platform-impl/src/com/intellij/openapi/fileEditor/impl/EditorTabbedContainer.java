@@ -23,7 +23,6 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
@@ -208,9 +207,7 @@ final class EditorTabbedContainer implements Disposable {
     TabInfo tab = myTabs.findInfo(file);
     if (tab != null) return;
 
-    final FileColorManager fileColorManager = FileColorManagerImpl.getInstance(myProject);
-    final Color color = fileColorManager.isEnabledForTabs() ? fileColorManager.getFileColor(file) : null;
-    tab = new TabInfo(comp).setText(calcTabTitle(myProject, file)).setIcon(icon).setTooltipText(tooltip).setObject(file).setTabColor(color);
+    tab = new TabInfo(comp).setText(calcTabTitle(myProject, file)).setIcon(icon).setTooltipText(tooltip).setObject(file).setTabColor(calcTabColor(myProject, file));
     tab.setTestableUi(new MyTestableUi(tab));
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
@@ -245,8 +242,14 @@ final class EditorTabbedContainer implements Disposable {
   }
 
   public static Color calcTabColor(final Project project, final VirtualFile file) {
-    final FileColorManager colorManager = FileColorManagerImpl.getInstance(project);
-    return colorManager.isEnabledForTabs() ? colorManager.getFileColor(file) : null;
+    for (EditorTabColorProvider provider : Extensions.getExtensions(EditorTabColorProvider.EP_NAME)) {
+      final Color result = provider.getEditorTabColor(project, file);
+      if (result != null) {
+        return result;
+      }
+    }
+
+    return null;
   }
 
   public Component getComponentAt(final int i) {

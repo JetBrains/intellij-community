@@ -1,10 +1,10 @@
 package com.intellij.ui;
 
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.components.ServiceManager;
 
 import java.awt.*;
 import java.util.Collection;
@@ -22,15 +22,7 @@ public abstract class FileColorManager {
 
   public abstract void setEnabled(boolean enabled);
 
-  public abstract void setEnabledForTabs(boolean b);
-
   public abstract boolean isEnabledForTabs();
-
-  public abstract void addColoredFile(@NotNull VirtualFile file, @NotNull String colorName);
-
-  public abstract void removeColoredFile(@NotNull VirtualFile file);
-
-  public abstract void setShared(@NotNull VirtualFile file, boolean shared);
 
   @SuppressWarnings({"MethodMayBeStatic"})
   @Nullable
@@ -40,13 +32,9 @@ public abstract class FileColorManager {
   public abstract Collection<String> getColorNames();
 
   @Nullable
-  public abstract Color getFileColor(@NotNull VirtualFile file, boolean strict);
+  public abstract Color getFileColor(@NotNull final PsiFile file);
 
-  @Nullable
-  public abstract Color getFileColor(@NotNull VirtualFile file);
+  public abstract boolean isShared(@NotNull final String scopeName);
 
-  @Nullable
-  public abstract String getColorName(VirtualFile file);
-
-  public abstract boolean isShared(@NotNull VirtualFile virtualFile);
+  public abstract boolean isColored(@NotNull String scopeName, final boolean shared);
 }

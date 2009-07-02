@@ -415,8 +415,6 @@
       <reference ref="ExternalToolsGroup"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuSettingsGroup"/>
-      <separator/>
-      <reference ref="FileColorsGroup"/>
     </group>
 
     <group id="NavbarPopupMenu">

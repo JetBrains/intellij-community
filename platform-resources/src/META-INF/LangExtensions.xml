@@ -395,6 +395,8 @@
   <editorOptionsProvider implementation="com.intellij.application.options.CodeCompletionOptions"/>
   <editorOptionsProvider implementation="com.intellij.application.options.editor.AutoImportOptionsConfigurable"/>
 
+  <editorTabColorProvider implementation="com.intellij.ui.tabs.EditorTabColorProviderImpl"/>con
+
   <intentionAction>
     <className>com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction</className>
   </intentionAction>
@@ -480,6 +482,7 @@
   <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper"/>
   <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JarFileReferenceHelper"/>
   <projectConfigurable implementation="com.intellij.openapi.vfs.encoding.FileEncodingConfigurable"/>
+  <projectConfigurable implementation="com.intellij.ui.tabs.FileColorsConfigurable" id="fileColors"/>
 
   <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.PlaybackDebugger"/>
   <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.DisposerDebugger"/>

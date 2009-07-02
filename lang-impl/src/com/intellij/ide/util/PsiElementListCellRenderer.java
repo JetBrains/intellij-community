@@ -63,8 +63,10 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
             final FileColorManager colorManager = FileColorManager.getInstance(psiFile.getProject());
             if (colorManager.isEnabled()) {
-              final Color fileBgColor = colorManager.getFileColor(vFile);
-              bgColor = fileBgColor == null ? bgColor : fileBgColor;
+              if (psiFile.isValid()) {
+                final Color fileBgColor = colorManager.getFileColor(psiFile);
+                bgColor = fileBgColor == null ? bgColor : fileBgColor;
+              }
             }
           }
         }

@@ -374,8 +374,6 @@
       <action id="ChangeLaf" class="com.intellij.ide.actions.QuickChangeLookAndFeel"/>
     </group>
 
-    <group id="FileColorsGroup" class="com.intellij.ui.tabs.actions.FileColorActionGroup" text="File Colors"/>
-
     <group id="Internal" text="Internal Actions" internal="true" popup="true">
       <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
       <action id="DropAnOutOfMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfMemoryErrorAction"/>

@@ -137,9 +137,6 @@
   <applicationConfigurable implementation="com.intellij.util.net.HttpConfigurable"/>
   <applicationConfigurable implementation="com.intellij.openapi.diff.impl.external.DiffOptionsForm"/>
 
-  <!-- Colored Tabs -->
-  <projectConfigurable implementation="com.intellij.ui.tabs.FileColorsConfigurable" id="fileColors"/>
-
   <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
   <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
                         serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>

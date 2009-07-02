@@ -1,10 +1,8 @@
 package com.intellij.ui.tabs;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jdom.Element;
 
 /**
 * @author spleaner
@@ -12,25 +10,24 @@ import org.jdom.Element;
 class FileColorConfiguration implements Cloneable {
   private static final String COLOR = "color";
 
-  private String myPath;
+  private String myScopeName;
   private String myColorName;
-  private VirtualFile myFile;
-  private static final String PATH = "path";
+  private static final String SCOPE_NAME = "scope";
 
   public FileColorConfiguration() {
   }
 
-  public FileColorConfiguration(final String path, final String colorName) {
-    myPath = path;
+  public FileColorConfiguration(final String scopeName, final String colorName) {
+    myScopeName = scopeName;
     myColorName = colorName;
   }
 
-  public String getPath() {
-    return myPath;
+  public String getScopeName() {
+    return myScopeName;
   }
 
-  public void setPath(String path) {
-    myPath = path;
+  public void setScopeName(String scopeName) {
+    myScopeName = scopeName;
   }
 
   public String getColorName() {
@@ -42,7 +39,7 @@ class FileColorConfiguration implements Cloneable {
   }
 
   public boolean isValid() {
-    if (myPath == null || myPath.length() == 0) {
+    if (myScopeName == null || myScopeName.length() == 0) {
       return false;
     }
 
@@ -60,19 +57,10 @@ class FileColorConfiguration implements Cloneable {
 
     final Element tab = new Element(FileColorsModel.FILE_COLOR);
 
-    tab.setAttribute(PATH, getPath());
+    tab.setAttribute(SCOPE_NAME, getScopeName());
     tab.setAttribute(COLOR, myColorName);
 
     e.addContent(tab);
-  }
-
-  @Nullable
-  public VirtualFile resolve() {
-    if (myFile == null) {
-      myFile = LocalFileSystem.getInstance().findFileByPath(getPath());
-    }
-
-    return myFile;
   }
 
   @Override
@@ -83,14 +71,14 @@ class FileColorConfiguration implements Cloneable {
     FileColorConfiguration that = (FileColorConfiguration)o;
 
     if (!myColorName.equals(that.myColorName)) return false;
-    if (!myPath.equals(that.myPath)) return false;
+    if (!myScopeName.equals(that.myScopeName)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myPath.hashCode();
+    int result = myScopeName.hashCode();
     result = 31 * result + myColorName.hashCode();
     return result;
   }
@@ -99,14 +87,14 @@ class FileColorConfiguration implements Cloneable {
     final FileColorConfiguration result = new FileColorConfiguration();
 
     result.myColorName = myColorName;
-    result.myPath = myPath;
+    result.myScopeName = myScopeName;
 
     return result;
   }
 
   @Nullable
   public static FileColorConfiguration load(@NotNull final Element e) {
-    final String path = e.getAttributeValue(PATH);
+    final String path = e.getAttributeValue(SCOPE_NAME);
     if (path == null) {
       return null;
     }

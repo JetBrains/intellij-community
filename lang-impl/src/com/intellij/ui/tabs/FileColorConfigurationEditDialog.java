@@ -2,31 +2,33 @@ package com.intellij.ui.tabs;
 
 import com.intellij.notification.impl.ui.StickyButton;
 import com.intellij.notification.impl.ui.StickyButtonUI;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.DocumentEvent;
 import javax.swing.plaf.ButtonUI;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author spleaner
  */
 public class FileColorConfigurationEditDialog extends DialogWrapper {
   private FileColorConfiguration myConfiguration;
-  private JTextField myPathField;
+  private JComboBox myScopeComboBox;
   private JCheckBox myShareCheckbox;
   private FileColorManagerImpl myManager;
   private HashMap<String,AbstractButton> myColorToButtonMap;
+  private boolean myShared;
 
   public FileColorConfigurationEditDialog(@NotNull final FileColorManagerImpl manager, @Nullable final FileColorConfiguration configuration) {
     super(true);
@@ -46,18 +48,18 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     final JPanel result = new JPanel();
     result.setLayout(new BoxLayout(result, BoxLayout.Y_AXIS));
 
-    myPathField = new JTextField(myConfiguration == null ? "" : myConfiguration.getPath());
-    myPathField.setEditable(false);
-    myPathField.getDocument().addDocumentListener(new DocumentListener() {
-      public void insertUpdate(DocumentEvent e) {
-        updateOKButton();
+    final List<String> scopeNames = new ArrayList<String>();
+    final NamedScopesHolder[] scopeHolders = NamedScopeManager.getAllNamedScopeHolders(myManager.getProject());
+    for (final NamedScopesHolder scopeHolder : scopeHolders) {
+      final NamedScope[] scopes = scopeHolder.getScopes();
+      for (final NamedScope scope : scopes) {
+        scopeNames.add(scope.getName());
       }
+    }
 
-      public void removeUpdate(DocumentEvent e) {
-        updateOKButton();
-      }
-
-      public void changedUpdate(DocumentEvent e) {
+    myScopeComboBox = new JComboBox(scopeNames.toArray(new String[scopeNames.size()]));
+    myScopeComboBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
         updateOKButton();
       }
     });
@@ -65,18 +67,11 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     final JPanel pathPanel = new JPanel();
     pathPanel.setLayout(new BorderLayout());
 
-    final TextFieldWithBrowseButton withBrowseButton = new TextFieldWithBrowseButton(myPathField);
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, true, false, false);
-    descriptor.setRoot(myManager.getProject().getBaseDir());
-
-    withBrowseButton.addBrowseFolderListener("Choose path", "Choose path", myManager.getProject(), descriptor);
-
-    withBrowseButton.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-    final JLabel pathLabel = new JLabel("Path:");
-    pathLabel.setDisplayedMnemonic('P');
-    pathLabel.setLabelFor(withBrowseButton);
+    final JLabel pathLabel = new JLabel("Scope:");
+    pathLabel.setDisplayedMnemonic('S');
+    pathLabel.setLabelFor(myScopeComboBox);
     pathPanel.add(pathLabel, BorderLayout.WEST);
-    pathPanel.add(withBrowseButton, BorderLayout.CENTER);
+    pathPanel.add(myScopeComboBox, BorderLayout.CENTER);
     result.add(pathPanel);
 
     final JPanel colorPanel = new JPanel();
@@ -103,10 +98,10 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     close(OK_EXIT_CODE);
 
     if (myConfiguration != null) {
-      myConfiguration.setPath(myPathField.getText());
+      myConfiguration.setScopeName((String) myScopeComboBox.getSelectedItem());
       myConfiguration.setColorName(getColorName());
     } else {
-      myConfiguration = new FileColorConfiguration(myPathField.getText(), getColorName());
+      myConfiguration = new FileColorConfiguration((String) myScopeComboBox.getSelectedItem(), getColorName());
     }
   }
 
@@ -167,7 +162,7 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myPathField;
+    return myScopeComboBox;
   }
 
   private void updateOKButton() {
@@ -176,8 +171,8 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
 
   @Override
   public boolean isOKActionEnabled() {
-    final String path = myPathField.getText();
-    return path != null && path.length() > 0 && getColorName() != null; 
+    final String scopeName = (String) myScopeComboBox.getSelectedItem();
+    return scopeName != null && scopeName.length() > 0 && getColorName() != null;
   }
 
   protected JComponent createCenterPanel() {

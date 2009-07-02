@@ -119,7 +119,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
 
           final FileColorManager fileColorManager = FileColorManager.getInstance(project);
           if (virtualFile != null && fileColorManager.isEnabled()) {
-            final Color fileColor = fileColorManager.getFileColor(virtualFile);
+            final Color fileColor = fileColorManager.getFileColor(psiElement.getContainingFile());
             if (fileColor != null) {
               bgColor = fileColor;
             }

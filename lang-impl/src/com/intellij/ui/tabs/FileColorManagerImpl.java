@@ -1,8 +1,11 @@
 package com.intellij.ui.tabs;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.FileColorManager;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Element;
@@ -47,7 +50,7 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
 
   public FileColorManagerImpl(@NotNull final Project project) {
     myProject = project;
-    myModel = new FileColorsModel();
+    myModel = new FileColorsModel(project);
   }
 
   private void initSharedConfigurations() {
@@ -70,24 +73,6 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
 
   public boolean isEnabledForTabs() {
     return myEnabledForTabs;
-  }
-
-  public void addColoredFile(@NotNull final VirtualFile file, @NotNull final String colorName) {
-    myModel.add(file, colorName);
-  }
-
-  public void removeColoredFile(@NotNull final VirtualFile file) {
-    myModel.remove(file);
-  }
-
-  public void setShared(@NotNull final VirtualFile file, final boolean shared) {
-    final String colorName = myModel.getColor(file, true);
-    if (colorName != null) {
-      final Color color = getColor(colorName);
-      if (color != null) {
-        myModel.setShared(file, shared);
-      }
-    }
   }
 
   public Element getState(final boolean shared) {
@@ -148,25 +133,19 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
     loadState(state, false);
   }
 
+  @Override
+  public boolean isColored(@NotNull final String scopeName, final boolean shared) {
+    return myModel.isColored(scopeName, shared);
+  }
+
   @Nullable
-  public Color getFileColor(@NotNull final VirtualFile file, final boolean strict) {
-    final String colorName = myModel.getColor(file, strict);
+  public Color getFileColor(@NotNull final PsiFile file) {
+    final String colorName = myModel.getColor(file);
     return colorName == null ? null : ourDefaultColors.get(colorName);
   }
 
-  @Nullable
-  public Color getFileColor(@NotNull final VirtualFile file) {
-    final String colorName = getColorName(file);
-    return colorName == null ? null : ourDefaultColors.get(colorName);
-  }
-
-  @Nullable
-  public String getColorName(VirtualFile file) {
-    return myModel.getColor(file, false);
-  }
-
-  public boolean isShared(@NotNull VirtualFile virtualFile) {
-    return myModel.isShared(virtualFile);
+  public boolean isShared(@NotNull final String scopeName) {
+    return myModel.isShared(scopeName);
   }
 
   FileColorsModel getModel() {
@@ -179,5 +158,13 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
 
   public Project getProject() {
     return myProject;
+  }
+
+  public List<FileColorConfiguration> getLocalConfigurations() {
+    return myModel.getLocalConfigurations();
+  }
+
+  public List<FileColorConfiguration> getSharedConfigurations() {
+    return myModel.getSharedConfigurations();
   }
 }
