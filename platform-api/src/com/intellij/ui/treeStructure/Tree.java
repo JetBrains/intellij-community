@@ -151,12 +151,18 @@ public class Tree extends JTree implements Autoscroll, TestableUi {
     scrollRowToVisible(realrow);
   }
 
+  protected boolean paintNodes() {
+    return false;
+  }
+
   @Override
   protected void paintComponent(Graphics g) {
-    g.setColor(getBackground());
-    g.fillRect(0, 0, getWidth(), getHeight());
+    if (paintNodes()) {
+      g.setColor(getBackground());
+      g.fillRect(0, 0, getWidth(), getHeight());
 
-    paintNodeContent(g);
+      paintNodeContent(g);
+    }
 
     super.paintComponent(g);
   }

@@ -259,6 +259,11 @@ public class SimpleTree extends Tree implements CellEditorListener {
     return true;
   }
 
+  @Override
+  protected boolean paintNodes() {
+    return true;
+  }
+
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
 
