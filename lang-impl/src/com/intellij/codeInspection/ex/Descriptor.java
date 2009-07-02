@@ -9,6 +9,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
@@ -74,6 +75,7 @@ public class Descriptor {
     return myText;
   }
 
+  @NotNull
   public HighlightDisplayKey getKey() {
     return myKey;
   }
