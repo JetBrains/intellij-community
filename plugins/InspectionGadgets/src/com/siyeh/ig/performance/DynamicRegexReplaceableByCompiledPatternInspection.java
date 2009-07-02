@@ -15,20 +15,20 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.Expression;
-import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
-import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -88,11 +88,6 @@ public class DynamicRegexReplaceableByCompiledPatternInspection
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
-            final PsiElement parent = element.getParent();
-            //if (!(parent instanceof PsiMethodCallExpression)) {
-            //    System.out.println("HEY!");
-            //    return;
-            //}
             final PsiClass aClass = PsiTreeUtil.getParentOfType(element,
                     PsiClass.class);
             if (aClass == null) {
@@ -105,18 +100,31 @@ public class DynamicRegexReplaceableByCompiledPatternInspection
                     "java.util.regex.Pattern", resolveScope);
             final PsiField newField = factory.createField("pattern", patternType);
             final PsiElement field = aClass.add(newField);
-            final PsiIdentifier identifier = newField.getNameIdentifier();
-            final TemplateBuilder templateBuilder = new TemplateBuilder(field);
-            final Expression macroCallNode = new MacroCallNode(
-                    new SuggestVariableNameMacro());
-            templateBuilder.replaceElement(identifier, macroCallNode);
-            final Template template = templateBuilder.buildInlineTemplate();
+
+            showTemplateBuilder((PsiField) field);
+        }
+
+        private static void showTemplateBuilder(PsiField field) {
+            final Project project = field.getProject();
             final FileEditorManager fileEditorManager =
                     FileEditorManager.getInstance(project);
             final Editor editor = fileEditorManager.getSelectedTextEditor();
             if (editor == null) {
                 return;
             }
+            field = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(
+                    field);
+            final TextRange range = field.getTextRange();
+            final TemplateBuilder builder = new TemplateBuilder(field);
+            builder.replaceElement(field.getNameIdentifier(),
+                    new ConstantNode(field.getName()));
+            final Template template = builder.buildTemplate();
+
+            final int startOffset = range.getStartOffset();
+            final int endOffset = range.getEndOffset();
+            editor.getDocument().replaceString(startOffset, endOffset, "");
+            editor.getCaretModel().moveToOffset(startOffset);
+
             TemplateManager.getInstance(project).startTemplate(editor, template);
         }
     }
