@@ -62,7 +62,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
 
     if (current instanceof PsiClassOwner) {
       PsiClass[] classes = ((PsiClassOwner)current).getClasses();
-      if (classes.length > 0 && isTopLevelClass(classes[0], baseRootFile)) {
+      if (classes.length == 1 && !(classes[0] instanceof SyntheticElement) && isTopLevelClass(classes[0], baseRootFile)) {
         current = classes[0];
       }
     }
