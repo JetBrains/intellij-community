@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -278,26 +279,38 @@ public class TestNGUtil implements TestFramework
   /**
    * @return were javadoc params used
    */
-  public static boolean collectAnnotationValues(Set<String> results, String parameter, PsiMethod[] psiMethods, PsiClass... classes) {
+  public static boolean collectAnnotationValues(final Set<String> results, final String parameter, PsiMethod[] psiMethods, PsiClass... classes) {
     boolean used = false;
-    Set<String> test = new HashSet<String>(1);
+    final Set<String> test = new HashSet<String>(1);
     test.add(TEST_ANNOTATION_FQN);
     test.addAll(Arrays.asList(CONFIG_ANNOTATIONS_FQN));
     if (psiMethods != null) {
-      for (PsiMethod psiMethod : psiMethods) {
-        used |= appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(psiMethod, test), psiMethod);
+      for (final PsiMethod psiMethod : psiMethods) {
+        used |= ApplicationManager.getApplication().runReadAction(
+            new Computable<Boolean>() {
+              public Boolean compute() {
+                return appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(psiMethod, test), psiMethod);
+              }
+            }
+        );
       }
     } else {
-      for (PsiClass psiClass : classes) {
-        if (psiClass != null && hasTest(psiClass)) {
-          used |= appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(psiClass, test), psiClass);
-          PsiMethod[] methods = psiClass.getMethods();
-          for (PsiMethod method : methods) {
-            if (method != null) {
-              used |= appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(method, test), method);
+      for (final PsiClass psiClass : classes) {
+        used |= ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          public Boolean compute() {
+            boolean annotated = false;
+            if (psiClass != null && hasTest(psiClass)) {
+              annotated |= appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(psiClass, test), psiClass);
+              PsiMethod[] methods = psiClass.getMethods();
+              for (PsiMethod method : methods) {
+                if (method != null) {
+                  annotated |= appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(method, test), method);
+                }
+              }
             }
+            return annotated;
           }
-        }
+        });
       }
     }
     return used;
@@ -355,27 +368,36 @@ public class TestNGUtil implements TestFramework
     return results;
   }
 
-  public static PsiClass[] getAllTestClasses(final TestClassFilter filter) {
+  public static PsiClass[] getAllTestClasses(final TestClassFilter filter, boolean sync) {
     final PsiClass[][] holder = new PsiClass[1][];
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable()
-    {
+    final Runnable process = new Runnable() {
       public void run() {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
-        Collection<PsiClass> set = new HashSet<PsiClass>();
+        final Collection<PsiClass> set = new HashSet<PsiClass>();
         PsiManager manager = PsiManager.getInstance(filter.getProject());
         GlobalSearchScope scope = filter.getScope();
         GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
         scope = projectScope.intersectWith(scope);
-        for (PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject())) {
-          if (filter.isAccepted(psiClass)) {
-            indicator.setText2("Found test class " + psiClass.getQualifiedName());
-            set.add(psiClass);
-          }
+        for (final PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject())) {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              if (filter.isAccepted(psiClass)) {
+                indicator.setText2("Found test class " + psiClass.getQualifiedName());
+                set.add(psiClass);
+              }
+            }
+          });
         }
         holder[0] = set.toArray(new PsiClass[set.size()]);
       }
-    }, "Searching For Tests...", true, filter.getProject());
+    };
+    if (sync) {
+       ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "Searching For Tests...", true, filter.getProject());
+    }
+    else {
+       process.run();
+    }
     return holder[0];
   }
 

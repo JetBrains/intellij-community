@@ -23,19 +23,25 @@ import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -67,8 +73,7 @@ import java.net.ServerSocket;
 import java.net.UnknownHostException;
 import java.util.*;
 
-public class TestNGRunnableState extends JavaCommandLineState
-{
+public class TestNGRunnableState extends JavaCommandLineState {
   private static final Logger LOG = Logger.getInstance("TestNG Runner");
   private final ConfigurationPerRunnerSettings myConfigurationPerRunnerSettings;
   private final TestNGConfiguration config;
@@ -77,9 +82,9 @@ public class TestNGRunnableState extends JavaCommandLineState
   private int port;
   private String debugPort;
   private CoverageSuite myCurrentCoverageSuite;
+  private File myTempFile;
 
-  public TestNGRunnableState(ExecutionEnvironment environment,
-                             TestNGConfiguration config) {
+  public TestNGRunnableState(ExecutionEnvironment environment, TestNGConfiguration config) {
     super(environment);
     this.runnerSettings = environment.getRunnerSettings();
     myConfigurationPerRunnerSettings = environment.getConfigurationSettings();
@@ -89,7 +94,7 @@ public class TestNGRunnableState extends JavaCommandLineState
     client = new IDEARemoteTestRunnerClient();
     // Want debugging?
     if (runnerSettings.getData() instanceof DebuggingRunnerData) {
-      DebuggingRunnerData debuggingRunnerData = ((DebuggingRunnerData) runnerSettings.getData());
+      DebuggingRunnerData debuggingRunnerData = ((DebuggingRunnerData)runnerSettings.getData());
       debugPort = debuggingRunnerData.getDebugPort();
       if (debugPort.length() == 0) {
         try {
@@ -109,8 +114,7 @@ public class TestNGRunnableState extends JavaCommandLineState
     final TestNGConsoleView console = new TestNGConsoleView(config, runnerSettings, myConfigurationPerRunnerSettings);
     console.initUI();
     ProcessHandler processHandler = startProcess();
-    processHandler.addProcessListener(new ProcessAdapter()
-    {
+    processHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(final ProcessEvent event) {
         client.stopTest();
@@ -154,41 +158,44 @@ public class TestNGRunnableState extends JavaCommandLineState
 
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
-    Project project = config.getProject();
-    JavaParameters javaParameters = new JavaParameters();
+    final Project project = config.getProject();
+    final JavaParameters javaParameters = new JavaParameters();
     javaParameters.setupEnvs(config.getPersistantData().getEnvs(), config.getPersistantData().PASS_PARENT_ENVS);
     javaParameters.getVMParametersList().add("-ea");
-    javaParameters.setMainClass("org.testng.remote.RemoteTestNG");
+    javaParameters.setMainClass("org.testng.RemoteTestNGStarter");
     javaParameters.setWorkingDirectory(config.getProperty(RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY));
+    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(IDEACoverageListener.class));
 
     //the next few lines are awkward for a reason, using compareTo for some reason causes a JVM class verification error!
     Module module = config.getConfigurationModule().getModule();
-    LanguageLevel effectiveLanguageLevel = module == null ? LanguageLevelProjectExtension.getInstance(project).getLanguageLevel() : LanguageLevelUtil
-        .getEffectiveLanguageLevel(module);
-    boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
+    LanguageLevel effectiveLanguageLevel = module == null
+                                           ? LanguageLevelProjectExtension.getInstance(project).getLanguageLevel()
+                                           : LanguageLevelUtil.getEffectiveLanguageLevel(module);
+    final boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
 
     LOG.info("Language level is " + effectiveLanguageLevel.toString());
     LOG.info("is15 is " + is15);
 
     // Add plugin jars first...
     javaParameters.getClassPath().add(is15 ? PathUtil.getJarPathForClass(AfterClass.class) : //testng-jdk15.jar
-        new File(PathManager.getPreinstalledPluginsPath(), "testng/lib-jdk14/testng-jdk14.jar").getPath());//todo !do not hard code lib name!
+                                      new File(PathManager.getPreinstalledPluginsPath(), "testng/lib-jdk14/testng-jdk14.jar")
+                                        .getPath());//todo !do not hard code lib name!
     final boolean hasIDEACoverageEnabled = config.isCoverageEnabled() && config.getCoverageRunner() instanceof IDEACoverageRunner;
-    if (hasIDEACoverageEnabled) javaParameters.getClassPath().add(PathUtil.getJarPathForClass(IDEACoverageListener.class));
+
 
     // Configure rest of jars
     JavaParametersUtil.configureConfiguration(javaParameters, config);
-    Sdk jdk =
-        module == null ? ProjectRootManager.getInstance(project).getProjectJdk() : ModuleRootManager.getInstance(module).getSdk();
+    Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectJdk() : ModuleRootManager.getInstance(module).getSdk();
     javaParameters.setJdk(jdk);
     final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);
     for (Object patcher : patchers) {
-      ((JUnitPatcher) patcher).patchJavaParameters(module, javaParameters);
+      ((JUnitPatcher)patcher).patchJavaParameters(module, javaParameters);
     }
     JavaSdkUtil.addRtJar(javaParameters.getClassPath());
 
     // Append coverage parameters if appropriate
-    if ((!(runnerSettings.getData() instanceof DebuggingRunnerData) || config.getCoverageRunner() instanceof IDEACoverageRunner) && config.isCoverageEnabled()) {
+    if ((!(runnerSettings.getData() instanceof DebuggingRunnerData) || config.getCoverageRunner() instanceof IDEACoverageRunner) &&
+        config.isCoverageEnabled()) {
       myCurrentCoverageSuite = CoverageDataManager.getInstance(project).addCoverageSuite(config);
       LOG.info("Added coverage data with name '" + myCurrentCoverageSuite.getPresentableName() + "'");
       config.appendCoverageArgument(javaParameters);
@@ -199,14 +206,15 @@ public class TestNGRunnableState extends JavaCommandLineState
       LOG.info("Configuring for whole project");
       JavaParametersUtil.configureProject(config.getProject(), javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
                                           config.ALTERNATIVE_JRE_PATH_ENABLED ? config.ALTERNATIVE_JRE_PATH : null);
-    } else {
+    }
+    else {
       LOG.info("Configuring for module:" + config.getConfigurationModule().getModuleName());
       JavaParametersUtil.configureModule(config.getConfigurationModule(), javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
                                          config.ALTERNATIVE_JRE_PATH_ENABLED ? config.ALTERNATIVE_JRE_PATH : null);
     }
     calculateServerPort();
 
-    TestData data = config.getPersistantData();
+    final TestData data = config.getPersistantData();
 
     javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.PORT_COMMAND_OPT, String.valueOf(port));
 
@@ -232,7 +240,8 @@ public class TestNGRunnableState extends JavaCommandLineState
     VirtualFile[] sources;
     if ((data.getScope() == TestSearchScope.WHOLE_PROJECT && TestType.PACKAGE.getType().equals(data.TEST_OBJECT)) || module == null) {
       sources = ProjectRootManager.getInstance(project).getContentSourceRoots();
-    } else {
+    }
+    else {
       sources = ModuleRootManager.getInstance(module).getSourceRoots();
     }
 
@@ -251,92 +260,142 @@ public class TestNGRunnableState extends JavaCommandLineState
       javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.SRC_COMMAND_OPT, sb.toString());
     }
 
-    Map<PsiClass, Collection<PsiMethod>> classes = new HashMap<PsiClass, Collection<PsiMethod>>();
-    fillTestObjects(classes, project);
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        Map<PsiClass, Collection<PsiMethod>> classes = new HashMap<PsiClass, Collection<PsiMethod>>();
+        try {
+          fillTestObjects(classes, project);
 
-    //if we have testclasses, then we're not running a suite and we have to create one
-    //LaunchSuite suite = null;
-    //
-    //if(testPackage != null) {
-    //    List<String> packages = new ArrayList<String>(1);
-    //    packages.add(testPackage.getQualifiedName());
-    //    suite = SuiteGenerator.createCustomizedSuite(config.project.getName(), packages, null, null, null, data.TEST_PROPERTIES, is15 ? null : "javadoc", 0);
-    //} else
-    if (classes.size() > 0) {
-      Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-      for (Map.Entry<PsiClass, Collection<PsiMethod>> entry : classes.entrySet()) {
-        Collection<String> methods = new HashSet<String>(entry.getValue().size());
-        for (PsiMethod method : entry.getValue()) {
-          methods.add(method.getName());
-        }
-        map.put(entry.getKey().getQualifiedName(), methods);
-      }
-      // We have groups we wish to limit to.
-      Collection<String> groupNames = null;
-      if (TestType.GROUP.getType().equals(data.TEST_OBJECT)) {
-        String groupName = data.getGroupName();
-        if (groupName != null && groupName.length() > 0) {
-          groupNames = new HashSet<String>(1);
-          groupNames.add(groupName);
-        }
-      }
 
-      Map<String, String> testParams = buildTestParameters(data);
+          //if we have testclasses, then we're not running a suite and we have to create one
+          //LaunchSuite suite = null;
+          //
+          //if(testPackage != null) {
+          //    List<String> packages = new ArrayList<String>(1);
+          //    packages.add(testPackage.getQualifiedName());
+          //    suite = SuiteGenerator.createCustomizedSuite(config.project.getName(), packages, null, null, null, data.TEST_PROPERTIES, is15 ? null : "javadoc", 0);
+          //} else
+          if (classes.size() > 0) {
+            Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
+            for (final Map.Entry<PsiClass, Collection<PsiMethod>> entry : classes.entrySet()) {
+              Collection<String> methods = new HashSet<String>(entry.getValue().size());
+              for (PsiMethod method : entry.getValue()) {
+                methods.add(method.getName());
+              }
+              map.put(ApplicationManager.getApplication().runReadAction(
+                  new Computable<String>() {
+                    @Nullable
+                    public String compute() {
+                      return entry.getKey().getQualifiedName();
+                    }
+                  }
+              ), methods);
+            }
+            // We have groups we wish to limit to.
+            Collection<String> groupNames = null;
+            if (TestType.GROUP.getType().equals(data.TEST_OBJECT)) {
+              String groupName = data.getGroupName();
+              if (groupName != null && groupName.length() > 0) {
+                groupNames = new HashSet<String>(1);
+                groupNames.add(groupName);
+              }
+            }
 
-      String annotationType = data.ANNOTATION_TYPE;
-      if (annotationType == null || "".equals(annotationType)) {
-        annotationType = is15 ? TestNG.JDK_ANNOTATION_TYPE : TestNG.JAVADOC_ANNOTATION_TYPE;
-      }
+            Map<String, String> testParams = buildTestParameters(data);
 
-      LOG.info("Using annotationType of " + annotationType);
+            String annotationType = data.ANNOTATION_TYPE;
+            if (annotationType == null || "".equals(annotationType)) {
+              annotationType = is15 ? TestNG.JDK_ANNOTATION_TYPE : TestNG.JAVADOC_ANNOTATION_TYPE;
+            }
 
-      int logLevel = 1;
-      try {
-        final Properties properties = new Properties();
-        properties.load(new ByteArrayInputStream(config.getPersistantData().VM_PARAMETERS.getBytes()));
-        final String verbose = properties.getProperty("-Dtestng.verbose");
-        if (verbose != null) {
-          logLevel = Integer.parseInt(verbose);
-        }
-      }
-      catch (Exception e) { //not a number
-        logLevel = 1;
-      }
+            LOG.info("Using annotationType of " + annotationType);
 
-      LaunchSuite suite = SuiteGenerator.createSuite(project.getName(), null, map, groupNames, testParams, annotationType, logLevel);
+            int logLevel = 1;
+            try {
+              final Properties properties = new Properties();
+              properties.load(new ByteArrayInputStream(config.getPersistantData().VM_PARAMETERS.getBytes()));
+              final String verbose = properties.getProperty("-Dtestng.verbose");
+              if (verbose != null) {
+                logLevel = Integer.parseInt(verbose);
+              }
+            }
+            catch (Exception e) { //not a number
+              logLevel = 1;
+            }
 
-      File xmlFile = suite.save(new File(PathManager.getSystemPath()));
-      javaParameters.getProgramParametersList().add(xmlFile.getAbsolutePath());
-    } else if (TestType.SUITE.getType().equals(data.TEST_OBJECT)) {
-      // Running a suite, make a local copy of the suite and apply our custom parameters to it and run that instead.
+            LaunchSuite suite = SuiteGenerator.createSuite(project.getName(), null, map, groupNames, testParams, annotationType, logLevel);
 
-      try {
-        Collection<XmlSuite> suites = new Parser(data.getSuiteName()).parse();
-        for (XmlSuite suite : suites) {
-          Map<String, String> params = suite.getParameters();
-
-          params.putAll(buildTestParameters(data));
-
-          String annotationType = data.ANNOTATION_TYPE;
-          if (annotationType != null && !"".equals(annotationType)) {
-            suite.setAnnotations(annotationType);
+            File xmlFile = suite.save(new File(PathManager.getSystemPath()));
+            String path = xmlFile.getAbsolutePath() + "\n";
+            try {
+              FileUtil.writeToFile(myTempFile, path.getBytes(), true);
+            }
+            catch (IOException e) {
+              LOG.error(e);
+            }
           }
-          LOG.info("Using annotationType of " + annotationType);
+          else if (TestType.SUITE.getType().equals(data.TEST_OBJECT)) {
+            // Running a suite, make a local copy of the suite and apply our custom parameters to it and run that instead.
 
-          final String fileId =
-              (project.getName() + '_' + suite.getName() + '_' + Integer.toHexString(suite.getName().hashCode()) + ".xml").replace(' ', '_');
-          final File suiteFile = new File(PathManager.getSystemPath(), fileId);
-          FileWriter fileWriter = new FileWriter(suiteFile);
-          fileWriter.write(suite.toXml());
-          fileWriter.close();
+            try {
+              Collection<XmlSuite> suites = new Parser(data.getSuiteName()).parse();
+              for (XmlSuite suite : suites) {
+                Map<String, String> params = suite.getParameters();
 
-          javaParameters.getProgramParametersList().add(suiteFile.getAbsolutePath());
+                params.putAll(buildTestParameters(data));
+
+                String annotationType = data.ANNOTATION_TYPE;
+                if (annotationType != null && !"".equals(annotationType)) {
+                  suite.setAnnotations(annotationType);
+                }
+                LOG.info("Using annotationType of " + annotationType);
+
+                final String fileId =
+                  (project.getName() + '_' + suite.getName() + '_' + Integer.toHexString(suite.getName().hashCode()) + ".xml")
+                    .replace(' ', '_');
+                final File suiteFile = new File(PathManager.getSystemPath(), fileId);
+                FileWriter fileWriter = new FileWriter(suiteFile);
+                fileWriter.write(suite.toXml());
+                fileWriter.close();
+                String path = suiteFile.getAbsolutePath() + "\n";
+                FileUtil.writeToFile(myTempFile, path.getBytes(), true);
+              }
+            }
+            catch (Exception e) {
+              throw new CantRunException("Unable to parse suite: " + e.getMessage());
+            }
+          }
+
+          try {
+            FileUtil.writeToFile(myTempFile, "end".getBytes(), true);
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
         }
-
+        catch (CantRunException e) {
+          try {
+            final String message = "CantRunException" + e.getMessage();
+            FileUtil.writeToFile(myTempFile, message.getBytes());
+          }
+          catch (IOException e1) {
+            LOG.error(e1);
+          }
+        }
       }
-      catch (Exception e) {
-        throw new CantRunException("Unable to parse suite: " + e.getMessage());
-      }
+    };
+    try {
+      myTempFile = File.createTempFile("idea_testng", ".tmp");
+      myTempFile.deleteOnExit();
+      javaParameters.getProgramParametersList().add("-temp", myTempFile.getAbsolutePath());
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Searching For Tests ...", true) {
+        public void run(@NotNull ProgressIndicator indicator) {
+          runnable.run();
+        }
+      });
+    }
+    catch (IOException e) {
+      LOG.error(e);
     }
     // Configure for debugging
     if (runnerSettings.getData() instanceof DebuggingRunnerData) {
@@ -358,44 +417,84 @@ public class TestNGRunnableState extends JavaCommandLineState
 
   protected void fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes, final Project project) throws CantRunException {
     final TestData data = config.getPersistantData();
-    PsiManager psiManager = PsiManager.getInstance(project);
+    final PsiManager psiManager = PsiManager.getInstance(project);
     if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
       final String packageName = data.getPackageName();
-      PsiPackage psiPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(packageName);
+      PsiPackage psiPackage = ApplicationManager.getApplication().runReadAction(
+          new Computable<PsiPackage>() {
+            @Nullable
+            public PsiPackage compute() {
+              return JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(packageName);
+            }
+          }
+      );
       if (psiPackage == null) {
         throw CantRunException.packageNotFound(packageName);
-      } else {
+      }
+      else {
         TestSearchScope scope = config.getPersistantData().getScope();
         //TODO we should narrow this down by module really, if that's what's specified
         TestClassFilter projectFilter = new TestClassFilter(scope.getSourceScope(config).getGlobalSearchScope(), config.getProject(), true);
         TestClassFilter filter = projectFilter.intersectionWith(PackageScope.packageScope(psiPackage, true));
-        classes.putAll(calculateDependencies(null, TestNGUtil.getAllTestClasses(filter)));
+        classes.putAll(calculateDependencies(null, TestNGUtil.getAllTestClasses(filter, false)));
         if (classes.size() == 0) {
           throw new CantRunException("No tests found in the package \"" + packageName + '\"');
         }
       }
-    } else if (data.TEST_OBJECT.equals(TestType.CLASS.getType())) {
+    }
+    else if (data.TEST_OBJECT.equals(TestType.CLASS.getType())) {
       //it's a class
-      PsiClass psiClass = JavaPsiFacade.getInstance(psiManager.getProject())
-          .findClass(data.getMainClassName(), getSearchScope());
+      final PsiClass psiClass = ApplicationManager.getApplication().runReadAction(
+          new Computable<PsiClass>() {
+            @Nullable
+            public PsiClass compute() {
+              return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(data.getMainClassName(), getSearchScope());
+            }
+          }
+      );
       if (psiClass == null) {
         throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
       }
-      if (null == psiClass.getQualifiedName()) {
+      if (null == ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Nullable
+        public String compute() {
+          return psiClass.getQualifiedName();
+        }
+      })) {
         throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
       }
       classes.putAll(calculateDependencies(null, psiClass));
-    } else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
+    }
+    else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
       //it's a method
-      PsiClass psiClass = JavaPsiFacade.getInstance(psiManager.getProject())
-          .findClass(data.getMainClassName(), getSearchScope());
+      final PsiClass psiClass = ApplicationManager.getApplication().runReadAction(
+          new Computable<PsiClass>() {
+            @Nullable
+            public PsiClass compute() {
+              return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(data.getMainClassName(), getSearchScope());
+            }
+          }
+      );
       if (psiClass == null) {
         throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
       }
-      if (null == psiClass.getQualifiedName()) {
+      if (null == ApplicationManager.getApplication().runReadAction(
+          new Computable<String>() {
+            @Nullable
+            public String compute() {
+              return psiClass.getQualifiedName();
+            }
+          }
+      )) {
         throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
       }
-      final PsiMethod[] methods = psiClass.findMethodsByName(data.getMethodName(), true);
+      final PsiMethod[] methods = ApplicationManager.getApplication().runReadAction(
+          new Computable<PsiMethod[]>() {
+            public PsiMethod[] compute() {
+              return psiClass.findMethodsByName(data.getMethodName(), true);
+            }
+          }
+      );
       classes.putAll(calculateDependencies(methods, psiClass));
       Collection<PsiMethod> psiMethods = classes.get(psiClass);
       if (psiMethods == null) {
@@ -403,10 +502,11 @@ public class TestNGRunnableState extends JavaCommandLineState
         classes.put(psiClass, psiMethods);
       }
       psiMethods.addAll(Arrays.asList(methods));
-    } else if (data.TEST_OBJECT.equals(TestType.GROUP.getType())) {
+    }
+    else if (data.TEST_OBJECT.equals(TestType.GROUP.getType())) {
       //for a group, we include all classes
-      PsiClass[] testClasses =
-          TestNGUtil.getAllTestClasses(new TestClassFilter(data.getScope().getSourceScope(config).getGlobalSearchScope(), project, true));
+      PsiClass[] testClasses = TestNGUtil
+        .getAllTestClasses(new TestClassFilter(data.getScope().getSourceScope(config).getGlobalSearchScope(), project, true), false);
       for (PsiClass c : testClasses) {
         classes.put(c, new HashSet<PsiMethod>());
       }
@@ -477,40 +577,47 @@ public class TestNGRunnableState extends JavaCommandLineState
     }
   }
 
-  private Map<PsiClass, Collection<PsiMethod>> calculateDependencies(PsiMethod[] methods, @Nullable PsiClass... classes) {
+  private Map<PsiClass, Collection<PsiMethod>> calculateDependencies(PsiMethod[] methods, @Nullable final PsiClass... classes) {
     //we build up a list of dependencies
-    Map<PsiClass, Collection<PsiMethod>> results = new HashMap<PsiClass, Collection<PsiMethod>>();
+    final Map<PsiClass, Collection<PsiMethod>> results = new HashMap<PsiClass, Collection<PsiMethod>>();
     if (classes != null && classes.length > 0) {
-      Set<String> dependencies = new HashSet<String>();
+      final Set<String> dependencies = new HashSet<String>();
       final boolean usedJavadocTags = TestNGUtil.collectAnnotationValues(dependencies, "dependsOnGroups", methods, classes);
-      if (!dependencies.isEmpty()) {
-        final Project project = classes[0].getProject();
-        //we get all classes in the module to figure out which are in the groups we depend on
-        Collection<PsiClass> allClasses;
-        if (usedJavadocTags) {
-          allClasses = AllClassesSearch.search(getSearchScope(), project).findAll();
-          Map<PsiClass, Collection<PsiMethod>> filteredClasses = TestNGUtil.filterAnnotations("groups", dependencies, allClasses);
-          //we now have a list of dependencies, and a list of classes that match those dependencies
-          results.putAll(filteredClasses);
-        } else {
-          final PsiClass testAnnotation =
-            JavaPsiFacade.getInstance(project).findClass(TestNGUtil.TEST_ANNOTATION_FQN, GlobalSearchScope.allScope(project));
-          LOG.assertTrue(testAnnotation != null);
-          for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, getSearchScope())) {
-            if (TestNGUtil.isAnnotatedWithParameter(AnnotationUtil.findAnnotation(psiMember, TestNGUtil.TEST_ANNOTATION_FQN), "groups", dependencies)) {
-              final PsiClass psiClass = psiMember instanceof PsiClass ? ((PsiClass)psiMember) : psiMember.getContainingClass();
-              Collection<PsiMethod> psiMethods = results.get(psiClass);
-              if (psiMethods == null) {
-                psiMethods = new LinkedHashSet<PsiMethod>();
-                results.put(psiClass, psiMethods);
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run(){
+              if (!dependencies.isEmpty()) {
+              final Project project = classes[0].getProject();
+              //we get all classes in the module to figure out which are in the groups we depend on
+              Collection<PsiClass> allClasses;
+              if (usedJavadocTags) {
+                allClasses = AllClassesSearch.search(getSearchScope(), project).findAll();
+                Map<PsiClass, Collection<PsiMethod>> filteredClasses = TestNGUtil.filterAnnotations("groups", dependencies, allClasses);
+                //we now have a list of dependencies, and a list of classes that match those dependencies
+                results.putAll(filteredClasses);
               }
-              if (psiMember instanceof PsiMethod) {
-                psiMethods.add((PsiMethod)psiMember);
+              else {
+                final PsiClass testAnnotation =
+                  JavaPsiFacade.getInstance(project).findClass(TestNGUtil.TEST_ANNOTATION_FQN, GlobalSearchScope.allScope(project));
+                LOG.assertTrue(testAnnotation != null);
+                for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, getSearchScope())) {
+                  if (TestNGUtil
+                    .isAnnotatedWithParameter(AnnotationUtil.findAnnotation(psiMember, TestNGUtil.TEST_ANNOTATION_FQN), "groups", dependencies)) {
+                    final PsiClass psiClass = psiMember instanceof PsiClass ? ((PsiClass)psiMember) : psiMember.getContainingClass();
+                    Collection<PsiMethod> psiMethods = results.get(psiClass);
+                    if (psiMethods == null) {
+                      psiMethods = new LinkedHashSet<PsiMethod>();
+                      results.put(psiClass, psiMethods);
+                    }
+                    if (psiMember instanceof PsiMethod) {
+                      psiMethods.add((PsiMethod)psiMember);
+                    }
+                  }
+                }
               }
             }
           }
-        }
-      }
+      });
+
       if (methods == null) {
         for (PsiClass c : classes) {
           results.put(c, new LinkedHashSet<PsiMethod>());
@@ -524,7 +631,7 @@ public class TestNGRunnableState extends JavaCommandLineState
     final TestData data = config.getPersistantData();
     final Module module = config.getConfigurationModule().getModule();
     return data.TEST_OBJECT.equals(TestType.PACKAGE.getType())
-        ? config.getPersistantData().getScope().getSourceScope(config).getGlobalSearchScope()
-        : module != null ? GlobalSearchScope.moduleWithDependenciesScope(module) : GlobalSearchScope.projectScope(config.getProject());
+           ? config.getPersistantData().getScope().getSourceScope(config).getGlobalSearchScope()
+           : module != null ? GlobalSearchScope.moduleWithDependenciesScope(module) : GlobalSearchScope.projectScope(config.getProject());
   }
 }

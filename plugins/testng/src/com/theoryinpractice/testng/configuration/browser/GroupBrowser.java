@@ -36,7 +36,7 @@ public class GroupBrowser extends BrowseModuleValueActionListener
       else {
         filter = new TestClassFilter(GlobalSearchScope.moduleScope(module), getProject(), false);
       }
-      PsiClass[] classes = TestNGUtil.getAllTestClasses(filter);
+      PsiClass[] classes = TestNGUtil.getAllTestClasses(filter, true);
       if(classes.length == 0) {
         Messages.showMessageDialog(getField(), "No tests found in project", "Cannot Browse Groups", Messages.getInformationIcon());
         return null;
