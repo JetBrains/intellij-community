@@ -901,8 +901,12 @@ public class FileUtil {
   }
 
   public static void writeToFile(final File file, final byte[] text) throws IOException {
+    writeToFile(file, text, false);
+  }
+
+  public static void writeToFile(final File file, final byte[] text, boolean append) throws IOException {
     createParentDirs(file);
-    OutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
+    OutputStream stream = new BufferedOutputStream(new FileOutputStream(file, append));
     try {
       stream.write(text);
     }
