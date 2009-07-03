@@ -18,7 +18,7 @@ package com.intellij.psi;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 
 /**
- * Visitor which can be used to visit Java, XML and JSP PSI elements.
+ * Visitor which can be used to visit elements for all languages.
  *
  * @see PsiRecursiveElementVisitor
  */
