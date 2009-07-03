@@ -33,4 +33,8 @@ public abstract class JavaRecursiveElementWalkingVisitor extends JavaElementVisi
     visitClass(file.getJavaClass());
     visitFile(file.getBaseLanguageRoot());
   }
+
+  public void stopWalking() {
+    myWalkingState.stopWalking();
+  }
 }

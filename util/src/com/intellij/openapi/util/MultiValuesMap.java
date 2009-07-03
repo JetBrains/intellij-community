@@ -19,8 +19,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class MultiValuesMap<Key, Value>{
-  private final Map<Key, Collection<Value>> myBaseMap;
+public class MultiValuesMap<K, V>{
+  private final Map<K, Collection<V>> myBaseMap;
   private final boolean myOrdered;
 
   public MultiValuesMap() {
@@ -29,50 +29,50 @@ public class MultiValuesMap<Key, Value>{
 
   public MultiValuesMap(boolean ordered) {
     myOrdered = ordered;
-    myBaseMap = ordered ? new LinkedHashMap<Key, Collection<Value>>() : new HashMap<Key, Collection<Value>>();
+    myBaseMap = ordered ? new LinkedHashMap<K, Collection<V>>() : new HashMap<K, Collection<V>>();
   }
 
-  public void putAll(Key key, Collection<Value> values) {
-    for (Value value : values) {
+  public void putAll(K key, Collection<V> values) {
+    for (V value : values) {
       put(key, value);
     }
   }
 
-  public void putAll(Key key, Value... values) {
-    for (Value value : values) {
+  public void putAll(K key, V... values) {
+    for (V value : values) {
       put(key, value);
     }
   }
 
-  public void put(Key key, Value value) {
+  public void put(K key, V value) {
     if (!myBaseMap.containsKey(key)) {
-      myBaseMap.put(key, myOrdered ? new LinkedHashSet<Value>() : new HashSet<Value>());
+      myBaseMap.put(key, myOrdered ? new LinkedHashSet<V>() : new HashSet<V>());
     }
 
     myBaseMap.get(key).add(value);
   }
 
   @Nullable
-  public Collection<Value> get(Key key){
+  public Collection<V> get(K key){
     return myBaseMap.get(key);
   }
 
-  public Set<Key> keySet() {
+  public Set<K> keySet() {
     return myBaseMap.keySet();
   }
 
-  public Collection<Value> values() {
-    Set<Value> result = myOrdered ? new LinkedHashSet<Value>() : new HashSet<Value>();
-    for (final Collection<Value> values : myBaseMap.values()) {
+  public Collection<V> values() {
+    Set<V> result = myOrdered ? new LinkedHashSet<V>() : new HashSet<V>();
+    for (final Collection<V> values : myBaseMap.values()) {
       result.addAll(values);
     }
 
     return result;
   }
 
-  public void remove(Key key, Value value) {
+  public void remove(K key, V value) {
     if (!myBaseMap.containsKey(key)) return;
-    final Collection<Value> values = myBaseMap.get(key);
+    final Collection<V> values = myBaseMap.get(key);
     values.remove(value);
     if (values.isEmpty()) {
       myBaseMap.remove(key);
@@ -84,11 +84,11 @@ public class MultiValuesMap<Key, Value>{
   }
 
   @Nullable 
-  public Collection<Value> removeAll(final Key key) {
+  public Collection<V> removeAll(final K key) {
     return myBaseMap.remove(key);
   }
 
-  public Set<Map.Entry<Key, Collection<Value>>> entrySet() {
+  public Set<Map.Entry<K, Collection<V>>> entrySet() {
     return myBaseMap.entrySet();
   }
 
@@ -96,23 +96,23 @@ public class MultiValuesMap<Key, Value>{
     return myBaseMap.isEmpty();
   }
 
-  public boolean containsKey(final Key key) {
+  public boolean containsKey(final K key) {
     return myBaseMap.containsKey(key);
   }
 
-  public Collection<Value> collectValues() {
-    Collection<Value> result = new HashSet<Value>();
-    for (Key k : myBaseMap.keySet()) {
-      result.addAll(myBaseMap.get(k));
+  public Collection<V> collectValues() {
+    Collection<V> result = new HashSet<V>();
+    for (Collection<V> v : myBaseMap.values()) {
+      result.addAll(v);
     }
 
     return result;
   }
 
   @Nullable
-  public Value getFirst(final Key key) {
-    Collection<Value> values = myBaseMap.get(key);
-    return (values == null || values.isEmpty()) ? null : values.iterator().next();
+  public V getFirst(final K key) {
+    Collection<V> values = myBaseMap.get(key);
+    return values == null || values.isEmpty() ? null : values.iterator().next();
   }
 
 

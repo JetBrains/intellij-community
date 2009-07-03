@@ -28,4 +28,9 @@ public class SliceTreeBuilder extends AbstractTreeBuilder{
   public void setRoot(SliceNode root) {
     ((SliceTreeStructure)getTreeStructure()).setRoot(root);
   }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+  }
 }

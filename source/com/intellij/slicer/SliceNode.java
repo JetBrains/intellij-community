@@ -18,7 +18,7 @@ import java.util.*;
  */
 public class SliceNode extends AbstractTreeNode<SliceUsage> implements DuplicateNodeRenderer.DuplicatableNode {
   private List<SliceNode> myCachedChildren;
-  private long storedModificationCount = -1;
+  private volatile long storedModificationCount = -1;
   private boolean initialized;
   private DefaultMutableTreeNode duplicate;
   private final Map<SliceUsage, List<SliceNode>> targetEqualUsages;
@@ -33,19 +33,37 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   @NotNull
   public Collection<? extends AbstractTreeNode> getChildren() {
     long count = PsiManager.getInstance(getProject()).getModificationTracker().getModificationCount();
-    if (myCachedChildren == null || storedModificationCount != count) {
-      myCachedChildren = Collections.synchronizedList(new ArrayList<SliceNode>());
-      storedModificationCount = count;
-      if (isValid()) {
+    if (myCachedChildren != null && storedModificationCount == count || !isValid()) {
+      return myCachedChildren;
+    }
+    myCachedChildren = Collections.synchronizedList(new ArrayList<SliceNode>());
+    storedModificationCount = count;
+    final SliceManager manager = SliceManager.getInstance(getProject());
+    manager.runInterruptibly(new Runnable() {
+      public void run() {
         getValue().processChildren(new Processor<SliceUsage>() {
           public boolean process(SliceUsage sliceUsage) {
+            manager.checkCanceled();
             SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages, myTreeBuilder);
             myCachedChildren.add(node);
             return true;
           }
         });
       }
-    }
+    }, new Runnable(){
+      public void run() {
+        myCachedChildren = null;
+        storedModificationCount = -1;
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(getValue());
+            //myTreeBuilder.getUi().queueBackgroundUpdate(node, (NodeDescriptor)node.getUserObject(), new TreeUpdatePass(node));
+            myTreeBuilder.addSubtreeToUpdate(node);
+          }
+        });
+        //myTreeBuilder.addSubtreeToUpdateByElement(getValue());
+      }
+    });
     return myCachedChildren;
   }
 

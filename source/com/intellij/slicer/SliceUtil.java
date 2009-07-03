@@ -9,10 +9,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,8 +25,6 @@ import java.util.Set;
  */
 public class SliceUtil {
   public static boolean processUsagesFlownDownToTheExpression(PsiExpression expression, Processor<SliceUsage> processor, SliceUsage parent) {
-    PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-    if (method == null) return true;
     expression = simplify(expression);
     Processor<SliceUsage> uniqueProcessor =
         new CommonProcessors.UniqueProcessor<SliceUsage>(processor, new TObjectHashingStrategy<SliceUsage>() {
@@ -37,17 +36,45 @@ public class SliceUtil {
             return o1.getUsageInfo().equals(o2.getUsageInfo());
           }
         });
+
     if (expression instanceof PsiReferenceExpression) {
       PsiReferenceExpression ref = (PsiReferenceExpression)expression;
       PsiElement resolved = ref.resolve();
       if (!(resolved instanceof PsiVariable)) return true;
 
-      Collection<PsiExpression> expressions = getExpressionsFlownTo(expression, method, (PsiVariable)resolved);
+      PsiCodeBlock codeBlock;
+      PsiElement element = expression;
+      while ((codeBlock = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class)) != null) {
+        PsiAnonymousClass anon = PsiTreeUtil.getParentOfType(codeBlock, PsiAnonymousClass.class);
+        if (anon == null) break;
+        element = anon;
+      }
+      if (codeBlock != null) {
+        PsiVariable variable = (PsiVariable)resolved;
+        Set<PsiExpression> expressions = new THashSet<PsiExpression>(getExpressionsAssignedToVariable(ref, variable, codeBlock));
+        if (variable.hasModifierProperty(PsiModifier.FINAL)) {
+          PsiExpression initializer = variable.getInitializer();
+          if (initializer != null) expressions.add(initializer);
+        }
+        if (!processFlownFromExpressions(expressions, uniqueProcessor, parent)) return false;
+      }
 
-      return processFlownFromExpressions(expressions, uniqueProcessor, parent);
+      if (resolved instanceof PsiField) {
+        return processFieldUsages((PsiField)resolved, processor, parent);
+      }
+      else if (resolved instanceof PsiParameter) {
+        return processParameterUsages((PsiParameter)resolved, processor, parent);
+      }
     }
-    else if (expression instanceof PsiMethodCallExpression) {
+    if (expression instanceof PsiMethodCallExpression) {
       return processMethodReturnValue((PsiMethodCallExpression)expression, uniqueProcessor, parent);
+    }
+    if (expression instanceof PsiConditionalExpression) {
+      PsiConditionalExpression conditional = (PsiConditionalExpression)expression;
+      PsiExpression thenE = conditional.getThenExpression();
+      PsiExpression elseE = conditional.getElseExpression();
+      if (thenE != null && !processUsagesFlownDownToTheExpression(thenE, processor, parent)) return false;
+      if (elseE != null && !processUsagesFlownDownToTheExpression(elseE, processor, parent)) return false;
     }
     return true;
   }
@@ -62,44 +89,26 @@ public class SliceUtil {
     return expression;
   }
 
-  private static Collection<PsiExpression> getExpressionsFlownTo(final PsiExpression expression, final PsiMethod containingMethod, final PsiVariable variable) {
+  private static Collection<PsiExpression> getExpressionsAssignedToVariable(@NotNull PsiReferenceExpression expression, @NotNull PsiVariable variable,
+                                                                            @NotNull PsiCodeBlock containingMethod) {
     ValuableDataFlowRunner runner = new ValuableDataFlowRunner(expression);
     assert PsiTreeUtil.isAncestor(containingMethod, expression, true);
-    if (runner.analyzeMethod(containingMethod.getBody()) != RunnerResult.OK) return Collections.emptyList();
+    if (runner.analyzeMethod(containingMethod, expression) != RunnerResult.OK) return Collections.emptyList();
 
-    Collection<PsiExpression> expressions = runner.getPossibleVariableValues(variable);
-
-    if (variable instanceof PsiField || variable instanceof PsiParameter) {
-      expressions = new THashSet<PsiExpression>(expressions);
-      expressions.add(expression);
-    }
-    return expressions;
+    return runner.getPossibleVariableValues(variable);
   }
 
   private static boolean processFlownFromExpressions(final Collection<PsiExpression> expressions, final Processor<SliceUsage> processor,
                                                      final SliceUsage parent) {
-    for (PsiExpression flowFromExpression : expressions) {
-      if (flowFromExpression instanceof PsiReferenceExpression) {
-        PsiElement element = ((PsiReferenceExpression)flowFromExpression).resolve();
-        if (element instanceof PsiParameter) {
-          if (!processParameterUsages((PsiParameter)element, processor, parent)) return false;
-          continue;
-        }
-        if (element instanceof PsiField) {
-          if (!processFieldUsages((PsiField)element, processor, parent)) return false;
-          continue;
-        }
-      }
-      //generic usage
-      SliceUsage usage = new SliceUsage(new UsageInfo(flowFromExpression), parent);
+    for (PsiExpression exp : expressions) {
+      SliceUsage usage = new SliceUsage(new UsageInfo(exp), parent);
       if (!processor.process(usage)) return false;
     }
 
     return true;
   }
 
-  private static boolean processMethodReturnValue(final PsiMethodCallExpression methodCallExpr, final Processor<SliceUsage> processor,
-                                                  final SliceUsage parent) {
+  private static boolean processMethodReturnValue(final PsiMethodCallExpression methodCallExpr, final Processor<SliceUsage> processor, final SliceUsage parent) {
     final PsiMethod methodCalled = methodCallExpr.resolveMethod();
     if (methodCalled == null) return true;
 
@@ -108,19 +117,26 @@ public class SliceUtil {
     final PsiCodeBlock body = methodCalled.getBody();
     if (body == null) return true;
 
-    final Collection<PsiExpression> expressions = new THashSet<PsiExpression>();
+    final boolean[] result = {true};
     body.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitAnonymousClass(PsiAnonymousClass aClass) {
+        // do not look for returns there
+      }
+
       public void visitReturnStatement(final PsiReturnStatement statement) {
         PsiExpression returnValue = statement.getReturnValue();
-        if (!(returnValue instanceof PsiReferenceExpression)) return;
-        PsiElement resolved = ((PsiReferenceExpression)returnValue).resolve();
-        if (!(resolved instanceof PsiVariable)) return;
-
-        expressions.addAll(getExpressionsFlownTo(returnValue, methodCalled, (PsiVariable)resolved));
+        if (returnValue == null) return;
+        UsageInfo usageInfo = new UsageInfo(returnValue);
+        SliceUsage usage = new SliceUsage(usageInfo, parent);
+        if (!processor.process(usage)) {
+          stopWalking();
+          result[0] = false;
+        }
       }
     });
 
-    return processFlownFromExpressions(expressions, processor, parent);
+    return result[0];
   }
 
   static boolean processFieldUsages(final PsiField field, final Processor<SliceUsage> processor, final SliceUsage parent) {
@@ -133,13 +149,25 @@ public class SliceUtil {
     }
     return ReferencesSearch.search(field).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference reference) {
+        SliceManager.getInstance(field.getProject()).checkCanceled();
         PsiElement element = reference.getElement();
         if (!(element instanceof PsiReferenceExpression)) return true;
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
-        if (!PsiUtil.isOnAssignmentLeftHand(referenceExpression)) return true;
-        PsiExpression rExpression = ((PsiAssignmentExpression)referenceExpression.getParent()).getRExpression();
-        SliceFieldUsage usage = new SliceFieldUsage(new UsageInfo(rExpression), parent, field);
-        return processor.process(usage);
+        PsiElement parentExpr = referenceExpression.getParent();
+        if (PsiUtil.isOnAssignmentLeftHand(referenceExpression)) {
+          PsiExpression rExpression = ((PsiAssignmentExpression)parentExpr).getRExpression();
+          SliceFieldUsage usage = new SliceFieldUsage(new UsageInfo(rExpression), parent, field);
+          return processor.process(usage);
+        }
+        if (parentExpr instanceof PsiPrefixExpression && ((PsiPrefixExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiPrefixExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiPrefixExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
+          SliceFieldUsage usage = new SliceFieldUsage(new UsageInfo(parentExpr), parent, field);
+          return processor.process(usage);
+        }
+        if (parentExpr instanceof PsiPostfixExpression && ((PsiPostfixExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiPostfixExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiPostfixExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
+          SliceFieldUsage usage = new SliceFieldUsage(new UsageInfo(parentExpr), parent, field);
+          return processor.process(usage);
+        }
+        return true;
       }
     });
   }

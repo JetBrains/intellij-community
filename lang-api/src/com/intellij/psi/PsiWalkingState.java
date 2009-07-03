@@ -7,6 +7,7 @@ public abstract class PsiWalkingState {
   private boolean isDown;
   private boolean startedWalking;
   private final PsiElementVisitor myVisitor;
+  private boolean stopped;
 
   public abstract void elementFinished(PsiElement element);
 
@@ -17,6 +18,7 @@ public abstract class PsiWalkingState {
   public void elementStarted(PsiElement element){
     isDown = true;
     if (!startedWalking) {
+      stopped = false;
       startedWalking = true;
       walkChildren(element);
       startedWalking = false;
@@ -24,7 +26,7 @@ public abstract class PsiWalkingState {
   }
 
   private void walkChildren(PsiElement root) {
-    for (PsiElement element = next(root,root,isDown); element != null; element = next(element, root, isDown)) {
+    for (PsiElement element = next(root,root,isDown); element != null && !stopped; element = next(element, root, isDown)) {
       isDown = false; // if client visitor did not call default visitElement it means skip subtree
       PsiElement parent = element.getParent();
       PsiElement next = element.getNextSibling();
@@ -56,5 +58,9 @@ public abstract class PsiWalkingState {
 
   public void startedWalking() {
     startedWalking = true;
+  }
+
+  public void stopWalking() {
+    stopped = true;
   }
 }

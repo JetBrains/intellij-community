@@ -62,4 +62,8 @@ public abstract class PsiRecursiveElementWalkingVisitor extends PsiElementVisito
 
     super.visitFile(file);
   }
+
+  public void stopWalking() {
+    myWalkingState.stopWalking();
+  }
 }

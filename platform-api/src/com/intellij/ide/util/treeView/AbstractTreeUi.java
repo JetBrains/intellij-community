@@ -1071,6 +1071,11 @@ class AbstractTreeUi {
     boolean isValidChild(Object childElement) {
       return myElements.contains(childElement);
     }
+
+    @Override
+    public String toString() {
+      return String.valueOf(getUserObject());
+    }
   }
 
   private boolean isUpdatingParent(DefaultMutableTreeNode kid) {

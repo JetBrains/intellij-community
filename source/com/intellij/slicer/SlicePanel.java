@@ -13,12 +13,12 @@ import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
@@ -56,22 +56,43 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   private final Project myProject;
   private boolean isDisposed;
 
+  // rehash map on each PSI modification since SmartPsiPointer's hashCode() and equals() are changed
+  private static class DuplicateMap extends THashMap<SliceUsage, List<SliceNode>> {
+    private long timeStamp = -1;
+    private DuplicateMap() {
+      super(new TObjectHashingStrategy<SliceUsage>() {
+        public int computeHashCode(SliceUsage object) {
+          return object.getUsageInfo().hashCode();
+        }
+
+        public boolean equals(SliceUsage o1, SliceUsage o2) {
+          return o1.getUsageInfo().equals(o2.getUsageInfo());
+        }
+      });
+    }
+
+    @Override
+    public List<SliceNode> put(SliceUsage key, List<SliceNode> value) {
+      long count = key.getElement().getManager().getModificationTracker().getModificationCount();
+      if (count != timeStamp) {
+        Map<SliceUsage, List<SliceNode>> map = new THashMap<SliceUsage, List<SliceNode>>(this, _hashingStrategy);
+        clear();
+        putAll(map);
+        timeStamp = count;
+      }
+      return super.put(key, value);
+    }
+  }
+
   public SlicePanel(Project project, final SliceUsage root) {
     super(new BorderLayout());
     myProject = project;
     myTree = createTree();
 
-    final Map<SliceUsage, List<SliceNode>> targetEqualUsages =
-        new THashMap<SliceUsage, List<SliceNode>>(new TObjectHashingStrategy<SliceUsage>() {
-          public int computeHashCode(SliceUsage object) {
-            return object.getUsageInfo().hashCode();
-          }
-          public boolean equals(SliceUsage o1, SliceUsage o2) {
-            return o1.getUsageInfo().equals(o2.getUsageInfo());
-          }
-        });
+    Map<SliceUsage, List<SliceNode>> targetEqualUsages = new DuplicateMap();
 
     myBuilder = new SliceTreeBuilder(myTree, project);
+    myBuilder.setCanYieldUpdate(true);
     Disposer.register(this, myBuilder);
     SliceNode rootNode = new SliceNode(project, root, targetEqualUsages, myBuilder);
     myBuilder.setRoot(rootNode);
@@ -118,7 +139,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
 
   private JTree createTree() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
-    final Tree tree = new Tree(new DefaultTreeModel(root)){
+    final JTree tree = new Tree(new DefaultTreeModel(root)){
       protected void paintComponent(Graphics g) {
         DuplicateNodeRenderer.paintDuplicateNodesBackground(g, this);
         super.paintComponent(g);

@@ -1,9 +1,9 @@
 package com.intellij.slicer;
 
-import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -13,14 +13,14 @@ import java.util.Enumeration;
  * @author cdr
  */
 public class DuplicateNodeRenderer {
-  public static interface DuplicatableNode {
+  public interface DuplicatableNode {
     //returns first duplicate node, if any, or null if there are none
     //duplicate nodes are painted gray
     @Nullable
     DefaultMutableTreeNode getDuplicate();
   }
 
-  public static void paintDuplicateNodesBackground(Graphics g, Tree tree) {
+  public static void paintDuplicateNodesBackground(Graphics g, JTree tree) {
     Rectangle clipBounds = g.getClipBounds();
     int start = tree.getClosestRowForLocation(clipBounds.x, clipBounds.y);
     int end = Math.min(tree.getRowCount(), tree.getClosestRowForLocation(clipBounds.x+clipBounds.width, clipBounds.y+clipBounds.height)+1);
@@ -64,7 +64,7 @@ public class DuplicateNodeRenderer {
     return r1.union(r2);
   }
 
-  private static Rectangle getExpandedNodesRect(Tree tree, DefaultMutableTreeNode node, TreePath path) {
+  private static Rectangle getExpandedNodesRect(JTree tree, DefaultMutableTreeNode node, TreePath path) {
     Rectangle rect = tree.getRowBounds(tree.getRowForPath(path));
     if (tree.isExpanded(path)) {
       Enumeration<DefaultMutableTreeNode> children = node.children();

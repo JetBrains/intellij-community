@@ -41,11 +41,11 @@ public class ControlFlow {
   }
 
   public void startElement(PsiElement psiElement) {
-    myElementToStartOffsetMap.put(psiElement, new Integer(myInstructions.size()));
+    myElementToStartOffsetMap.put(psiElement, Integer.valueOf(myInstructions.size()));
   }
 
   public void finishElement(PsiElement psiElement) {
-    myElementToEndOffsetMap.put(psiElement, new Integer(myInstructions.size()));
+    myElementToEndOffsetMap.put(psiElement, Integer.valueOf(myInstructions.size()));
   }
 
   public void addInstruction(Instruction instruction) {

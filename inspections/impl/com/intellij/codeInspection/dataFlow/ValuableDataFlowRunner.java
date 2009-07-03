@@ -61,11 +61,12 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
         public DfaInstructionState[] apply(final DataFlowRunner runner, final DfaMemoryState memState) {
           if (myContext == expression) {
             final Map<DfaVariableValue,DfaVariableState> map = ((MyDfaMemoryState)memState).getVariableStates();
-            for (DfaVariableValue value : map.keySet()) {
-              MyDfaVariableState state = (MyDfaVariableState)map.get(value);
+            for (Map.Entry<DfaVariableValue, DfaVariableState> entry : map.entrySet()) {
+              MyDfaVariableState state = (MyDfaVariableState)entry.getValue();
+              DfaVariableValue variableValue = entry.getKey();
               final PsiExpression psiExpression = state.myExpression;
               if (psiExpression != null) {
-                myValues.put(value.getPsiVariable(), psiExpression);
+                myValues.put(variableValue.getPsiVariable(), psiExpression);
               }
             }
           }
@@ -74,8 +75,8 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
       };
     }
 
-    public AssignInstruction createAssignInstruction(final PsiExpression RExpression) {
-      return new AssignInstruction(RExpression) {
+    public AssignInstruction createAssignInstruction(final PsiExpression rExpression) {
+      return new AssignInstruction(rExpression) {
         public DfaInstructionState[] apply(final DataFlowRunner runner, final DfaMemoryState memState) {
           final DfaInstructionState[] states = super.apply(runner, memState);
           final DfaValue value = memState.peek();
@@ -92,7 +93,7 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
   }
 
   private static class MyDfaMemoryState extends DfaMemoryStateImpl {
-    public MyDfaMemoryState(final DfaValueFactory factory) {
+    private MyDfaMemoryState(final DfaValueFactory factory) {
       super(factory);
     }
 
@@ -110,7 +111,7 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
     DfaValue myValue;
     PsiExpression myExpression;
 
-    public MyDfaVariableState(final PsiVariable psiVariable) {
+    private MyDfaVariableState(final PsiVariable psiVariable) {
       super(psiVariable);
     }
 

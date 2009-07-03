@@ -1,8 +1,15 @@
 package com.intellij.slicer;
 
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -18,33 +25,31 @@ import org.jetbrains.annotations.NotNull;
 
 public class SliceManager {
   private final Project myProject;
-  private ContentManager myContentManager;
+  private final ContentManager myContentManager;
   private static final String TOOL_WINDOW_ID = "Dataflow to this";
+  private volatile boolean myCanceled;
 
   public static SliceManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, SliceManager.class);
   }
 
-  public SliceManager(Project project, ToolWindowManager toolWindowManager) {
+  public SliceManager(Project project, ToolWindowManager toolWindowManager, final Application application) {
     myProject = project;
     final ToolWindow toolWindow= toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, true, ToolWindowAnchor.BOTTOM, project);
     myContentManager = toolWindow.getContentManager();
     new ContentManagerWatcher(toolWindow, myContentManager);
+    final MyApplicationListener myApplicationListener = new MyApplicationListener();
+    application.addApplicationListener(myApplicationListener);
+    Disposer.register(project, new Disposable() {
+      public void dispose() {
+        application.removeApplicationListener(myApplicationListener);
+      }
+    });
   }
 
   public void slice(PsiElement element) {
     final SliceToolwindowSettings sliceToolwindowSettings = SliceToolwindowSettings.getInstance(myProject);
-    SliceUsage usage;
-    UsageInfo usageInfo = new UsageInfo(element);
-    if (element instanceof PsiField) {
-      usage = new SliceFieldUsage(usageInfo, null, (PsiField)element);
-    }
-    else if (element instanceof PsiParameter) {
-      usage = new SliceParameterUsage(usageInfo, (PsiParameter)element, null);
-    }
-    else {
-      usage = new SliceUsage(usageInfo, null);
-    }
+    SliceUsage usage = createSliceUsage(element);
     final Content[] myContent = new Content[1];
     final SlicePanel slicePanel = new SlicePanel(myProject, usage) {
       protected void close() {
@@ -75,5 +80,47 @@ public class SliceManager {
     myContentManager.setSelectedContent(myContent[0]);
 
     ToolWindowManager.getInstance(myProject).getToolWindow(TOOL_WINDOW_ID).activate(null);
+  }
+
+  public static SliceUsage createSliceUsage(PsiElement element) {
+    UsageInfo usageInfo = new UsageInfo(element);
+    SliceUsage usage;
+    if (element instanceof PsiField) {
+      usage = new SliceFieldUsage(usageInfo, null, (PsiField)element);
+    }
+    else if (element instanceof PsiParameter) {
+      usage = new SliceParameterUsage(usageInfo, (PsiParameter)element, null);
+    }
+    else {
+      usage = new SliceUsage(usageInfo, null);
+    }
+    return usage;
+  }
+
+  private class MyApplicationListener extends ApplicationAdapter {
+    public void beforeWriteActionStart(Object action) {
+      myCanceled = true;
+    }
+  }
+
+  public void checkCanceled() throws ProcessCanceledException {
+    if (myCanceled) {
+      throw new ProcessCanceledException();
+    }
+  }
+
+  public void runInterruptibly(Runnable runnable, Runnable onCancel) throws ProcessCanceledException {
+    myCanceled = false;
+    ProgressIndicatorBase progress = new ProgressIndicatorBase();
+    try {
+      ProgressManager.getInstance().runProcess(runnable, progress);
+    }
+    catch (ProcessCanceledException e) {
+      myCanceled = true;
+      progress.cancel();
+      //reschedule for later
+      onCancel.run();
+      throw e;
+    }
   }
 }
