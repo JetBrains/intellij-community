@@ -11,8 +11,8 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.util.MemberChooser;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -29,6 +29,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -38,6 +39,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,10 +50,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
 import java.util.*;
 
 public class OverrideImplementUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.OverrideImplementUtil");
+
+  @NonNls private static final String PROP_COMBINED_OVERRIDE_IMPLEMENT = "OverrideImplement.combined";
 
   private OverrideImplementUtil() {
   }
@@ -435,22 +441,50 @@ public class OverrideImplementUtil {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, toImplement);
+    Collection<CandidateInfo> secondary = toImplement ? Collections.<CandidateInfo>emptyList() : getMethodsToOverrideImplement(aClass, true);
 
-    if (candidates.isEmpty()) return;
+    if (candidates.isEmpty() && secondary.isEmpty()) return;
 
-    final MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(ContainerUtil.map2Array(candidates, PsiMethodMember.class, new Function<CandidateInfo, PsiMethodMember>() {
-      public PsiMethodMember fun(final CandidateInfo s) {
-        return new PsiMethodMember(s);
+    final PsiMethodMember[] onlyPrimary = convertToMethodMembers(candidates);
+    final PsiMethodMember[] all = ArrayUtil.mergeArrays(onlyPrimary, convertToMethodMembers(secondary), PsiMethodMember.class);
+
+    final String toMerge = PropertiesComponent.getInstance(project).getValue(PROP_COMBINED_OVERRIDE_IMPLEMENT);
+    final Ref<Boolean> merge = Ref.create(!"false".equals(toMerge));
+
+    final MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(merge.get().booleanValue() ? all : onlyPrimary, false, true, project,
+                                                                                      PsiUtil.isLanguageLevel5OrHigher(aClass)) {
+
+      @Override
+      protected void fillToolbarActions(DefaultActionGroup group) {
+        super.fillToolbarActions(group);
+        if (toImplement) return;
+
+        final ToggleAction mergeAction = new ToggleAction("Show methods to implement") {
+          @Override
+          public boolean isSelected(AnActionEvent e) {
+            return merge.get().booleanValue();
+          }
+
+          @Override
+          public void setSelected(AnActionEvent e, boolean state) {
+            merge.set(state);
+            resetElements(state ? all : onlyPrimary);
+            setTitle(getChooserTitle(false, merge));
+          }
+        };
+        mergeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.ALT_MASK)), myTree);
+        group.add(mergeAction);
       }
-    }), false, true, project, PsiUtil.isLanguageLevel5OrHigher(aClass) && (PsiUtil.isLanguageLevel6OrHigher(aClass) || !toImplement));
-    chooser.setTitle(toImplement
-                     ? CodeInsightBundle.message("methods.to.implement.chooser.title")
-                     : CodeInsightBundle.message("methods.to.override.chooser.title"));
+    };
+    chooser.setTitle(getChooserTitle(toImplement, merge));
     registerHandlerForComplementaryAction(project, editor, aClass, toImplement, chooser);
 
     chooser.setCopyJavadocVisible(true);
     chooser.show();
     if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
+
+    PropertiesComponent.getInstance(project).setValue(PROP_COMBINED_OVERRIDE_IMPLEMENT, merge.get().toString());
+
     final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
     if (selectedElements == null || selectedElements.isEmpty()) return;
 
@@ -459,6 +493,22 @@ public class OverrideImplementUtil {
         overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
       }
     }.execute();
+  }
+
+  private static String getChooserTitle(boolean toImplement, Ref<Boolean> merge) {
+    return toImplement
+                     ? CodeInsightBundle.message("methods.to.implement.chooser.title")
+                     : merge.get().booleanValue()
+                       ? CodeInsightBundle.message("methods.to.override.implement.chooser.title")
+                       : CodeInsightBundle.message("methods.to.override.chooser.title");
+  }
+
+  private static PsiMethodMember[] convertToMethodMembers(Collection<CandidateInfo> candidates) {
+    return ContainerUtil.map2Array(candidates, PsiMethodMember.class, new Function<CandidateInfo, PsiMethodMember>() {
+        public PsiMethodMember fun(final CandidateInfo s) {
+          return new PsiMethodMember(s);
+        }
+      });
   }
 
   private static void registerHandlerForComplementaryAction(final Project project, final Editor editor, final PsiClass aClass,

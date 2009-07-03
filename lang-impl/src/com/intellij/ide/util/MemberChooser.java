@@ -230,17 +230,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
     DefaultActionGroup group = new DefaultActionGroup();
 
-    SortEmAction sortAction = new SortEmAction();
-    sortAction.registerCustomShortcutSet(
-      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.ALT_MASK)), myTree);
-    setSorted(PropertiesComponent.getInstance().isTrueValue(PROP_SORTED));
-    group.add(sortAction);
+    fillToolbarActions(group);
 
-    ShowContainersAction showContainersAction = getShowContainersAction();
-    showContainersAction.registerCustomShortcutSet(
-      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_MASK)), myTree);
-    setShowClasses(PropertiesComponent.getInstance().isTrueValue(PROP_SHOWCLASSES));
-    group.add(showContainersAction);
+    group.addSeparator();
 
     ExpandAllAction expandAllAction = new ExpandAllAction();
     expandAllAction.registerCustomShortcutSet(
@@ -310,6 +302,18 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     panel.add(scrollPane, BorderLayout.CENTER);
 
     return panel;
+  }
+
+  protected void fillToolbarActions(DefaultActionGroup group) {
+    SortEmAction sortAction = new SortEmAction();
+    sortAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.ALT_MASK)), myTree);
+    setSorted(PropertiesComponent.getInstance().isTrueValue(PROP_SORTED));
+    group.add(sortAction);
+
+    ShowContainersAction showContainersAction = getShowContainersAction();
+    showContainersAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_MASK)), myTree);
+    setShowClasses(PropertiesComponent.getInstance().isTrueValue(PROP_SHOWCLASSES));
+    group.add(showContainersAction);
   }
 
   protected String getDimensionServiceKey() {
