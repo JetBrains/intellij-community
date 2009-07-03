@@ -64,7 +64,11 @@ public class DescriptionNotFoundInspection extends DevKitInspectionBase{
 
 
     for (PsiDirectory description : getInspectionDescriptionsDirs(module)) {
-      if (description.getVirtualFile().getNameWithoutExtension().equals(filename)) {
+      final PsiFile file = description.findFile(filename + ".html");
+      if (file == null) continue;
+      final VirtualFile vf = file.getVirtualFile();
+      if (vf == null) continue;
+      if (vf.getNameWithoutExtension().equals(filename)) {
         return null;
       }
     }
