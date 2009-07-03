@@ -164,6 +164,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
         if (prepended_something) cat.append(BR).append(BR);
         cat.append(combUp(docString.trim()));
       }
+      else if (! prepended_something) return null; // no doc, no prepend -> not found
       return cat.append("</body></html>").toString();
     }
     return null;
