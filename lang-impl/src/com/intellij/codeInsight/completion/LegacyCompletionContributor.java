@@ -76,7 +76,7 @@ public class LegacyCompletionContributor extends CompletionContributor {
         final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
         completionData.completeReference(reference, lookupSet, parameters.getPosition(), parameters.getOriginalFile(), parameters.getOffset());
         for (final LookupElement item : lookupSet) {
-          if (resultSet.getPrefixMatcher().prefixMatches(item)) {
+         if (resultSet.getPrefixMatcher().prefixMatches(item)) {
             hasVariants.set(true);
             resultSet.addElement(item);
           }

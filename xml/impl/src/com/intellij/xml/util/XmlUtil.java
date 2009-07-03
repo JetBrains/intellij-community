@@ -114,8 +114,9 @@ public class XmlUtil {
   @NonNls public static final String XSD_SIMPLE_CONTENT_TAG = "simpleContent";
   @NonNls public static final String NO_NAMESPACE_SCHEMA_LOCATION_ATT = "noNamespaceSchemaLocation";
   @NonNls public static final String SCHEMA_LOCATION_ATT = "schemaLocation";
-  @NonNls public static final String[] WEB_XML_URIS = {"http://java.sun.com/xml/ns/j2ee", "http://java.sun.com/xml/ns/javaee",
-    "http://java.sun.com/dtd/web-app_2_3.dtd", "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd"};
+  @NonNls public static final String[] WEB_XML_URIS =
+    {"http://java.sun.com/xml/ns/j2ee", "http://java.sun.com/xml/ns/javaee", "http://java.sun.com/dtd/web-app_2_3.dtd",
+      "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd"};
   @NonNls public static final String FACELETS_URI = "http://java.sun.com/jsf/facelets";
   @NonNls public static final String JSTL_FUNCTIONS_URI = "http://java.sun.com/jsp/jstl/functions";
   @NonNls public static final String JSTL_FN_FACELET_URI = "com.sun.facelets.tag.jstl.fn.JstlFnLibrary";
@@ -315,7 +316,8 @@ public class XmlUtil {
                                                                                       final ASTNode right,
                                                                                       final Lexer lexer,
                                                                                       int state) {
-    if (left.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN || right.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
+    if (left.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
+        right.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
       return ParserDefinition.SpaceRequirements.MUST_NOT;
     }
     if (left.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER && right.getElementType() == XmlTokenType.XML_NAME) {
@@ -360,8 +362,7 @@ public class XmlUtil {
   }
 
   @Nullable
-  public static
-  String getTargetSchemaNsFromTag(@Nullable final XmlTag xmlTag) {
+  public static String getTargetSchemaNsFromTag(@Nullable final XmlTag xmlTag) {
     if (xmlTag == null) return null;
     String targetNamespace = xmlTag.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME, XML_SCHEMA_URI);
     if (targetNamespace == null) targetNamespace = xmlTag.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME, XML_SCHEMA_URI2);
@@ -385,9 +386,9 @@ public class XmlUtil {
               final XmlTag tag = (XmlTag)element;
               @NonNls final String s = ((XmlTag)element).getLocalName();
 
-              if((s.equals(XSD_SIMPLE_CONTENT_TAG) ||
-                  s.equals("restriction") && "string".equals(findLocalNameByQualifiedName(tag.getAttributeValue("base")))
-                 ) && tag.getNamespace().equals(XML_SCHEMA_URI)) {
+              if ((s.equals(XSD_SIMPLE_CONTENT_TAG) ||
+                   s.equals("restriction") && "string".equals(findLocalNameByQualifiedName(tag.getAttributeValue("base")))) &&
+                  tag.getNamespace().equals(XML_SCHEMA_URI)) {
                 simpleContent[0] = tag;
                 return false;
               }
@@ -468,13 +469,13 @@ public class XmlUtil {
   @Nullable
   public static PsiFile findRelativeFile(String uri, PsiElement base) {
     if (base instanceof PsiFile) {
-      PsiFile baseFile = (PsiFile) base;
+      PsiFile baseFile = (PsiFile)base;
       VirtualFile file = UriUtil.findRelative(uri, baseFile.getOriginalFile());
       if (file == null) return null;
       return base.getManager().findFile(file);
     }
     else if (base instanceof PsiDirectory) {
-      PsiDirectory baseDir = (PsiDirectory) base;
+      PsiDirectory baseDir = (PsiDirectory)base;
       VirtualFile file = UriUtil.findRelative(uri, baseDir);
       if (file == null) return null;
       return base.getManager().findFile(file);
@@ -484,18 +485,18 @@ public class XmlUtil {
   }
 
   @Nullable
-    public static String getCommentText(XmlComment comment) {
-      final PsiElement firstChild = comment.getFirstChild();
-      if (firstChild != null) {
-          final PsiElement nextSibling = firstChild.getNextSibling();
-          if (nextSibling instanceof XmlToken) {
-              final XmlToken token = (XmlToken)nextSibling;
-              if (token.getTokenType() == XmlTokenType.XML_COMMENT_CHARACTERS) {
-                  return token.getText();
-              }
-          }
+  public static String getCommentText(XmlComment comment) {
+    final PsiElement firstChild = comment.getFirstChild();
+    if (firstChild != null) {
+      final PsiElement nextSibling = firstChild.getNextSibling();
+      if (nextSibling instanceof XmlToken) {
+        final XmlToken token = (XmlToken)nextSibling;
+        if (token.getTokenType() == XmlTokenType.XML_COMMENT_CHARACTERS) {
+          return token.getText();
+        }
       }
-      return null;
+    }
+    return null;
   }
 
   private static class XmlElementProcessor {
@@ -739,8 +740,7 @@ public class XmlUtil {
             final PsiElement res = entityDecl.parse(targetFile, type, entityRef);
             if (res == null) return new Result<PsiElement>(res, targetFile);
             if (!entityDecl.isInternalReference()) XmlEntityRefImpl.copyEntityCaches(res.getContainingFile(), targetFile);
-            return new Result<PsiElement>(res, res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile,
-                                                              entityRef);
+            return new Result<PsiElement>(res, res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile, entityRef);
           }
         }, false);
         entityRef.putUserData(PARSED_DECL_KEY, value);
@@ -883,12 +883,10 @@ public class XmlUtil {
 
       if (file != null) {
         final FileType fileType = file.getFileType();
-        overrideNamespaceFromDocType = fileType == StdFileTypes.HTML ||
-                                       fileType == StdFileTypes.XHTML ||
-                                       fileType == StdFileTypes.JSPX ||
-                                       fileType == StdFileTypes.JSP;
+        overrideNamespaceFromDocType =
+          fileType == StdFileTypes.HTML || fileType == StdFileTypes.XHTML || fileType == StdFileTypes.JSPX || fileType == StdFileTypes.JSP;
       }
-      
+
       if (!overrideNamespaceFromDocType) return new String[][]{new String[]{"", namespace}};
     }
 
@@ -1010,7 +1008,7 @@ public class XmlUtil {
     if (type != null) {
       final String namespaceByPrefix = findNamespaceByPrefix(findPrefixByQualifiedName(type), xmlTag);
       XmlNSDescriptor typeDecr = xmlTag.getNSDescriptor(namespaceByPrefix, true);
-      
+
       if (typeDecr == null && namespaceByPrefix.length() == 0) {
         if (context != null) typeDecr = context.getNSDescriptor("", true);
 
@@ -1096,11 +1094,12 @@ public class XmlUtil {
       if (!(language instanceof HTMLLanguage)) language = StdFileTypes.XML.getLanguage();
       XmlTag retTag;
       if (bodyText != null && bodyText.length() > 0) {
-        retTag = XmlElementFactory.getInstance(xmlTag.getProject()).createTagFromText("<" + tagStart + ">" + bodyText + "</" + qname + ">",
-                                                                                      language);
+        retTag = XmlElementFactory.getInstance(xmlTag.getProject())
+          .createTagFromText("<" + tagStart + ">" + bodyText + "</" + qname + ">", language);
         if (enforceNamespacesDeep) {
           retTag.acceptChildren(new XmlRecursiveElementVisitor() {
-            @Override public void visitXmlTag(XmlTag tag) {
+            @Override
+            public void visitXmlTag(XmlTag tag) {
               final String namespacePrefix = tag.getNamespacePrefix();
               if (namespacePrefix.length() == 0) {
                 String qname;
@@ -1283,7 +1282,8 @@ public class XmlUtil {
           computeTag((XmlTag)element, tags, attributes);
         }
       }
-    } finally {
+    }
+    finally {
       XmlEntityRefImpl.setNoEntityExpandOutOfDocument(doc, false);
     }
 
@@ -1542,37 +1542,54 @@ public class XmlUtil {
   }
 
   public static void registerXmlAttributeValueReferenceProvider(PsiReferenceRegistrar registrar,
-                                                          @Nullable @NonNls String[] attributeNames,
-                                                         @Nullable ElementFilter elementFilter,
-                                                         @NotNull PsiReferenceProvider provider) {
+                                                                @Nullable @NonNls String[] attributeNames,
+                                                                @Nullable ElementFilter elementFilter,
+                                                                @NotNull PsiReferenceProvider provider) {
     registerXmlAttributeValueReferenceProvider(registrar, attributeNames, elementFilter, true, provider);
   }
 
   public static void registerXmlAttributeValueReferenceProvider(PsiReferenceRegistrar registrar,
-                                                          @Nullable @NonNls String[] attributeNames,
-                                                         @Nullable ElementFilter elementFilter,
-                                                         boolean caseSensitive,
-                                                         @NotNull PsiReferenceProvider provider) {
-    if (attributeNames == null) {
-      registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().and(new FilterPattern(elementFilter)), provider);
-      return;
-    }
-
-    final StringPattern namePattern = caseSensitive ? StandardPatterns.string().oneOf(attributeNames) : com.intellij
-      .patterns.StandardPatterns.string().oneOfIgnoreCase(attributeNames);
-    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withLocalName(namePattern).and(new FilterPattern(elementFilter)), provider);
+                                                                @Nullable @NonNls String[] attributeNames,
+                                                                @Nullable ElementFilter elementFilter,
+                                                                boolean caseSensitive,
+                                                                @NotNull PsiReferenceProvider provider) {
+    registerXmlAttributeValueReferenceProvider(registrar, attributeNames, elementFilter, caseSensitive, provider,
+                                               PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
-  public static void registerXmlTagReferenceProvider(PsiReferenceRegistrar registrar, @NonNls String[] names, @Nullable ElementFilter elementFilter,
-                                              boolean caseSensitive, @NotNull PsiReferenceProvider provider) {
+  public static void registerXmlAttributeValueReferenceProvider(PsiReferenceRegistrar registrar,
+                                                                @Nullable @NonNls String[] attributeNames,
+                                                                @Nullable ElementFilter elementFilter,
+                                                                boolean caseSensitive,
+                                                                @NotNull PsiReferenceProvider provider,
+                                                                double priority) {
+    if (attributeNames == null) {
+      registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().and(new FilterPattern(elementFilter)), provider, priority);
+      return;
+    }
+
+    final StringPattern namePattern = caseSensitive
+                                      ? StandardPatterns.string().oneOf(attributeNames)
+                                      : StandardPatterns.string().oneOfIgnoreCase(attributeNames);
+    registrar
+      .registerReferenceProvider(XmlPatterns.xmlAttributeValue().withLocalName(namePattern).and(new FilterPattern(elementFilter)), provider,
+                                 priority);
+  }
+
+  public static void registerXmlTagReferenceProvider(PsiReferenceRegistrar registrar,
+                                                     @NonNls String[] names,
+                                                     @Nullable ElementFilter elementFilter,
+                                                     boolean caseSensitive,
+                                                     @NotNull PsiReferenceProvider provider) {
     if (names == null) {
-      registrar.registerReferenceProvider(XmlPatterns.xmlTag().and(new FilterPattern(elementFilter)), provider, PsiReferenceRegistrar.DEFAULT_PRIORITY);
+      registrar.registerReferenceProvider(XmlPatterns.xmlTag().and(new FilterPattern(elementFilter)), provider,
+                                          PsiReferenceRegistrar.DEFAULT_PRIORITY);
       return;
     }
 
 
-    final StringPattern namePattern = caseSensitive ? StandardPatterns.string().oneOf(names) : com.intellij.patterns
-      .StandardPatterns.string().oneOfIgnoreCase(names);
+    final StringPattern namePattern =
+      caseSensitive ? StandardPatterns.string().oneOf(names) : StandardPatterns.string().oneOfIgnoreCase(names);
     registrar.registerReferenceProvider(XmlPatterns.xmlTag().withLocalName(namePattern).and(new FilterPattern(elementFilter)), provider,
                                         PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
