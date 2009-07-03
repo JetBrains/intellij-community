@@ -30,6 +30,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   private final JComponent myComponent;
   private boolean myAvailable;
   private final ContentManager myContentManager;
+  private Icon myIcon = null;
 
   private static final Content EMPTY_CONTENT = new ContentImpl(new JLabel(), "", false);
   private final ToolWindowContentUi myContentUI;
@@ -206,7 +207,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   public final Icon getIcon() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return getSelectedContent().getIcon();
+    return myIcon;
+    //return getSelectedContent().getIcon();
   }
 
   public final String getId() {
@@ -222,6 +224,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Icon oldIcon = getIcon();
     getSelectedContent().setIcon(icon);
+    myIcon = icon;
     myChangeSupport.firePropertyChange(PROP_ICON, oldIcon, icon);
   }
 
