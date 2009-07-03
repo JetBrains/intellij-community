@@ -12,6 +12,8 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyFunction;
@@ -48,7 +50,8 @@ public class PyTestRunConfigurationType implements LocatableConfigurationType {
   }
 
   public RunnerAndConfigurationSettings createConfigurationByLocation(Location location) {
-    PsiFileSystemItem file = location.getPsiElement().getContainingFile();
+    PsiElement element = location.getPsiElement();
+    PsiFileSystemItem file = element instanceof PsiDirectory ? (PsiDirectory) element : element.getContainingFile();
     if (file == null) return null;
     String path = file.getVirtualFile().getPath();
 
@@ -56,7 +59,7 @@ public class PyTestRunConfigurationType implements LocatableConfigurationType {
       RunManager.getInstance(location.getProject()).createRunConfiguration(file.getName(), myPyTestConfigurationFactory);
     PyTestRunConfiguration configuration = (PyTestRunConfiguration)result.getConfiguration();
     configuration.setUseModuleSdk(true);
-    configuration.setModule(ModuleUtil.findModuleForPsiElement(location.getPsiElement()));
+    configuration.setModule(ModuleUtil.findModuleForPsiElement(element));
 
     configuration.setTestToRun(path);
 

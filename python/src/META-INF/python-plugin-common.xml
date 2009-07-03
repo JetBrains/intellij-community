@@ -38,7 +38,6 @@
     <configurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
 
     <configurationType implementation="com.jetbrains.python.testing.PythonUnitTestConfigurationType"/>
-    <configurationProducer implementation="com.jetbrains.python.testing.PythonUnitTestConfigurationProducer"/>
     <testSrcLocator implementation="com.jetbrains.python.testing.PythonUnitTestTestIdUrlProvider"/>
 
     <configurationType implementation="com.jetbrains.python.testing.pytest.PyTestRunConfigurationType"/>
@@ -80,6 +79,7 @@
     <pyClassInheritorsSearch implementation="com.jetbrains.python.psi.search.PyClassInheritorsSearchExecutor"/>
     <pyOverridingMethodsSearch implementation="com.jetbrains.python.psi.search.PyOverridingMethodsSearchExecutor"/>
     <runnableScriptFilter implementation="com.jetbrains.python.testing.pytest.PyTestRunnableScriptFilter"/>
+    <runnableScriptFilter implementation="com.jetbrains.python.testing.PythonUnitTestRunnableScriptFilter"/>
   </extensions>
   <actions>
     <action 
