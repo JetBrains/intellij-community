@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.util.*;
 
 //todo: support missing plugins
+
 //todo: support storage data
 public class DirectoryBasedStorage implements StateStorage, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.DirectoryBasedStorage");
@@ -92,7 +93,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
   @Nullable
   public <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto)
-      throws StateStorageException {
+    throws StateStorageException {
     if (myStorageData == null) myStorageData = loadState();
 
 
@@ -181,7 +182,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     assert mySession == externalizationSession;
 
     final MySaveSession session =
-        new MySaveSession(((MyExternalizationSession)externalizationSession).myStorageData, myPathMacroSubstitutor);
+      new MySaveSession(((MyExternalizationSession)externalizationSession).myStorageData, myPathMacroSubstitutor);
     mySession = session;
     return session;
   }
@@ -228,7 +229,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       IFile[] children = myDir.listFiles();
       for (IFile child : children) {
         final String fileName = child.getName();
-        if (! myFileTypeManager.isFileIgnored(fileName)) {
+        if (!myFileTypeManager.isFileIgnored(fileName)) {
           currentNames.add(fileName);
         }
       }
@@ -246,13 +247,14 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
             IFile child = myDir.getChild(name);
 
             final VirtualFile virtualFile = StorageUtil.getVirtualFile(child);
-            assert virtualFile != null : "Can't find vFile for: " + child;
-            try {
-              LOG.debug("Removing configuration file: " + virtualFile.getPresentableUrl());
-              virtualFile.delete(DirectoryBasedStorage.this);
-            }
-            catch (IOException e) {
-              LOG.error(e);
+            if (virtualFile != null) {
+              try {
+                LOG.debug("Removing configuration file: " + virtualFile.getPresentableUrl());
+                virtualFile.delete(DirectoryBasedStorage.this);
+              }
+              catch (IOException e) {
+                LOG.error(e);
+              }
             }
           }
         }
@@ -413,9 +415,9 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     }
 
     public void setState(final Object component, final String componentName, final Object state, final Storage storageSpec)
-        throws StateStorageException {
+      throws StateStorageException {
       assert mySession == this;
-      setState(componentName,state, storageSpec);
+      setState(componentName, state, storageSpec);
     }
 
     private void setState(final String componentName, Object state, final Storage storageSpec) throws StateStorageException {
