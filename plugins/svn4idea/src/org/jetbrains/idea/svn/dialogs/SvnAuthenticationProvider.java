@@ -120,6 +120,23 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
           }
         }
       };
+    } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
+      command = new Runnable() {
+        public void run() {
+          final SSLCredentialsDialog dialog = new SSLCredentialsDialog(myProject, realm, authMayBeStored);
+          if (previousAuth == null) {
+            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
+          }
+          else {
+            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required.was.failed"));
+          }
+          dialog.show();
+          if (dialog.isOK()) {
+            result[0] = new SVNSSLAuthentication(new File(dialog.getCertificatePath()), String.valueOf(dialog.getCertificatePassword()),
+                                                 dialog.getSaveAuth());
+          }
+        }
+      };
     }
 
     if (command != null) {
