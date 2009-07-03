@@ -75,11 +75,15 @@ class MyFileManager extends DefaultFileManager {
     }
   }
   
+  private static URI createUri(String url) {
+    return URI.create(url.replaceAll(" ","%20"));
+  }
+
   private static class JavaVirtualFile extends FileVirtualObject {
     private final VirtualFile myFile;
 
     protected JavaVirtualFile(VirtualFile file, Kind source) {
-      super(URI.create(file.getUrl()), source);
+      super(createUri(file.getUrl()), source);
       myFile = file;
     }
 
@@ -117,7 +121,7 @@ class MyFileManager extends DefaultFileManager {
   }
 
   private static URI toURI(String outputDir, String name) {
-    return URI.create("file:///" + outputDir.replace('\\','/') + "/" + name.replace('.', '/') + JavaFileObject.Kind.CLASS.extension);
+    return createUri("file:///" + outputDir.replace('\\','/') + "/" + name.replace('.', '/') + JavaFileObject.Kind.CLASS.extension);
   }
 
   @Override
