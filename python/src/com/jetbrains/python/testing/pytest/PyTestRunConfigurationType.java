@@ -11,9 +11,9 @@ import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyFunction;
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 
 /**
  * @author yole
@@ -60,6 +61,10 @@ public class PyTestRunConfigurationType implements LocatableConfigurationType {
     PyTestRunConfiguration configuration = (PyTestRunConfiguration)result.getConfiguration();
     configuration.setUseModuleSdk(true);
     configuration.setModule(ModuleUtil.findModuleForPsiElement(element));
+
+    if (!new File(configuration.getRunnerScriptPath()).exists()) {
+      return null;
+    }
 
     configuration.setTestToRun(path);
 
