@@ -70,6 +70,9 @@ public final class Presentation implements Cloneable {
    */
   @NonNls public static final String PROP_ENABLED = "enabled";
 
+  public static final double DEFAULT_WEIGHT = 0;
+  public static final double HIGHER_WEIGHT = 42;
+  public static final double EVEN_HIGHER_WEIGHT = 239;
 
   private PropertyChangeSupport myChangeSupport;
   private String myText;
@@ -81,6 +84,7 @@ public final class Presentation implements Cloneable {
   private int myDisplayedMnemonicIndex = -1;
   private boolean myVisible;
   private boolean myEnabled;
+  private double myWeight = DEFAULT_WEIGHT;
 
   public Presentation(){
     myChangeSupport = new PropertyChangeSupport(this);
@@ -299,5 +303,17 @@ public final class Presentation implements Cloneable {
     }
     Object oldValue = myUserMap.put(key,value);
     myChangeSupport.firePropertyChange(key, oldValue, value);
+  }
+
+  public double getWeight() {
+    return myWeight;
+  }
+
+  /**
+   * Some action groups (like 'New...') may filter out actions with non-highest priority.
+   * @param weight please use {@link #HIGHER_WEIGHT} or {@link #EVEN_HIGHER_WEIGHT}
+   */
+  public void setWeight(double weight) {
+    myWeight = weight;
   }
 }

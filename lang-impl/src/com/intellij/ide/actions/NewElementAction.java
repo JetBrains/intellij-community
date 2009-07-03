@@ -42,7 +42,7 @@ public class NewElementAction extends AnAction implements DumbAware {
     presentation.setEnabled(!ActionGroupUtil.isGroupEmpty(getGroup(), event));
   }
 
-  protected static DefaultActionGroup getGroup() {
-    return (DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_NEW);
+  private static ActionGroup getGroup() {
+    return (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WEIGHING_NEW);
   }
 }

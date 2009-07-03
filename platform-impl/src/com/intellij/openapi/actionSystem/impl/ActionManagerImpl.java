@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -25,6 +24,8 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -251,7 +252,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
     AnAction anAction = (AnAction)obj;
     stub.initAction(anAction);
-    anAction.getTemplatePresentation().setText(stub.getText());
+    if (StringUtil.isNotEmpty(stub.getText())) {
+      anAction.getTemplatePresentation().setText(stub.getText());
+    }
     String iconPath = stub.getIconPath();
     if (iconPath != null) {
       setIconFromClass(anAction.getClass(), anAction.getClass().getClassLoader(), iconPath, stub.getClassName(), anAction.getTemplatePresentation(), stub.getPluginId());

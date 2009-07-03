@@ -178,6 +178,7 @@ public interface IdeActions {
 
   @NonNls String GROUP_GENERATE = "GenerateGroup";
   @NonNls String GROUP_NEW = "NewGroup";
+  @NonNls String GROUP_WEIGHING_NEW = "WeighingNewGroup";
   @NonNls String GROUP_CHANGE_SCHEME = "ChangeScheme";
 
   @NonNls String GROUP_FILE = "FileMenu";

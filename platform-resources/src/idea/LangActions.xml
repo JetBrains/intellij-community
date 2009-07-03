@@ -314,6 +314,7 @@
       <action id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
     </group>
 
+    <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup"/>
 
     <!-- Toolbar -->
     <!--
@@ -386,7 +387,7 @@
     </group>
 
     <group id="ProjectViewPopupMenu">
-      <reference ref="NewGroup"/>
+      <reference ref="WeighingNewGroup"/>
       <action id="AssociateWithFileType" class="com.intellij.ide.actions.AssociateFileType"/>
       <separator/>
       <reference ref="CutCopyPasteGroup"/>

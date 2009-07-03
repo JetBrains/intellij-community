@@ -150,12 +150,10 @@ public class Utils{
 
       LOG.assertTrue(anAction != null, "Null action found in group " + group);
 
+      final Presentation presentation = factory.getPresentation(anAction);
+      updateGroupChild(context, place, anAction, presentation);
       if (anAction instanceof ActionGroup) {
         ActionGroup childGroup = (ActionGroup)anAction;
-        final Presentation presentation = factory.getPresentation(childGroup);
-        AnActionEvent event1 = new AnActionEvent(null, context, place, presentation, ActionManager.getInstance(), 0);
-        event1.setInjectedContext(childGroup.isInInjectedContext());
-        doUpdate(childGroup, event1, presentation);
 
         // popup menu must be visible itself
         if (childGroup.isPopup()) {
@@ -168,18 +166,18 @@ public class Utils{
           return true;
         }
       }
-      else {
-        final Presentation presentation = factory.getPresentation(anAction);
-        AnActionEvent event1 = new AnActionEvent(null, context, place, presentation, ActionManager.getInstance(), 0);
-        event1.setInjectedContext(anAction.isInInjectedContext());
-        doUpdate(anAction, event1, presentation);
-        if (presentation.isVisible()) {
-          return true;
-        }
+      else if (presentation.isVisible()) {
+        return true;
       }
     }
 
     return false;
+  }
+
+  public static void updateGroupChild(DataContext context, String place, AnAction anAction, final Presentation presentation) {
+    AnActionEvent event1 = new AnActionEvent(null, context, place, presentation, ActionManager.getInstance(), 0);
+    event1.setInjectedContext(anAction.isInInjectedContext());
+    doUpdate(anAction, event1, presentation);
   }
 
 
