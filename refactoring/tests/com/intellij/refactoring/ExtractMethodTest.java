@@ -391,6 +391,14 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testReturnStatementFolding() throws Exception {
+    doTest();
+  }
+
+  public void testWriteArrayAccess() throws Exception {
+    doTest();
+  }
+
   private void doPrepareErrorTest(final String expectedMessage) throws Exception {
     String expectedError = null;
     try {
@@ -463,8 +471,9 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
 
     if (replaceAllDuplicates) {
       final List<Match> duplicates = processor.getDuplicates();
-      for (final Match expressionMatch : duplicates) {
-        processor.processMatch(expressionMatch);
+      for (final Match match : duplicates) {
+        if (!match.getMatchStart().isValid() || !match.getMatchEnd().isValid()) continue;
+        processor.processMatch(match);
       }
     }
 

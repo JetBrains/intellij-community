@@ -145,6 +145,7 @@ public class ParametersFolder {
   @Nullable
   private List<PsiExpression> getMentionedExpressions(PsiVariable var, LocalSearchScope scope) {
     if (myMentionedInExpressions.containsKey(var)) return myMentionedInExpressions.get(var);
+    final PsiElement[] scopeElements = scope.getScope();
     List<PsiExpression> expressions = null;
     for (PsiReference reference : ReferencesSearch.search(var, scope)) {
       PsiElement expression = reference.getElement();
@@ -152,6 +153,14 @@ public class ParametersFolder {
         expressions = new ArrayList<PsiExpression>();
         while (expression != null) {
           if (PsiUtil.isAccessedForWriting((PsiExpression)expression)) return null;
+          for (PsiElement scopeElement : scopeElements) {
+            if (PsiTreeUtil.isAncestor(expression, scopeElement, true)) {
+              expression = null;
+              break;
+            }
+          }
+          if (expression == null) break;
+
           if (((PsiExpression)expression).getType() != PsiType.VOID) {
             expressions.add((PsiExpression)expression);
           }
