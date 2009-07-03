@@ -179,7 +179,17 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
 
     if (myProject.isInitialized()) {
-      runnable.run();
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        runnable.run();
+      } else {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            if (!myProject.isDisposed()) {
+              runnable.run();
+            }
+          }
+        });
+      }
     }
     else {
       registerPostStartupActivity(runnable);
