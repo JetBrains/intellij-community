@@ -28,7 +28,7 @@ public abstract class ProjectViewTree extends DnDAwareTree {
     renderer.setIconOpaque(false);
     setCellRenderer(renderer);
 
-    setOpaque(false);
+    //setOpaque(false);
   }
 
   @Override
