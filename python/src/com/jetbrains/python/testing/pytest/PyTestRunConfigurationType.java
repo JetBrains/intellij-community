@@ -87,8 +87,9 @@ public class PyTestRunConfigurationType implements LocatableConfigurationType {
   public boolean isConfigurationByLocation(RunConfiguration configuration, Location location) {
     if (!(configuration instanceof PyTestRunConfiguration)) return false;
     PyTestRunConfiguration pyTestRunConfiguration = (PyTestRunConfiguration)configuration;
-    PsiFileSystemItem file = location.getPsiElement().getContainingFile();
-    if (!pyTestRunConfiguration.getTestToRun().equals(file.getVirtualFile().getPath())) {
+    final PsiElement element = location.getPsiElement();
+    PsiFileSystemItem file = element instanceof PsiDirectory ? (PsiDirectory) element : element.getContainingFile();
+    if (file == null || !pyTestRunConfiguration.getTestToRun().equals(file.getVirtualFile().getPath())) {
       return false;
     }
     PyFunction testFunction = findTestFunction(location);
