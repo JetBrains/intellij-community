@@ -33,4 +33,12 @@ public class PythonCompletionTest extends LightCodeInsightTestCase{
   public void testSelfField() throws Exception {
     doTest();
   }
+
+  public void testFuncParams() throws Exception {
+    doTest();
+  }
+
+  public void testFuncParamsStar() throws Exception {
+    doTest();
+  }
 }

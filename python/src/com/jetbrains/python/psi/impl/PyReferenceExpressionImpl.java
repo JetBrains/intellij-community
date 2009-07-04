@@ -16,7 +16,6 @@
 
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.ASTNode;
@@ -31,9 +30,9 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.Icons;
 import com.intellij.util.containers.SortedList;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyIcons;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
@@ -420,9 +419,31 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return ResolveImportUtil.suggestImportVariants(this);
     }
 
+    List<Object> ret = new ArrayList<Object>();
+    LookupElementFactory factory = LookupElementFactory.getInstance();
+
     // include our own names
     final VariantsProcessor processor = new VariantsProcessor();
     PyResolveUtil.treeCrawlUp(processor, this); // names from here
+
+    // in a call, include function's arg names
+    PyCallExpression call_expr = PsiTreeUtil.getParentOfType(this, PyCallExpression.class);
+    if (call_expr != null) {
+      PyExpression callee =call_expr.getCallee();
+      if (callee instanceof PyReferenceExpression) {
+        PsiElement def = ((PyReferenceExpression)callee).resolve();
+        if (def instanceof PyFunction) {
+          for (PyParameter param : ((PyFunction)def).getParameterList().getParameters()) {
+            if (! param.isKeywordContainer() && ! param.isPositionalContainer()) {
+              LookupItem item = (LookupItem)factory.createLookupElement(param.getName() + "=");
+              item.setIcon(param.getIcon(0));
+              ret.add(item);
+            }
+          }
+        }
+      }
+    }
+
     // scan all "import *" and include names provided by them
     CollectProcessor collect_proc;
     collect_proc = new CollectProcessor(PyStarImportElement.class);
@@ -441,6 +462,18 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     // include builtin names
     processor.setNotice(" | __builtin__");
     PyResolveUtil.treeCrawlUp(processor, true, PyBuiltinCache.getInstance(getProject()).getBuiltinsFile()); // names from __builtin__
+
+    // if we're a normal module, add module's attrs
+    PsiFile f = getContainingFile();
+    if (f instanceof PyFile) {
+      for (String name : PyModuleType.getPossibleInstanceMembers()) {
+        LookupItem item = (LookupItem)factory.createLookupElement(name);
+        item.setIcon(Icons.FIELD_ICON);
+        ret.add(item);
+      }
+    }
+
+    /* TODO: move to a contributor that handles 'def' targets
     // if we're expanding a "__", include predefined __names__
     String name = getName();
     if (name != null && name.startsWith("__")) {
@@ -452,9 +485,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         item.setIcon(PyIcons.PREDEFINED);
         result.add(item);
       }
-      return result.toArray(new LookupElement[result.size()]);
+      ret.addAll(result);
     }
-    return processor.getResult();
+    */
+    ret.addAll(processor.getResultList());
+    return ret.toArray();
   }
 
   public boolean isSoft() {
