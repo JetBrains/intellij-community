@@ -1,5 +1,6 @@
 package com.intellij.compiler.impl;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,8 +34,6 @@ public class OutputPathFinder {
         node = node.addChild(path.substring(idx));
       }
 
-      assert node.isLeaf();
-      
       node.setData(path);
     }
   }
@@ -49,30 +48,38 @@ public class OutputPathFinder {
     final String path = FileUtil.toSystemIndependentName(filePath);
     Node node = myRoot;
     int idx = path.startsWith("/")? 1 : 0;
-    int slashIndex = path.indexOf('/', idx);
 
-    for (; slashIndex >= 0; slashIndex = path.indexOf('/', idx)) {
-      final String name = path.substring(idx, slashIndex);
+    return findOutputPath(path, idx, node);
+  }
+
+  private static @Nullable String findOutputPath(final String path, int idx, Node node) {
+    while (true) {
+      final int slashIndex = path.indexOf('/', idx);
+      final String name = slashIndex < idx? path.substring(idx) : path.substring(idx, slashIndex);
       node = node.getChild(name);
       if (node == null) {
         return null;
       }
-      if (node.isLeaf()) {
+      if (node.isOutputRoot()) {
+        if (node.hasChildren() && slashIndex > idx) {
+          final String candidate = findOutputPath(path, slashIndex + 1, node);
+          if (candidate != null) {
+            return candidate;
+          }
+        }
         return node.getData();
+      }
+      if (slashIndex < 0) {
+        return null;  // end of path reached
       }
       idx = slashIndex + 1;
     }
-
-    if (idx < path.length()) {
-      node = node.getChild(path.substring(idx));
-    }
-    return (node != null && node.isLeaf()) ? node.getData() : null;
   }
 
   private static class Node {
     private final String myName;
     @Nullable
-    private Object myChildren; // either a Node or a Map<String, Node> or a String for leaf nodes
+    private Object myChildren; // either a Node or a Map<String, Node> or a String  or a Pair<String, Node or NodeMap>
 
     private Node(String name) {
       myName = name;
@@ -82,17 +89,38 @@ public class OutputPathFinder {
       return myName;
     }
 
-    public boolean isLeaf() {
-      return myChildren == null || myChildren instanceof String;
+    public boolean isOutputRoot() {
+      return myChildren instanceof String || myChildren instanceof Pair;
+    }
+
+    public boolean hasChildren() {
+      return myChildren instanceof Map || myChildren instanceof Pair;
     }
 
     @Nullable
     public String getData() {
-      return isLeaf()? (String)myChildren : null;
+      if (myChildren instanceof String) {
+        return (String)myChildren;
+      }
+      if (myChildren instanceof Pair) {
+        //noinspection unchecked
+        return (String)((Pair)myChildren).first;
+      }
+      return null;
     }
 
     public void setData(String path) {
-      myChildren = path;
+      if (myChildren != null) {
+        if (myChildren instanceof String) {
+          myChildren = path;
+        }
+        else {
+          myChildren = new Pair(path, myChildren instanceof Pair? ((Pair)myChildren).second : myChildren);
+        }
+      }
+      else {
+        myChildren = path;
+      }
     }
 
     public Node addChild(String childName) {
@@ -101,16 +129,31 @@ public class OutputPathFinder {
         myChildren = node;
         return node;
       }
+      if (myChildren instanceof String) {
+        final Node node = new Node(childName);
+        myChildren = new Pair(myChildren, node);
+        return node;
+      }
 
       final Map<String, Node> map;
-      if (myChildren instanceof Node)  {
+      if (myChildren instanceof Map) {
+        map = (Map<String, Node>)myChildren;
+      }
+      else if (myChildren instanceof Node)  {
         final Node existingChild = (Node)myChildren;
         myChildren = map = new HashMap<String, Node>();
         map.put(existingChild.getName(), existingChild);
       }
-      else {
-        //noinspection unchecked
-        map = (Map<String, Node>)myChildren;
+      else { // myChildren is a Pair
+        Object children = ((Pair)myChildren).second;
+        if (children instanceof Map) {
+          map = (Map<String, Node>)children;
+        }
+        else {
+          final Node existingChild = (Node)children;
+          myChildren = new Pair(((Pair)myChildren).first, map = new HashMap<String, Node>());
+          map.put(existingChild.getName(), existingChild);
+        }
       }
 
       Node node = map.get(childName);
@@ -122,12 +165,15 @@ public class OutputPathFinder {
 
     @Nullable
     public Node getChild(String childName) {
-      if (myChildren instanceof Node) {
-        final Node childNode = (Node)myChildren;
+      final Object children = myChildren instanceof Pair? ((Pair)myChildren).second : myChildren;
+      if (children instanceof Node) {
+        final Node childNode = (Node)children;
         return childName.equals(childNode.getName())? childNode : null;
       }
-
-      return isLeaf()? null : ((Map<String, Node>)myChildren).get(childName);
+      if (children instanceof Map) {
+        return ((Map<String, Node>)myChildren).get(childName);
+      }
+      return null;
     }
   }
 
@@ -138,14 +184,21 @@ public class OutputPathFinder {
     set.add(new File("a/b/d"));
     set.add(new File("a/b/e"));
     set.add(new File("/a/b/f/g"));
+    set.add(new File("/a/b/f/g/zzz"));
 
     final OutputPathFinder finder = new OutputPathFinder(set);
 
+    System.out.println(finder.lookupOutputPath(new File("a/b")));
     System.out.println(finder.lookupOutputPath(new File("a/b/c/dir1/dir2/File.class")));
     System.out.println(finder.lookupOutputPath(new File("a/b/d/dir1/dir2/File.class")));
     System.out.println(finder.lookupOutputPath(new File("a/b/jjjjj/dir1/dir2/File.class")));
     System.out.println(finder.lookupOutputPath(new File("a/b/e/File.class")));
     System.out.println(finder.lookupOutputPath(new File("a/b/File.class")));
+
+    System.out.println(finder.lookupOutputPath(new File("/a/b/f/g/File.class")));
+    System.out.println(finder.lookupOutputPath(new File("/a/b/f/g/ttt/yy/File.class")));
+    System.out.println(finder.lookupOutputPath(new File("/a/b/f/g/zzz/File.class")));
+    System.out.println(finder.lookupOutputPath(new File("/a/b/f/g/zzz/mmm/ttt/File.class")));
 
   }
 }

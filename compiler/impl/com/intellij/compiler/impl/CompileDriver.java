@@ -95,7 +95,8 @@ public class CompileDriver {
       return new PackagingCompilerAdapter(context, (PackagingCompiler)compiler);
     }
   };
-  private OutputPathFinder myOutputFinder;
+  private OutputPathFinder myOutputFinder; // need this for updating zip archives (experimental feature) 
+
   private Set<File> myAllOutputDirectories;
 
   public CompileDriver(Project project) {
@@ -162,7 +163,8 @@ public class CompileDriver {
       public void run() {
         try {
           myAllOutputDirectories = getAllOutputDirectories();
-          myOutputFinder = new OutputPathFinder(myAllOutputDirectories);
+          // need this for updating zip archives experiment, uncomment if the feature is turned on
+          //myOutputFinder = new OutputPathFinder(myAllOutputDirectories);
           status.set(doCompile(compileContext, false, false, false, true));
         }
         finally {
@@ -385,7 +387,8 @@ public class CompileDriver {
       }
 
       myAllOutputDirectories = getAllOutputDirectories();
-      myOutputFinder = new OutputPathFinder(myAllOutputDirectories);
+      // need this for updating zip archives experiment, uncomment if the feature is turned on
+      //myOutputFinder = new OutputPathFinder(myAllOutputDirectories);
       status = doCompile(compileContext, isRebuild, forceCompile, trackDependencies, false);
     }
     catch (Throwable ex) {
@@ -1341,15 +1344,15 @@ public class CompileDriver {
             wereFilesDeleted[0] = true;
 
             // update zip here
-            final String outputDir = myOutputFinder.lookupOutputPath(outputPath);
-            if (outputDir != null) {
-              try {
-                context.updateZippedOuput(outputDir, FileUtil.toSystemIndependentName(outputPath.getPath()).substring(outputDir.length() + 1));
-              }
-              catch (IOException e) {
-                LOG.info(e);
-              }
-            }
+            //final String outputDir = myOutputFinder.lookupOutputPath(outputPath);
+            //if (outputDir != null) {
+            //  try {
+            //    context.updateZippedOuput(outputDir, FileUtil.toSystemIndependentName(outputPath.getPath()).substring(outputDir.length() + 1));
+            //  }
+            //  catch (IOException e) {
+            //    LOG.info(e);
+            //  }
+            //}
 
             final String className = trinity.getSecond();
             if (className != null) {
@@ -1527,11 +1530,11 @@ public class CompileDriver {
             LOG.debug("\tFile processed " + file.getPresentableUrl() + "; ts=" + file.getTimeStamp());
           }
 
-          final String path = file.getPath();
-          final String outputDir = myOutputFinder.lookupOutputPath(path);
-          if (outputDir != null) {
-            context.updateZippedOuput(outputDir, path.substring(outputDir.length() + 1));
-          }
+          //final String path = file.getPath();
+          //final String outputDir = myOutputFinder.lookupOutputPath(path);
+          //if (outputDir != null) {
+          //  context.updateZippedOuput(outputDir, path.substring(outputDir.length() + 1));
+          //}
         }
         CompilerUtil.refreshFilesInterruptibly(context, vFiles,"Refreshing processed files...");
         if (LOG.isDebugEnabled()) {
