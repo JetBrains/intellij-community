@@ -235,8 +235,8 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     private String start_tag, end_tag;
 
     WrapInTagLambda(String tag) {
-      end_tag = "<" + tag + ">";
-      start_tag = "</" + tag + ">";
+      end_tag = "</" + tag + ">";
+      start_tag = "<" + tag + ">";
     }
 
     public StringBuilder apply(String deconame, @NonNls StringBuilder cat) {
