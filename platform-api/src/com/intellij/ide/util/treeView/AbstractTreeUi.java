@@ -642,10 +642,14 @@ class AbstractTreeUi {
     myUpdatingChildren.add(node);
     processAllChildren(node, elementToIndexMap, pass).doWhenDone(new Runnable() {
       public void run() {
+        if (isDisposed(node)) {
+          return;
+        }
+
         if (canYield()) {
           removeLoadingNode(node);
         }
-
+        
         ArrayList<TreeNode> nodesToInsert = collectNodesToInsert(descriptor, elementToIndexMap);
 
         insertNodesInto(nodesToInsert, node);
@@ -672,6 +676,10 @@ class AbstractTreeUi {
         processNodeActionsIfReady(node);
       }
     });
+  }
+
+  private boolean isDisposed(DefaultMutableTreeNode node) {
+    return !node.isNodeAncestor((DefaultMutableTreeNode)myTree.getModel().getRoot());
   }
 
   private void expand(DefaultMutableTreeNode node) {
@@ -804,7 +812,6 @@ class AbstractTreeUi {
                                             final TreeUpdatePass pass) {
 
     final ArrayList<TreeNode> childNodes = TreeUtil.childrenToArray(node);
-
     return maybeYeild(new ActiveRunnable() {
       public ActionCallback run() {
         return processAllChildren(node, elementToIndexMap, pass, childNodes);
@@ -1604,6 +1611,9 @@ class AbstractTreeUi {
   }
 
   private void disposeNode(DefaultMutableTreeNode node) {
+    myUpdatingChildren.remove(node);
+    myUnbuiltNodes.remove(node);
+
     if (node.getChildCount() > 0) {
       for (DefaultMutableTreeNode _node = (DefaultMutableTreeNode)node.getFirstChild(); _node != null; _node = _node.getNextSibling()) {
         disposeNode(_node);
@@ -2204,8 +2214,17 @@ class AbstractTreeUi {
 
       NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
       if (getBuilder().isDisposeOnCollapsing(descriptor)) {
-        removeChildren(node);
-        addLoadingNode(node);
+        runDone(new Runnable() {
+          public void run() {
+            if (isDisposed(node)) return;
+            
+            TreePath nodePath = new TreePath(node.getPath());
+            if (myTree.isExpanded(nodePath)) return;
+
+            removeChildren(node);
+            addLoadingNode(node);
+          }
+        });
         if (node.equals(getRootNode())) {
           addSelectionPath(new TreePath(getRootNode().getPath()), true, Condition.FALSE);
         }
