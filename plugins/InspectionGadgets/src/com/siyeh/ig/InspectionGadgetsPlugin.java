@@ -85,7 +85,7 @@ import java.util.*;
 public class InspectionGadgetsPlugin implements ApplicationComponent,
         InspectionToolProvider {
 
-    private static final int NUM_INSPECTIONS = 615;
+    private static final int NUM_INSPECTIONS = 618;
     private final List<Class<? extends InspectionProfileEntry>> m_inspectionClasses =
             new ArrayList(NUM_INSPECTIONS);
     @NonNls private static final String DESCRIPTION_DIRECTORY_NAME =
@@ -937,7 +937,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(CollectionContainsUrlInspection.class);
         m_inspectionClasses.add(CollectionsMustHaveInitialCapacityInspection.class);
         m_inspectionClasses.add(ConstantStringInternInspection.class);
-        //m_inspectionClasses.add(DynamicRegexReplaceableByCompiledPatternInspection.class);
+        m_inspectionClasses.add(DynamicRegexReplaceableByCompiledPatternInspection.class);
         m_inspectionClasses.add(EqualsHashCodeCalledOnUrlInspection.class);
         m_inspectionClasses.add(FieldMayBeStaticInspection.class);
         m_inspectionClasses.add(InnerClassMayBeStaticInspection.class);
