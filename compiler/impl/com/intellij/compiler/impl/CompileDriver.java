@@ -1225,80 +1225,81 @@ public class CompileDriver {
 
     final Set<VirtualFile> toCompile = new HashSet<VirtualFile>();
     final List<Trinity<File, String, Boolean>> toDelete = new ArrayList<Trinity<File, String, Boolean>>();
+    context.getProgressIndicator().pushState();
 
-    final boolean[] wereFilesDeleted = {false};
-    CompilerUtil.runInContext(context, "Compiling using " + compiler.getDescription(), new ThrowableRunnable<ExitException>() {
-      public void run() throws ExitException {
-        try {
-          final TranslatingCompilerFilesMonitor monitor = TranslatingCompilerFilesMonitor.getInstance();
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              TranslatingCompilerFilesMonitor.getInstance()
-                .collectFiles(context, compiler, Arrays.asList(sources).iterator(), forceCompile, isRebuild, toCompile, toDelete);
-              if (trackDependencies && !toCompile.isEmpty()) { // should add dependent files
-                final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-                final PsiManager psiManager = PsiManager.getInstance(myProject);
-                final VirtualFile[] filesToCompile = toCompile.toArray(new VirtualFile[toCompile.size()]);
-                for (final VirtualFile file : filesToCompile) {
-                  if (fileTypeManager.getFileTypeByFile(file) == StdFileTypes.JAVA) {
-                    final PsiFile psiFile = psiManager.findFile(file);
-                    if (psiFile != null) {
-                      addDependentFiles(psiFile, toCompile, compiler, context);
-                    }
-                  }
+    final boolean[] wereFilesDeleted = new boolean[]{false};
+    try {
+      final TranslatingCompilerFilesMonitor monitor = TranslatingCompilerFilesMonitor.getInstance();
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+
+          TranslatingCompilerFilesMonitor.getInstance().collectFiles(
+              context, compiler, Arrays.asList(sources).iterator(), forceCompile, isRebuild, toCompile, toDelete
+          );
+          if (trackDependencies && !toCompile.isEmpty()) { // should add dependent files
+            final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+            final PsiManager psiManager = PsiManager.getInstance(myProject);
+            final VirtualFile[] filesToCompile = toCompile.toArray(new VirtualFile[toCompile.size()]);
+            for (final VirtualFile file : filesToCompile) {
+              if (fileTypeManager.getFileTypeByFile(file) == StdFileTypes.JAVA) {
+                final PsiFile psiFile = psiManager.findFile(file);
+                if (psiFile != null) {
+                  addDependentFiles(psiFile, toCompile, compiler, context);
                 }
               }
             }
-          });
-
-          if (onlyCheckStatus) {
-            if (toDelete.isEmpty() && toCompile.isEmpty()) {
-              return;
-            }
-            if (LOG.isDebugEnabled()) {
-              if (!toDelete.isEmpty()) {
-                LOG.debug("Found items to delete, compiler " + compiler.getDescription());
-              }
-              if (!toCompile.isEmpty()) {
-                LOG.debug("Found items to compile, compiler " + compiler.getDescription());
-              }
-            }
-            throw new ExitException(ExitStatus.CANCELLED);
-          }
-
-          if (!toDelete.isEmpty()) {
-            try {
-              wereFilesDeleted[0] = syncOutputDir(context, toDelete);
-            }
-            catch (CacheCorruptedException e) {
-              LOG.info(e);
-              context.requestRebuildNextTime(e.getMessage());
-            }
-          }
-
-          if ((wereFilesDeleted[0] || !toCompile.isEmpty()) && context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
-            final TranslatingCompiler.ExitStatus exitStatus =
-              compiler.compile(context, toCompile.toArray(new VirtualFile[toCompile.size()]));
-            final TranslatingCompiler.OutputItem[] successfullyCompiled = exitStatus.getSuccessfullyCompiled();
-
-            monitor.update(context, successfullyCompiled, exitStatus.getFilesToRecompile());
-
-            for (TranslatingCompiler.OutputItem item : successfullyCompiled) {
-              final String outputDir = item.getOutputRootDirectory();
-              final String outputPath = item.getOutputPath();
-              if (outputDir != null && outputPath != null) {
-                context.updateZippedOuput(outputDir, outputPath.substring(outputDir.length() + 1));
-              }
-            }
           }
         }
-        catch (IOException e) {
+      });
+
+      if (onlyCheckStatus) {
+        if (toDelete.isEmpty() && toCompile.isEmpty()) {
+          return false;
+        }
+        if (LOG.isDebugEnabled()) {
+          if (!toDelete.isEmpty()) {
+            LOG.debug("Found items to delete, compiler " + compiler.getDescription());
+          }
+          if (!toCompile.isEmpty()) {
+            LOG.debug("Found items to compile, compiler " + compiler.getDescription());
+          }
+        }
+        throw new ExitException(ExitStatus.CANCELLED);
+      }
+
+      if (!toDelete.isEmpty()) {
+        try {
+          wereFilesDeleted[0] = syncOutputDir(context, toDelete);
+        }
+        catch (CacheCorruptedException e) {
           LOG.info(e);
           context.requestRebuildNextTime(e.getMessage());
-          throw new ExitException(ExitStatus.ERRORS);
         }
       }
-    });
+
+      if ((wereFilesDeleted[0] || !toCompile.isEmpty()) && context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
+        final TranslatingCompiler.ExitStatus exitStatus = compiler.compile(context, toCompile.toArray(new VirtualFile[toCompile.size()]));
+        final TranslatingCompiler.OutputItem[] successfullyCompiled = exitStatus.getSuccessfullyCompiled();
+
+        monitor.update(context, successfullyCompiled, exitStatus.getFilesToRecompile());
+
+        for (TranslatingCompiler.OutputItem item : successfullyCompiled) {
+          final String outputDir = item.getOutputRootDirectory();
+          final String outputPath = item.getOutputPath();
+          if (outputDir != null && outputPath != null) {
+            context.updateZippedOuput(outputDir, outputPath.substring(outputDir.length() + 1));
+          }
+        }
+      }
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      context.requestRebuildNextTime(e.getMessage());
+      throw new ExitException(ExitStatus.ERRORS);
+    }
+    finally {
+      context.getProgressIndicator().popState();
+    }
     return !toCompile.isEmpty() || wereFilesDeleted[0];
   }
 
