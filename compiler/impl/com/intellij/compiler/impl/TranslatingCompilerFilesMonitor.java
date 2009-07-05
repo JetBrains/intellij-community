@@ -29,11 +29,11 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ThrowableRunnable;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntLongHashMap;
 import gnu.trove.TIntObjectHashMap;
@@ -195,7 +195,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           final Map<VirtualFile, SourceFileInfo> compiledSources = new HashMap<VirtualFile, SourceFileInfo>();
           final Set<VirtualFile> forceRecompile = new HashSet<VirtualFile>();
 
-          CompileDriver.runInContext(context, "Saving compiled files info...", new ThrowableRunnable<IOException>(){
+          CompilerUtil.runInContext(context, "Saving compiled files info...", new ThrowableRunnable<IOException>(){
             public void run() throws IOException {
               context.getProgressIndicator().setFraction(0);
               int i =0;

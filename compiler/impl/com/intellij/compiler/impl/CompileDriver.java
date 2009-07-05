@@ -334,14 +334,16 @@ public class CompileDriver {
           doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion, trackDependencies);
         }
         finally {
-          long finish = System.currentTimeMillis();
-          LOG.debug("       Make took " +
-                             (finish - start)/1000/60 + "m" +((finish - start)%60000)/1000 + "s" +
-                             " with " +
-                             compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
-                             " errors, " +
-                             compileContext.getMessageCount(CompilerMessageCategory.WARNING) +
-                             " warnings.");
+          if (LOG.isDebugEnabled()) {
+            long finish = System.currentTimeMillis();
+            LOG.debug("       Make took " +
+                               (finish - start)/1000/60 + "m" +((finish - start)%60000)/1000 + "s" +
+                               " with " +
+                               compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
+                               " errors, " +
+                               compileContext.getMessageCount(CompilerMessageCategory.WARNING) +
+                               " warnings.");
+          }
 
           compileContext.commitZipFiles();
           if (LOG.isDebugEnabled()) {
@@ -526,48 +528,43 @@ public class CompileDriver {
       }
 
       // need this to make sure the VFS is built
-      final boolean[] needRecalcOutputDirs = {false};
+      boolean needRecalcOutputDirs = false;
       final List<VirtualFile> outputsToRefresh = new ArrayList<VirtualFile>();
-      final ExitStatus[] exitStatus = {null};
-      runInContext(context, "Walking output directories...", new ThrowableRunnable<RuntimeException>(){
-        public void run() throws RuntimeException {
-          for (VirtualFile output : context.getAllOutputDirectories()) {
-            if (output.isValid()) {
-              walkChildren(output, context);
+      for (VirtualFile output : context.getAllOutputDirectories()) {
+        if (output.isValid()) {
+          walkChildren(output, context);
+        }
+        else {
+          needRecalcOutputDirs = true;
+          final File file = new File(output.getPath());
+          if (!file.exists()) {
+            final boolean created = file.mkdirs();
+            if (!created) {
+              context.addMessage(CompilerMessageCategory.ERROR, "Failed to create output directory " + file.getPath(), null, 0, 0);
+              return ExitStatus.ERRORS;
             }
-            else {
-              needRecalcOutputDirs[0] = true;
-              final File file = new File(output.getPath());
-              if (!file.exists()) {
-                final boolean created = file.mkdirs();
-                if (!created) {
-                  context.addMessage(CompilerMessageCategory.ERROR, "Failed to create output directory " + file.getPath(), null, 0, 0);
-                  exitStatus[0] = ExitStatus.ERRORS;
-                  return;
-                }
-              }
-              output = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-              if (output == null) {
-                context.addMessage(CompilerMessageCategory.ERROR, "Failed to locate output directory " + file.getPath(), null, 0, 0);
-                exitStatus[0] = ExitStatus.ERRORS;
-                return;
-              }
-            }
-            outputsToRefresh.add(output);
           }
-          for (Pair<VirtualFile, VirtualFile> generated : myGenerationCompilerModuleToOutputDirMap.values()) {
-            walkChildren(generated.getFirst(), context);
-            outputsToRefresh.add(generated.getFirst());
-            walkChildren(generated.getSecond(), context);
-            outputsToRefresh.add(generated.getSecond());
+          output = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+          if (output == null) {
+            context.addMessage(CompilerMessageCategory.ERROR, "Failed to locate output directory " + file.getPath(), null, 0, 0);
+            return ExitStatus.ERRORS;
           }
         }
-      });
-      if (exitStatus[0] != null) return exitStatus[0];
-      CompilerUtil.refreshFilesInterruptibly(context, outputsToRefresh,"Refreshing output directories...");
+        outputsToRefresh.add(output);
+      }
+      for (Pair<IntermediateOutputCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
+        final Pair<VirtualFile, VirtualFile> generated = myGenerationCompilerModuleToOutputDirMap.get(pair);
+        walkChildren(generated.getFirst(), context);
+        outputsToRefresh.add(generated.getFirst());
+        walkChildren(generated.getSecond(), context);
+        outputsToRefresh.add(generated.getSecond());
+      }
+
+      RefreshQueue.getInstance().refresh(false, true, null, outputsToRefresh.toArray(new VirtualFile[outputsToRefresh.size()]));
+
       DumbService.getInstance(myProject).waitForSmartMode();
 
-      if (needRecalcOutputDirs[0]) {
+      if (needRecalcOutputDirs) {
         context.recalculateOutputDirs();
       }
 
@@ -613,7 +610,7 @@ public class CompileDriver {
         final VirtualFile[] allOutputDirs = context.getAllOutputDirectories();
 
         if (didSomething && GENERATE_CLASSPATH_INDEX) {
-          runInContext(context, "Generating classpath index...", new ThrowableRunnable<RuntimeException>(){
+          CompilerUtil.runInContext(context, "Generating classpath index...", new ThrowableRunnable<RuntimeException>(){
             public void run() {
               int count = 0;
               for (VirtualFile file : allOutputDirs) {
@@ -701,7 +698,7 @@ public class CompileDriver {
   }
 
   private static void dropDependencyCache(final CompileContextEx context) {
-    runInContext(context, CompilerBundle.message("progress.saving.caches"), new ThrowableRunnable<RuntimeException>(){
+    CompilerUtil.runInContext(context, CompilerBundle.message("progress.saving.caches"), new ThrowableRunnable<RuntimeException>(){
       public void run() {
         context.getDependencyCache().dispose();
       }
@@ -863,24 +860,8 @@ public class CompileDriver {
     return map;
   }
 
-  public static <T extends Throwable> void runInContext(CompileContext context, String title, ThrowableRunnable<T> action) throws T {
-    if (title != null) {
-      context.getProgressIndicator().pushState();
-      context.getProgressIndicator().setText(title);
-    }
-    try {
-      action.run();
-    }
-    finally {
-      if (title != null) {
-        context.getProgressIndicator().popState();
-      }
-    }
-  }
-
-
   private void deleteAll(final CompileContextEx context) {
-    runInContext(context, CompilerBundle.message("progress.clearing.output"), new ThrowableRunnable<RuntimeException>() {
+    CompilerUtil.runInContext(context, CompilerBundle.message("progress.clearing.output"), new ThrowableRunnable<RuntimeException>() {
       public void run() {
         final boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
         final VirtualFile[] allSources = context.getProjectCompileScope().getFiles(null, true);
@@ -927,7 +908,7 @@ public class CompileDriver {
             pruneEmptyDirectories(context.getProgressIndicator(), myAllOutputDirectories); // to avoid too much files deleted events
           }
           finally {
-            CompilerUtil.refreshIOFilesInterruptibly(context, myAllOutputDirectories, "Refreshing output directories");
+            CompilerUtil.refreshIODirectories(myAllOutputDirectories);
           }
         }
         dropScopesCaches();
@@ -1006,7 +987,7 @@ public class CompileDriver {
     for (final File file : outputDirectories) {
       file.mkdirs();
     }
-    CompilerUtil.refreshIOFilesInterruptibly(context, outputDirectories, null);
+    CompilerUtil.refreshIODirectories(outputDirectories);
   }
 
   private void clearCompilerSystemDirectory(final CompileContextEx context) {
@@ -1134,7 +1115,7 @@ public class CompileDriver {
       }
 
       if (!pathsToRemove.isEmpty()) {
-        runInContext(context, CompilerBundle.message("progress.synchronizing.output.directory"), new ThrowableRunnable<IOException>(){
+        CompilerUtil.runInContext(context, CompilerBundle.message("progress.synchronizing.output.directory"), new ThrowableRunnable<IOException>(){
           public void run() throws IOException {
             for (final String path : pathsToRemove) {
               final File file = new File(path);
@@ -1157,7 +1138,7 @@ public class CompileDriver {
       ModuleCompilerUtil.sortModules(myProject, modules);
 
       for (final Module module : modules) {
-        runInContext(context, "Generating output from "+compiler.getDescription(),new ThrowableRunnable<IOException>(){
+        CompilerUtil.runInContext(context, "Generating output from "+compiler.getDescription(),new ThrowableRunnable<IOException>(){
           public void run() throws IOException {
             final Set<GeneratingCompiler.GenerationItem> items = moduleToItemMap.get(module);
             if (items != null && !items.isEmpty()) {
@@ -1167,7 +1148,7 @@ public class CompileDriver {
                 final VirtualFile outputDir = getGenerationOutputDir(compiler, module, _items[0].isTestSource());
                 final GeneratingCompiler.GenerationItem[] successfullyGenerated = compiler.generate(context, _items, outputDir);
 
-                runInContext(context, CompilerBundle.message("progress.updating.caches"), new ThrowableRunnable<IOException>() {
+                CompilerUtil.runInContext(context, CompilerBundle.message("progress.updating.caches"), new ThrowableRunnable<IOException>() {
                   public void run() throws IOException {
                     if (successfullyGenerated.length > 0) {
                       affectedModules.add(module);
@@ -1194,7 +1175,7 @@ public class CompileDriver {
       throw new ExitException(ExitStatus.ERRORS);
     }
     finally {
-      CompilerUtil.refreshIOFilesInterruptibly(context, filesToRefresh, "Refreshing generated output...");
+      CompilerUtil.refreshIOFiles(filesToRefresh);
       if (!generatedFiles.isEmpty()) {
         List<VirtualFile> vFiles = ApplicationManager.getApplication().runReadAction(new Computable<List<VirtualFile>>() {
           public List<VirtualFile> compute() {
@@ -1246,7 +1227,7 @@ public class CompileDriver {
     final List<Trinity<File, String, Boolean>> toDelete = new ArrayList<Trinity<File, String, Boolean>>();
 
     final boolean[] wereFilesDeleted = {false};
-    runInContext(context, "Compiling using " + compiler.getDescription(), new ThrowableRunnable<ExitException>() {
+    CompilerUtil.runInContext(context, "Compiling using " + compiler.getDescription(), new ThrowableRunnable<ExitException>() {
       public void run() throws ExitException {
         try {
           final TranslatingCompilerFilesMonitor monitor = TranslatingCompilerFilesMonitor.getInstance();
@@ -1321,14 +1302,14 @@ public class CompileDriver {
     return !toCompile.isEmpty() || wereFilesDeleted[0];
   }
 
-  private boolean syncOutputDir(final CompileContextEx context, final Collection<Trinity<File, String, Boolean>> toDelete) throws CacheCorruptedException {
+  private static boolean syncOutputDir(final CompileContextEx context, final Collection<Trinity<File, String, Boolean>> toDelete) throws CacheCorruptedException {
     final int total = toDelete.size();
     final DependencyCache dependencyCache = context.getDependencyCache();
     final boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
     final List<File> filesToRefresh = new ArrayList<File>();
     final boolean[] wereFilesDeleted = {false};
-    runInContext(context, CompilerBundle.message("progress.synchronizing.output.directory"), new ThrowableRunnable<CacheCorruptedException>(){
+    CompilerUtil.runInContext(context, CompilerBundle.message("progress.synchronizing.output.directory"), new ThrowableRunnable<CacheCorruptedException>(){
       public void run() throws CacheCorruptedException {
         try {
           int current = 0;
@@ -1369,7 +1350,7 @@ public class CompileDriver {
           }
         }
         finally {
-          CompilerUtil.refreshIOFilesInterruptibly(context, filesToRefresh, null);
+          CompilerUtil.refreshIOFiles(filesToRefresh);
         }
       }
     });
@@ -1465,26 +1446,26 @@ public class CompileDriver {
     final Collection<String> urls = cache.getUrls();
     final List<String> urlsToRemove = new ArrayList<String>();
     if (!urls.isEmpty()) {
-      runInContext(context, CompilerBundle.message("progress.processing.outdated.files"), new ThrowableRunnable<IOException>(){
+      CompilerUtil.runInContext(context, CompilerBundle.message("progress.processing.outdated.files"), new ThrowableRunnable<IOException>(){
         public void run() throws IOException {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          for (final String url : urls) {
-            if (!allUrls.contains(url)) {
-              if (!checkScope || scope.belongs(url)) {
-                urlsToRemove.add(url);
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              for (final String url : urls) {
+                if (!allUrls.contains(url)) {
+                  if (!checkScope || scope.belongs(url)) {
+                    urlsToRemove.add(url);
+                  }
+                }
               }
+            }
+          });
+          if (!onlyCheckStatus && !urlsToRemove.isEmpty()) {
+            for (final String url : urlsToRemove) {
+              adapter.processOutdatedItem(context, url, cache.getExtState(url));
+              cache.remove(url);
             }
           }
         }
-      });
-      if (!onlyCheckStatus && !urlsToRemove.isEmpty()) {
-        for (final String url : urlsToRemove) {
-          adapter.processOutdatedItem(context, url, cache.getExtState(url));
-          cache.remove(url);
-        }
-      }
-    }
       });
     }
 
@@ -1519,7 +1500,7 @@ public class CompileDriver {
     if (processed.length == 0) {
       return true;
     }
-    runInContext(context, CompilerBundle.message("progress.updating.caches"), new ThrowableRunnable<IOException>() {
+    CompilerUtil.runInContext(context, CompilerBundle.message("progress.updating.caches"), new ThrowableRunnable<IOException>() {
       public void run() throws IOException {
         final List<VirtualFile> vFiles = new ArrayList<VirtualFile>(processed.length);
         for (FileProcessingCompiler.ProcessingItem aProcessed : processed) {
@@ -1536,7 +1517,7 @@ public class CompileDriver {
           //  context.updateZippedOuput(outputDir, path.substring(outputDir.length() + 1));
           //}
         }
-        CompilerUtil.refreshFilesInterruptibly(context, vFiles,"Refreshing processed files...");
+        LocalFileSystem.getInstance().refreshFiles(vFiles);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Files after VFS refresh:");
           for (VirtualFile file : vFiles) {
@@ -1588,23 +1569,17 @@ public class CompileDriver {
     final CompilerManager manager = CompilerManager.getInstance(myProject);
     final ProgressIndicator progressIndicator = context.getProgressIndicator();
     try {
-      final CompileTask[] tasks = beforeTasks ? manager.getBeforeTasks() : manager.getAfterTasks();
-      final boolean[] result = {true};
+      CompileTask[] tasks = beforeTasks ? manager.getBeforeTasks() : manager.getAfterTasks();
       if (tasks.length > 0) {
-        runInContext(context, beforeTasks
-                              ? CompilerBundle.message("progress.executing.precompile.tasks")
-                              : CompilerBundle.message("progress.executing.postcompile.tasks"), new ThrowableRunnable<RuntimeException>() {
-          public void run() {
-            for (CompileTask task : tasks) {
-              if (!task.execute(context)) {
-                result[0] = false;
-                return;
-              }
-            }
+        progressIndicator.setText(beforeTasks
+                                  ? CompilerBundle.message("progress.executing.precompile.tasks")
+                                  : CompilerBundle.message("progress.executing.postcompile.tasks"));
+        for (CompileTask task : tasks) {
+          if (!task.execute(context)) {
+            return false;
           }
-        });
+        }
       }
-      return result[0];
     }
     finally {
       WindowManager.getInstance().getStatusBar(myProject).setInfo("");
@@ -1616,6 +1591,7 @@ public class CompileDriver {
         });
       }
     }
+    return true;
   }
 
   // todo: add validation for module chunks: all modules that form a chunk must have the same JDK

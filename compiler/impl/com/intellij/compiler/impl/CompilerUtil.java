@@ -17,13 +17,10 @@ import com.intellij.util.ThrowableRunnable;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 public class CompilerUtil {
   public static String quotePath(String path) {
@@ -89,53 +86,6 @@ public class CompilerUtil {
       if (file != null) {
         file.refresh(false, false);
       }
-    }
-  }
-
-  public static void refreshIOFilesInterruptibly(@NotNull CompileContext context, @NotNull Collection<File> files, @Nullable String title) {
-    List<VirtualFile> virtualFiles = new ArrayList<VirtualFile>(files.size());
-    for (File file : files) {
-      context.getProgressIndicator().checkCanceled();
-      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-      if (virtualFile == null) continue;
-      virtualFiles.add(virtualFile);
-    }
-    refreshFilesInterruptibly(context, virtualFiles, title);
-  }
-  public static void refreshFilesInterruptibly(@NotNull final CompileContext context, @NotNull final Collection<VirtualFile> files, @Nullable String title) {
-    LocalFileSystem.getInstance().refreshFiles(files); //
-    if (true) return;
-    ThrowableRunnable<RuntimeException> runnable = new ThrowableRunnable<RuntimeException>() {
-      public void run() throws RuntimeException {
-        boolean async = !ApplicationManager.getApplication().isDispatchThread();
-        final CountDownLatch latch = new CountDownLatch(files.size());
-        final int[] i = {0};
-        for (final VirtualFile virtualFile : files) {
-          context.getProgressIndicator().checkCanceled();
-          virtualFile.refresh(async, true, new Runnable() {
-            public void run() {
-              latch.countDown();
-              context.getProgressIndicator().setFraction(++i[0] * 1.0 / files.size());
-              context.getProgressIndicator().setText2(virtualFile.getPath());
-            }
-          });
-        }
-        try {
-          while (true) {
-            latch.await(100, TimeUnit.MILLISECONDS);
-            if (latch.getCount() == 0) break;
-            context.getProgressIndicator().checkCanceled();
-          }
-        }
-        catch (InterruptedException ignored) {
-        }
-      }
-    };
-    if (title != null) {
-      CompileDriver.runInContext(context, title, runnable);
-    }
-    else {
-      runnable.run();
     }
   }
 
@@ -227,5 +177,20 @@ public class CompilerUtil {
 
   public static boolean isOfVersion(String versionString, String checkedVersion) {
     return versionString.contains(checkedVersion);
+  }
+
+  public static <T extends Throwable> void runInContext(CompileContext context, String title, ThrowableRunnable<T> action) throws T {
+    if (title != null) {
+      context.getProgressIndicator().pushState();
+      context.getProgressIndicator().setText(title);
+    }
+    try {
+      action.run();
+    }
+    finally {
+      if (title != null) {
+        context.getProgressIndicator().popState();
+      }
+    }
   }
 }

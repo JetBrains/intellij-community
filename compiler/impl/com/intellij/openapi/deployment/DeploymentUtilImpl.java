@@ -201,7 +201,9 @@ public class DeploymentUtilImpl extends DeploymentUtil {
       context.getProgressIndicator().setText2(fromFile.getPath());
     }
     try {
-      LOG.debug("Copy file '" + fromFile + "' to '"+toFile+"'");
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Copy file '" + fromFile + "' to '"+toFile+"'");
+      }
       FileUtil.copy(fromFile, toFile);
     }
     catch (IOException e) {

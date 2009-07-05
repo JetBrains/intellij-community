@@ -123,7 +123,7 @@ public class ResourceCompiler implements TranslatingCompiler {
       }
     }
     if (!filesToRefresh.isEmpty()) {
-      CompilerUtil.refreshIOFilesInterruptibly(context, filesToRefresh,"Refreshing copied files");
+      CompilerUtil.refreshIOFiles(filesToRefresh);
     }
 
     context.getProgressIndicator().popState();

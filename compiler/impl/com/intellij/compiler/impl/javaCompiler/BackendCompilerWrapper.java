@@ -9,7 +9,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.compiler.*;
 import com.intellij.compiler.classParsing.AnnotationConstantValue;
 import com.intellij.compiler.classParsing.MethodInfo;
-import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.make.*;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
@@ -54,7 +53,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class BackendCompilerWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.BackendCompilerWrapper");
@@ -145,7 +147,7 @@ public class BackendCompilerWrapper {
     }
 
     // do not update caches if cancelled because there is a chance that they will be incomplete
-    CompileDriver.runInContext(myCompileContext, CompilerBundle.message("progress.updating.caches"), new ThrowableRunnable<CacheCorruptedException>(){
+    CompilerUtil.runInContext(myCompileContext, CompilerBundle.message("progress.updating.caches"), new ThrowableRunnable<CacheCorruptedException>(){
       public void run() throws CacheCorruptedException {
         ProgressIndicator indicator = myCompileContext.getProgressIndicator();
         myCompileContext.getDependencyCache().update(indicator);
@@ -203,25 +205,31 @@ public class BackendCompilerWrapper {
   private void compileModules(final Map<Module, List<VirtualFile>> moduleToFilesMap) throws CompilerException {
     final List<ModuleChunk> chunks = getModuleChunks(moduleToFilesMap);
     List<VirtualFile> files = ContainerUtil.concat(moduleToFilesMap.values());
-    LOG.debug("------ Make started. Files to compile: " + files.size() + " " + StringUtil.first(files.toString(), 500, true));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("------ Make started. Files to compile: " + files.size() + " " + StringUtil.first(files.toString(), 500, true));
+    }
     myProcessedFilesCount = 0;
     myTotalFilesToCompile = files.size();
 
-    long start = System.currentTimeMillis();
+    final long start = System.currentTimeMillis();
     for (final ModuleChunk chunk : chunks) {
       try {
         boolean success = compileChunk(chunk);
-        if (!success) return;
+        if (!success) {
+          return;
+        }
       }
       catch (IOException e) {
         throw new CompilerException(e.getMessage(), e);
       }
     }
 
-    long end = System.currentTimeMillis();
-    String time = (end - start)/1000/60 + "m" + ((end - start) % 60000)/1000 + "s";
-    BackendCompiler compiler = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject)).getDefaultCompiler();
-    LOG.debug("Compilation took " + time + "; for " + compiler.getPresentableName() + ". ");
+    if (LOG.isDebugEnabled()) {
+      final long end = System.currentTimeMillis();
+      final String time = (end - start)/1000/60 + "m" + ((end - start) % 60000)/1000 + "s";
+      BackendCompiler compiler = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject)).getDefaultCompiler();
+      LOG.debug("Compilation took " + time + "; for " + compiler.getPresentableName() + ". ");
+    }
   }
 
   private boolean compileChunk(ModuleChunk chunk) throws IOException {
@@ -677,7 +685,7 @@ public class BackendCompilerWrapper {
         }
       }
     });
-    CompilerUtil.refreshIOFilesInterruptibly(myCompileContext, chunk.myFilesToRefresh, "Refreshing moved files");
+    CompilerUtil.refreshIOFiles(chunk.myFilesToRefresh);
     chunk.myFileNameToSourceMap.clear(); // clear the map before the next use
     chunk.myFilesToRefresh.clear();
   }

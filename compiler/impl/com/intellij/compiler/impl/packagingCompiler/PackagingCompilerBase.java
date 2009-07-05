@@ -1,6 +1,5 @@
 package com.intellij.compiler.impl.packagingCompiler;
 
-import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
@@ -115,7 +114,7 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
     final List<PackagingProcessingItem> processedItems = new ArrayList<PackagingProcessingItem>();
     final Set<String> writtenPaths = createPathsHashSet();
     final Ref<Boolean> built = Ref.create(false);
-    CompileDriver.runInContext(context, "Copying files", new ThrowableRunnable<RuntimeException>() {
+    CompilerUtil.runInContext(context, "Copying files", new ThrowableRunnable<RuntimeException>() {
       public void run() throws RuntimeException {
         built.set(doBuild(context, items, processedItems, writtenPaths, deletedJars));
       }
@@ -312,7 +311,9 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
 
   protected Set<String> deleteFiles(final Project project, final List<String> paths) {
     final THashSet<String> deletedJars = new THashSet<String>();
-    LOG.debug("Deleting outdated files...");
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Deleting outdated files...");
+    }
     List<File> filesToRefresh = new ArrayList<File>();
     for (String fullPath : paths) {
       int end = fullPath.indexOf(JarFileSystem.JAR_SEPARATOR);
