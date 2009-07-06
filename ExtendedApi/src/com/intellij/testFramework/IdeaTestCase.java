@@ -1,6 +1,5 @@
 package com.intellij.testFramework;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -12,10 +11,6 @@ import org.jetbrains.annotations.NonNls;
  * @author mike
  */
 @NonNls public abstract class IdeaTestCase extends PlatformTestCase {
-  static {
-    Logger.setFactory(TestLoggerFactory.getInstance());
-  }
-
   public final JavaPsiFacadeEx getJavaFacade() {
     return JavaPsiFacadeEx.getInstanceEx(myProject);
   }

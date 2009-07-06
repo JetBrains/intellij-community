@@ -85,6 +85,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private static final String ourOriginalTempDir = System.getProperty("java.io.tmpdir");
   private static int ourTestCount = 0;
 
+  static {
+    Logger.setFactory(TestLoggerFactory.getInstance());
+  }
+
   protected static long getTimeRequired() {
     return DEFAULT_TEST_TIME;
   }
