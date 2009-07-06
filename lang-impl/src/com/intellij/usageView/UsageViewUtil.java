@@ -46,7 +46,7 @@ public class UsageViewUtil {
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewTypeLocation.INSTANCE);
   }
 
-  public static String getDescriptiveName(final PsiElement psiElement) {
+  public static String getDescriptiveName(@NotNull PsiElement psiElement) {
     LOG.assertTrue(psiElement.isValid());
 
     if (psiElement instanceof PsiMetaOwner) {

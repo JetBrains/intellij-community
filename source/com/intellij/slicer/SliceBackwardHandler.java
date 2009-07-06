@@ -30,16 +30,12 @@ public class SliceBackwardHandler implements CodeInsightActionHandler {
   private static void slice(final PsiElement expression) {
     final Project project = expression.getProject();
 
-
     SliceManager sliceManager = SliceManager.getInstance(project);
     sliceManager.slice(expression);
   }
 
   @Nullable
   public static PsiElement getExpressionAtCaret(final Editor editor, final PsiFile file) {
-    //PsiElement element = BaseRefactoringAction.getElementAtCaret(editor, file);
-    //PsiElement parent = findParentElement(element);
-    //if (parent != null) return parent;
     int offset = TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
     if (offset != 0) return findParentElement(file.findElementAt(offset));
     return null;

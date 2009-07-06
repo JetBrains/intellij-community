@@ -14,13 +14,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiParameter;
+import com.intellij.psi.*;
+import com.intellij.refactoring.util.RefactoringDescriptionLocation;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class SliceManager {
@@ -47,7 +45,7 @@ public class SliceManager {
     });
   }
 
-  public void slice(PsiElement element) {
+  public void slice(@NotNull PsiElement element) {
     final SliceToolwindowSettings sliceToolwindowSettings = SliceToolwindowSettings.getInstance(myProject);
     SliceUsage usage = createSliceUsage(element);
     final Content[] myContent = new Content[1];
@@ -72,9 +70,12 @@ public class SliceManager {
         sliceToolwindowSettings.setPreview(preview);
       }
     };
-    String title = UsageViewUtil.getDescriptiveName(element);
-    if (StringUtil.isEmpty(title)) title = element.getText();
-    title = StringUtil.first(title, 20, true);
+
+    PsiElement elementToSlice = element;
+    if (element instanceof PsiReferenceExpression) elementToSlice = ((PsiReferenceExpression)element).resolve();
+    if (elementToSlice == null) elementToSlice = element;
+    String title = "<html>"+ElementDescriptionUtil.getElementDescription(elementToSlice, RefactoringDescriptionLocation.WITHOUT_PARENT)+"</html>";
+    title = StringUtil.first(title, 100, true);
     myContent[0] = myContentManager.getFactory().createContent(slicePanel, title, true);
     myContentManager.addContent(myContent[0]);
     myContentManager.setSelectedContent(myContent[0]);
