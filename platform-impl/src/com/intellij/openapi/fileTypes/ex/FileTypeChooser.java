@@ -1,7 +1,10 @@
 package com.intellij.openapi.fileTypes.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.FileTypesBundle;
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
@@ -147,5 +150,10 @@ public class FileTypeChooser extends DialogWrapper{
       finalPattern = "*." + pattern;
     }
     return finalPattern;
+  }
+
+  @Override
+  protected String getHelpId() {
+    return "reference.dialogs.register.association";
   }
 }
