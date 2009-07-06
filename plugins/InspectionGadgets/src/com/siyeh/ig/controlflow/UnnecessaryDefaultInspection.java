@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,13 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.InitializationUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class UnnecessaryDefaultInspection extends BaseInspection {
 
@@ -45,65 +48,92 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
         @Override public void visitSwitchStatement(
                 @NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
-            if (!switchStatementContainsUnnecessaryDefault(statement)) {
+            final PsiSwitchLabelStatement defaultStatement =
+                    retrieveUnnecessaryDefault(statement);
+            if (defaultStatement == null) {
                 return;
             }
-            final PsiCodeBlock body = statement.getBody();
-            if (body == null) {
-                return;
-            }
-            final PsiStatement[] statements = body.getStatements();
-            for (int i = statements.length - 1; i >= 0; i--) {
-                final PsiStatement child = statements[i];
-                if (child instanceof PsiSwitchLabelStatement) {
-                    final PsiSwitchLabelStatement label =
-                            (PsiSwitchLabelStatement)child;
-                    if (label.isDefaultCase()) {
-                        registerStatementError(label);
-                    }
+            PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(
+                    defaultStatement, PsiStatement.class);
+            while (nextStatement != null &&
+                    !(nextStatement instanceof PsiBreakStatement) &&
+                    !(nextStatement instanceof PsiSwitchLabelStatement)) {
+                if (isStatementNeededForInitializationOfVariable(statement,
+                        nextStatement)) {
+                    return;
                 }
+                nextStatement = PsiTreeUtil.getNextSiblingOfType(
+                        nextStatement, PsiStatement.class);
             }
+            registerStatementError(defaultStatement);
         }
 
-        private static boolean switchStatementContainsUnnecessaryDefault(
+        private static boolean isStatementNeededForInitializationOfVariable(
+                PsiSwitchStatement switchStatement, PsiStatement statement) {
+            if (!(statement instanceof PsiExpressionStatement)) {
+                return false;
+            }
+            final PsiExpressionStatement expressionStatement =
+                    (PsiExpressionStatement)statement;
+            final PsiExpression expression =
+                    expressionStatement.getExpression();
+            if (!(expression instanceof PsiAssignmentExpression)) {
+                return false;
+            }
+            final PsiAssignmentExpression assignmentExpression =
+                    (PsiAssignmentExpression)expression;
+            final PsiExpression lhs = assignmentExpression.getLExpression();
+            if (!(lhs instanceof PsiReferenceExpression)) {
+                return false;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression)lhs;
+            final PsiElement target = referenceExpression.resolve();
+            if (!(target instanceof PsiLocalVariable)) {
+                return false;
+            }
+            final PsiLocalVariable variable = (PsiLocalVariable)target;
+            return InitializationUtils.switchStatementAssignsVariableOrFails(
+                    switchStatement, variable, true);
+        }
+
+        @Nullable
+        private static PsiSwitchLabelStatement retrieveUnnecessaryDefault(
                 PsiSwitchStatement statement) {
             final PsiExpression expression = statement.getExpression();
             if (expression == null) {
-                return false;
+                return null;
             }
             final PsiType type = expression.getType();
-            if (type == null) {
-                return false;
-            }
             if (!(type instanceof PsiClassType)) {
-                return false;
+                return null;
             }
-            final PsiClass aClass = ((PsiClassType)type).resolve();
-            if (aClass == null) {
-                return false;
-            }
-            if (!aClass.isEnum()) {
-                return false;
+            final PsiClassType classType = (PsiClassType)type;
+            final PsiClass aClass = classType.resolve();
+            if (aClass == null || !aClass.isEnum()) {
+                return null;
             }
             final PsiCodeBlock body = statement.getBody();
             if (body == null) {
-                return false;
+                return null;
             }
             final PsiStatement[] statements = body.getStatements();
-            boolean containsDefault = false;
             int numCases = 0;
+            PsiSwitchLabelStatement result = null;
             for (final PsiStatement child : statements) {
-                if (child instanceof PsiSwitchLabelStatement) {
-                    if (((PsiSwitchLabelStatement)child).isDefaultCase()) {
-                        containsDefault = true;
-                    }
-                    else {
-                        numCases++;
-                    }
+                if (!(child instanceof PsiSwitchLabelStatement)) {
+                    continue;
+                }
+                final PsiSwitchLabelStatement labelStatement =
+                        (PsiSwitchLabelStatement)child;
+                if (labelStatement.isDefaultCase()) {
+                    result = labelStatement;
+                } else {
+                    numCases++;
                 }
             }
-            if (!containsDefault) {
-                return false;
+            if (result == null) {
+                return null;
             }
             final PsiField[] fields = aClass.getFields();
             int numEnums = 0;
@@ -113,7 +143,10 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
                     numEnums++;
                 }
             }
-            return numEnums == numCases;
+            if (numEnums != numCases) {
+                return null;
+            }
+            return result;
         }
     }
 }

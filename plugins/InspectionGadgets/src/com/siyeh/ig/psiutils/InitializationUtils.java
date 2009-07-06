@@ -208,6 +208,14 @@ public class InitializationUtils{
         }
     }
 
+    public static boolean switchStatementAssignsVariableOrFails(
+            @NotNull PsiSwitchStatement switchStatement,
+            @NotNull PsiVariable variable,
+            boolean strict) {
+        return switchStatementAssignsVariableOrFails(switchStatement, variable,
+                new HashSet(), strict);
+    }
+
     private static boolean switchStatementAssignsVariableOrFails(
             @NotNull PsiSwitchStatement switchStatement,
             @NotNull PsiVariable variable,
