@@ -1,11 +1,9 @@
 package com.intellij.slicer;
 
-import com.intellij.codeInspection.dataFlow.RunnerResult;
-import com.intellij.codeInspection.dataFlow.ValuableDataFlowRunner;
+import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
@@ -13,11 +11,9 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -41,24 +37,15 @@ public class SliceUtil {
       PsiReferenceExpression ref = (PsiReferenceExpression)expression;
       PsiElement resolved = ref.resolve();
       if (!(resolved instanceof PsiVariable)) return true;
-
-      PsiCodeBlock codeBlock;
-      PsiElement element = expression;
-      while ((codeBlock = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class)) != null) {
-        PsiAnonymousClass anon = PsiTreeUtil.getParentOfType(codeBlock, PsiAnonymousClass.class);
-        if (anon == null) break;
-        element = anon;
+      final PsiVariable variable = (PsiVariable)resolved;
+      final Set<PsiExpression> expressions = new THashSet<PsiExpression>(DfaUtil.getCachedVariableValues(variable, ref));
+      if (variable.hasModifierProperty(PsiModifier.FINAL)) {
+        PsiExpression initializer = variable.getInitializer();
+        if (initializer != null) expressions.add(initializer);
       }
-      if (codeBlock != null) {
-        PsiVariable variable = (PsiVariable)resolved;
-        Set<PsiExpression> expressions = new THashSet<PsiExpression>(getExpressionsAssignedToVariable(ref, variable, codeBlock));
-        if (variable.hasModifierProperty(PsiModifier.FINAL)) {
-          PsiExpression initializer = variable.getInitializer();
-          if (initializer != null) expressions.add(initializer);
-        }
+      if (!expressions.isEmpty()) {
         if (!processFlownFromExpressions(expressions, uniqueProcessor, parent)) return false;
       }
-
       if (resolved instanceof PsiField) {
         return processFieldUsages((PsiField)resolved, processor, parent);
       }
@@ -87,15 +74,6 @@ public class SliceUtil {
       return simplify(((PsiTypeCastExpression)expression).getOperand());
     }
     return expression;
-  }
-
-  private static Collection<PsiExpression> getExpressionsAssignedToVariable(@NotNull PsiReferenceExpression expression, @NotNull PsiVariable variable,
-                                                                            @NotNull PsiCodeBlock containingMethod) {
-    ValuableDataFlowRunner runner = new ValuableDataFlowRunner(expression);
-    assert PsiTreeUtil.isAncestor(containingMethod, expression, true);
-    if (runner.analyzeMethod(containingMethod, expression) != RunnerResult.OK) return Collections.emptyList();
-
-    return runner.getPossibleVariableValues(variable);
   }
 
   private static boolean processFlownFromExpressions(final Collection<PsiExpression> expressions, final Processor<SliceUsage> processor,
