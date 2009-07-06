@@ -141,6 +141,7 @@ public class PaletteManager implements ProjectComponent {
     myQueue.cancelAllUpdates();
     myQueue.queue(new Update("update") {
       public void run() {
+        if (myPaletteWindow == null) return;
         myPaletteWindow.refreshPaletteIfChanged(selectedFile);
         if (myPaletteWindow.getActiveGroupCount() == 0) {
           myPaletteToolWindow.setAvailable(false, null);
