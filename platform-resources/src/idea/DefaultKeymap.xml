@@ -920,6 +920,10 @@
     <action id="UiDebugger">
       <keyboard-shortcut first-keystroke="ctrl alt SLASH"/>
     </action>
+    <action id="ToolWindowSwitcher">
+      <keyboard-shortcut first-keystroke="ctrl TAB"/>
+      <keyboard-shortcut first-keystroke="ctrl shift TAB"/>
+    </action>
   </keymap>
 
   <!-- ############################################################################## -->
