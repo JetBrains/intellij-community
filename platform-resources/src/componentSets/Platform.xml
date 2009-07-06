@@ -108,6 +108,11 @@
     <component>
       <implementation-class>com.intellij.notification.impl.NotificationsManager</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.ide.EvaluationSupport</implementation-class>
+      <headless-implementation-class/>
+    </component>
   </application-components>
 
   <project-components>
