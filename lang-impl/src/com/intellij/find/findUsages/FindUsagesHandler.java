@@ -60,7 +60,7 @@ public abstract class FindUsagesHandler {
   }
 
   public static FindUsagesOptions createFindUsagesOptions(final Project project) {
-    FindUsagesOptions findUsagesOptions = new FindUsagesOptions(project);
+    FindUsagesOptions findUsagesOptions = new FindUsagesOptions(project, null);
     findUsagesOptions.isUsages = true;
     findUsagesOptions.isIncludeOverloadUsages = false;
     findUsagesOptions.isIncludeSubpackages = true;

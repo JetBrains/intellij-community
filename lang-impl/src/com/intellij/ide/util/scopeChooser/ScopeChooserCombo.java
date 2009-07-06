@@ -140,7 +140,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
 
 
   private void createPredefinedScopeDescriptors(DefaultComboBoxModel model) {
-    for (SearchScope scope : getPredefinedScopes(myProject, mySuggestSearchInLibs, myPrevSearchFiles, true, true)) {
+    for (SearchScope scope : getPredefinedScopes(myProject, DataManager.getInstance().getDataContext(), mySuggestSearchInLibs, myPrevSearchFiles, true, true)) {
       model.addElement(new ScopeDescriptor(scope));
     }
     for (ScopeDescriptorProvider provider : Extensions.getExtensions(ScopeDescriptorProvider.EP_NAME)) {
@@ -150,8 +150,12 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     }
   }
 
-  public static List<SearchScope> getPredefinedScopes(final Project project, boolean suggestSearchInLibs, boolean prevSearchFiles,
-                                                      boolean currentSelection, boolean usageView) {
+  public static List<SearchScope> getPredefinedScopes(@NotNull final Project project,
+                                                      @Nullable final DataContext dataContext,
+                                                      boolean suggestSearchInLibs,
+                                                      boolean prevSearchFiles,
+                                                      boolean currentSelection,
+                                                      boolean usageView) {
     ArrayList<SearchScope> result = new ArrayList<SearchScope>();
     result.add(GlobalSearchScope.projectScope(project));
     if (suggestSearchInLibs) {
@@ -160,24 +164,24 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     result.add(GlobalSearchScope.projectProductionScope(project));
     result.add(GlobalSearchScope.projectTestScope(project));
 
-    final DataContext dataContext = DataManager.getInstance().getDataContext();
-    
-    PsiElement dataContextElement = LangDataKeys.PSI_FILE.getData(dataContext);
+    if (dataContext != null) {
+      PsiElement dataContextElement = LangDataKeys.PSI_FILE.getData(dataContext);
 
-    if (dataContextElement == null) {
-      dataContextElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-    }
+      if (dataContextElement == null) {
+        dataContextElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      }
 
-    if (dataContextElement != null) {
-      Module module = ModuleUtil.findModuleForPsiElement(dataContextElement);
-      if (module == null) {
-        module = LangDataKeys.MODULE.getData(dataContext);
-      }
-      if (module != null) {
-        result.add(module.getModuleScope());
-      }
-      if (dataContextElement.getContainingFile() != null) {
-        result.add(new LocalSearchScope(dataContextElement, IdeBundle.message("scope.current.file")));
+      if (dataContextElement != null) {
+        Module module = ModuleUtil.findModuleForPsiElement(dataContextElement);
+        if (module == null) {
+          module = LangDataKeys.MODULE.getData(dataContext);
+        }
+        if (module != null) {
+          result.add(module.getModuleScope());
+        }
+        if (dataContextElement.getContainingFile() != null) {
+          result.add(new LocalSearchScope(dataContextElement, IdeBundle.message("scope.current.file")));
+        }
       }
     }
 
