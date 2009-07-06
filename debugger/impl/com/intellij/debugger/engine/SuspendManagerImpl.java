@@ -120,6 +120,7 @@ public class SuspendManagerImpl implements SuspendManager {
             break;
           }
           catch (ObjectCollectedException e) {
+            // according to error reports set.resume() may throw this if one of the threads has been collected
             LOG.info(e);
             continue;
           }
