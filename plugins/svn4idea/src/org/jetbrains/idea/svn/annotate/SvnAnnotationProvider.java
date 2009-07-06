@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
@@ -84,8 +85,7 @@ public class SvnAnnotationProvider implements AnnotationProvider {
           }
 
           // ignore mime type=true : IDEA-19562
-          client.doAnnotate(ioFile, SVNRevision.UNDEFINED,
-                            SVNRevision.create(0), endRevision, true, true, new ISVNAnnotateHandler() {
+          final ISVNAnnotateHandler annotateHandler = new ISVNAnnotateHandler() {
             public void handleLine(Date date, long revision, String author, String line) {
               if (progress != null) {
                 progress.checkCanceled();
@@ -108,13 +108,14 @@ public class SvnAnnotationProvider implements AnnotationProvider {
               if ((mergedDate != null) && (revision > mergedRevision)) {
                 // !!! merged date = date of merge, i.e. date -> date of original change etc.
                 result.appendLineInfo(date, revision, author, mergedDate, mergedRevision, mergedAuthor);
-              } else {
+              }
+              else {
                 result.appendLineInfo(date, revision, author);
               }
             }
 
             public boolean handleRevision(final Date date, final long revision, final String author, final File contents)
-                throws SVNException {
+              throws SVNException {
               if (progress != null) {
                 progress.checkCanceled();
               }
@@ -123,11 +124,14 @@ public class SvnAnnotationProvider implements AnnotationProvider {
             }
 
             public void handleEOF() {
-              
-            }
-          }, null);
 
-          client.doLog(new File[]{ioFile}, endRevision, SVNRevision.create(1), SVNRevision.UNDEFINED, false, false, true, 0, null,
+            }
+          };
+
+          final boolean supportsMergeinfo = SvnUtil.checkRepositoryVersion15(myVcs, url);
+          client.doAnnotate(ioFile, SVNRevision.UNDEFINED, SVNRevision.create(0), endRevision, true, supportsMergeinfo, annotateHandler, null);
+
+          client.doLog(new File[]{ioFile}, endRevision, SVNRevision.create(1), SVNRevision.UNDEFINED, false, false, supportsMergeinfo, 0, null,
                        new ISVNLogEntryHandler() {
                          public void handleLogEntry(SVNLogEntry logEntry) {
                            if (progress != null) {
