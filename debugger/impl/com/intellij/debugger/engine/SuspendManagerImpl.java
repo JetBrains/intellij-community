@@ -119,6 +119,10 @@ public class SuspendManagerImpl implements SuspendManager {
             set.resume();
             break;
           }
+          catch (ObjectCollectedException e) {
+            LOG.info(e);
+            continue;
+          }
           catch (InternalException e) {
             //InternalException 13 means that there are running threads that we are trying to resume
             //On MacOS it happened that native thread didn't stop while some java thread reached breakpoint
