@@ -111,7 +111,6 @@ public class DynamicRegexReplaceableByCompiledPatternInspection
                             "private static final Pattern PATTERN = " +
                                     "Pattern.compile(");
             final int expressionsLength = expressions.length;
-            System.out.println("expressionsLength: " + expressionsLength);
             if (expressionsLength > 0) {
                 fieldText.append(expressions[0].getText());
             }
