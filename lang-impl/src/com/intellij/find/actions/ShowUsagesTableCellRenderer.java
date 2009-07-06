@@ -56,13 +56,17 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
       if (column == 1) {
         textChunks.setIcon(presentation.getIcon());
         if (text.length != 0) {
-          textChunks.append(text[0].getText(), SimpleTextAttributes.fromTextAttributes(text[0].getAttributes()));
+          SimpleTextAttributes attributes = SimpleTextAttributes.fromTextAttributes(text[0].getAttributes());
+          if (isSelected) attributes = attributes.derive(-1,null,UIUtil.getListSelectionBackground(),null);
+          textChunks.append(text[0].getText(), attributes);
         }
       }
       else if (column == 2) {
         for (int i = 1; i < text.length; i++) {
           TextChunk textChunk = text[i];
-          textChunks.append(textChunk.getText(), SimpleTextAttributes.fromTextAttributes(textChunk.getAttributes()));
+          SimpleTextAttributes attributes = SimpleTextAttributes.fromTextAttributes(textChunk.getAttributes());
+          if (isSelected) attributes = attributes.derive(-1,null,UIUtil.getListSelectionBackground(),null);
+          textChunks.append(textChunk.getText(), attributes);
         }
       }
       else {

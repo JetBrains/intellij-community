@@ -172,6 +172,7 @@ public final class SimpleTextAttributes {
   }
 
   public SimpleTextAttributes derive(int style, @Nullable Color fg, @Nullable Color bg, @Nullable Color wave) {
-    return new SimpleTextAttributes(bg != null ? bg : getBgColor(), fg != null ? fg : getFgColor(), wave != null ? wave : getWaveColor(), style != -1 ? style : getStyle());   
+    return new SimpleTextAttributes(bg != null ? bg : getBgColor(), fg != null ? fg : getFgColor(), wave != null ? wave : getWaveColor(),
+                                    style == -1 ? getStyle() : style);
   }
 }
