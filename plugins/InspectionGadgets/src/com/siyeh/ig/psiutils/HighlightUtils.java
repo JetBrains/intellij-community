@@ -15,7 +15,14 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.MacroCallNode;
+import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.openapi.application.Application;
@@ -27,18 +34,21 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiReference;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
 
-public class HighlightUtil {
+public class HighlightUtils {
 
-    private HighlightUtil() {
+    private HighlightUtils() {
     }
 
     public static void highlightElement(PsiElement element) {
@@ -95,5 +105,35 @@ public class HighlightUtil {
                 findmanager.setFindNextModel(findmodel);
             }
         });
+    }
+
+    public static void showRenameTemplate(PsiElement context,
+                                           PsiNameIdentifierOwner element,
+                                           PsiReference... references) {
+        context = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(
+                context);
+        final Project project = context.getProject();
+        final FileEditorManager fileEditorManager =
+                FileEditorManager.getInstance(project);
+        final Editor editor = fileEditorManager.getSelectedTextEditor();
+        if (editor == null) {
+            return;
+        }
+        final TemplateBuilder builder = new TemplateBuilder(context);
+        final Expression macroCallNode = new MacroCallNode(
+                new SuggestVariableNameMacro());
+        final PsiElement identifier = element.getNameIdentifier();
+        builder.replaceElement(identifier, "PATTERN", macroCallNode, true);
+        for (PsiReference reference : references) {
+            builder.replaceElement(reference, "PATTERN", "PATTERN",
+                    false);
+        }
+        final Template template = builder.buildInlineTemplate();
+        final TextRange textRange = context.getTextRange();
+        final int startOffset = textRange.getStartOffset();
+        editor.getCaretModel().moveToOffset(startOffset);
+        final TemplateManager templateManager =
+                TemplateManager.getInstance(project);
+        templateManager.startTemplate(editor, template);
     }
 }

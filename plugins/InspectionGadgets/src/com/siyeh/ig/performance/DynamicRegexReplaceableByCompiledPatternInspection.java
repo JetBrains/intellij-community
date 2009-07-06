@@ -16,17 +16,8 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.template.Expression;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.MacroCallNode;
-import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -35,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.HighlightUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -157,38 +149,8 @@ public class DynamicRegexReplaceableByCompiledPatternInspection
             final PsiReferenceExpression reference = (PsiReferenceExpression)
                     newMethodCallExpression.getMethodExpression()
                             .getQualifierExpression();
-            showRenameTemplate(aClass, (PsiNameIdentifierOwner) field,
+            HighlightUtils.showRenameTemplate(aClass, (PsiNameIdentifierOwner) field,
                     reference);
-        }
-
-        private static void showRenameTemplate(PsiElement context,
-                                               PsiNameIdentifierOwner element,
-                                               PsiReference... references) {
-            //context = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(
-            //        context);
-            final Project project = context.getProject();
-            final FileEditorManager fileEditorManager =
-                    FileEditorManager.getInstance(project);
-            final Editor editor = fileEditorManager.getSelectedTextEditor();
-            if (editor == null) {
-                return;
-            }
-            final TemplateBuilder builder = new TemplateBuilder(context);
-            final Expression macroCallNode = new MacroCallNode(
-                    new SuggestVariableNameMacro());
-            final PsiElement identifier = element.getNameIdentifier();
-            builder.replaceElement(identifier, "PATTERN", macroCallNode, true);
-            for (PsiReference reference : references) {
-                builder.replaceElement(reference, "PATTERN", "PATTERN",
-                        false);
-            }
-            final Template template = builder.buildInlineTemplate();
-            final TextRange textRange = context.getTextRange();
-            final int startOffset = textRange.getStartOffset();
-            editor.getCaretModel().moveToOffset(startOffset);
-            final TemplateManager templateManager =
-                    TemplateManager.getInstance(project);
-            templateManager.startTemplate(editor, template);
         }
     }
 

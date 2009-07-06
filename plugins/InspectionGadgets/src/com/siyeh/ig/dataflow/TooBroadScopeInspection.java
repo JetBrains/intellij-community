@@ -31,7 +31,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.HighlightUtil;
+import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
@@ -179,7 +179,7 @@ public class TooBroadScopeInspection extends BaseInspection
             removeOldVariable(variable);
             if (isOnTheFly())
             {
-                HighlightUtil.highlightElement(newDeclaration);
+                HighlightUtils.highlightElement(newDeclaration);
             }
         }
 

@@ -33,7 +33,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.HighlightUtil;
+import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -123,7 +123,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
             if (isOnTheFly()) {
                 final Collection<PsiElement> shortenedElements =
                         qualificationRemover.getShortenedElements();
-                HighlightUtil.highlightElements(shortenedElements);
+                HighlightUtils.highlightElements(shortenedElements);
                 showStatusMessage(file.getProject(), shortenedElements.size());
             }
         }

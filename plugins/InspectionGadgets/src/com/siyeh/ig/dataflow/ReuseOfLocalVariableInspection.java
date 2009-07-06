@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -33,27 +31,33 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ReuseOfLocalVariableInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "reuse.of.local.variable.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "reuse.of.local.variable.problem.descriptor");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos){
         return new ReuseOfLocalVariableFix();
     }
@@ -67,6 +71,7 @@ public class ReuseOfLocalVariableInspection
                     "reuse.of.local.variable.split.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiReferenceExpression referenceExpression =
@@ -86,23 +91,9 @@ public class ReuseOfLocalVariableInspection
                     JavaCodeStyleManager.getInstance(project);
             final PsiCodeBlock variableBlock =
                     PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-            final SuggestedNameInfo suggestions =
-                    codeStyleManager.suggestVariableName(
-                            VariableKind.LOCAL_VARIABLE,
-                            originalVariableName,
-                            lExpression,
-                            type);
-            final String[] names = suggestions.names;
-            @NonNls final String baseName;
-            if(names != null && names.length > 0){
-                baseName = names[0];
-            } else{
-                baseName = "value";
-            }
             final String newVariableName =
-                    codeStyleManager.suggestUniqueVariableName(baseName,
-                                                               variableBlock,
-                                                               false);
+                    codeStyleManager.suggestUniqueVariableName(
+                            originalVariableName, variableBlock, false);
             final PsiCodeBlock codeBlock =
                     PsiTreeUtil.getParentOfType(assignmentStatement,
                             PsiCodeBlock.class);
@@ -112,29 +103,58 @@ public class ReuseOfLocalVariableInspection
             } else {
                 scope = variable.getUseScope();
             }
-            final Query<PsiReference> query = ReferencesSearch.search(variable,
-                    scope, false);
+            final Query<PsiReference> query =
+                    ReferencesSearch.search(variable, scope, false);
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiElementFactory factory = psiFacade.getElementFactory();
+            List<PsiReferenceExpression> collectedReferences = new ArrayList();
             for (PsiReference reference : query){
                 final PsiElement referenceElement = reference.getElement();
-                if(referenceElement != null){
-                    final TextRange textRange =
-                            assignmentStatement.getTextRange();
-                    if(referenceElement.getTextOffset() >
-                       textRange.getEndOffset()){
-                        replaceExpression((PsiExpression) referenceElement,
-                                          newVariableName);
-                    }
+                if (referenceElement == null) {
+                    continue;
                 }
+                final TextRange textRange = assignmentStatement.getTextRange();
+                if (referenceElement.getTextOffset() <=
+                        textRange.getEndOffset()) {
+                    continue;
+                }
+                final PsiExpression newExpression =
+                        factory.createExpressionFromText(newVariableName, referenceElement);
+                final PsiReferenceExpression replacementExpression =
+                        (PsiReferenceExpression)
+                                referenceElement.replace(newExpression);
+                collectedReferences.add(replacementExpression);
             }
             final PsiExpression rhs = assignment.getRExpression();
-            assert rhs != null;
-            @NonNls final String newStatement =
+            final String rhsText;
+            if (rhs == null) {
+                rhsText = "";
+            } else {
+                rhsText = rhs.getText();
+            }
+            @NonNls final String newStatementText =
                     type.getCanonicalText() + ' ' + newVariableName +
-                            " =  " + rhs.getText() + ';';
-            replaceStatement(assignmentStatement, newStatement);
+                            " =  " + rhsText + ';';
+
+            final PsiStatement newStatement =
+                    factory.createStatementFromText(newStatementText,
+                            assignmentStatement);
+            final PsiDeclarationStatement declarationStatement =
+                    (PsiDeclarationStatement)
+                            assignmentStatement.replace(newStatement);
+            final PsiElement[] elements =
+                    declarationStatement.getDeclaredElements();
+            final PsiLocalVariable newVariable = (PsiLocalVariable) elements[0];
+            final PsiElement context = declarationStatement.getParent();
+            HighlightUtils.showRenameTemplate(context, newVariable,
+                    collectedReferences.toArray(
+                            new PsiReferenceExpression[
+                                    collectedReferences.size()]));
+
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new ReuseOfLocalVariableVisitor();
     }
@@ -145,9 +165,6 @@ public class ReuseOfLocalVariableInspection
         @Override public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression assignment){
             super.visitAssignmentExpression(assignment);
-            if(!WellFormednessUtils.isWellFormed(assignment)){
-                return;
-            }
             final PsiElement assignmentParent = assignment.getParent();
             if(!(assignmentParent instanceof PsiExpressionStatement)){
                 return;
@@ -156,8 +173,9 @@ public class ReuseOfLocalVariableInspection
             if(!(lhs instanceof PsiReferenceExpression)){
                 return;
             }
-            final PsiReferenceExpression ref = (PsiReferenceExpression) lhs;
-            final PsiElement referent = ref.resolve();
+            final PsiReferenceExpression reference =
+                    (PsiReferenceExpression) lhs;
+            final PsiElement referent = reference.resolve();
             if(!(referent instanceof PsiLocalVariable)){
                 return;
             }
@@ -173,10 +191,8 @@ public class ReuseOfLocalVariableInspection
                 return;
             }
             final PsiExpression rhs = assignment.getRExpression();
-            if(rhs == null){
-                return;
-            }
-            if(VariableAccessUtils.variableIsUsed(variable, rhs)){
+            if(rhs != null &&
+                    VariableAccessUtils.variableIsUsed(variable, rhs)){
                 return;
             }
             final PsiCodeBlock variableBlock =
