@@ -17,6 +17,7 @@
     <orderEntry type="library" exported="" name="commons-codec" level="project" />
     <orderEntry type="module" module-name="platform-resources_eng" exported="" />
     <orderEntry type="library" name="OroMatcher" level="project" />
+    <orderEntry type="module" module-name="icons" />
   </component>
 </module>
 
