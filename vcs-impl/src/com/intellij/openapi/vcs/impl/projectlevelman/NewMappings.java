@@ -83,6 +83,9 @@ public class NewMappings {
   }
 
   private void keepActiveVcs(final Runnable runnable) {
+    // ensure initialized - outside the lock
+    myAllVcsesI.isEmpty();
+    
     final MyVcsActivator activator;
     synchronized (myLock) {
       activator = new MyVcsActivator(new HashSet<String>(myVcsToPaths.keySet()));

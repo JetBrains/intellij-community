@@ -118,7 +118,6 @@ public class ModuleVcsDetector implements ProjectComponent {
       }
     }
     myVcsManager.cleanupMappings();
-    myVcsManager.updateActiveVcss();
   }
 
   private void checkRemoveVcsRoot(final Module module) {
@@ -134,7 +133,6 @@ public class ModuleVcsDetector implements ProjectComponent {
               int rc = Messages.showYesNoDialog(myProject, msg, VcsBundle.message("vcs.root.remove.title"), Messages.getQuestionIcon());
               if (rc == 0) {
                 myVcsManager.removeDirectoryMapping(mapping);
-                myVcsManager.updateActiveVcss();
               }
             }
           }, ModalityState.NON_MODAL);
