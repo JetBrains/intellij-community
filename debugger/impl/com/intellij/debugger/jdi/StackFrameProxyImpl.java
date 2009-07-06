@@ -48,6 +48,14 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         clearCaches();
         return isObsolete();
       }
+      catch (InternalException e) {
+        if (e.errorCode() == 23 /*INVALID_METHODID accoeding to JDI sources*/) {
+          myIsObsolete = Boolean.TRUE;
+        }
+        else {
+          throw e;
+        }
+      }
     }
     return myIsObsolete.booleanValue();
   }
