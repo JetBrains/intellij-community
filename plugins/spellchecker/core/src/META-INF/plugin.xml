@@ -3,7 +3,7 @@
   <description>Spell checker plugin</description>
   <version>1.0</version>
   <vendor>JetBrains</vendor>
-
+  <depends>com.intellij.modules.xml</depends>
 
   <application-components>
     <component>
