@@ -5,8 +5,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
@@ -75,6 +73,6 @@ public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAw
       visible = ((ProjectEx)project).getStateStore().getStorageScheme() != StorageScheme.DIRECTORY_BASED;
     }
 
-    presentation.setVisible(visible && ((ApplicationEx)ApplicationManager.getApplication()).isInternal());
+    presentation.setVisible(visible);
   }
 }
