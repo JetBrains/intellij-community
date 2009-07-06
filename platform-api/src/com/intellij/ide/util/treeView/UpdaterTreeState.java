@@ -182,6 +182,7 @@ public class UpdaterTreeState {
     final ActionCallback result = new ActionCallback();
 
     final Set<Object> allSelected = myUi.getSelectedElements();
+
     Set<Object> toSelect = new HashSet<Object>();
     for (Object each : adjusted.keySet()) {
       if (adjusted.get(each).value(each)) continue;

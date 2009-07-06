@@ -20,6 +20,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.containers.HashSet;
@@ -282,8 +283,9 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   protected void runOnYeildingDone(Runnable onDone) {
-    if (getTree().isShowing()) {
-      ApplicationManager.getApplication().invokeLater(onDone, ModalityState.stateForComponent(getTree()));
+    final Application app = ApplicationManager.getApplication();
+    if (getTree().isShowing() && app != null) {
+      app.invokeLater(onDone, ModalityState.stateForComponent(getTree()));
     } else {
       UIUtil.invokeLaterIfNeeded(onDone);
     }
@@ -295,6 +297,33 @@ public class AbstractTreeBuilder implements Disposable {
 
   public boolean isToYieldUpdateFor(DefaultMutableTreeNode node) {
     return true;
+  }
+
+  protected void runBackgroundLoading(final Runnable runnable) {
+    final Application app = ApplicationManager.getApplication();
+    if (app != null) {
+      app.runReadAction(new Runnable() {
+        public void run() {
+          runnable.run();
+        }
+      });
+    } else {
+      runnable.run();
+    }
+  }
+
+  protected void updateAfterLoadedInBackground(Runnable runnable) {
+    final Application app = ApplicationManager.getApplication();
+    if (app != null) {
+      if (getTree() != null && getTree().isVisible()) {
+        app.invokeLater(runnable, ModalityState.stateForComponent(getTree()));
+      }
+      else {
+        app.invokeLater(runnable);
+      }
+    } else {
+      UIUtil.invokeLaterIfNeeded(runnable);
+    }
   }
 
   public static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {
