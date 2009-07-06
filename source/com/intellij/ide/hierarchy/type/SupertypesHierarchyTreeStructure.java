@@ -6,6 +6,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructure {
 
   public SupertypesHierarchyTreeStructure(final Project project, final PsiClass aClass) {
@@ -15,14 +18,13 @@ public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructu
   protected final Object[] buildChildren(final HierarchyNodeDescriptor descriptor) {
     final PsiClass psiClass = ((TypeHierarchyNodeDescriptor)descriptor).getPsiClass();
     final PsiClass[] supers = psiClass.getSupers();
-    final int supersLength = psiClass.isInterface() && supers.length > 0 ? supers.length - 1 : supers.length;
-    final HierarchyNodeDescriptor[] descriptors = new HierarchyNodeDescriptor[supersLength];
+    final List<HierarchyNodeDescriptor> descriptors = new ArrayList<HierarchyNodeDescriptor>();
     PsiClass objectClass = JavaPsiFacade.getInstance(myProject).findClass("java.lang.Object", psiClass.getResolveScope());
-    for (int i = 0, j = 0; i < supers.length; i++) {
-      if (!psiClass.isInterface() || !supers[i].equals(objectClass)) {
-        descriptors[j++] = new TypeHierarchyNodeDescriptor(myProject, descriptor, supers[i], false);
+    for (PsiClass aSuper : supers) {
+      if (!psiClass.isInterface() || !aSuper.equals(objectClass)) {
+        descriptors.add(new TypeHierarchyNodeDescriptor(myProject, descriptor, aSuper, false));
       }
     }
-    return descriptors;
+    return descriptors.toArray(new HierarchyNodeDescriptor[descriptors.size()]);
   }
 }
