@@ -58,8 +58,9 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
             while (nextStatement != null &&
                     !(nextStatement instanceof PsiBreakStatement) &&
                     !(nextStatement instanceof PsiSwitchLabelStatement)) {
-                if (isStatementNeededForInitializationOfVariable(statement,
-                        nextStatement)) {
+                if (nextStatement instanceof PsiThrowStatement ||
+                        isStatementNeededForInitializationOfVariable(statement,
+                                nextStatement)) {
                     return;
                 }
                 nextStatement = PsiTreeUtil.getNextSiblingOfType(
