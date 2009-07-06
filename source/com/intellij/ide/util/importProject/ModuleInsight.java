@@ -471,6 +471,9 @@ public class ModuleInsight {
     catch (IOException e) {
       LOG.info(e);
     }
+    catch (InternalError e) { // indicates that zip file is somehow damaged and cannot be processed
+      LOG.info(e);
+    }
     finally {
       myProgress.popState();
     }
