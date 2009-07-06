@@ -1862,14 +1862,18 @@ public class CompileDriver {
 
   private static VirtualFile lookupVFile(final IntermediateOutputCompiler compiler, final Module module, final boolean forTestSources) {
     final File file = new File(CompilerPaths.getGenerationOutputPath(compiler, module, forTestSources));
-    final VirtualFile vFile;
-    if (file.mkdirs()) {
-      vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+
+    VirtualFile vFile = lfs.findFileByIoFile(file);
+    if (vFile != null) {
+      return vFile;
     }
-    else {
-      vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-    }
-    assert vFile != null: "Virtual file not found for " + file.getPath();
+
+    final boolean justCreated = file.mkdirs();
+    vFile = lfs.refreshAndFindFileByIoFile(file);
+
+    assert vFile != null: "Virtual file not found for " + file.getPath() + "; mkdirs() exit code is " + justCreated;
+
     return vFile;
   }
 
