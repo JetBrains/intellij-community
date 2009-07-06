@@ -36,7 +36,7 @@ public abstract class XDebuggerEditorBase {
 
   public void setText(String text) {
     saveTextInHistory(text);
-    doSetText(null);
+    doSetText(text);
   }
 
   public abstract String getText();
