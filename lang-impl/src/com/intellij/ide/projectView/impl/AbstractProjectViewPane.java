@@ -4,6 +4,7 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
@@ -497,7 +498,10 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     }
 
     public DataFlavor[] getTransferDataFlavors() {
-      return FLAVORS;
+      DataFlavor[] flavors = new DataFlavor[2];
+      flavors [0] = FLAVORS [0];
+      flavors [1] = DataFlavor.javaFileListFlavor;
+      return flavors;
     }
 
     public boolean isDataFlavorSupported(DataFlavor flavor) {
@@ -506,6 +510,10 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     }
 
     public Object getTransferData(DataFlavor flavor) {
+      if (flavor == DataFlavor.javaFileListFlavor) {
+        TransferableWrapper wrapper = (TransferableWrapper) myTransferable;
+        return PsiCopyPasteManager.asFileList(wrapper.getPsiElements());
+      }
       return myTransferable;
     }
   }

@@ -5,7 +5,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +16,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -104,6 +108,7 @@ public class PsiCopyPasteManager {
   }
 
   private static final DataFlavor ourDataFlavor;
+
   static {
     try {
       final Class<MyData> flavorClass = MyData.class;
@@ -166,7 +171,7 @@ public class PsiCopyPasteManager {
 
   public static class MyTransferable implements Transferable {
     private final MyData myDataProxy;
-    private static final DataFlavor[] DATA_FLAVOR_ARRAY = new DataFlavor[]{ourDataFlavor, DataFlavor.stringFlavor};
+    private static final DataFlavor[] DATA_FLAVOR_ARRAY = new DataFlavor[]{ourDataFlavor, DataFlavor.stringFlavor, DataFlavor.javaFileListFlavor};
 
     public MyTransferable(MyData data) {
       myDataProxy = data;
@@ -178,6 +183,9 @@ public class PsiCopyPasteManager {
       }
       if (DataFlavor.stringFlavor.equals(flavor)) {
         return getDataAsText();
+      }
+      if (DataFlavor.javaFileListFlavor.equals(flavor)) {
+        return asFileList(myDataProxy.getElements());
       }
       return null;
     }
@@ -199,12 +207,13 @@ public class PsiCopyPasteManager {
       return StringUtil.join(names, "\n");
     }
 
+
     public DataFlavor[] getTransferDataFlavors() {
       return DATA_FLAVOR_ARRAY;
     }
 
     public boolean isDataFlavorSupported(DataFlavor flavor) {
-      return flavor.equals(ourDataFlavor) || flavor.equals(DataFlavor.stringFlavor);
+      return flavor.equals(ourDataFlavor) || flavor.equals(DataFlavor.stringFlavor) || flavor.equals(DataFlavor.javaFileListFlavor);
     }
 
     public PsiElement[] getElements() {
@@ -212,4 +221,20 @@ public class PsiCopyPasteManager {
     }
   }
 
+  public static List<File> asFileList(final PsiElement[] elements) {
+    List<File> result = new ArrayList<File>();
+    for (PsiElement element : elements) {
+      final PsiFile psiFile = element.getContainingFile();
+      if (psiFile != null) {
+        VirtualFile vFile = psiFile.getVirtualFile();
+        if (vFile != null && vFile.getFileSystem() instanceof LocalFileSystem) {
+          result.add(new File(vFile.getPath()));
+        }
+      }
+    }
+    if (result.isEmpty()) {
+      return null;
+    }
+    return result;
+  }
 }
