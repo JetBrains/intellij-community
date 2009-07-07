@@ -30,11 +30,13 @@ import com.intellij.openapi.editor.impl.event.MarkupModelEvent;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TestableUi;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JScrollPane2;
@@ -69,12 +71,14 @@ import java.awt.font.TextHitInfo;
 import java.awt.im.InputMethodRequests;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -3902,6 +3906,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     public boolean importData(final JComponent comp, final Transferable t) {
+      if (isFileList(t.getTransferDataFlavors())) {
+        final EditorImpl editor = (EditorImpl)getEditor(comp);
+        openFileList(t, editor);
+        return true;
+      }
+
       final EditorImpl editor = (EditorImpl)getEditor(comp);
 
       final int caretOffset = editor.getCaretModel().getOffset();
@@ -3970,6 +3980,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
+      if (isFileList(transferFlavors)) {
+        return true;
+      }
+
       Editor editor = getEditor(comp);
       if (editor.isViewer()) return false;
 
@@ -3981,6 +3995,38 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       return false;
+    }
+
+    private boolean isFileList(DataFlavor[] transferFlavors) {
+      for (DataFlavor transferFlavor : transferFlavors) {
+        if (transferFlavor.equals(DataFlavor.javaFileListFlavor)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private void openFileList(Transferable t, EditorImpl editor) {
+      Project project = editor.getProject();
+      if (project == null) {
+        return;
+      }
+      List<File> fileList;
+      try {
+        //noinspection unchecked
+        fileList = (List<File>)t.getTransferData(DataFlavor.javaFileListFlavor);
+      }
+      catch (Exception e) {
+        return;
+      }
+      if (fileList != null) {
+        for (File file : fileList) {
+          final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+          if (vFile != null) {
+            new OpenFileDescriptor(project, vFile).navigate(true);
+          }
+        }
+      }
     }
 
     protected Transferable createTransferable(JComponent c) {
