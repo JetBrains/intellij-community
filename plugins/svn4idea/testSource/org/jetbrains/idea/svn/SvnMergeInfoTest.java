@@ -35,7 +35,6 @@ public class SvnMergeInfoTest extends SvnTestCase {
 
     myProjectLevelVcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject);
     myProjectLevelVcsManager.setDirectoryMapping(myBranchVcsRoot.getAbsolutePath(), SvnVcs.VCS_NAME);
-    myProjectLevelVcsManager.updateActiveVcss();
 
 //    AbstractVcs vcsFound = myProjectLevelVcsManager.findVcsByName(SvnVcs.VCS_NAME);
 //    Assert.assertEquals(1, myProjectLevelVcsManager.getRootsUnderVcs(vcsFound).length);
@@ -66,7 +65,7 @@ public class SvnMergeInfoTest extends SvnTestCase {
 
     // rev 3
 
-    final VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(f1);
+    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
     editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
     verify(runSvn("ci", "-m", "test", trunk.getAbsolutePath()));
@@ -108,7 +107,7 @@ public class SvnMergeInfoTest extends SvnTestCase {
     verify(runSvn("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath()));
 
     // rev 3
-    final VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(f1);
+    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
     editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
     verify(runSvn("ci", "-m", "test", trunk.getAbsolutePath()));
@@ -163,7 +162,7 @@ public class SvnMergeInfoTest extends SvnTestCase {
     verify(runSvn("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath()));
 
     // rev 3
-    final VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(f1);
+    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
     editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
     verify(runSvn("ci", "-m", "test", trunk.getAbsolutePath()));
@@ -228,7 +227,7 @@ public class SvnMergeInfoTest extends SvnTestCase {
     verify(runSvn("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath()));
 
     // rev 3
-    final VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(f1);
+    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
     editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
     verify(runSvn("ci", "-m", "test", trunk.getAbsolutePath()));
@@ -283,7 +282,7 @@ public class SvnMergeInfoTest extends SvnTestCase {
     verify(runSvn("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath()));
 
     // rev 3
-    final VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(f1);
+    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
     editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
     verify(runSvn("ci", "-m", "test", trunk.getAbsolutePath()));
@@ -359,9 +358,9 @@ public class SvnMergeInfoTest extends SvnTestCase {
     verify(runSvn("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath()));
 
     // rev 3
-    final VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(f1);
+    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
     editFileInCommand(myProject, vf, "123\n456\n123");
-    final VirtualFile vf2 = LocalFileSystem.getInstance().findFileByIoFile(f2);
+    final VirtualFile vf2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f2);
     editFileInCommand(myProject, vf2, "123\n456\n123");
     Thread.sleep(100);
     verify(runSvn("ci", "-m", "test", trunk.getAbsolutePath()));
@@ -433,7 +432,7 @@ public class SvnMergeInfoTest extends SvnTestCase {
     verify(runSvn("co", myRepoUrl + "/branch/folder/folder1", myBranchVcsRoot.getAbsolutePath()));
 
     // rev 3 : f2 changed
-    final VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(f2);
+    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f2);
     editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
     verify(runSvn("ci", "-m", "test", trunk.getAbsolutePath()));
@@ -487,7 +486,7 @@ public class SvnMergeInfoTest extends SvnTestCase {
     verify(runSvn("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath()));
 
     // rev 3
-    final VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(f1);
+    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
     editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
     verify(runSvn("ci", "-m", "test", trunk.getAbsolutePath()));

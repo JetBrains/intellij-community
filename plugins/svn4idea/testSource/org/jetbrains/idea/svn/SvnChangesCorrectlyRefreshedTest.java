@@ -85,6 +85,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     Assert.assertEquals("new", text1.toString());
 
     sleep1000();
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(subTree.myS1File.getPath()));
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     clManager.ensureUpToDate(false);
     final VcsException updateException = ((ChangeListManagerImpl)clManager).getUpdateException();
@@ -103,6 +104,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     final CharSequence text = LoadTextUtil.loadText(subTree.myS1File);
     Assert.assertEquals(SubTree.ourS1Contents, text.toString());
 
+    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     clManager.ensureUpToDate(false);
     DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {}, clManager.getDefaultListName(), clManager);
   }
