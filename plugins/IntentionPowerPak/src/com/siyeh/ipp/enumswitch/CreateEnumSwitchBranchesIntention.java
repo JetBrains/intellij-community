@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,11 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CreateEnumSwitchBranchesIntention extends Intention {
 
@@ -33,7 +32,7 @@ public class CreateEnumSwitchBranchesIntention extends Intention {
         return new EnumSwitchPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiSwitchStatement switchStatement =
                 (PsiSwitchStatement)element;
@@ -55,8 +54,8 @@ public class CreateEnumSwitchBranchesIntention extends Intention {
             return;
         }
         final PsiField[] fields = enumClass.getFields();
-        final Set<String> missingEnumElements =
-                new HashSet<String>(fields.length);
+        final List<String> missingEnumElements =
+                new ArrayList<String>(fields.length);
         for (final PsiField field : fields) {
             if (field instanceof PsiEnumConstant) {
                 missingEnumElements.add(field.getName());
@@ -64,23 +63,25 @@ public class CreateEnumSwitchBranchesIntention extends Intention {
         }
         final PsiStatement[] statements = body.getStatements();
         for (final PsiStatement statement : statements) {
-            if (statement instanceof PsiSwitchLabelStatement) {
-                final PsiSwitchLabelStatement labelStatement =
-                        (PsiSwitchLabelStatement)statement;
-                final PsiExpression value = labelStatement.getCaseValue();
-                if (value instanceof PsiReferenceExpression) {
-                    final PsiReferenceExpression reference =
-                            (PsiReferenceExpression)value;
-                    final PsiElement resolved = reference.resolve();
-                    if (resolved instanceof PsiEnumConstant) {
-                        final PsiEnumConstant enumConstant =
-                                (PsiEnumConstant)resolved;
-                        missingEnumElements.remove(enumConstant.getName());
-                    }
-                }
+            if (!(statement instanceof PsiSwitchLabelStatement)) {
+                continue;
             }
+            final PsiSwitchLabelStatement labelStatement =
+                    (PsiSwitchLabelStatement)statement;
+            final PsiExpression value = labelStatement.getCaseValue();
+            if (!(value instanceof PsiReferenceExpression)) {
+                continue;
+            }
+            final PsiReferenceExpression reference =
+                    (PsiReferenceExpression)value;
+            final PsiElement resolved = reference.resolve();
+            if (!(resolved instanceof PsiEnumConstant)) {
+                continue;
+            }
+            final PsiEnumConstant enumConstant = (PsiEnumConstant) resolved;
+            missingEnumElements.remove(enumConstant.getName());
         }
-        @NonNls final StringBuilder buffer = new StringBuilder(512);
+        @NonNls final StringBuilder buffer = new StringBuilder();
         buffer.append("switch(");
         buffer.append(switchExpression.getText());
         buffer.append("){");
@@ -88,13 +89,9 @@ public class CreateEnumSwitchBranchesIntention extends Intention {
         for (int i = 1; i < children.length - 1; i++) {
             buffer.append(children[i].getText());
         }
-        final String[] missingElementsArray =
-                missingEnumElements.toArray(
-                        new String[missingEnumElements.size()]);
-        Arrays.sort(missingElementsArray);
-        for (String aMissingElementsArray : missingElementsArray) {
+        for (String missingEnumElement : missingEnumElements) {
             buffer.append("case ");
-            buffer.append(aMissingElementsArray);
+            buffer.append(missingEnumElement);
             buffer.append(": break;");
         }
         buffer.append('}');
