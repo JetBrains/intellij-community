@@ -486,4 +486,6 @@
 
   <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.PlaybackDebugger"/>
   <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.DisposerDebugger"/>
+
+  <inspectionToolProvider implementation="com.intellij.codeInspection.PlatformInspectionToolProvider"/>
 </extensions>
