@@ -647,7 +647,7 @@ class AbstractTreeUi {
       return;
     }
 
-    final Map<Object, Integer> elementToIndexMap = collectElementToIndexMap(descriptor, preloadedChildren);
+    final MutualMap<Object, Integer> elementToIndexMap = collectElementToIndexMap(descriptor, preloadedChildren);
 
     myUpdatingChildren.add(node);
     processAllChildren(node, elementToIndexMap, pass).doWhenDone(new Runnable() {
@@ -819,7 +819,7 @@ class AbstractTreeUi {
   }
 
   private ActionCallback processAllChildren(final DefaultMutableTreeNode node,
-                                            final Map<Object, Integer> elementToIndexMap,
+                                            final MutualMap<Object, Integer> elementToIndexMap,
                                             final TreeUpdatePass pass) {
 
     final ArrayList<TreeNode> childNodes = TreeUtil.childrenToArray(node);
@@ -940,7 +940,7 @@ class AbstractTreeUi {
   }
 
   private ActionCallback processAllChildren(final DefaultMutableTreeNode node,
-                                            final Map<Object, Integer> elementToIndexMap,
+                                            final MutualMap<Object, Integer> elementToIndexMap,
                                             final TreeUpdatePass pass,
                                             final ArrayList<TreeNode> childNodes) {
 
@@ -975,8 +975,8 @@ class AbstractTreeUi {
     return getBuilder().isToYieldUpdateFor(node);
   }
 
-  private Map<Object, Integer> collectElementToIndexMap(final NodeDescriptor descriptor, @Nullable Object[] preloadedChildren) {
-    Map<Object, Integer> elementToIndexMap = new LinkedHashMap<Object, Integer>();
+  private MutualMap<Object, Integer> collectElementToIndexMap(final NodeDescriptor descriptor, @Nullable Object[] preloadedChildren) {
+    MutualMap<Object, Integer> elementToIndexMap = new MutualMap<Object, Integer>(true);
     Object[] children = preloadedChildren != null ? preloadedChildren : getChildrenFor(getBuilder().getTreeStructureElement(descriptor));
     int index = 0;
     for (Object child : children) {
@@ -1024,11 +1024,11 @@ class AbstractTreeUi {
     return node instanceof LoadingNode;
   }
 
-  private ArrayList<TreeNode> collectNodesToInsert(final NodeDescriptor descriptor, final Map<Object, Integer> elementToIndexMap) {
+  private ArrayList<TreeNode> collectNodesToInsert(final NodeDescriptor descriptor, final MutualMap<Object, Integer> elementToIndexMap) {
     ArrayList<TreeNode> nodesToInsert = new ArrayList<TreeNode>();
-    for (Map.Entry<Object, Integer> entry : elementToIndexMap.entrySet()) {
-      Object child = entry.getKey();
-      Integer index = entry.getValue();
+    final Collection<Object> allElements = elementToIndexMap.getKeys();
+    for (Object child : allElements) {
+      Integer index = elementToIndexMap.getValue(child);
       final NodeDescriptor childDescr = getTreeStructure().createDescriptor(child, descriptor);
       //noinspection ConstantConditions
       if (childDescr == null) {
@@ -1045,6 +1045,7 @@ class AbstractTreeUi {
       nodesToInsert.add(childNode);
       createMapping(getElementFromDescriptor(childDescr), childNode);
     }
+
     return nodesToInsert;
   }
 
@@ -1250,38 +1251,58 @@ class AbstractTreeUi {
   }
 
   private ActionCallback processChildNode(final DefaultMutableTreeNode childNode,
-                                          final NodeDescriptor childDescr,
-                                          final DefaultMutableTreeNode node,
-                                          final Map<Object, Integer> elementToIndexMap,
+                                          final NodeDescriptor childDescriptor,
+                                          final DefaultMutableTreeNode parentNode,
+                                          final MutualMap<Object, Integer> elementToIndexMap,
                                           TreeUpdatePass pass) {
 
     if (pass.isExpired()) {
       return new ActionCallback.Rejected();
     }
 
+    NodeDescriptor childDesc = childDescriptor;
+    
 
-    if (childDescr == null) {
+    if (childDesc == null) {
       pass.expire();
       return new ActionCallback.Rejected();
     }
-    Object oldElement = getElementFromDescriptor(childDescr);
+    Object oldElement = getElementFromDescriptor(childDesc);
     if (oldElement == null) {
       pass.expire();
       return new ActionCallback.Rejected();
     }
-    boolean changes = update(childDescr, false);
-    Object newElement = getElementFromDescriptor(childDescr);
-    Integer index = newElement != null ? elementToIndexMap.get(getBuilder().getTreeStructureElement(childDescr)) : null;
+    boolean changes = update(childDesc, false);
+    boolean forceRemapping = false;
+    Object newElement = getElementFromDescriptor(childDesc);
+
+    Integer index = newElement != null ? elementToIndexMap.getValue(getBuilder().getTreeStructureElement(childDesc)) : null;
     if (index != null) {
-      if (childDescr.getIndex() != index.intValue()) {
+      final Object elementFromMap = elementToIndexMap.getKey(index);
+      if (elementFromMap != newElement && elementFromMap.equals(newElement)) {
+        if (isInStructure(elementFromMap) && isInStructure(newElement)) {
+          if (parentNode.getUserObject() instanceof NodeDescriptor) {
+            final NodeDescriptor parentDescriptor = (NodeDescriptor)parentNode.getUserObject();
+            childDesc = getTreeStructure().createDescriptor(elementFromMap, parentDescriptor);
+            childNode.setUserObject(childDesc);
+            newElement = elementFromMap;
+            forceRemapping = true;
+            update(childDesc, false);
+            changes = true;
+          }
+        }
+      }
+
+      if (childDesc.getIndex() != index.intValue()) {
         changes = true;
       }
-      childDescr.setIndex(index.intValue());
+      childDesc.setIndex(index.intValue());
     }
+
     if (index != null && changes) {
       updateNodeImageAndPosition(childNode);
     }
-    if (!oldElement.equals(newElement)) {
+    if (!oldElement.equals(newElement) | forceRemapping) {
       removeMapping(oldElement, childNode);
       if (newElement != null) {
         createMapping(newElement, childNode);
@@ -1291,7 +1312,7 @@ class AbstractTreeUi {
     if (index == null) {
       int selectedIndex = -1;
       if (TreeBuilderUtil.isNodeOrChildSelected(myTree, childNode)) {
-        selectedIndex = node.getIndex(childNode);
+        selectedIndex = parentNode.getIndex(childNode);
       }
 
       if (childNode.getParent() instanceof DefaultMutableTreeNode) {
@@ -1309,31 +1330,31 @@ class AbstractTreeUi {
       disposeNode(childNode);
 
       if (selectedIndex >= 0) {
-        if (node.getChildCount() > 0) {
-          if (node.getChildCount() > selectedIndex) {
-            TreeNode newChildNode = node.getChildAt(selectedIndex);
+        if (parentNode.getChildCount() > 0) {
+          if (parentNode.getChildCount() > selectedIndex) {
+            TreeNode newChildNode = parentNode.getChildAt(selectedIndex);
             if (isValidForSelectionAdjusting(newChildNode)) {
               addSelectionPath(new TreePath(myTreeModel.getPathToRoot(newChildNode)), true, getExpiredElementCondition(disposedElement));
             }
           }
           else {
-            TreeNode newChild = node.getChildAt(node.getChildCount() - 1);
+            TreeNode newChild = parentNode.getChildAt(parentNode.getChildCount() - 1);
             if (isValidForSelectionAdjusting(newChild)) {
               addSelectionPath(new TreePath(myTreeModel.getPathToRoot(newChild)), true, getExpiredElementCondition(disposedElement));
             }
           }
         }
         else {
-          addSelectionPath(new TreePath(myTreeModel.getPathToRoot(node)), true, getExpiredElementCondition(disposedElement));
+          addSelectionPath(new TreePath(myTreeModel.getPathToRoot(parentNode)), true, getExpiredElementCondition(disposedElement));
         }
       }
     }
     else {
-      elementToIndexMap.remove(getBuilder().getTreeStructureElement(childDescr));
+      elementToIndexMap.remove(getBuilder().getTreeStructureElement(childDesc));
       updateNodeChildren(childNode, pass, null, false);
     }
 
-    if (node.equals(getRootNode())) {
+    if (parentNode.equals(getRootNode())) {
       myTreeModel.nodeChanged(getRootNode());
     }
 
@@ -1501,7 +1522,10 @@ class AbstractTreeUi {
   }
 
 
-  protected void addTaskToWorker(@NotNull final Runnable bgReadActionRunnable, boolean first, @Nullable final Runnable edtPostRunnable, @Nullable final Runnable finilizeEdtRunnable) {
+  protected void addTaskToWorker(@NotNull final Runnable bgReadActionRunnable,
+                                 boolean first,
+                                 @Nullable final Runnable edtPostRunnable,
+                                 @Nullable final Runnable finilizeEdtRunnable) {
     registerWorkerTask(bgReadActionRunnable);
 
     final Runnable pooledThreadWithProgressRunnable = new Runnable() {
@@ -1530,13 +1554,15 @@ class AbstractTreeUi {
                     }
                   }
                 });
-              } else {
+              }
+              else {
                 unregisterWorkerTask(bgReadActionRunnable, finilizeEdtRunnable);
               }
             }
             catch (ProcessCanceledException e) {
               unregisterWorkerTask(bgReadActionRunnable, finilizeEdtRunnable);
-            } catch (Throwable t) {
+            }
+            catch (Throwable t) {
               unregisterWorkerTask(bgReadActionRunnable, finilizeEdtRunnable);
               throw new RuntimeException(t);
             }
