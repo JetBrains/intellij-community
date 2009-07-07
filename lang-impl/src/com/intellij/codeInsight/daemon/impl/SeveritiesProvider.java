@@ -21,7 +21,7 @@ public abstract class SeveritiesProvider {
   public abstract List<HighlightInfoType> getSeveritiesHighlightInfoTypes();
 
   public boolean isGotoBySeverityEnabled(HighlightSeverity minSeverity) {
-    return true;
+    return minSeverity != HighlightSeverity.INFORMATION;
   }
 
   public Color getTrafficRendererColor(TextAttributes textAttributes) {

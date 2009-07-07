@@ -250,7 +250,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
       if (!provider.isGotoBySeverityEnabled(minSeverity)) return true;
     }
-    return false;
+    return minSeverity == HighlightSeverity.INFORMATION;
   }
 
   public static class SeverityBasedTextAttributes implements JDOMExternalizable {
