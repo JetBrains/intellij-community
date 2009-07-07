@@ -169,6 +169,7 @@ public class ReformatCodeAction extends AnAction {
       }
     }
     else if (files!= null && areFiles(files)) {
+      boolean anyFormatters = false;
       for (VirtualFile virtualFile : files) {
         if (virtualFile.isDirectory()) {
           presentation.setEnabled(false);
@@ -180,10 +181,13 @@ public class ReformatCodeAction extends AnAction {
           return;
         }
         final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(psiFile);
-        if (builder == null) {
-          presentation.setEnabled(false);
-          return;
+        if (builder != null) {
+          anyFormatters = true;
         }
+      }
+      if (!anyFormatters) {
+        presentation.setEnabled(false);
+        return;
       }
     }
     else if (files != null && files.length == 1) {

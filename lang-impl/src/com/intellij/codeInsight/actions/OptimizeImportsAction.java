@@ -126,12 +126,20 @@ public class OptimizeImportsAction extends AnAction {
       }
     }
     else if (files != null && ReformatCodeAction.areFiles(files)) {
+      boolean anyHasOptimizeImports = false;
       for (VirtualFile virtualFile : files) {
         PsiFile file = PsiManager.getInstance(project).findFile(virtualFile);
-        if (file == null || !isOptimizeImportsAvailable(file)) {
+        if (file == null) {
           presentation.setEnabled(false);
           return;
         }
+        if (isOptimizeImportsAvailable(file)) {
+          anyHasOptimizeImports = true;
+        }
+      }
+      if (!anyHasOptimizeImports) {
+        presentation.setEnabled(false);
+        return;
       }
     }
     else if (files != null && files.length == 1) {
