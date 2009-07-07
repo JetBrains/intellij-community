@@ -80,7 +80,9 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   }
 
   private void onChange() {
-    myValidatorsManager.validate();
+    if (myValidatorsManager != null) {
+      myValidatorsManager.validate();
+    }
   }
 
   public void onFacetInitialized(Facet facet) {
@@ -167,15 +169,15 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
 
     protected void doOKAction() {
       myPanel.apply();
-      LibraryCompositionSettings settings = myPanel.getLibraryCompositionSettings();
-      LibrariesContainer librariesContainer = myContext.getLibrariesContainer();
+      final LibraryCompositionSettings settings = myPanel.getLibraryCompositionSettings();
+      final LibrariesContainer librariesContainer = myContext.getLibrariesContainer();
       if (settings.downloadFiles(myMirrorsMap, librariesContainer, myPanel.getMainPanel())) {
         ModifiableRootModel rootModel = myContext.getModifiableRootModel();
         if (rootModel == null) {
           final ModifiableRootModel model = ModuleRootManager.getInstance(myContext.getModule()).getModifiableModel();
-          settings.addLibraries(model, myAddedLibraries, librariesContainer);
           new WriteAction() {
             protected void run(final Result result) {
+              settings.addLibraries(model, myAddedLibraries, librariesContainer);
               model.commit();
             }
           }.execute();

@@ -35,6 +35,10 @@ public abstract class FacetEditorsFactory {
                                                                    FacetEditorContext context,
                                                                    final FacetValidatorsManager validatorsManager);
 
+  public abstract FacetLibrariesValidator createLibrariesValidator(@NotNull final LibraryInfo[] libraries,
+                                                                   @NotNull final Module module,
+                                                                   @NotNull final String libraryName);
+
   public abstract LibrariesValidationComponent createLibrariesValidationComponent(LibraryInfo[] libraryInfos, Module module, 
                                                                          String defaultLibraryName);
 

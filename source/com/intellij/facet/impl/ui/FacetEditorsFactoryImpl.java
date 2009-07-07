@@ -24,7 +24,11 @@ public class FacetEditorsFactoryImpl extends FacetEditorsFactory {
     return new FacetLibrariesValidatorImpl(libraries, description, new DelegatingLibrariesValidatorContext(context), validatorsManager);
   }
 
-  public LibrariesValidationComponent createLibrariesValidationComponent(LibraryInfo[] libraryInfos, Module module, 
+  public FacetLibrariesValidator createLibrariesValidator(@NotNull final LibraryInfo[] libraries, @NotNull final Module module, @NotNull final String libraryName) {
+    return new FacetLibrariesValidatorImpl(libraries, new FacetLibrariesValidatorDescription(libraryName), new LibrariesValidatorContextImpl(module), null);
+  }
+
+  public LibrariesValidationComponent createLibrariesValidationComponent(LibraryInfo[] libraryInfos, Module module,
                                                                          String defaultLibraryName) {
     return new LibrariesValidationComponentImpl(libraryInfos, module, defaultLibraryName);
   }
