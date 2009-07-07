@@ -26,9 +26,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -658,7 +656,7 @@ public class BackendCompilerWrapper {
       myCompileContext.addMessage(CompilerMessageCategory.ERROR, CompilerBundle.message("error.compiler.internal.error", exitValue), null, -1, -1);
     }
     myCompiler.compileFinished();
-    final VirtualFile[] sourceRoots = chunk.getSourceRoots();
+    final Module[] chunkModules = chunk.getModules();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final Set<VirtualFile> compiledWithErrors = getFilesCompiledWithErrors();
@@ -668,13 +666,15 @@ public class BackendCompilerWrapper {
           LOG.debug("myFileNameToSourceMap contains entries: " + chunk.myFileNameToSourceMap.size());
         }
         try {
-          for (final VirtualFile root : sourceRoots) {
-            final String packagePrefix = myProjectFileIndex.getPackageNameByDirectory(root);
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Building output items for " + root.getPresentableUrl() + "; output dir = " + outputDirPath + "; packagePrefix = \"" +
-                        packagePrefix + "\"");
+          for (final Module module : chunkModules) {
+            for (final VirtualFile root : chunk.getSourceRoots(module)) {
+              final String packagePrefix = myProjectFileIndex.getPackageNameByDirectory(root);
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Building output items for " + root.getPresentableUrl() + "; output dir = " + outputDirPath + "; packagePrefix = \"" +
+                          packagePrefix + "\"");
+              }
+              buildOutputItemsList(chunk, outputDirPath, module, root, typeManager, compiledWithErrors, root, packagePrefix);
             }
-            buildOutputItemsList(chunk, outputDirPath, root, typeManager, compiledWithErrors, root, packagePrefix);
           }
         }
         catch (CacheCorruptedException e) {
@@ -705,14 +705,13 @@ public class BackendCompilerWrapper {
     return compiledWithErrors;
   }
 
-  private void buildOutputItemsList(@NotNull final ModuleChunk chunk, final String outputDir,
-                                    VirtualFile from,
-                                    final FileTypeManager typeManager,
-                                    final Set<VirtualFile> compiledWithErrors,
-                                    final VirtualFile sourceRoot,
-                                    final String packagePrefix) throws CacheCorruptedException {
+    private void buildOutputItemsList(@NotNull final ModuleChunk chunk, final String outputDir, Module module, VirtualFile from,
+                                      final FileTypeManager typeManager,
+                                      final Set<VirtualFile> compiledWithErrors,
+                                      final VirtualFile sourceRoot,
+                                      final String packagePrefix) throws CacheCorruptedException {
     final Ref<CacheCorruptedException> exRef = new Ref<CacheCorruptedException>(null);
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
     final ContentIterator contentIterator = new ContentIterator() {
       public boolean processFile(final VirtualFile child) {
         try {

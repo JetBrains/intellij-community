@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Chunk;
@@ -120,32 +121,45 @@ public class ModuleChunk extends Chunk<Module> {
   }
 
   public VirtualFile[] getSourceRoots() {
-    final List<VirtualFile> filteredRoots = new ArrayList<VirtualFile>();
-    final Project project = getNodes().iterator().next().getProject();
-    final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        final VirtualFile[] roots = getAllSourceRoots();
-        for (final VirtualFile root : roots) {
-          if (mySourcesFilter != ALL_SOURCES) {
-            if (myContext.isInTestSourceContent(root)) {
-              if ((mySourcesFilter & TEST_SOURCES) == 0) {
-                continue;
-              }
-            }
-            else {
-              if ((mySourcesFilter & SOURCES) == 0) {
-                continue;
-              }
-            }
-          }
-          if (compilerConfiguration.isExcludedFromCompilation(root)) {
-            continue;
-          }
-          filteredRoots.add(root);
-        }
+    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
+      public VirtualFile[] compute() {
+        return filterRoots(getAllSourceRoots(), getNodes().iterator().next().getProject());
       }
     });
+  }
+
+  public VirtualFile[] getSourceRoots(final Module module) {
+    if (!getNodes().contains(module)) {
+      return VirtualFile.EMPTY_ARRAY;
+    }
+    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
+      public VirtualFile[] compute() {
+        return filterRoots(myContext.getSourceRoots(module), module.getProject());
+      }
+    });
+  }
+
+  private VirtualFile[] filterRoots(VirtualFile[] roots, Project project) {
+    final List<VirtualFile> filteredRoots = new ArrayList<VirtualFile>(roots.length);
+    final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
+    for (final VirtualFile root : roots) {
+      if (mySourcesFilter != ALL_SOURCES) {
+        if (myContext.isInTestSourceContent(root)) {
+          if ((mySourcesFilter & TEST_SOURCES) == 0) {
+            continue;
+          }
+        }
+        else {
+          if ((mySourcesFilter & SOURCES) == 0) {
+            continue;
+          }
+        }
+      }
+      if (compilerConfiguration.isExcludedFromCompilation(root)) {
+        continue;
+      }
+      filteredRoots.add(root);
+    }
     return filteredRoots.toArray(new VirtualFile[filteredRoots.size()]);
   }
 
