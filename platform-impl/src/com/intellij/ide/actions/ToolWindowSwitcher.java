@@ -34,7 +34,7 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class ToolWindowSwitcher extends AnAction {
-  private static ToolWindowSwitcherPanel SWITCHER = null;
+  private static volatile ToolWindowSwitcherPanel SWITCHER = null;
   private static final Border EMPTY_BORDER = IdeBorderFactory.createEmptyBorder(1,1,1,1);
   private static final Border COLORED_BORDER = new RoundedLineBorder(Color.BLUE);
   private static final Icon EMPTY_ICON = new EmptyIcon(16, 16);
@@ -44,13 +44,13 @@ public class ToolWindowSwitcher extends AnAction {
     if (project == null) return;
     if (SWITCHER == null) {
       SWITCHER = new ToolWindowSwitcherPanel(project, true);
-    } else {
+    }
       if (e.getInputEvent().isShiftDown()) {
         SWITCHER.goBack();
       } else {
         SWITCHER.goForward();
       }
-    }
+
   }
 
   private static class ToolWindowSwitcherPanel extends JPanel implements KeyListener {
@@ -126,9 +126,6 @@ public class ToolWindowSwitcher extends AnAction {
       }
 
       activePanel = files.length == 0 ? ActivePanel.TOOL_WINDOWS : ActivePanel.FILES;
-      if (files.length > 1) {
-        goForward();
-      }
 
       final IdeFrameImpl ideFrame = WindowManagerEx.getInstanceEx().getFrame(project);
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, this).setResizable(false)
