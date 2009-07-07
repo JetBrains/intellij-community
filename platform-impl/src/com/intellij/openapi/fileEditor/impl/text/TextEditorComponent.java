@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorDropHandler;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
@@ -14,17 +15,16 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.util.EditorPopupHandler;
@@ -34,9 +34,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 
 /**
  * @author Anton Katilin
@@ -161,6 +164,8 @@ class TextEditorComponent extends JPanel implements DataProvider{
     editor.addEditorMouseListener(myEditorMouseListener);
     editor.getCaretModel().addCaretListener(myEditorCaretListener);
     ((EditorEx)editor).addPropertyChangeListener(myEditorPropertyChangeListener);
+
+    ((EditorImpl) editor).setDropHandler(new FileDropHandler());
 
     TextEditorProvider.putTextEditor(editor, myTextEditor);
     return editor;
@@ -378,6 +383,41 @@ class TextEditorComponent extends JPanel implements DataProvider{
         LOG.assertTrue(file.isValid());
         if(myFile.equals(file)){
           updateModifiedProperty();
+        }
+      }
+    }
+  }
+
+  private static class FileDropHandler implements EditorDropHandler {
+
+    public boolean canHandleDrop(DataFlavor[] transferFlavors) {
+      for (DataFlavor transferFlavor : transferFlavors) {
+        if (transferFlavor.equals(DataFlavor.javaFileListFlavor)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    public void handleDrop(Transferable t, Editor e) {
+      Project project = e.getProject();
+      if (project == null) {
+        return;
+      }
+      java.util.List<File> fileList;
+      try {
+        //noinspection unchecked
+        fileList = (java.util.List<File>)t.getTransferData(DataFlavor.javaFileListFlavor);
+      }
+      catch (Exception ex) {
+        return;
+      }
+      if (fileList != null) {
+        for (File file : fileList) {
+          final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+          if (vFile != null) {
+            new OpenFileDescriptor(project, vFile).navigate(true);
+          }
         }
       }
     }
