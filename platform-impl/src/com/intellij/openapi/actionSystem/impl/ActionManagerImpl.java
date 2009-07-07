@@ -23,6 +23,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -1114,6 +1115,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       if (!ModalityState.current().dominates(modalityState)) {
         try {
           listener.run();
+        }
+        catch (ProcessCanceledException ex) {
+          // ignore
         }
         catch (Throwable e) {
           LOG.error(e);
