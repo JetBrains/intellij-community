@@ -3,6 +3,8 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.Project;
@@ -10,82 +12,111 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.RoundedLineBorder;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.Icons;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
-import java.util.*;
+import java.io.File;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class ToolWindowSwitcher extends AnAction {
   private static volatile ToolWindowSwitcherPanel SWITCHER = null;
-  private static final Border EMPTY_BORDER = IdeBorderFactory.createEmptyBorder(1,1,1,1);
-  private static final Border COLORED_BORDER = new RoundedLineBorder(Color.BLUE);
-  private static final Icon EMPTY_ICON = new EmptyIcon(16, 16);
+  private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
     if (SWITCHER == null) {
-      SWITCHER = new ToolWindowSwitcherPanel(project, true);
+      SWITCHER = new ToolWindowSwitcherPanel(project);
     }
-      if (e.getInputEvent().isShiftDown()) {
-        SWITCHER.goBack();
-      } else {
-        SWITCHER.goForward();
-      }
-
+    if (e.getInputEvent().isShiftDown()) {
+      SWITCHER.goBack();
+    }
+    else {
+      SWITCHER.goForward();
+    }
   }
 
   private static class ToolWindowSwitcherPanel extends JPanel implements KeyListener {
     final JBPopup myPopup;
-    final String[] ids;
-    final JLabel[] toolwindows;
-    final JLabel[] files;
-    final VirtualFile[] vfiles;
+    final Map<ToolWindow, String> ids = new HashMap<ToolWindow, String>();
+    final JList toolwindows;
+    final JList files;
     final ToolWindowManager twManager;
-    final JLabel title;
+    final JLabel pathLabel = new JLabel(" ");
+    final JPanel descriptions;
     final Project project;
-    ActivePanel activePanel;
-    int currentIndex;
-    /** tool window id <--> it's icon */
-    final static Map<String, Icon> iconCache = new HashMap<String, Icon>();
 
-    ToolWindowSwitcherPanel(Project project, boolean fromFirst) {
+    ToolWindowSwitcherPanel(Project project) {
+      super(new BorderLayout(0, 0));
       this.project = project;
       setFocusable(true);
       addKeyListener(this);
-      setBorder(new EmptyBorder(0,0,0,0));
-      setBackground(Color.WHITE);      
-      final BorderLayout layout = new BorderLayout(0, 0);
-      setLayout(layout);
+      setBorder(new EmptyBorder(0, 0, 0, 0));
+      setBackground(Color.WHITE);
+      pathLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+
+      final Font font = pathLabel.getFont();
+      pathLabel.setFont(font.deriveFont((float)10));
+
+      descriptions = new JPanel(new BorderLayout()) {
+        @Override
+        protected void paintComponent(Graphics g) {
+          super.paintComponent(g);
+          g.setColor(BORDER_COLOR);
+          g.drawLine(0, 0, getWidth(), 0);
+        }
+      };
+
+      descriptions.setBorder(BorderFactory.createEmptyBorder(1, 4, 1, 4));
+      descriptions.add(pathLabel);
       twManager = ToolWindowManager.getInstance(project);
-      ArrayList<String> visible = new ArrayList<String>();
+      final DefaultListModel twModel = new DefaultListModel();
       for (String id : twManager.getToolWindowIds()) {
         final ToolWindow tw = twManager.getToolWindow(id);
         if (tw.isAvailable()) {
-          visible.add(id);
+          ids.put(tw, id);
+          twModel.addElement(tw);
         }
       }
-      ids = visible.toArray(new String[visible.size()]);
+      toolwindows = new JList(twModel);
+      toolwindows.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
+      toolwindows.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      toolwindows.setCellRenderer(new ToolWindowsRenderer(ids));
 
-      currentIndex = fromFirst ? 0 : ids.length - 1;
-      toolwindows = new JLabel[ids.length];
+      final JPanel separator = new JPanel() {
+        @Override
+        protected void paintComponent(Graphics g) {
+          super.paintComponent(g);
+          g.setColor(new Color(240, 240, 240));
+          g.drawLine(0, 0, 0, getHeight());
+        }
+      };
+      separator.setBackground(Color.WHITE);
 
       final FileEditorManager editorManager = FileEditorManager.getInstance(project);
       final VirtualFile[] openFiles = editorManager.getOpenFiles();
@@ -95,76 +126,79 @@ public class ToolWindowSwitcher extends AnAction {
       } catch (Exception e) {// IndexNotReadyException
       }
 
-      final VirtualFile[] selectedFiles = editorManager.getSelectedFiles();
-      final VirtualFile selectedFile = selectedFiles.length > 0 ? selectedFiles[0] : null;
+      final DefaultListModel filesModel = new DefaultListModel();
 
-      files = new JLabel[openFiles.length];
-      final JPanel tabs = openFiles.length > 0 ? createItemsPanel("Open Files:", new Insets(0,0,0,4)) : new JPanel();
-      vfiles = openFiles;
-      for (int i = 0; i < openFiles.length; i++) {
-        if (openFiles[i] == selectedFile) {
-          currentIndex = i;
-        }
-        files[i] = createItem(openFiles[i].getName(), IconUtil.getIcon(openFiles[i], Iconable.ICON_FLAG_READ_STATUS, project));
-        tabs.add(files[i]);
+      for (VirtualFile openFile : openFiles) {
+        filesModel.addElement(openFile);
       }
+      files = new JList(filesModel);
+      files.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
+      files.setCellRenderer(new VirtualFilesRenderer(project));
 
-      final JPanel toolwindows = createItemsPanel("Tool Windows:", new Insets(0,4,0,10));
-
-      for (int i = 0; i < ids.length; i++) {
-        this.toolwindows[i] = createItem(ids[i], getIcon(ids[i]));
-        toolwindows.add(this.toolwindows[i]);
-      }
-
-      JPanel titlePanel = new JPanel();
-      title = new JLabel("", SwingConstants.CENTER);
-      title.setFont(new Font(title.getFont().getName(), Font.BOLD, 12));
-      titlePanel.setOpaque(true);
-      titlePanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK));
-      titlePanel.add(title);
-
-      this.add(titlePanel, BorderLayout.NORTH);
       this.add(toolwindows, BorderLayout.WEST);
-      if (files.length > 0) {
-        this.add(tabs, BorderLayout.EAST);
+      if (filesModel.size() > 0) {
+        this.add(files, BorderLayout.EAST);
       }
+      this.add(descriptions, BorderLayout.SOUTH);
+      this.add(separator, BorderLayout.CENTER);
 
-      activePanel = files.length > 1 ? ActivePanel.FILES : ActivePanel.TOOL_WINDOWS;
+      files.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        private String getTitle2Text(String fullText) {
+          int labelWidth = pathLabel.getWidth();
+          if (fullText == null || fullText.length() == 0) return " ";
+          while (pathLabel.getFontMetrics(pathLabel.getFont()).stringWidth(fullText) > labelWidth) {
+            int sep = fullText.indexOf(File.separatorChar, 4);
+            if (sep < 0) return fullText;
+            fullText = "..." + fullText.substring(sep);
+          }
+
+          return fullText;
+        }
+
+        public void valueChanged(final ListSelectionEvent e) {
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              updatePathLabel();
+            }
+          });
+        }
+
+        private void updatePathLabel() {
+          final Object[] values = files.getSelectedValues();
+          if (values != null && values.length == 1) {
+            final VirtualFile parent = ((VirtualFile)values[0]).getParent();
+            if (parent != null) {
+              pathLabel.setText(getTitle2Text(parent.getPresentableUrl()));
+            } else {
+              pathLabel.setText(" ");
+            }
+          } else {
+            pathLabel.setText(" ");
+          }
+        }
+      });
 
       final IdeFrameImpl ideFrame = WindowManagerEx.getInstanceEx().getFrame(project);
-      myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, this).setResizable(false)
-        .setModalContext(false).setFocusable(true).setRequestFocus(true).setMovable(false).setCancelCallback(new Computable<Boolean>() {
+      myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, this)
+          .setResizable(false)
+          .setModalContext(false)
+          .setFocusable(true)
+          .setRequestFocus(true)
+          .setMovable(true)
+          .setTitle("Switcher")
+          .setCancelCallback(new Computable<Boolean>() {
           public Boolean compute() {
             SWITCHER = null;
             return true;
           }
         }).createPopup();
-      updateUI();
-      update();
       myPopup.showInCenterOf(ideFrame.getContentPane());
     }
 
-    private static JLabel createItem(String name, final Icon icon) {
-      JLabel label = new JLabel(name, icon, SwingConstants.LEFT);
-      label.setBackground(new Color(204, 204, 255));
-      return label;
+    public void keyTyped(KeyEvent e) {
     }
 
-    private static JPanel createItemsPanel(String title, Insets insets) {
-      JPanel panel = new JPanel();
-      panel.setBackground(Color.WHITE);
-      final BoxLayout mgr = new BoxLayout(panel, BoxLayout.Y_AXIS);
-      panel.setLayout(mgr);
-      panel.setBorder(IdeBorderFactory.createEmptyBorder(insets));
-      final JLabel label = new JLabel(title);
-      label.setHorizontalAlignment(JLabel.CENTER);
-      label.setForeground(Color.GRAY);
-      label.setBorder(IdeBorderFactory.createEmptyBorder(2,0,3,0));
-      panel.add(label);
-      return panel;
-    }
-
-    public void keyTyped(KeyEvent e) {}
     public void keyPressed(KeyEvent e) {
       switch (e.getKeyCode()) {
         case KeyEvent.VK_LEFT:
@@ -191,93 +225,161 @@ public class ToolWindowSwitcher extends AnAction {
       }
     }
 
+    private boolean isFilesSelected() {
+      return getSelectedList() == files;
+    }
+
+    private boolean isToolWindowsSelected() {
+      return getSelectedList() == toolwindows;
+    }
+
     private void goRight() {
-      if (files.length == 0) return;
-      
-      if (activePanel == ActivePanel.TOOL_WINDOWS) {
-        activePanel = ActivePanel.FILES;
-        if (currentIndex >= files.length) {
-          currentIndex = files.length - 1;
+      if (isFilesSelected()) {
+        cancel();
+      }
+      else {
+        if (files.getModel().getSize() > 0) {
+          files.setSelectedIndex(Math.min(toolwindows.getSelectedIndex(), files.getModel().getSize() - 1));
+          toolwindows.getSelectionModel().clearSelection();
         }
-        update();
-      } else {
-        myPopup.cancel();
       }
     }
 
+    private void cancel() {
+      myPopup.cancel();
+    }
+
     private void goLeft() {
-      if (activePanel == ActivePanel.FILES) {
-        activePanel = ActivePanel.TOOL_WINDOWS;
-        if (currentIndex >= ids.length) {
-          currentIndex = ids.length - 1;
+      if (isToolWindowsSelected()) {
+        cancel();
+      }
+      else {
+        if (toolwindows.getModel().getSize() > 0) {
+          toolwindows.setSelectedIndex(Math.min(files.getSelectedIndex(), toolwindows.getModel().getSize() - 1));
+          files.getSelectionModel().clearSelection();
         }
-        update();
-      } else {
-        myPopup.cancel();
       }
     }
 
     public void goForward() {
-      final int length = activePanel == ActivePanel.FILES ? files.length : toolwindows.length;
-      currentIndex = (currentIndex == length - 1) ? 0 : currentIndex + 1;
-      update();
+      final JList list = getSelectedList();
+      int index = list.getSelectedIndex() + 1;
+      if (index >= list.getModel().getSize()) {
+        index = 0;
+      }
+      list.setSelectedIndex(index);
     }
 
     public void goBack() {
-      final int length = activePanel == ActivePanel.FILES ? files.length : toolwindows.length;
-      currentIndex = (currentIndex == 0) ? length - 1 : currentIndex - 1;
-      update();
+      final JList list = getSelectedList();
+      int index = list.getSelectedIndex() - 1;
+      if (index < 0) {
+        index = list.getModel().getSize() - 1;
+      }
+      list.setSelectedIndex(index);
+    }
+
+    public JList getSelectedList() {
+      if (toolwindows.isSelectionEmpty() && files.isSelectionEmpty()) {
+        if (files.getModel().getSize() > 1) {
+          files.setSelectedIndex(0);
+          return files;
+        }
+        else {
+          toolwindows.setSelectedIndex(0);
+          return toolwindows;
+        }
+      }
+      else {
+        return toolwindows.isSelectionEmpty() ? files : toolwindows;
+      }
     }
 
     private void navigate() {
       myPopup.cancel();
-      if (activePanel == ActivePanel.TOOL_WINDOWS) {
-        twManager.getToolWindow(ids[currentIndex]).activate(null, true, true);
-      } else {
-        FileEditorManager.getInstance(project).openFile(vfiles[currentIndex], true);
+      final Object value = getSelectedList().getSelectedValue();
+      if (value instanceof ToolWindow) {
+        ((ToolWindow)value).activate(null, true, true);
+      }
+      else if (value instanceof VirtualFile) {
+        FileEditorManager.getInstance(project).openFile((VirtualFile)value, true);
       }
     }
 
-    private void update() {
-      for (int i = 0; i < toolwindows.length; i++) {
-        final boolean selected = i == currentIndex && activePanel == ActivePanel.TOOL_WINDOWS;
-        toolwindows[i].setBorder(selected ? COLORED_BORDER : EMPTY_BORDER);
-        toolwindows[i].setOpaque(selected);
+    private static class RecentFilesComparator implements Comparator<VirtualFile> {
+      private final VirtualFile[] recentFiles;
+
+      public RecentFilesComparator(Project project) {
+        recentFiles = EditorHistoryManager.getInstance(project).getFiles();
       }
-      for (int i = 0; i < files.length; i++) {
-        final boolean selected = i == currentIndex && activePanel == ActivePanel.FILES;
-        files[i].setBorder(selected ? COLORED_BORDER : EMPTY_BORDER);
-        files[i].setOpaque(selected);
+
+      public int compare(VirtualFile vf1, VirtualFile vf2) {
+        return ArrayUtil.find(recentFiles, vf2) - ArrayUtil.find(recentFiles, vf1);
       }
-      title.setText(activePanel == ActivePanel.FILES ? files[currentIndex].getText() : ids[currentIndex]);
     }
 
-    private Icon getIcon(String toolWindowID) {
-      Icon icon = iconCache.get(toolWindowID);
+  }
+
+  private static class VirtualFilesRenderer extends ColoredListCellRenderer {
+    private final Project myProject;
+
+    public VirtualFilesRenderer(Project project) {
+      myProject = project;
+    }
+
+    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      if (value instanceof VirtualFile) {
+        VirtualFile virtualFile = (VirtualFile)value;
+        String name = virtualFile.getName();
+        setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, myProject));
+
+        FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
+        TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null, null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
+        append(name, SimpleTextAttributes.fromTextAttributes(attributes));
+      }
+    }
+  }
+
+  private static class ToolWindowsRenderer extends ColoredListCellRenderer {
+    private static final Map<String, Icon> iconCache = new HashMap<String, Icon>();
+    private final Map<ToolWindow, String> ids;
+
+    public ToolWindowsRenderer(Map<ToolWindow, String> ids) {
+      this.ids = ids;
+    }
+
+    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      if (value instanceof ToolWindow) {
+        final ToolWindow tw = (ToolWindow)value;
+        String name = ids.get(tw);
+        setIcon(getIcon(tw));
+
+        TextAttributes attributes = new TextAttributes(Color.BLACK, null, null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
+        append(name, SimpleTextAttributes.fromTextAttributes(attributes));
+      }
+    }
+
+    private Icon getIcon(ToolWindow toolWindow) {
+      Icon icon = iconCache.get(ids.get(toolWindow));
       if (icon != null) return icon;
 
-      final ToolWindow tw = twManager.getToolWindow(toolWindowID);
-      icon = tw.getIcon();
+      icon = toolWindow.getIcon();
       if (icon == null) {
-        return EMPTY_ICON;
+        return Icons.UI_FORM_ICON;
       }
 
       icon = to16x16(icon);
-      iconCache.put(toolWindowID, icon);
+      iconCache.put(ids.get(toolWindow), icon);
       return icon;
     }
 
     private static Icon to16x16(Icon icon) {
       if (icon.getIconHeight() == 16 && icon.getIconWidth() == 16) return icon;
-
-
-
       final int w = icon.getIconWidth();
       final int h = icon.getIconHeight();
-      
 
-      final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()
-        .getDefaultScreenDevice().getDefaultConfiguration().createCompatibleImage(16, 16, Color.TRANSLUCENT);
+      final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration()
+        .createCompatibleImage(16, 16, Color.TRANSLUCENT);
       final Graphics2D g = image.createGraphics();
       icon.paintIcon(null, g, 0, 0);
       g.dispose();
@@ -290,29 +392,6 @@ public class ToolWindowSwitcher extends AnAction {
       }
 
       return new ImageIcon(img);
-    }
-
-    enum ActivePanel {
-      TOOL_WINDOWS, FILES
-    }
-
-    private static class RecentFilesComparator implements Comparator<VirtualFile> {
-      private final VirtualFile[] recentFiles;
-
-      public RecentFilesComparator(Project project) {
-        recentFiles = EditorHistoryManager.getInstance(project).getFiles();
-      }
-
-      public int compare(VirtualFile vf1, VirtualFile vf2) {
-        return getIndex(vf2) - getIndex(vf1);
-      }
-
-      private int getIndex(VirtualFile vf) {
-        for (int i = 0; i < recentFiles.length; i++) {
-          if (recentFiles[i] == vf) return i;
-        }
-        return recentFiles.length - 1;
-      }
     }
   }
 }
