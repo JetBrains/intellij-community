@@ -113,7 +113,7 @@ public class ToolWindowSwitcher extends AnAction {
       }
 
       JPanel titlePanel = new JPanel();
-      title = new JLabel(ids[currentIndex], SwingConstants.CENTER);
+      title = new JLabel("", SwingConstants.CENTER);
       title.setFont(new Font(title.getFont().getName(), Font.BOLD, 12));
       titlePanel.setOpaque(true);
       titlePanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK));
@@ -125,7 +125,7 @@ public class ToolWindowSwitcher extends AnAction {
         this.add(tabs, BorderLayout.EAST);
       }
 
-      activePanel = files.length == 0 ? ActivePanel.TOOL_WINDOWS : ActivePanel.FILES;
+      activePanel = files.length > 1 ? ActivePanel.FILES : ActivePanel.TOOL_WINDOWS;
 
       final IdeFrameImpl ideFrame = WindowManagerEx.getInstanceEx().getFrame(project);
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, this).setResizable(false)
