@@ -5,9 +5,9 @@ import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDirectoryContainer;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
@@ -27,6 +27,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.*;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,8 +53,12 @@ class MoveDropTargetListener implements DropTargetListener {
   }
 
   public void dragEnter(DropTargetDragEvent dtde) {
+    final DropHandler dropHandler = getDropHandler(dtde.getDropAction());
     final TreeNode[] sourceNodes = getSourceNodes(dtde.getTransferable());
-    if (sourceNodes != null && getDropHandler(dtde.getDropAction()).isValidSource(sourceNodes)) {
+    if (sourceNodes != null && dropHandler.isValidSource(sourceNodes)) {
+      dtde.acceptDrag(dtde.getDropAction());
+    }
+    else if (dtde.getTransferable().isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
       dtde.acceptDrag(dtde.getDropAction());
     }
     else {
@@ -66,6 +71,9 @@ class MoveDropTargetListener implements DropTargetListener {
     final TreeNode targetNode = getTargetNode(dtde.getLocation());
     final int dropAction = dtde.getDropAction();
     if (sourceNodes != null && targetNode != null && canDrop(sourceNodes, targetNode, dropAction)) {
+      dtde.acceptDrag(dropAction);
+    }
+    else if (targetNode != null && dtde.getTransferable().isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
       dtde.acceptDrag(dropAction);
     }
     else {
@@ -83,14 +91,36 @@ class MoveDropTargetListener implements DropTargetListener {
     final TreeNode[] sourceNodes = getSourceNodes(dtde.getTransferable());
     final TreeNode targetNode = getTargetNode(dtde.getLocation());
     final int dropAction = dtde.getDropAction();
-    if ((dropAction & DnDConstants.ACTION_COPY_OR_MOVE) == 0 || sourceNodes == null || targetNode == null ||
-        !doDrop(sourceNodes, targetNode, dropAction, dtde)) {
+    if (targetNode == null || (dropAction & DnDConstants.ACTION_COPY_OR_MOVE) == 0) {
+      dtde.rejectDrop();
+    }
+    else if (sourceNodes == null) {
+      if (dtde.getTransferable().isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+        dtde.acceptDrop(dropAction);
+        List<File> fileList;
+        try {
+          fileList = (List<File>)dtde.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+        }
+        catch (Exception e) {
+          dtde.rejectDrop();
+          return;
+        }
+        getDropHandler(dropAction).doDropFiles(fileList, targetNode);
+      }
+      else {
+        dtde.rejectDrop();
+      }
+    }
+    else if (!doDrop(sourceNodes, targetNode, dropAction, dtde)) {
       dtde.rejectDrop();
     }
   }
 
   @Nullable
   private TreeNode[] getSourceNodes(final Transferable transferable) {
+    if (!transferable.isDataFlavorSupported(dataFlavor)) {
+      return null;
+    }
     try {
       Object transferData = transferable.getTransferData(dataFlavor);
       if (transferData instanceof AbstractProjectViewPSIPane.TransferableWrapper) {
@@ -173,6 +203,8 @@ class MoveDropTargetListener implements DropTargetListener {
     boolean isDropRedundant(@NotNull TreeNode sourceNode, @NotNull TreeNode targetNode);
 
     void doDrop(@NotNull TreeNode[] sourceNodes, @NotNull TreeNode targetNode);
+
+    void doDropFiles(List<File> fileList, TreeNode targetNode);
   }
 
   public abstract class MoveCopyDropHandler implements DropHandler {
@@ -211,6 +243,22 @@ class MoveDropTargetListener implements DropTargetListener {
       return targetElement != null && sourceElements.length > 0 && sourceElements[0] != null &&
              targetElement.getProject() == sourceElements[0].getProject();
     }
+
+    protected PsiFileSystemItem[] getPsiFiles(List<File> fileList) {
+      List<PsiFileSystemItem> sourceFiles = new ArrayList<PsiFileSystemItem>();
+      for (File file : fileList) {
+        final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+        if (vFile != null) {
+          final PsiFileSystemItem psiFile = vFile.isDirectory()
+                                            ? PsiManager.getInstance(myProject).findDirectory(vFile)
+                                            : PsiManager.getInstance(myProject).findFile(vFile);
+          if (psiFile != null) {
+            sourceFiles.add(psiFile);
+          }
+        }
+      }
+      return sourceFiles.toArray(new PsiFileSystemItem[sourceFiles.size()]);
+    }
   }
 
   private class MoveDropHandler extends MoveCopyDropHandler {
@@ -237,6 +285,10 @@ class MoveDropTargetListener implements DropTargetListener {
         }
       }
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
+      doDrop(targetNode, sourceElements);
+    }
+
+    private void doDrop(TreeNode targetNode, PsiElement[] sourceElements) {
       final PsiElement targetElement = getPsiElement(targetNode);
       if (targetElement == null) return;
       final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
@@ -271,6 +323,11 @@ class MoveDropTargetListener implements DropTargetListener {
       final PsiElement psiElement = getPsiElement(targetNode);
       return !MoveHandler.isValidTarget(psiElement);
     }
+
+    public void doDropFiles(List<File> fileList, TreeNode targetNode) {
+      final PsiFileSystemItem[] sourceFileArray = getPsiFiles(fileList);
+      doDrop(targetNode, sourceFileArray);
+    }
   }
 
   private class CopyDropHandler extends MoveCopyDropHandler {
@@ -284,6 +341,10 @@ class MoveDropTargetListener implements DropTargetListener {
 
     public void doDrop(@NotNull final TreeNode[] sourceNodes, @NotNull final TreeNode targetNode) {
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
+      doDrop(targetNode, sourceElements);
+    }
+
+    private void doDrop(TreeNode targetNode, PsiElement[] sourceElements) {
       final PsiElement targetElement = getPsiElement(targetNode);
       final PsiDirectory psiDirectory;
       if (targetElement instanceof PsiDirectoryContainer) {
@@ -303,6 +364,11 @@ class MoveDropTargetListener implements DropTargetListener {
     public boolean shouldDelegateToParent(@NotNull final TreeNode targetNode) {
       final PsiElement psiElement = getPsiElement(targetNode);
       return psiElement == null || (!(psiElement instanceof PsiDirectoryContainer) && !(psiElement instanceof PsiDirectory));
+    }
+
+    public void doDropFiles(List<File> fileList, TreeNode targetNode) {
+      final PsiFileSystemItem[] sourceFileArray = getPsiFiles(fileList);
+      doDrop(targetNode, sourceFileArray);
     }
   }
 }
