@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -26,9 +27,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -88,9 +87,14 @@ public class ToolWindowSwitcher extends AnAction {
       currentIndex = fromFirst ? 0 : ids.length - 1;
       toolwindows = new JLabel[ids.length];
 
-
       final FileEditorManager editorManager = FileEditorManager.getInstance(project);
       final VirtualFile[] openFiles = editorManager.getOpenFiles();
+
+      try {
+        Arrays.sort(openFiles, new RecentFilesComparator(project));
+      } catch (Exception e) {// IndexNotReadyException
+      }
+
       final VirtualFile[] selectedFiles = editorManager.getSelectedFiles();
       final VirtualFile selectedFile = selectedFiles.length > 0 ? selectedFiles[0] : null;
 
@@ -290,6 +294,25 @@ public class ToolWindowSwitcher extends AnAction {
 
     enum ActivePanel {
       TOOL_WINDOWS, FILES
+    }
+
+    private static class RecentFilesComparator implements Comparator<VirtualFile> {
+      private final VirtualFile[] recentFiles;
+
+      public RecentFilesComparator(Project project) {
+        recentFiles = EditorHistoryManager.getInstance(project).getFiles();
+      }
+
+      public int compare(VirtualFile vf1, VirtualFile vf2) {
+        return getIndex(vf2) - getIndex(vf1);
+      }
+
+      private int getIndex(VirtualFile vf) {
+        for (int i = 0; i < recentFiles.length; i++) {
+          if (recentFiles[i] == vf) return i;
+        }
+        return recentFiles.length - 1;
+      }
     }
   }
 }
