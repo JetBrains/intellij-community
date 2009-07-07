@@ -1,5 +1,7 @@
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -13,7 +15,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AllVcses implements AllVcsesI {
+public class AllVcses implements AllVcsesI, Disposable {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.projectlevelman.AllVcses");
   private final Map<String, AbstractVcs> myVcses;
 
@@ -21,7 +23,7 @@ public class AllVcses implements AllVcsesI {
   private final Project myProject;
   private final Map<String, VcsEP> myExtensions;
 
-  public AllVcses(final Project project) {
+  private AllVcses(final Project project) {
     myProject = project;
     myVcses = new HashMap<String, AbstractVcs>();
     myLock = new Object();
@@ -35,6 +37,10 @@ public class AllVcses implements AllVcsesI {
     for (VcsEP ep : myExtensions.values()) {
       addVcs(ep.getVcs(myProject));
     }
+  }
+
+  public static AllVcsesI getInstance(final Project project) {
+    return ServiceManager.getService(project, AllVcsesI.class);
   }
 
   private void addVcs(final AbstractVcs vcs) {
@@ -94,7 +100,7 @@ public class AllVcses implements AllVcsesI {
     return myList;
   }*/
 
-  public void disposeMe() {
+  public void dispose() {
     synchronized (myLock) {
       for (AbstractVcs vcs : myVcses.values()) {
         unregisterVcs(vcs);

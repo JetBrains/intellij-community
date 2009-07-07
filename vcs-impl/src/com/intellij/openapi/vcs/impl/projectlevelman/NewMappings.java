@@ -25,11 +25,11 @@ public class NewMappings {
   private final Map<VcsDirectoryMapping, LocalFileSystem.WatchRequest> myDirectoryMappingWatches;
   
   private final DefaultVcsRootPolicy myDefaultVcsRootPolicy;
-  private final AllVcsesI myAllVcsesI;
   private final EventDispatcher<VcsListener> myEventDispatcher;
+  private final Project myProject;
 
-  public NewMappings(final Project project, final AllVcsesI allVcsesI, final EventDispatcher<VcsListener> eventDispatcher) {
-    myAllVcsesI = allVcsesI;
+  public NewMappings(final Project project, final EventDispatcher<VcsListener> eventDispatcher) {
+    myProject = project;
     myLock = new Object();
     myVcsToPaths = new HashMap<String, List<VcsDirectoryMapping>>();
     myDirectoryMappingWatches = new HashMap<VcsDirectoryMapping, LocalFileSystem.WatchRequest>();
@@ -83,16 +83,13 @@ public class NewMappings {
   }
 
   private void keepActiveVcs(final Runnable runnable) {
-    // ensure initialized - outside the lock
-    myAllVcsesI.isEmpty();
-    
     final MyVcsActivator activator;
     synchronized (myLock) {
       activator = new MyVcsActivator(new HashSet<String>(myVcsToPaths.keySet()));
       runnable.run();
       restoreActiveVcses();
     }
-    activator.activate(myVcsToPaths.keySet(), myAllVcsesI);
+    activator.activate(myVcsToPaths.keySet(), AllVcses.getInstance(myProject));
   }
 
   private void restoreActiveVcses() {
@@ -101,7 +98,7 @@ public class NewMappings {
       final List<AbstractVcs> list = new ArrayList<AbstractVcs>(set.size());
       for (String s : set) {
         if (s.trim().length() == 0) continue;
-        final AbstractVcs vcs = myAllVcsesI.getByName(s);
+        final AbstractVcs vcs = AllVcses.getInstance(myProject).getByName(s);
         if (vcs != null) {
           list.add(vcs);
         }
@@ -229,6 +226,9 @@ public class NewMappings {
   }
 
   private void clearImpl() {
+    // if vcses were not mapped, there's nothing to clear
+    if ((myActiveVcses ==  null) || (myActiveVcses.length == 0)) return;
+
     final Collection<LocalFileSystem.WatchRequest> toRemove = new ArrayList<LocalFileSystem.WatchRequest>();
     keepActiveVcs(new Runnable() {
       public void run() {

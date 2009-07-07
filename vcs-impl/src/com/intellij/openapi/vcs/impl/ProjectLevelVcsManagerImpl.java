@@ -84,7 +84,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final ProjectLevelVcsManagerSerialization mySerialization;
   private final OptionsAndConfirmations myOptionsAndConfirmations;
 
-  private AllVcsesI myAllVcsesI;
   private NewMappings myMappings;
   private final Project myProject;
   private MappingsToRoots myMappingsToRoots;
@@ -122,8 +121,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
 
-    myAllVcsesI = new AllVcsesCorrectlyInitProxy(myProject);
-    myMappings = new NewMappings(myProject, myAllVcsesI, myEventDispatcher);
+    myMappings = new NewMappings(myProject, myEventDispatcher);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
     myBackgroundableActionHandlerMap = new HashMap<MyBackgroundableActions, BackgroundableActionEnabledHandler>();
   }
@@ -137,22 +135,22 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void registerVcs(AbstractVcs vcs) {
-    myAllVcsesI.registerManually(vcs);
+    AllVcses.getInstance(myProject).registerManually(vcs);
   }
 
   @Nullable
   public AbstractVcs findVcsByName(String name) {
     if (name == null) return null;
     if (myProject.isDisposed()) return null;
-    return myAllVcsesI.getByName(name);
+    return AllVcses.getInstance(myProject).getByName(name);
   }
 
   public AbstractVcs[] getAllVcss() {
-    return myAllVcsesI.getAll();
+    return AllVcses.getInstance(myProject).getAll();
   }
 
   public boolean haveVcses() {
-    return ! myAllVcsesI.isEmpty();
+    return ! AllVcses.getInstance(myProject).isEmpty();
   }
 
   public void disposeComponent() {
@@ -204,7 +202,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     if (vcsName == null || vcsName.length() == 0) {
       return null;
     }
-    return myAllVcsesI.getByName(vcsName);
+    return AllVcses.getInstance(myProject).getByName(vcsName);
   }
 
   @Nullable
@@ -256,8 +254,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       if (myIsDisposed) return;
 
       myMappings.disposeMe();
-      myAllVcsesI.disposeMe();
-
       try {
         myContentManager = null;
 
@@ -278,7 +274,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       LOG.warn("Active vcs '" + vcs.getName() + "' is being unregistered. Remove from mappings first.");
     }
     myMappings.beingUnregistered(vcs.getName());
-    myAllVcsesI.unregisterManually(vcs);
+    AllVcses.getInstance(myProject).unregisterManually(vcs);
   }
 
   public ContentManager getContentManager() {

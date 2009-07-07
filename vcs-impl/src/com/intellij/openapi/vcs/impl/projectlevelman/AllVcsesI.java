@@ -1,7 +1,7 @@
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.vcs.AbstractVcs;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,14 +12,8 @@ import com.intellij.openapi.vcs.AbstractVcs;
  */
 public interface AllVcsesI {
   void registerManually(@NotNull AbstractVcs vcs);
-
   void unregisterManually(@NotNull AbstractVcs vcs);
-
   AbstractVcs getByName(String name);
-
-  void disposeMe();
-
   AbstractVcs[] getAll();
-
   boolean isEmpty();
 }

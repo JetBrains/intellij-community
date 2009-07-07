@@ -35,10 +35,9 @@ public class DuringChangeListManagerUpdateTestScheme {
     final ProjectLevelVcsManagerImpl projectLevelVcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(project);
     projectLevelVcsManager.registerVcs(vcs);
     projectLevelVcsManager.setDirectoryMapping(mockVcsRoot.getAbsolutePath(), vcs.getName());
-    projectLevelVcsManager.updateActiveVcss();
 
     AbstractVcs vcsFound = projectLevelVcsManager.findVcsByName(vcs.getName());
-    assert projectLevelVcsManager.getRootsUnderVcs(vcsFound).length == 1;
+    assert projectLevelVcsManager.getRootsUnderVcs(vcsFound).length == 1: "size: " + projectLevelVcsManager.getRootsUnderVcs(vcsFound).length;
 
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
     myClManager = ChangeListManager.getInstance(project);
