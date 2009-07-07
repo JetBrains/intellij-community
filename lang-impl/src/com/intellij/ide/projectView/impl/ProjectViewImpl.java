@@ -639,6 +639,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     myActionGroup.addAction(myAutoScrollFromSourceHandler.createToggleAction()).setAsSecondary(true);
     myActionGroup.addAction(new SortByTypeAction()).setAsSecondary(true);
 
+    myActionGroup.addAction(new ScrollFromSourceAction());
     AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(new TreeExpander() {
       public void expandAll() {
 
@@ -1419,6 +1420,16 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       myFileEditorManager.addFileEditorManagerListener(myEditorManagerListener);
     }
 
+    public void scrollFromSource() {
+      final FileEditor[] editors = FileEditorManager.getInstance(myProject).getSelectedEditors();
+      for (FileEditor fileEditor : editors) {
+        if (fileEditor instanceof TextEditor) {
+          Editor editor = ((TextEditor)fileEditor).getEditor();
+          selectElementAtCaretNotLosingFocus(editor);
+        }
+      }
+    }
+
     private void selectElementAtCaretNotLosingFocus(final Editor editor) {
       if (IJSwingUtilities.hasFocus(getCurrentProjectViewPane().getComponentToFocus())) return;
       final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
@@ -1535,6 +1546,17 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       super.update(e);
       final Presentation presentation = e.getPresentation();
       presentation.setVisible(getCurrentProjectViewPane() != null);
+    }
+  }
+
+  private class ScrollFromSourceAction extends AnAction {
+    private ScrollFromSourceAction() {
+      super("Scroll from Source", "Select the file open in the active editor", IconLoader.getIcon("/general/autoscrollFromSource.png"));
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myAutoScrollFromSourceHandler.scrollFromSource();
     }
   }
 
