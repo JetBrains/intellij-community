@@ -2,6 +2,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -67,10 +68,18 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     };
 
     myPathPanel = new FieldPanel(IdeBundle.message("editbox.export.settings.to"), null, browseAction, null);
-    myPathPanel.setText(DEFAULT_PATH);
+
+    String exportPath = PropertiesComponent.getInstance().getOrInit("export.settings.path", DEFAULT_PATH);
+    myPathPanel.setText(exportPath);
 
     setTitle(title);
     init();
+  }
+
+  @Override
+  protected void doOKAction() {
+    PropertiesComponent.getInstance().setValue("export.settings.path", myPathPanel.getText());
+    super.doOKAction();
   }
 
   private static boolean addToExistingListElement(ExportableComponent component,
