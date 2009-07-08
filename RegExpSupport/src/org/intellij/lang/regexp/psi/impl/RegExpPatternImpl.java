@@ -16,14 +16,14 @@
 package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.TokenSet;
-
-import org.jetbrains.annotations.NotNull;
-
 import org.intellij.lang.regexp.RegExpElementTypes;
+import org.intellij.lang.regexp.psi.RegExpBranch;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpPattern;
-import org.intellij.lang.regexp.psi.RegExpBranch;
+import org.jetbrains.annotations.NotNull;
 
 public class RegExpPatternImpl extends RegExpElementImpl implements RegExpPattern {
     private static final TokenSet BRANCH = TokenSet.create(RegExpElementTypes.BRANCH);
@@ -45,4 +45,10 @@ public class RegExpPatternImpl extends RegExpElementImpl implements RegExpPatter
         }
         return branches;
     }
+
+  @NotNull
+  @Override
+  public PsiReference[] getReferences() {
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this, RegExpPattern.class);
+  }
 }
