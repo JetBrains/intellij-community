@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.template;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 
 /**
@@ -26,6 +27,13 @@ public interface TemplateBuilder {
    * @param expression the replacement expression.
    */
   void replaceElement(PsiElement element, Expression expression);
+
+  /**
+   * Creates a replacement box for the specified text range within the container element.
+   * @param rangeWithinElement range within the container element.
+   * @param replacementText the initial value for the replacement.
+   */
+  void replaceRange(TextRange rangeWithinElement, String replacementText);
 
   /**
    * Shows the live template and initiates editing process.

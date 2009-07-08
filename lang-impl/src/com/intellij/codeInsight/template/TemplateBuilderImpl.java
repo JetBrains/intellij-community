@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -105,6 +106,12 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   public void replaceElement(PsiElement element, Expression expression) {
     final RangeMarker key = wrapElement(element);
     myExpressions.put(key, expression);
+    myElements.add(key);
+  }
+
+  public void replaceRange(TextRange rangeWithinElement, String replacementText) {
+    final RangeMarker key = myDocument.createRangeMarker(rangeWithinElement.shiftRight(myContainerElement.getStartOffset()));
+    myExpressions.put(key, new ConstantNode(replacementText));
     myElements.add(key);
   }
 
