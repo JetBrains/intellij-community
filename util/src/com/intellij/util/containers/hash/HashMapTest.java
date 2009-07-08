@@ -1,13 +1,11 @@
 package com.intellij.util.containers.hash;
 
 
-
 import gnu.trove.THashMap;
 
 import org.junit.Assert;
 
 import org.junit.Test;
-
 
 
 import java.util.HashSet;
@@ -19,9 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 
-
 public class HashMapTest {
-
 
 
   @Test
@@ -61,7 +57,6 @@ public class HashMapTest {
   }
 
 
-
   @Test
 
   public void testPutGet2() {
@@ -99,7 +94,6 @@ public class HashMapTest {
   }
 
 
-
   @Test
 
   public void testPutGetRemove() {
@@ -131,7 +125,6 @@ public class HashMapTest {
   }
 
 
-
   @Test
 
   public void keySet() {
@@ -139,7 +132,6 @@ public class HashMapTest {
     final HashMap<Integer, String> tested = new HashMap<Integer, String>();
 
     final Set<Integer> set = new HashSet<Integer>();
-
 
 
     for (int i = 0; i < 10000; ++i) {
@@ -161,7 +153,6 @@ public class HashMapTest {
   }
 
 
-
   @Test
 
   public void keySet2() {
@@ -169,7 +160,6 @@ public class HashMapTest {
     final HashMap<Integer, String> tested = new HashMap<Integer, String>();
 
     final Set<Integer> set = new HashSet<Integer>();
-
 
 
     for (int i = 0; i < 10000; ++i) {
@@ -197,9 +187,7 @@ public class HashMapTest {
     }
 
 
-
     Assert.assertEquals(5000, tested.size());
-
 
 
     it = tested.keySet().iterator();
@@ -219,15 +207,12 @@ public class HashMapTest {
   }
 
 
-
-  @Test
+  //@Test
 
   public void benchmarkGet() {
 
 
-
     long started;
-
 
 
     final Map<Integer, String> map = new java.util.HashMap<Integer, String>();
@@ -253,7 +238,6 @@ public class HashMapTest {
     System.out.println("100 000 000 lookups in java.util.HashMap took " + (System.currentTimeMillis() - started));
 
 
-
     final Map<Integer, String> troveMap = new THashMap<Integer, String>();
 
     for (int i = 0; i < 100000; ++i) {
@@ -275,7 +259,6 @@ public class HashMapTest {
     }
 
     System.out.println("100 000 000 lookups in THashMap took " + (System.currentTimeMillis() - started));
-
 
 
     final HashMap<Integer, String> tested = new HashMap<Integer, String>();
@@ -303,15 +286,12 @@ public class HashMapTest {
   }
 
 
-
-  @Test
+  //@Test
 
   public void benchmarkGetMissingKeys() {
 
 
-
     long started;
-
 
 
     final Map<Integer, String> map = new java.util.HashMap<Integer, String>();
@@ -337,7 +317,6 @@ public class HashMapTest {
     System.out.println("100 000 000 lookups in java.util.HashMap took " + (System.currentTimeMillis() - started));
 
 
-
     final Map<Integer, String> troveMap = new THashMap<Integer, String>();
 
     for (int i = 0; i < 100000; ++i) {
@@ -359,7 +338,6 @@ public class HashMapTest {
     }
 
     System.out.println("100 000 000 lookups in THashMap took " + (System.currentTimeMillis() - started));
-
 
 
     final HashMap<Integer, String> tested = new HashMap<Integer, String>();
