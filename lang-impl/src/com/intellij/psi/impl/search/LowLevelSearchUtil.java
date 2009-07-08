@@ -12,7 +12,6 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringSearcher;
 
 import java.util.List;
@@ -110,9 +109,13 @@ public class LowLevelSearchUtil {
                                                                final StringSearcher searcher,
                                                                final boolean ignoreInjectedPsi) {
     ProgressManager.getInstance().checkCanceled();
-    final CharSequence buffer = scope instanceof PsiFile ? ((PsiFile)scope).getViewProvider().getContents():new CharArrayCharSequence(scope.textToCharArray());
-    int startOffset = 0;
-    int endOffset = buffer.length();
+
+    PsiFile file = scope.getContainingFile();
+    final CharSequence buffer = file.getViewProvider().getContents();
+
+    TextRange range = scope.getTextRange();
+    int startOffset = range.getStartOffset();
+    int endOffset = range.getEndOffset();
 
     do {
       startOffset  = searchWord(buffer, startOffset, endOffset, searcher);
