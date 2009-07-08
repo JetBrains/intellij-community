@@ -114,6 +114,9 @@
 
   <projectService serviceInterface="com.intellij.openapi.project.DumbService" serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
 
+  <projectService serviceInterface="com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI" 
+                  serviceImplementation="com.intellij.openapi.vcs.impl.projectlevelman.AllVcses"/>
+
   <!-- General -->
   <applicationConfigurable implementation="com.intellij.ide.GeneralSettingsConfigurable"/>
 

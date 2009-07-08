@@ -89,9 +89,5 @@
     <component>
       <implementation-class>com.intellij.lifecycle.PeriodicalTasksCloser</implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.impl.projectlevelman.AllVcses</implementation-class>
-    </component>
   </project-components>
 </components>
