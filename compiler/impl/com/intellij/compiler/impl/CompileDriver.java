@@ -68,6 +68,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 
 public class CompileDriver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileDriver");
@@ -529,38 +530,68 @@ public class CompileDriver {
 
       // need this to make sure the VFS is built
       boolean needRecalcOutputDirs = false;
-      final List<VirtualFile> outputsToRefresh = new ArrayList<VirtualFile>();
-      for (VirtualFile output : context.getAllOutputDirectories()) {
-        if (output.isValid()) {
-          walkChildren(output, context);
+      //final List<VirtualFile> outputsToRefresh = new ArrayList<VirtualFile>();
+
+      final VirtualFile[] all = context.getAllOutputDirectories();
+
+      final ProgressIndicator progressIndicator = context.getProgressIndicator();
+
+      final int totalCount = all.length + myGenerationCompilerModuleToOutputDirMap.size() * 2;
+      final CountDownLatch latch = new CountDownLatch(totalCount);
+      final Runnable decCount = new Runnable() {
+        public void run() {
+          latch.countDown();
+          progressIndicator.setFraction(((double)(totalCount - latch.getCount())) / totalCount);
         }
-        else {
-          needRecalcOutputDirs = true;
-          final File file = new File(output.getPath());
-          if (!file.exists()) {
-            final boolean created = file.mkdirs();
-            if (!created) {
-              context.addMessage(CompilerMessageCategory.ERROR, "Failed to create output directory " + file.getPath(), null, 0, 0);
+      };
+      progressIndicator.pushState();
+      progressIndicator.setText("Inspecting output directories...");
+      final boolean asyncMode = !ApplicationManager.getApplication().isDispatchThread(); // must not lock awt thread with latch.await()
+      try {
+        for (VirtualFile output : all) {
+          if (output.isValid()) {
+            walkChildren(output, context);
+          }
+          else {
+            needRecalcOutputDirs = true;
+            final File file = new File(output.getPath());
+            if (!file.exists()) {
+              final boolean created = file.mkdirs();
+              if (!created) {
+                context.addMessage(CompilerMessageCategory.ERROR, "Failed to create output directory " + file.getPath(), null, 0, 0);
+                return ExitStatus.ERRORS;
+              }
+            }
+            output = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+            if (output == null) {
+              context.addMessage(CompilerMessageCategory.ERROR, "Failed to locate output directory " + file.getPath(), null, 0, 0);
               return ExitStatus.ERRORS;
             }
           }
-          output = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-          if (output == null) {
-            context.addMessage(CompilerMessageCategory.ERROR, "Failed to locate output directory " + file.getPath(), null, 0, 0);
-            return ExitStatus.ERRORS;
-          }
+          output.refresh(asyncMode, true, decCount);
+          //outputsToRefresh.add(output);
         }
-        outputsToRefresh.add(output);
-      }
-      for (Pair<IntermediateOutputCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
-        final Pair<VirtualFile, VirtualFile> generated = myGenerationCompilerModuleToOutputDirMap.get(pair);
-        walkChildren(generated.getFirst(), context);
-        outputsToRefresh.add(generated.getFirst());
-        walkChildren(generated.getSecond(), context);
-        outputsToRefresh.add(generated.getSecond());
-      }
+        for (Pair<IntermediateOutputCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
+          final Pair<VirtualFile, VirtualFile> generated = myGenerationCompilerModuleToOutputDirMap.get(pair);
+          walkChildren(generated.getFirst(), context);
+          //outputsToRefresh.add(generated.getFirst());
+          generated.getFirst().refresh(asyncMode, true, decCount);
+          walkChildren(generated.getSecond(), context);
+          //outputsToRefresh.add(generated.getSecond());
+          generated.getSecond().refresh(asyncMode, true, decCount);
+        }
 
-      RefreshQueue.getInstance().refresh(false, true, null, outputsToRefresh.toArray(new VirtualFile[outputsToRefresh.size()]));
+        //RefreshQueue.getInstance().refresh(false, true, null, outputsToRefresh.toArray(new VirtualFile[outputsToRefresh.size()]));
+        try {
+          latch.await(); // wait until all threads are refreshed
+        }
+        catch (InterruptedException e) {
+          LOG.info(e);
+        }
+      }
+      finally {
+        progressIndicator.popState();
+      }
 
       DumbService.getInstance(myProject).waitForSmartMode();
 
@@ -1569,6 +1600,7 @@ public class CompileDriver {
   private boolean executeCompileTasks(final CompileContext context, final boolean beforeTasks) {
     final CompilerManager manager = CompilerManager.getInstance(myProject);
     final ProgressIndicator progressIndicator = context.getProgressIndicator();
+    progressIndicator.pushState();
     try {
       CompileTask[] tasks = beforeTasks ? manager.getBeforeTasks() : manager.getAfterTasks();
       if (tasks.length > 0) {
@@ -1583,6 +1615,7 @@ public class CompileDriver {
       }
     }
     finally {
+      progressIndicator.popState();
       WindowManager.getInstance().getStatusBar(myProject).setInfo("");
       if (progressIndicator instanceof CompilerTask) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
