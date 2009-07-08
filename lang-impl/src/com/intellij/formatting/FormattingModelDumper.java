@@ -14,35 +14,41 @@ public class FormattingModelDumper {
   private FormattingModelDumper() {
   }
 
-  public static void dumpFormattingModel(final Block block, int indent, final PrintStream output) {
+  public static void dumpFormattingModel(final Block block, int indent, PrintStream stream) {
+    StringBuilder builder = new StringBuilder();
+    dumpFormattingModel(block, indent, builder);
+    stream.print(builder.toString());
+  }
+
+  public static void dumpFormattingModel(final Block block, int indent, final StringBuilder builder) {
     if (indent == 0) {
-      output.println("--- FORMATTING MODEL ---");
+      builder.append("--- FORMATTING MODEL ---\n");
     }
-    output.print(StringUtil.repeatSymbol(' ', indent));
+    builder.append(StringUtil.repeatSymbol(' ', indent));
     List<Block> subBlocks = block.getSubBlocks();
     if (subBlocks.isEmpty()) {
-      dumpTextBlock(block, output);
+      dumpTextBlock(block, builder);
     }
     else {
-      dumpBlock(block, output);
+      dumpBlock(block, builder);
       Block prevBlock = null;
       for(Block subBlock: subBlocks) {
         if (prevBlock != null) {
           Spacing spacing = block.getSpacing(prevBlock, subBlock);
           if (spacing != null) {
-            dumpSpacing(spacing, indent+2, output);
+            dumpSpacing(spacing, indent+2, builder);
           }
         }
         prevBlock = subBlock;
-        dumpFormattingModel(subBlock, indent+2, output);
+        dumpFormattingModel(subBlock, indent+2, builder);
       }
     }
   }
 
-  private static void dumpTextBlock(final Block block, final PrintStream output) {
-    StringBuilder blockData = new StringBuilder("\"" + getBlockText(block) + "\"");
-    dumpBlockProperties(block, blockData);
-    output.println(blockData.toString());
+  private static void dumpTextBlock(final Block block, final StringBuilder builder) {
+    builder.append("\"").append(getBlockText(block)).append("\"");
+    dumpBlockProperties(block, builder);
+    builder.append("\n");
   }
 
   private static String getBlockText(final Block block) {
@@ -54,14 +60,13 @@ public class FormattingModelDumper {
     }
   }
 
-  private static void dumpBlock(final Block block, final PrintStream output) {
-    StringBuilder blockData = new StringBuilder("<block ");
+  private static void dumpBlock(final Block block, final StringBuilder builder) {
+    builder.append("<block ");
     if (block instanceof ASTBlock) {
-      blockData.append(((ASTBlock)block).getNode().getElementType());
+      builder.append(((ASTBlock)block).getNode().getElementType());
     }
-    dumpBlockProperties(block, blockData);
-    blockData.append(">");
-    output.println(blockData.toString());
+    dumpBlockProperties(block, builder);
+    builder.append(">\n");
   }
 
   private static void dumpBlockProperties(final Block block, final StringBuilder blockData) {
@@ -77,8 +82,8 @@ public class FormattingModelDumper {
     }
   }
 
-  private static void dumpSpacing(final Spacing spacing, final int indent, final PrintStream out) {
-    out.print(StringUtil.repeatSymbol(' ', indent));
-    out.println("spacing: " + spacing);
+  private static void dumpSpacing(final Spacing spacing, final int indent, final StringBuilder out) {
+    out.append(StringUtil.repeatSymbol(' ', indent));
+    out.append("spacing: ").append(spacing).append("\n");
   }
 }
