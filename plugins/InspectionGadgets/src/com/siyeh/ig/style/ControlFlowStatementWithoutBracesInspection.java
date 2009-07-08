@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,18 +29,21 @@ import org.jetbrains.annotations.NotNull;
 public class ControlFlowStatementWithoutBracesInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "control.flow.statement.without.braces.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "control.flow.statement.without.braces.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos){
         return new ControlFlowStatementFix();
     }
@@ -53,54 +56,55 @@ public class ControlFlowStatementWithoutBracesInspection
                     "control.flow.statement.without.braces.add.quickfix");
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
-	        final PsiElement parent = element.getParent();
-	        if (!(parent instanceof PsiStatement)) {
-		        return;
-	        }
-	        final PsiStatement statement = (PsiStatement)parent;
+            final PsiElement parent = element.getParent();
+            if (!(parent instanceof PsiStatement)) {
+                return;
+            }
+            final PsiStatement statement = (PsiStatement)parent;
             @NonNls final String elementText = element.getText();
             final PsiStatement statementWithoutBraces;
-            if (statement instanceof PsiDoWhileStatement) {
-                final PsiDoWhileStatement doWhileStatement =
-                        (PsiDoWhileStatement)statement;
-                statementWithoutBraces = doWhileStatement.getBody();
-            } else if (statement instanceof PsiForeachStatement) {
-                final PsiForeachStatement foreachStatement =
-                        (PsiForeachStatement)statement;
-                statementWithoutBraces = foreachStatement.getBody();
-            } else if (statement instanceof PsiForStatement) {
-                final PsiForStatement forStatement = (PsiForStatement)statement;
-                statementWithoutBraces = forStatement.getBody();
+            if (statement instanceof PsiLoopStatement) {
+                final PsiLoopStatement loopStatement =
+                        (PsiLoopStatement) statement;
+                statementWithoutBraces = loopStatement.getBody();
             } else if (statement instanceof PsiIfStatement) {
                 final PsiIfStatement ifStatement = (PsiIfStatement)statement;
                 if ("if".equals(elementText)) {
                     statementWithoutBraces = ifStatement.getThenBranch();
+                    // special casing to avoid "else" on new line
+                    final PsiElement[] children = ifStatement.getChildren();
+                    final StringBuilder newStatementText = new StringBuilder();
+                    for (PsiElement child : children) {
+                        if (child != statementWithoutBraces) {
+                            newStatementText.append(child.getText());
+                        } else {
+                            newStatementText.append("{\n");
+                            newStatementText.append(child.getText());
+                            newStatementText.append("\n}");
+                        }
+                    }
+                    replaceStatement(ifStatement, newStatementText.toString());
+                    return;
                 } else {
                     statementWithoutBraces = ifStatement.getElseBranch();
                 }
-            } else if (statement instanceof PsiWhileStatement) {
-                final PsiWhileStatement whileStatement =
-                        (PsiWhileStatement)statement;
-                statementWithoutBraces = whileStatement.getBody();
             } else {
-                assert false;
-                statementWithoutBraces = null;
+                return;
             }
             if (statementWithoutBraces == null) {
                 return;
             }
-            final String statementText = statementWithoutBraces.getText();
-            final PsiElement whiteSpace =
-                    statementWithoutBraces.getPrevSibling();
-            assert whiteSpace != null;
-            replaceStatement(statementWithoutBraces,
-                    "{\n" + statementText + "\n}");
+            final String newStatementText =
+                    "{\n" + statementWithoutBraces.getText() + "\n}";
+            replaceStatement(statementWithoutBraces, newStatementText);
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ControlFlowStatementVisitor();
     }
@@ -111,28 +115,28 @@ public class ControlFlowStatementWithoutBracesInspection
         @Override public void visitDoWhileStatement(PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
             final PsiStatement body = statement.getBody();
-	        if (body == null || body instanceof PsiBlockStatement) {
-		        return;
-	        }
-	        registerStatementError(statement);
+            if (body == null || body instanceof PsiBlockStatement) {
+                return;
+            }
+            registerStatementError(statement);
         }
 
         @Override public void visitForeachStatement(PsiForeachStatement statement) {
             super.visitForeachStatement(statement);
             final PsiStatement body = statement.getBody();
-	        if (body == null || body instanceof PsiBlockStatement) {
-		        return;
-	        }
-	        registerStatementError(statement);
+            if (body == null || body instanceof PsiBlockStatement) {
+                return;
+            }
+            registerStatementError(statement);
         }
 
         @Override public void visitForStatement(PsiForStatement statement) {
             super.visitForStatement(statement);
             final PsiStatement body = statement.getBody();
-	        if (body == null || body instanceof PsiBlockStatement) {
-		        return;
-	        }
-	        registerStatementError(statement);
+            if (body == null || body instanceof PsiBlockStatement) {
+                return;
+            }
+            registerStatementError(statement);
         }
 
         @Override public void visitIfStatement(PsiIfStatement statement) {
@@ -161,10 +165,10 @@ public class ControlFlowStatementWithoutBracesInspection
         @Override public void visitWhileStatement(PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
             final PsiStatement body = statement.getBody();
-	        if (body == null || body instanceof PsiBlockStatement) {
-		        return;
-	        }
-	        registerStatementError(statement);
+            if (body == null || body instanceof PsiBlockStatement) {
+                return;
+            }
+            registerStatementError(statement);
         }
     }
 }
