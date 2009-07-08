@@ -8,7 +8,10 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.filters.*;
+import com.intellij.psi.filters.AndFilter;
+import com.intellij.psi.filters.ConstructorFilter;
+import com.intellij.psi.filters.NotFilter;
+import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -21,6 +24,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.VariableResolverProcessor;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
@@ -373,10 +377,10 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
   public void processVariants(PsiScopeProcessor processor) {
     OrFilter filter = new OrFilter();
-    filter.addFilter(new ClassFilter(PsiClass.class));
-    filter.addFilter(new ClassFilter(PsiPackage.class));
-    filter.addFilter(new AndFilter(new ClassFilter(PsiMethod.class), new NotFilter(new ConstructorFilter())));
-    filter.addFilter(new ClassFilter(PsiVariable.class));
+    filter.addFilter(ElementClassFilter.CLASS);
+    filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
+    filter.addFilter(new AndFilter(ElementClassFilter.METHOD, new NotFilter(new ConstructorFilter())));
+    filter.addFilter(ElementClassFilter.VARIABLE);
 
     FilterScopeProcessor proc = new FilterScopeProcessor(filter, processor) {
       private final Set<String> myVarNames = new THashSet<String>();

@@ -1,8 +1,11 @@
 package com.intellij.psi.scope.processor;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ClassFilter;
+import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.scope.ElementClassFilter;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.util.SmartList;
@@ -14,8 +17,8 @@ import com.intellij.util.SmartList;
  * Time: 8:24:29 PM
  * To change this template use Options | File Templates.
  */
-public abstract class MethodsProcessor extends ConflictFilterProcessor {
-  private static final ClassFilter ourFilter = new ClassFilter(PsiMethod.class);
+public abstract class MethodsProcessor extends ConflictFilterProcessor implements ElementClassHint {
+  private static final ElementFilter ourFilter = ElementClassFilter.METHOD;
 
   private boolean myStaticScopeFlag = false;
   private boolean myIsConstructor = false;
@@ -86,5 +89,18 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor {
 
   public void forceAddResult(PsiMethod method) {
     add(new CandidateInfo(method, PsiSubstitutor.EMPTY, false, false, myCurrentFileContext));
+  }
+
+  @Override
+  public <T> T getHint(Key<T> hintKey) {
+    if (hintKey == ElementClassHint.KEY) {
+      return (T)this;
+    }
+
+    return super.getHint(hintKey);
+  }
+
+  public boolean shouldProcess(DeclaractionKind kind) {
+    return kind == DeclaractionKind.METHOD;
   }
 }

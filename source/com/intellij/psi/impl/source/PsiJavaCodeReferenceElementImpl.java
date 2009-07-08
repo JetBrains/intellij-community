@@ -18,6 +18,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.VariableResolverProcessor;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -673,25 +674,25 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
     case CLASS_OR_PACKAGE_NAME_KIND:
            filter = new OrFilter();
-             ((OrFilter)filter).addFilter(new ClassFilter(PsiClass.class));
-             ((OrFilter)filter).addFilter(new ClassFilter(PsiPackage.class));
+             ((OrFilter)filter).addFilter(ElementClassFilter.CLASS);
+             ((OrFilter)filter).addFilter(ElementClassFilter.PACKAGE_FILTER);
            break;
     case CLASS_NAME_KIND:
-           filter = new ClassFilter(PsiClass.class);
+           filter = ElementClassFilter.CLASS;
            break;
     case PACKAGE_NAME_KIND:
-           filter = new ClassFilter(PsiPackage.class);
+           filter = ElementClassFilter.PACKAGE_FILTER;
            break;
     case CLASS_FQ_NAME_KIND:
     case CLASS_FQ_OR_PACKAGE_NAME_KIND:
            filter = new OrFilter();
-             ((OrFilter)filter).addFilter(new ClassFilter(PsiPackage.class));
+             ((OrFilter)filter).addFilter(ElementClassFilter.PACKAGE_FILTER);
            if (isQualified()) {
-               ((OrFilter)filter).addFilter(new ClassFilter(PsiClass.class));
+               ((OrFilter)filter).addFilter(ElementClassFilter.CLASS);
            }
            break;
     case CLASS_IN_QUALIFIED_NEW_KIND:
-           filter = new ClassFilter(PsiClass.class);
+           filter = ElementClassFilter.CLASS;
            break;
     default:
            throw new RuntimeException("Unknown reference type");
@@ -721,27 +722,27 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       }
     }
     if (!smartCompletion && !isCodeFragmentType(getTreeParent().getElementType()) && !(getParent() instanceof PsiAnnotation)) {
-      /*filter.addFilter(new ClassFilter(PsiClass.class));
-      filter.addFilter(new ClassFilter(PsiPackage.class));*/
-      filter.addFilter(new AndFilter(new ClassFilter(PsiMethod.class), new NotFilter(new ConstructorFilter())));
-      filter.addFilter(new ClassFilter(PsiVariable.class));
+      /*filter.addFilter(ElementClassFilter.CLASS);
+      filter.addFilter(ElementClassFilter.PACKAGE);*/
+      filter.addFilter(new AndFilter(ElementClassFilter.METHOD, new NotFilter(new ConstructorFilter())));
+      filter.addFilter(ElementClassFilter.VARIABLE);
     }
     switch (getKind()) {
     case CLASS_OR_PACKAGE_NAME_KIND:
       addClassFilter(filter);
-      filter.addFilter(new ClassFilter(PsiPackage.class));
+      filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
            break;
     case CLASS_NAME_KIND:
       addClassFilter(filter);
       break;
     case PACKAGE_NAME_KIND:
-           filter.addFilter(new ClassFilter(PsiPackage.class));
+           filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
            break;
     case CLASS_FQ_NAME_KIND:
     case CLASS_FQ_OR_PACKAGE_NAME_KIND:
-           filter.addFilter(new ClassFilter(PsiPackage.class));
+           filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
            if (isQualified()) {
-             filter.addFilter(new ClassFilter(PsiClass.class));
+             filter.addFilter(ElementClassFilter.CLASS);
            }
            break;
     case CLASS_IN_QUALIFIED_NEW_KIND:
@@ -751,7 +752,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
              final PsiType type = newExpr.getQualifier().getType();
              final PsiClass aClass = PsiUtil.resolveClassInType(type);
              if (aClass != null) {
-               aClass.processDeclarations(new FilterScopeProcessor(new AndFilter(new ClassFilter(PsiClass.class), new ModifierFilter(PsiModifier.STATIC, false)),
+               aClass.processDeclarations(new FilterScopeProcessor(new AndFilter(ElementClassFilter.CLASS, new ModifierFilter(PsiModifier.STATIC, false)),
                                                                    processor), ResolveState.initial(), null, this);
              }
              //          else{
@@ -775,7 +776,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       filter.addFilter(new AnnotationTypeFilter());
     }
     else {
-      filter.addFilter(new ClassFilter(PsiClass.class));
+      filter.addFilter(ElementClassFilter.CLASS);
     }
   }
 

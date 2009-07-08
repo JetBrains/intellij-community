@@ -3,8 +3,9 @@ package com.intellij.psi.impl.source.resolve;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ClassFilter;
+import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -17,7 +18,7 @@ import com.intellij.util.SmartList;
  * @author ik, dsl
  */
 public class VariableResolverProcessor extends ConflictFilterProcessor implements ElementClassHint {
-  private static final ClassFilter ourFilter = new ClassFilter(PsiVariable.class);
+  private static final ElementFilter ourFilter = ElementClassFilter.VARIABLE;
 
   private boolean myStaticScopeFlag = false;
   private final PsiClass myAccessClass;

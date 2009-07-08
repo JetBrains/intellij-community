@@ -7,8 +7,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.*;
@@ -366,9 +364,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   }
 
   public void processVariants(PsiScopeProcessor processor) {
-    ElementFilter filter = new OrFilter(new ClassFilter[]{new ClassFilter(PsiModifierListOwner.class),
-                                                          new ClassFilter(PsiPackage.class)});
-    FilterScopeProcessor proc = new FilterScopeProcessor(filter, processor);
+    FilterScopeProcessor proc = new FilterScopeProcessor(new ClassFilter(PsiModifierListOwner.class), processor);
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
   }
 

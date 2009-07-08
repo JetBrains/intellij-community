@@ -4,16 +4,16 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
-import com.intellij.psi.scope.processor.FilterScopeProcessor;
+import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CharTable;
@@ -99,13 +99,13 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
   public static PsiVariable[] getAllVariables(PsiElement scope, PsiElement place) {
     final SmartList<PsiVariable> result = new SmartList<PsiVariable>();
-    scope.processDeclarations(new FilterScopeProcessor<PsiVariable>(new ClassFilter(PsiVariable.class), result), ResolveState.initial(), null, place);
+    scope.processDeclarations(new FilterScopeProcessor<PsiVariable>(ElementClassFilter.VARIABLE, result), ResolveState.initial(), null, place);
     return result.toArray(new PsiVariable[result.size()]);
   }
 
   public static PsiMethod[] getAllMethods(PsiElement scope, PsiElement place) {
     final SmartList<PsiMethod> result = new SmartList<PsiMethod>();
-    scope.processDeclarations(new FilterScopeProcessor<PsiMethod>(new ClassFilter(PsiMethod.class), result), ResolveState.initial(), null, place);
+    scope.processDeclarations(new FilterScopeProcessor<PsiMethod>(ElementClassFilter.METHOD, result), ResolveState.initial(), null, place);
     return result.toArray(new PsiMethod[result.size()]);
   }
 

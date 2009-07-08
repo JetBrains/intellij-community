@@ -1,15 +1,13 @@
 package com.intellij.psi.scope.processor;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 import com.intellij.util.SmartList;
 
-public class MethodResolverProcessor extends MethodCandidatesProcessor implements ElementClassHint {
+public class MethodResolverProcessor extends MethodCandidatesProcessor {
   private boolean myStopAcceptingCandidates = false;
 
   public MethodResolverProcessor(PsiMethodCallExpression place){
@@ -29,10 +27,6 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor implement
     super(place, resolvers, new SmartList<CandidateInfo>());
   }
 
-  public boolean shouldProcess(DeclaractionKind kind) {
-    return kind == DeclaractionKind.METHOD;
-  }
-
   public void handleEvent(Event event, Object associated) {
     if (event == JavaScopeProcessorEvent.CHANGE_LEVEL) {
       if (myHasAccessibleStaticCorrectCandidate) myStopAcceptingCandidates = true;
@@ -42,14 +36,5 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor implement
 
   public boolean execute(PsiElement element, ResolveState state) {
     return !myStopAcceptingCandidates && super.execute(element, state);
-  }
-
-  @Override
-  public <T> T getHint(Key<T> hintKey) {
-    if (hintKey == ElementClassHint.KEY) {
-      return (T)this;
-    }
-
-    return super.getHint(hintKey);
   }
 }

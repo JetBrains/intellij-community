@@ -6,10 +6,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -210,7 +210,7 @@ public class PsiClassImplUtil {
     final List<Pair<PsiMember, PsiSubstitutor>> methods = new ArrayList<Pair<PsiMember, PsiSubstitutor>>();
 
     FilterScopeProcessor<MethodCandidateInfo> processor = new FilterScopeProcessor<MethodCandidateInfo>(
-      new OrFilter(new ClassFilter(PsiMethod.class), new ClassFilter(PsiField.class), new ClassFilter(PsiClass.class))) {
+      new OrFilter(ElementClassFilter.METHOD, ElementClassFilter.FIELD, ElementClassFilter.CLASS)) {
       protected void add(PsiElement element, PsiSubstitutor substitutor) {
         if (element instanceof PsiMethod) {
           methods.add(new Pair<PsiMember, PsiSubstitutor>((PsiMethod)element, substitutor));
