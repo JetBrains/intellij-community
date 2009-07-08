@@ -539,20 +539,24 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
+  protected boolean isRunInWriteAction() {
+    return true;
+  }
+
   protected void invokeTestRunnable(final Runnable runnable) throws Exception {
     final Exception[] e = new Exception[1];
     Runnable runnable1 = new Runnable() {
       public void run() {
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          try {
+        try {
+          if (ApplicationManager.getApplication().isDispatchThread() && isRunInWriteAction()) {
             ApplicationManager.getApplication().runWriteAction(runnable);
           }
-          catch (Exception e1) {
-            e[0] = e1;
+          else {
+            runnable.run();
           }
         }
-        else {
-          runnable.run();
+        catch (Exception e1) {
+          e[0] = e1;
         }
       }
     };
