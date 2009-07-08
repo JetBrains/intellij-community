@@ -44,7 +44,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     }, operands);
   }
 
-  private boolean processAnnotationInjections(final PsiModifierListOwner annoElement, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor,
+  private boolean processAnnotationInjections(final boolean unparsable, final PsiModifierListOwner annoElement, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor,
                                               final PsiElement... operands) {
     final PsiAnnotation[] annotations =
       AnnotationUtilEx.getAnnotationFrom(annoElement, myInjectionConfiguration.getLanguageAnnotationPair(), true);
@@ -56,7 +56,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       if (prefix != null) injection.setPrefix(prefix);
       if (suffix != null) injection.setSuffix(suffix);
       if (id != null) injection.setInjectedLanguageId(id);
-      processInjectionWithContext(false, injection, processor, operands);
+      processInjectionWithContext(unparsable, injection, processor, operands);
       return true;
     }
     return false;
@@ -66,7 +66,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
                                                   final PsiElement... operands) {
     processLiteralExpressionInjectionsInner(myInjectionConfiguration, new Processor<Info>() {
       public boolean process(final Info info) {
-        if (processAnnotationInjections(info.owner, processor, operands)) return false; // annotated element
+        if (processAnnotationInjections(info.unparsable, info.owner, processor, operands)) return false; // annotated element
         for (MethodParameterInjection injection : info.injections) {
           if (injection.isApplicable(info.method)) {
             processInjectionWithContext(info.unparsable, injection, processor, operands);

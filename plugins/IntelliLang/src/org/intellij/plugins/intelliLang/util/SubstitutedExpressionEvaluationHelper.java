@@ -19,11 +19,13 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.SmartList;
+import com.intellij.codeInspection.dataFlow.DfaUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Collection;
 
 /**
  * Computes the constant value of an expression while considering the substitution annotation for non-compile-time
@@ -55,8 +57,22 @@ public class SubstitutedExpressionEvaluationHelper {
         }
         else if (psiElement instanceof PsiModifierListOwner) {
           // find substitution
-          return calcSubstituted((PsiModifierListOwner)psiElement);
+          final Object substituted = calcSubstituted((PsiModifierListOwner)psiElement);
+          if (substituted != null) {
+            return substituted;
+          }
+          else if (psiElement instanceof PsiVariable) {
+            final Collection<PsiExpression> values = DfaUtil.getCachedVariableValues(((PsiVariable)psiElement), ref);
+            // return the first computed value as far as we do not support multiple injection
+            for (PsiExpression value : values) {
+              final Object computedValue = myHelper.computeConstantExpression(value);
+              if (computedValue != null) {
+                return computedValue;
+              }
+            }
+          }
         }
+        return null;
       }
       else {
         // unresolvable... no luck

@@ -70,7 +70,11 @@ public class AnnotationUtilEx {
 
       final PsiElement parent = element.getParent();
 
-      if (parent instanceof PsiAssignmentExpression) {
+      if (element instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)element).getOperationSign().getTokenType() == JavaTokenType.PLUSEQ) {
+        element = ((PsiAssignmentExpression)element).getLExpression();
+        continue;
+      }
+      else if (parent instanceof PsiAssignmentExpression) {
         final PsiAssignmentExpression p = (PsiAssignmentExpression)parent;
         if (p.getRExpression() == element) {
           element = p.getLExpression();
@@ -78,7 +82,7 @@ public class AnnotationUtilEx {
         }
       }
       else if (parent instanceof PsiExpression) {
-        element = (PsiExpression)parent;
+        element = parent;
         continue;
       }
       else if (parent instanceof PsiReturnStatement) {
