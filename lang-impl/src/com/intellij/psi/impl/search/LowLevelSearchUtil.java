@@ -114,7 +114,8 @@ public class LowLevelSearchUtil {
     final CharSequence buffer = file.getViewProvider().getContents();
 
     TextRange range = scope.getTextRange();
-    int startOffset = range.getStartOffset();
+    int scopeStart = range.getStartOffset();
+    int startOffset = scopeStart;
     int endOffset = range.getEndOffset();
 
     do {
@@ -122,7 +123,7 @@ public class LowLevelSearchUtil {
       if (startOffset < 0) {
         return true;
       }
-      if (!processTreeUp(processor, scope, searcher, startOffset, ignoreInjectedPsi)) return false;
+      if (!processTreeUp(processor, scope, searcher, startOffset - scopeStart, ignoreInjectedPsi)) return false;
 
       startOffset++;
     }
