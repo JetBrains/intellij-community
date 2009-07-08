@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.ToolWindow;
 
 public class ShowChangesViewAction extends AbstractVcsAction {
   protected void actionPerformed(VcsContext e) {
+    if (e.getProject() == null) return;
     final ToolWindowManager manager = ToolWindowManager.getInstance(e.getProject());
     if (manager != null) {
       final ToolWindow window = manager.getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
