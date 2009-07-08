@@ -90,6 +90,7 @@ public class JavaConcatenationInjectorManager implements ProjectComponent, Modif
       PsiElement element = context;
       PsiElement parent = context.getParent();
       while (parent instanceof PsiBinaryExpression && ((PsiBinaryExpression)parent).getOperationSign().getTokenType() == JavaTokenType.PLUS
+             || parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getOperationSign().getTokenType() == JavaTokenType.PLUSEQ
              || parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != element
              || parent instanceof PsiTypeCastExpression
              || parent instanceof PsiParenthesizedExpression) {
@@ -99,7 +100,7 @@ public class JavaConcatenationInjectorManager implements ProjectComponent, Modif
 
       PsiElement[] operands;
       PsiElement anchor;
-      if (element instanceof PsiBinaryExpression) {
+      if (element instanceof PsiBinaryExpression || element instanceof PsiAssignmentExpression) {
         List<PsiElement> operandList = new ArrayList<PsiElement>();
         collectOperands(element, operandList);
         operands = operandList.toArray(new PsiElement[operandList.size()]);
@@ -162,7 +163,7 @@ public class JavaConcatenationInjectorManager implements ProjectComponent, Modif
 
   private static void collectOperands(PsiElement expression, List<PsiElement> operands) {
     if (expression instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
+      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
       collectOperands(binaryExpression.getLOperand(), operands);
       collectOperands(binaryExpression.getROperand(), operands);
     }

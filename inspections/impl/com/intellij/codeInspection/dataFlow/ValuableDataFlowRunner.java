@@ -5,13 +5,14 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -78,15 +79,29 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
     public AssignInstruction createAssignInstruction(final PsiExpression rExpression) {
       return new AssignInstruction(rExpression) {
         public DfaInstructionState[] apply(final DataFlowRunner runner, final DfaMemoryState memState) {
-          final DfaInstructionState[] states = super.apply(runner, memState);
-          final DfaValue value = memState.peek();
-          if (value instanceof DfaVariableValue) {
-            final MyDfaVariableState state = (MyDfaVariableState)((MyDfaMemoryState)memState).getVariableState((DfaVariableValue)value);
-            if (state.myExpression == null) {
-              state.myExpression = getRExpression();
+          final Instruction nextInstruction = runner.getInstruction(getIndex() + 1);
+
+          final DfaValue dfaSource = memState.pop();
+          final DfaValue dfaDest = memState.pop();
+
+          if (dfaDest instanceof DfaVariableValue) {
+            DfaVariableValue var = (DfaVariableValue)dfaDest;
+            final PsiExpression curValue = getRExpression();
+            final PsiElement parent = curValue.getParent();
+            final IElementType type = parent instanceof PsiAssignmentExpression ? ((PsiAssignmentExpression)parent).getOperationTokenType() : JavaTokenType.EQ;
+            final PsiExpression prevValue = ((MyDfaVariableState)((MyDfaMemoryState)memState).getVariableState(var)).myExpression;
+            memState.setVarValue(var, dfaSource);
+            final PsiExpression nextValue;
+            if (prevValue != null && type == JavaTokenType.PLUSEQ) {
+              nextValue = JavaPsiFacade.getElementFactory(myContext.getProject()).createExpressionFromText(prevValue.getText()+"+"+curValue.getText(), curValue);
             }
+            else {
+              nextValue = curValue;
+            }
+            ((MyDfaVariableState)((MyDfaMemoryState)memState).getVariableState(var)).myExpression = nextValue;
           }
-          return states;
+          memState.push(dfaDest);
+          return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, memState)};
         }
       };
     }

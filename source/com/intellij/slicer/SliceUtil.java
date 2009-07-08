@@ -2,6 +2,7 @@ package com.intellij.slicer;
 
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -79,7 +80,10 @@ public class SliceUtil {
   private static boolean processFlownFromExpressions(final Collection<PsiExpression> expressions, final Processor<SliceUsage> processor,
                                                      final SliceUsage parent) {
     for (PsiExpression exp : expressions) {
-      SliceUsage usage = new SliceUsage(new UsageInfo(exp), parent);
+      final PsiExpression realExpression;
+      realExpression = exp.getParent() instanceof DummyHolder? (PsiExpression) ((DummyHolder)exp.getParent()).getContext() : exp;
+      assert realExpression != null;
+      SliceUsage usage = new SliceUsage(new UsageInfo(realExpression), parent);
       if (!processor.process(usage)) return false;
     }
 
