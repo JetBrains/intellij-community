@@ -2,6 +2,7 @@ package com.intellij.lifecycle;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -17,18 +18,18 @@ import java.util.concurrent.*;
 public class SlowlyClosingAlarm implements AtomicSectionsAware, Disposable {
   private final static Logger LOG = Logger.getInstance("#com.intellij.lifecycle.SlowlyClosingAlarm");
 
-  // todo think about shared thread
-  private final ExecutorService myExecutorService;
+  protected final ExecutorService myExecutorService;
   // single threaded executor, so we have "shared" state here 
   private boolean myInUninterruptibleState;
-  private boolean myDisposeStarted;
+  protected boolean myDisposeStarted;
   private boolean myFinished;
   // for own threads only
-  private final List<Future<?>> myFutureList;
-  private final Object myLock;
+  protected final List<Future<?>> myFutureList;
+  protected final Object myLock;
 
   private static final ThreadFactory THREAD_FACTORY_OWN = threadFactory("SlowlyClosingAlarm pool");
   private final String myName;
+  private final boolean myExecutorIsShared;
 
   private static ThreadFactory threadFactory(@NonNls final String threadsName) {
     return new ThreadFactory() {
@@ -48,11 +49,17 @@ public class SlowlyClosingAlarm implements AtomicSectionsAware, Disposable {
     }
   }
 
-  public SlowlyClosingAlarm(@NotNull final Project project, @NotNull final String name) {
+  protected SlowlyClosingAlarm(@NotNull final Project project, @NotNull final String name) {
+    this(project, name, Executors.newSingleThreadExecutor(THREAD_FACTORY_OWN), false);
+  }
+
+  protected SlowlyClosingAlarm(@NotNull final Project project, @NotNull final String name, final ExecutorService executor,
+                               final boolean executorIsShared) {
     myName = name;
+    myExecutorIsShared = executorIsShared;
+    myExecutorService = executor;
     myLock = new Object();
     myFutureList = new ArrayList<Future<?>>();
-    myExecutorService = Executors.newSingleThreadExecutor(THREAD_FACTORY_OWN);
     Disposer.register(project, this);
     PeriodicalTasksCloser.getInstance(project).register(name, new Runnable() {
       public void run() {
@@ -61,11 +68,10 @@ public class SlowlyClosingAlarm implements AtomicSectionsAware, Disposable {
     });
   }
 
-  private void debug(final String s) {
+  protected void debug(final String s) {
     LOG.debug(myName + " " + s);
   }
 
-  // todo maybe further allow delayed invocation
   public void addRequest(final Runnable runnable) {
     synchronized (myLock) {
       if (myDisposeStarted) return;
@@ -77,13 +83,20 @@ public class SlowlyClosingAlarm implements AtomicSectionsAware, Disposable {
     }
   }
 
+  private void stopSelf() {
+    if (myExecutorIsShared) {
+      throw new ProcessCanceledException();
+    } else {
+      Thread.currentThread().interrupt();
+    }
+  }
+
   public void enter() {
     synchronized (myLock) {
       debug("entering section");
       if (myDisposeStarted) {
         debug("self-interrupting (1)");
-        //myLock.notifyAll();
-        Thread.currentThread().interrupt();
+        stopSelf();
       }
       myInUninterruptibleState = true;
     }
@@ -95,8 +108,7 @@ public class SlowlyClosingAlarm implements AtomicSectionsAware, Disposable {
       myInUninterruptibleState = false;
       if (myDisposeStarted) {
         debug("self-interrupting (2)");
-        //myLock.notifyAll();
-        Thread.currentThread().interrupt();
+        stopSelf();
       }
     }
   }
@@ -106,13 +118,23 @@ public class SlowlyClosingAlarm implements AtomicSectionsAware, Disposable {
       return myDisposeStarted;
     }
   }
+  
+  public void checkShouldExit() throws ProcessCanceledException {
+    synchronized (myLock) {
+      if (myDisposeStarted) {
+        stopSelf();
+      }
+    }
+  }
 
   private void safelyShutdownExecutor() {
     synchronized (myLock) {
-      try {
-        myExecutorService.shutdown();
-      } catch (SecurityException e) {
-        //
+      if (! myExecutorIsShared) {
+        try {
+          myExecutorService.shutdown();
+        } catch (SecurityException e) {
+          //
+        }
       }
     }
   }
@@ -175,61 +197,11 @@ public class SlowlyClosingAlarm implements AtomicSectionsAware, Disposable {
     debug("done");
   }
 
-  /*public void waitAndInterrupt(@Nullable final ProgressIndicator indicator) {
-    synchronized (myLock) {
-      debug("starting shutdown: " + myFutureList.size());
-      myDisposeStarted = true;
-      myExecutorService.shutdown();
-
-      while (myInUninterruptibleState) {
-        if (indicator != null) {
-          if (indicator.isCanceled()) {
-            debug("cancelling...");
-            for (Future<?> future : myFutureList) {
-              future.cancel(true);
-            }
-            myFutureList.clear();
-            return;
-          }
-        }
-        
-        try {
-          debug("going to wait...");
-          myLock.wait(500);
-        }
-        catch (InterruptedException e) {
-          //
-        }
-      }
-      // cancel those not in uninterruptible state
-      boolean success = true;
-      for (Future<?> future : myFutureList) {
-        success &= future.cancel(true);
-      }
-      myFutureList.clear();
-
-      myFinished = true;
-      debug("finished " + success);
-    }
-  }*/
-
-  public boolean isFinished() {
-    synchronized (myLock) {
-      return myFinished;
-    }
-  }
-
-  public boolean isSafeFinished() {
-    synchronized (myLock) {
-      return myFinished && (! myInUninterruptibleState);
-    }
-  }
-
-  private class MyWrapper implements Runnable {
+  protected class MyWrapper implements Runnable {
     private final Runnable myDelegate;
     private Future myFuture;
 
-    private MyWrapper(final Runnable delegate) {
+    protected MyWrapper(final Runnable delegate) {
       myDelegate = delegate;
     }
 

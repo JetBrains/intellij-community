@@ -25,6 +25,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.Topic;
+import com.intellij.lifecycle.AtomicSectionsAware;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -192,13 +193,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myUpdater.schedule(updateUnversionedFiles);
   }
 
-  private class ActualUpdater implements Consumer<Boolean> {
-    public void consume(final Boolean aBoolean) {
-      updateImmediately(aBoolean);
+  private class ActualUpdater implements LocalChangesUpdater {
+    public void execute(boolean updateUnversioned, AtomicSectionsAware atomicSectionsAware) {
+      updateImmediately(updateUnversioned, atomicSectionsAware);
     }
   }
 
-  private void updateImmediately(final boolean updateUnversionedFiles) {
+  private void updateImmediately(final boolean updateUnversionedFiles, final AtomicSectionsAware atomicSectionsAware) {
     FileHolderComposite composite;
     ChangeListWorker changeListWorker;
 
@@ -251,7 +252,20 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
       }, updateUnversionedFiles, myIgnoredIdeaLevel, gate);
 
+      myUpdateChangesProgressIndicator = new EmptyProgressIndicator() {
+        @Override
+        public boolean isCanceled() {
+          return myUpdater.isStopped() || atomicSectionsAware.shouldExitAsap();
+        }
+        @Override
+        public void checkCanceled() {
+          checkIfDisposed();
+          atomicSectionsAware.checkShouldExit();
+        }
+      };
       for (final VcsDirtyScope scope : scopes) {
+        atomicSectionsAware.checkShouldExit();
+
         final AbstractVcs vcs = scope.getVcs();
         if (vcs == null) continue;
 
@@ -325,13 +339,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       if (changeProvider != null) {
         final FoldersCutDownWorker foldersCutDownWorker = new FoldersCutDownWorker();
         try {
-          myUpdateChangesProgressIndicator = new EmptyProgressIndicator() {
-            @Override
-            public boolean isCanceled() {
-              checkIfDisposed();
-              return false;
-            }
-          };
           builder.setCurrent(scope, foldersCutDownWorker);
           changeProvider.getChanges(scope, builder, myUpdateChangesProgressIndicator, gate);
         }

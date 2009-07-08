@@ -1,5 +1,7 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.lifecycle.ControlledAlarmFactory;
+import com.intellij.lifecycle.ScheduledSlowlyClosingAlarm;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,8 +13,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * ChangeListManager updates scheduler.
@@ -22,20 +22,21 @@ import java.util.concurrent.TimeUnit;
 public class UpdateRequestsQueue {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdateRequestsQueue");
   private final Project myProject;
-  private final ScheduledExecutorService myExecutor;
-  private final Consumer<Boolean> myAction;
+  private final LocalChangesUpdater myDelegate;
   private final Object myLock;
   private volatile boolean myStarted;
   private volatile boolean myStopped;
 
-  private ScheduledFuture<?> myTask;
+  private boolean myRequestSubmitted;
   private final List<Runnable> myWaitingUpdateCompletionQueue;
   private final ProjectLevelVcsManager myPlVcsManager;
   private boolean myUpdateUnversionedRequested;
+  private ScheduledSlowlyClosingAlarm mySharedExecutor;
 
-  public UpdateRequestsQueue(final Project project, final ScheduledExecutorService executor, final Consumer<Boolean> action) {
-    myExecutor = executor;
-    myAction = action;
+  public UpdateRequestsQueue(final Project project, final ScheduledExecutorService executor, final LocalChangesUpdater delegate) {
+    mySharedExecutor = ControlledAlarmFactory.createScheduledOnSharedThread(project, "Local changes update", executor);
+
+    myDelegate = delegate;
     myProject = project;
     myPlVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     myLock = new Object();
@@ -60,9 +61,10 @@ public class UpdateRequestsQueue {
       if (! myStarted && ApplicationManager.getApplication().isUnitTestMode()) return;
 
       if (! myStopped) {
-        if (myTask == null) {
+        if (! myRequestSubmitted) {
           final MyRunnable runnable = new MyRunnable();
-          myTask = myExecutor.schedule(runnable, 300, TimeUnit.MILLISECONDS);
+          myRequestSubmitted = true;
+          mySharedExecutor.addRequest(runnable, 300);
           LOG.debug("Scheduled for project: " + myProject.getName() + ", runnable: " + runnable.hashCode());
           myUpdateUnversionedRequested |= updateUnversionedFiles;
         } else if (updateUnversionedFiles && (! myUpdateUnversionedRequested)) {
@@ -77,10 +79,6 @@ public class UpdateRequestsQueue {
     final List<Runnable> waiters = new ArrayList<Runnable>(myWaitingUpdateCompletionQueue.size());
     synchronized (myLock) {
       myStopped = true;
-      if (myTask != null) {
-        myTask.cancel(false);
-        myTask = null;
-      }
       waiters.addAll(myWaitingUpdateCompletionQueue);
       myWaitingUpdateCompletionQueue.clear();
     }
@@ -140,15 +138,15 @@ public class UpdateRequestsQueue {
         synchronized (myLock) {
           if ((! myStopped) && ((! myStarted) || myPlVcsManager.isBackgroundVcsOperationRunning())) {
             LOG.debug("MyRunnable: not started, not stopped, reschedule, project: " + myProject.getName() + ", runnable: " + hashCode());
-            myTask = null;
+            myRequestSubmitted = false;
             // try again after time
             schedule(myUpdateUnversionedRequested);
             return;
           }
 
           copy.addAll(myWaitingUpdateCompletionQueue);
-          myTask = null;
-          
+          myRequestSubmitted = false;
+
           if (myStopped) {
             LOG.debug("MyRunnable: STOPPED, project: " + myProject.getName() + ", runnable: " + hashCode());
             return;
@@ -161,7 +159,7 @@ public class UpdateRequestsQueue {
         }
 
         LOG.debug("MyRunnable: INVOKE, project: " + myProject.getName() + ", runnable: " + hashCode());
-        myAction.consume(updateUnversioned);
+        myDelegate.execute(updateUnversioned, mySharedExecutor);
         LOG.debug("MyRunnable: invokeD, project: " + myProject.getName() + ", runnable: " + hashCode());
       } finally {
         synchronized (myLock) {
@@ -170,7 +168,7 @@ public class UpdateRequestsQueue {
             myWaitingUpdateCompletionQueue.removeAll(copy);
           }
 
-          if ((! myWaitingUpdateCompletionQueue.isEmpty()) && (myTask == null)) {
+          if ((! myWaitingUpdateCompletionQueue.isEmpty()) && (! myRequestSubmitted)) {
             LOG.error("No update task to handle request(s)");
           }
         }
