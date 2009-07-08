@@ -135,7 +135,7 @@ public class XmlTagInplaceRenamer {
   }
 
   private static Template buildTemplate(@NotNull final XmlTag tag, @NotNull final Pair<ASTNode, ASTNode> pair) {
-    final TemplateBuilder builder = new TemplateBuilder(tag);
+    final TemplateBuilderImpl builder = new TemplateBuilderImpl(tag);
 
     final ASTNode selected = pair.first;
     final ASTNode other = pair.second;

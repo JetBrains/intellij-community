@@ -74,7 +74,7 @@ public class CreateClassAction extends CreateInPackageFromTemplateActionBase {
 
   protected Template buildTemplate(PsiClass templateClass) {
     final Project project = templateClass.getProject();
-    TemplateBuilder builder = new TemplateBuilder(templateClass.getContainingFile());
+    TemplateBuilderImpl builder = new TemplateBuilderImpl(templateClass.getContainingFile());
     final ASTNode classToken = ObjectUtils.assertNotNull(templateClass.getNode()).findChildByType(JavaTokenType.CLASS_KEYWORD);
     assert classToken != null;
     builder.replaceElement(classToken.getPsi(), createTypeExpression(project), true);

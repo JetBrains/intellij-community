@@ -4,7 +4,7 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -90,7 +90,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
         PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
       }
 
-      TemplateBuilder builder = new TemplateBuilder(field);
+      TemplateBuilderImpl builder = new TemplateBuilderImpl(field);
       PsiElement context = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiClass.class, PsiMethod.class);
       new GuessTypeParameters(factory).setupTypeElement(field.getTypeElement(), expectedTypes, getTargetSubstitutor(myReferenceExpression),
                                                         builder, context, targetClass);

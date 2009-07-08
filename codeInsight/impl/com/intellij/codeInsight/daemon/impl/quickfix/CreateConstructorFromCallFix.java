@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,7 +35,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
       PsiMethod constructor = (PsiMethod)targetClass.add(elementFactory.createConstructor());
 
       final PsiFile file = targetClass.getContainingFile();
-      TemplateBuilder templateBuilder = new TemplateBuilder(constructor);
+      TemplateBuilderImpl templateBuilder = new TemplateBuilderImpl(constructor);
       CreateFromUsageUtils
         .setupMethodParameters(constructor, templateBuilder, myConstructorCall.getArgumentList(), getTargetSubstitutor(myConstructorCall));
       CreateClassFromNewFix.setupSuperCall(targetClass, constructor, templateBuilder);

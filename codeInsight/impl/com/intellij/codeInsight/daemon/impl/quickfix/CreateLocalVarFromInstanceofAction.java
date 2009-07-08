@@ -142,7 +142,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       if (decl == null) return;
 
       PsiLocalVariable localVariable = (PsiLocalVariable)decl.getDeclaredElements()[0];
-      TemplateBuilder builder = new TemplateBuilder(localVariable);
+      TemplateBuilderImpl builder = new TemplateBuilderImpl(localVariable);
       builder.setEndVariableAfter(localVariable.getNameIdentifier());
 
       Template template = generateTemplate(project, localVariable.getInitializer(), localVariable.getType());

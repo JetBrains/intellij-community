@@ -166,7 +166,7 @@ public class RenameWrongRefFix implements IntentionAction {
       LookupItem[] items = collectItems();
       ReferenceNameExpression refExpr = new ReferenceNameExpression(items, myRefExpr.getReferenceName());
 
-      TemplateBuilder builder = new TemplateBuilder(element);
+      TemplateBuilderImpl builder = new TemplateBuilderImpl(element);
       for (PsiReferenceExpression expr : refs) {
         if (!expr.equals(myRefExpr)) {
           builder.replaceElement(expr.getReferenceNameElement(), OTHER_VARIABLE_NAME, INPUT_VARIABLE_NAME, false);

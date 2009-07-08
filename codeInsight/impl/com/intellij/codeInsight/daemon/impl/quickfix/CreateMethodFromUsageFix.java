@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,8 +20,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.FieldConflictsResolver;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -179,7 +179,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     final PsiFile targetFile = targetClass.getContainingFile();
     Document document = PsiDocumentManager.getInstance(project).getDocument(targetFile);
 
-    TemplateBuilder builder = new TemplateBuilder(method);
+    TemplateBuilderImpl builder = new TemplateBuilderImpl(method);
 
     CreateFromUsageUtils.setupMethodParameters(method, builder, context, substitutor, arguments);
     new GuessTypeParameters(JavaPsiFacade.getInstance(project).getElementFactory())

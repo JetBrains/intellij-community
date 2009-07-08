@@ -488,4 +488,7 @@
   <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.DisposerDebugger"/>
 
   <inspectionToolProvider implementation="com.intellij.codeInspection.PlatformInspectionToolProvider"/>
+
+  <applicationService serviceInterface="com.intellij.codeInsight.template.TemplateBuilderFactory"
+                      serviceImplementation="com.intellij.codeInsight.template.TemplateBuilderFactoryImpl"/>
 </extensions>

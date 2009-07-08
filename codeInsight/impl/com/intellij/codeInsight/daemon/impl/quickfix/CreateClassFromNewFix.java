@@ -1,11 +1,11 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -62,7 +62,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
               PsiMethod constructor = elementFactory.createConstructor();
               constructor = (PsiMethod) aClass.add(constructor);
 
-              TemplateBuilder templateBuilder = new TemplateBuilder(aClass);
+              TemplateBuilderImpl templateBuilder = new TemplateBuilderImpl(aClass);
               CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, argList, getTargetSubstitutor(newExpression));
 
               setupSuperCall(aClass, constructor, templateBuilder);
@@ -93,7 +93,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     return false;
   }
 
-  public static void setupSuperCall(PsiClass targetClass, PsiMethod constructor, TemplateBuilder templateBuilder)
+  public static void setupSuperCall(PsiClass targetClass, PsiMethod constructor, TemplateBuilderImpl templateBuilder)
     throws IncorrectOperationException {
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(targetClass.getProject()).getElementFactory();
 

@@ -2,7 +2,7 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
@@ -31,7 +31,7 @@ abstract class TemplateGenerationInfo extends GenerationInfo {
 
   public Template getTemplate() {
     PsiMethod element = getPsiMember();
-    TemplateBuilder builder = new TemplateBuilder(element);
+    TemplateBuilderImpl builder = new TemplateBuilderImpl(element);
     builder.replaceElement(getTemplateElement(element), myExpression);
     return builder.buildTemplate();
   }

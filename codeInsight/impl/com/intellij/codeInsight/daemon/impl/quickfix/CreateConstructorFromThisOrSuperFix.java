@@ -4,7 +4,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -69,7 +69,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
       PsiMethod constructor = elementFactory.createConstructor();
       constructor = (PsiMethod)targetClass.add(constructor);
 
-      final TemplateBuilder templateBuilder = new TemplateBuilder(constructor);
+      final TemplateBuilderImpl templateBuilder = new TemplateBuilderImpl(constructor);
       CreateFromUsageUtils
         .setupMethodParameters(constructor, templateBuilder, myMethodCall.getArgumentList(), getTargetSubstitutor(myMethodCall));
 

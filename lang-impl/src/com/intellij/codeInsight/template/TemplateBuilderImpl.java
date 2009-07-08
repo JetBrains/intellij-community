@@ -1,8 +1,15 @@
 package com.intellij.codeInsight.template;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -18,7 +25,7 @@ import java.util.TreeSet;
 /**
  * @author mike
  */
-public class TemplateBuilder {
+public class TemplateBuilderImpl implements TemplateBuilder {
   private final RangeMarker myContainerElement;
   private final Map<RangeMarker,Expression> myExpressions = new HashMap<RangeMarker, Expression>();
   private final Map<RangeMarker,String> myVariableExpressions = new HashMap<RangeMarker, String>();
@@ -31,7 +38,14 @@ public class TemplateBuilder {
   private final Document myDocument;
   private final PsiFile myFile;
 
-  public TemplateBuilder(@NotNull PsiElement element) {
+  public TemplateBuilderImpl(@NotNull PsiElement element) {
+    this(element, false);
+  }
+
+  public TemplateBuilderImpl(@NotNull PsiElement element, boolean autoUnblockPsi) {
+    if (autoUnblockPsi) {
+      element = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(element);
+    }
     myFile = InjectedLanguageUtil.getTopLevelFile(element);
     myDocument = myFile.getViewProvider().getDocument();
     myContainerElement = wrapElement(element);
@@ -191,5 +205,23 @@ public class TemplateBuilder {
   }
   private String getDocumentTextFragment(final int startOffset, final int endOffset) {
     return myDocument.getCharsSequence().subSequence(startOffset, endOffset).toString();
+  }
+
+  public void replaceElement(PsiElement element, String replacementText) {
+    replaceElement(element, new ConstantNode(replacementText));
+  }
+
+  public void run() {
+    final Project project = myFile.getProject();
+    VirtualFile file = myFile.getVirtualFile();
+    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
+    final Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+
+    final Template template = buildTemplate();
+
+    editor.getDocument().replaceString(myContainerElement.getStartOffset(), myContainerElement.getEndOffset(), "");
+    editor.getCaretModel().moveToOffset(myContainerElement.getStartOffset());
+
+    TemplateManager.getInstance(myFile.getProject()).startTemplate(editor, template);
   }
 }

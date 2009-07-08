@@ -129,7 +129,7 @@ public class VariableInplaceRenamer {
     }
 
     final ResolveSnapshot snapshot = ResolveSnapshot.createSnapshot(scope);
-    final TemplateBuilder builder = new TemplateBuilder(scope);
+    final TemplateBuilderImpl builder = new TemplateBuilderImpl(scope);
 
     final PsiElement nameIdentifier = myElementToRename.getNameIdentifier();
     PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, myEditor.getCaretModel().getOffset());
@@ -269,7 +269,7 @@ public class VariableInplaceRenamer {
     return range.getStartOffset() <= offset && offset <= range.getEndOffset();
   }
 
-  private void addVariable(final PsiReference reference, final PsiElement selectedElement, final TemplateBuilder builder) {
+  private void addVariable(final PsiReference reference, final PsiElement selectedElement, final TemplateBuilderImpl builder) {
     if (reference.getElement() == selectedElement) {
       Expression expression = new MyExpression(myElementToRename.getName());
       builder.replaceElement(reference, PRIMARY_VARIABLE_NAME, expression, true);
@@ -279,7 +279,7 @@ public class VariableInplaceRenamer {
     }
   }
 
-  private void addVariable(final PsiElement element, final PsiElement selectedElement, final TemplateBuilder builder) {
+  private void addVariable(final PsiElement element, final PsiElement selectedElement, final TemplateBuilderImpl builder) {
     if (element == selectedElement) {
       Expression expression = new MyExpression(myElementToRename.getName());
       builder.replaceElement(element, PRIMARY_VARIABLE_NAME, expression, true);

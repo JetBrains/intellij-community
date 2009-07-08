@@ -101,7 +101,7 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
           return new TextResult(myType.getCanonicalText());
         }
       };
-      final TemplateBuilder builder = new TemplateBuilder(scope);
+      final TemplateBuilderImpl builder = new TemplateBuilderImpl(scope);
       boolean first = true;
       @NonNls final String TYPE_NAME_VAR = "TYPE_NAME_VAR";
       for (GenerationInfo prototype : prototypes) {

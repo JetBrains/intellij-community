@@ -4,7 +4,7 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -85,7 +85,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
       var = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(var);
       if (var == null) return;
-      TemplateBuilder builder = new TemplateBuilder(var);
+      TemplateBuilderImpl builder = new TemplateBuilderImpl(var);
       builder.replaceElement(var.getTypeElement(), expression);
       builder.setEndVariableAfter(var.getNameIdentifier());
       Template template = builder.buildTemplate();
