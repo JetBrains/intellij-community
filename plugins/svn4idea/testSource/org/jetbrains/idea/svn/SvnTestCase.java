@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.io.FileUtil;
@@ -72,6 +73,8 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
       }
       public boolean shouldExitAsap() {
         return false;
+      }
+      public void checkShouldExit() throws ProcessCanceledException {
       }
     };
 

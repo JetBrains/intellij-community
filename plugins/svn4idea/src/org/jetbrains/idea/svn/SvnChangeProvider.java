@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -57,7 +58,7 @@ public class SvnChangeProvider implements ChangeProvider {
     try {
       final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, progress);
 
-      final StatusWalkerPartnerImpl partner = new StatusWalkerPartnerImpl(myVcs);
+      final StatusWalkerPartnerImpl partner = new StatusWalkerPartnerImpl(myVcs, progress);
       final NestedCopiesBuilder nestedCopiesBuilder = new NestedCopiesBuilder();
 
       final EventDispatcher<StatusReceiver> statusReceiver = EventDispatcher.create(StatusReceiver.class);
@@ -124,7 +125,7 @@ public class SvnChangeProvider implements ChangeProvider {
 
   public void getChanges(final FilePath path, final boolean recursive, final ChangelistBuilder builder) throws SVNException {
     final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, null);
-    final StatusWalkerPartnerImpl partner = new StatusWalkerPartnerImpl(myVcs);
+    final StatusWalkerPartnerImpl partner = new StatusWalkerPartnerImpl(myVcs, ProgressManager.getInstance().getProgressIndicator());
     final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(context, partner);
     walker.go(path, recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES);
     processCopiedAndDeleted(context);

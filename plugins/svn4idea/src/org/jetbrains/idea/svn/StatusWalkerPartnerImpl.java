@@ -1,12 +1,15 @@
 package org.jetbrains.idea.svn;
 
-import org.tmatesoft.svn.core.wc.SVNStatusClient;
-import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNStatusClient;
 
 public class StatusWalkerPartnerImpl implements StatusWalkerPartner {
   private final SvnVcs myVcs;
@@ -15,11 +18,11 @@ public class StatusWalkerPartnerImpl implements StatusWalkerPartner {
   private final ProgressIndicator myIndicator;
   private ISVNStatusFileProvider myFileProvider;
 
-  public StatusWalkerPartnerImpl(final SvnVcs vcs) {
+  public StatusWalkerPartnerImpl(final SvnVcs vcs, final ProgressIndicator pi) {
     myVcs = vcs;
     myClManager = ChangeListManager.getInstance(myVcs.getProject());
     myExcludedFileIndex = ExcludedFileIndex.getInstance(myVcs.getProject());
-    myIndicator = ProgressManager.getInstance().getProgressIndicator();
+    myIndicator = pi;
   }
 
   public void setFileProvider(final ISVNStatusFileProvider fileProvider) {
@@ -29,6 +32,17 @@ public class StatusWalkerPartnerImpl implements StatusWalkerPartner {
   public SVNStatusClient createStatusClient() {
     final SVNStatusClient result = myVcs.createStatusClient();
     result.setFilesProvider(myFileProvider);
+    result.setEventHandler(new ISVNEventHandler() {
+      public void handleEvent(SVNEvent event, double progress) throws SVNException {
+        //
+      }
+
+      public void checkCancelled() throws SVNCancelException {
+        if (myIndicator != null) {
+          myIndicator.checkCanceled();
+        }
+      }
+    });
     return result;
   }
 

@@ -1,6 +1,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.lifecycle.AtomicSectionsAware;
+import com.intellij.lifecycle.ControlledAlarmFactory;
 import com.intellij.lifecycle.SlowlyClosingAlarm;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -16,7 +17,7 @@ public class SvnCopiesRefreshManager {
     myCopiesRefresh = new MyVeryRefresh();
     //myCopiesRefreshProxy = new DefendedCopiesRefreshProxy(veryRefresh);
 
-    final SlowlyClosingAlarm alarm = new SlowlyClosingAlarm(project, "Subversion working copies refresher");
+    final SlowlyClosingAlarm alarm = ControlledAlarmFactory.createOnOwnThread(project, "Subversion working copies refresher");
     final Runnable refresher = new MyRefresher(project, mapping, alarm);
     //final Runnable proxiedRefresher = myCopiesRefreshProxy.proxyRefresher(refresher);
 
