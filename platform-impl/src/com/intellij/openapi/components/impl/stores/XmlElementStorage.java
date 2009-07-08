@@ -677,12 +677,16 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     public StorageData clone() {
       return new StorageData(this);
     }
+    
+    protected int fixHash(int hash) {
+      return hash;
+    }
 
     public final int getHash() {
       if (myHash == null) {
         myHash = computeHash();
       }
-      return myHash.intValue();
+      return fixHash(myHash.intValue());
     }
 
     protected int computeHash() {

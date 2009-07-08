@@ -381,6 +381,11 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     public XmlElementStorage.StorageData clone() {
       return new ProjectStorageData(this);
     }
+
+    @Override
+    protected int fixHash(int hash) {
+      return hash + (((ProjectEx)myProject).isSavePathsRelative() ? 1 : 0);
+    }
   }
 
   static class WsStorageData extends ProjectStorageData {

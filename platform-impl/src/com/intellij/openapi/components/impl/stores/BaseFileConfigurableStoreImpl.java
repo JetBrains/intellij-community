@@ -2,11 +2,10 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.PathMacroSubstitutor;
+import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
-import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -19,12 +18,9 @@ import java.util.Set;
 abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.BaseFileConfigurableStoreImpl");
 
-  final HashMap<String,String> myConfigurationNameToFileName = new HashMap<String,String>();
   @NonNls protected static final String RELATIVE_PATHS_OPTION = "relativePaths";
   @NonNls protected static final String VERSION_OPTION = "version";
   @NonNls public static final String ATTRIBUTE_NAME = "name";
-  @NonNls static final String ELEMENT_COMPONENT = "component";
-  @NonNls private static final String ATTRIBUTE_CLASS = "class";
   private final ComponentManager myComponentManager;
   private static final ArrayList<String> ourConversionProblemsStorage = new ArrayList<String>();
   private final DefaultsStateStorage myDefaultsStateStorage;
