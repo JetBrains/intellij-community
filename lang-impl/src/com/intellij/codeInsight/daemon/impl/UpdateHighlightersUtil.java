@@ -257,7 +257,9 @@ public class UpdateHighlightersUtil {
         if (!Comparing.equal(color, highlighter.getErrorStripeMarkColor())) {
           highlighter.setErrorStripeMarkColor(color);
         }
-        highlighter.setErrorStripeTooltip(info);
+        if (info.getSeverity() != HighlightSeverity.INFORMATION) {
+          highlighter.setErrorStripeTooltip(info);
+        }
         GutterIconRenderer renderer = info.getGutterIconRenderer();
         if (!Comparing.equal(renderer, highlighter.getGutterIconRenderer())) {
           highlighter.setGutterIconRenderer(renderer);
