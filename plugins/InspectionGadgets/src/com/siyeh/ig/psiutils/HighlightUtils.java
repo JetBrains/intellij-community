@@ -19,7 +19,7 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
@@ -119,7 +119,7 @@ public class HighlightUtils {
         if (editor == null) {
             return;
         }
-        final TemplateBuilder builder = new TemplateBuilder(context);
+        final TemplateBuilderImpl builder = new TemplateBuilderImpl(context);
         final Expression macroCallNode = new MacroCallNode(
                 new SuggestVariableNameMacro());
         final PsiElement identifier = element.getNameIdentifier();

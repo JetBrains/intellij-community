@@ -16,7 +16,7 @@
 package org.intellij.lang.xpath.xslt.quickfix;
 
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.CompleteMacro;
@@ -29,12 +29,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CreateVariableFix extends AbstractFix {
     private final XPathVariableReference myReference;
@@ -63,7 +62,7 @@ public class CreateVariableFix extends AbstractFix {
         final PsiElement dummy = XsltSupport.getAttValueToken(select);
         assert dummy != null;
 
-        final TemplateBuilder builder = createTemplateBuilder(xmlTag);
+        final TemplateBuilderImpl builder = createTemplateBuilder(xmlTag);
         builder.replaceElement(dummy, new MacroCallNode(new CompleteMacro()));
         builder.setEndVariableAfter(select);
         final Template template = builder.buildTemplate();

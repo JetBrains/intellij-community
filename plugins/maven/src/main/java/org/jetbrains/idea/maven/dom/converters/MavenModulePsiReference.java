@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.dom.converters;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -123,7 +123,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor d) {
       try {
         VirtualFile modulePom = createModulePom();
-        TemplateBuilder b = buildTemplate(project, modulePom);
+        TemplateBuilderImpl b = buildTemplate(project, modulePom);
         runTemplate(project, modulePom, b.buildTemplate());
       }
       catch (IOException e) {
@@ -138,7 +138,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
       return moduleDir.createChildData(this, MavenConstants.POM_XML);
     }
 
-    private TemplateBuilder buildTemplate(Project project, VirtualFile modulePomFile) {
+    private TemplateBuilderImpl buildTemplate(Project project, VirtualFile modulePomFile) {
       MavenId id = MavenDomUtil.describe(MavenDomUtil.getMavenDomProjectFile(myPsiFile));
 
       String groupId = id.getGroupId() == null ? "groupId" : id.getGroupId();
@@ -150,7 +150,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
         StdLanguages.XML,
         MavenUtil.makeFileContent(new MavenId(groupId, artifactId, version)));
 
-      TemplateBuilder b = new TemplateBuilder(psiFile);
+      TemplateBuilderImpl b = new TemplateBuilderImpl(psiFile);
 
       b.replaceElement(getTagValueElement(psiFile, "groupId"), new ConstantNode(groupId));
       b.replaceElement(getTagValueElement(psiFile, "artifactId"), new ConstantNode(artifactId));

@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.ide.actions.CreateClassAction;
 import com.intellij.ide.actions.CreateInPackageFromTemplateActionBase;
 import com.intellij.lang.ASTNode;
@@ -77,7 +77,7 @@ public class NewGroovyClassAction extends CreateInPackageFromTemplateActionBase 
 
   protected Template buildTemplate(PsiClass templateClass) {
     final Project project = templateClass.getProject();
-    TemplateBuilder builder = new TemplateBuilder(templateClass.getContainingFile());
+    TemplateBuilderImpl builder = new TemplateBuilderImpl(templateClass.getContainingFile());
     final ASTNode classToken = ObjectUtils.assertNotNull(templateClass.getNode()).findChildByType(GroovyTokenTypes.kCLASS);
     assert classToken != null;
     builder.replaceElement(classToken.getPsi(), CreateClassAction.createTypeExpression(project), true);

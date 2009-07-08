@@ -15,7 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
-import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.CompleteMacro;
@@ -25,19 +25,14 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.psi.XsltParameter;
 import org.intellij.lang.xpath.xslt.refactoring.RefactoringUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class AddWithParamFix extends AbstractFix {
     protected XmlTag myTag;
@@ -90,7 +85,7 @@ public class AddWithParamFix extends AbstractFix {
         final XmlTag withParamTag = result.getResultObject().getElement();
         assert withParamTag != null;
 
-        final TemplateBuilder builder = new TemplateBuilder(withParamTag);
+        final TemplateBuilderImpl builder = new TemplateBuilderImpl(withParamTag);
         final XmlAttribute selectAttr = withParamTag.getAttribute("select", null);
         assert selectAttr != null;
         PsiElement dummy = XsltSupport.getAttValueToken(selectAttr);

@@ -17,7 +17,7 @@ package org.intellij.lang.xpath.xslt.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
@@ -57,9 +57,9 @@ public abstract class AbstractFix implements IntentionAction {
         editor.getDocument().deleteString(dummy.getTextRange().getStartOffset(), dummy.getTextRange().getEndOffset());
     }
 
-    protected static TemplateBuilder createTemplateBuilder(XmlTag xmlTag) {
+    protected static TemplateBuilderImpl createTemplateBuilder(XmlTag xmlTag) {
         final PsiFile psiFile = PsiFileFactory.getInstance(xmlTag.getProject()).createFileFromText("dummy.xml", StdFileTypes.XML, xmlTag.getText(), LocalTimeCounter.currentTime(), true, false);
-        return new TemplateBuilder(psiFile);
+        return new TemplateBuilderImpl(psiFile);
     }
 
     public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
