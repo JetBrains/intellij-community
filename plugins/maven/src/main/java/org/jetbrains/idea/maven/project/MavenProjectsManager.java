@@ -769,7 +769,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     }
 
     long importTime = System.currentTimeMillis() - before;
-    System.out.println("Import/Commit time: " + importTime + "/" + modelsProvider.getCommitTime() + " ms");
+    //System.out.println("Import/Commit time: " + importTime + "/" + modelsProvider.getCommitTime() + " ms");
 
     VirtualFileManager.getInstance().refresh(isNormalProject());
     schedulePostImportTasts(postTasks.get());
