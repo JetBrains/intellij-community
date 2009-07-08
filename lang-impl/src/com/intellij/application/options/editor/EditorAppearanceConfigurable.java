@@ -1,8 +1,10 @@
 package com.intellij.application.options.editor;
 
+import com.intellij.application.options.OptionId;
+import com.intellij.application.options.OptionsApplicabilityFilter;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -43,7 +45,10 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
         myBlinkIntervalField.setEnabled(myCbBlinkCaret.isSelected());
       }
     }
-  );
+    );
+    if (!OptionsApplicabilityFilter.isApplicable(OptionId.ICONS_IN_GUTTER)) {
+      myCbShowIconsInGutter.setVisible(false);
+    }
   }
 
 

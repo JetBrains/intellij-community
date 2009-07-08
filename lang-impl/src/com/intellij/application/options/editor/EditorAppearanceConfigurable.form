@@ -87,7 +87,6 @@
           <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <margin top="2" left="0" bottom="2" right="2"/>
           <text resource-bundle="messages/IdeBundle" key="checkbox.use.antialiased.font.in.editor"/>
         </properties>
       </component>
