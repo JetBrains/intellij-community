@@ -254,7 +254,14 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   }
 
   public boolean isSuspended() throws ObjectCollectedException {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    return getThreadReference().isSuspended();
+    try {
+      DebuggerManagerThreadImpl.assertIsManagerThread();
+      return getThreadReference().isSuspended();
+    }
+    catch (IllegalThreadStateException e) {
+      // must be zombie thread
+      LOG.info(e);
+      return false;
+    }
   }
 }
