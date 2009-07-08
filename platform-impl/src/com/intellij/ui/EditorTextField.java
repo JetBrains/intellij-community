@@ -9,6 +9,7 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -392,7 +393,8 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
 
   private Color getBackgroundColor(boolean enabled){
     if (myEnforcedBgColor != null) return myEnforcedBgColor;
-    return enabled ? UIUtil.getActiveTextFieldBackgroundColor()
+    return enabled
+           ? EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()
            : UIUtil.getInactiveTextFieldBackgroundColor();
   }
 
