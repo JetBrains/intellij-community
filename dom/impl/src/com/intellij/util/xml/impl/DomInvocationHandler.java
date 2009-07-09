@@ -563,7 +563,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     tag.getValue().setText(value);
   }
 
-  static String getTagValue(final XmlTag tag) {
+  private static String getTagValue(final XmlTag tag) {
     return tag.getValue().getTrimmedText();
   }
 

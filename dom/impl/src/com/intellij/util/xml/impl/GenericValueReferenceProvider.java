@@ -16,9 +16,7 @@ import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author peter
@@ -117,11 +115,28 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
     return DomManagerImpl.getDomInvocationHandler(domValue);
   }
 
-  @NotNull
   private PsiReference[] createReferences(final GenericDomValue domValue, final XmlElement psiElement, final Object converter) {
+    AbstractConvertContext context = createConvertContext(psiElement, domValue);
+
+    List<PsiReference> result = new ArrayList<PsiReference>();
+    String unresolvedText = domValue instanceof GenericAttributeValue
+                            ? ((XmlAttributeValue)psiElement).getValue()
+                            : ((XmlTag)psiElement).getValue().getText();
+
+    for (DomReferenceInjector each : DomUtil.getFileElement(domValue).getFileDescription().getReferenceInjectors()) {
+      Collections.addAll(result, each.inject(unresolvedText, psiElement, context));
+    }
+
+    Collections.addAll(result, doCreateReferences(domValue, psiElement, converter, context));
+
+    return result.toArray(new PsiReference[result.size()]);
+  }
+
+  @NotNull
+  private PsiReference[] doCreateReferences(GenericDomValue domValue, XmlElement psiElement, Object converter, ConvertContext context) {
     if (converter instanceof CustomReferenceConverter) {
       final PsiReference[] references =
-        ((CustomReferenceConverter)converter).createReferences(domValue, psiElement, createConvertContext(psiElement, domValue));
+        ((CustomReferenceConverter)converter).createReferences(domValue, psiElement, context);
 
       if (references.length == 0 && converter instanceof ResolvingConverter) {
         return new PsiReference[]{new GenericDomValueReference(domValue)};

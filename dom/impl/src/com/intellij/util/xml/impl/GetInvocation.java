@@ -14,6 +14,8 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomReferenceInjector;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.SubTag;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +70,7 @@ public class GetInvocation implements Invocation {
   }
 
   @Nullable
-  private static Object getValueInner(final DomInvocationHandler<?> handler, Converter converter) {
+  private static Object getValueInner(DomInvocationHandler<?> handler, Converter converter) {
     final SubTag annotation = handler.getAnnotation(SubTag.class);
     if (annotation != null && annotation.indicator()) {
       final boolean tagNotNull = handler.getXmlTag() != null;
@@ -80,8 +82,14 @@ public class GetInvocation implements Invocation {
       }
     }
 
-    final String tagValue = handler.getValue();
-    return converter.fromString(tagValue, new ConvertContextImpl(handler));
+    String tagValue = handler.getValue();
+    ConvertContextImpl context = new ConvertContextImpl(handler);
+
+    for (DomReferenceInjector each : DomUtil.getFileElement(handler).getFileDescription().getReferenceInjectors()) {
+      tagValue = each.resolveString(tagValue, context);
+    }
+
+    return converter.fromString(tagValue, context);
   }
 
 }

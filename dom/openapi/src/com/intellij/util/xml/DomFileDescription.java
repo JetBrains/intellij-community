@@ -45,8 +45,10 @@ public class DomFileDescription<T> {
   protected final Class<T> myRootElementClass;
   protected final String myRootTagName;
   private final String[] myAllPossibleRootTagNamespaces;
+  private volatile boolean myInitialized;
   private final Map<Class<? extends DomElement>,Class<? extends DomElement>> myImplementations = new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
+  private final List<DomReferenceInjector> myInjectors = new ArrayList<DomReferenceInjector>();
   private final Map<String, NotNullFunction<XmlTag,List<String>>> myNamespacePolicies = new ConcurrentHashMap<String, NotNullFunction<XmlTag, List<String>>>();
 
   public DomFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName, @NonNls final String... allPossibleRootTagNamespaces) {
@@ -126,6 +128,14 @@ public class DomFileDescription<T> {
     return myTypeChooserManager;
   }
 
+  protected final void registerReferenceInjector(DomReferenceInjector injector) {
+    myInjectors.add(injector);
+  }
+
+  public List<DomReferenceInjector> getReferenceInjectors() {
+    return myInjectors;
+  }
+
   public boolean isAutomaticHighlightingEnabled() {
     return true;
   }
@@ -149,7 +159,10 @@ public class DomFileDescription<T> {
   }
 
   public final Map<Class<? extends DomElement>,Class<? extends DomElement>> getImplementations() {
-    initializeFileDescription();
+    if (!myInitialized) {
+      initializeFileDescription();
+      myInitialized = true;
+    }
     return myImplementations;
   }
 
