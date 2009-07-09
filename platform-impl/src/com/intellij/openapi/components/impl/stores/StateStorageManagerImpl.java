@@ -19,9 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.ConnectException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -376,7 +374,18 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   public ExternalizationSession startExternalization() {
     if (mySession != null) {
-      LOG.error("Starting duplicate externalization session: previous session=" + mySession);
+      final StringBuffer sb = new StringBuffer();
+
+      final Map<Thread,StackTraceElement[]> traces = Thread.getAllStackTraces();
+      for (final Map.Entry<Thread, StackTraceElement[]> entry : traces.entrySet()) {
+        sb.append("\n").append(entry.getKey().getName()).append("\n");
+        final StackTraceElement[] value = entry.getValue();
+        for (final StackTraceElement stackTraceElement : value) {
+          sb.append(stackTraceElement).append('\n');
+        }
+      }
+
+      LOG.error("Starting duplicate externalization session: dumping threads..." + sb.toString());
     }
     ExternalizationSession session = new MyExternalizationSession();
 
