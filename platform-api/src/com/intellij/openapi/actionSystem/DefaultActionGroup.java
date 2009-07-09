@@ -304,6 +304,12 @@ public class DefaultActionGroup extends ActionGroup {
     }
   }
 
+  public final void addAll(AnAction... actions) {
+    for (AnAction each : actions) {
+      add(each);
+    }
+  }
+
   public void addSeparator(@Nullable String separatorText) {
     add(new Separator(separatorText));
   }

@@ -8,6 +8,7 @@ import com.intellij.diagnostic.logging.AdditionalTabComponent;
 import com.intellij.diagnostic.logging.LogConsoleImpl;
 import com.intellij.diagnostic.logging.LogConsoleManager;
 import com.intellij.diagnostic.logging.LogFilesManager;
+import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -183,16 +184,21 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     final RestartAction restartAction = new RestartAction(myExecutor, myRunner, getProcessHandler(), myRerunIcon, contentDescriptor, myEnvironment);
     restartAction.registerShortcut(component);
     actionGroup.add(restartAction);
+
+    if (myExecutionResult instanceof DefaultExecutionResult) {
+      final AnAction[] actions = ((DefaultExecutionResult)myExecutionResult).getRestartActions();
+      if (actions != null) {
+        actionGroup.addAll(actions);
+        if (actions.length > 0) {
+          actionGroup.addSeparator();
+        }
+      }
+    }
+
     final AnAction stopAction = ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
     actionGroup.add(stopAction);
 
-    final AnAction[] profileActions = myExecutionResult.getActions();
-    for (final AnAction profileAction : profileActions) {
-      actionGroup.add(profileAction);
-    }
-    if (profileActions.length > 0) {
-      actionGroup.addSeparator();
-    }
+    actionGroup.addAll(myExecutionResult.getActions());
 
     for (final AnAction anAction : myRunnerActions) {
       if (anAction != null) {

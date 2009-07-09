@@ -15,10 +15,7 @@ import com.intellij.debugger.ui.impl.ThreadsPanel;
 import com.intellij.debugger.ui.impl.VariablesPanel;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.*;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -279,13 +276,17 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
     group.add(restarAction);
     restarAction.registerShortcut(myUi.getComponent());
 
+    if (executionResult instanceof DefaultExecutionResult) {
+      final AnAction[] actions = ((DefaultExecutionResult)executionResult).getRestartActions();
+      if (actions != null) {
+        group.addAll(actions);
+        if (actions.length > 0) {
+          group.addSeparator();
+        }
+      }
+    }
     final AnAction[] profileActions = executionResult.getActions();
-    for (final AnAction profileAction : profileActions) {
-      group.add(profileAction);
-    }
-    if (profileActions.length > 0) {
-      group.addSeparator();
-    }
+    group.addAll(profileActions);
 
     addActionToGroup(group, XDebuggerActions.RESUME);
     addActionToGroup(group, XDebuggerActions.PAUSE);

@@ -29,6 +29,7 @@ public class DefaultExecutionResult implements ExecutionResult {
   private final ExecutionConsole myConsole;
   private final ProcessHandler myProcessHandler;
   private AnAction[] myActions;
+  private AnAction[] myRestartActions;
 
   public DefaultExecutionResult(final ExecutionConsole console, final ProcessHandler processHandler) {
     this(console, processHandler, AnAction.EMPTY_ARRAY);
@@ -50,6 +51,14 @@ public class DefaultExecutionResult implements ExecutionResult {
 
   public void setActions(@NotNull final AnAction... actions) {
     myActions = actions;
+  }
+
+  public AnAction[] getRestartActions() {
+    return myRestartActions;
+  }
+
+  public void setRestartActions(AnAction... restartActions) {
+    myRestartActions = restartActions;
   }
 
   public ProcessHandler getProcessHandler() {
