@@ -178,10 +178,13 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
   }
 
   private ActionGroup createActionToolbar(final RunContentDescriptor contentDescriptor, final JComponent component) {
-    final RestartAction action = new RestartAction(myExecutor, myRunner, getProcessHandler(), myRerunIcon, contentDescriptor, myEnvironment);
-    action.registerShortcut(component);
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.add(action);
+
+    final RestartAction restartAction = new RestartAction(myExecutor, myRunner, getProcessHandler(), myRerunIcon, contentDescriptor, myEnvironment);
+    restartAction.registerShortcut(component);
+    actionGroup.add(restartAction);
+    final AnAction stopAction = ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
+    actionGroup.add(stopAction);
 
     final AnAction[] profileActions = myExecutionResult.getActions();
     for (final AnAction profileAction : profileActions) {
@@ -200,8 +203,6 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
       }
     }
 
-    final AnAction stopAction = ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
-    actionGroup.add(stopAction);
     actionGroup.addSeparator();
     actionGroup.add(myUi.getOptions().getLayoutActions());
     actionGroup.addSeparator();
