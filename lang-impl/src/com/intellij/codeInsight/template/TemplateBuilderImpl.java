@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.template;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -40,13 +39,6 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   private final PsiFile myFile;
 
   public TemplateBuilderImpl(@NotNull PsiElement element) {
-    this(element, false);
-  }
-
-  public TemplateBuilderImpl(@NotNull PsiElement element, boolean autoUnblockPsi) {
-    if (autoUnblockPsi) {
-      element = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(element);
-    }
     myFile = InjectedLanguageUtil.getTopLevelFile(element);
     myDocument = myFile.getViewProvider().getDocument();
     myContainerElement = wrapElement(element);

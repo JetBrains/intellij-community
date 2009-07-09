@@ -8,6 +8,6 @@ import com.intellij.psi.PsiElement;
 public class TemplateBuilderFactoryImpl extends TemplateBuilderFactory {
   @Override
   public TemplateBuilder createTemplateBuilder(PsiElement element) {
-    return new TemplateBuilderImpl(element, true);
+    return new TemplateBuilderImpl(element);
   }
 }
