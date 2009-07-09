@@ -225,7 +225,9 @@ public abstract class TestObject implements JavaCommandLine {
       }
     });
 
-    return new DefaultExecutionResult(consoleView, handler, rerunFailedTestsAction);
+    final DefaultExecutionResult result = new DefaultExecutionResult(consoleView, handler);
+    result.setRestartActions(rerunFailedTestsAction);
+    return result;
   }
 
   private ProcessHandler startProcess(final JUnitTreeConsoleView consoleView) throws ExecutionException {

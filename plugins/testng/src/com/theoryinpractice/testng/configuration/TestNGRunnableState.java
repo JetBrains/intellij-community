@@ -169,7 +169,9 @@ public class TestNGRunnableState extends JavaCommandLineState {
       }
     });
 
-    return new DefaultExecutionResult(console, processHandler, rerunFailedTestsAction);
+    final DefaultExecutionResult result = new DefaultExecutionResult(console, processHandler);
+    result.setRestartActions(rerunFailedTestsAction);
+    return result;
   }
 
   @Override
