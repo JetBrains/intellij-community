@@ -43,7 +43,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   private JPanel myTreePanel;
   private final ComplexElementSubstitutionParameters mySubstitutionParameters;
   private PackagingEditorContext myContext;
-  private ArtifactRootElement myModifiableRoot;
+  private CompositePackagingElement<?> myModifiableRoot;
   private final Artifact myOriginalArtifact;
   private SelectedElementInfo<?> mySelectedElementInfo = new SelectedElementInfo<PackagingElement<?>>(null);
   private Map<String, PackagingElementPropertiesPanel<?>> myPropertiesPanels = new HashMap<String, PackagingElementPropertiesPanel<?>>();
@@ -329,9 +329,16 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     return myTree.isEditing();
   }
 
-  public ArtifactRootElement<?> getRootElement() {
+  public void setRootElement(CompositePackagingElement<?> rootElement) {
+    myModifiableRoot = rootElement;
+    myContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setRootElement(rootElement);
+    rebuildTree();
+    myArtifactsEditor.getSourceItemsTree().rebuildTree();
+  }
+
+  public CompositePackagingElement<?> getRootElement() {
     if (myModifiableRoot == null) {
-      myModifiableRoot = ArtifactUtil.copyFromRoot(myOriginalArtifact.getRootElement(), null);
+      myModifiableRoot = ArtifactUtil.copyFromRoot(myOriginalArtifact.getRootElement(), myOriginalArtifact.getArtifactType());
     }
     return myModifiableRoot;
   }
@@ -344,7 +351,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   public void putIntoDefaultLocations(@NotNull List<? extends PackagingSourceItem> items) {
     ensureRootIsWritable();
 
-    final ArtifactRootElement<?> rootElement = getArtifact().getRootElement();
+    final CompositePackagingElement<?> rootElement = getArtifact().getRootElement();
     final ArtifactType artifactType = getArtifact().getArtifactType();
     List<PackagingElement<?>> toSelect = new ArrayList<PackagingElement<?>>();
     for (PackagingSourceItem item : items) {
@@ -355,6 +362,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
         toSelect.addAll(directory.addOrFindChildren(elements));
       }
     }
+    myArtifactsEditor.getSourceItemsTree().rebuildTree();
     updateAndSelect(myTree.getRootPackagingNode(), toSelect);
   }
 

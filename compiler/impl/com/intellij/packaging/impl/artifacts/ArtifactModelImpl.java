@@ -4,7 +4,6 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.packaging.artifacts.*;
-import com.intellij.packaging.impl.elements.ArtifactRootElementImpl;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,8 +53,8 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
     final String outputUrl = CompilerProjectExtension.getInstance(myArtifactManager.getProject()).getCompilerOutputUrl();
     final String outputPath = outputUrl != null ? VfsUtil.urlToPath(outputUrl) + "/artifacts/" + FileUtil.sanitizeFileName(name) : null;
 
-    final ArtifactImpl artifact = new ArtifactImpl(generateUniqueName(name), artifactType, false, new ArtifactRootElementImpl(), outputPath,
-                                                   true);
+    final ArtifactImpl artifact = new ArtifactImpl(generateUniqueName(name), artifactType, false, artifactType.createRootElement(), 
+                                                   outputPath, true);
     myOriginalArtifacts.add(artifact);
     myArtifact2ModifiableCopy.put(artifact, artifact);
     myModifiable2Original.put(artifact, artifact);

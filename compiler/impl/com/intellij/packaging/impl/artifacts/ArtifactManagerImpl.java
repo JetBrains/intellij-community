@@ -6,9 +6,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.*;
-import com.intellij.packaging.impl.elements.ArtifactRootElementImpl;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -125,29 +124,30 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     final List<ArtifactImpl> artifacts = new ArrayList<ArtifactImpl>();
     for (ArtifactState state : managerState.getArtifacts()) {
       final Element element = state.getRootElement();
-      final ArtifactRootElementImpl rootElement;
-      if (element != null) {
-        rootElement = (ArtifactRootElementImpl)deserializeElement(element);
-      }
-      else {
-        rootElement = new ArtifactRootElementImpl();
-      }
       ArtifactType type = ArtifactType.findById(state.getArtifactType());
-      if (type != null) {
-        final ArtifactImpl artifact = new ArtifactImpl(state.getName(), type, state.isBuildOnMake(), rootElement, state.getOutputPath(),
-                                                       state.isClearOutputOnRebuild());
-        final List<ArtifactPropertiesState> propertiesList = state.getPropertiesList();
-        for (ArtifactPropertiesState propertiesState : propertiesList) {
-          final ArtifactPropertiesProvider provider = ArtifactPropertiesProvider.findById(propertiesState.getId());
-          if (provider != null) {
-            deserializeProperties(artifact.getProperties(provider), propertiesState);
-          }
-        }
-        artifacts.add(artifact);
+      if (type == null) {
+        LOG.info("Unknown artifact type: " + state.getArtifactType());
+        continue;
+      }
+      
+      final CompositePackagingElement<?> rootElement;
+      if (element != null) {
+        rootElement = (CompositePackagingElement<?>)deserializeElement(element);
       }
       else {
-        LOG.info("Unknown artifact type: " + state.getArtifactType());
+        rootElement = type.createRootElement();
       }
+
+      final ArtifactImpl artifact = new ArtifactImpl(state.getName(), type, state.isBuildOnMake(), rootElement, state.getOutputPath(),
+                                                     state.isClearOutputOnRebuild());
+      final List<ArtifactPropertiesState> propertiesList = state.getPropertiesList();
+      for (ArtifactPropertiesState propertiesState : propertiesList) {
+        final ArtifactPropertiesProvider provider = ArtifactPropertiesProvider.findById(propertiesState.getId());
+        if (provider != null) {
+          deserializeProperties(artifact.getProperties(provider), propertiesState);
+        }
+      }
+      artifacts.add(artifact);
     }
     myModel.setArtifactsList(artifacts);
   }

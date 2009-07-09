@@ -23,6 +23,7 @@ public abstract class CompositePackagingElementType<E extends CompositePackaging
 
   @NotNull
   public List<? extends E> createWithDialog(@NotNull PackagingEditorContext context, Artifact artifact, CompositePackagingElement<?> parent) {
-    return Collections.singletonList(createComposite(context, parent));
+    final E composite = createComposite(context, parent);
+    return composite != null ? Collections.singletonList(composite) : Collections.<E>emptyList();
   }
 }

@@ -36,7 +36,13 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
     final Artifact artifact = findArtifact(context);
     if (artifact != null) {
       final List<PackagingElement<?>> elements = new ArrayList<PackagingElement<?>>();
-      elements.addAll(artifact.getRootElement().getChildren());
+      final CompositePackagingElement<?> rootElement = artifact.getRootElement();
+      if (rootElement instanceof ArtifactRootElement<?>) {
+        elements.addAll(rootElement.getChildren());
+      }
+      else {
+        elements.add(rootElement);
+      }
       return elements;
     }
     return null;

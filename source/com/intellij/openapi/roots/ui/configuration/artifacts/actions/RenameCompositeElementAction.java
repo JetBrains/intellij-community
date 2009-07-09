@@ -38,6 +38,7 @@ public class RenameCompositeElementAction extends AnAction {
     final PackagingElementNode<?> node = selection.getNodeIfSingle();
     if (node == null) return;
     final TreePath path = selection.getPath(node);
+    myArtifactEditor.getLayoutTreeComponent().ensureRootIsWritable();
     myArtifactEditor.getLayoutTreeComponent().rename(path);
   }
 }

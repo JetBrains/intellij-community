@@ -59,7 +59,7 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
   public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
                                                           @NotNull ArtifactAntGenerationContext generationContext,
                                                           @NotNull ArtifactType artifactType) {
-    throw new UnsupportedOperationException("'computeGenerators' not implemented in " + getClass().getName());
+    return computeChildrenGenerators(resolvingContext, creator, generationContext, artifactType);
   }
 
   @Override

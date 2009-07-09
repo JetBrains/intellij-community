@@ -1,18 +1,16 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.artifacts.ModifiableArtifact;
 import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
-import com.intellij.packaging.impl.elements.ArtifactRootElementImpl;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author nik
@@ -21,43 +19,24 @@ public class ArtifactUtil {
   private ArtifactUtil() {
   }
 
-  public static void copyRoot(@NotNull ModifiableArtifact artifact, @Nullable Map<PackagingElement<?>,PackagingElement<?>> old2New) {
-    final ArtifactRootElement<?> oldRoot = artifact.getRootElement();
-    final ArtifactRootElement newRoot = copyFromRoot(oldRoot, old2New);
-    artifact.setRootElement(newRoot);
-  }
-
-  public static ArtifactRootElement copyFromRoot(ArtifactRootElement<?> oldRoot, Map<PackagingElement<?>, PackagingElement<?>> old2New) {
-    final ArtifactRootElementImpl newRoot = new ArtifactRootElementImpl();
-    if (old2New != null) {
-      old2New.put(oldRoot, newRoot);
-    }
-    copyChildren(oldRoot, newRoot, old2New);
+  public static CompositePackagingElement<?> copyFromRoot(@NotNull CompositePackagingElement<?> oldRoot, ArtifactType artifactType) {
+    final CompositePackagingElement<?> newRoot = (CompositePackagingElement<?>)copyElement(oldRoot);
+    copyChildren(oldRoot, newRoot);
     return newRoot;
   }
 
 
-  private static void copyChildren(CompositePackagingElement<?> oldParent, CompositePackagingElement<?> newParent, 
-                                   @Nullable Map<PackagingElement<?>, PackagingElement<?>> old2New) {
+  public static void copyChildren(CompositePackagingElement<?> oldParent, CompositePackagingElement<?> newParent) {
     for (PackagingElement<?> child : oldParent.getChildren()) {
-      newParent.addOrFindChild(copyWithChildren(child, old2New));
+      newParent.addOrFindChild(copyWithChildren(child));
     }
   }
 
   @NotNull
   public static <S> PackagingElement<S> copyWithChildren(@NotNull PackagingElement<S> element) {
-    return copyWithChildren(element, null);
-  }
-
-  @NotNull
-  public static <S> PackagingElement<S> copyWithChildren(@NotNull PackagingElement<S> element,
-                                                         final @Nullable Map<PackagingElement<?>, PackagingElement<?>> old2New) {
     final PackagingElement<S> copy = copyElement(element);
-    if (old2New != null) {
-      old2New.put(element, copy);
-    }
     if (element instanceof CompositePackagingElement<?>) {
-      copyChildren((CompositePackagingElement<?>)element, (CompositePackagingElement<?>)copy, old2New);
+      copyChildren((CompositePackagingElement<?>)element, (CompositePackagingElement<?>)copy);
     }
     return copy;
   }
@@ -70,21 +49,33 @@ public class ArtifactUtil {
   }
 
   public static <E extends PackagingElement<?>> boolean processPackagingElements(@NotNull Artifact artifact, @Nullable PackagingElementType<E> type,
-                                                                                 @NotNull Processor<E> processor,
+                                                                                 @NotNull final Processor<E> processor,
                                                                                  final @NotNull PackagingElementResolvingContext resolvingContext,
                                                                                  final boolean processSubstituions) {
-    final List<PackagingElement<?>> children = artifact.getRootElement().getChildren();
-    if (!processElements(children, type, processor, resolvingContext, processSubstituions, artifact.getArtifactType())) return false;
-    return true;
+    return processPackagingElements(artifact, type, new PackagingElementProcessor<E>() {
+      @Override
+      public boolean process(@NotNull List<CompositePackagingElement<?>> parents, @NotNull E e) {
+        return processor.process(e);
+      }
+    }, resolvingContext, processSubstituions);
+  }
+
+  public static <E extends PackagingElement<?>> boolean processPackagingElements(@NotNull Artifact artifact, @Nullable PackagingElementType<E> type,
+                                                                                 @NotNull PackagingElementProcessor<E> processor,
+                                                                                 final @NotNull PackagingElementResolvingContext resolvingContext,
+                                                                                 final boolean processSubstituions) {
+    return processElements(artifact.getRootElement(), type, processor, resolvingContext, processSubstituions, artifact.getArtifactType(),
+                           FList.<CompositePackagingElement<?>>emptyList());
   }
 
   private static <E extends PackagingElement<?>> boolean processElements(final List<? extends PackagingElement<?>> elements,
                                                                          @Nullable PackagingElementType<E> type,
-                                                                         @NotNull Processor<E> processor,
+                                                                         @NotNull PackagingElementProcessor<E> processor,
                                                                          final @NotNull PackagingElementResolvingContext resolvingContext,
-                                                                         final boolean processSubstituions, ArtifactType artifactType) {
+                                                                         final boolean processSubstituions, ArtifactType artifactType,
+                                                                         FList<CompositePackagingElement<?>> parents) {
     for (PackagingElement<?> element : elements) {
-      if (!processElements(element, type, processor, resolvingContext, processSubstituions, artifactType)) {
+      if (!processElements(element, type, processor, resolvingContext, processSubstituions, artifactType, parents)) {
         return false;
       }
     }
@@ -92,24 +83,26 @@ public class ArtifactUtil {
   }
 
   private static <E extends PackagingElement<?>> boolean processElements(@NotNull PackagingElement<?> element, @Nullable PackagingElementType<E> type,
-                                                                         @NotNull Processor<E> processor,
+                                                                         @NotNull PackagingElementProcessor<E> processor,
                                                                          @NotNull PackagingElementResolvingContext resolvingContext,
                                                                          final boolean processSubstituions,
-                                                                         ArtifactType artifactType) {
+                                                                         ArtifactType artifactType,
+                                                                         FList<CompositePackagingElement<?>> parents) {
     if (type == null || element.getType().equals(type)) {
-      if (!processor.process((E)element)) {
+      if (!processor.process(parents, (E)element)) {
         return false;
       }
     }
     if (element instanceof CompositePackagingElement<?>) {
-      return processElements(((CompositePackagingElement<?>)element).getChildren(), type, processor, resolvingContext, processSubstituions,
-                             artifactType);
+      final CompositePackagingElement<?> composite = (CompositePackagingElement<?>)element;
+      return processElements(composite.getChildren(), type, processor, resolvingContext, processSubstituions,
+                             artifactType, parents.prepend(composite));
     }
     else if (element instanceof ComplexPackagingElement<?> && processSubstituions) {
       final List<? extends PackagingElement<?>> substitution = ((ComplexPackagingElement<?>)element).getSubstitution(resolvingContext,
                                                                                                                      artifactType);
       if (substitution != null) {
-        return processElements(substitution, type, processor, resolvingContext, processSubstituions, artifactType);
+        return processElements(substitution, type, processor, resolvingContext, processSubstituions, artifactType, parents);
       }
     }
     return true;

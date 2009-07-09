@@ -3,9 +3,11 @@ package com.intellij.packaging.impl.artifacts;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.impl.elements.ArtifactRootElementImpl;
+import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,4 +44,8 @@ public class PlainArtifactType extends ArtifactType {
     return "/";
   }
 
+  @NotNull
+  public CompositePackagingElement<?> createRootElement() {
+    return new ArtifactRootElementImpl();
+  }
 }

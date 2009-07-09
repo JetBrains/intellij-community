@@ -4,7 +4,7 @@ import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
-import com.intellij.packaging.elements.ArtifactRootElement;
+import com.intellij.packaging.elements.CompositePackagingElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -16,7 +16,7 @@ import java.util.Map;
  * @author nik
  */
 public class ArtifactImpl implements ModifiableArtifact {
-  private ArtifactRootElement<?> myRootElement;
+  private CompositePackagingElement<?> myRootElement;
   private String myName;
   private boolean myBuildOnMake;
   private boolean myClearOutputDirectoryOnRebuild;
@@ -24,7 +24,7 @@ public class ArtifactImpl implements ModifiableArtifact {
   private ArtifactType myArtifactType;
   private Map<ArtifactPropertiesProvider, ArtifactProperties<?>> myProperties;
 
-  public ArtifactImpl(@NotNull String name, @NotNull ArtifactType artifactType, boolean buildOnMake, @NotNull ArtifactRootElement<?> rootElement,
+  public ArtifactImpl(@NotNull String name, @NotNull ArtifactType artifactType, boolean buildOnMake, @NotNull CompositePackagingElement<?> rootElement,
                       String outputPath,
                       boolean clearOutputDirectoryOnRebuild) {
     myName = name;
@@ -55,7 +55,7 @@ public class ArtifactImpl implements ModifiableArtifact {
   }
 
   @NotNull
-  public ArtifactRootElement<?> getRootElement() {
+  public CompositePackagingElement<?> getRootElement() {
     return myRootElement;
   }
 
@@ -90,7 +90,7 @@ public class ArtifactImpl implements ModifiableArtifact {
     myName = name;
   }
 
-  public void setRootElement(ArtifactRootElement<?> root) {
+  public void setRootElement(CompositePackagingElement<?> root) {
     myRootElement = root;
   }
 

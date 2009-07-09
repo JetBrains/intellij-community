@@ -2,6 +2,7 @@ package com.intellij.packaging.artifacts;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
@@ -53,5 +54,11 @@ public abstract class ArtifactType {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public abstract CompositePackagingElement<?> createRootElement();
+
+  public void checkRootElement(@NotNull CompositePackagingElement<?> rootElement) {
   }
 }

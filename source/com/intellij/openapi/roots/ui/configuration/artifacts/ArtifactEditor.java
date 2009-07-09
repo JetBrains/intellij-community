@@ -3,7 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.elements.ArtifactRootElement;
+import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +25,7 @@ public interface ArtifactEditor extends Disposable {
 
   Artifact getArtifact();
 
-  ArtifactRootElement<?> getRootElement();
+  CompositePackagingElement<?> getRootElement();
 
   PackagingEditorContext getContext();
 

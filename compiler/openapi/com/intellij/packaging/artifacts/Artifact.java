@@ -1,6 +1,6 @@
 package com.intellij.packaging.artifacts;
 
-import com.intellij.packaging.elements.ArtifactRootElement;
+import com.intellij.packaging.elements.CompositePackagingElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +18,7 @@ public interface Artifact {
   boolean isBuildOnMake();
 
   @NotNull
-  ArtifactRootElement<?> getRootElement();
+  CompositePackagingElement<?> getRootElement();
 
   @Nullable
   String getOutputPath();

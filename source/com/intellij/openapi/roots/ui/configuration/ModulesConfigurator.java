@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.Chunk;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.packaging.artifacts.Artifact;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -423,6 +424,15 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
       public void run() {
         configurable.select(library, true);
+      }
+    });
+  }
+
+  public static boolean showArtifactSettings(@NotNull Project project, @Nullable final Artifact artifact) {
+    final ProjectStructureConfigurable configurable = ProjectStructureConfigurable.getInstance(project);
+    return ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
+      public void run() {
+        configurable.select(artifact, true);
       }
     });
   }

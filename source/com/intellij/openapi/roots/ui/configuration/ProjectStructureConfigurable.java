@@ -359,9 +359,11 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     return navigateTo(place, requestFocus);
   }
 
-  public ActionCallback select(@NotNull Artifact artifact, boolean requestFocus) {
+  public ActionCallback select(@Nullable Artifact artifact, boolean requestFocus) {
     Place place = new Place().putPath(CATEGORY, myArtifactsStructureConfigurable);
-    place.putPath(BaseStructureConfigurable.TREE_NAME, artifact.getName());
+    if (artifact != null) {
+      place.putPath(BaseStructureConfigurable.TREE_NAME, artifact.getName());
+    }
     return navigateTo(place, requestFocus);
   }
 

@@ -131,9 +131,7 @@ public class ArtifactsGenerator {
     final DirectoryAntCopyInstructionCreator creator = new DirectoryAntCopyInstructionCreator(outputPath);
 
     List<Generator> copyInstructions = new ArrayList<Generator>();
-    for (PackagingElement<?> element : artifact.getRootElement().getChildren()) {
-      copyInstructions.addAll(element.computeAntInstructions(myResolvingContext, creator, myContext, artifact.getArtifactType()));
-    }
+    copyInstructions.addAll(artifact.getRootElement().computeAntInstructions(myResolvingContext, creator, myContext, artifact.getArtifactType()));
 
     for (Generator generator : myContext.getAndClearBeforeCurrentArtifact()) {
       artifactTarget.add(generator);

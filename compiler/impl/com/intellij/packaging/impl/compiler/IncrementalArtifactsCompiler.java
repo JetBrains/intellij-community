@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
-import com.intellij.packaging.elements.ArtifactRootElement;
+import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,7 +74,7 @@ public class IncrementalArtifactsCompiler extends PackagingCompilerBase<Artifact
 
   private static void collectItems(@NotNull ArtifactsProcessingItemsBuilderContext builderContext, @NotNull Artifact artifact, @NotNull String outputPath,
                             final Project project) {
-    final ArtifactRootElement<?> rootElement = artifact.getRootElement();
+    final CompositePackagingElement<?> rootElement = artifact.getRootElement();
     final VirtualFile outputFile = LocalFileSystem.getInstance().findFileByPath(outputPath);
     final CopyToDirectoryInstructionCreator instructionCreator =
         new CopyToDirectoryInstructionCreator(builderContext, outputPath, outputFile);

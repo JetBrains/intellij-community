@@ -17,8 +17,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
-import com.intellij.packaging.elements.ArtifactRootElement;
 import com.intellij.packaging.elements.PackagingElementType;
+import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -113,7 +113,7 @@ public class ArtifactEditorImpl implements ArtifactEditor {
     return myContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
   }
 
-  public ArtifactRootElement<?> getRootElement() {
+  public CompositePackagingElement<?> getRootElement() {
     return myLayoutTreeComponent.getRootElement();
   }
 

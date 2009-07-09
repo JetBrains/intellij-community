@@ -183,7 +183,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     private final ArtifactType myType;
 
     public AddArtifactAction(ArtifactType type) {
-      super(ProjectBundle.message("action.text.add.artifact", type.getPresentableName()));
+      super(ProjectBundle.message("action.text.add.artifact", type.getPresentableName()), null, type.getIcon());
       myType = type;
     }
 

@@ -20,6 +20,11 @@ import com.intellij.execution.ExecutionBundle;
 
 public class RuntimeConfigurationWarning extends RuntimeConfigurationException{
   public RuntimeConfigurationWarning(final String message) {
+    this(message, null);
+  }
+
+  public RuntimeConfigurationWarning(final String message, final Runnable quickFix) {
     super(message, ExecutionBundle.message("warning.common.title"));
+    setQuickFix(quickFix);
   }
 }

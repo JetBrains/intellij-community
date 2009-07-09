@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.elements.CompositePackagingElement;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -102,7 +103,13 @@ public class ArtifactConfigurable extends NamedConfigurable<Artifact> {
       public void actionPerformed(ActionEvent e) {
         final ArtifactType selected = (ArtifactType)artifactTypeBox.getSelectedItem();
         if (!Comparing.equal(selected, getArtifact().getArtifactType())) {
+          final CompositePackagingElement<?> element = myEditor.getRootElement();
+          final CompositePackagingElement<?> newRootElement = selected.createRootElement();
           myPackagingEditorContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setArtifactType(selected);
+          if (!newRootElement.getType().equals(element.getType())) {
+            ArtifactUtil.copyChildren(element, newRootElement);
+            myEditor.getLayoutTreeComponent().setRootElement(newRootElement);
+          }
         }
       }
     });

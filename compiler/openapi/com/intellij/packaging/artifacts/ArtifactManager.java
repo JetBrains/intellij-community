@@ -19,4 +19,8 @@ public abstract class ArtifactManager implements ArtifactModel {
   public abstract ModifiableArtifactModel createModifiableModel();
 
   public abstract PackagingElementResolvingContext getResolvingContext();
+
+  public static boolean useArtifactsForDeployment() {
+    return Boolean.parseBoolean(System.getProperty("idea.use.artifacts.for.deployment"));
+  }
 }

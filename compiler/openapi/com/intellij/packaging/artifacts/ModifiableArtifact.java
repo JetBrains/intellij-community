@@ -1,6 +1,6 @@
 package com.intellij.packaging.artifacts;
 
-import com.intellij.packaging.elements.ArtifactRootElement;
+import com.intellij.packaging.elements.CompositePackagingElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,7 +14,7 @@ public interface ModifiableArtifact extends Artifact {
 
   void setName(@NotNull String name);
 
-  void setRootElement(ArtifactRootElement<?> root);
+  void setRootElement(CompositePackagingElement<?> root);
 
   void setProperties(ArtifactPropertiesProvider provider, ArtifactProperties<?> properties);
 
