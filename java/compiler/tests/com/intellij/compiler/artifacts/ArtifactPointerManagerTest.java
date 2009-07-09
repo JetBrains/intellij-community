@@ -13,6 +13,7 @@ public class ArtifactPointerManagerTest extends ArtifactsTestCase {
     final ArtifactPointer pointer = getPointerManager().create("art");
     assertSame(artifact, pointer.getArtifact());
     assertSame(artifact, pointer.findArtifact(getArtifactManager()));
+    assertSame(pointer, getPointerManager().create(artifact));
     assertEquals("art", pointer.getName());
   }
 
@@ -21,6 +22,7 @@ public class ArtifactPointerManagerTest extends ArtifactsTestCase {
     final ArtifactPointer pointer = getPointerManager().create(artifact);
     assertSame(artifact, pointer.getArtifact());
     assertEquals("aaa", pointer.getName());
+    assertSame(pointer, getPointerManager().create("aaa"));
   }
 
   public void testRenameArtifact() throws Exception {
@@ -32,6 +34,7 @@ public class ArtifactPointerManagerTest extends ArtifactsTestCase {
     final Artifact newArtifact = rename(artifact, "art2");
     assertSame(newArtifact, pointer.getArtifact());
     assertEquals("art2", pointer.getName());
+    assertSame(pointer, getPointerManager().create("art2"));
   }
 
   public void testCreateArtifactAfterPointer() throws Exception {
@@ -40,6 +43,8 @@ public class ArtifactPointerManagerTest extends ArtifactsTestCase {
 
     final Artifact artifact = addArtifact("xxx");
     assertSame(artifact, pointer.getArtifact());
+    assertSame(pointer, getPointerManager().create("xxx"));
+    assertSame(pointer, getPointerManager().create(artifact));
   }
 
   public void testDeleteArtifact() throws Exception {
