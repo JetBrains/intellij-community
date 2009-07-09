@@ -33,7 +33,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
-import com.intellij.util.Time;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
@@ -485,8 +484,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
       Disposer.register(this, treeBuilder);
 // needs refactoring for project view first
 //      treeBuilder.setCanYieldUpdate(true);
-      treeBuilder.setClearOnHideDelay(Time.SECOND * 120);
-    } 
+    }
     myTreeBuilder = treeBuilder;
   }
 

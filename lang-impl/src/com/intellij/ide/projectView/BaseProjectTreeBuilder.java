@@ -110,7 +110,8 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
                                  final Condition<AbstractTreeNode> nonStopCondition) {
     final ActionCallback result = new ActionCallback();
 
-    DefaultMutableTreeNode selected = alreadySelectedNode(element);
+    AbstractTreeNode alreadySelected = alreadySelectedNode(element);
+
 
     final Runnable onDone = new Runnable() {
       public void run() {
@@ -129,7 +130,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       }
     };
 
-    if (selected == null) {
+    if (alreadySelected == null) {
       expandPathTo(file, (AbstractTreeNode)getTreeStructure().getRootElement(), element, condition)
         .doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
           public void run(AbstractTreeNode node) {
@@ -138,14 +139,13 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
         }).notifyWhenRejected(result);
     }
     else {
-      onDone.run();
+      select(alreadySelected, onDone);
     }
 
     return result;
   }
 
-  // returns selected node for element or null if element node is not selected
-  private DefaultMutableTreeNode alreadySelectedNode(final Object element) {
+  private AbstractTreeNode alreadySelectedNode(final Object element) {
     final TreePath[] selectionPaths = getTree().getSelectionPaths();
     if (selectionPaths == null || selectionPaths.length == 0) {
       return null;
@@ -153,7 +153,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     for (TreePath selectionPath : selectionPaths) {
       Object selected = selectionPath.getLastPathComponent();
       if (elementIsEqualTo(selected, element)) {
-        return (DefaultMutableTreeNode)selected;
+        return ((AbstractTreeNode)((DefaultMutableTreeNode)selected).getUserObject());
       }
     }
     return null;

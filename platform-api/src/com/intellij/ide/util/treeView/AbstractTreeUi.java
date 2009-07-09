@@ -78,8 +78,12 @@ class AbstractTreeUi {
   private long myClearOnHideDelay = -1;
   private ScheduledExecutorService ourClearanceService;
   private final Map<AbstractTreeUi, Long> ourUi2Countdown = Collections.synchronizedMap(new WeakHashMap<AbstractTreeUi, Long>());
+
   private final List<Runnable> myDeferredSelections = new ArrayList<Runnable>();
   private final List<Runnable> myDeferredExpansions = new ArrayList<Runnable>();
+
+  private boolean myCanProcessDeferredSelections;
+
   private UpdaterTreeState myUpdaterState;
   private AbstractTreeBuilder myBuilder;
 
@@ -171,8 +175,8 @@ class AbstractTreeUi {
       myUpdateFromRootRequested = true;
     }
 
-    if (myClearOnHideDelay >= 0) {
-      ourUi2Countdown.put(this, System.currentTimeMillis() + myClearOnHideDelay);
+    if (getClearOnHideDelay() >= 0) {
+      ourUi2Countdown.put(this, System.currentTimeMillis() + getClearOnHideDelay());
       initClearanceServiceIfNeeded();
     }
   }
@@ -250,6 +254,8 @@ class AbstractTreeUi {
   }
 
   void showNotify() {
+    myCanProcessDeferredSelections = true;
+
     ourUi2Countdown.remove(this);
 
     if (!myWasEverShown || myUpdateFromRootRequested) {
@@ -1057,6 +1063,10 @@ class AbstractTreeUi {
     return myCanYield && myYeildingUpdate.asBoolean();
   }
 
+  public long getClearOnHideDelay() {
+    return myClearOnHideDelay > 0 ? myClearOnHideDelay : Registry.intValue("ide.tree.clearOnHideTime");
+  }
+
   static class ElementNode extends DefaultMutableTreeNode {
 
     Set<Object> myElements = new HashSet<Object>();
@@ -1735,7 +1745,11 @@ class AbstractTreeUi {
   }
 
   public void select(final Object[] elements, @Nullable final Runnable onDone, boolean addToSelection) {
-    _select(elements, onDone, addToSelection, true, false);
+    select(elements, onDone, addToSelection, false);
+  }
+
+  public void select(final Object[] elements, @Nullable final Runnable onDone, boolean addToSelection, boolean deferred) {
+    _select(elements, onDone, addToSelection, true, false, deferred);
   }
 
   void _select(final Object[] elements,
@@ -1744,13 +1758,38 @@ class AbstractTreeUi {
                final boolean checkCurrentSelection,
                final boolean checkIfInStructure) {
 
+    _select(elements, onDone, addToSelection, checkCurrentSelection, checkIfInStructure, false);
+  }
+
+  void _select(final Object[] elements,
+               final Runnable onDone,
+               final boolean addToSelection,
+               final boolean checkCurrentSelection,
+               final boolean checkIfInStructure,
+               final boolean deferred) {
+
+    boolean willAffectSelection = elements.length > 0 || (elements.length == 0 && addToSelection);
+    if (!willAffectSelection) {
+      runDone(onDone);
+      return;
+    }
+
+    final boolean oldCanProcessDeferredSelection = myCanProcessDeferredSelections;
+
+    if (!deferred && wasRootNodeInitialized() && willAffectSelection) {
+      myCanProcessDeferredSelections = false;
+    }
+
+    if (!checkDeferred(deferred, onDone)) return;
+
+    if (!deferred && oldCanProcessDeferredSelection && !myCanProcessDeferredSelections) {
+      getTree().clearSelection();
+    }
+
 
     runDone(new Runnable() {
       public void run() {
-        if (elements.length == 0) {
-          runDone(onDone);
-          return;
-        }
+        if (!checkDeferred(deferred, onDone)) return;
 
         final Set<Object> currentElements = getSelectedElements();
 
@@ -1764,7 +1803,9 @@ class AbstractTreeUi {
           }
 
           if (!runSelection) {
-            runDone(onDone);
+            if (elements.length > 0) {
+              selectVisible(elements[0], onDone, true);
+            }
             return;
           }
         }
@@ -1793,18 +1834,27 @@ class AbstractTreeUi {
           if (!addToSelection) {
             myTree.clearSelection();
           }
-          addNext(elementsToSelect, 0, onDone, originalRows);
+          addNext(elementsToSelect, 0, onDone, originalRows, deferred);
         }
         else {
           myDeferredSelections.clear();
           myDeferredSelections.add(new Runnable() {
             public void run() {
-              select(elementsToSelect, onDone);
+              select(elementsToSelect, onDone, false, true);
             }
           });
         }
       }
     });
+  }
+
+  private boolean checkDeferred(boolean isDeferred, @Nullable Runnable onDone) {
+    if (!isDeferred || myCanProcessDeferredSelections || !wasRootNodeInitialized()) {
+      return true;
+    } else {
+      runDone(onDone);
+      return false;
+    }
   }
 
   @NotNull
@@ -1827,7 +1877,7 @@ class AbstractTreeUi {
   }
 
 
-  private void addNext(final Object[] elements, final int i, @Nullable final Runnable onDone, final int[] originalRows) {
+  private void addNext(final Object[] elements, final int i, @Nullable final Runnable onDone, final int[] originalRows, final boolean deferred) {
     if (i >= elements.length) {
       if (myTree.isSelectionEmpty()) {
         myTree.setSelectionRows(originalRows);
@@ -1835,11 +1885,17 @@ class AbstractTreeUi {
       runDone(onDone);
     }
     else {
-      _select(elements[i], new Runnable() {
+      if (!checkDeferred(deferred, onDone)) {
+        return;
+      }
+      
+      doSelect(elements[i], new Runnable() {
         public void run() {
-          addNext(elements, i + 1, onDone, originalRows);
+          if (!checkDeferred(deferred, onDone)) return;
+
+          addNext(elements, i + 1, onDone, originalRows, deferred);
         }
-      }, true);
+      }, true, deferred);
     }
   }
 
@@ -1848,27 +1904,35 @@ class AbstractTreeUi {
   }
 
   public void select(final Object element, @Nullable final Runnable onDone, boolean addToSelection) {
-    _select(element, onDone, addToSelection);
+    _select(new Object[] {element}, onDone, addToSelection, true, false);
   }
 
-  private void _select(final Object element, final Runnable onDone, final boolean addToSelection) {
+  private void doSelect(final Object element, final Runnable onDone, final boolean addToSelection, final boolean deferred) {
     final Runnable _onDone = new Runnable() {
       public void run() {
-        final DefaultMutableTreeNode toSelect = getNodeForElement(element, false);
-        if (toSelect == null) {
-          runDone(onDone);
-          return;
-        }
-        final int row = myTree.getRowForPath(new TreePath(toSelect.getPath()));
-
-        if (myUpdaterState != null) {
-          myUpdaterState.addSelection(element);
-        }
-        TreeUtil.showAndSelect(myTree, row - 2, row + 2, row, -1, addToSelection);
-        runDone(onDone);
+        if (!checkDeferred(deferred, onDone)) return;
+        selectVisible(element, onDone, addToSelection);
       }
     };
     _expand(element, _onDone, true, false);
+  }
+
+  private void selectVisible(Object element, final Runnable onDone, boolean addToSelection) {
+    final DefaultMutableTreeNode toSelect = getNodeForElement(element, false);
+    if (toSelect == null) {
+      runDone(onDone);
+      return;
+    }
+    final int row = myTree.getRowForPath(new TreePath(toSelect.getPath()));
+
+    if (myUpdaterState != null) {
+      myUpdaterState.addSelection(element);
+    }
+    TreeUtil.showAndSelect(myTree, row - 2, row + 2, row, -1, addToSelection).doWhenDone(new Runnable() {
+      public void run() {
+        runDone(onDone);
+      }
+    });
   }
 
   public void expand(final Object element, @Nullable final Runnable onDone) {
@@ -2269,7 +2333,6 @@ class AbstractTreeUi {
 
   private class MyExpansionListener implements TreeExpansionListener {
     public void treeExpanded(TreeExpansionEvent event) {
-
       dropUpdaterStateIfExternalChange();
 
       TreePath path = event.getPath();

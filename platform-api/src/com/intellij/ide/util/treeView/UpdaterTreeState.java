@@ -137,6 +137,8 @@ public class UpdaterTreeState {
     clearSelection();
     clearExpansion();
 
+    final Set<Object> originallySelected = myUi.getSelectedElements();
+
     myUi._select(toSelect, new Runnable() {
       public void run() {
         processUnsuccessfulSelections(toSelect, new Function<Object, Object>() {
@@ -144,9 +146,9 @@ public class UpdaterTreeState {
             addSelection(o);
             return o;
           }
-        });
+        }, originallySelected);
 
-        processAjusted(adjusted).doWhenDone(new Runnable() {
+        processAjusted(adjusted, originallySelected).doWhenDone(new Runnable() {
           public void run() {
             myUi.expand(toExpand, new Runnable() {
               public void run() {
@@ -169,8 +171,20 @@ public class UpdaterTreeState {
     myCanRunRestore = true;
   }
 
-  private void processUnsuccessfulSelections(final Object[] toSelect, Function<Object, Object> restore) {
+  private void processUnsuccessfulSelections(final Object[] toSelect, Function<Object, Object> restore, Set<Object> originallySelected) {
     final Set<Object> selected = myUi.getSelectedElements();
+
+    boolean wasFullyRejected = false;
+    if (toSelect.length > 0 && selected.size() > 0 && !originallySelected.containsAll(selected)) {
+      final Set<Object> successfulSelections = new HashSet<Object>();
+      successfulSelections.addAll(Arrays.asList(toSelect));
+
+      successfulSelections.retainAll(selected);
+      wasFullyRejected = successfulSelections.size() == 0;
+    }
+
+    if (wasFullyRejected) return;
+
     for (Object eachToSelect : toSelect) {
       if (!selected.contains(eachToSelect)) {
         restore.fun(eachToSelect);
@@ -178,7 +192,7 @@ public class UpdaterTreeState {
     }
   }
 
-  private ActionCallback processAjusted(final Map<Object, Condition> adjusted) {
+  private ActionCallback processAjusted(final Map<Object, Condition> adjusted, final Set<Object> originallySelected) {
     final ActionCallback result = new ActionCallback();
 
     final Set<Object> allSelected = myUi.getSelectedElements();
@@ -198,17 +212,21 @@ public class UpdaterTreeState {
 
     final Object[] newSelection = ArrayUtil.toObjectArray(toSelect);
 
-    myUi._select(newSelection, new Runnable() {
-      public void run() {
-        processUnsuccessfulSelections(newSelection, new Function<Object, Object>() {
-          public Object fun(final Object o) {
-            addAdjustedSelection(o, adjusted.get(o));
-            return null;
-          }
-        });
-        result.setDone();
-      }
-    }, true, true, true);
+    if (newSelection.length > 0) {
+      myUi._select(newSelection, new Runnable() {
+        public void run() {
+          processUnsuccessfulSelections(newSelection, new Function<Object, Object>() {
+            public Object fun(final Object o) {
+              addAdjustedSelection(o, adjusted.get(o));
+              return null;
+            }
+          }, originallySelected);
+          result.setDone();
+        }
+      }, true, true, true);
+    } else {
+      result.setDone();
+    }
 
     return result;
   }
@@ -240,4 +258,8 @@ public class UpdaterTreeState {
     myAdjustedSelection.put(element, isExpired);
   }
 
+  @Override
+  public String toString() {
+    return "UpdaterState toSelect" + Arrays.asList(myToSelect) + " toExpand=" + Arrays.asList(myToExpand);
+  }
 }
