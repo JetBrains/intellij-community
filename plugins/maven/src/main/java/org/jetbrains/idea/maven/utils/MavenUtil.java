@@ -14,21 +14,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomManager;
 import gnu.trove.THashSet;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.maven.model.Model;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 
@@ -41,8 +34,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Future;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -117,6 +110,10 @@ public class MavenUtil {
   public static File getPluginSystemDir(String folder) {
     // PathManager.getSystemPath() may return relative path
     return new File(PathManager.getSystemPath(), "Maven" + "/" + folder).getAbsoluteFile();
+  }
+
+  public static VirtualFile findProfilesXmlFile(VirtualFile pomFile) {
+    return pomFile.getParent().findChild(MavenConstants.PROFILES_XML);
   }
 
   public static List<String> collectPaths(List<VirtualFile> files) {
@@ -213,11 +210,7 @@ public class MavenUtil {
         Class<?> type = each.getType();
         each.setAccessible(true);
         Object value = each.get(object);
-        if (value != null
-            && (value.getClass().isArray()
-                || value instanceof Collection
-                || value instanceof Map
-                || value instanceof Xpp3Dom)) {
+        if (isContainerType(value)) {
           each.set(object, null);
         }
         else {
@@ -231,6 +224,13 @@ public class MavenUtil {
     catch (IllegalAccessException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public static boolean isContainerType(Object value) {
+    return value != null && (value.getClass().isArray()
+                             || value instanceof Collection
+                             || value instanceof Map
+                             || value instanceof Xpp3Dom);
   }
 
   public static void run(Project project, String title, final MavenTask task) throws MavenProcessCanceledException {
@@ -257,10 +257,7 @@ public class MavenUtil {
                                                  final String title,
                                                  final boolean cancellable,
                                                  final MavenTask task) {
-    final Semaphore finishSemaphore = new Semaphore();
     final MavenProgressIndicator indicator = new MavenProgressIndicator();
-
-    finishSemaphore.down();
 
     Runnable runnable = new Runnable() {
       public void run() {
@@ -273,46 +270,50 @@ public class MavenUtil {
         catch (ProcessCanceledException ignore) {
           indicator.cancel();
         }
-        finally {
-          finishSemaphore.up();
-        }
       }
     };
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       runnable.run();
+      return new MavenTaskHandler(indicator) {
+        public void waitFor() {
+        }
+      };
     }
     else {
       final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
+      final MavenTaskHandler handler = new MavenTaskHandler(indicator) {
+        public void waitFor() {
+          try {
+            future.get();
+          }
+          catch (InterruptedException e) {
+            MavenLog.LOG.error(e);
+          }
+          catch (ExecutionException e) {
+            MavenLog.LOG.error(e);
+          }
+        }
+      };
       invokeLater(project, new Runnable() {
         public void run() {
           if (future.isDone()) return;
-
           new Task.Backgroundable(project, title, cancellable) {
             public void run(@NotNull ProgressIndicator i) {
               indicator.addIndicator(i);
-              try {
-                future.get();
-              }
-              catch (InterruptedException e) {
-              }
-              catch (ExecutionException e) {
-              }
+              handler.waitFor();
             }
           }.queue();
         }
       });
+      return handler;
     }
-
-    return new MavenTaskHandler(finishSemaphore, indicator);
   }
 
-  public static class MavenTaskHandler {
-    private final Semaphore myFinishSemaphore;
+  public static abstract class MavenTaskHandler {
     private final MavenProgressIndicator myIndicator;
 
-    private MavenTaskHandler(Semaphore finishSemaphore, MavenProgressIndicator indicator) {
-      myFinishSemaphore = finishSemaphore;
+    private MavenTaskHandler(MavenProgressIndicator indicator) {
       myIndicator = indicator;
     }
 
@@ -320,9 +321,7 @@ public class MavenUtil {
       myIndicator.cancel();
     }
 
-    public void waitFor() {
-      myFinishSemaphore.waitFor();
-    }
+    public abstract void waitFor();
 
     public boolean isCancelled() {
       return myIndicator.isCanceled();

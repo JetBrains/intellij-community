@@ -1835,7 +1835,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      "  </profile>" +
                      "</profiles>");
 
-    createProfilesXmlNewStyle("<profile>" +
+    createProfilesXml("<profile>" +
                               "  <id>two</id>" +
                               "</profile>");
 
@@ -1859,7 +1859,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      "  </profile>" +
                      "</profiles>");
 
-    createProfilesXmlNewStyle("<profile>" +
+    createProfilesXml("<profile>" +
                               "  <id>two</id>" +
                               "</profile>");
 
@@ -1896,7 +1896,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      "  </profile>" +
                      "</profiles>");
 
-    createProfilesXmlNewStyle("<profile>" +
+    createProfilesXml("<profile>" +
                               "  <id>two</id>" +
                               "</profile>");
 
@@ -1914,7 +1914,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     update(myProjectPom);
     assertUnorderedElementsAreEqual(myTree.getActiveProfiles());
 
-    createProfilesXmlNewStyle("<profile>" +
+    createProfilesXml("<profile>" +
                               "  <id>two</id>" +
                               "</profile>");
     update(myProjectPom);

@@ -668,7 +668,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
   public void testPropertiesFromProfilesXmlNewStyle() throws Exception {
     createProjectPom("<name>${prop}</name>");
-    createProfilesXmlNewStyle("<profile>" +
+    createProfilesXml("<profile>" +
                               "  <id>one</id>" +
                               "  <properties>" +
                               "    <prop>foo</prop>" +

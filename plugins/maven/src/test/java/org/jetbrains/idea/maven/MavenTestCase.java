@@ -171,16 +171,17 @@ public abstract class MavenTestCase extends TestCase {
     return myProjectRoot.getParent().getPath();
   }
 
-  protected void updateSettingsXml(String content) throws IOException {
-    updateSettingsXmlFully(createSettingsXmlContent(content));
+  protected VirtualFile updateSettingsXml(String content) throws IOException {
+    return updateSettingsXmlFully(createSettingsXmlContent(content));
   }
 
-  protected void updateSettingsXmlFully(String content) throws IOException {
+  protected VirtualFile updateSettingsXmlFully(String content) throws IOException {
     File ioFile = new File(myDir, "settings.xml");
     ioFile.createNewFile();
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
     setFileContent(f, content);
     getMavenGeneralSettings().setMavenSettingsFile(f.getPath());
+    return f;
   }
 
   protected void deleteSettingsXml() throws IOException {
@@ -243,24 +244,25 @@ public abstract class MavenTestCase extends TestCase {
            "</project>";
   }
 
-  protected void createProfilesXmlOldStyle(String xml) throws IOException {
-    createProfilesFile(myProjectRoot, xml, true);
+  protected VirtualFile createProfilesXmlOldStyle(String xml) throws IOException {
+    return createProfilesFile(myProjectRoot, xml, true);
   }
 
-  protected void createProfilesXmlNewStyle(String xml) throws IOException {
-    createProfilesFile(myProjectRoot, xml, false);
+  protected VirtualFile createProfilesXml(String xml) throws IOException {
+    return createProfilesFile(myProjectRoot, xml, false);
   }
 
-  protected void createProfilesXmlOldStyle(String relativePath, String xml) throws IOException {
-    createProfilesFile(createProjectSubDir(relativePath), xml, true);
+  protected VirtualFile createProfilesXmlOldStyle(String relativePath, String xml) throws IOException {
+    return createProfilesFile(createProjectSubDir(relativePath), xml, true);
   }
 
-  private void createProfilesFile(VirtualFile dir, String xml, boolean oldStyle) throws IOException {
+  private VirtualFile createProfilesFile(VirtualFile dir, String xml, boolean oldStyle) throws IOException {
     VirtualFile f = dir.findChild("profiles.xml");
     if (f == null) {
       f = dir.createChildData(null, "profiles.xml");
     }
     setFileContent(f, createValidProfiles(xml, oldStyle));
+    return f;
   }
 
   private String createValidProfiles(String xml, boolean oldStyle) {

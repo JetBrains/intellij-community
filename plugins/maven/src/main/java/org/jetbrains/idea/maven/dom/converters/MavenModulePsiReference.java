@@ -139,7 +139,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
     }
 
     private TemplateBuilderImpl buildTemplate(Project project, VirtualFile modulePomFile) {
-      MavenId id = MavenDomUtil.describe(MavenDomUtil.getMavenDomProjectFile(myPsiFile));
+      MavenId id = MavenDomUtil.describe(myPsiFile);
 
       String groupId = id.getGroupId() == null ? "groupId" : id.getGroupId();
       String artifactId = modulePomFile.getParent().getName();

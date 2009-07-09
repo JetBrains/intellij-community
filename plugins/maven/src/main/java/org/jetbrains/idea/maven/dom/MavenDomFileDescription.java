@@ -13,7 +13,7 @@ public abstract class MavenDomFileDescription<T> extends DomFileDescription<T> {
   }
 
   public boolean isMyFile(@NotNull XmlFile file, final Module module) {
-    return MavenDomUtil.isPomFile(file) && super.isMyFile(file, module);
+    return MavenDomUtil.isMavenFile(file) && super.isMyFile(file, module);
   }
 
   @Override

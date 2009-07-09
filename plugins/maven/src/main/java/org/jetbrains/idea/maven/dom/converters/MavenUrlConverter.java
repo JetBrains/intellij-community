@@ -9,8 +9,6 @@ import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class MavenUrlConverter extends MavenReferenceConverter<String> {
   @Override
   public String fromString(@Nullable @NonNls String s, ConvertContext context) {
@@ -22,12 +20,11 @@ public class MavenUrlConverter extends MavenReferenceConverter<String> {
     return text;
   }
 
-  protected void createReferences(PsiElement element,
-                                  String resolvedText,
-                                  TextRange range,
-                                  VirtualFile virtualFile,
-                                  XmlFile psiFile,
-                                  List<PsiReference> result) {
-    result.add(new MavenUrlPsiReference(element, resolvedText, range));
+  protected PsiReference createReference(PsiElement element,
+                                         String text,
+                                         TextRange range,
+                                         VirtualFile virtualFile,
+                                         XmlFile psiFile) {
+    return new MavenUrlPsiReference(element, text, range);
   }
 }

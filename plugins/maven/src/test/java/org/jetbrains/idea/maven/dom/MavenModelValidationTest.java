@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 
 public class MavenModelValidationTest extends MavenCompletionAndResolutionWithIndicesTestCase {
   @Override
@@ -11,13 +12,31 @@ public class MavenModelValidationTest extends MavenCompletionAndResolutionWithIn
                   "<version>1</version>");
   }
 
-  public void testUnderstandingProjectsWithoutNamespace() throws Exception {
+  public void testUnderstandingProjectSchemaWithoutNamespace() throws Exception {
     VfsUtil.saveText(myProjectPom,
                      "<project>" +
                      "  <dep<caret>" +
                      "</project>");
 
     assertCompletionVariants(myProjectPom, "dependencies", "dependencyManagement");
+  }
+
+  public void testUnderstandingProfilesSchemaWithoutNamespace() throws Exception {
+    VirtualFile profiles = createProfilesXml("<profile>" +
+                                             "  <<caret>" +
+                                             "</profile>");
+
+    assertCompletionVariantsInclude(profiles, "id", "activation");
+  }
+
+  public void testUnderstandingSettingsSchemaWithoutNamespace() throws Exception {
+    VirtualFile settings = updateSettingsXml("<profiles>" +
+                                             "  <profile>" +
+                                             "    <<caret>" +
+                                             "  </profile>" +
+                                             "</profiles>");
+
+    assertCompletionVariantsInclude(settings, "id", "activation");
   }
 
   public void testAbsentModelVersion() throws Throwable {

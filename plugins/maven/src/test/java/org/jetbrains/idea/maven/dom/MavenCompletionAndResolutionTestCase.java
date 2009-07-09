@@ -52,7 +52,15 @@ public abstract class MavenCompletionAndResolutionTestCase extends MavenImportin
     return myCodeInsightFixture.getFile().findReferenceAt(e.getOffset());
   }
 
+  protected void assertUnresolved(VirtualFile file) throws IOException {
+    PsiReference ref = getReferenceAtCaret(file);
+    assertNotNull(ref);
+    assertNull(ref.resolve());
+  }
+
   protected void assertResolved(VirtualFile file, PsiElement expected) throws IOException {
+    assertNotNull("expected reference is null", expected);
+
     PsiReference ref = getReferenceAtCaret(file);
     assertNotNull(ref);
     PsiElement resolved = ref.resolve();

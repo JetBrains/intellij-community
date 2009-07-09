@@ -1,6 +1,8 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NotNull;
@@ -9,6 +11,7 @@ import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 
 import java.io.File;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -128,6 +131,33 @@ public class MavenGeneralSettings implements Cloneable {
         firePathChanged();
       }
     }
+  }
+
+  public @Nullable File getEffectiveUserSettingsIoFile() {
+    return MavenEmbedderFactory.resolveUserSettingsFile(getMavenSettingsFile());
+  }
+
+  public @Nullable File getEffectiveGlobalSettingsIoFile() {
+    return MavenEmbedderFactory.resolveGlobalSettingsFile(getMavenHome());
+  }
+
+  public @Nullable VirtualFile getEffectiveUserSettingsFile() {
+    File file = getEffectiveUserSettingsIoFile();
+    return file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file);
+  }
+
+  public List<VirtualFile> getEffectiveSettingsFiles() {
+    List<VirtualFile> result = new ArrayList<VirtualFile>(2);
+    VirtualFile file = getEffectiveUserSettingsFile();
+    if (file != null) result.add(file);
+    file = getEffectiveGlobalSettingsFile();
+    if (file != null) result.add(file);
+    return result;
+  }
+
+  public @Nullable VirtualFile getEffectiveGlobalSettingsFile() {
+    File file = getEffectiveGlobalSettingsIoFile();
+    return file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file);
   }
 
   public boolean isPrintErrorStackTraces() {

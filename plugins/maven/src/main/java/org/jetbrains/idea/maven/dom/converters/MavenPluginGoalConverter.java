@@ -2,6 +2,7 @@ package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,9 +15,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenPluginGoalConverter extends MavenPropertyResolvingConverter<String> {
+public class MavenPluginGoalConverter extends ResolvingConverter<String> {
   @Override
-  public String fromResolvedString(@Nullable @NonNls String s, ConvertContext context) {
+  public String fromString(@Nullable @NonNls String s, ConvertContext context) {
     return getVariants(context).contains(s) ? s : null;
   }
 
@@ -26,7 +27,7 @@ public class MavenPluginGoalConverter extends MavenPropertyResolvingConverter<St
 
   @NotNull
   public Collection<String> getVariants(ConvertContext context) {
-    MavenDomPluginModel model = MavenPluginDomUtil.getMavenPlugin(context.getInvocationElement());
+    MavenDomPluginModel model = MavenPluginDomUtil.getMavenPluginModel(context.getInvocationElement());
     if (model == null) return Collections.emptyList();
 
     List<String> result = new ArrayList<String>();
@@ -39,7 +40,7 @@ public class MavenPluginGoalConverter extends MavenPropertyResolvingConverter<St
 
   @Override
   public PsiElement resolve(String text, ConvertContext context) {
-    MavenDomPluginModel model = MavenPluginDomUtil.getMavenPlugin(context.getInvocationElement());
+    MavenDomPluginModel model = MavenPluginDomUtil.getMavenPluginModel(context.getInvocationElement());
     if (model == null) return null;
     
     for (MavenDomMojo each : model.getMojos().getMojos()) {

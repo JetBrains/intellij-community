@@ -45,7 +45,7 @@ public class ChooseFileIntentionAction implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!MavenDomUtil.isPomFile(file)) return false;
+    if (!MavenDomUtil.isMavenFile(file)) return false;
     MavenDomDependency dep = getDependency(file, editor);
     return dep != null && "system".equals(dep.getScope().getStringValue());
   }

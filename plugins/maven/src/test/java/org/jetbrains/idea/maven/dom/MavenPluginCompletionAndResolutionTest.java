@@ -401,7 +401,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenCompletionAndRe
                      "  </plugins>" +
                      "</build>");
 
-    assertResolved(myProjectPom, null);
+    assertUnresolved(myProjectPom);
   }
 
   public void testPhaseCompletionAndHighlighting() throws Throwable {

@@ -1,6 +1,6 @@
 package org.jetbrains.idea.maven.dom;
 
-import org.jetbrains.idea.maven.dom.settings.MavenDomSettingsModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
 
 public class MavenDomSettingsModelDescription extends MavenDomFileDescription<MavenDomSettingsModel> {
   public MavenDomSettingsModelDescription() {

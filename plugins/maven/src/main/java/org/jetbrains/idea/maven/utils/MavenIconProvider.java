@@ -6,12 +6,11 @@ package org.jetbrains.idea.maven.utils;
 
 import com.intellij.ide.IconProvider;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
 
 import javax.swing.*;
 
@@ -19,13 +18,9 @@ import javax.swing.*;
  * @author peter
  */
 public class MavenIconProvider extends IconProvider implements DumbAware {
-  public static final Icon MAVEN_ICON = IconLoader.getIcon("/images/mavenLogo.png");
-
   @Nullable
   public Icon getIcon(@NotNull final PsiElement element, final int flags) {
-    if (element instanceof XmlFile && Comparing.strEqual(((XmlFile)element).getName(), MavenConstants.POM_XML)) {
-      return MAVEN_ICON;
-    }
+    if (element instanceof PsiFile && MavenDomUtil.isMavenFile((PsiFile)element)) return MavenIcons.MAVEN_ICON;
     return null;
   }
 }

@@ -309,6 +309,10 @@ public class MavenProject {
     return myFile.getParent();
   }
 
+  public VirtualFile getProfilesXmlFile() {
+    return MavenUtil.findProfilesXmlFile(myFile);
+  }
+
   public boolean hasErrors()  {
     return !myState.myValid;
   }

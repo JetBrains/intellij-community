@@ -1,16 +1,16 @@
 package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.ResolvingConverter;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.converters.MavenPropertyResolvingConverter;
 
 import java.util.Collection;
 import java.util.List;
 
-public abstract class MavenConstantListConverter extends MavenPropertyResolvingConverter<String> {
+public abstract class MavenConstantListConverter extends ResolvingConverter<String> {
   private boolean myStrict;
 
   protected MavenConstantListConverter() {
@@ -22,7 +22,7 @@ public abstract class MavenConstantListConverter extends MavenPropertyResolvingC
   }
 
   @Override
-  public String fromResolvedString(@Nullable @NonNls String s, ConvertContext context) {
+  public String fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (!myStrict) return s;
     return getValues().contains(s) ? s : null;
   }

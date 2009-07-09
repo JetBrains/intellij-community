@@ -25,7 +25,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
 
   @Override
   public void registerExtensions(@NotNull MavenDomConfiguration config, @NotNull DomExtensionsRegistrar r) {
-    MavenDomPluginModel pluginModel = MavenPluginDomUtil.getMavenPlugin(config);
+    MavenDomPluginModel pluginModel = MavenPluginDomUtil.getMavenPluginModel(config);
     if (pluginModel == null) {
       r.registerCustomChildrenExtension(MavenDomConfigurationParameter.class);
       return;

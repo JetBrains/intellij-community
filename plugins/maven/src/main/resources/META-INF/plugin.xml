@@ -41,6 +41,7 @@
     <xml.elementDescriptorProvider implementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorProvider"/>
     <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomProjectModelDescription"/>
     <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomProfilesModelDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomOldProfilesModelDescription"/>
     <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomSettingsModelDescription"/>
     <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomPluginModelDescription"/>
     <lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenPluginModelDocumentationProvider"
@@ -71,6 +72,9 @@
     <component>
       <implementation-class>org.jetbrains.idea.maven.utils.MavenEnvironmentRegistrar</implementation-class>
     </component>
+    <!--<component>-->
+      <!--<implementation-class>org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem</implementation-class>-->
+    <!--</component>-->
   </application-components>
 
   <project-components>
@@ -133,33 +137,52 @@
             icon="/images/download.png">
     </action>
 
-    <action id="Maven.AddManagedFiles" class="org.jetbrains.idea.maven.project.actions.AddManagedFilesAction"
-            text="Add Maven Projects" description="Add and import Maven projects to projects tree"
+    <action id="Maven.AddManagedFiles"
+            class="org.jetbrains.idea.maven.project.actions.AddManagedFilesAction"
+            text="Add Maven Projects"
+            description="Add and import Maven projects to projects tree"
             icon="/general/add.png">
     </action>
-    <action id="Maven.RemoveManagedFiles" class="org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction"
-            text="Remove Project" description="Remove selected Maven projects from project tree"
+
+    <action id="Maven.RemoveManagedFiles"
+            class="org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction"
+            text="Remove Project"
+            description="Remove selected Maven projects from project tree"
             icon="/general/remove.png">
       <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
     </action>
 
+    <action id="Maven.EditProfilesXml"
+            class="org.jetbrains.idea.maven.project.actions.EditProfilesXmlAction"
+            text="Edit profiles.xml"
+            description="Edit profiles.xml for selected project"/>
+
+    <action id="Maven.EditSettingsXml"
+            class="org.jetbrains.idea.maven.project.actions.EditSettingsXmlAction"
+            text="Edit settings.xml"
+            description="Edit Maven settings.xml"/>
+
     <action id="Maven.IgnoreProject"
-            class="org.jetbrains.idea.maven.project.actions.ToggleIgnoredProjectsAction" text="_Ignore Project"
+            class="org.jetbrains.idea.maven.project.actions.ToggleIgnoredProjectsAction"
+            text="_Ignore Project"
             description="Exclude/Include selected Maven projects from being imported">
     </action>
     <action id="Maven.ToggleProfile"
-            class="org.jetbrains.idea.maven.project.actions.ToggleProfileAction" text="Toggle Profile"
+            class="org.jetbrains.idea.maven.project.actions.ToggleProfileAction"
+            text="Toggle Profile"
             description="Activate/deactivate profile">
     </action>
 
     <action id="Maven.RunBuild"
-            class="org.jetbrains.idea.maven.project.actions.RunBuildAction" text="_Run Maven Build"
+            class="org.jetbrains.idea.maven.project.actions.RunBuildAction"
+            text="_Run Maven Build"
             description="Execute selected phases or goals"
             icon="/actions/execute.png">
     </action>
 
     <action id="Maven.ShowGraph"
-            class="org.jetbrains.idea.maven.graph.actions.ShowGraphAction" text="_Dependency Graph"
+            class="org.jetbrains.idea.maven.graph.actions.ShowGraphAction"
+            text="_Dependency Graph"
             description="Show Maven dependency graph"
             icon="/images/graph.png">
     </action>
@@ -254,6 +277,9 @@
       <reference id="Maven.DownloadArtifactsForProject"/>
       <separator/>
       <reference id="Maven.RemoveManagedFiles"/>
+      <separator/>
+      <reference id="Maven.EditProfilesXml"/>
+      <reference id="Maven.EditSettingsXml"/>
     </group>
 
     <group id="Maven.NavigatorProjectMenu" popup="true">

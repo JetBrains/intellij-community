@@ -9,7 +9,6 @@ import com.intellij.util.xml.Required;
 import com.intellij.util.xml.SubTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
-import org.jetbrains.idea.maven.dom.converters.MavenDomDefaultConverter;
 import org.jetbrains.idea.maven.dom.converters.MavenModelVersionConverter;
 import org.jetbrains.idea.maven.dom.converters.MavenPackagingTypeConverter;
 import org.jetbrains.idea.maven.dom.converters.MavenUrlConverter;
@@ -111,7 +110,6 @@ public interface MavenDomProjectModel extends MavenDomElement, MavenDomProjectMo
    * @return the value of the name child.
    */
   @NotNull
-  @Convert(MavenDomDefaultConverter.class)
   GenericDomValue<String> getName();
 
   /**

@@ -2,16 +2,15 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericDomValue;
 import org.apache.commons.beanutils.BeanAccessLanguageException;
 import org.apache.commons.beanutils.BeanUtils;
+import org.jetbrains.idea.maven.dom.model.MavenDomProfile;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
-import org.jetbrains.idea.maven.dom.model.MavenDomProfile;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -19,6 +18,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Properties;
 import java.util.Stack;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,34 +41,31 @@ public class MavenPropertyResolver {
     if (text == null) return null;
 
     DomFileElement<MavenDomProjectModel> dom = DomUtil.getFileElement(value);
-    return resolve(text, dom);
+    return resolve(text, dom.getRootElement());
   }
 
-  public static String resolve(String text, DomFileElement<MavenDomProjectModel> dom) {
-    VirtualFile file = dom.getOriginalFile().getVirtualFile();
-    MavenProjectsManager manager = MavenProjectsManager.getInstance(dom.getFile().getProject());
-    MavenProject mavenProject = manager.findProject(file);
+  public static String resolve(String text, MavenDomProjectModel projectDom) {
+    MavenProject mavenProject = MavenDomUtil.findProject(projectDom);
     if (mavenProject == null) return text;
-
-    return doResolve(text, mavenProject, collectPropertiesFromDOM(mavenProject, dom), null, null, new Stack<String>());
+    return doResolve(text, mavenProject, collectPropertiesFromDOM(mavenProject, projectDom), null, null, new Stack<String>());
   }
 
-  private static Properties collectPropertiesFromDOM(MavenProject project, DomFileElement<MavenDomProjectModel> dom) {
+  private static Properties collectPropertiesFromDOM(MavenProject project, MavenDomProjectModel projectDom) {
     Properties result = new Properties();
 
-    MavenDomProjectModel mavenModel = dom.getRootElement();
-    collectPropertiesFromDOM(result, mavenModel.getProperties());
+    collectPropertiesFromDOM(projectDom.getProperties(), result);
 
-    for (MavenDomProfile each : mavenModel.getProfiles().getProfiles()) {
-      String id = each.getId().getStringValue();
-      if (id == null || !project.getActiveProfilesIds().contains(id)) continue;
-      collectPropertiesFromDOM(result, each.getProperties());
+    List<String> activePropfiles = project.getActiveProfilesIds();
+    for (MavenDomProfile each : projectDom.getProfiles().getProfiles()) {
+      XmlTag idTag = each.getId().getXmlTag();
+      if (idTag == null || !activePropfiles.contains(idTag.getValue().getText())) continue;
+      collectPropertiesFromDOM(each.getProperties(), result);
     }
 
     return result;
   }
 
-  private static void collectPropertiesFromDOM(Properties result, MavenDomProperties props) {
+  private static void collectPropertiesFromDOM(MavenDomProperties props, Properties result) {
     XmlTag propsTag = props.getXmlTag();
     if (propsTag != null) {
       for (XmlTag each : propsTag.getSubTags()) {

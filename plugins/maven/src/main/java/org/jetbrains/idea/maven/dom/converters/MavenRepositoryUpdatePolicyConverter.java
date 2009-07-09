@@ -13,9 +13,9 @@ public class MavenRepositoryUpdatePolicyConverter extends MavenConstantListConve
   private static final List<String> VALUES = Arrays.asList("always", "daily", INTERVAL, "never");
 
   @Override
-  public String fromResolvedString(@Nullable @NonNls String s, ConvertContext context) {
+  public String fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (s != null && s.startsWith(INTERVAL)) return s;
-    return super.fromResolvedString(s, context);
+    return super.fromString(s, context);
   }
 
   protected List<String> getValues() {

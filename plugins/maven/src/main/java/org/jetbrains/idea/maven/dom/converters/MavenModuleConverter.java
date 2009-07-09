@@ -7,10 +7,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.ConvertContext;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
-
-import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 public class MavenModuleConverter extends MavenReferenceConverter<PsiFile> {
   @Override
@@ -24,12 +22,11 @@ public class MavenModuleConverter extends MavenReferenceConverter<PsiFile> {
     return MavenModulePsiReference.calcRelativeModulePath(file, psiFile.getVirtualFile());
   }
 
-  protected void createReferences(PsiElement element,
-                                  String resolvedText,
-                                  TextRange range,
-                                  VirtualFile virtualFile,
-                                  XmlFile psiFile,
-                                  List<PsiReference> result) {
-    result.add(new MavenModulePsiReference(element, resolvedText, range, virtualFile, psiFile));
+  protected PsiReference createReference(PsiElement element,
+                                            String text,
+                                            TextRange range,
+                                            VirtualFile virtualFile,
+                                            XmlFile psiFile) {
+    return new MavenModulePsiReference(element, text, range, virtualFile, psiFile);
   }
 }

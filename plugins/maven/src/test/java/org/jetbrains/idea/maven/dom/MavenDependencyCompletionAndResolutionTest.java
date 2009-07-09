@@ -861,9 +861,9 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenCompletionA
 
                                     "<dependencies>" +
                                     "  <dependency>" +
-                                    "    <groupId><error>${xxx}</error></groupId>" +
-                                    "    <artifactId><error>${xxx}</error></artifactId>" +
-                                    "    <version><error>${xxx}</error></version>" +
+                                    "    <groupId><error>xxx</error></groupId>" +
+                                    "    <artifactId><error>xxx</error></artifactId>" +
+                                    "    <version><error>xxx</error></version>" +
                                     "  </dependency>" +
                                     "</dependencies>");
 

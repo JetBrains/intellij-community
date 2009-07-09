@@ -1,6 +1,8 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -21,11 +23,11 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -105,9 +107,14 @@ public class MavenProjectsManagerWatcher {
 
             MavenUtil.invokeLater(myProject, new Runnable() {
               public void run() {
-                for (Document each : copy) {
-                  FileDocumentManager.getInstance().saveDocument(each);
-                }
+                new WriteAction() {
+                  protected void run(Result result) throws Throwable {
+                    for (Document each : copy) {
+                      PsiDocumentManager.getInstance(myProject).commitDocument(each);
+                      FileDocumentManager.getInstance().saveDocument(each);
+                    }
+                  }
+                }.execute();
               }
             });
           }
@@ -129,8 +136,8 @@ public class MavenProjectsManagerWatcher {
   private void updateSettingsFilePointers() {
     LocalFileSystem.getInstance().removeWatchedRoots(myWatchedRoots);
     mySettingsFilesPointers.clear();
-    addFilePointer(MavenEmbedderFactory.resolveGlobalSettingsFile(myGeneralSettings.getMavenHome()));
-    addFilePointer(MavenEmbedderFactory.resolveUserSettingsFile(myGeneralSettings.getMavenSettingsFile()));
+    addFilePointer(myGeneralSettings.getEffectiveUserSettingsIoFile());
+    addFilePointer(myGeneralSettings.getEffectiveGlobalSettingsIoFile());
   }
 
   private void addFilePointer(File settingsFile) {

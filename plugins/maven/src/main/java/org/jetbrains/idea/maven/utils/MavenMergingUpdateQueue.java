@@ -74,6 +74,7 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
 
           public void rootsChanged(ModuleRootEvent event) {
             mySuppendHelper.resume();
+            MavenMergingUpdateQueue.this.restartTimer();
           }
         }, MavenMergingUpdateQueue.this);
       }

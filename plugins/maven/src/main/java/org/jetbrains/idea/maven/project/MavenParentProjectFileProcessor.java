@@ -2,13 +2,19 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 
 import java.io.File;
 
 public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
-  public RESULT_TYPE process(VirtualFile projectFile, MavenId parentId, String parentRelativePath, File localRepository) {
+  @Nullable
+  public RESULT_TYPE process(@NotNull VirtualFile projectFile,
+                             @NotNull MavenId parentId,
+                             @NotNull String parentRelativePath,
+                             @NotNull File localRepository) {
     VirtualFile parentFile = findManagedFile(parentId);
     RESULT_TYPE result = null;
     if (parentFile != null) {
@@ -37,17 +43,21 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
 
   protected abstract VirtualFile findManagedFile(MavenId id);
 
+  @Nullable
   protected RESULT_TYPE processManagedParent(VirtualFile parentFile) {
     return doProcessParent(parentFile);
   }
 
+  @Nullable
   protected RESULT_TYPE processRelativeParent(VirtualFile parentFile) {
     return doProcessParent(parentFile);
   }
 
+  @Nullable
   protected RESULT_TYPE processRepositoryParent(VirtualFile parentFile) {
     return doProcessParent(parentFile);
   }
 
+  @Nullable
   protected abstract RESULT_TYPE doProcessParent(VirtualFile parentFile);
 }

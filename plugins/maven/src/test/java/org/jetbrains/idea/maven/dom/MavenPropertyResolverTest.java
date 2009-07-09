@@ -263,6 +263,6 @@ public class MavenPropertyResolverTest extends MavenImportingTestCase {
   }
 
   private String resolve(String text, VirtualFile f) {
-    return MavenPropertyResolver.resolve(text, MavenDomUtil.getMavenDomProjectFile(myProject, f));
+    return MavenPropertyResolver.resolve(text, MavenDomUtil.getMavenDomProjectModel(myProject, f));
   }
 }

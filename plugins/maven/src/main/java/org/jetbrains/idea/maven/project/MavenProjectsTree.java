@@ -13,7 +13,6 @@ import gnu.trove.THashSet;
 import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -567,13 +566,11 @@ public class MavenProjectsTree {
     long pomTimestamp = getFileTimestamp(mavenProject.getFile());
     MavenProject parent = findParent(mavenProject);
     long parentLastReadStamp = parent == null ? -1 : parent.getLastReadStamp();
-    VirtualFile profilesXmlFile = mavenProject.getDirectoryFile().findChild(MavenConstants.PROFILES_XML);
+    VirtualFile profilesXmlFile = mavenProject.getProfilesXmlFile();
     long profilesTimestamp = getFileTimestamp(profilesXmlFile);
 
-    File userSettings = MavenEmbedderFactory.resolveUserSettingsFile(generalSettings.getMavenSettingsFile());
-    File globalSettings = MavenEmbedderFactory.resolveGlobalSettingsFile(generalSettings.getMavenHome());
-    long userSettingsTimestamp = getFileTimestamp(userSettings);
-    long globalSettingsTimestamp = getFileTimestamp(globalSettings);
+    long userSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveUserSettingsFile());
+    long globalSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveGlobalSettingsFile());
 
     int profilesHashCode = new THashSet<String>(activeProfiles).hashCode();
 
@@ -583,10 +580,6 @@ public class MavenProjectsTree {
                                      userSettingsTimestamp,
                                      globalSettingsTimestamp,
                                      profilesHashCode);
-  }
-
-  private long getFileTimestamp(File file) {
-    return getFileTimestamp(file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file));
   }
 
   private long getFileTimestamp(VirtualFile file) {

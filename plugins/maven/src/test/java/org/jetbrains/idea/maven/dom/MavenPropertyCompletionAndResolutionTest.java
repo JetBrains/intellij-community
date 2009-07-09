@@ -1,7 +1,11 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.idea.maven.dom.model.MavenDomProfiles;
+import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
 
 public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAndResolutionTestCase {
   @Override
@@ -20,7 +24,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAnd
 
                      "<name>${<caret>foo}</name>");
 
-    assertResolved(myProjectPom, null);
+    assertUnresolved(myProjectPom);
   }
 
   public void testResolutionToProject() throws Exception {
@@ -58,7 +62,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAnd
 
                      "<name>${<caret>project.bar}</name>");
 
-    assertResolved(myProjectPom, null);
+    assertUnresolved(myProjectPom);
   }
 
   public void testResolutionToUnknownExtraProjectProperty() throws Exception {
@@ -68,7 +72,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAnd
 
                      "<name>${<caret>project.version.bar}</name>");
 
-    assertResolved(myProjectPom, null);
+    assertUnresolved(myProjectPom);
   }
 
   public void testResolutionToPomProperty() throws Exception {
@@ -190,26 +194,218 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAnd
 
                      "<name>${<caret>project.build.directory}</name>");
 
+    createModulePom("parent",
+                    "<groupId>test</groupId" +
+                    "<artifactId>parent</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<parent>" +
+                    "  <groupId>test</groupId" +
+                    "  <artifactId>project</artifactId>" +
+                    "  <version>1</version>" +
+                    "  <relativePath>../pom.xml</version>" +
+                    "</parent>");
+
+    assertUnresolved(myProjectPom);
+  }
+
+  public void testResolutionFromProperties() throws Exception {
+    createProjectPom("<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <foo>value</foo>" +
+                     "</properties>" +
+
+                     "<name>${<caret>foo}</name>");
+
+    assertResolved(myProjectPom, findTag(myProjectPom, "project.properties.foo"));
+  }
+
+  public void testResolutionWithProfiles() throws Exception {
+    importProjectWithProfiles("two");
+
+    createProjectPom("<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <properties>" +
+                     "      <foo>value</foo>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <properties>" +
+                     "      <foo>value</foo>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>" +
+
+                     "<name>${<caret>foo}</name>");
+
+    assertResolved(myProjectPom, findTag(myProjectPom, "project.profiles[1].properties.foo"));
+  }
+
+  public void testResolvingToProfilesBeforeModelsProperties() throws Exception {
+    importProjectWithProfiles("one");
+
+    createProjectPom("<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <foo>value</foo>" +
+                     "</properties>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <properties>" +
+                     "      <foo>value</foo>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>" +
+
+                     "<name>${<caret>foo}</name>");
+
+    assertResolved(myProjectPom, findTag(myProjectPom, "project.profiles[0].properties.foo"));
+  }
+
+  public void testResolvingPropertiesInSettingsXml() throws Exception {
+    VirtualFile profiles = updateSettingsXml("<profiles>" +
+                                             "  <profile>" +
+                                             "    <id>one</id>" +
+                                             "    <properties>" +
+                                             "      <foo>value</foo>" +
+                                             "    </properties>" +
+                                             "  </profile>" +
+                                             "  <profile>" +
+                                             "    <id>two</id>" +
+                                             "    <properties>" +
+                                             "      <foo>value</foo>" +
+                                             "    </properties>" +
+                                             "  </profile>" +
+                                             "</profiles>");
+    importProjectWithProfiles("two");
+
+    createProjectPom("<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>${<caret>foo}</name>");
+
+    assertResolved(myProjectPom, findTag(profiles, "settings.profiles[1].properties.foo", MavenDomSettingsModel.class));
+  }
+
+  public void testResolvingModelPropertiesInSettingsXml() throws Exception {
+    VirtualFile profiles = updateSettingsXml("<localRepository>" + getRepositoryPath() + "</localRepository>");
+
+    createProjectPom("<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>${<caret>settings.localRepository}</name>");
+
+    assertResolved(myProjectPom, findTag(profiles, "settings.localRepository", MavenDomSettingsModel.class));
+  }
+
+  public void testResolvingPropertiesInProfilesXml() throws Exception {
+    VirtualFile profiles = createProfilesXml("<profile>" +
+                                             "  <id>one</id>" +
+                                             "  <properties>" +
+                                             "    <foo>value</foo>" +
+                                             "  </properties>" +
+                                             "</profile>" +
+                                             "<profile>" +
+                                             "  <id>two</id>" +
+                                             "  <properties>" +
+                                             "    <foo>value</foo>" +
+                                             "  </properties>" +
+                                             "</profile>");
+    importProjectWithProfiles("two");
+
+    createProjectPom("<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>${<caret>foo}</name>");
+
+    assertResolved(myProjectPom, findTag(profiles, "profilesXml.profiles[1].properties.foo", MavenDomProfilesModel.class));
+  }
+
+  public void testResolvingPropertiesInOldStyleProfilesXml() throws Exception {
+    VirtualFile profiles = createProfilesXmlOldStyle("<profile>" +
+                                                     "  <id>one</id>" +
+                                                     "  <properties>" +
+                                                     "    <foo>value</foo>" +
+                                                     "  </properties>" +
+                                                     "</profile>" +
+                                                     "<profile>" +
+                                                     "  <id>two</id>" +
+                                                     "  <properties>" +
+                                                     "    <foo>value</foo>" +
+                                                     "  </properties>" +
+                                                     "</profile>");
+    importProjectWithProfiles("two");
+
+    createProjectPom("<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>${<caret>foo}</name>");
+
+    assertResolved(myProjectPom, findTag(profiles, "profiles[1].properties.foo", MavenDomProfiles.class));
+  }
+
+  public void testResolvingInheritedProperties() throws Exception {
+    createProjectPom("<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     "  <groupId>test</groupId" +
+                     "  <artifactId>parent</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <relativePath>./parent/pom.xml</version>" +
+                     "</parent>" +
+
+                     "<name>${<caret>foo}</name>");
+
     VirtualFile parent = createModulePom("parent",
                                          "<groupId>test</groupId" +
                                          "<artifactId>parent</artifactId>" +
                                          "<version>1</version>" +
 
-                                         "<parent>" +
-                                         "  <groupId>test</groupId" +
-                                         "  <artifactId>project</artifactId>" +
-                                         "  <version>1</version>" +
-                                         "  <relativePath>../pom.xml</version>" +
-                                         "</parent>");
+                                         "<properties>" +
+                                         "  <foo>value</foo>" +
+                                         "</properties>");
 
-    assertResolved(myProjectPom, null);
+    assertResolved(myProjectPom, findTag(parent, "project.properties.foo"));
   }
 
-  private XmlElement findTag(String path) {
+  public void testSystemProperties() throws Exception {
+    createProjectPom("<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>${user.home}</name>");
+
+    //assertResolved(myProjectPom, findTag(parent, "project.properties.foo"));
+  }
+
+  private XmlTag findTag(String path) {
     return findTag(myProjectPom, path);
   }
 
-  private XmlElement findTag(VirtualFile file, String path) {
-    return MavenDomUtil.findTag(MavenDomUtil.getMavenDomProjectFile(myProject, file), path);
+  private XmlTag findTag(VirtualFile file, String path) {
+    return findTag(file, path, MavenDomProjectModel.class);
+  }
+
+  private XmlTag findTag(VirtualFile file, String path, Class<? extends MavenDomElement> clazz) {
+    return MavenDomUtil.findTag(MavenDomUtil.getMavenDomModel(myProject, file, clazz), path);
   }
 }

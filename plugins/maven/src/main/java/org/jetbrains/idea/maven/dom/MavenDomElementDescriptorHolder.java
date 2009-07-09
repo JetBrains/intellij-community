@@ -27,14 +27,34 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
 
 public class MavenDomElementDescriptorHolder {
+  private enum FileKind {
+    PROJECT_FILE {
+      public String getSchemaUrl() {
+        return MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL;
+      }},
+    PROFILES_FILE {
+      public String getSchemaUrl() {
+        return MavenSchemaProvider.MAVEN_PROFILES_SCHEMA_URL;
+      }},
+    SETTINGS_FILE {
+      public String getSchemaUrl() {
+        return MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL;
+      }};
+
+    public abstract String getSchemaUrl();
+  }
+
   private final Project myProject;
-  private volatile XmlNSDescriptorImpl myNSDescriptor;
+  private final Map<FileKind, XmlNSDescriptorImpl> myDescriptorsMap = new THashMap<FileKind, XmlNSDescriptorImpl>();
 
   public MavenDomElementDescriptorHolder(Project project) {
     myProject = project;
@@ -44,35 +64,53 @@ public class MavenDomElementDescriptorHolder {
     return ServiceManager.getService(project, MavenDomElementDescriptorHolder.class);
   }
 
-  public XmlElementDescriptor getDescriptor(XmlTag tag) {
-    if (!MavenDomUtil.isPomFile(tag.getContainingFile())) return null;
+  @Nullable
+  public XmlElementDescriptor getDescriptor(@NotNull XmlTag tag) {
+    FileKind kind = getFileKind(tag.getContainingFile());
+    if (kind == null) return null;
 
-    if (myNSDescriptor == null || !myNSDescriptor.isValid()) {
-      synchronized (this) {
-        if (myNSDescriptor == null || !myNSDescriptor.isValid()) initDescriptor();
-      }
+    XmlNSDescriptorImpl desc;
+    synchronized (this) {
+      desc = tryGetOrCreateDescriptor(kind);
+      if (desc == null) return null;
     }
-    return myNSDescriptor.getElementDescriptor(tag.getName(), myNSDescriptor.getDefaultNamespace());
+    return desc.getElementDescriptor(tag.getName(), desc.getDefaultNamespace());
   }
 
-  private void initDescriptor() {
-    myNSDescriptor = new XmlNSDescriptorImpl();
+  @Nullable
+  private XmlNSDescriptorImpl tryGetOrCreateDescriptor(FileKind kind) {
+    XmlNSDescriptorImpl result = myDescriptorsMap.get(kind);
+    if (result != null && result.isValid()) return result;
 
-    String schemaUrl = MavenSchemaProvider.MAVEN_SCHEMA_URL;
+    String schemaUrl = kind.getSchemaUrl();
     String location = ExternalResourceManager.getInstance().getResourceLocation(schemaUrl);
-    if (schemaUrl.equals(location)) return;
+    if (schemaUrl.equals(location)) return null;
 
     VirtualFile schema;
     try {
       schema = VfsUtil.findFileByURL(new URL(location));
     }
     catch (MalformedURLException ignore) {
-      return;
+      return null;
     }
 
-    if (schema != null) {
-      PsiFile psiFile = PsiManager.getInstance(myProject).findFile(schema);
-      if (psiFile instanceof XmlFile) myNSDescriptor.init(psiFile);
-    }
+    if (schema == null) return null;
+
+    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(schema);
+    if (!(psiFile instanceof XmlFile)) return null;
+
+    result = new XmlNSDescriptorImpl();
+
+    result.init(psiFile);
+    myDescriptorsMap.put(kind, result);
+
+    return result;
+  }
+
+  private FileKind getFileKind(PsiFile file) {
+    if (MavenDomUtil.isProjectFile(file)) return FileKind.PROJECT_FILE;
+    if (MavenDomUtil.isProfilesFile(file)) return FileKind.PROFILES_FILE;
+    if (MavenDomUtil.isSettingsFile(file)) return FileKind.SETTINGS_FILE;
+    return null;
   }
 }

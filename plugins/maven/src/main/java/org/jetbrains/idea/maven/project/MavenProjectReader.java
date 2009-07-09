@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
@@ -32,10 +31,10 @@ import org.apache.maven.reactor.MissingModuleException;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.*;
-import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -182,7 +181,7 @@ public class MavenProjectReader {
     List<Profile> result = new ArrayList<Profile>();
     collectProfiles(findChildrenByPath(xmlProject, "profiles", "profile"), result);
 
-    VirtualFile profilesFile = file.getParent().findChild(MavenConstants.PROFILES_XML);
+    VirtualFile profilesFile = MavenUtil.findProfilesXmlFile(file);
     if (profilesFile != null) {
       Element profilesFileElement = readXml(profilesFile);
       Element rootElement = findChildByPath(profilesFileElement, "profiles");
@@ -191,20 +190,14 @@ public class MavenProjectReader {
       collectProfiles(xmlProfiles, result);
     }
 
-    File userSettings = MavenEmbedderFactory.resolveUserSettingsFile(generalSettings.getMavenSettingsFile());
-    collectProfilesFromSettingsFile(userSettings, result);
-
-    File globalSettings = MavenEmbedderFactory.resolveGlobalSettingsFile(generalSettings.getMavenHome());
-    collectProfilesFromSettingsFile(globalSettings, result);
+    for (VirtualFile each : generalSettings.getEffectiveSettingsFiles()) {
+      collectProfilesFromSettingsFile(each, result);
+    }
 
     return result;
   }
 
-  private void collectProfilesFromSettingsFile(File settings, List<Profile> result) {
-    if (settings == null) return;
-
-    VirtualFile settingsFile = LocalFileSystem.getInstance().findFileByIoFile(settings);
-
+  private void collectProfilesFromSettingsFile(VirtualFile settingsFile, List<Profile> result) {
     if (settingsFile == null) return;
     List<Element> xmlProfiles = findChildrenByPath(readXml(settingsFile), "settings.profiles", "profile");
     collectProfiles(xmlProfiles, result);

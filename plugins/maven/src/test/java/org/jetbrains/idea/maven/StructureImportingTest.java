@@ -895,7 +895,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                      "  </dependency>" +
                      "</dependencies>");
 
-    createProfilesXmlNewStyle("<profile>" +
+    createProfilesXml("<profile>" +
                               "  <id>one</id>" +
                               "  <activation>" +
                               "    <activeByDefault>false</activeByDefault>" +
