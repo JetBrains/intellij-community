@@ -25,6 +25,7 @@ import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -149,14 +150,19 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @NotNull
   public <T  extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass) {
+    return getCompilers(compilerClass, CompilerFilter.ALL);
+  }
+
+  @NotNull
+  public <T extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass, CompilerFilter filter) {
     final List<T> compilers = new ArrayList<T>(myCompilers.size());
     for (final Compiler item : myCompilers) {
-      if (compilerClass.isAssignableFrom(item.getClass())) {
+      if (compilerClass.isAssignableFrom(item.getClass()) && filter.acceptCompiler(item)) {
         compilers.add((T)item);
       }
     }
     for (final Compiler item : myTranslators) {
-      if (compilerClass.isAssignableFrom(item.getClass())) {
+      if (compilerClass.isAssignableFrom(item.getClass()) && filter.acceptCompiler(item)) {
         compilers.add((T)item);
       }
     }
@@ -220,6 +226,12 @@ public class CompilerManagerImpl extends CompilerManager {
 
   public void make(@NotNull CompileScope scope, CompileStatusNotification callback) {
     new CompileDriver(myProject).make(scope, new ListenerNotificator(callback));
+  }
+
+  public void make(@NotNull CompileScope scope, CompilerFilter filter, @Nullable CompileStatusNotification callback) {
+    final CompileDriver compileDriver = new CompileDriver(myProject);
+    compileDriver.setCompilerFilter(filter);
+    compileDriver.make(scope, new ListenerNotificator(callback));
   }
 
   public boolean isUpToDate(@NotNull final CompileScope scope) {

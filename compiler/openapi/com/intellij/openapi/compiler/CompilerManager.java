@@ -82,6 +82,16 @@ public abstract class CompilerManager {
   public abstract <T  extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass);
 
   /**
+   * Returns all registered compilers of the specified class that the filter accepts
+   *
+   * @param compilerClass the class for which the compilers should be returned.
+   * @param filter additional filter to restrict compiler instances
+   * @return all registered compilers of the specified class.
+   */
+  @NotNull
+  public abstract <T  extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass, CompilerFilter filter);
+
+  /**
    * Registers the type as a compilable type so that Compile action will be enabled on files of this type.
    *
    * @param type the type for which the Compile action is enabled.
@@ -199,6 +209,16 @@ public abstract class CompilerManager {
    * @param callback a notification callback, or null if no notifications needed
    */
   public abstract void make(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback);
+
+  /**
+   * Compile all modified files and all files that depend on them from the scope given.
+   * Files are compiled according to dependencies between the modules they belong to. Compiler excludes are honored. All modules must belong to the same project
+   *
+   * @param scope    a scope to be compiled
+   * @param filter filter allowing choose what compilers should be executed
+   * @param callback a notification callback, or null if no notifications needed
+   */
+  public abstract void make(@NotNull CompileScope scope, CompilerFilter filter, @Nullable CompileStatusNotification callback);
 
   /**
    * Checks if compile scope given is up-to-date

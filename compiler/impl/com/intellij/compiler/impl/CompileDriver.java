@@ -96,6 +96,8 @@ public class CompileDriver {
       return new PackagingCompilerAdapter(context, (PackagingCompiler)compiler);
     }
   };
+  private CompilerFilter myCompilerFilter = CompilerFilter.ALL;
+  
   private OutputPathFinder myOutputFinder; // need this for updating zip archives (experimental feature) 
 
   private Set<File> myAllOutputDirectories;
@@ -107,7 +109,7 @@ public class CompileDriver {
 
     myGenerationCompilerModuleToOutputDirMap = new HashMap<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>>();
 
-    final IntermediateOutputCompiler[] generatingCompilers = CompilerManager.getInstance(myProject).getCompilers(IntermediateOutputCompiler.class);
+    final IntermediateOutputCompiler[] generatingCompilers = CompilerManager.getInstance(myProject).getCompilers(IntermediateOutputCompiler.class, myCompilerFilter);
     if (generatingCompilers.length > 0) {
       final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
       for (IntermediateOutputCompiler compiler : generatingCompilers) {
@@ -120,6 +122,10 @@ public class CompileDriver {
         }
       }
     }
+  }
+
+  public void setCompilerFilter(CompilerFilter compilerFilter) {
+    myCompilerFilter = compilerFilter == null? CompilerFilter.ALL : compilerFilter;
   }
 
   public void rebuild(CompileStatusNotification callback) {
@@ -742,7 +748,7 @@ public class CompileDriver {
                                   final boolean onlyCheckStatus) throws ExitException {
     boolean didSomething = false;
 
-    final SourceGeneratingCompiler[] sourceGenerators = compilerManager.getCompilers(SourceGeneratingCompiler.class);
+    final SourceGeneratingCompiler[] sourceGenerators = compilerManager.getCompilers(SourceGeneratingCompiler.class, myCompilerFilter);
     for (final SourceGeneratingCompiler sourceGenerator : sourceGenerators) {
       if (context.getProgressIndicator().isCanceled()) {
         throw new ExitException(ExitStatus.CANCELLED);
@@ -766,7 +772,7 @@ public class CompileDriver {
 
     boolean didSomething = false;
 
-    final TranslatingCompiler[] translators = compilerManager.getCompilers(TranslatingCompiler.class);
+    final TranslatingCompiler[] translators = compilerManager.getCompilers(TranslatingCompiler.class, myCompilerFilter);
 
     final Set<FileType> generatedTypes = new HashSet<FileType>();
     VirtualFile[] snapshot = null;
@@ -833,7 +839,7 @@ public class CompileDriver {
                                                 final boolean onlyCheckStatus) throws ExitException {
     LOG.assertTrue(FileProcessingCompiler.class.isAssignableFrom(fileProcessingCompilerClass));
     boolean didSomething = false;
-    final FileProcessingCompiler[] compilers = compilerManager.getCompilers(fileProcessingCompilerClass);
+    final FileProcessingCompiler[] compilers = compilerManager.getCompilers(fileProcessingCompilerClass, myCompilerFilter);
     if (compilers.length > 0) {
       try {
         CacheDeferredUpdater cacheUpdater = new CacheDeferredUpdater();
