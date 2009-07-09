@@ -8,10 +8,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
-  private volatile Map<Key, Object> myUserMap = null;
-  private static final Object WRITE_LOCK = new Object();
-
+  private static final Object MAP_LOCK = new Object();
   private static final Key<Map<Key, Object>> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
+
+  private volatile LockPoolSynchronizedMap<Key, Object> myUserMap = null;
 
   protected Object clone() {
     try {
@@ -57,18 +57,13 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   }
 
   public <T> void putUserData(Key<T> key, T value) {
-    synchronized (WRITE_LOCK) {
-      Map<Key, Object> map = myUserMap;
-      if (map == null) {
-        if (value == null) return;
-        myUserMap = map = createMap();
-      }
-      if (value == null) {
-        map.remove(key);
-      }
-      else {
-        map.put(key, value);
-      }
+    LockPoolSynchronizedMap<Key, Object> map = getOrCreateMap();
+
+    if (value == null) {
+      map.remove(key);
+    }
+    else {
+      map.put(key, value);
     }
   }
 
@@ -90,67 +85,51 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   }
 
   protected <T> void putCopyableUserDataImpl(Key<T> key, T value) {
-    synchronized (WRITE_LOCK) {
-      Map<Key, Object> map = getUserData(COPYABLE_USER_MAP_KEY);
-      if (map == null) {
+    LockPoolSynchronizedMap<Key, Object> map = getOrCreateMap();
+    map.getWriteLock().lock();
+    try {
+      Map<Key, Object> copyMap = getUserData(COPYABLE_USER_MAP_KEY);
+      if (copyMap == null) {
         if (value == null) return;
-        map = new LockPoolSynchronizedMap<Key, Object>(1, 0.9f);
-        putUserData(COPYABLE_USER_MAP_KEY, map);
+        copyMap = new LockPoolSynchronizedMap<Key, Object>(1, 0.9f);
+        putUserData(COPYABLE_USER_MAP_KEY, copyMap);
       }
 
       if (value != null) {
-        map.put(key, value);
+        copyMap.put(key, value);
       }
       else {
-        map.remove(key);
-        if (map.isEmpty()) {
-          putUserData(COPYABLE_USER_MAP_KEY, null);
+        copyMap.remove(key);
+        if (copyMap.isEmpty()) {
+          map.remove(COPYABLE_USER_MAP_KEY);
         }
       }
     }
+    finally {
+      map.getWriteLock().unlock();
+    }
+  }
+
+
+  private LockPoolSynchronizedMap<Key, Object> getOrCreateMap() {
+    if (myUserMap == null) {
+      synchronized (MAP_LOCK) {
+        if (myUserMap == null) {
+          myUserMap = createMap();
+        }
+      }
+    }
+
+    return myUserMap;
+  }
+
+  public <T> boolean replace(@NotNull Key<T> key, @Nullable T oldValue, @Nullable T newValue) {
+    return getOrCreateMap().replace(key, oldValue, newValue);
   }
 
   @NotNull
   public <T> T putUserDataIfAbsent(@NotNull final Key<T> key, @NotNull final T value) {
-    synchronized (WRITE_LOCK) {
-      Map<Key, Object> map = myUserMap;
-      if (map == null) {
-        myUserMap = map = createMap();
-        map.put(key, value);
-        return value;
-      }
-      T prev = (T)map.get(key);
-      if (prev == null) {
-        map.put(key, value);
-        return value;
-      }
-      else {
-        return prev;
-      }
-    }
-  }
-
-  public <T> boolean replace(@NotNull Key<T> key, @Nullable T oldValue, @Nullable T newValue) {
-    synchronized (WRITE_LOCK) {
-      Map<Key, Object> map = myUserMap;
-      if (map == null) {
-        if (newValue == null) return oldValue == null;
-        myUserMap = map = createMap();
-        map.put(key, newValue);
-        return true;
-      }
-      T prev = (T)map.get(key);
-      if (!Comparing.equal(oldValue, prev)) {
-        return false;
-      }
-      if (newValue == null) {
-        map.remove(key);
-      }
-      else {
-        map.put(key, newValue);
-      }
-      return true;
-    }
+    return (T)getOrCreateMap().putIfAbsent(key, value);
   }
 
   public void copyCopyableDataTo(UserDataHolderBase clone) {
@@ -162,7 +141,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   }
 
   protected void clearUserData() {
-    synchronized (WRITE_LOCK) {
+    synchronized (MAP_LOCK) {
       myUserMap = null;
     }
   }

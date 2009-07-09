@@ -19,6 +19,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.concurrency.JBLock;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
@@ -187,5 +188,51 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> {
     finally {
       r.unlock();
     }
+  }
+
+  public boolean replace(K key, V oldValue, V newValue) {
+    w.lock();
+    try {
+      V prev = get(key);
+      if (!Comparing.equal(oldValue, prev)) {
+        return false;
+      }
+
+      if (newValue == null) {
+        remove(key);
+      }
+      else {
+        put(key, newValue);
+      }
+      return true;
+    }
+    finally {
+      w.unlock();
+    }
+  }
+
+  public V putIfAbsent(K key, V value) {
+    w.lock();
+    try {
+      V prev = get(key);
+      if (prev == null) {
+        put(key, value);
+        return value;
+      }
+      else {
+        return prev;
+      }
+    }
+    finally {
+      w.unlock();
+    }
+  }
+
+  public JBLock getReadLock() {
+    return r;
+  }
+
+  public JBLock getWriteLock() {
+    return w;
   }
 }
