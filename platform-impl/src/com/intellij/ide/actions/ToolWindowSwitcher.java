@@ -46,6 +46,7 @@ import java.util.Map;
 public class ToolWindowSwitcher extends AnAction {
   private static volatile ToolWindowSwitcherPanel SWITCHER = null;
   private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
+  private static final Color SEPARATOR_COLOR = BORDER_COLOR.brighter();
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
@@ -107,12 +108,20 @@ public class ToolWindowSwitcher extends AnAction {
       toolwindows.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
       toolwindows.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       toolwindows.setCellRenderer(new ToolWindowsRenderer(ids));
+      toolwindows.addKeyListener(this);
+      toolwindows.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        public void valueChanged(ListSelectionEvent e) {
+          if (!toolwindows.getSelectionModel().isSelectionEmpty()) {
+            files.getSelectionModel().clearSelection();
+          }
+        }
+      });
 
       final JPanel separator = new JPanel() {
         @Override
         protected void paintComponent(Graphics g) {
           super.paintComponent(g);
-          g.setColor(new Color(240, 240, 240));
+          g.setColor(SEPARATOR_COLOR);
           g.drawLine(0, 0, 0, getHeight());
         }
       };
@@ -127,13 +136,21 @@ public class ToolWindowSwitcher extends AnAction {
       }
 
       final DefaultListModel filesModel = new DefaultListModel();
-
       for (VirtualFile openFile : openFiles) {
         filesModel.addElement(openFile);
       }
       files = new JList(filesModel);
+      files.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       files.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
       files.setCellRenderer(new VirtualFilesRenderer(project));
+      files.addKeyListener(this);
+      files.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        public void valueChanged(ListSelectionEvent e) {
+          if (!files.getSelectionModel().isSelectionEmpty()) {
+            toolwindows.getSelectionModel().clearSelection();
+          }
+        }
+      });
 
       this.add(toolwindows, BorderLayout.WEST);
       if (filesModel.size() > 0) {
@@ -213,6 +230,16 @@ public class ToolWindowSwitcher extends AnAction {
         case KeyEvent.VK_DOWN:
           goForward();
           break;
+        case KeyEvent.VK_ESCAPE:
+          cancel();
+          break;
+        case KeyEvent.VK_ALT:
+          if (isFilesSelected()) {
+            goLeft();
+          } else {
+            goRight();
+          }
+          break;
       }
     }
 
@@ -227,6 +254,10 @@ public class ToolWindowSwitcher extends AnAction {
 
     private boolean isFilesSelected() {
       return getSelectedList() == files;
+    }
+
+    private boolean isFilesVisible() {
+      return files.getModel().getSize() > 0;
     }
 
     private boolean isToolWindowsSelected() {
@@ -262,18 +293,24 @@ public class ToolWindowSwitcher extends AnAction {
     }
 
     public void goForward() {
-      final JList list = getSelectedList();
+      JList list = getSelectedList();
       int index = list.getSelectedIndex() + 1;
       if (index >= list.getModel().getSize()) {
         index = 0;
+        if (isFilesVisible()) {
+          list = isFilesSelected() ? toolwindows : files;
+        }
       }
       list.setSelectedIndex(index);
     }
 
     public void goBack() {
-      final JList list = getSelectedList();
+      JList list = getSelectedList();
       int index = list.getSelectedIndex() - 1;
       if (index < 0) {
+        if (isFilesVisible()) {
+          list = isFilesSelected() ? toolwindows : files;
+        }
         index = list.getModel().getSize() - 1;
       }
       list.setSelectedIndex(index);
@@ -384,10 +421,12 @@ public class ToolWindowSwitcher extends AnAction {
       icon.paintIcon(null, g, 0, 0);
       g.dispose();
 
-      final BufferedImage img = new BufferedImage(16, 16, Color.TRANSLUCENT);
-      for (int col = 0; col < 16; col++) {
-        for (int row = 0; row < 16; row++) {
-          img.setRGB(col, row, col < w && row < h ? image.getRGB(col, row) : Color.TRANSLUCENT);
+      final BufferedImage img = new BufferedImage(16, 16, BufferedImage.TRANSLUCENT);
+      final int offX = Math.max((16 - w) / 2, 0);
+      final int offY = Math.max((16 - h) / 2, 0);
+      for (int col = 0; col < w; col++) {
+        for (int row = 0; row < h; row++) {
+          img.setRGB(col + offX, row + offY, image.getRGB(col, row));
         }
       }
 
