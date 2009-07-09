@@ -1022,6 +1022,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
    if (SystemInfo.isWindows) {
      Win32Restarter.restart();
     }
+    else {
+     exit();
+   }
   }
 
   public boolean isSaving() {
