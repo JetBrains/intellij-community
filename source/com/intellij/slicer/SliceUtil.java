@@ -15,6 +15,7 @@ import gnu.trove.TObjectHashingStrategy;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -37,21 +38,20 @@ public class SliceUtil {
     if (expression instanceof PsiReferenceExpression) {
       PsiReferenceExpression ref = (PsiReferenceExpression)expression;
       PsiElement resolved = ref.resolve();
+      if (resolved instanceof PsiMethod && expression.getParent() instanceof PsiMethodCallExpression) {
+        return processUsagesFlownDownToTheExpression((PsiExpression)expression.getParent(), processor, parent);
+      }
       if (!(resolved instanceof PsiVariable)) return true;
       final PsiVariable variable = (PsiVariable)resolved;
       final Set<PsiExpression> expressions = new THashSet<PsiExpression>(DfaUtil.getCachedVariableValues(variable, ref));
-      if (variable.hasModifierProperty(PsiModifier.FINAL)) {
-        PsiExpression initializer = variable.getInitializer();
-        if (initializer != null) expressions.add(initializer);
-      }
-      if (!expressions.isEmpty()) {
-        if (!processFlownFromExpressions(expressions, uniqueProcessor, parent)) return false;
-      }
+      PsiExpression initializer = variable.getInitializer();
+      if (initializer != null) expressions.add(initializer);
+      if (!handToProcessor(expressions, uniqueProcessor, parent)) return false;
       if (resolved instanceof PsiField) {
-        return processFieldUsages((PsiField)resolved, processor, parent);
+        return processFieldUsages((PsiField)resolved, uniqueProcessor, parent);
       }
       else if (resolved instanceof PsiParameter) {
-        return processParameterUsages((PsiParameter)resolved, processor, parent);
+        return processParameterUsages((PsiParameter)resolved, uniqueProcessor, parent);
       }
     }
     if (expression instanceof PsiMethodCallExpression) {
@@ -61,8 +61,8 @@ public class SliceUtil {
       PsiConditionalExpression conditional = (PsiConditionalExpression)expression;
       PsiExpression thenE = conditional.getThenExpression();
       PsiExpression elseE = conditional.getElseExpression();
-      if (thenE != null && !processUsagesFlownDownToTheExpression(thenE, processor, parent)) return false;
-      if (elseE != null && !processUsagesFlownDownToTheExpression(elseE, processor, parent)) return false;
+      if (thenE != null && !handToProcessor(Collections.singletonList(thenE), uniqueProcessor, parent)) return false;
+      if (elseE != null && !handToProcessor(Collections.singletonList(elseE), uniqueProcessor, parent)) return false;
     }
     return true;
   }
@@ -77,8 +77,7 @@ public class SliceUtil {
     return expression;
   }
 
-  private static boolean processFlownFromExpressions(final Collection<PsiExpression> expressions, final Processor<SliceUsage> processor,
-                                                     final SliceUsage parent) {
+  private static boolean handToProcessor(Collection<PsiExpression> expressions, Processor<SliceUsage> processor, SliceUsage parent) {
     for (PsiExpression exp : expressions) {
       final PsiExpression realExpression;
       realExpression = exp.getParent() instanceof DummyHolder? (PsiExpression) ((DummyHolder)exp.getParent()).getContext() : exp;
@@ -86,7 +85,6 @@ public class SliceUtil {
       SliceUsage usage = new SliceUsage(new UsageInfo(realExpression), parent);
       if (!processor.process(usage)) return false;
     }
-
     return true;
   }
 

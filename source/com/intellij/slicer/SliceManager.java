@@ -7,7 +7,8 @@ import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -71,16 +72,22 @@ public class SliceManager {
       }
     };
 
-    PsiElement elementToSlice = element;
-    if (element instanceof PsiReferenceExpression) elementToSlice = ((PsiReferenceExpression)element).resolve();
-    if (elementToSlice == null) elementToSlice = element;
-    String title = "<html>"+ElementDescriptionUtil.getElementDescription(elementToSlice, RefactoringDescriptionLocation.WITHOUT_PARENT)+"</html>";
-    title = StringUtil.first(title, 100, true);
+    String title = getElementDescription(element);
     myContent[0] = myContentManager.getFactory().createContent(slicePanel, title, true);
     myContentManager.addContent(myContent[0]);
     myContentManager.setSelectedContent(myContent[0]);
 
     ToolWindowManager.getInstance(myProject).getToolWindow(TOOL_WINDOW_ID).activate(null);
+  }
+
+  public static String getElementDescription(PsiElement element) {
+    PsiElement elementToSlice = element;
+    if (element instanceof PsiReferenceExpression) elementToSlice = ((PsiReferenceExpression)element).resolve();
+    if (elementToSlice == null) elementToSlice = element;
+    String title = "<html>"+
+                   ElementDescriptionUtil.getElementDescription(elementToSlice, RefactoringDescriptionLocation.WITHOUT_PARENT);
+    title = StringUtil.first(title, 100, true)+"</html>";
+    return title;
   }
 
   public static SliceUsage createSliceUsage(PsiElement element) {
@@ -110,11 +117,11 @@ public class SliceManager {
     }
   }
 
-  public void runInterruptibly(Runnable runnable, Runnable onCancel) throws ProcessCanceledException {
+  public void runInterruptibly(Runnable runnable, Runnable onCancel, ProgressIndicator progress) throws ProcessCanceledException {
     myCanceled = false;
-    ProgressIndicatorBase progress = new ProgressIndicatorBase();
     try {
-      ProgressManager.getInstance().runProcess(runnable, progress);
+      progress.checkCanceled();
+      ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(runnable, progress);
     }
     catch (ProcessCanceledException e) {
       myCanceled = true;

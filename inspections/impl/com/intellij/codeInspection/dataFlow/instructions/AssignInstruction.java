@@ -20,7 +20,7 @@ import com.intellij.psi.PsiVariable;
 public class AssignInstruction extends Instruction {
   private final PsiExpression myRExpression;
 
-  public AssignInstruction(final PsiExpression RExpression) {
+  public AssignInstruction(PsiExpression RExpression) {
     myRExpression = RExpression;
   }
 

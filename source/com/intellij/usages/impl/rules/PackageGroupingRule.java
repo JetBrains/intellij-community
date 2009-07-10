@@ -56,7 +56,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
     private Icon myOpenIcon;
     private Icon myClosedIcon;
 
-    public PackageGroup(PsiPackage aPackage) {
+    private PackageGroup(PsiPackage aPackage) {
       myPackage = aPackage;
       update();
     }

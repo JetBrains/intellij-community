@@ -78,7 +78,7 @@ public abstract class ProgressManager {
    * @param parentComponent the component which will be used to calculate the progress window ancestor
    * @return true if the operation completed successfully, false if it was cancelled.
    */
-  public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process, String progressTitle, boolean canBeCanceled,
+  public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process, @Nls String progressTitle, boolean canBeCanceled,
                                                               Project project, JComponent parentComponent);
 
   /**

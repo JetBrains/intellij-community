@@ -31,7 +31,7 @@ import javax.swing.*;
  */
 public class NonCodeUsageGroupingRule implements UsageGroupingRule {
   private static class CodeUsageGroup implements UsageGroup {
-    public static final UsageGroup INSTANCE = new CodeUsageGroup();
+    private static final UsageGroup INSTANCE = new CodeUsageGroup();
 
     @NotNull
     public String getText(UsageView view) {

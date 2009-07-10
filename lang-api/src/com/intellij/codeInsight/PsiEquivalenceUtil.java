@@ -75,6 +75,7 @@ public class PsiEquivalenceUtil {
     return true;
 
   }
+
   public static boolean areElementsEquivalent(@NotNull PsiElement element1, @NotNull PsiElement element2) {
     return areElementsEquivalent(element1, element2, null, false);
   }

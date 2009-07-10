@@ -82,11 +82,11 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
   private class UsageTypeGroup implements UsageGroup {
     private final UsageType myUsageType;
 
-    public void update() {
+    private UsageTypeGroup(@NotNull UsageType usageType) {
+      myUsageType = usageType;
     }
 
-    public UsageTypeGroup(UsageType usageType) {
-      myUsageType = usageType;
+    public void update() {
     }
 
     public Icon getIcon(boolean isOpen) {
@@ -123,7 +123,7 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
     }
 
     public int hashCode() {
-      return (myUsageType != null ? myUsageType.hashCode() : 0);
+      return myUsageType != null ? myUsageType.hashCode() : 0;
     }
   }
 }

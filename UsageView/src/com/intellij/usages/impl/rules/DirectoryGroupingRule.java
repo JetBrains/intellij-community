@@ -57,7 +57,7 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
     public void update() {
     }
 
-    public DirectoryGroup(VirtualFile dir) {
+    private DirectoryGroup(VirtualFile dir) {
       myDir = dir;
     }
 

@@ -25,6 +25,7 @@ import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Range;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -628,12 +629,7 @@ public final class TreeUtil {
         }
       }
     };
-    if (EventQueue.isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(runnable);
-    }
+    UIUtil.invokeLaterIfNeeded(runnable);
   }
 
   public static void expandAll(final JTree tree) {

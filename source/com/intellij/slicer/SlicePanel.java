@@ -1,6 +1,7 @@
 package com.intellij.slicer;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -9,6 +10,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
@@ -16,6 +18,7 @@ import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usages.Usage;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -23,6 +26,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -32,7 +36,10 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -75,7 +82,14 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     public List<SliceNode> put(SliceUsage key, List<SliceNode> value) {
       long count = key.getElement().getManager().getModificationTracker().getModificationCount();
       if (count != timeStamp) {
-        Map<SliceUsage, List<SliceNode>> map = new THashMap<SliceUsage, List<SliceNode>>(this, _hashingStrategy);
+        Map<SliceUsage, List<SliceNode>> map = new THashMap<SliceUsage, List<SliceNode>>(_hashingStrategy);
+        for (Map.Entry<SliceUsage, List<SliceNode>> entry : map.entrySet()) {
+          SliceUsage usage = entry.getKey();
+          PsiElement element = usage.getElement();
+          if (!element.isValid()) continue;
+          List<SliceNode> list = entry.getValue();
+          map.put(usage, list);
+        }
         clear();
         putAll(map);
         timeStamp = count;
@@ -94,12 +108,17 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     myBuilder = new SliceTreeBuilder(myTree, project);
     myBuilder.setCanYieldUpdate(true);
     Disposer.register(this, myBuilder);
-    SliceNode rootNode = new SliceNode(project, root, targetEqualUsages, myBuilder);
+    final SliceNode rootNode = new SliceRootNode(project, root, targetEqualUsages, myBuilder);
     myBuilder.setRoot(rootNode);
 
     layoutPanel();
     myBuilder.addSubtreeToUpdate((DefaultMutableTreeNode)myTree.getModel().getRoot(), new Runnable() {
       public void run() {
+        myBuilder.expand(rootNode, new Runnable(){
+          public void run() {
+            myBuilder.select(rootNode.myCachedChildren.get(0)); //first there is ony one child
+          }
+        });
         treeSelectionChanged();
       }
     });
@@ -152,7 +171,8 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     renderer.setOpaque(false);
     tree.setCellRenderer(renderer);
     UIUtil.setLineStyleAngled(tree);
-    tree.setRootVisible(true);
+    tree.setRootVisible(false);
+    
     tree.setShowsRootHandles(true);
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     tree.setSelectionPath(new TreePath(root.getPath()));
@@ -172,6 +192,28 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
         treeSelectionChanged();
       }
     });
+
+    tree.addKeyListener(new KeyAdapter() {
+      public void keyPressed(KeyEvent e) {
+        if (KeyEvent.VK_ENTER == e.getKeyCode()) {
+          List<Navigatable> navigatables = getNavigatables();
+          if (navigatables.isEmpty()) return;
+          for (Navigatable navigatable : navigatables) {
+            if (navigatable instanceof AbstractTreeNode && ((AbstractTreeNode)navigatable).getValue() instanceof Usage) {
+              navigatable = (Usage)((AbstractTreeNode)navigatable).getValue();
+            }
+            if (navigatable.canNavigateToSource()) {
+              navigatable.navigate(false);
+              if (navigatable instanceof Usage) {
+                ((Usage)navigatable).highlightInEditor();
+              }
+            }
+          }
+          e.consume();
+        }
+      }
+    });
+
     return tree;
   }
 
@@ -207,30 +249,32 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
 
   public void calcData(DataKey key, DataSink sink) {
     if (key == PlatformDataKeys.NAVIGATABLE_ARRAY) {
-      TreePath[] paths = myTree.getSelectionPaths();
-      if (paths == null) return;
-      final ArrayList<Navigatable> navigatables = new ArrayList<Navigatable>();
-      for (TreePath path : paths) {
-        Object lastPathComponent = path.getLastPathComponent();
-        if (lastPathComponent instanceof DefaultMutableTreeNode) {
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
-          Object userObject = node.getUserObject();
-          if (userObject instanceof Navigatable) {
-            navigatables.add((Navigatable)userObject);
-          }
-          else if (node instanceof Navigatable) {
-            navigatables.add((Navigatable)node);
-          }
-        }
-      }
+      List<Navigatable> navigatables = getNavigatables();
       if (!navigatables.isEmpty()) {
         sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, navigatables.toArray(new Navigatable[navigatables.size()]));
       }
     }
   }
 
-  public void sliceFinished() {
-    TreeUtil.expand(myTree, 1);
+  @NotNull
+  private List<Navigatable> getNavigatables() {
+    TreePath[] paths = myTree.getSelectionPaths();
+    if (paths == null) return Collections.emptyList();
+    final ArrayList<Navigatable> navigatables = new ArrayList<Navigatable>();
+    for (TreePath path : paths) {
+      Object lastPathComponent = path.getLastPathComponent();
+      if (lastPathComponent instanceof DefaultMutableTreeNode) {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
+        Object userObject = node.getUserObject();
+        if (userObject instanceof Navigatable) {
+          navigatables.add((Navigatable)userObject);
+        }
+        else if (node instanceof Navigatable) {
+          navigatables.add((Navigatable)node);
+        }
+      }
+    }
+    return navigatables;
   }
 
   private ActionToolbar createToolbar() {
@@ -248,6 +292,8 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
         layoutPanel();
       }
     });
+
+    actionGroup.add(new AnalyzeLeavesAction(myBuilder));
 
     //actionGroup.add(new ContextHelpAction(HELP_ID));
 
@@ -271,7 +317,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   protected abstract void close();
 
   private final class RefreshAction extends com.intellij.ide.actions.RefreshAction {
-    public RefreshAction(JComponent tree) {
+    private RefreshAction(JComponent tree) {
       super(IdeBundle.message("action.refresh"), IdeBundle.message("action.refresh"), IconLoader.getIcon("/actions/sync.png"));
       registerShortcutOn(tree);
     }

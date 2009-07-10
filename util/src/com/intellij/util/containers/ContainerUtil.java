@@ -19,17 +19,15 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.io.Serializable;
 
 public class ContainerUtil {
   public static List<Object> mergeSortedLists(List<Object> list1, List<Object> list2, Comparator<Object> comparator, boolean mergeEqualItems){
@@ -636,5 +634,79 @@ public class ContainerUtil {
     public <T> T[] toArray(T[] a) {
       return a;
     }
+  }
+
+  @NotNull
+  public static <T> Set<T> singleton(final T o, @NotNull final TObjectHashingStrategy<T> strategy) {
+    return new Set<T>() {
+      public int size() {
+        return 1;
+      }
+
+      public boolean isEmpty() {
+        return false;
+      }
+
+      public boolean contains(Object elem) {
+        return strategy.equals(o, (T)elem);
+      }
+
+      public Iterator<T> iterator() {
+        return new Iterator<T>() {
+          boolean atEnd;
+          public boolean hasNext() {
+            return !atEnd;
+          }
+
+          public T next() {
+            if (atEnd) throw new NoSuchElementException();
+            atEnd = true;
+            return o;
+          }
+
+          public void remove() {
+            throw new IncorrectOperationException();
+          }
+        };
+      }
+
+      public Object[] toArray() {
+        return new Object[]{o};
+      }
+
+      public <T> T[] toArray(T[] a) {
+        assert a.length == 1;
+        a[0] = (T)o;
+        return a;
+      }
+
+      public boolean add(T t) {
+        throw new IncorrectOperationException();
+      }
+
+      public boolean remove(Object o) {
+        throw new IncorrectOperationException();
+      }
+
+      public boolean containsAll(Collection<?> c) {
+        return false;
+      }
+
+      public boolean addAll(Collection<? extends T> c) {
+        throw new IncorrectOperationException();
+      }
+
+      public boolean retainAll(Collection<?> c) {
+        throw new IncorrectOperationException();
+      }
+
+      public boolean removeAll(Collection<?> c) {
+        throw new IncorrectOperationException();
+      }
+
+      public void clear() {
+        throw new IncorrectOperationException();
+      }
+    };
   }
 }

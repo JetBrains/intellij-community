@@ -87,7 +87,7 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
           if (dfaDest instanceof DfaVariableValue) {
             DfaVariableValue var = (DfaVariableValue)dfaDest;
             final PsiExpression rightValue = getRExpression();
-            final PsiElement parent = rightValue.getParent();
+            final PsiElement parent = rightValue == null ? null : rightValue.getParent();
             final IElementType type = parent instanceof PsiAssignmentExpression ? ((PsiAssignmentExpression)parent).getOperationTokenType() : JavaTokenType.EQ;
             // store current value - to use in case of '+='
             final PsiExpression prevValue = ((MyDfaVariableState)((MyDfaMemoryState)memState).getVariableState(var)).myExpression;
