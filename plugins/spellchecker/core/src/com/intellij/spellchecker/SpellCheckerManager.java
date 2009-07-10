@@ -10,10 +10,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.spellchecker.engine.SpellChecker;
 import com.intellij.spellchecker.engine.SpellCheckerFactory;
 import com.intellij.spellchecker.options.SpellCheckerConfiguration;
+import com.intellij.spellchecker.options.ProjectDictionaryState;
+import com.intellij.spellchecker.options.CachedDictionaryState;
 import com.intellij.spellchecker.util.Strings;
-import com.intellij.spellchecker.dictionary.UserWordList;
-import com.intellij.spellchecker.dictionary.CachedWordList;
-import com.intellij.spellchecker.dictionary.ProjectWordList;
+import com.intellij.spellchecker.dictionary.Dictionary;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,8 +32,8 @@ public final class SpellCheckerManager {
   private static HighlightDisplayLevel level;
   private Set<String> dictionaries = new HashSet<String>();
 
-  private UserWordList projectWordList;
-  private UserWordList cachedWordList;
+  private Dictionary projectWordList;
+  private Dictionary cachedWordList;
 
   public Set<String> getDictionaries() {
     return dictionaries;
@@ -59,7 +59,7 @@ public final class SpellCheckerManager {
 
   @NotNull
   public static HighlightDisplayLevel getHighlightDisplayLevel() {
-    return HighlightDisplayLevel.find(SpellCheckerSeveritiesProvider.MISSPELLED);
+    return HighlightDisplayLevel.find(SpellCheckerSeveritiesProvider.TYPO);
   }
 
 
@@ -157,15 +157,15 @@ public final class SpellCheckerManager {
     initDictionaries();
     spellChecker.reset();
 
-    projectWordList = ServiceManager.getService(project, ProjectWordList.class);
-    cachedWordList = ServiceManager.getService(project, CachedWordList.class);
+    projectWordList = ServiceManager.getService(project, ProjectDictionaryState.class).getDictionary();
+    cachedWordList = ServiceManager.getService(project, CachedDictionaryState.class).getDictionary();
 
     for (String word : projectWordList.getWords()) {
       cachedWordList.acceptWord(word);
     }
 
 
-    for (String word : ejectAll(cachedWordList.words)) {
+    for (String word : ejectAll(cachedWordList.getWords())) {
       String lowerCased = word.toLowerCase();
       spellChecker.addToDictionary(lowerCased);
     }
@@ -184,7 +184,7 @@ public final class SpellCheckerManager {
     }
 
 
-    for (String word : ejectAll(cachedWordList.words)) {
+    for (String word : ejectAll(cachedWordList.getWords())) {
       String lowerCased = word.toLowerCase();
       spellChecker.addToDictionary(lowerCased);
     }
@@ -230,11 +230,13 @@ public final class SpellCheckerManager {
     return words;
   }
 
-  public UserWordList getProjectWordList() {
+  public Dictionary getProjectWordList() {
     return projectWordList;
   }
 
-  public UserWordList getCachedWordList() {
+  public Dictionary getCachedWordList() {
     return cachedWordList;
   }
+
+  
 }

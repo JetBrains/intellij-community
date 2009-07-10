@@ -1,1 +1,0 @@
-simple <MISSPELLED descr="Word 'ttest' is misspelled">ttest</MISSPELLED> file (just plain text)

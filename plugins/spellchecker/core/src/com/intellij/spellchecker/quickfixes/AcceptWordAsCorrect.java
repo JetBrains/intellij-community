@@ -4,7 +4,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.actionSystem.Anchor;
 import com.intellij.openapi.project.Project;
 import com.intellij.spellchecker.SpellCheckerManager;
-import com.intellij.spellchecker.inspections.SpellCheckerQuickFix;
+import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.NotNull;
 

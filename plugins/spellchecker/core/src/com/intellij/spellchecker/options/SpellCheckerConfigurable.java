@@ -76,7 +76,7 @@ public final class SpellCheckerConfigurable implements Configurable {
     if (options != null) {
       boolean reload = false;
       if (dictionaryListWasChanged()) {
-        options.getShownDictionary().replaceAllDictionaryWords(options.getUserDictionaryWordsSet());
+        options.getShownDictionary().replaceAllWords(options.getUserDictionaryWordsSet());
         reload = true;
       }
       

@@ -5,17 +5,18 @@
   <vendor>JetBrains</vendor>
   <depends>com.intellij.modules.xml</depends>
 
+
   <application-components>
     <component>
-      <interface-class>com.intellij.spellchecker.dictionary.CachedWordList</interface-class>
-      <implementation-class>com.intellij.spellchecker.dictionary.CachedWordList</implementation-class>
+      <interface-class>com.intellij.spellchecker.options.CachedDictionaryState</interface-class>
+      <implementation-class>com.intellij.spellchecker.options.CachedDictionaryState</implementation-class>
     </component>
   </application-components>
 
   <project-components>
     <component>
-      <interface-class>com.intellij.spellchecker.dictionary.ProjectWordList</interface-class>
-      <implementation-class>com.intellij.spellchecker.dictionary.ProjectWordList</implementation-class>
+      <interface-class>com.intellij.spellchecker.options.ProjectDictionaryState</interface-class>
+      <implementation-class>com.intellij.spellchecker.options.ProjectDictionaryState</implementation-class>
     </component>
   </project-components>
 
@@ -35,8 +36,7 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.spellchecker.SpellCheckerSeverityRegister"
-                        serviceImplementation="com.intellij.spellchecker.SpellCheckerSeverityRegister"/>
+    
     <projectService serviceInterface="com.intellij.spellchecker.options.SpellCheckerConfiguration"
                     serviceImplementation="com.intellij.spellchecker.options.SpellCheckerConfiguration"/>
     <projectService serviceInterface="com.intellij.spellchecker.SpellCheckerManager"

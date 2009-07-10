@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
-  public static final HighlightSeverity MISSPELLED = new HighlightSeverity("MISSPELLED", 10);
+  public static final HighlightSeverity TYPO = new HighlightSeverity("TYPO", 10);
 
   public List<HighlightInfoType> getSeveritiesHighlightInfoTypes() {
     final List<HighlightInfoType> result = new ArrayList<HighlightInfoType>();
@@ -26,8 +26,8 @@ public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
     attributes.setEffectType(EffectType.WAVE_UNDERSCORE);
     attributes.setEffectColor(Color.GRAY);
 
-    result.add(new HighlightInfoType.HighlightInfoTypeImpl(MISSPELLED,
-               TextAttributesKey.createTextAttributesKey("MISSPELLED", attributes)));
+    result.add(new HighlightInfoType.HighlightInfoTypeImpl(TYPO,
+               TextAttributesKey.createTextAttributesKey("TYPO", attributes)));
     return result;
   }
 
@@ -38,6 +38,6 @@ public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
 
   @Override
   public boolean isGotoBySeverityEnabled(HighlightSeverity minSeverity) {
-    return MISSPELLED != minSeverity;
+    return TYPO != minSeverity;
   }
 }

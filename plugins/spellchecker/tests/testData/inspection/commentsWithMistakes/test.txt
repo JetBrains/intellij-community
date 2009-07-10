@@ -1,0 +1,1 @@
+simple <TYPO descr="Word 'ttest' is misspelled">ttest</TYPO> file (just plain text)

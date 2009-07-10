@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.actions.RenameElementAction;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.spellchecker.DictionarySuggestionProvider;
-import com.intellij.spellchecker.inspections.SpellCheckerQuickFix;
+import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

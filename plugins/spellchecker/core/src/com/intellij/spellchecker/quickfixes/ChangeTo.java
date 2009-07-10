@@ -3,38 +3,36 @@ package com.intellij.spellchecker.quickfixes;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.Anchor;
-import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.spellchecker.SpellCheckerManager;
-import com.intellij.spellchecker.inspections.SpellCheckerQuickFix;
+import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Quick fix for misspelled words.
- *
- * @author Sergiy Dubovik
- */
 public class ChangeTo implements SpellCheckerQuickFix {
 
   private TextRange textRange;
+  private String word;
+  private Project project;
 
-  public ChangeTo(@NotNull TextRange textRange) {
+  public ChangeTo(@NotNull TextRange textRange, @NotNull String word, @NotNull Project project) {
     this.textRange = textRange;
+    this.word = word;
+    this.project = project;
   }
 
   @NotNull
   public String getName() {
-    return SpellCheckerBundle.message("change.to");
+   return SpellCheckerBundle.message("change.to");
   }
 
   @NotNull
@@ -47,35 +45,23 @@ public class ChangeTo implements SpellCheckerQuickFix {
     return Anchor.FIRST;
   }
 
-
+ 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
 
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    PsiFile psiFile = descriptor.getPsiElement().getContainingFile();
-    Document document = documentManager.getDocument(psiFile);
+    final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
+    if (editor == null) {
+      return;
+    }
+
     int psiElementOffset = descriptor.getPsiElement().getTextRange().getStartOffset();
-
-    /*if (document != null) {
-        document.replaceString(
-                psiElementOffset + textRange.getStartOffset(),
-                psiElementOffset + textRange.getEndOffset(),
-                correctWord
-        );
-    }*/
-
-
-    final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-
-    if (editor == null) return;
-
-    /*FileEditorManager.getInstance(project).openEditor(new OpenFileDescriptor(project, psiFile.getVirtualFile(), psiElementOffset + textRange.getStartOffset()), true);*/
     editor.offsetToLogicalPosition(psiElementOffset + textRange.getStartOffset());
-
-
     editor.getSelectionModel().setSelection(psiElementOffset + textRange.getStartOffset(), psiElementOffset + textRange.getEndOffset());
 
     String word = editor.getSelectionModel().getSelectedText();
-    /*editor.getSelectionModel().selectWordAtCaret(true);*/
+
+    if (word == null || StringUtil.isEmpty(word)) {
+      return;
+    }
 
     SpellCheckerManager manager = SpellCheckerManager.getInstance(project);
     List<String> variants = manager.getSuggestions(word);

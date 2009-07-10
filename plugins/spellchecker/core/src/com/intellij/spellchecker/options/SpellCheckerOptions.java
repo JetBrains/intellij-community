@@ -2,7 +2,7 @@ package com.intellij.spellchecker.options;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.spellchecker.dictionary.UserWordList;
+import com.intellij.spellchecker.dictionary.Dictionary;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.spellchecker.util.Strings;
@@ -31,9 +31,9 @@ public class SpellCheckerOptions implements Disposable {
   private JRadioButton localRB;
   private JLabel globalDictionaries;
 
-  private UserWordList shownDictionary;
+  private Dictionary shownDictionary;
 
-  public UserWordList getShownDictionary() {
+  public Dictionary getShownDictionary() {
     return shownDictionary;
   }
 
@@ -65,8 +65,8 @@ public class SpellCheckerOptions implements Disposable {
     return getWords(ignoredWords);
   }*/
 
- /* public void setIgnoredWords(Set<String> words) {
-    ignoredWords.replaceAll(words);
+ /* public void setIgnoredWords(Set<String> dictionary) {
+    ignoredWords.replaceAll(dictionary);
   }*/
 
 
@@ -131,6 +131,7 @@ public class SpellCheckerOptions implements Disposable {
       Collections.sort(arrayList);
       return arrayList;
     }
+
 
 
     protected Object findItemToAdd() {
