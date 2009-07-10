@@ -1039,18 +1039,18 @@ public abstract class DebugProcessImpl implements DebugProcess {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Invoke " + method.name());
         }
-        try {
-          if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-            // ensure target object wil not be collected
-            objRef.disableCollection();
-          }
+        //try {
+        //  if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
+        //    // ensure target object wil not be collected
+        //    objRef.disableCollection();
+        //  }
           return objRef.invokeMethod(thread, method, args, invokePolicy | invocationOptions);
-        }
-        finally {
-          if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-            objRef.enableCollection();
-          }
-        }
+        //}
+        //finally {
+        //  if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
+        //    objRef.enableCollection();
+        //  }
+        //}
       }
     };
     return invokeCommand.start((EvaluationContextImpl)evaluationContext, method);
