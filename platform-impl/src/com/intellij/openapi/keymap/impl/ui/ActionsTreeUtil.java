@@ -43,21 +43,25 @@ public class ActionsTreeUtil {
   public static final String J2EE_POPUP = KeyMapBundle.message("j2ee.view.popup.menu.title");
 
   @NonNls
-  private static final String VCS_GROUP_ID = "VcsGroup";
-  @NonNls
   private static final String EDITOR_PREFIX = "Editor";
   @NonNls private static final String TOOL_ACTION_PREFIX = "Tool_";
 
   private ActionsTreeUtil() {
   }
 
-  private static Group createPluginsActionsGroup(Condition<AnAction> filtered) {
+  private static Group createPluginsActionsGroup(Condition<AnAction> filtered, Group otherGroup) {
     Group pluginsGroup = new Group(KeyMapBundle.message("plugins.group.title"), null, null);
     final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
     final IdeaPluginDescriptor[] plugins = ApplicationManager.getApplication().getPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
-      Group pluginGroup = new Group(plugin.getName(), null, null);
+      Group pluginGroup;
+      if (plugin.getName().equals("IDEA CORE")) {
+        pluginGroup = otherGroup;
+      }
+      else {
+        pluginGroup = new Group(plugin.getName(), null, null);
+      }
       final String[] pluginActions = managerEx.getPluginActions(plugin.getPluginId());
       if (pluginActions == null || pluginActions.length == 0) {
         continue;
@@ -69,7 +73,7 @@ public class ActionsTreeUtil {
           pluginGroup.addActionId(pluginAction);
         }
       }
-      if (pluginGroup.getSize() > 0) {
+      if (pluginGroup.getSize() > 0 && pluginGroup != otherGroup) {
         pluginsGroup.addGroup(pluginGroup);
       }
     }
@@ -359,8 +363,9 @@ public class ActionsTreeUtil {
     }
     mainGroup.addGroup(createMacrosGroup(filtered));
     mainGroup.addGroup(createQuickListsGroup(filtered, filter, forceFiltering, quickLists));
-    mainGroup.addGroup(createOtherGroup(filtered, mainGroup, keymap));
-    mainGroup.addGroup(createPluginsActionsGroup(filtered));
+    final Group otherGroup = createOtherGroup(filtered, mainGroup, keymap);
+    mainGroup.addGroup(otherGroup);
+    mainGroup.addGroup(createPluginsActionsGroup(filtered, otherGroup));
     if (filter != null || filtered != null) {
       final ArrayList list = mainGroup.getChildren();
       for (Iterator i = list.iterator(); i.hasNext();) {
