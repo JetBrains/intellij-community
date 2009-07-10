@@ -274,9 +274,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         LOG.error(e);
         continue;
       }
-      JLabel label = new JLabel("Initializing toolwindow...");
+      JLabel label = new JLabel("Initializing...", JLabel.CENTER);
+      label.setOpaque(true);
+      final Color treeBg = UIManager.getColor("Tree.background");
+      label.setBackground(new Color(treeBg.getRed(), treeBg.getGreen(), treeBg.getBlue(), 180));
+      final Color treeFg = UIManager.getColor("Tree.foreground");
+      label.setForeground(new Color(treeFg.getRed(), treeFg.getGreen(), treeFg.getBlue(), 180));
       final ToolWindowFactory factory = bean.getToolWindowFactory();
-      final ToolWindow toolWindow = registerToolWindow(bean.id, label, toolWindowAnchor, myProject, factory instanceof DumbAware);
+      final ToolWindowImpl toolWindow = (ToolWindowImpl)registerToolWindow(bean.id, label, toolWindowAnchor, myProject, factory instanceof DumbAware);
       if (bean.icon != null) {
         Icon icon = IconLoader.findIcon(bean.icon, factory.getClass());
         if (icon == null) {
@@ -287,12 +292,16 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         toolWindow.setIcon(icon);
       }
       toolWindow.setSplitMode(bean.secondary, null);
+
+      final ActionCallback activation = toolWindow.setActivation(new ActionCallback());
+
       UiNotifyConnector.doWhenFirstShown(label, new Runnable() {
         public void run() {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               toolWindow.getContentManager().removeAllContents(false);
               factory.createToolWindowContent(myProject, toolWindow);
+              activation.setDone();
             }
           });
         }

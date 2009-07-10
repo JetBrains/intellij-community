@@ -34,6 +34,14 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
   }
 
   public final void run() {
+    myToolWindow.getActivation().doWhenDone(new Runnable() {
+      public void run() {
+        processRequestFocus();
+      }
+    });
+  }
+
+  private void processRequestFocus() {
     try {
       Component preferredFocusedComponent = myFocusWatcher.getFocusedComponent();
 

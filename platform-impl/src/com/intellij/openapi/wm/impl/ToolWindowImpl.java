@@ -8,6 +8,7 @@ import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -39,6 +40,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   private boolean myHideOnEmptyContent = false;
   private boolean myPlaceholderMode;
+
+  private ActionCallback myActivation = new ActionCallback.Done();
 
   ToolWindowImpl(final ToolWindowManagerImpl toolWindowManager, final String id, boolean canCloseContent, @Nullable final JComponent component) {
     myToolWindowManager = toolWindowManager;
@@ -294,5 +297,18 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   public void setPlaceholderMode(final boolean placeholderMode) {
     myPlaceholderMode = placeholderMode;
+  }
+
+  public ActionCallback getActivation() {
+    return myActivation;
+  }
+
+  public ActionCallback setActivation(ActionCallback activation) {
+    if (myActivation != null && !myActivation.isProcessed() && !myActivation.equals(activation)) {
+      myActivation.setRejected();
+    }
+
+    myActivation = activation;
+    return myActivation;
   }
 }
