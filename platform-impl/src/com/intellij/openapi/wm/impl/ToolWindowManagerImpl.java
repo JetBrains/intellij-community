@@ -1534,9 +1534,20 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       final KeyEvent[] events = myToDispatchOnDone.toArray(new KeyEvent[myToDispatchOnDone.size()]);
       IdeEventQueue.getInstance().getKeyEventDispatcher().resetState();
 
+      boolean keyWasPressed = false;
+
       for (int i = 0; i < events.length; i++) {
         KeyEvent each = events[i];
         if (!isFocusTransferReady()) break;
+
+        if (!keyWasPressed) {
+          if (each.getID() == KeyEvent.KEY_PRESSED) {
+            keyWasPressed = true;
+          } else {
+            myToDispatchOnDone.remove(each);
+            continue;
+          }
+        }
 
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         if (owner != null && SwingUtilities.getWindowAncestor(owner) != null) {
