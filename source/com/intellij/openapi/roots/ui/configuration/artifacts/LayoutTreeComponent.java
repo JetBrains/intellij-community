@@ -114,6 +114,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   public void rebuildTree() {
     myBuilder.updateFromRoot(true);
     updatePropertiesPanel();
+    myArtifactsEditor.checkLayout();
   }
 
   public LayoutTreeSelection getSelection() {
@@ -167,6 +168,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   }
 
   public void updateAndSelect(PackagingElementNode<?> node, final List<? extends PackagingElement<?>> toSelect) {
+    myArtifactsEditor.checkLayout();
     final DefaultMutableTreeNode treeNode = TreeUtil.findNodeWithObject(myTree.getRootNode(), node);
     myBuilder.addSubtreeToUpdate(treeNode, new Runnable() {
       public void run() {

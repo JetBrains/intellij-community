@@ -6,6 +6,7 @@ import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
+import com.intellij.packaging.ui.ArtifactValidationManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +60,6 @@ public abstract class ArtifactType {
   @NotNull
   public abstract CompositePackagingElement<?> createRootElement();
 
-  public void checkRootElement(@NotNull CompositePackagingElement<?> rootElement) {
+  public void checkRootElement(@NotNull CompositePackagingElement<?> rootElement, @NotNull ArtifactValidationManager manager) {
   }
 }

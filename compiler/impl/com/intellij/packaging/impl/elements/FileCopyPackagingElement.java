@@ -47,9 +47,13 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
       generator = creator.createDirectoryContentCopyInstruction(path);
     }
     else {
-      generator = creator.createFileCopyInstruction(path, StringUtil.getShortName(myFilePath, '/'));
+      generator = creator.createFileCopyInstruction(path, getFileName());
     }
     return Collections.singletonList(generator);
+  }
+
+  public String getFileName() {
+    return StringUtil.getShortName(myFilePath, '/');
   }
 
   @Override

@@ -20,6 +20,8 @@ import com.intellij.packaging.artifacts.ModifiableArtifact;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.ArtifactValidationManager;
+import com.intellij.packaging.ui.ArtifactProblemQuickFix;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -46,6 +48,7 @@ public class ArtifactEditorImpl implements ArtifactEditor {
   private JCheckBox myShowIncludedCheckBox;
   private JPanel myEditorPanel;
   private JCheckBox myClearOnRebuildCheckBox;
+  private JPanel myErrorPanelPlace;
   private Splitter mySplitter;
   private final Project myProject;
   private final ComplexElementSubstitutionParameters mySubstitutionParameters = new ComplexElementSubstitutionParameters();
@@ -56,6 +59,8 @@ public class ArtifactEditorImpl implements ArtifactEditor {
   private final LayoutTreeComponent myLayoutTreeComponent;
   private TabbedPaneWrapper myTabbedPane;
   private ArtifactPropertiesEditors myPropertiesEditors;
+  private ArtifactErrorPanel myErrorPanel;
+  private ArtifactEditorImpl.ArtifactValidationManagerImpl myValidationManager;
 
   public ArtifactEditorImpl(final PackagingEditorContext context, Artifact artifact) {
     myContext = context;
@@ -73,6 +78,12 @@ public class ArtifactEditorImpl implements ArtifactEditor {
                                                    CompilerBundle.message("chooser.description.select.output.directory.for.0.artifact",
                                                                          getArtifact().getName()),
                                                    myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    setOutputPath(outputPath);
+    myErrorPanel = new ArtifactErrorPanel(this);
+    myValidationManager = new ArtifactValidationManagerImpl();
+  }
+
+  private void setOutputPath(@Nullable String outputPath) {
     myOutputDirectoryField.setText(outputPath != null ? FileUtil.toSystemDependentName(outputPath) : null);
   }
 
@@ -122,11 +133,18 @@ public class ArtifactEditorImpl implements ArtifactEditor {
     mySourceItemsTree.rebuildTree();
   }
 
+  public void checkLayout() {
+    myErrorPanel.clearError();
+    getArtifact().getArtifactType().checkRootElement(getRootElement(), myValidationManager);
+  }
+
 
   public JComponent createMainComponent() {
     mySourceItemsTree.initTree();
     myLayoutTreeComponent.initTree();
     myMainPanel.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new TypeSafeDataProviderAdapter(new MyDataProvider()));
+
+    myErrorPanelPlace.add(myErrorPanel.getMainPanel(), BorderLayout.CENTER);
 
     mySplitter = new Splitter(false);
     final JPanel leftPanel = new JPanel(new BorderLayout());
@@ -241,11 +259,32 @@ public class ArtifactEditorImpl implements ArtifactEditor {
     return myLayoutTreeComponent;
   }
 
+  public void updateOutputPath(@NotNull String oldArtifactName, @NotNull String newArtifactName) {
+    final String oldDefaultPath = ArtifactUtil.getDefaultArtifactOutputPath(oldArtifactName, myProject);
+    if (Comparing.equal(oldDefaultPath, getConfiguredOutputPath())) {
+      setOutputPath(ArtifactUtil.getDefaultArtifactOutputPath(newArtifactName, myProject));
+    }
+  }
+
   private class MyDataProvider implements TypeSafeDataProvider {
     public void calcData(DataKey key, DataSink sink) {
       if (ARTIFACTS_EDITOR_KEY.equals(key)) {
         sink.put(ARTIFACTS_EDITOR_KEY, ArtifactEditorImpl.this);
       }
+    }
+  }
+
+  private class ArtifactValidationManagerImpl implements ArtifactValidationManager {
+    public PackagingEditorContext getContext() {
+      return myContext;
+    }
+
+    public void registerProblem(@NotNull String messsage) {
+      registerProblem(messsage, null);
+    }
+
+    public void registerProblem(@NotNull String messsage, @Nullable ArtifactProblemQuickFix quickFix) {
+      myErrorPanel.showError(messsage, quickFix);
     }
   }
 }

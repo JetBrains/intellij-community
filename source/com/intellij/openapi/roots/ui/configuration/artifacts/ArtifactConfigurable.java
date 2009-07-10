@@ -8,8 +8,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.ui.PackagingEditorContext;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -37,6 +37,7 @@ public class ArtifactConfigurable extends NamedConfigurable<Artifact> {
     final String oldName = getArtifact().getName();
     if (name != null && !name.equals(oldName) && !myIsInUpdateName) {
       myPackagingEditorContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setName(name);
+      myEditor.updateOutputPath(oldName, name);
     }
   }
 
