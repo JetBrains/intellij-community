@@ -1313,7 +1313,7 @@ class AbstractTreeUi {
       updateNodeImageAndPosition(childNode);
     }
     if (!oldElement.equals(newElement) | forceRemapping) {
-      removeMapping(oldElement, childNode);
+      removeMapping(oldElement, childNode, newElement);
       if (newElement != null) {
         createMapping(newElement, childNode);
       }
@@ -1722,7 +1722,7 @@ class AbstractTreeUi {
     NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
     if (descriptor == null) return;
     final Object element = getElementFromDescriptor(descriptor);
-    removeMapping(element, node);
+    removeMapping(element, node, null);
     node.setUserObject(null);
     node.removeAllChildren();
   }
@@ -2193,24 +2193,30 @@ class AbstractTreeUi {
     }
   }
 
-  private void removeMapping(Object element, DefaultMutableTreeNode node) {
+  private void removeMapping(Object element, DefaultMutableTreeNode node, @Nullable Object elementToPutNodeActionsFor) {
     final Object value = myElementToNodeMap.get(element);
-    if (value == null) {
-      return;
-    }
-    if (value instanceof DefaultMutableTreeNode) {
-      if (value.equals(node)) {
-        myElementToNodeMap.remove(element);
-      }
-    }
-    else {
-      List<DefaultMutableTreeNode> nodes = (List<DefaultMutableTreeNode>)value;
-      final boolean reallyRemoved = nodes.remove(node);
-      if (reallyRemoved) {
-        if (nodes.isEmpty()) {
+    if (value != null) {
+      if (value instanceof DefaultMutableTreeNode) {
+        if (value.equals(node)) {
           myElementToNodeMap.remove(element);
         }
       }
+      else {
+        List<DefaultMutableTreeNode> nodes = (List<DefaultMutableTreeNode>)value;
+        final boolean reallyRemoved = nodes.remove(node);
+        if (reallyRemoved) {
+          if (nodes.isEmpty()) {
+            myElementToNodeMap.remove(element);
+          }
+        }
+      }
+    }
+
+    final List<NodeAction> actions = myNodeActions.get(element);
+    myNodeActions.remove(element);
+
+    if (elementToPutNodeActionsFor != null) {
+      myNodeActions.put(elementToPutNodeActionsFor, actions);
     }
   }
 
