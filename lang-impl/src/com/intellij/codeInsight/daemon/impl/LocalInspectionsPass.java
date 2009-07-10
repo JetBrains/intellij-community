@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -83,7 +84,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     myDescriptors = new ArrayList<ProblemDescriptor>();
     myLevels = new ArrayList<HighlightInfoType>();
     myTools = new ArrayList<LocalInspectionTool>();
+    long startTime = System.nanoTime();
     inspectRoot(progress);
+    long endTime = System.nanoTime();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Inspections for " + myFile.getName() + " completed in " + (endTime - startTime) / 1000000 + " ms");
+    }
   }
 
   private void inspectRoot(final ProgressIndicator progress) {
@@ -294,6 +300,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       case GENERIC_ERROR:
         return HighlightInfoType.ERROR;
       case INFORMATION:
+        final TextAttributesKey attributes = ((ProblemDescriptorImpl)problemDescriptor).getEnforcedTextAttributes();
+        if (attributes != null) {
+          return new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, attributes);
+        }
         return HighlightInfoType.INFORMATION;
     }
     throw new RuntimeException("Cannot map " + highlightType);
