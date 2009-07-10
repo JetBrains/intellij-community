@@ -1804,7 +1804,7 @@ class AbstractTreeUi {
 
           if (!runSelection) {
             if (elements.length > 0) {
-              selectVisible(elements[0], onDone, true);
+              selectVisible(elements[0], onDone, true, true);
             }
             return;
           }
@@ -1895,7 +1895,7 @@ class AbstractTreeUi {
 
           addNext(elements, i + 1, onDone, originalRows, deferred);
         }
-      }, true, deferred);
+      }, true, deferred, i == 0);
     }
   }
 
@@ -1907,17 +1907,17 @@ class AbstractTreeUi {
     _select(new Object[] {element}, onDone, addToSelection, true, false);
   }
 
-  private void doSelect(final Object element, final Runnable onDone, final boolean addToSelection, final boolean deferred) {
+  private void doSelect(final Object element, final Runnable onDone, final boolean addToSelection, final boolean deferred, final boolean canBeCentered) {
     final Runnable _onDone = new Runnable() {
       public void run() {
         if (!checkDeferred(deferred, onDone)) return;
-        selectVisible(element, onDone, addToSelection);
+        selectVisible(element, onDone, addToSelection, canBeCentered);
       }
     };
     _expand(element, _onDone, true, false);
   }
 
-  private void selectVisible(Object element, final Runnable onDone, boolean addToSelection) {
+  private void selectVisible(Object element, final Runnable onDone, boolean addToSelection, boolean canBeCentered) {
     final DefaultMutableTreeNode toSelect = getNodeForElement(element, false);
     if (toSelect == null) {
       runDone(onDone);
@@ -1928,11 +1928,24 @@ class AbstractTreeUi {
     if (myUpdaterState != null) {
       myUpdaterState.addSelection(element);
     }
-    TreeUtil.showAndSelect(myTree, row - 2, row + 2, row, -1, addToSelection).doWhenDone(new Runnable() {
-      public void run() {
-        runDone(onDone);
-      }
-    });
+
+    if (Registry.is("ide.tree.autoscrollToVCenter") && canBeCentered) {
+      runDone(new Runnable() {
+        public void run() {
+          TreeUtil.showRowCentered(myTree, row, false).doWhenDone(new Runnable() {
+            public void run() {
+              runDone(onDone);
+            }
+          });
+        }
+      });
+    } else {
+      TreeUtil.showAndSelect(myTree, row - 2, row + 2, row, -1, addToSelection).doWhenDone(new Runnable() {
+        public void run() {
+          runDone(onDone);
+        }
+      });
+    }
   }
 
   public void expand(final Object element, @Nullable final Runnable onDone) {
