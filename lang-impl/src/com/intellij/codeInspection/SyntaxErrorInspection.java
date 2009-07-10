@@ -4,6 +4,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import org.jetbrains.annotations.Nls;
@@ -39,8 +40,14 @@ public class SyntaxErrorInspection extends GlobalInspectionTool {
           descriptor = manager.createProblemDescriptor(element, element.getErrorDescription(), ProblemHighlightType.ERROR, null);
         }
         else {
-          descriptor = manager.createProblemDescriptor(element.getParent(),
-                                                       new TextRange(element.getStartOffsetInParent(), element.getStartOffsetInParent()+1),
+          PsiElement parent = element;
+          do {
+            parent = parent.getParent();
+          } while(parent != null && parent.getTextRange().getLength() == 0);
+          if (parent == null) return;
+          int offset = element.getTextRange().getStartOffset() - parent.getTextRange().getStartOffset();
+          descriptor = manager.createProblemDescriptor(parent,
+                                                       new TextRange(offset, offset+1),
                                                        element.getErrorDescription(), ProblemHighlightType.ERROR);
         }
 
