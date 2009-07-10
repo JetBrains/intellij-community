@@ -37,11 +37,15 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
   }
 
   public void iterateIndexableFilesIn(VirtualFile file, ContentIterator iterator) {
-    iterator.processFile(file);
+    if (!isInSet(file)) return;
+
     if (file.isDirectory()) {
-      for (VirtualFile virtualFile : file.getChildren()) {
-        iterateIndexableFilesIn(virtualFile, iterator);
+      for (VirtualFile child : file.getChildren()) {
+        iterateIndexableFilesIn(child, iterator);
       }
+    }
+    else {
+      iterator.processFile(file);
     }
   }
 }
