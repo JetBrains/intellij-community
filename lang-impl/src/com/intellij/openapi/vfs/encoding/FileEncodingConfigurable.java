@@ -5,10 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.NonDefaultProjectConfigurable;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
@@ -26,7 +23,7 @@ import java.awt.*;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-public class FileEncodingConfigurable implements SearchableConfigurable, NonDefaultProjectConfigurable {
+public class FileEncodingConfigurable implements SearchableConfigurable, NonDefaultProjectConfigurable, OptionalConfigurable {
   private final Project myProject;
   private FileTreeTable myTreeView;
   private JScrollPane myTreePanel;
@@ -165,5 +162,11 @@ public class FileEncodingConfigurable implements SearchableConfigurable, NonDefa
 
   private void createUIComponents() {
     myTreePanel = ScrollPaneFactory.createScrollPane(new JTable());
+  }
+
+  public boolean needDisplay() {
+    // TODO[yole] cleaner API
+    String platformPrefix = System.getProperty("idea.platform.prefix");
+    return !"Ruby".equals(platformPrefix);
   }
 }

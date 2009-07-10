@@ -1,9 +1,6 @@
 package com.intellij.openapi.options.ex;
 
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.NonDefaultProjectConfigurable;
-import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +45,7 @@ public class ProjectConfigurablesGroup implements ConfigurableGroup {
       public boolean isIncluded(final Configurable configurable) {
         if (isDefault() && configurable instanceof NonDefaultProjectConfigurable) return false;
         if (configurable instanceof Configurable.Assistant) return false;
+        if (configurable instanceof OptionalConfigurable && !((OptionalConfigurable) configurable).needDisplay()) return false;
         if (!myIncludeProjectStructure && PROJECT_STRUCTURE_CLASS_FQ_NAME.equals(configurable.getClass().getName())) return false;
         return true;
       }
