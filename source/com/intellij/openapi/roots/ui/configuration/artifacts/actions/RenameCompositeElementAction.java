@@ -4,7 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditor;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeSelection;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -16,9 +16,9 @@ import javax.swing.tree.TreePath;
  * @author nik
  */
 public class RenameCompositeElementAction extends AnAction {
-  private final ArtifactEditor myArtifactEditor;
+  private final ArtifactEditorEx myArtifactEditor;
 
-  public RenameCompositeElementAction(ArtifactEditor artifactEditor) {
+  public RenameCompositeElementAction(ArtifactEditorEx artifactEditor) {
     super(ProjectBundle.message("action.name.rename.packaging.element"));
     registerCustomShortcutSet(CommonShortcuts.getRename(), artifactEditor.getLayoutTreeComponent().getTreePanel());
     myArtifactEditor = artifactEditor;

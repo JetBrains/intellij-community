@@ -41,6 +41,11 @@ public class LibrarySourceItem extends PackagingSourceItem {
     return myLibrary.hashCode();
   }
 
+  @NotNull 
+  public Library getLibrary() {
+    return myLibrary;
+  }
+
   @NotNull
   @Override
   public PackagingElementFilesKind getKindOfProducedElements() {

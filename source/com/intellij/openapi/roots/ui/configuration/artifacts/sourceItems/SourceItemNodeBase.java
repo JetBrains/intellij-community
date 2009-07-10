@@ -3,7 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditor;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.ArtifactsTreeNode;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.PackagingEditorContext;
@@ -22,16 +22,16 @@ import java.util.List;
  */
 public abstract class SourceItemNodeBase extends ArtifactsTreeNode {
   private Artifact myArtifact;
-  private final ArtifactEditor myArtifactEditor;
+  private final ArtifactEditorEx myArtifactEditor;
 
   public SourceItemNodeBase(PackagingEditorContext context, NodeDescriptor parentDescriptor, final TreeNodePresentation presentation,
-                            ArtifactEditor artifactEditor) {
+                            ArtifactEditorEx artifactEditor) {
     super(context, parentDescriptor, presentation);
     myArtifact = artifactEditor.getArtifact();
     myArtifactEditor = artifactEditor;
   }
 
-  protected ArtifactEditor getArtifactEditor() {
+  protected ArtifactEditorEx getArtifactEditor() {
     return myArtifactEditor;
   }
 
@@ -50,7 +50,9 @@ public abstract class SourceItemNodeBase extends ArtifactsTreeNode {
     for (PackagingSourceItemsProvider provider : providers) {
       final Collection<? extends PackagingSourceItem> items = provider.getSourceItems(myContext, myArtifact, getSourceItem());
       for (PackagingSourceItem item : items) {
-        children.add(new SourceItemNode(myContext, this, item, myArtifactEditor));
+        if (myArtifact.getArtifactType().isSuitableItem(item)) {
+          children.add(new SourceItemNode(myContext, this, item, myArtifactEditor));
+        }
       }
     }
     return children.toArray(new SimpleNode[children.size()]);

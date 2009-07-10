@@ -24,7 +24,7 @@ public class ChooseLibrariesDialog extends ChooseElementsDialog<Library> {
   }
 
   protected String getItemText(final Library item) {
-    return item != null ? PackagingEditorUtil.getLibraryItemText(item) : "";
+    return item != null ? PackagingEditorUtil.getLibraryItemText(item, true) : "";
   }
 
   protected Icon getItemIcon(final Library item) {

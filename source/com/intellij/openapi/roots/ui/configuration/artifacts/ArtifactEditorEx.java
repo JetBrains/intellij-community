@@ -6,6 +6,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.ArtifactEditor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -13,8 +14,8 @@ import javax.swing.*;
 /**
  * @author nik
  */
-public interface ArtifactEditor extends Disposable {
-  DataKey<ArtifactEditor> ARTIFACTS_EDITOR_KEY = DataKey.create("artifactsEditor");
+public interface ArtifactEditorEx extends ArtifactEditor, Disposable {
+  DataKey<ArtifactEditorEx> ARTIFACTS_EDITOR_KEY = DataKey.create("artifactsEditor");
 
 
   void addNewPackagingElement(@NotNull PackagingElementType<?> type);

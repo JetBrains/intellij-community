@@ -27,6 +27,10 @@ public class SmartList<E> extends AbstractList<E> {
   public SmartList() {
   }
 
+  public SmartList(E elem) {
+    add(elem);
+  }
+
   public SmartList(Collection<? extends E> c) {
     addAll(c);
   }

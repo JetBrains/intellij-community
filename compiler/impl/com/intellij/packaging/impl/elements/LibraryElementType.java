@@ -7,10 +7,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
 import com.intellij.openapi.roots.ui.configuration.packaging.ChooseLibrariesDialog;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
@@ -20,7 +17,6 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.io.File;
 import java.util.*;
 
 /**
@@ -43,8 +39,7 @@ public class LibraryElementType extends PackagingElementType<LibraryPackagingEle
     final Set<VirtualFile> roots = new HashSet<VirtualFile>();
     ArtifactUtil.processPackagingElements(artifact, PackagingElementFactoryImpl.FILE_COPY_ELEMENT_TYPE, new Processor<FileCopyPackagingElement>() {
       public boolean process(FileCopyPackagingElement fileCopyPackagingElement) {
-        final String url = VfsUtil.getUrlForLibraryRoot(new File(FileUtil.toSystemDependentName(fileCopyPackagingElement.getFilePath())));
-        final VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(url);
+        final VirtualFile root = fileCopyPackagingElement.getLibraryRoot();
         if (root != null) {
           roots.add(root);
         }

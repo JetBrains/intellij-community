@@ -2,7 +2,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditor;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeSelection;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingNodeSource;
@@ -13,9 +13,9 @@ import java.util.Collection;
  * @author nik
  */
 public class HideContentAction extends AnAction {
-  private ArtifactEditor myArtifactEditor;
+  private ArtifactEditorEx myArtifactEditor;
 
-  public HideContentAction(ArtifactEditor artifactEditor) {
+  public HideContentAction(ArtifactEditorEx artifactEditor) {
     super("Hide Content");
     myArtifactEditor = artifactEditor;
   }

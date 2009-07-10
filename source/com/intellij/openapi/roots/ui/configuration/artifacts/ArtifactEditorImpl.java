@@ -8,8 +8,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.artifacts.actions.*;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.LibrarySourceItem;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -17,11 +19,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
-import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.elements.CompositePackagingElement;
-import com.intellij.packaging.ui.PackagingEditorContext;
-import com.intellij.packaging.ui.ArtifactValidationManager;
+import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.ArtifactProblemQuickFix;
+import com.intellij.packaging.ui.ArtifactValidationManager;
+import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -36,12 +38,13 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author nik
  */
-public class ArtifactEditorImpl implements ArtifactEditor {
+public class ArtifactEditorImpl implements ArtifactEditorEx {
   private JPanel myMainPanel;
   private JCheckBox myBuildOnMakeCheckBox;
   private TextFieldWithBrowseButton myOutputDirectoryField;
@@ -264,6 +267,10 @@ public class ArtifactEditorImpl implements ArtifactEditor {
     if (Comparing.equal(oldDefaultPath, getConfiguredOutputPath())) {
       setOutputPath(ArtifactUtil.getDefaultArtifactOutputPath(newArtifactName, myProject));
     }
+  }
+
+  public void putLibraryIntoDefaultLocation(@NotNull Library library) {
+    myLayoutTreeComponent.putIntoDefaultLocations(Collections.singletonList(new LibrarySourceItem(library)));
   }
 
   private class MyDataProvider implements TypeSafeDataProvider {

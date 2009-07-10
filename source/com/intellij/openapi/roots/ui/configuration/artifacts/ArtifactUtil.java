@@ -10,7 +10,9 @@ import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement;
+import com.intellij.packaging.impl.elements.DirectoryPackagingElement;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,10 +115,13 @@ public class ArtifactUtil {
                              artifactType, parents.prepend(composite));
     }
     else if (element instanceof ComplexPackagingElement<?> && processSubstituions) {
-      final List<? extends PackagingElement<?>> substitution = ((ComplexPackagingElement<?>)element).getSubstitution(resolvingContext,
-                                                                                                                     artifactType);
-      if (substitution != null) {
-        return processElements(substitution, type, processor, resolvingContext, processSubstituions, artifactType, parents);
+      final ComplexPackagingElement<?> complexElement = (ComplexPackagingElement<?>)element;
+      if (processor.shouldProcessSubstitution(complexElement)) {
+        final List<? extends PackagingElement<?>> substitution = complexElement.getSubstitution(resolvingContext,
+                                                                                                artifactType);
+        if (substitution != null) {
+          return processElements(substitution, type, processor, resolvingContext, processSubstituions, artifactType, parents);
+        }
       }
     }
     return true;
@@ -165,42 +170,74 @@ public class ArtifactUtil {
     return outputUrl != null ? VfsUtil.urlToPath(outputUrl) + "/artifacts/" + FileUtil.sanitizeFileName(artifactName) : null;
   }
 
-  public static PackagingElement<?> findFileByName(@NotNull List<? extends PackagingElement<?>> elements, @NotNull String name,
-                                                   @NotNull PackagingElementResolvingContext context, @NotNull ArtifactType artifactType) {
+  public static boolean processElements(@NotNull List<? extends PackagingElement<?>> elements,
+                                        @NotNull PackagingElementResolvingContext context,
+                                        @NotNull ArtifactType artifactType,
+                                        @NotNull Processor<PackagingElement<?>> processor) {
     for (PackagingElement<?> element : elements) {
-      if (element instanceof CompositePackagingElement && name.equals(((CompositePackagingElement<?>)element).getName()) ||
-          element instanceof FileCopyPackagingElement && name.equals(((FileCopyPackagingElement)element).getFileName())) {
-        return element;
-      }
-      if (element instanceof ComplexPackagingElement) {
-        final List<? extends PackagingElement<?>> substitution = ((ComplexPackagingElement<?>)element).getSubstitution(context, artifactType);
-        if (substitution != null) {
-          final PackagingElement<?> packagingElement = findFileByName(substitution, name, context, artifactType);
-          if (packagingElement != null) {
-            return packagingElement;
-          }
+      if (element instanceof ComplexPackagingElement<?>) {
+        final List<? extends PackagingElement<?>> substitution =
+            ((ComplexPackagingElement<?>)element).getSubstitution(context, artifactType);
+        if (substitution != null && !processElements(substitution, context, artifactType, processor)) {
+          return false;
         }
       }
+      else if (!processor.process(element)) {
+        return false;
+      }
     }
-    return null;
+    return true;
   }
 
-  public static PackagingElement<?> findByRelativePath(@NotNull CompositePackagingElement<?> parent, @NotNull String relativePath,
+  public static List<PackagingElement<?>> findByRelativePath(@NotNull CompositePackagingElement<?> parent, @NotNull String relativePath,
                                                        @NotNull PackagingElementResolvingContext context, @NotNull ArtifactType artifactType) {
     relativePath = StringUtil.trimStart(relativePath, "/");
     if (relativePath.length() == 0) {
-      return parent;
+      return new SmartList<PackagingElement<?>>(parent);
     }
 
     int i = relativePath.indexOf('/');
-    String firstName = i != -1 ? relativePath.substring(0, i) : relativePath;
+    final String firstName = i != -1 ? relativePath.substring(0, i) : relativePath;
     String tail = i != -1 ? relativePath.substring(i+1) : "";
-    final PackagingElement<?> child = findFileByName(parent.getChildren(), firstName, context, artifactType);
+
+    final List<PackagingElement<?>> children = new SmartList<PackagingElement<?>>();
+    processElements(parent.getChildren(), context, artifactType, new Processor<PackagingElement<?>>() {
+      public boolean process(PackagingElement<?> element) {
+        if (element instanceof CompositePackagingElement && firstName.equals(((CompositePackagingElement<?>)element).getName()) ||
+            element instanceof FileCopyPackagingElement && firstName.equals(((FileCopyPackagingElement)element).getFileName())) {
+          children.add(element);
+        }
+        return true;
+      }
+    });
+
     if (tail.length() == 0) {
-      return child;
+      return children;
     }
 
-    if (!(child instanceof CompositePackagingElement)) return null;
-    return findByRelativePath((CompositePackagingElement<?>)child, tail, context, artifactType);
+    List<PackagingElement<?>> result = new SmartList<PackagingElement<?>>();
+    for (PackagingElement<?> child : children) {
+      if (child instanceof CompositePackagingElement) {
+        result.addAll(findByRelativePath((CompositePackagingElement<?>)child, tail, context, artifactType));
+      }
+    }
+    return result;
+  }
+
+  public static boolean processDirectoryChildren(@NotNull CompositePackagingElement<?> root,
+                                                 @NotNull String relativePath,
+                                                 @NotNull PackagingElementResolvingContext context,
+                                                 @NotNull ArtifactType artifactType,
+                                                 @NotNull Processor<PackagingElement<?>> processor) {
+    final List<PackagingElement<?>> dirs = findByRelativePath(root, relativePath, context, artifactType);
+    for (PackagingElement<?> dir : dirs) {
+      if (dir instanceof DirectoryPackagingElement) {
+        final List<PackagingElement<?>> children = ((DirectoryPackagingElement)dir).getChildren();
+        if (!processElements(children, context, artifactType, processor)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }

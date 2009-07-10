@@ -17,9 +17,9 @@ import java.util.List;
  * @author nik
  */
 public class AddPackagingElementActionGroup extends ActionGroup {
-  private final ArtifactEditor myArtifactEditor;
+  private final ArtifactEditorEx myArtifactEditor;
 
-  public AddPackagingElementActionGroup(ArtifactEditor artifactEditor) {
+  public AddPackagingElementActionGroup(ArtifactEditorEx artifactEditor) {
     super(ProjectBundle.message("artifacts.add.copy.action"), true);
     myArtifactEditor = artifactEditor;
     getTemplatePresentation().setIcon(Icons.ADD_ICON);

@@ -39,7 +39,7 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
   }
 
   private static Collection<? extends PackagingSourceItem> createClasspathItems(PackagingEditorContext editorContext,
-                                                                                      Artifact artifact, @NotNull Module module) {
+                                                                                Artifact artifact, @NotNull Module module) {
     final List<PackagingSourceItem> items = new ArrayList<PackagingSourceItem>();
     final ModuleRootModel rootModel = editorContext.getModulesProvider().getRootModel(module);
     List<Library> libraries = new ArrayList<Library>();

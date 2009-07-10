@@ -3,7 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditor;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.ui.PackagingSourceItem;
@@ -17,9 +17,9 @@ import java.util.HashSet;
  */
 public class PutSourceItemIntoDefaultLocationAction extends AnAction {
   private final SourceItemsTree mySourceItemsTree;
-  private final ArtifactEditor myArtifactEditor;
+  private final ArtifactEditorEx myArtifactEditor;
 
-  public PutSourceItemIntoDefaultLocationAction(SourceItemsTree sourceItemsTree, ArtifactEditor artifactEditor) {
+  public PutSourceItemIntoDefaultLocationAction(SourceItemsTree sourceItemsTree, ArtifactEditorEx artifactEditor) {
     mySourceItemsTree = sourceItemsTree;
     myArtifactEditor = artifactEditor;
   }

@@ -117,14 +117,14 @@ public class PackagingEditorUtil {
     }
   }
 
-  public static String getLibraryItemText(final @NotNull Library library) {
+  public static String getLibraryItemText(final @NotNull Library library, final boolean includeTableName) {
     String name = library.getName();
     VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
     if (name != null) {
-      return name + getLibraryTableComment(library);
+      return name + (includeTableName ? getLibraryTableComment(library) : "");
     }
     else if (files.length > 0) {
-      return files[0].getName() + getLibraryTableComment(library);
+      return files[0].getName() + (includeTableName ? getLibraryTableComment(library) : "");
     }
     else {
       return ProjectBundle.message("library.empty.item");

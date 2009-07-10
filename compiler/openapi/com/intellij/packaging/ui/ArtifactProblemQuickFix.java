@@ -18,5 +18,5 @@ public abstract class ArtifactProblemQuickFix {
     return myActionName;
   }
 
-  public abstract void performFix();
+  public abstract void performFix(ArtifactEditor artifactEditor);
 }

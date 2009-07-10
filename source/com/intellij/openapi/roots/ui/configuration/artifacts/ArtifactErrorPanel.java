@@ -23,7 +23,7 @@ public class ArtifactErrorPanel {
     myFixButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (myCurrentQuickFix != null) {
-          myCurrentQuickFix.performFix();
+          myCurrentQuickFix.performFix(artifactEditor);
           artifactEditor.checkLayout();
         }
       }

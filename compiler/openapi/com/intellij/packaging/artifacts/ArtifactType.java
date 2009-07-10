@@ -43,6 +43,10 @@ public abstract class ArtifactType {
   @Nullable
   public abstract String getDefaultPathFor(@NotNull PackagingElement<?> element, @NotNull PackagingElementResolvingContext context);
 
+  public boolean isSuitableItem(@NotNull PackagingSourceItem sourceItem) {
+    return true;
+  }
+
   public static ArtifactType[] getAllTypes() {
     return Extensions.getExtensions(EP_NAME);
   }

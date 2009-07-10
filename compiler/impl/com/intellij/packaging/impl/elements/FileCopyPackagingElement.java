@@ -5,6 +5,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.FileCopyPresentation;
 import com.intellij.packaging.ui.PackagingEditorContext;
@@ -12,6 +14,7 @@ import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collections;
@@ -93,5 +96,11 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
 
   public void setFilePath(String filePath) {
     myFilePath = filePath;
+  }
+
+  @Nullable
+  public VirtualFile getLibraryRoot() {
+    final String url = VfsUtil.getUrlForLibraryRoot(new File(FileUtil.toSystemDependentName(getFilePath())));
+    return VirtualFileManager.getInstance().findFileByUrl(url);
   }
 }
