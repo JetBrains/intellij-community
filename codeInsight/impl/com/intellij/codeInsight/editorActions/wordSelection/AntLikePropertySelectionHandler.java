@@ -5,7 +5,9 @@ import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,9 +16,13 @@ import java.util.List;
 public class AntLikePropertySelectionHandler implements ExtendWordSelectionHandler {
   public boolean canSelect(PsiElement e) {
     Language l = e.getLanguage();
-    return StdLanguages.JAVA.equals(l)
-           || StdLanguages.XML.equals(l)
-           || StdLanguages.ANT.equals(l);
+    if (!(StdLanguages.JAVA.equals(l)
+          || StdLanguages.XML.equals(l)
+          || StdLanguages.ANT.equals(l))) {
+      return false;
+    }
+
+    return PsiTreeUtil.getParentOfType(e, PsiComment.class) == null;
   }
 
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
