@@ -23,10 +23,10 @@ public class MavenModuleConverter extends MavenReferenceConverter<PsiFile> {
   }
 
   protected PsiReference createReference(PsiElement element,
-                                            String text,
-                                            TextRange range,
-                                            VirtualFile virtualFile,
-                                            XmlFile psiFile) {
+                                         String text,
+                                         TextRange range,
+                                         VirtualFile virtualFile,
+                                         XmlFile psiFile) {
     return new MavenModulePsiReference(element, text, range, virtualFile, psiFile);
   }
 }

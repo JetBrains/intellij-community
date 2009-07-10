@@ -1,25 +1,46 @@
 package org.jetbrains.idea.maven.vfs;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.DeprecatedVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Properties;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class MavenPropertiesVirtualFile extends DeprecatedVirtualFile {
-  private final String myName;
+  private final String myPath;
   private final VirtualFileSystem myFS;
-  private volatile byte[] myContent = new byte[0];
+  private final byte[] myContent;
 
-  public MavenPropertiesVirtualFile(String name, VirtualFileSystem FS) {
-    myName = name;
+  public MavenPropertiesVirtualFile(String path, Properties properties, VirtualFileSystem FS) {
+    myPath = path;
     myFS = FS;
+
+    myContent = createContent(properties);
+  }
+
+  private byte[] createContent(Properties properties) {
+    StringBuilder builder = new StringBuilder();
+    TreeSet<String> sortedKeys = new TreeSet<String>((Set)properties.keySet());
+    for (String each : sortedKeys) {
+      builder.append(StringUtil.escapeProperty(each, true));
+      builder.append("=");
+      builder.append(StringUtil.escapeProperty(properties.getProperty(each), false));
+      builder.append("\n");
+    }
+    return builder.toString().getBytes();
   }
 
   @NotNull
   public String getName() {
-    return myName;
+    return myPath;
   }
 
   @NotNull
@@ -28,7 +49,7 @@ public class MavenPropertiesVirtualFile extends DeprecatedVirtualFile {
   }
 
   public String getPath() {
-    return myName;
+    return myPath;
   }
 
   public boolean isWritable() {
@@ -52,18 +73,8 @@ public class MavenPropertiesVirtualFile extends DeprecatedVirtualFile {
   }
 
   @NotNull
-  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
-    return new ByteArrayOutputStream() {
-      @Override
-      public void close() throws IOException {
-        super.close();
-        myContent = toByteArray();
-      }
-    };
-  }
-
-  @NotNull
   public byte[] contentsToByteArray() throws IOException {
+    if (myContent == null) throw new IOException();
     return myContent;
   }
 
@@ -85,5 +96,10 @@ public class MavenPropertiesVirtualFile extends DeprecatedVirtualFile {
 
   public InputStream getInputStream() throws IOException {
     return new ByteArrayInputStream(myContent);
+  }
+
+  @NotNull
+  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
+    throw new UnsupportedOperationException();
   }
 }

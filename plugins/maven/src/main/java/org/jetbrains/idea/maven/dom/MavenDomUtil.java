@@ -1,10 +1,13 @@
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -23,6 +26,7 @@ import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenConstants;
+import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
 import java.io.File;
 import java.util.List;
@@ -179,6 +183,18 @@ public class MavenDomUtil {
     XmlTag[] children = parent.getSubTags();
     if (index < 0 || index >= children.length) return null;
     return children[index];
+  }
+
+  @Nullable
+  public static Property findProperty(@NotNull Project project, @NotNull String fileName, @NotNull String propName) {
+    VirtualFileSystem fs = MavenPropertiesVirtualFileSystem.getInstance();
+    VirtualFile file = fs.findFileByPath(fileName);
+    if (file == null) return null;
+
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    if (!(psiFile instanceof PropertiesFile)) return null;
+
+    return ((PropertiesFile)psiFile).findPropertyByKey(propName);
   }
 
   public static List<DomFileElement<MavenDomProjectModel>> collectProjectPoms(final Project p) {

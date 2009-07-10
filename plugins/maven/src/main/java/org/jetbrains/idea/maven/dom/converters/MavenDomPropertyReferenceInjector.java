@@ -47,8 +47,4 @@ public class MavenDomPropertyReferenceInjector implements DomReferenceInjector {
     VirtualFile virtualFile = dom.getOriginalFile().getVirtualFile();
     return Pair.create(virtualFile, dom);
   }
-
-  protected VirtualFile getFile(ConvertContext context) {
-    return getFileAndDom(context).first;
-  }
 }

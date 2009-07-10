@@ -72,9 +72,9 @@
     <component>
       <implementation-class>org.jetbrains.idea.maven.utils.MavenEnvironmentRegistrar</implementation-class>
     </component>
-    <!--<component>-->
-      <!--<implementation-class>org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem</implementation-class>-->
-    <!--</component>-->
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

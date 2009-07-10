@@ -2,13 +2,13 @@ package org.jetbrains.idea.maven.embedder;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.maven.embedder.*;
-import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.utils.JDOMReader;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -182,18 +182,12 @@ public class MavenEmbedderFactory {
   public static Properties collectSystemProperties() {
     if (mySystemPropertiesCache == null) {
       Properties result = new Properties();
-      result.putAll(System.getProperties());
+      result.putAll(MavenUtil.getSystemProperties());
 
-      try {
-        Properties envVars = CommandLineUtils.getSystemEnvVars();
-        for (Map.Entry<Object, Object> each : envVars.entrySet()) {
-          result.setProperty("env." + each.getKey().toString(), each.getValue().toString());
-        }
+      Properties envVars = MavenUtil.getEnvProperties();
+      for (Map.Entry<Object, Object> each : envVars.entrySet()) {
+        result.setProperty("env." + each.getKey().toString(), each.getValue().toString());
       }
-      catch (IOException e) {
-        MavenLog.LOG.warn(e);
-      }
-
       mySystemPropertiesCache = result;
     }
 

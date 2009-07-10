@@ -30,10 +30,7 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.regex.Pattern;
@@ -105,6 +102,24 @@ public class MavenUtil {
   public static boolean isInModalContext() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return false;
     return LaterInvocator.isInModalContext();
+  }
+
+  public static Properties getSystemProperties() {
+    Properties result = (Properties)System.getProperties().clone();
+    for (String each : new THashSet<String>((Set)result.keySet())) {
+      if (each.startsWith("idea.")) {
+        result.remove(each);
+      }
+    }
+    return result;
+  }
+
+  public static Properties getEnvProperties() {
+    Properties reuslt = new Properties();
+    for (Map.Entry<String, String> each : System.getenv().entrySet()) {
+      reuslt.put(each.getKey(), each.getValue());
+    }
+    return reuslt;
   }
 
   public static File getPluginSystemDir(String folder) {

@@ -3,13 +3,9 @@ package org.jetbrains.idea.maven.dom.converters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
@@ -20,13 +16,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class MavenPropertyPsiReference extends MavenPsiReference {
@@ -65,6 +58,14 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   // 7. profiles in parent pom.xml
   // 8. parent pom.xml
   private PsiElement doResolve() {
+    if (myText.startsWith("env.")) {
+      return resolveEnvPropety();
+    }
+
+    if (myText.equals("basedir")) {
+      return resolveBasedir();
+    }
+
     PsiElement result = resolveSystemPropety();
     if (result != null) return result;
 
@@ -72,10 +73,11 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     DomFileElement<DomElement> fileElement = DomUtil.getFileElement(domElement);
     MavenDomProjectModel domProject = (MavenDomProjectModel)fileElement.getRootElement(); // todo hard-cast for now
 
-    if (myText.startsWith("project.") || myText.startsWith("pom.")) {
+    if (myText.startsWith("project.") || myText.startsWith("pom.") || myText.equals("version")) {
       String path = myText.startsWith("pom.")
                     ? "project." + myText.substring("pom.".length())
                     : myText;
+      if (myText.equals("version")) path = "project.version";
       return resolveModelProperty(domProject, path, new THashSet<DomElement>());
     }
 
@@ -92,30 +94,19 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   }
 
   private PsiElement resolveSystemPropety() {
-    if (true) return null;
-    if (System.getProperty(myText) == null) return null;
+    return MavenDomUtil.findProperty(myProject,
+                                     MavenPropertiesVirtualFileSystem.SYSTEM_PROPERTIES_FILE,
+                                     myText);
+  }
 
-    StringBuilder builder = new StringBuilder();
-    for (Map.Entry<Object, Object> each : System.getProperties().entrySet()) {
-      builder.append(each.getKey());
-      builder.append("=");
-      builder.append(each.getValue());
-      builder.append("\n");
-    }
+  private PsiElement resolveEnvPropety() {
+    return MavenDomUtil.findProperty(myProject,
+                                     MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE,
+                                     myText.substring("env.".length()));
+  }
 
-    VirtualFileSystem fs = VirtualFileManager.getInstance().getFileSystem(MavenPropertiesVirtualFileSystem.PROTOCOL);
-    final VirtualFile propertiesFile = fs.findFileByPath("System.properties");
-    try {
-      VfsUtil.saveText(propertiesFile, builder.toString());
-    }
-    catch (IOException e) {
-      MavenLog.LOG.error(e);
-      return null;
-    }
-    PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(myProject);
-    //FileManager fileManager = psiManager.getFileManager();
-    //fileManager.setViewProvider(propertiesFile, fileManager.createFileViewProvider(propertiesFile, false));
-    return psiManager.findFile(propertiesFile);
+  private PsiElement resolveBasedir() {
+    return PsiManager.getInstance(myProject).findDirectory(myVirtualFile.getParent());
   }
 
   private PsiElement resolveModelProperty(MavenDomProjectModel projectDom,

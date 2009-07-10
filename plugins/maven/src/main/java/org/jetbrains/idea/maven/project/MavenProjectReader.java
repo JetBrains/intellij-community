@@ -272,7 +272,7 @@ public class MavenProjectReader {
     List<Profile> activated = new ArrayList<Profile>();
     List<Profile> activeByDefault = new ArrayList<Profile>();
 
-    ProfileActivationContext context = new DefaultProfileActivationContext(System.getProperties(), true);
+    ProfileActivationContext context = new DefaultProfileActivationContext(MavenUtil.getSystemProperties(), true);
 
     List<Profile> rawProfiles = model.getProfiles();
     List<Profile> expandedProfiles = null;

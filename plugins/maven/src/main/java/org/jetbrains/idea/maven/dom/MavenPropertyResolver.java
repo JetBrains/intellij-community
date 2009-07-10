@@ -3,9 +3,6 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.GenericDomValue;
 import org.apache.commons.beanutils.BeanAccessLanguageException;
 import org.apache.commons.beanutils.BeanUtils;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfile;
@@ -16,9 +13,9 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 import java.util.Properties;
 import java.util.Stack;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,14 +31,6 @@ public class MavenPropertyResolver {
     MavenProject mavenProject = manager.findProject(module);
     if (mavenProject == null) return text;
     return doResolve(text, mavenProject, additionalProperties, propertyEscapeString, escapedCharacters, new Stack<String>());
-  }
-
-  public static String resolve(GenericDomValue<String> value) {
-    String text = value.getStringValue();
-    if (text == null) return null;
-
-    DomFileElement<MavenDomProjectModel> dom = DomUtil.getFileElement(value);
-    return resolve(text, dom.getRootElement());
   }
 
   public static String resolve(String text, MavenDomProjectModel projectDom) {

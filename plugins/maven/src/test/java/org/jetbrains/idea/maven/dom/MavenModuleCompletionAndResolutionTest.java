@@ -172,7 +172,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenCompletionAndRe
                      "  <module>unknown<caret>Module</module>" +
                      "</modules>");
 
-    assertResolved(myProjectPom, null, "unknownModule");
+    assertUnresolved(myProjectPom, "unknownModule");
   }
 
   public void testResolutionWithSlashes() throws Exception {
@@ -251,6 +251,21 @@ public class MavenModuleCompletionAndResolutionTest extends MavenCompletionAndRe
                      "</modules>");
 
     assertResolved(myProjectPom, getPsiFile(m), "subDir/m");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<properties>" +
+                     "  <dirName>subDir</dirName>" +
+                     "</properties>" +
+
+                     "<modules>" +
+                     "  <module>${<caret>dirName}/m</module>" +
+                     "</modules>");
+
+    assertResolved(myProjectPom, findTag(myProjectPom, "project.properties.dirName"));
   }
 
   public void testCreatePomQuickFix() throws Throwable {

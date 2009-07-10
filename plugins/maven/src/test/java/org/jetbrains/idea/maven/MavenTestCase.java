@@ -248,12 +248,16 @@ public abstract class MavenTestCase extends TestCase {
     return createProfilesFile(myProjectRoot, xml, true);
   }
 
+  protected VirtualFile createProfilesXmlOldStyle(String relativePath, String xml) throws IOException {
+    return createProfilesFile(createProjectSubDir(relativePath), xml, true);
+  }
+
   protected VirtualFile createProfilesXml(String xml) throws IOException {
     return createProfilesFile(myProjectRoot, xml, false);
   }
 
-  protected VirtualFile createProfilesXmlOldStyle(String relativePath, String xml) throws IOException {
-    return createProfilesFile(createProjectSubDir(relativePath), xml, true);
+  protected VirtualFile createProfilesXml(String relativePath, String xml) throws IOException {
+    return createProfilesFile(createProjectSubDir(relativePath), xml, false);
   }
 
   private VirtualFile createProfilesFile(VirtualFile dir, String xml, boolean oldStyle) throws IOException {
