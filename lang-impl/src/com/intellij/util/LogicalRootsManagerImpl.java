@@ -111,7 +111,8 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
     LogicalRoot result = null;
     final List<LogicalRoot> list = getLogicalRoots(module);
     for (final LogicalRoot root : list) {
-      if (VfsUtil.isAncestor(root.getVirtualFile(), file, false)) {
+      final VirtualFile rootFile = root.getVirtualFile();
+      if (rootFile != null && VfsUtil.isAncestor(rootFile, file, false)) {
         result = root;
         break;
       }

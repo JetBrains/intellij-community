@@ -18,6 +18,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author spleaner
@@ -35,7 +36,7 @@ public class VirtualFileLogicalRoot extends LogicalRoot {
     this(virtualFile, LogicalRootType.SOURCE_ROOT);
   }
 
-  @NotNull
+  @Nullable
   public VirtualFile getVirtualFile() {
     return myVirtualFile;
   }
