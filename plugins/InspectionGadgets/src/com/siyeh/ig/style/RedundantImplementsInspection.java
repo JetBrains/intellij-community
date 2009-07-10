@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,27 +26,48 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class RedundantImplementsInspection extends BaseInspection {
 
+    public boolean ignoreSerializable = false;
+    public boolean ignoreCloneable = false;
+
+    @Override
     @NotNull
     public String getID() {
         return "RedundantInterfaceDeclaration";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "redundant.implements.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "redundant.implements.problem.descriptor");
     }
 
+    @Override
+    public JComponent createOptionsPanel() {
+        final MultipleCheckboxOptionsPanel checkboxOptionsPanel =
+                new MultipleCheckboxOptionsPanel(this);
+        checkboxOptionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "ignore.serializable.option"), "ignoreSerializable");
+        checkboxOptionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "ignore.cloneable.option"), "ignoreCloneable");
+        return checkboxOptionsPanel;
+    }
+
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new RedundantImplementsFix();
     }
@@ -59,6 +80,7 @@ public class RedundantImplementsInspection extends BaseInspection {
                     "redundant.implements.remove.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement implementReference = descriptor.getPsiElement();
@@ -66,12 +88,12 @@ public class RedundantImplementsInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new RedundantImplementsVisitor();
     }
 
-    private static class RedundantImplementsVisitor
-            extends BaseInspectionVisitor {
+    private class RedundantImplementsVisitor extends BaseInspectionVisitor {
 
         @Override public void visitClass(@NotNull PsiClass aClass) {
             if (aClass.isAnnotationType()) {
@@ -91,14 +113,15 @@ public class RedundantImplementsInspection extends BaseInspection {
             }
             final PsiJavaCodeReferenceElement[] extendsElements =
                     extendsList.getReferenceElements();
-            for (final PsiJavaCodeReferenceElement implementsElement :
+            for (final PsiJavaCodeReferenceElement extendsElement :
                     extendsElements) {
-                final PsiElement referent = implementsElement.resolve();
-                if (referent instanceof PsiClass) {
-                    final PsiClass implementedClass = (PsiClass)referent;
-                    checkExtendedInterface(implementedClass,
-                            implementsElement, extendsElements);
+                final PsiElement referent = extendsElement.resolve();
+                if (!(referent instanceof PsiClass)) {
+                    continue;
                 }
+                final PsiClass extendedInterface = (PsiClass)referent;
+                checkExtendedInterface(extendedInterface, extendsElement,
+                        extendsElements);
             }
         }
 
@@ -129,6 +152,14 @@ public class RedundantImplementsInspection extends BaseInspection {
                 PsiJavaCodeReferenceElement implementsElement,
                 PsiJavaCodeReferenceElement[] extendsElements,
                 PsiJavaCodeReferenceElement[] implementsElements) {
+            final String qualifiedName = implementedClass.getQualifiedName();
+            if (ignoreSerializable &&
+                    "java.io.Serializable".equals(qualifiedName)) {
+                return;
+            } else if (ignoreCloneable &&
+                    "java.lang.Cloneable".equals(qualifiedName)) {
+                return;
+            }
             for (final PsiJavaCodeReferenceElement extendsElement :
                     extendsElements) {
                 final PsiElement extendsReferent = extendsElement.resolve();
@@ -161,23 +192,23 @@ public class RedundantImplementsInspection extends BaseInspection {
         }
 
         private void checkExtendedInterface(
-                PsiClass implementedClass,
-                PsiJavaCodeReferenceElement implementsElement,
+                PsiClass extendedInterface,
+                PsiJavaCodeReferenceElement extendsElement,
                 PsiJavaCodeReferenceElement[] extendsElements) {
-            for (final PsiJavaCodeReferenceElement testImplementElement :
+            for (final PsiJavaCodeReferenceElement testExtendsElement :
                     extendsElements) {
-                if (testImplementElement.equals(implementsElement)) {
+                if (testExtendsElement.equals(extendsElement)) {
                     continue;
                 }
                 final PsiElement implementsReferent =
-                        testImplementElement.resolve();
+                        testExtendsElement.resolve();
                 if (!(implementsReferent instanceof PsiClass)) {
                     continue;
                 }
-                final PsiClass testImplementedClass =
+                final PsiClass testExtendedInterface =
                         (PsiClass)implementsReferent;
-                if (testImplementedClass.isInheritor(implementedClass, true)) {
-                    registerError(implementsElement);
+                if (testExtendedInterface.isInheritor(extendedInterface, true)) {
+                    registerError(extendsElement);
                     return;
                 }
             }
