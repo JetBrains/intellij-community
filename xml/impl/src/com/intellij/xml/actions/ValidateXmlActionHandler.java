@@ -483,6 +483,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
         if (schemaChecking) {
           parser.setProperty(JAXPConstants.JAXP_SCHEMA_LANGUAGE,JAXPConstants.W3C_XML_SCHEMA);
           parser.getXMLReader().setFeature(SCHEMA_FULL_CHECKING_FEATURE_ID, true);
+          parser.getXMLReader().setFeature("http://apache.org/xml/features/honour-all-schemaLocations", true);
 
           parser.getXMLReader().setFeature("http://apache.org/xml/features/validation/warn-on-undeclared-elemdef",Boolean.TRUE);
           parser.getXMLReader().setFeature("http://apache.org/xml/features/validation/warn-on-duplicate-attdef",Boolean.TRUE);
