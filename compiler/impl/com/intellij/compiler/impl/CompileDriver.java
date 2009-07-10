@@ -332,30 +332,25 @@ public class CompileDriver {
           if (myProject.isDisposed()) {
             return;
           }
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("COMPILATION STARTED");
-          }
+          LOG.info("COMPILATION STARTED");
           if (message != null) {
             compileContext.addMessage(message);
           }
           doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion, trackDependencies);
         }
         finally {
-          if (LOG.isDebugEnabled()) {
-            long finish = System.currentTimeMillis();
-            LOG.debug("       Make took " +
-                               (finish - start)/1000/60 + "m" +((finish - start)%60000)/1000 + "s" +
-                               " with " +
-                               compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
-                               " errors, " +
-                               compileContext.getMessageCount(CompilerMessageCategory.WARNING) +
-                               " warnings.");
-          }
-
           compileContext.commitZipFiles();
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("COMPILATION FINISHED");
-          }
+          
+          final long finish = System.currentTimeMillis();
+          LOG.info("\tCOMPILATION FINISHED in " +
+                    (finish - start)/60000 + " min " +((finish - start)%60000)/1000 + "sec; errors: " +
+                    compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
+                    "; warnings: " +
+                    compileContext.getMessageCount(CompilerMessageCategory.WARNING)
+          );
+          //if (LOG.isDebugEnabled()) {
+          //  LOG.debug("COMPILATION FINISHED");
+          //}
         }
       }
     }, new Runnable() {

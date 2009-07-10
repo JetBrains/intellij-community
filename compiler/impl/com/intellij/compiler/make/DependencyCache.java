@@ -138,7 +138,7 @@ public class DependencyCache {
       return; // optimization
     }
 
-    //final long updateStart = System.currentTimeMillis();
+    final long updateStart = System.currentTimeMillis();
     //pause();
 
     final int[] namesToUpdate = myToUpdate.toArray();
@@ -223,7 +223,8 @@ public class DependencyCache {
     }
     myToUpdate = new TIntHashSet();
 
-    //System.out.println("Dependency cache update took: " + (System.currentTimeMillis() - updateStart) + " ms");
+    final long updateFinish = System.currentTimeMillis();
+    LOG.info("Dependency cache update took: " + (updateFinish - updateStart)/60000 + " min " +((updateFinish - updateStart)%60000)/1000 + "sec");
     //pause();
   }
 
