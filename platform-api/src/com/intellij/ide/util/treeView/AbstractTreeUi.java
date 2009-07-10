@@ -519,12 +519,12 @@ class AbstractTreeUi {
   }
 
   private boolean update(final NodeDescriptor nodeDescriptor, boolean canBeNonEdt) {
-    if (!canBeNonEdt) {
+    if (!canBeNonEdt && myWasEverShown) {
       assertIsDispatchThread();
     }
 
     final Application app = ApplicationManager.getApplication();
-    if (app.isDispatchThread()) {
+    if (app.isDispatchThread() || !myWasEverShown) {
       return getBuilder().updateNodeDescriptor(nodeDescriptor);
     }
     else {
