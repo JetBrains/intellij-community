@@ -108,8 +108,8 @@ public class DynamicRegexReplaceableByCompiledPatternInspection
             final PsiExpression[] expressions = list.getExpressions();
             final StringBuilder fieldText =
                     new StringBuilder(
-                            "private static final Pattern PATTERN = " +
-                                    "Pattern.compile(");
+                            "private static final java.util.regex.Pattern PATTERN = " +
+                                    "java.util.regex.Pattern.compile(");
             final int expressionsLength = expressions.length;
             if (expressionsLength > 0) {
                 fieldText.append(expressions[0].getText());
