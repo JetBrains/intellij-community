@@ -167,6 +167,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "    <plugin>" +
                   "      <groupId>org.codehaus.mojo</groupId>" +
                   "      <artifactId>build-helper-maven-plugin</artifactId>" +
+                  "      <version>1.3</version>" +
                   "      <executions>" +
                   "        <execution>" +
                   "          <id>someId</id>" +
@@ -204,6 +205,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "    <plugin>" +
                   "      <groupId>org.codehaus.mojo</groupId>" +
                   "      <artifactId>build-helper-maven-plugin</artifactId>" +
+                  "      <version>1.3</version>" +
                   "      <executions>" +
                   "        <execution>" +
                   "          <id>someId</id>" +
@@ -242,6 +244,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "    <plugin>" +
                   "      <groupId>org.codehaus.mojo</groupId>" +
                   "      <artifactId>build-helper-maven-plugin</artifactId>" +
+                  "      <version>1.3</version>" +
                   "      <executions>" +
                   "        <execution>" +
                   "          <id>someId</id>" +
@@ -278,6 +281,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "    <plugin>" +
                   "      <groupId>org.codehaus.mojo</groupId>" +
                   "      <artifactId>build-helper-maven-plugin</artifactId>" +
+                  "      <version>1.3</version>" +
                   "      <executions>" +
                   "        <execution>" +
                   "          <id>someId</id>" +
@@ -314,6 +318,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "    <plugin>" +
                   "      <groupId>org.codehaus.mojo</groupId>" +
                   "      <artifactId>build-helper-maven-plugin</artifactId>" +
+                  "      <version>1.3</version>" +
                   "      <executions>" +
                   "        <execution>" +
                   "          <id>someId</id>" +
@@ -369,6 +374,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                     "    <plugin>" +
                     "      <groupId>org.codehaus.mojo</groupId>" +
                     "      <artifactId>build-helper-maven-plugin</artifactId>" +
+                    "      <version>1.3</version>" +
                     "      <executions>" +
                     "        <execution>" +
                     "          <id>someId</id>" +
@@ -488,6 +494,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "    <plugin>" +
                   "      <groupId>org.codehaus.mojo</groupId>" +
                   "      <artifactId>build-helper-maven-plugin</artifactId>" +
+                  "      <version>1.3</version>" +
                   "      <executions>" +
                   "        <execution>" +
                   "          <id>id</id>" +
