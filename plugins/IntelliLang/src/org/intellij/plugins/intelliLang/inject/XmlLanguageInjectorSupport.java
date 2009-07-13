@@ -17,7 +17,6 @@
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -25,9 +24,10 @@ import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -46,6 +46,7 @@ import org.intellij.plugins.intelliLang.inject.config.ui.configurables.XmlTagInj
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Gregory.Shrago
@@ -62,7 +63,7 @@ public class XmlLanguageInjectorSupport implements LanguageInjectorSupport {
     }
     else if (host instanceof XmlText) {
       final XmlTag tag = ((XmlText)host).getParentTag();
-      return tag != null && tag.getValue().getTextElements().length == 1 && tag.getSubTags().length == 0;
+      return tag != null/* && tag.getValue().getTextElements().length == 1 && tag.getSubTags().length == 0*/;
     }
     return false;
   }
@@ -83,26 +84,19 @@ public class XmlLanguageInjectorSupport implements LanguageInjectorSupport {
     final Configuration configuration = Configuration.getInstance();
     final ArrayList<AbstractTagInjection> injections = collectInjections(host, configuration);
     if (injections.isEmpty()) return false;
-    final Project project = host.getProject();
+    addRemoveInjections(host.getProject(), configuration, Collections.<AbstractTagInjection>emptyList(), injections);
+    return true;
+  }
+
+  private static void addRemoveInjections(final Project project, final Configuration configuration, final List<AbstractTagInjection> newInjections,
+                                          final List<AbstractTagInjection> originalInjections) {
     final UndoableAction action = new UndoableAction() {
       public void undo() throws UnexpectedUndoException {
-        for (AbstractTagInjection injection : injections) {
-          if (injection instanceof XmlTagInjection) {
-            configuration.getTagInjections().add((XmlTagInjection)injection);
-          }
-          else if (injection instanceof XmlAttributeInjection) {
-            configuration.getAttributeInjections().add((XmlAttributeInjection)injection);
-          }
-        }
-        configuration.configurationModified();
-        FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+        addRemoveInjectionsInner(project, configuration, originalInjections, newInjections);
       }
 
       public void redo() throws UnexpectedUndoException {
-        configuration.getTagInjections().removeAll(injections);
-        configuration.getAttributeInjections().removeAll(injections);
-        configuration.configurationModified();
-        FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+        addRemoveInjectionsInner(project, configuration, newInjections, originalInjections);
       }
 
       public DocumentReference[] getAffectedDocuments() {
@@ -112,15 +106,29 @@ public class XmlLanguageInjectorSupport implements LanguageInjectorSupport {
       public boolean isComplex() {
         return true;
       }
+
     };
-    new WriteCommandAction(project) {
-      @Override
-      protected void run(final Result result) throws Throwable {
-        action.redo();
+    new WriteCommandAction.Simple(project) {
+      public void run() {
+        addRemoveInjectionsInner(project, configuration, newInjections, originalInjections);
         UndoManager.getInstance(project).undoableActionPerformed(action);
       }
     }.execute();
-    return true;
+  }
+
+  private static void addRemoveInjectionsInner(final Project project, final Configuration configuration, final List<AbstractTagInjection> newInjections, final List<AbstractTagInjection> originalInjections) {
+    configuration.getTagInjections().removeAll(originalInjections);
+    configuration.getAttributeInjections().removeAll(originalInjections);
+    for (AbstractTagInjection injection : newInjections) {
+      if (injection instanceof XmlTagInjection) {
+        configuration.getTagInjections().add((XmlTagInjection)injection);
+      }
+      else if (injection instanceof XmlAttributeInjection) {
+        configuration.getAttributeInjections().add((XmlAttributeInjection)injection);
+      }
+    }
+    configuration.configurationModified();
+    FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
   }
 
   public boolean editInjectionInPlace(final PsiLanguageInjectionHost host) {
@@ -129,16 +137,18 @@ public class XmlLanguageInjectorSupport implements LanguageInjectorSupport {
     final ArrayList<AbstractTagInjection> injections = collectInjections(host, configuration);
     if (injections.isEmpty()) return false;
     final Project project = host.getProject();
-    final AbstractTagInjection injection = injections.get(0);
+    final AbstractTagInjection originalInjection = injections.get(0);
+    final AbstractTagInjection newInjection = (AbstractTagInjection)originalInjection.copy();
+
     final AbstractInjectionPanel panel;
-    if (injection instanceof XmlTagInjection) {
-      panel = new XmlTagPanel((XmlTagInjection)injection, project);
+    if (newInjection instanceof XmlTagInjection) {
+      panel = new XmlTagPanel((XmlTagInjection)newInjection, project);
     }
-    else if (injection instanceof XmlAttributeInjection) {
-      panel = new XmlAttributePanel((XmlAttributeInjection)injection, project);
+    else if (newInjection instanceof XmlAttributeInjection) {
+      panel = new XmlAttributePanel((XmlAttributeInjection)newInjection, project);
     }
     else {
-      throw new AssertionError(injection);
+      throw new AssertionError(newInjection);
     }
     panel.reset();
     final DialogBuilder builder = new DialogBuilder(project);
@@ -149,12 +159,12 @@ public class XmlLanguageInjectorSupport implements LanguageInjectorSupport {
     builder.setOkOperation(new Runnable() {
       public void run() {
         panel.apply();
-        configuration.configurationModified();
-        FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
-        builder.getWindow().dispose();
+        builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
       }
     });
-    builder.show();
+    if (builder.show() == DialogWrapper.OK_EXIT_CODE) {
+      addRemoveInjections(project, configuration, Collections.singletonList(newInjection), Collections.singletonList(originalInjection));
+    }
     return true;
   }
 

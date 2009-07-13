@@ -25,7 +25,9 @@ import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -84,7 +86,12 @@ public class JavaLanguageInjectorSupport implements LanguageInjectorSupport {
         return null;
       }
     });
+    addRemoveInjections(project, configuration, newInjections, originalInjections, annotations);
+    return true;
+  }
 
+  private static void addRemoveInjections(final Project project, final Configuration configuration, final List<MethodParameterInjection> newInjections,
+                                   final List<MethodParameterInjection> originalInjections, final List<PsiAnnotation> annotations) {
     final List<PsiFile> psiFiles = ContainerUtil.mapNotNull(annotations, new NullableFunction<PsiAnnotation, PsiFile>() {
       public PsiFile fun(final PsiAnnotation psiAnnotation) {
         return psiAnnotation instanceof PsiCompiledElement ? null : psiAnnotation.getContainingFile();
@@ -92,17 +99,11 @@ public class JavaLanguageInjectorSupport implements LanguageInjectorSupport {
     });
     final UndoableAction action = new UndoableAction() {
       public void undo() throws UnexpectedUndoException {
-        configuration.getParameterInjections().removeAll(newInjections);
-        configuration.getParameterInjections().addAll(originalInjections);
-        configuration.configurationModified();
-        FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+        addRemoveInjectionsInner(project, configuration, originalInjections, newInjections);
       }
 
       public void redo() throws UnexpectedUndoException {
-        configuration.getParameterInjections().removeAll(originalInjections);
-        configuration.getParameterInjections().addAll(newInjections);
-        configuration.configurationModified();
-        FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+        addRemoveInjectionsInner(project, configuration, newInjections, originalInjections);
       }
 
       public DocumentReference[] getAffectedDocuments() {
@@ -113,17 +114,23 @@ public class JavaLanguageInjectorSupport implements LanguageInjectorSupport {
         return true;
       }
     };
-    new WriteCommandAction(project, psiFiles.toArray(new PsiFile[psiFiles.size()])) {
-      @Override
-      protected void run(final Result result) throws Throwable {
+    new WriteCommandAction.Simple(project, psiFiles.toArray(new PsiFile[psiFiles.size()])) {
+      public void run() {
         for (PsiAnnotation annotation : annotations) {
           annotation.delete();
         }
-        action.redo();
+        addRemoveInjectionsInner(project, configuration, newInjections, originalInjections);
         UndoManager.getInstance(project).undoableActionPerformed(action);
       }
     }.execute();
-    return true;
+  }
+
+  private static void addRemoveInjectionsInner(final Project project, final Configuration configuration,
+                                          final List<MethodParameterInjection> newInjections, final List<MethodParameterInjection> originalInjections) {
+    configuration.getParameterInjections().removeAll(originalInjections);
+    configuration.getParameterInjections().addAll(newInjections);
+    configuration.configurationModified();
+    FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
   }
 
   public boolean editInjectionInPlace(final PsiLanguageInjectionHost psiElement) {
@@ -137,8 +144,9 @@ public class JavaLanguageInjectorSupport implements LanguageInjectorSupport {
     if (injectionsMap.isEmpty() || !annotations.isEmpty()) return false;
     final ArrayList<MethodParameterInjection> injections = new ArrayList<MethodParameterInjection>(injectionsMap.keySet());
 
-    final MethodParameterInjection injection = injections.get(0);
-    final AbstractInjectionPanel panel = new MethodParameterPanel(injection, project);
+    final MethodParameterInjection originalInjection = injections.get(0);
+    final MethodParameterInjection newInjection = originalInjection.copy();
+    final AbstractInjectionPanel panel = new MethodParameterPanel(newInjection, project);
     panel.reset();
     final DialogBuilder builder = new DialogBuilder(project);
     builder.addOkAction();
@@ -148,12 +156,19 @@ public class JavaLanguageInjectorSupport implements LanguageInjectorSupport {
     builder.setOkOperation(new Runnable() {
       public void run() {
         panel.apply();
-        configuration.configurationModified();
-        FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
-        builder.getWindow().dispose();
+        builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
       }
     });
-    builder.show();
+    if (builder.show() == DialogWrapper.OK_EXIT_CODE) {
+      final List<MethodParameterInjection> newInjections =
+        ContainerUtil.find(newInjection.getMethodInfos(), new Condition<MethodParameterInjection.MethodInfo>() {
+          public boolean value(final MethodParameterInjection.MethodInfo info) {
+            return info.isEnabled();
+          }
+        }) == null ? Collections.<MethodParameterInjection>emptyList() : Collections.singletonList(newInjection);
+      addRemoveInjections(project, configuration, newInjections, Collections.singletonList(originalInjection),
+                          Collections.<PsiAnnotation>emptyList());
+    }
     return true;
 
   }
