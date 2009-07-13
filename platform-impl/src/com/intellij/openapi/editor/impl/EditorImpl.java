@@ -192,7 +192,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private JPanel myHeaderPanel;
 
   private MouseEvent myInitialMouseEvent;
-  private boolean myIgnoreMouseEventsConsequitiveToInitial;
+  private boolean myIgnoreMouseEventsConsecutiveToInitial;
 
   private String myReleasedAt = null;
 
@@ -384,7 +384,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     updateCaretCursor();
 
     if (myInitialMouseEvent != null) {
-      myIgnoreMouseEventsConsequitiveToInitial = true;
+      myIgnoreMouseEventsConsecutiveToInitial = true;
     }
   }
 
@@ -2510,19 +2510,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private boolean checkIgnore(MouseEvent e, boolean isFinalCheck) {
-    if (!myIgnoreMouseEventsConsequitiveToInitial) {
+    if (!myIgnoreMouseEventsConsecutiveToInitial) {
       myInitialMouseEvent = null;
       return false;
     }
 
     if (e.getComponent() != myInitialMouseEvent.getComponent() || !e.getPoint().equals(myInitialMouseEvent.getPoint())) {
-      myIgnoreMouseEventsConsequitiveToInitial = false;
+      myIgnoreMouseEventsConsecutiveToInitial = false;
       myInitialMouseEvent = null;
       return false;
     }
 
     if (isFinalCheck) {
-      myIgnoreMouseEventsConsequitiveToInitial = false;
+      myIgnoreMouseEventsConsecutiveToInitial = false;
       myInitialMouseEvent = null;
     }
 
