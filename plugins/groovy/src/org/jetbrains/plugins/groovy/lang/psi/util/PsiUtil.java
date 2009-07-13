@@ -641,7 +641,7 @@ public class PsiUtil {
     final GroovyResolveResult[] resolveResults = call.getMethodVariants();
     if (resolveResults.length == 0) return false;
     final PsiElement element = resolveResults[0].getElement();
-    if (element != null) {
+    if (element instanceof PsiMethod) {
       PsiType returnType = ((PsiMethod)element).getReturnType();
       return isRawMemberAccess(resolveResults[0].getSubstitutor(), returnType);
     }

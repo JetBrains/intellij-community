@@ -76,7 +76,9 @@ public class GroovyUnresolvedAccessInspection extends BaseInspection {
 
       final PsiType refExprType = refExpr.getType();
       if (refExprType == null && resolved == null) {
-        registerError(refExpr);
+        PsiElement refNameElement = refExpr.getReferenceNameElement();
+        PsiElement element = refNameElement == null ? refExpr : refNameElement;
+        registerError(element);
       }
     }
 
