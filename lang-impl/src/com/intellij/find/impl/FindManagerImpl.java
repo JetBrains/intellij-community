@@ -3,11 +3,15 @@ package com.intellij.find.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.highlighting.HighlightManagerImpl;
-import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.*;
 import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -22,6 +26,10 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -30,9 +38,12 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.usages.UsageViewManager;
@@ -215,6 +226,12 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
   @NotNull
   public FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model){
+    return findString(text, offset, model, null);
+  }
+
+  @NotNull
+  @Override
+  public FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model, @Nullable VirtualFile file) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("offset="+offset);
       LOG.debug("textlength="+text.length());
@@ -222,7 +239,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
 
     while(true){
-      FindResult result = doFindString(text, offset, model);
+      FindResult result = doFindString(text, offset, model, file);
 
       if (!model.isWholeWordsOnly()) {
         return result;
@@ -250,17 +267,22 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return isWordStart && isWordEnd;
   }
 
-  private static FindResult doFindString(CharSequence text, int offset, FindModel model) {
+  private static FindResult doFindString(CharSequence text, int offset, final FindModel model, @Nullable VirtualFile file) {
     String toFind = model.getStringToFind();
     if (toFind == null || toFind.length() == 0){
       return NOT_FOUND_RESULT;
+    }
+
+    if (model.isInCommentsOnly() || model.isInStringLiteralsOnly()) {
+      return findInCommentsAndLiterals(text, offset, model, file);
     }
 
     if (model.isRegularExpressions()){
       return findStringByRegularExpression(text, offset, model);
     }
 
-    StringSearcher searcher = new StringSearcher(toFind, model.isCaseSensitive(), model.isForward());
+    final StringSearcher searcher = createStringSearcher(model);
+
     int index;
     if (model.isForward()){
       final int res = searcher.scan(text.subSequence(offset, text.length()));
@@ -275,19 +297,129 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return new FindResultImpl(index, index + toFind.length());
   }
 
+  private static StringSearcher createStringSearcher(FindModel model) {
+    return new StringSearcher(model.getStringToFind(), model.isCaseSensitive(), model.isForward());
+  }
+
+  static class CommentsLiteralsSearchData {
+    final VirtualFile lastFile;
+    int startOffset = 0;
+    final Lexer lexer;
+
+    final TokenSet tokensOfInterest;
+    final StringSearcher searcher;
+    final Matcher matcher;
+
+    public CommentsLiteralsSearchData(VirtualFile lastFile, Lexer lexer, TokenSet tokensOfInterest,
+                                      StringSearcher searcher, Matcher matcher) {
+      this.lastFile = lastFile;
+      this.lexer = lexer;
+      this.tokensOfInterest = tokensOfInterest;
+      this.searcher = searcher;
+      this.matcher = matcher;
+    }
+  }
+
+  private static final Key<CommentsLiteralsSearchData> ourCommentsLiteralsSearchDataKey = Key.create("comments.literals.search.data");
+
+  private static FindResult findInCommentsAndLiterals(CharSequence text, int offset, FindModel model, VirtualFile file) {
+    if (file == null) return NOT_FOUND_RESULT;
+
+    FileType ftype = file.getFileType();
+    Language lang = null;
+    if (ftype instanceof LanguageFileType) {
+      lang = ((LanguageFileType)ftype).getLanguage();
+    }
+
+    if(lang == null) return NOT_FOUND_RESULT;
+
+    CommentsLiteralsSearchData data = model.getUserData(ourCommentsLiteralsSearchDataKey);
+    if (data == null || data.lastFile != file) {
+      Lexer lexer = getLexer(file, lang);
+
+      ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
+      TokenSet tokensOfInterest = model.isInCommentsOnly() ? definition.getCommentTokens(): TokenSet.EMPTY;
+      tokensOfInterest = TokenSet.orSet(tokensOfInterest, model.isInStringLiteralsOnly() ? definition.getStringLiteralElements() : TokenSet.EMPTY);
+
+      if(model.isInStringLiteralsOnly()) {
+        // TODO: xml does not have string literals defined so we add XmlAttributeValue element type as convenience
+        final Lexer xmlLexer = getLexer(null, Language.findLanguageByID("XML"));
+        final String marker = "xxx";
+        xmlLexer.start("<a href=\"" + marker+ "\" />");
+
+        while (!marker.equals(xmlLexer.getTokenText())) {
+          xmlLexer.advance();
+          if (xmlLexer.getTokenType() == null) break;
+        }
+
+        IElementType convenienceXmlAttrType = xmlLexer.getTokenType();
+        if (convenienceXmlAttrType != null) {
+          tokensOfInterest = TokenSet.orSet(tokensOfInterest, TokenSet.create(convenienceXmlAttrType));
+        }
+      }
+
+      Matcher matcher = model.isRegularExpressions() ? compileRegExp(model, ""):null;
+      StringSearcher searcher = matcher != null ? null: createStringSearcher(model);
+      data = new CommentsLiteralsSearchData(file, lexer, tokensOfInterest, searcher, matcher);
+      model.putUserData(ourCommentsLiteralsSearchDataKey, data);
+    }
+
+    data.lexer.start(text, data.startOffset, text.length(), 0);
+
+    IElementType tokenType;
+    final Lexer lexer = data.lexer;
+    final TokenSet tokens = data.tokensOfInterest;
+
+    int lastGoodOffset = 0;
+    boolean scanningForward = model.isForward();
+    FindResultImpl prevFindResult = NOT_FOUND_RESULT;
+
+    while((tokenType = lexer.getTokenType()) != null) {
+      if (lexer.getState() == 0) lastGoodOffset = lexer.getTokenStart();
+
+      if (tokens.contains(tokenType)) {
+        int start = lexer.getTokenStart();
+
+        if (start >= offset || !scanningForward) {
+          FindResultImpl findResult = null;
+
+          if (data.searcher != null) {
+            int i = data.searcher.scan(text, start, lexer.getTokenEnd());
+            if (i != -1) findResult = new FindResultImpl(i, i + model.getStringToFind().length());
+          } else {
+            data.matcher.reset(text.subSequence(start, lexer.getTokenEnd()));
+            if (data.matcher.find()) {
+              int matchStart = data.matcher.start();
+              findResult = new FindResultImpl(start + matchStart, start + data.matcher.end());
+            }
+          }
+
+          if (findResult != null) {
+            if (scanningForward) {
+              data.startOffset = lastGoodOffset;
+              return findResult;
+            } else {
+              if (start >= offset) return prevFindResult;
+              prevFindResult = findResult;
+            }
+          }
+        }
+      }
+
+      lexer.advance();
+    }
+
+    return prevFindResult;
+  }
+
+  private static Lexer getLexer(VirtualFile file, Language lang) {
+    SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(lang, null, file);
+    assert syntaxHighlighter != null:"Syntax highlighter is null:"+file;
+    return syntaxHighlighter.getHighlightingLexer();
+  }
+
   private static FindResult findStringByRegularExpression(CharSequence text, int startOffset, FindModel model) {
-    String toFind = model.getStringToFind();
-
-    Pattern pattern;
-    try {
-      pattern = Pattern.compile(toFind, model.isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
-    }
-    catch(PatternSyntaxException e){
-      LOG.error(e);
-      return null;
-    }
-
-    Matcher matcher = pattern.matcher(text);
+    Matcher matcher = compileRegExp(model, text);
 
     if (model.isForward()){
       if (matcher.find(startOffset)) {
@@ -309,6 +441,21 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       }
       return new FindResultImpl(start, end);
     }
+  }
+
+  private static Matcher compileRegExp(FindModel model, CharSequence text) {
+    String toFind = model.getStringToFind();
+
+    Pattern pattern;
+    try {
+      pattern = Pattern.compile(toFind, model.isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+    }
+    catch(PatternSyntaxException e){
+      LOG.error(e);
+      return null;
+    }
+
+    return pattern.matcher(text);
   }
 
   public String getStringToReplace(@NotNull String foundString, FindModel model) {

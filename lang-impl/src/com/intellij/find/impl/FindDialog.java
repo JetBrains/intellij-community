@@ -52,6 +52,8 @@ final class FindDialog extends DialogWrapper {
   private StateRestoringCheckBox myCbCaseSensitive;
   private StateRestoringCheckBox myCbPreserveCase;
   private StateRestoringCheckBox myCbWholeWordsOnly;
+  private StateRestoringCheckBox myCbInCommentsOnly;
+  private StateRestoringCheckBox myCbInStringLiteralsOnly;
   private StateRestoringCheckBox myCbRegularExpressions;
   private JRadioButton myRbGlobal;
   private JRadioButton myRbSelectedText;
@@ -486,6 +488,14 @@ final class FindDialog extends DialogWrapper {
 
     findOptionsPanel.add(myCbWholeWordsOnly);
 
+    myCbInCommentsOnly = createCheckbox(FindBundle.message("find.options.comments.only"));
+
+    findOptionsPanel.add(myCbInCommentsOnly);
+
+    myCbInStringLiteralsOnly = createCheckbox(FindBundle.message("find.options.string.literals.only"));
+
+    findOptionsPanel.add(myCbInStringLiteralsOnly);
+
     myCbRegularExpressions = createCheckbox(FindBundle.message("find.options.regular.expressions"));
     findOptionsPanel.add(myCbRegularExpressions);
 
@@ -838,6 +848,12 @@ final class FindDialog extends DialogWrapper {
 
     model.setWholeWordsOnly(myCbWholeWordsOnly.isSelected());
     findSettings.setWholeWordsOnly(myCbWholeWordsOnly.isSelected());
+    model.setInStringLiteralsOnly(myCbInStringLiteralsOnly.isSelected());
+    findSettings.setInStringLiteralsOnly(myCbInStringLiteralsOnly.isSelected());
+
+    model.setInCommentsOnly(myCbInCommentsOnly.isSelected());
+    findSettings.setInCommentsOnly(myCbInCommentsOnly.isSelected());
+
     model.setRegularExpressions(myCbRegularExpressions.isSelected());
     findSettings.setRegularExpressions(myCbRegularExpressions.isSelected());
     model.setStringToFind(getStringToFind());
@@ -894,6 +910,8 @@ final class FindDialog extends DialogWrapper {
   private void initByModel() {
     myCbCaseSensitive.setSelected(myModel.isCaseSensitive());
     myCbWholeWordsOnly.setSelected(myModel.isWholeWordsOnly());
+    myCbInStringLiteralsOnly.setSelected(myModel.isInStringLiteralsOnly());
+    myCbInCommentsOnly.setSelected(myModel.isInCommentsOnly());
     myCbRegularExpressions.setSelected(myModel.isRegularExpressions());
 
     if (myModel.isMultipleFiles()) {

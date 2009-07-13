@@ -62,6 +62,8 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   @SuppressWarnings({"WeakerAccess"}) public boolean LOCAL_CASE_SENSITIVE_SEARCH = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean PRESERVE_CASE_REPLACE = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean WHOLE_WORDS_ONLY = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean COMMENTS_ONLY = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean STRING_LITERALS_ONLY = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean LOCAL_WHOLE_WORDS_ONLY = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean REGULAR_EXPRESSIONS = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean WITH_SUBDIRECTORIES = true;
@@ -213,6 +215,8 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     model.setGlobal(isGlobal());
     model.setRegularExpressions(isRegularExpressions());
     model.setWholeWordsOnly(isWholeWordsOnly());
+    model.setInCommentsOnly(isInCommentsOnly());
+    model.setInStringLiteralsOnly(isInStringLiteralsOnly());
     model.setWithSubdirectories(isWithSubdirectories());
     model.setFileFilter(FILE_MASK);
 
@@ -279,6 +283,26 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
 
   public String getCustomScope() {
     return SEARCH_SCOPE;
+  }
+
+  @Override
+  public boolean isInStringLiteralsOnly() {
+    return STRING_LITERALS_ONLY;
+  }
+
+  @Override
+  public boolean isInCommentsOnly() {
+    return COMMENTS_ONLY;
+  }
+
+  @Override
+  public void setInCommentsOnly(boolean selected) {
+    COMMENTS_ONLY = selected;
+  }
+
+  @Override
+  public void setInStringLiteralsOnly(boolean selected) {
+    STRING_LITERALS_ONLY = selected;
   }
 
   public void setCustomScope(final String SEARCH_SCOPE) {

@@ -570,7 +570,7 @@ public class FindInProjectUtil {
     FindManager findManager = FindManager.getInstance(project);
     while (offset < textLength) {
       usageViewManager.checkSearchCanceled();
-      FindResult result = findManager.findString(text, offset, findModel);
+      FindResult result = findManager.findString(text, offset, findModel, psiFile.getVirtualFile());
       if (!result.isStringFound()) break;
 
       UsageInfo info = new UsageInfo(psiFile, result.getStartOffset(), result.getEndOffset());

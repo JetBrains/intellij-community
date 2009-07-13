@@ -18,17 +18,20 @@ package com.intellij.find;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.openapi.util.UserDataHolderBase;
 
 /**
  * Represents the settings of a Find, Replace, Find in Path or Replace in Path
  * operations.
  */
-public class FindModel implements Cloneable {
+public class FindModel extends UserDataHolderBase implements Cloneable {
   private String myStringToFind;
   private String myStringToReplace;
   private boolean isSearchHighlighters = false;
   private boolean isReplaceState = false;
   private boolean isWholeWordsOnly = false;
+  private boolean isInCommentsOnly;
+  private boolean isInStringLiteralsOnly;
   private boolean isFromCursor = true;
   private boolean isForward = true;
   private boolean isGlobal = true;
@@ -100,6 +103,9 @@ public class FindModel implements Cloneable {
     customScopeName = model.customScopeName;
     customScope = model.customScope;
     isFindAll = model.isFindAll;
+
+    isInCommentsOnly = model.isInCommentsOnly;
+    isInStringLiteralsOnly = model.isInStringLiteralsOnly;
   }
 
   /**
@@ -430,13 +436,7 @@ public class FindModel implements Cloneable {
   }
 
   public Object clone() {
-    // throws CloneNotSupportedException {
-    try {
-      return super.clone();
-    }
-    catch (CloneNotSupportedException e) {
-      return null;
-    }
+    return super.clone();
   }
 
 
@@ -447,6 +447,8 @@ public class FindModel implements Cloneable {
     buffer.append("myStringToReplace =").append(myStringToReplace).append("\n");
     buffer.append("isReplaceState =").append(isReplaceState).append("\n");
     buffer.append("isWholeWordsOnly =").append(isWholeWordsOnly).append("\n");
+    buffer.append("isInStringLiterals =").append(isInStringLiteralsOnly).append("\n");
+    buffer.append("isInComments =").append(isInCommentsOnly).append("\n");
     buffer.append("isFromCursor =").append(isFromCursor).append("\n");
     buffer.append("isForward =").append(isForward).append("\n");
     buffer.append("isGlobal =").append(isGlobal).append("\n");
@@ -582,5 +584,21 @@ public class FindModel implements Cloneable {
 
   public void setCustomScope(final SearchScope customScope) {
     this.customScope = customScope;
+  }
+
+  public boolean isInStringLiteralsOnly() {
+    return isInStringLiteralsOnly;
+  }
+
+  public void setInStringLiteralsOnly(boolean inStringLiteralsOnly) {
+    isInStringLiteralsOnly = inStringLiteralsOnly;
+  }
+
+  public boolean isInCommentsOnly() {
+    return isInCommentsOnly;
+  }
+
+  public void setInCommentsOnly(boolean inCommentsOnly) {
+    isInCommentsOnly = inCommentsOnly;
   }
 }

@@ -92,4 +92,10 @@ public abstract class FindSettings{
   public abstract void setFileMask(String fileMask);
   public abstract void setCustomScope(String scopeName);
   public abstract String getCustomScope();
+
+  public abstract boolean isInStringLiteralsOnly();
+  public abstract void setInStringLiteralsOnly(boolean selected);
+
+  public abstract boolean isInCommentsOnly();
+  public abstract void setInCommentsOnly(boolean selected);
 }

@@ -19,9 +19,11 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows to invoke and control Find, Replace and Find Usages operations.
@@ -90,6 +92,21 @@ public abstract class FindManager {
    */
   @NotNull
   public abstract FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model);
+
+  /**
+   * Searches for the specified substring in the specified character sequence,
+   * using the specified find settings. Supports case sensitive and insensitive
+   * searches, forward and backward searches, regular expression searches and
+   * searches for whole words.
+   *
+   * @param text   the text in which the search is performed.
+   * @param offset the start offset for the search.
+   * @param model  the settings for the search, including the string to find.
+   * @return the result of the search.
+   */
+  @NotNull
+  public abstract FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model,
+                                        @Nullable VirtualFile findContextFile);
 
   /**
    * Gets the string to replace with, given the specified found string and find/replace
