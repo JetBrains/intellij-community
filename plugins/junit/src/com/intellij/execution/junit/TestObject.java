@@ -24,6 +24,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit2.ui.JUnitTreeConsoleView;
 import com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction;
+import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -245,12 +246,13 @@ public abstract class TestObject implements JavaCommandLine {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
 
-            final boolean hasFailed = !Filter.DEFECTIVE_LEAF.and(JavaAwareFilter.METHOD(myProject)).select(consoleView.getModel().getRoot().getAllTests()).isEmpty();
+            final JUnitRunningModel model = consoleView.getModel();
+            final int failed = model != null ? Filter.DEFECTIVE_LEAF.and(JavaAwareFilter.METHOD(myProject)).select(model.getRoot().getAllTests()).size() : -1;
 
             ToolWindowManager.getInstance(myProject).notifyByBalloon(
               consoleView.getProperties().isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN,
-              hasFailed ? MessageType.ERROR : MessageType.INFO,
-              hasFailed ? ExecutionBundle.message("junit.runing.info.tests.failed.label") :  ExecutionBundle.message("junit.runing.info.tests.passed.label") , null, null);
+              failed == -1 ? MessageType.WARNING : (failed > 0 ? MessageType.ERROR : MessageType.INFO),
+              failed == -1 ? ExecutionBundle.message("test.not.started.progress.text") : (failed > 0 ? failed + " " + ExecutionBundle.message("junit.runing.info.tests.failed.label") :  ExecutionBundle.message("junit.runing.info.tests.passed.label")) , null, null);
           }
         });
       }

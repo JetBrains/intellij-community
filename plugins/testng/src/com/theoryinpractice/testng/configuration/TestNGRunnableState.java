@@ -132,11 +132,12 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            final boolean hasFailed = !Filter.DEFECTIVE_LEAF.and(JavaAwareFilter.METHOD(config.getProject())).select(console.getModel().getRoot().getAllTests()).isEmpty();
+            final TestFrameworkRunningModel model = console.getModel();
+            final int failed = model != null ? Filter.DEFECTIVE_LEAF.and(JavaAwareFilter.METHOD(config.getProject())).select(model.getRoot().getAllTests()).size() : -1;
             ToolWindowManager.getInstance(config.getProject()).notifyByBalloon(
               console.getProperties().isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN,
-              hasFailed ? MessageType.ERROR : MessageType.INFO,
-              hasFailed ? "Tests failed" :  "Tests passed" , null, null);
+              failed == -1 ? MessageType.WARNING : (failed > 0 ? MessageType.ERROR : MessageType.INFO),
+              failed == -1 ? "Tests were not started" : (failed > 0 ? failed + " Tests failed" :  "Tests passed") , null, null);
           }
         });
       }
@@ -282,7 +283,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
       public void run() {
         Map<PsiClass, Collection<PsiMethod>> classes = new HashMap<PsiClass, Collection<PsiMethod>>();
         try {
-          fillTestObjects(classes, project);
+          fillTestObjects(classes, project, is15);
 
 
           //if we have testclasses, then we're not running a suite and we have to create one
@@ -433,7 +434,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     return javaParameters;
   }
 
-  protected void fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes, final Project project) throws CantRunException {
+  protected void fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes, final Project project, boolean is15) throws CantRunException {
     final TestData data = config.getPersistantData();
     final PsiManager psiManager = PsiManager.getInstance(project);
     if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
@@ -454,7 +455,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
         //TODO we should narrow this down by module really, if that's what's specified
         TestClassFilter projectFilter = new TestClassFilter(scope.getSourceScope(config).getGlobalSearchScope(), config.getProject(), true);
         TestClassFilter filter = projectFilter.intersectionWith(PackageScope.packageScope(psiPackage, true));
-        classes.putAll(calculateDependencies(null, TestNGUtil.getAllTestClasses(filter, false)));
+        classes.putAll(calculateDependencies(null, is15, TestNGUtil.getAllTestClasses(filter, false)));
         if (classes.size() == 0) {
           throw new CantRunException("No tests found in the package \"" + packageName + '\"');
         }
@@ -481,7 +482,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
       })) {
         throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
       }
-      classes.putAll(calculateDependencies(null, psiClass));
+      classes.putAll(calculateDependencies(null, is15, psiClass));
     }
     else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
       //it's a method
@@ -513,7 +514,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
             }
           }
       );
-      classes.putAll(calculateDependencies(methods, psiClass));
+      classes.putAll(calculateDependencies(methods, is15, psiClass));
       Collection<PsiMethod> psiMethods = classes.get(psiClass);
       if (psiMethods == null) {
         psiMethods = new LinkedHashSet<PsiMethod>();
@@ -595,19 +596,19 @@ public class TestNGRunnableState extends JavaCommandLineState {
     }
   }
 
-  private Map<PsiClass, Collection<PsiMethod>> calculateDependencies(PsiMethod[] methods, @Nullable final PsiClass... classes) {
+  private Map<PsiClass, Collection<PsiMethod>> calculateDependencies(PsiMethod[] methods, final boolean is15, @Nullable final PsiClass... classes) {
     //we build up a list of dependencies
     final Map<PsiClass, Collection<PsiMethod>> results = new HashMap<PsiClass, Collection<PsiMethod>>();
     if (classes != null && classes.length > 0) {
       final Set<String> dependencies = new HashSet<String>();
-      final boolean usedJavadocTags = TestNGUtil.collectAnnotationValues(dependencies, "dependsOnGroups", methods, classes);
+      TestNGUtil.collectAnnotationValues(dependencies, "dependsOnGroups", methods, classes);
       ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run(){
               if (!dependencies.isEmpty()) {
               final Project project = classes[0].getProject();
               //we get all classes in the module to figure out which are in the groups we depend on
               Collection<PsiClass> allClasses;
-              if (usedJavadocTags) {
+              if (!is15) {
                 allClasses = AllClassesSearch.search(getSearchScope(), project).findAll();
                 Map<PsiClass, Collection<PsiMethod>> filteredClasses = TestNGUtil.filterAnnotations("groups", dependencies, allClasses);
                 //we now have a list of dependencies, and a list of classes that match those dependencies
