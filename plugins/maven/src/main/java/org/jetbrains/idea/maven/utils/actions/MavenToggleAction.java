@@ -12,7 +12,7 @@ public abstract class MavenToggleAction extends ToggleAction implements DumbAwar
   }
 
   protected boolean isAvailable(AnActionEvent e) {
-    return MavenActionUtils.getProject(e) != null;
+    return MavenActionUtil.getProject(e) != null;
   }
 
   public final boolean isSelected(AnActionEvent e) {

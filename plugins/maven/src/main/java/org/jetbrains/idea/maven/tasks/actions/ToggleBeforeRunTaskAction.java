@@ -8,7 +8,7 @@ import org.jetbrains.idea.maven.tasks.MavenBeforeRunTask;
 import org.jetbrains.idea.maven.tasks.MavenBeforeRunTasksProvider;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 import org.jetbrains.idea.maven.utils.actions.MavenToggleAction;
-import org.jetbrains.idea.maven.utils.actions.MavenActionUtils;
+import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
 import java.util.List;
 
@@ -30,11 +30,11 @@ public class ToggleBeforeRunTaskAction extends MavenToggleAction {
   @Override
   public void setSelected(final AnActionEvent e, boolean state) {
     Pair<MavenProject, String> desc = getTaskDesc(e);
-    new SelectBeforeRunTaskDialog(MavenActionUtils.getProject(e), desc.first, desc.second).show();
+    new SelectBeforeRunTaskDialog(MavenActionUtil.getProject(e), desc.first, desc.second).show();
   }
 
   protected Pair<MavenProject, String> getTaskDesc(AnActionEvent e) {
-    MavenProject mavenProject = MavenActionUtils.getMavenProject(e);
+    MavenProject mavenProject = MavenActionUtil.getMavenProject(e);
     if (mavenProject == null) return null;
 
     List<String> goals = e.getData(MavenDataKeys.MAVEN_GOALS);
@@ -44,6 +44,6 @@ public class ToggleBeforeRunTaskAction extends MavenToggleAction {
   }
 
   private RunManagerEx getRunManager(AnActionEvent e) {
-    return RunManagerEx.getInstanceEx(MavenActionUtils.getProject(e));
+    return RunManagerEx.getInstanceEx(MavenActionUtil.getProject(e));
   }
 }

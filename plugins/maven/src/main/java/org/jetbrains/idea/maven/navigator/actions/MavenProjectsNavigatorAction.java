@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.navigator.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.utils.actions.MavenToggleAction;
-import org.jetbrains.idea.maven.utils.actions.MavenActionUtils;
+import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
 public abstract class MavenProjectsNavigatorAction extends MavenToggleAction {
   @Override
@@ -17,7 +17,7 @@ public abstract class MavenProjectsNavigatorAction extends MavenToggleAction {
   }
 
   private MavenProjectsNavigator getNavigator(AnActionEvent e) {
-    return MavenProjectsNavigator.getInstance(MavenActionUtils.getProject(e));
+    return MavenProjectsNavigator.getInstance(MavenActionUtil.getProject(e));
   }
 
   protected abstract boolean isSelected(MavenProjectsNavigator navigator);

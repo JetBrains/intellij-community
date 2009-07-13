@@ -12,6 +12,6 @@ public abstract class MavenAction extends AnAction implements DumbAware {
   }
 
   protected boolean isAvailable(AnActionEvent e) {
-    return MavenActionUtils.getProject(e) != null;
+    return MavenActionUtil.getProject(e) != null;
   }
 }

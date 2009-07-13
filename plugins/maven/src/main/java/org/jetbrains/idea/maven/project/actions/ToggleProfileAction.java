@@ -4,7 +4,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
-import org.jetbrains.idea.maven.utils.actions.MavenActionUtils;
+import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
 import java.util.List;
@@ -14,7 +14,7 @@ public class ToggleProfileAction extends MavenAction {
     super.update(e);
     if (!isAvailable(e)) return;
 
-    MavenProjectsManager projectsManager = MavenActionUtils.getProjectsManager(e);
+    MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(e);
     List<String> profiles = e.getData(MavenDataKeys.MAVEN_PROFILES);
 
     e.getPresentation().setText(isActive(projectsManager, profiles)
@@ -29,7 +29,7 @@ public class ToggleProfileAction extends MavenAction {
     List<String> selectedProfiles = e.getData(MavenDataKeys.MAVEN_PROFILES);
     if (selectedProfiles == null || selectedProfiles.isEmpty()) return false;
 
-    List<String> activeProfiles = MavenActionUtils.getProjectsManager(e).getActiveProfiles();
+    List<String> activeProfiles = MavenActionUtil.getProjectsManager(e).getActiveProfiles();
     int activeCount = 0;
     for (String profile : selectedProfiles) {
       if (activeProfiles.contains(profile)) {
@@ -45,7 +45,7 @@ public class ToggleProfileAction extends MavenAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    MavenProjectsManager manager = MavenActionUtils.getProjectsManager(e);
+    MavenProjectsManager manager = MavenActionUtil.getProjectsManager(e);
     List<String> selectedProfiles = e.getData(MavenDataKeys.MAVEN_PROFILES);
 
     List<String> activeProfiles = manager.getActiveProfiles();

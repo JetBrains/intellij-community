@@ -146,25 +146,25 @@
 
     <action id="Maven.RemoveManagedFiles"
             class="org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction"
-            text="Remove Project"
+            text="Remove Projects"
             description="Remove selected Maven projects from project tree"
             icon="/general/remove.png">
       <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
     </action>
 
-    <action id="Maven.EditProfilesXml"
-            class="org.jetbrains.idea.maven.project.actions.EditProfilesXmlAction"
-            text="Edit profiles.xml"
-            description="Edit profiles.xml for selected project"/>
+    <action id="Maven.OpenProfilesXml"
+            class="org.jetbrains.idea.maven.project.actions.OpenProfilesXmlAction"
+            text="Open profiles.xml"
+            description="Open profiles.xml for selected projects"/>
 
-    <action id="Maven.EditSettingsXml"
-            class="org.jetbrains.idea.maven.project.actions.EditSettingsXmlAction"
-            text="Edit settings.xml"
-            description="Edit Maven settings.xml"/>
+    <action id="Maven.OpenSettingsXml"
+            class="org.jetbrains.idea.maven.project.actions.OpenSettingsXmlAction"
+            text="Open settings.xml"
+            description="Open Maven settings.xml"/>
 
-    <action id="Maven.IgnoreProject"
+    <action id="Maven.IgnoreProjects"
             class="org.jetbrains.idea.maven.project.actions.ToggleIgnoredProjectsAction"
-            text="_Ignore Project"
+            text="_Ignore Projects"
             description="Exclude/Include selected Maven projects from being imported">
     </action>
     <action id="Maven.ToggleProfile"
@@ -276,10 +276,13 @@
       <reference id="Maven.UpdateFoldersForProject"/>
       <reference id="Maven.DownloadArtifactsForProject"/>
       <separator/>
+      <reference id="Maven.IgnoreProjects"/>
       <reference id="Maven.RemoveManagedFiles"/>
       <separator/>
-      <reference id="Maven.EditProfilesXml"/>
-      <reference id="Maven.EditSettingsXml"/>
+      <reference id="Maven.OpenProfilesXml"/>
+      <reference id="Maven.OpenSettingsXml"/>
+      <separator/>
+      <reference id="Maven.ShowGraph"/>
     </group>
 
     <group id="Maven.NavigatorProjectMenu" popup="true">
@@ -288,19 +291,7 @@
       <reference id="Maven.RunBuild"/>
       <reference ref="RunContextGroup"/>
       <separator/>
-      <reference id="Maven.ShowGraph"/>
-      <separator/>
       <reference id="EditSource"/>
-      <reference id="Maven.IgnoreProject"/>
-    </group>
-
-    <group id="Maven.EditorProjectMenu" class="org.jetbrains.idea.maven.project.actions.MavenEditorActionGroup" popup="true" text="Maven"
-           icon="/images/mavenLogo.png">
-      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
-
-      <reference ref="Maven.BaseProjectMenu"/>
-      <separator/>
-      <reference id="Maven.ShowGraph"/>
     </group>
 
     <group id="Maven.BuildMenu" popup="true">
@@ -308,6 +299,13 @@
       <reference ref="RunContextGroup"/>
       <separator/>
       <reference ref="Maven.TasksGroup"/>
+    </group>
+
+    <group id="Maven.GlobalProjectMenu" class="org.jetbrains.idea.maven.utils.actions.MavenActionGroup" popup="true" text="Maven"
+           icon="/images/mavenLogo.png">
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+      <reference ref="Maven.BaseProjectMenu"/>
     </group>
 
     <group id="Maven.GenerateGroup" text="Generate">

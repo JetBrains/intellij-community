@@ -93,7 +93,6 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     if (dataId.equals(Location.LOCATION)) return extractLocation();
     if (dataId.equals(PlatformDataKeys.NAVIGATABLE_ARRAY.getName())) return extractNavigatables();
 
-    if (dataId.equals(MavenDataKeys.MAVEN_PROJECTS.getName())) return extractProjectNodes();
     if (dataId.equals(MavenDataKeys.MAVEN_GOALS.getName())) return extractGoals();
     if (dataId.equals(MavenDataKeys.MAVEN_PROFILES.getName())) return extractProfiles();
 

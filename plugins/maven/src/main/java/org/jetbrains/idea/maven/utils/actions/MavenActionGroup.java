@@ -7,10 +7,12 @@ public class MavenActionGroup extends DefaultActionGroup {
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(isAvailable(e));
+    boolean available = isAvailable(e);
+    e.getPresentation().setEnabled(available);
+    e.getPresentation().setVisible(available);
   }
 
   protected boolean isAvailable(AnActionEvent e) {
-    return MavenActionUtils.getProject(e) != null;
+    return MavenActionUtil.getProject(e) != null && !MavenActionUtil.getMavenProjects(e).isEmpty();
   }
 }

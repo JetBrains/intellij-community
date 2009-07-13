@@ -400,8 +400,6 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         each.updateNameAndDescription();
         each = each.myStructuralParent;
       }
-
-
     }
 
     protected abstract void updateNameAndDescription();
@@ -637,7 +635,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     @Override
     protected SimpleTextAttributes getPlainAttributes() {
       if (myProjectsManager.isIgnored(myMavenProject)) {
-        return new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, Color.GRAY);
+        return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.GRAY);
       }
       return super.getPlainAttributes();
     }

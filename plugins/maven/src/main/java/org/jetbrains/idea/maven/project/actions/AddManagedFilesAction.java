@@ -9,14 +9,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
-import org.jetbrains.idea.maven.utils.actions.MavenActionUtils;
+import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
 import java.util.Arrays;
 
 public class AddManagedFilesAction extends MavenAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final MavenProjectsManager manager = MavenActionUtils.getProjectsManager(e);
+    final MavenProjectsManager manager = MavenActionUtil.getProjectsManager(e);
     FileChooserDescriptor singlePomSelection = new FileChooserDescriptor(true, false, false, false, false, true) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
@@ -25,12 +25,12 @@ public class AddManagedFilesAction extends MavenAction {
 
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        if (!file.isDirectory() && !MavenActionUtils.isMavenProjectFile(file)) return false;
+        if (!file.isDirectory() && !MavenActionUtil.isMavenProjectFile(file)) return false;
         return super.isFileVisible(file, showHiddenFiles);
       }
     };
 
-    Project project = MavenActionUtils.getProject(e);
+    Project project = MavenActionUtil.getProject(e);
     VirtualFile fileToSelect = e.getData(PlatformDataKeys.VIRTUAL_FILE);
 
     FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(singlePomSelection, project);
