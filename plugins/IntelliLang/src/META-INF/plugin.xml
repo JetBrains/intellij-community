@@ -46,6 +46,9 @@
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction</className>
     </intentionAction>
+    <intentionAction>
+      <className>org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction</className>
+    </intentionAction>
 
     <compiler implementation="org.intellij.plugins.intelliLang.pattern.compiler.impl.PatternValidationCompiler"/>
 

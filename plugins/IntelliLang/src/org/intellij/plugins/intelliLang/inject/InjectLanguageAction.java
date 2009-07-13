@@ -54,19 +54,22 @@ import org.intellij.plugins.intelliLang.inject.config.ui.configurables.XmlAttrib
 import org.intellij.plugins.intelliLang.inject.config.ui.configurables.XmlTagInjectionConfigurable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.*;
 
 public class InjectLanguageAction implements IntentionAction {
+  @NonNls protected static final String INJECT_LANGUAGE_FAMILY = "Inject Language";
+
   @NotNull
   public String getText() {
-    return "Inject Language";
+    return INJECT_LANGUAGE_FAMILY;
   }
 
   @NotNull
   public String getFamilyName() {
-    return "Inject Language";
+    return INJECT_LANGUAGE_FAMILY;
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
