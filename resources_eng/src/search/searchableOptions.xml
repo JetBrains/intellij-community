@@ -7609,4 +7609,8 @@
     <option name="comment" hit="Use line comment" />
     <option name="line" hit="Use line comment" />
   </configurable>
+  <configurable id="php.configurable" configurable_name="PHP">
+    <option name="server" hit="Server root:" />
+    <option name="root" hit="Server root:" />
+  </configurable>
 </options>
