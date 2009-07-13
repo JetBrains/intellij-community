@@ -18,6 +18,7 @@ package org.intellij.plugins.intelliLang;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diagnostic.Logger;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
@@ -45,6 +46,7 @@ import java.util.*;
       @Storage(id = "dir", file = "$APP_CONFIG$/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)
         })
 public final class Configuration implements PersistentStateComponent<Element> {
+  static final Logger LOG = Logger.getInstance(Configuration.class.getName());
 
   @NonNls
   static final String COMPONENT_NAME = "LanguageInjectionConfiguration";
@@ -168,15 +170,6 @@ public final class Configuration implements PersistentStateComponent<Element> {
       element.addContent(entry);
       entry.addContent(injection.getState());
     }
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-    myTagInjections.clear();
-    myAttributeInjections.clear();
-    myParameterInjections.clear();
   }
 
   public List<XmlTagInjection> getTagInjections() {

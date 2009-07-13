@@ -36,10 +36,6 @@ public class LanguageTextField extends EditorTextField {
   private final Language myLanguage;
   private final Project myProject;
 
-  public LanguageTextField(Language language, @NotNull Project project) {
-    this(language, project, "", null);
-  }
-
   public LanguageTextField(Language language, @NotNull Project project, @NotNull String value) {
     this(language, project, value, null);
   }

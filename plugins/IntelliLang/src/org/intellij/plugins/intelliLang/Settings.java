@@ -16,19 +16,12 @@
 
 package org.intellij.plugins.intelliLang;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.MasterDetailsComponent;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,18 +39,9 @@ import java.awt.*;
  * recreated and maintained for each project, and still being able to use class-choosers
  * that will allow to browse the current project's classes.
  */
-//@State(
-//    name = "IntelliLangSettings.UI",
-//    storages = {
-//      @Storage(id = "other", file = "$WORKSPACE_FILE$")})
-public class Settings implements Configurable, PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance(Settings.class.getName());
-
-  @NonNls
-  private static final String SETTINGS_UI_NAME = "SETTINGS_UI";
+public class Settings implements Configurable {
 
   private final Configuration myConfiguration;
-  private MasterDetailsComponent.UIState mySettingsUIState = new MasterDetailsComponent.UIState();
 
   Settings(Configuration configuration) {
     myConfiguration = configuration;
@@ -106,7 +90,6 @@ public class Settings implements Configurable, PersistentStateComponent<Element>
     }
 
     mySettingsUI = new SettingsUI(project, myConfiguration);
-    mySettingsUI.loadState(mySettingsUIState);
 
     return mySettingsUI.createComponent();
   }
@@ -124,35 +107,6 @@ public class Settings implements Configurable, PersistentStateComponent<Element>
   }
 
   public void disposeUIResources() {
-    if (mySettingsUI != null) {
-      // the order of these calls seems odd, but the MasterDetailsComponent
-      // requires it that way.
-      mySettingsUI.disposeUIResources();
-      mySettingsUIState = mySettingsUI.getState();
-    }
     mySettingsUI = null;
-  }
-
-  public Element getState() {
-    final Element e = new Element(SETTINGS_UI_NAME);
-    try {
-      DefaultJDOMExternalizer.writeExternal(mySettingsUIState, e);
-    }
-    catch (WriteExternalException e1) {
-      LOG.error(e1);
-    }
-    return e;
-  }
-
-  public void loadState(final Element state) {
-    final Element child = state.getChild(SETTINGS_UI_NAME);
-    if (child != null) {
-      try {
-        DefaultJDOMExternalizer.readExternal(mySettingsUIState, child);
-      }
-      catch (InvalidDataException e) {
-        LOG.error(e);
-      }
-    }
   }
 }
