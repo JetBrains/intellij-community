@@ -16,9 +16,9 @@
 package org.intellij.plugins.intelliLang;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
@@ -375,4 +375,21 @@ public final class Configuration implements PersistentStateComponent<Element> {
     final Collection<MethodParameterInjection> list = getMethodCache().get(key);
     return list == null? Collections.<MethodParameterInjection>emptyList() : list;
   }
+
+
+  public static boolean clearMethodParameterFlag(final MethodParameterInjection.MethodInfo info, final Trinity<String, Integer, Integer> key) {
+    if (!Comparing.equal(info.getMethodName(), key.first)) return false;
+    final int length = key.second.intValue();
+    final int index = key.third.intValue();
+    if (info.isReturnFlag() && length == 0 && index == 0) {
+      info.setReturnFlag(false);
+      return true;
+    }
+    else if (info.getParamFlags().length == length && index < length && index >= 0) {
+      info.getParamFlags()[index] = false;
+      return true;
+    }
+    return false;
+  }
+
 }

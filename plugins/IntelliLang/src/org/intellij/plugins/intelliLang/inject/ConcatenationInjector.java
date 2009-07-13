@@ -81,19 +81,22 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
   }
 
   public static class Info {
-    PsiModifierListOwner owner;
-    PsiMethod method;
-    Collection<MethodParameterInjection> injections;
-    boolean unparsable;
+    final PsiModifierListOwner owner;
+    final PsiMethod method;
+    final Collection<MethodParameterInjection> injections;
+    final boolean unparsable;
+    final Trinity<String, Integer, Integer> key;
 
     public Info(final PsiModifierListOwner owner,
                 final PsiMethod method,
                 final Collection<MethodParameterInjection> injections,
-                final boolean unparsable) {
+                final boolean unparsable,
+                final Trinity<String, Integer, Integer> key) {
       this.owner = owner;
       this.method = method;
       this.injections = injections;
       this.unparsable = unparsable;
+      this.key = key;
     }
   }
 
@@ -149,7 +152,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       }
       final Collection<MethodParameterInjection> injections =
         trin == null? Collections.<MethodParameterInjection>emptyList() : configuration.getPossibleCachedInjections(trin);
-      final Info info = new Info(owner, psiMethod, injections, unparsable);
+      final Info info = new Info(owner, psiMethod, injections, unparsable, trin);
       if (!processor.process(info)) return;
     }
   }

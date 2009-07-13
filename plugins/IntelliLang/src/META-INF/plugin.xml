@@ -32,7 +32,7 @@
   <!--<depends optional="true">XPathView</depends>-->
 
   <extensionPoints>
-    <extensionPoint name="CustomLanguageInjectorExtension"
+    <extensionPoint name="languageSupport"
                     interface="org.intellij.plugins.intelliLang.inject.LanguageInjectorSupport"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
@@ -68,6 +68,11 @@
 
     <projectService serviceInterface="org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry"
                     serviceImplementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.intellij.intelliLang">
+    <languageSupport implementation="org.intellij.plugins.intelliLang.inject.XmlLanguageInjectorSupport"/>
+    <languageSupport implementation="org.intellij.plugins.intelliLang.inject.JavaLanguageInjectorSupport"/>
   </extensions>
 
 </idea-plugin>

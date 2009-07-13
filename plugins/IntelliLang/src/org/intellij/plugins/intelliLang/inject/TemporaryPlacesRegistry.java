@@ -60,4 +60,8 @@ public class TemporaryPlacesRegistry {
     }));
     return myTempPlaces;
   }
+
+  public void removeTempInjection(final Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage> pair) {
+    myTempPlaces.remove(pair);
+  }
 }
