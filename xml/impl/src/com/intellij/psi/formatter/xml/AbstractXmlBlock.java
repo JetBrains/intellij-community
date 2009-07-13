@@ -322,11 +322,16 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   protected boolean useMyFormatter(final Language myLanguage, final Language childLanguage, final PsiElement childPsi) {
-    return myLanguage == childLanguage
-           || childLanguage == StdFileTypes.HTML.getLanguage()
-           || childLanguage == StdFileTypes.XHTML.getLanguage()
-           || childLanguage == StdFileTypes.XML.getLanguage()
-           || LanguageFormatting.INSTANCE.forContext(childPsi) == null;
+    if (myLanguage == childLanguage ||
+        childLanguage == StdFileTypes.HTML.getLanguage() ||
+        childLanguage == StdFileTypes.XHTML.getLanguage() ||
+        childLanguage == StdFileTypes.XML.getLanguage()) {
+      return true;
+    }
+    final FormattingModelBuilder childFormatter = LanguageFormatting.INSTANCE.forLanguage(childLanguage);
+    return childFormatter == null ||
+           childFormatter instanceof DelegatingFormattingModelBuilder &&
+           ((DelegatingFormattingModelBuilder)childFormatter).dontFormatMyModel();
   }
 
   protected boolean isJspxJavaContainingNode(final ASTNode child) {
