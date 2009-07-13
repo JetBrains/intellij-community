@@ -84,7 +84,7 @@ public class ImportClassFix implements HintAction {
       if (JavaCompletionUtil.isInExcludedPackage(aClass)) continue;
       if (referenceHasTypeParameters && !aClass.hasTypeParameters()) continue;
       PsiFile file = aClass.getContainingFile();
-      if (file instanceof PsiJavaFile && ((PsiJavaFile)file).getPackageName().length() == 0) { //do not show classes from default package
+      if (file instanceof PsiClassOwner && ((PsiClassOwner)file).getPackageName().length() == 0) { //do not show classes from default package
         continue;
       }
       String qName = aClass.getQualifiedName();
