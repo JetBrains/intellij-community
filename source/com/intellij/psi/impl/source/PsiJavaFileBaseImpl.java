@@ -17,6 +17,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
+import com.intellij.psi.impl.source.resolve.ClassCollectingProcessor;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -26,30 +27,24 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.ParameterizedCachedValue;
-import com.intellij.psi.util.ParameterizedCachedValueProvider;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.Reference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJavaFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaFileBaseImpl");
 
-  private final ConcurrentMap<PsiJavaFile,ConcurrentMap<String, SoftReference<JavaResolveResult[]>>> myGuessCache;
+  private final CachedValue<MostlySingularMultiMap<String, ClassCollectingProcessor.ResultWithContext>> myResolveCache;
 
   @NonNls private static final String[] IMPLICIT_IMPORTS = { "java.lang" };
   private static final ParameterizedCachedValueProvider<LanguageLevel,PsiJavaFileBaseImpl> LANGUAGE_LEVEL_PROVIDER = new ParameterizedCachedValueProvider<LanguageLevel, PsiJavaFileBaseImpl>() {
@@ -62,7 +57,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private static final Key<ResolveCache.MapPair<PsiJavaFile,ConcurrentMap<String, SoftReference<JavaResolveResult[]>>>> CACHED_CLASSES_MAP_KEY = Key.create("CACHED_CLASSES_MAP_KEY");
   protected PsiJavaFileBaseImpl(IElementType elementType, IElementType contentElementType, FileViewProvider viewProvider) {
     super(elementType, contentElementType, viewProvider);
-    myGuessCache = myManager.getResolveCache().getOrCreateWeakMap(CACHED_CLASSES_MAP_KEY, false);
+    myResolveCache = myManager.getCachedValuesManager().createCachedValue(new MyCacheBuilder(), false);
   }
 
   @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
@@ -236,17 +231,17 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place){
-    if(!processDeclarationsNoGuess(processor, state, lastParent, place)){
-      if(processor instanceof ClassResolverProcessor){
-        final ClassResolverProcessor hint = (ClassResolverProcessor)processor;
-        if(isPhysical()){
-          setGuess(hint.getName(state), hint.getResult());
-        }
-      }
-      return false;
+  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull final ResolveState state, PsiElement lastParent, @NotNull PsiElement place){
+    if (processor instanceof ClassResolverProcessor && isPhysical() &&
+        (getUserData(BATCH_REFERENCE_PROCESSING) == Boolean.TRUE || myResolveCache.hasUpToDateValue())) {
+      final ClassResolverProcessor hint = (ClassResolverProcessor)processor;
+      String name = hint.getName(state);
+      MostlySingularMultiMap<String, ClassCollectingProcessor.ResultWithContext> cache = myResolveCache.getValue();
+      MyResolveCacheProcessor cacheProcessor = new MyResolveCacheProcessor(processor, state);
+      return name != null ? cache.processForKey(name, cacheProcessor) : cache.processAllValues(cacheProcessor);
     }
-    return true;
+
+    return processDeclarationsNoGuess(processor, state, lastParent, place);
   }
 
   private boolean processDeclarationsNoGuess(PsiScopeProcessor processor, ResolveState state, PsiElement lastParent, PsiElement place){
@@ -255,15 +250,6 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     final NameHint nameHint = processor.getHint(NameHint.KEY);
     final String name = nameHint != null ? nameHint.getName(state) : null;
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.CLASS)){
-      if(processor instanceof ClassResolverProcessor){
-        // Some speedup
-        final JavaResolveResult[] guessClass = getGuess(name);
-        if(guessClass != null){
-          ((ClassResolverProcessor) processor).forceResult(guessClass);
-          return false;
-        }
-      }
-
       final PsiClass[] classes = getClasses();
       for (PsiClass aClass : classes) {
         if (!processor.execute(aClass, state)) return false;
@@ -385,22 +371,6 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return true;
   }
 
-  @Nullable
-  private JavaResolveResult[] getGuess(final String name){
-    final Map<String,SoftReference<JavaResolveResult[]>> guessForFile = myGuessCache.get(this);
-    final Reference<JavaResolveResult[]> ref = guessForFile != null ? guessForFile.get(name) : null;
-
-    return ref != null ? ref.get() : null;
-  }
-
-  private void setGuess(final String name, final JavaResolveResult[] cached) {
-    ConcurrentMap<String, SoftReference<JavaResolveResult[]>> guessForFile = myGuessCache.get(this);
-    if (guessForFile == null) {
-      guessForFile = ConcurrencyUtil.cacheOrGet(myGuessCache, this, new ConcurrentHashMap<String, SoftReference<JavaResolveResult[]>>());
-    }
-    guessForFile.putIfAbsent(name, new SoftReference<JavaResolveResult[]>(cached));
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitJavaFile(this);
@@ -480,5 +450,30 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }
 
     return defaultLanguageLevel;
+  }
+
+  private class MyCacheBuilder implements CachedValueProvider<MostlySingularMultiMap<String, ClassCollectingProcessor.ResultWithContext>> {
+    public Result<MostlySingularMultiMap<String, ClassCollectingProcessor.ResultWithContext>> compute() {
+      ClassCollectingProcessor p = new ClassCollectingProcessor();
+      processDeclarationsNoGuess(p, ResolveState.initial(),
+                                 PsiJavaFileBaseImpl.this,
+                                 PsiJavaFileBaseImpl.this);
+      return new Result<MostlySingularMultiMap<String, ClassCollectingProcessor.ResultWithContext>>(p.getResults(), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    }
+  }
+
+  private static class MyResolveCacheProcessor implements Processor<ClassCollectingProcessor.ResultWithContext> {
+    private final PsiScopeProcessor myProcessor;
+    private final ResolveState myState;
+
+    public MyResolveCacheProcessor(PsiScopeProcessor processor, ResolveState state) {
+      myProcessor = processor;
+      myState = state;
+    }
+
+    public boolean process(ClassCollectingProcessor.ResultWithContext result) {
+      myProcessor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, result.getFileContext());
+      return myProcessor.execute(result.getElement(), myState);
+    }
   }
 }

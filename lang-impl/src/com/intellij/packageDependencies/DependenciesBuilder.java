@@ -4,6 +4,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.PsiFileEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -131,7 +132,9 @@ public abstract class DependenciesBuilder {
 
 
   public static void analyzeFileDependencies(PsiFile file, DependencyProcessor processor) {
+    file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
     file.accept(DependenciesVisitorFactory.getInstance().createVisitor(processor));
+    file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, null);
   }
 
   public boolean isTransitive() {

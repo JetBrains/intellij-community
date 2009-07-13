@@ -41,6 +41,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -87,6 +88,10 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
       if (myFile != null && !myFile.isValid()) {
         myFile = null;
       }
+    }
+
+    if (myFile != null) {
+      myFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
     }
   }
 

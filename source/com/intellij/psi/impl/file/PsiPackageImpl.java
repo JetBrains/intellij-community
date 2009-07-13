@@ -57,7 +57,6 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   private volatile Set<String> myPublicClassNamesCache;
   private final Object myPublicClassNamesCacheLock = new String("package classnames cache lock");
-  private static final boolean NOT_IN_TESTS = !ApplicationManager.getApplication().isUnitTestMode();
 
   public PsiPackageImpl(PsiManagerEx manager, String qualifiedName) {
     myManager = manager;
@@ -418,11 +417,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   }
 
   @NotNull
-  private PsiClass[] findClassesByName(String name, GlobalSearchScope scope, PsiMigrationImpl migration) {
-    if (NOT_IN_TESTS && migration == null && !myManager.isBatchFilesProcessingMode() && !containsClassNamed(name)) {
-      return PsiClass.EMPTY_ARRAY;
-    }
-
+  private PsiClass[] findClassesByName(String name, GlobalSearchScope scope) {
     final String qName = getQualifiedName();
     final String classQName = qName.length() > 0 ? qName + "." + name : name;
     return getFacade().findClasses(classQName, scope);
@@ -514,7 +509,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   private boolean processClassesByName(PsiScopeProcessor processor, ResolveState state, PsiElement place, GlobalSearchScope scope,
                                        PsiMigrationImpl migration, String className) {
-    final PsiClass[] classes = findClassesByName(className, scope, migration);
+    final PsiClass[] classes = findClassesByName(className, scope);
     if (!processClasses(processor, state, place, classes)) return true;
     return false;
   }
