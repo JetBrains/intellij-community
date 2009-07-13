@@ -38,7 +38,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     final PsiFile containingFile = operands[0].getContainingFile();
     processLiteralExpressionInjections(new PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>>() {
       public boolean process(final Language language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list) {
-        CustomLanguageInjector.registerInjection(language, list, containingFile, registrar);
+        XmlLanguageInjector.registerInjection(language, list, containingFile, registrar);
         return true;
       }
     }, operands);
@@ -210,7 +210,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       }
       else {
         for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : result) {
-          trinity.first.putUserData(CustomLanguageInjector.HAS_UNPARSABLE_FRAGMENTS, unparsableRef.get());
+          trinity.first.putUserData(LanguageInjectorSupport.HAS_UNPARSABLE_FRAGMENTS, unparsableRef.get());
         }
         processor.process(language, result);
       }

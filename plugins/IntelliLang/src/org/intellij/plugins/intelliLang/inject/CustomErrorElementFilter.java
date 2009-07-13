@@ -16,6 +16,6 @@ public class CustomErrorElementFilter extends HighlightErrorFilter {
 
   public static boolean value(final PsiErrorElement psiErrorElement) {
     final PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(psiErrorElement.getProject()).getInjectionHost(psiErrorElement);
-    return host != null && Boolean.TRUE.equals(host.getUserData(CustomLanguageInjector.HAS_UNPARSABLE_FRAGMENTS));
+    return host != null && Boolean.TRUE.equals(host.getUserData(LanguageInjectorSupport.HAS_UNPARSABLE_FRAGMENTS));
   }
 }

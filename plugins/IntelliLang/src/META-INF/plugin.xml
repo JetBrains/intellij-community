@@ -33,7 +33,7 @@
 
   <extensionPoints>
     <extensionPoint name="CustomLanguageInjectorExtension"
-                    interface="org.intellij.plugins.intelliLang.inject.CustomLanguageInjectorExtension"/>
+                    interface="org.intellij.plugins.intelliLang.inject.LanguageInjectorSupport"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />
@@ -62,11 +62,12 @@
 
     <concatenationAwareInjector implementation="org.intellij.plugins.intelliLang.inject.ConcatenationInjector"/>
 
-    <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.IntelliLangLanguageInjector"/>
+    <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.XmlLanguageInjector"/>
+    <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector"/>
     <psi.referenceContributor implementation="org.intellij.plugins.intelliLang.inject.LanguageReferenceProvider"/>
 
-    <projectService serviceInterface="org.intellij.plugins.intelliLang.inject.CustomLanguageInjector"
-                    serviceImplementation="org.intellij.plugins.intelliLang.inject.CustomLanguageInjector"/>
+    <projectService serviceInterface="org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry"
+                    serviceImplementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry"/>
   </extensions>
 
 </idea-plugin>

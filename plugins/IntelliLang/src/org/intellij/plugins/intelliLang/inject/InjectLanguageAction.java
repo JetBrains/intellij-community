@@ -118,7 +118,7 @@ public class InjectLanguageAction implements IntentionAction {
         if (!(host instanceof XmlAttributeValue && doInjectInAttributeValue(project, (XmlAttributeValue)host, languageId) ||
             host instanceof XmlText && doInjectInXmlText(project, (XmlText)host, languageId) ||
             host.getLanguage() == StdLanguages.JAVA && doInjectInJava(project, host, languageId))) {
-          CustomLanguageInjector.getInstance(project).addTempInjection(host, InjectedLanguage.create(languageId));
+          TemporaryPlacesRegistry.getInstance(project).addTempInjection(host, InjectedLanguage.create(languageId));
         }
         FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
         return false;
