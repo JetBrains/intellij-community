@@ -51,10 +51,7 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
     XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, new String[] { "href" }, new ScopeFilter(
       new ParentElementFilter(
         new AndFilter(
-          new AndFilter(
-            new ClassFilter(XmlTag.class),
-            new XmlTextFilter("include")
-          ),
+          new AndFilter(XmlTagFilter.INSTANCE, new XmlTextFilter("include")),
           new NamespaceFilter(XmlUtil.XINCLUDE_URI)
         ),
         2
@@ -89,10 +86,7 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
 
     XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, new String[] {"content"}, new ScopeFilter(
       new ParentElementFilter(
-        new AndFilter(
-          new ClassFilter(XmlTag.class),
-          new XmlTextFilter("meta")
-        ), 2
+        new AndFilter(XmlTagFilter.INSTANCE, new XmlTextFilter("meta")), 2
       )
     ), true, new HtmlHttpEquivEncodingReferenceProvider());
 

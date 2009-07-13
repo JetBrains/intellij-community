@@ -36,6 +36,7 @@ import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
+import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.PairConsumer;
@@ -79,28 +80,28 @@ public class JavaCompletionContributor extends CompletionContributor {
     // Completion after extends in interface, type parameter and implements in class
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(position, PsiClass.class, false, PsiCodeBlock.class, PsiMethod.class, PsiExpressionList.class);
     if (containingClass != null && psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS, ",", "&").accepts(position)) {
-      return new AndFilter(new ClassFilter(PsiClass.class), new NotFilter(new AssignableFromContextFilter()));
+      return new AndFilter(ElementClassFilter.CLASS, new NotFilter(new AssignableFromContextFilter()));
     }
 
     if (JavaCompletionData.DECLARATION_START.isAcceptable(position, position)) {
-      return new OrFilter(new ClassFilter(PsiClass.class), new ClassFilter(PsiPackage.class));
+      return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER);
     }
 
     if (JavaCompletionData.INSIDE_PARAMETER_LIST.accepts(position)) {
-      return new ClassFilter(PsiClass.class);
+      return ElementClassFilter.CLASS;
     }
 
     // Completion for classes in method throws section
     if (psiElement().afterLeaf(PsiKeyword.THROWS, ",").inside(psiElement(PsiReferenceList.class).withParent(PsiMethod.class)).accepts(position)) {
-      return new OrFilter(new ThisOrAnyInnerFilter(new AssignableFromFilter("java.lang.Throwable")), new ClassFilter(PsiPackage.class));
+      return new OrFilter(new ThisOrAnyInnerFilter(new AssignableFromFilter("java.lang.Throwable")), ElementClassFilter.PACKAGE_FILTER);
     }
 
     if (psiElement().afterLeaf(PsiKeyword.INSTANCEOF).accepts(position)) {
-      return new ElementExtractorFilter(new ClassFilter(PsiClass.class));
+      return new ElementExtractorFilter(ElementClassFilter.CLASS);
     }
 
     if (JavaCompletionData.AFTER_FINAL.accepts(position)) {
-      return new ClassFilter(PsiClass.class);
+      return ElementClassFilter.CLASS;
     }
 
     if (JavaCompletionData.AFTER_TRY_BLOCK.isAcceptable(position, position) ||
@@ -110,8 +111,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (psiElement().afterLeaf(psiElement().withText("(").withParent(PsiTryStatement.class)).accepts(position)) {
-      return new OrFilter(new ThisOrAnyInnerFilter(new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE)),
-                     new ClassFilter(PsiPackage.class));
+      return new OrFilter(new ThisOrAnyInnerFilter(new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE)), ElementClassFilter.PACKAGE_FILTER);
     }
 
     if (JavaSmartCompletionContributor.AFTER_THROW_NEW.accepts(position)) {
@@ -119,21 +119,16 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
-      return new ClassFilter(PsiClass.class);
+      return ElementClassFilter.CLASS;
     }
 
     if (psiElement().inside(PsiReferenceParameterList.class).accepts(position)) {
-      return new ClassFilter(PsiClass.class);
+      return ElementClassFilter.CLASS;
     }
 
     if (psiElement().inside(PsiAnnotationParameterList.class).accepts(position)) {
-      return new OrFilter(
-        new ClassFilter(PsiAnnotationMethod.class),
-        new ClassFilter(PsiClass.class),
-        new ClassFilter(PsiPackage.class),
-        new AndFilter(
-          new ClassFilter(PsiField.class),
-          new ModifierFilter(PsiModifier.STATIC, PsiModifier.FINAL)));
+      return new OrFilter(new ClassFilter(PsiAnnotationMethod.class), ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER, new AndFilter(new ClassFilter(PsiField.class),
+                                                                                                                                                 new ModifierFilter(PsiModifier.STATIC, PsiModifier.FINAL)));
     }
 
     if (psiElement().afterLeaf("=").inside(PsiVariable.class).accepts(position)) {

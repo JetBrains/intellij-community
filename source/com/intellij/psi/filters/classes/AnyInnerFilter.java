@@ -1,13 +1,10 @@
 package com.intellij.psi.filters.classes;
 
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.filters.*;
-import org.jdom.Element;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,23 +13,14 @@ import org.jdom.Element;
  * Time: 20:37:26
  * To change this template use Options | File Templates.
  */
-public class AnyInnerFilter extends ClassFilter{
-  ElementFilter myFilter;
-  public AnyInnerFilter(){
-    super(PsiClass.class);
-  }
-
+public class AnyInnerFilter implements ElementFilter{
+  private final ElementFilter myFilter;
   public AnyInnerFilter(ElementFilter filter){
-    this();
     myFilter = filter;
   }
 
   public ElementFilter getFilter(){
     return myFilter;
-  }
-
-  public void setFilter(ElementFilter myFilter){
-    this.myFilter = myFilter;
   }
 
   public boolean isAcceptable(Object classElement, PsiElement place){
@@ -47,6 +35,10 @@ public class AnyInnerFilter extends ClassFilter{
       }
     }
     return false;
+  }
+
+  public boolean isClassAcceptable(Class hintClass) {
+    return true;
   }
 
   public String toString(){

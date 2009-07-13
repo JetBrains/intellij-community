@@ -23,13 +23,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.patterns.StringPattern;
 import com.intellij.patterns.XmlPatterns;
-import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.XmlElementFactory;
-import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.filters.XmlTagFilter;
 import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
@@ -977,7 +977,7 @@ public class XmlUtil {
     attributesMap.put(tagName, list);
     final List<String> tags = tagsMap.get(tagName) != null ? tagsMap.get(tagName) : new ArrayList<String>();
     tagsMap.put(tagName, tags);
-    tag.processElements(new FilterElementProcessor(new ClassFilter(XmlTag.class)) {
+    tag.processElements(new FilterElementProcessor(XmlTagFilter.INSTANCE) {
       public void add(PsiElement element) {
         XmlTag tag = (XmlTag)element;
         if (!tags.contains(tag.getName())) {

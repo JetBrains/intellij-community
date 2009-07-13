@@ -15,10 +15,10 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.not;
 import static com.intellij.patterns.StandardPatterns.or;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.getters.*;
+import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
@@ -114,7 +114,7 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
               public Object[] get(final PsiElement context, final CompletionContext completionContext) {
                 return new Object[]{expectedType};
               }
-            }, new ExcludeDeclaredFilter(new ClassFilter(PsiClass.class))));
+            }, new ExcludeDeclaredFilter(ElementClassFilter.CLASS)));
         for (final MutableLookupElement<PsiExpression> element : classGetter.getClassLiterals(position, null, result.getPrefixMatcher())) {
           result.addElement(element.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
         }

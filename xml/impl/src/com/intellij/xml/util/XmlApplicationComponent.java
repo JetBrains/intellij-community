@@ -27,11 +27,7 @@ public class XmlApplicationComponent implements MetaDataContributor {
       );
 
       registrar.registerMetaData(
-          new AndFilter(
-            new ClassFilter(XmlTag.class),
-            new NamespaceFilter(XmlUtil.SCHEMA_URIS),
-           new XmlTextFilter("schema")
-          ),
+          new AndFilter(XmlTagFilter.INSTANCE, new NamespaceFilter(XmlUtil.SCHEMA_URIS), new XmlTextFilter("schema")),
           SchemaNSDescriptor.class
       );
     }
@@ -55,21 +51,13 @@ public class XmlApplicationComponent implements MetaDataContributor {
     }
 
     {
-      registrar.registerMetaData(new AndFilter(
-          new ClassFilter(XmlTag.class),
-          new NamespaceFilter(XmlUtil.SCHEMA_URIS),
-          new XmlTextFilter("element")
-      ),
+      registrar.registerMetaData(new AndFilter(XmlTagFilter.INSTANCE, new NamespaceFilter(XmlUtil.SCHEMA_URIS), new XmlTextFilter("element")),
                          XmlElementDescriptorImpl.class);
     }
 
     {
       registrar.registerMetaData(
-          new AndFilter(
-              new ClassFilter(XmlTag.class),
-              new NamespaceFilter(XmlUtil.SCHEMA_URIS),
-              new XmlTextFilter("attribute")
-          ),
+          new AndFilter(XmlTagFilter.INSTANCE, new NamespaceFilter(XmlUtil.SCHEMA_URIS), new XmlTextFilter("attribute")),
           XmlAttributeDescriptorImpl.class
       );
     }
@@ -99,11 +87,9 @@ public class XmlApplicationComponent implements MetaDataContributor {
     }
 
     {
-      registrar.registerMetaData(new AndFilter(
-          new ClassFilter(XmlTag.class),
-          new NamespaceFilter(XmlUtil.SCHEMA_URIS),
-          new XmlTextFilter("complexType","simpleType", "group","attributeGroup")
-      ),
+      registrar.registerMetaData(new AndFilter(XmlTagFilter.INSTANCE, new NamespaceFilter(XmlUtil.SCHEMA_URIS), new XmlTextFilter("complexType",
+                                                                                                                                  "simpleType", "group",
+                                                                                                                                  "attributeGroup")),
                          NamedObjectDescriptor.class);
     }
   }

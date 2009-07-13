@@ -18,6 +18,7 @@ import com.intellij.psi.filters.position.*;
 import com.intellij.psi.filters.types.TypeCodeFragmentIsVoidEnabledFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.jsp.JspElementType;
+import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -432,7 +433,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
             new TextFilter("."),
             new LeftNeighbour(
                 new OrFilter(
-                    new ReferenceOnFilter(new ClassFilter(PsiClass.class)),
+                    new ReferenceOnFilter(ElementClassFilter.CLASS),
                     new TextFilter(PRIMITIVE_TYPES),
                     new TextFilter("]"))))));
       variant.includeScopeClass(PsiAnnotationParameterList.class);
