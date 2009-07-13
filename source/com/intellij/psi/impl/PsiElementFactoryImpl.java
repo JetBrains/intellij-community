@@ -329,8 +329,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     final Project project = myManager.getProject();
     final Lexer lexer = parserDefinition.createLexer(project);
     final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, holder, lexer, language, text);
-    parserDefinition.createParser(project).parse(type, builder);
-    final ASTNode node = builder.getTreeBuilt();
+    final ASTNode node = parserDefinition.createParser(project).parse(type, builder);
     holder.rawAddChildren((TreeElement)node);
     return node.getPsi();
   }
