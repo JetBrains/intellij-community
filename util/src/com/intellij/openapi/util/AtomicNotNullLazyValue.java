@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public abstract class AtomicNotNullLazyValue<T> {
+
   private volatile T myValue;
 
   @NotNull
@@ -29,8 +30,13 @@ public abstract class AtomicNotNullLazyValue<T> {
 
   @NotNull
   public final T getValue() {
-    if (myValue == null) {
-      myValue = compute();
+    if (myValue != null) {
+      return myValue;
+    }
+    synchronized (this) {
+      if (myValue == null) {
+        myValue = compute();
+      }
     }
     return myValue;
   }

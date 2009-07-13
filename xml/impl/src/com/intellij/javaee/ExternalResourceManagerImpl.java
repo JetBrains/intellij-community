@@ -49,7 +49,8 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   private final Map<String, XmlNSDescriptor> myImplicitNamespaces = new THashMap<String, XmlNSDescriptor>();
   private final Set<String> myIgnoredResources = new HashSet<String>();
 
-  private final NotNullLazyValue<Map<String, Map<String,String>>> myStdResources = new NotNullLazyValue<Map<String, Map<String, String>>>() {
+  private final AtomicNotNullLazyValue<Map<String, Map<String, String>>> myStdResources = new AtomicNotNullLazyValue<Map<String, Map<String, String>>>() {
+        
     @NotNull
     @Override
     protected Map<String, Map<String, String>> compute() {
