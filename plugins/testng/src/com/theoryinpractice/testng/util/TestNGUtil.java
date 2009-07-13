@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -279,44 +278,40 @@ public class TestNGUtil implements TestFramework
   /**
    * @return were javadoc params used
    */
-  public static boolean collectAnnotationValues(final Set<String> results, final String parameter, PsiMethod[] psiMethods, PsiClass... classes) {
-    boolean used = false;
+  public static void collectAnnotationValues(final Set<String> results, final String parameter, PsiMethod[] psiMethods, PsiClass... classes) {
     final Set<String> test = new HashSet<String>(1);
     test.add(TEST_ANNOTATION_FQN);
     test.addAll(Arrays.asList(CONFIG_ANNOTATIONS_FQN));
     if (psiMethods != null) {
       for (final PsiMethod psiMethod : psiMethods) {
-        used |= ApplicationManager.getApplication().runReadAction(
-            new Computable<Boolean>() {
-              public Boolean compute() {
-                return appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(psiMethod, test), psiMethod);
+        ApplicationManager.getApplication().runReadAction(
+            new Runnable() {
+              public void run() {
+                appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(psiMethod, test), psiMethod);
               }
             }
         );
       }
     } else {
       for (final PsiClass psiClass : classes) {
-        used |= ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          public Boolean compute() {
-            boolean annotated = false;
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
             if (psiClass != null && hasTest(psiClass)) {
-              annotated |= appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(psiClass, test), psiClass);
+              appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(psiClass, test), psiClass);
               PsiMethod[] methods = psiClass.getMethods();
               for (PsiMethod method : methods) {
                 if (method != null) {
-                  annotated |= appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(method, test), method);
+                  appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(method, test), method);
                 }
               }
             }
-            return annotated;
           }
         });
       }
     }
-    return used;
   }
 
-  private static boolean appendAnnotationAttributeValues(final String parameter,
+  private static void appendAnnotationAttributeValues(final String parameter,
                                                       final Collection<String> results,
                                                       final PsiAnnotation annotation,
                                                       final PsiDocCommentOwner commentOwner) {
@@ -327,11 +322,8 @@ public class TestNGUtil implements TestFramework
           results.addAll(extractValuesFromParameter(aPair));
         }
       }
-      return false;
     } else {
-      final Collection<String> values = extractAnnotationValuesFromJavaDoc(getTextJavaDoc(commentOwner), parameter);
-      results.addAll(values);
-      return !values.isEmpty();
+      results.addAll(extractAnnotationValuesFromJavaDoc(getTextJavaDoc(commentOwner), parameter));
     }
   }
 

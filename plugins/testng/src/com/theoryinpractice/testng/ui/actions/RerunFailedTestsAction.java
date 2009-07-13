@@ -44,7 +44,7 @@ public class RerunFailedTestsAction extends AbstractRerunFailedTestsAction {
 
       public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
         return new TestNGRunnableState(env, configuration) {
-          protected void fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes, final Project project)
+          protected void fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes, final Project project, boolean is15)
             throws CantRunException {
             for (AbstractTestProxy proxy : getFailedTests(configuration.getProject())) {
               final Location location = proxy.getLocation(project);
