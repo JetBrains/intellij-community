@@ -193,7 +193,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       }
     }
 
-    if (pluginBean.modules != null) {
+    if (pluginBean.modules != null && !pluginBean.modules.isEmpty()) {
       myModules = pluginBean.modules;
     }
   }
@@ -561,6 +561,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return getPath().getAbsolutePath().startsWith(PathManager.getPreinstalledPluginsPath());
   }
 
+  @Nullable
   public List<String> getModules() {
     return myModules;
   }

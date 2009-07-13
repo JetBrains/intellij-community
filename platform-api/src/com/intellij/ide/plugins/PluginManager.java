@@ -157,7 +157,10 @@ public class PluginManager {
     final List<IdeaPluginDescriptorImpl> result = new ArrayList<IdeaPluginDescriptorImpl>();
     for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
       if (descriptor.getPluginId().getIdString().equals(CORE_PLUGIN_ID)) {
-        ourAvailableModules.addAll(descriptor.getModules());
+        final List<String> modules = descriptor.getModules();
+        if (modules != null) {
+          ourAvailableModules.addAll(modules);
+        }
       }
 
       if (!shouldSkipPlugin(descriptor, pluginDescriptors)) {
