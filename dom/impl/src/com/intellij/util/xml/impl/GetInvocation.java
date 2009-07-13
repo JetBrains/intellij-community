@@ -8,13 +8,15 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomReferenceInjector;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.SubTag;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -83,14 +85,8 @@ public class GetInvocation implements Invocation {
     String tagValue = handler.getValue();
     ConvertContextImpl context = new ConvertContextImpl(handler);
 
-    XmlElement el = handler.getXmlElement();
-    if (el != null) {
-      DomFileDescription<?> fileDescription = handler.getManager().getDomFileDescription(el);
-      if (fileDescription != null) {
-        for (DomReferenceInjector each : fileDescription.getReferenceInjectors()) {
-          tagValue = each.resolveString(tagValue, context);
-        }
-      }
+    for (DomReferenceInjector each : DomUtil.getFileElement(handler).getFileDescription().getReferenceInjectors()) {
+      tagValue = each.resolveString(tagValue, context);
     }
 
     return converter.fromString(tagValue, context);

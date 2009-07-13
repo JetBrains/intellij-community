@@ -630,8 +630,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     final XmlTag tag = addEmptyTag(name, index);
     final CollectionElementInvocationHandler handler = new CollectionElementInvocationHandler(type, tag, description, this);
     myManager.fireEvent(new ElementChangedEvent(getProxy()));
-    handler.addRequiredChildren();
     getManager().getTypeChooserManager().getTypeChooser(description.getType()).distinguishTag(tag, type);
+    handler.addRequiredChildren();
     return handler.getProxy();
   }
 
