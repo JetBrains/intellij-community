@@ -9,6 +9,8 @@
     <group id="MoveModuleToGroup" class="com.intellij.ide.projectView.impl.MoveModuleToGroupTopLevel" popup="true"/>
 
     <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationAction"/>
+    <action id="ExecuteRunConfiguration" class="com.intellij.execution.actions.ExecuteRunConfigurationAction" text="Execute configuration..."/>
+
     <group id="RunContextGroup" popup="false">
       <action id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
     </group>
@@ -287,6 +289,7 @@
     <!-- Run -->
     <group id="RunMenu" popup="true">
       <group id="RunnerActions"/>
+      <reference ref="ExecuteRunConfiguration"/>
       <action id="editRunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction"/>
       <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="/actions/suspend.png"/>
 

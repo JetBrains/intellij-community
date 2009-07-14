@@ -836,7 +836,7 @@
       <keyboard-shortcut first-keystroke="alt F1"/>
     </action>
     <action id="CreateConfiguration"/>
-    <action id="RunConfiguration">
+    <action id="ExecuteRunConfiguration">
       <keyboard-shortcut first-keystroke="alt shift F10"/>
     </action>
     <action id="Refresh">

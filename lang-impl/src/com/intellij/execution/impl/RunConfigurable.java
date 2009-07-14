@@ -59,7 +59,6 @@ class RunConfigurable extends BaseConfigurable {
 
   private final Project myProject;
   private final RunDialog myRunDialog;
-  private JCheckBox myCbShowSettingsBeforeRunning;
   @NonNls private final DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode("Root");
   private final Tree myTree = new Tree(myRoot);
   private final JPanel myRightPanel = new JPanel(new BorderLayout());
@@ -308,13 +307,6 @@ class RunConfigurable extends BaseConfigurable {
     bottomPanel.add(editDefaultsButton, BorderLayout.NORTH);
     bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
 
-    myCbShowSettingsBeforeRunning = new JCheckBox(ExecutionBundle.message("run.configuration.display.settings.checkbox"));
-    myCbShowSettingsBeforeRunning.addItemListener(new ItemListener() {
-      public void itemStateChanged(final ItemEvent e) {
-        setModified(true);
-      }
-    });
-    bottomPanel.add(myCbShowSettingsBeforeRunning, BorderLayout.SOUTH);
     Box box = new Box(BoxLayout.LINE_AXIS);
     box.setBorder(BorderFactory.createEmptyBorder(7, 5, 3, 0));
     box.add(new JLabel("Temporary configurations limit:"));
@@ -389,7 +381,6 @@ class RunConfigurable extends BaseConfigurable {
   public void reset() {
     final RunManagerEx manager = getRunManager();
     final RunManagerConfig config = manager.getConfig();
-    myCbShowSettingsBeforeRunning.setSelected(config.isShowSettingsBeforeRun());
     myRecentsLimit.setText(Integer.toString(config.getRecentsLimit()));
     setModified(false);
   }
@@ -412,7 +403,6 @@ class RunConfigurable extends BaseConfigurable {
       manager.setSelectedConfiguration(null);
     }
 
-    manager.getConfig().setShowSettingsBeforeRun(myCbShowSettingsBeforeRunning.isSelected());
     String recentsLimit = myRecentsLimit.getText();
     try {
       int i = Integer.parseInt(recentsLimit);

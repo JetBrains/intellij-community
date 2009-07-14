@@ -59,4 +59,8 @@ public abstract class RunManagerEx extends RunManager {
   public abstract <T extends BeforeRunTask> T getBeforeRunTask(RunConfiguration settings, Key<T> taskProviderID);
 
   public abstract <T extends BeforeRunTask> Collection<T> getBeforeRunTasks(Key<T> taskProviderID, boolean includeOnlyActiveTasks);
+
+  public abstract RunnerAndConfigurationSettingsImpl findConfigurationByName(@NotNull final String name);
+
+  public abstract Collection<RunnerAndConfigurationSettingsImpl> getSortedConfigurations();
 }

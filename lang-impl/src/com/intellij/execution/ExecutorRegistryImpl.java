@@ -1,24 +1,17 @@
 package com.intellij.execution;
 
 import com.intellij.execution.actions.RunContextAction;
-import com.intellij.execution.impl.RunDialog;
-import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -155,7 +148,6 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       }
 
       String text = getTemplatePresentation().getTextWithMnemonic();
-      text = RunManagerEx.getInstanceEx(project).getConfig().isShowSettingsBeforeRun() ? text + "..." : text;
 
       presentation.setEnabled(enabled);
       presentation.setText(text);
@@ -173,50 +165,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
         return;
       }
 
-      executeConfiguration(project, dataContext);
-    }
-
-    private void executeConfiguration(final Project project, DataContext dataContext) {
-      RunnerAndConfigurationSettingsImpl configuration = getConfiguration(project);
-      if (configuration == null) return;
-
-      ProgramRunner runner = getRunner(myExecutor.getId(), configuration);
-      LOG.assertTrue(runner != null, "Runner MUST not be null!");
-
-      final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
-      final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-      LOG.assertTrue(component != null, "component MUST not be null!");
-      if (runManager.getConfig().isShowSettingsBeforeRun() || !RunManagerImpl.canRunConfiguration(configuration, myExecutor)) {
-        final RunDialog dialog = new RunDialog(project, myExecutor);
-        dialog.show();
-        if (!dialog.isOK()) return;
-        dataContext = recreateDataContext(project, component);
-        configuration = getConfiguration(project);
-        assert configuration != null;
-        runner = getRunner(myExecutor.getId(), configuration);
-        LOG.assertTrue(runner != null, String.format("Unable to find erunner for executor_id: %s", myExecutor.getId()));
-      }
-
-      try {
-        runner.execute(myExecutor, new ExecutionEnvironment(runner, configuration, dataContext));
-      }
-      catch (RunCanceledByUserException e) {
-      }
-      catch (ExecutionException e1) {
-        Messages.showErrorDialog(project, ExecutionBundle.message("error.running.configuration.with.error.error.message",
-                                                                  configuration.getName(), e1.getMessage()),
-                                          ExecutionBundle.message("run.error.message.title"));
-      }
-    }
-
-    @Nullable
-    private static ProgramRunner getRunner(final String executorId, final RunnerAndConfigurationSettingsImpl selectedConfiguration) {
-      return RunnerRegistry.getInstance().getRunner(executorId, selectedConfiguration.getConfiguration());
-    }
-
-    private static DataContext recreateDataContext(final Project project, final Component component) {
-      if (component != null && component.isDisplayable()) return DataManager.getInstance().getDataContext(component);
-      return SimpleDataContext.getProjectContext(project);
+      ExecutionUtil.executeConfiguration(project, getConfiguration(project), myExecutor, dataContext);
     }
   }
 }

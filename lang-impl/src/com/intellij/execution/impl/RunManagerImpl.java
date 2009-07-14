@@ -264,7 +264,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     }
   }
 
-  private Collection<RunnerAndConfigurationSettingsImpl> getSortedConfigurations() {
+  @Override
+  public Collection<RunnerAndConfigurationSettingsImpl> getSortedConfigurations() {
     if (myOrder != null && !myOrder.isEmpty()) { //compatibility
       final HashMap<String, RunnerAndConfigurationSettingsImpl> settings =
           new HashMap<String, RunnerAndConfigurationSettingsImpl>(myConfigurations); //sort shared and local configurations
@@ -609,6 +610,11 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       }
     }
     return tasks;
+  }
+
+  @Override
+  public RunnerAndConfigurationSettingsImpl findConfigurationByName(@NotNull String name) {
+    return null;
   }
 
   public <T extends BeforeRunTask> T getBeforeRunTask(RunConfiguration settings, Key<T> taskProviderID) {
