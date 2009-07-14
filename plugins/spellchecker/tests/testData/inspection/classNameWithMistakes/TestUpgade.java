@@ -1,4 +1,4 @@
 package testData.inspection.classNameWithMistakes;
 
-class <TYPO descr="Word 'Upgade' is misspelled">TestUpgade</TYPO> {
+class Test<TYPO descr="Word 'Upgade' is misspelled">Upgade</TYPO> {
 }

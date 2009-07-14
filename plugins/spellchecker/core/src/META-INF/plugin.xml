@@ -3,6 +3,7 @@
   <description>Spell checker plugin</description>
   <version>1.0</version>
   <vendor>JetBrains</vendor>
+  <id>com.intellij.spellchecker</id>
   <depends>com.intellij.modules.xml</depends>
 
 
@@ -35,6 +36,10 @@
 
   </actions>
 
+  <extensionPoints>
+    <extensionPoint name="tokenizerFactory" interface="com.intellij.spellchecker.tokenizer.TokenizerFactory"/>
+  </extensionPoints>
+  
   <extensions defaultExtensionNs="com.intellij">
     
     <projectService serviceInterface="com.intellij.spellchecker.options.SpellCheckerConfiguration"
@@ -48,6 +53,9 @@
         implementation="com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider"/>
     <nameSuggestionProvider id="DictionarySuggestionProvider" implementation="com.intellij.spellchecker.DictionarySuggestionProvider"/>
     <severitiesProvider implementation="com.intellij.spellchecker.SpellCheckerSeveritiesProvider"/>
+    
+    <spellchecker.tokenizerFactory implementation="com.intellij.spellchecker.tokenizer.TokenizerFactory"/>
+    <spellchecker.tokenizerFactory implementation="com.intellij.spellchecker.tokenizer.HtmlTokenizerFactory"/>
   </extensions>
 </idea-plugin>
         

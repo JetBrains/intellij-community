@@ -2,6 +2,7 @@
   <id>com.intellij.java-i18n</id>
   <name>I18n for Java</name>
   <depends>com.intellij.properties</depends>
+  <depends optional="true" config-file="spellchecker-support.xml">com.intellij.spellchecker</depends>
   <resource-bundle>messages.PropertiesBundle</resource-bundle>
   <extensionPoints>
     <extensionPoint name="resourceBundleManager"

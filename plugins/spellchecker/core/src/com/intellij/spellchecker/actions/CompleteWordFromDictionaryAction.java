@@ -22,7 +22,7 @@ public final class CompleteWordFromDictionaryAction extends AnAction {
 
     Project project = e.getData(PlatformDataKeys.PROJECT);
     Editor editor = e.getData(PlatformDataKeys.EDITOR);
-    PsiFile psiFile = e.getData(DataKeys.PSI_FILE);
+    PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
 
     if (project != null && editor != null && psiFile != null) {
       // Get position before caret
@@ -75,9 +75,9 @@ public final class CompleteWordFromDictionaryAction extends AnAction {
 
   public void update(AnActionEvent e) {
     super.update(e);
-    Project project = e.getData(DataKeys.PROJECT);
-    Editor editor = e.getData(DataKeys.EDITOR);
-    PsiFile psiFile = e.getData(DataKeys.PSI_FILE);
+    Project project = e.getData(LangDataKeys.PROJECT);
+    Editor editor = e.getData(LangDataKeys.EDITOR);
+    PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
     boolean available = project != null && editor != null && psiFile != null;
     Presentation presentation = e.getPresentation();
     if (presentation.isVisible()) {

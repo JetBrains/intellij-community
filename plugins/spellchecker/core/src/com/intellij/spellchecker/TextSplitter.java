@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 /**
  * @author shkate@jetbrains.com
  */
-public class Splitter {
+public class TextSplitter {
 
   @NonNls
   private static final Pattern NON_SPACE = Pattern.compile("\\S+");
@@ -42,7 +42,7 @@ public class Splitter {
   private static final Pattern SPECIAL = Pattern.compile("^&\\p{Alnum}{4};");
 
 
-  private Splitter() {
+  private TextSplitter() {
   }
 
 

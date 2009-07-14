@@ -1,27 +1,35 @@
 package com.intellij.spellchecker.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.lang.refactoring.NamesValidator;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.spellchecker.CheckArea;
 import com.intellij.spellchecker.SpellCheckerManager;
-import com.intellij.spellchecker.checker.Checker;
-import com.intellij.spellchecker.checker.CheckerFactory;
+import com.intellij.spellchecker.TextSplitter;
+import com.intellij.spellchecker.quickfixes.AcceptWordAsCorrect;
+import com.intellij.spellchecker.quickfixes.ChangeTo;
+import com.intellij.spellchecker.quickfixes.RenameTo;
+import com.intellij.spellchecker.tokenizer.Token;
+import com.intellij.spellchecker.tokenizer.Tokenizer;
+import com.intellij.spellchecker.tokenizer.TokenizerFactory;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Collection;
 
 
 public class SpellCheckingInspection extends LocalInspectionTool {
@@ -47,39 +55,31 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     return true;
   }
 
-
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return SpellCheckerManager.getHighlightDisplayLevel();
   }
 
+  private static boolean initComplete;
+  private static Map<Language, TokenizerFactory> factories = new HashMap<Language, TokenizerFactory>();
 
-  private static Set<String> elementTypes = new HashSet<String>();
-  private static Set<Language> languages = new HashSet<Language>();
-  private static Map<String, Checker> checkers = new HashMap<String, Checker>();
-
-  static {
-    elementTypes.add("CLASS");
-    elementTypes.add("FIELD");
-    elementTypes.add("METHOD");
-    elementTypes.add("LOCAL_VARIABLE");
-    elementTypes.add("STRING_LITERAL");
-    elementTypes.add("C_STYLE_COMMENT");
-    elementTypes.add("END_OF_LINE_COMMENT");
-    elementTypes.add("DOC_COMMENT");
-    elementTypes.add("XML_ATTRIBUTE_VALUE");
-    elementTypes.add("XML_TEXT");
-    elementTypes.add("XML_COMMENT");
-    elementTypes.add("PLAIN_TEXT");
-
+  private static void init() {
+    if (initComplete) return;
+    final TokenizerFactory[] tokenizerFactories = Extensions.getExtensions(TokenizerFactory.EP_NAME);
+    if (tokenizerFactories != null) {
+      for (TokenizerFactory tokenizerFactory : tokenizerFactories) {
+        final Language language = tokenizerFactory.getLanguage();
+        if (language != Language.ANY) {
+          factories.put(language, tokenizerFactory);
+        }
+      }
+    }
+    initComplete = true;
   }
 
-  static {
-    languages.add(StdLanguages.JAVA);
-    languages.add(StdLanguages.XML);
-    languages.add(StdLanguages.TEXT);
+  private static TokenizerFactory getFactoryByLanguage(@NotNull Language lang) {
+    return factories.containsKey(lang) ? factories.get(lang) : factories.get(PlainTextLanguage.INSTANCE);
   }
-
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
@@ -89,34 +89,108 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
       @Override
       public void visitElement(PsiElement element) {
+        if (!initComplete) {
+          init();
+        }
+        final TokenizerFactory factoryByLanguage = getFactoryByLanguage(element.getLanguage());
+        final Tokenizer tokenizer = factoryByLanguage.getTokenizer(element);
 
-
-        if (element.getLanguage() == StdLanguages.JSP || element.getLanguage() == StdLanguages.JSPX) {
+        @SuppressWarnings({"unchecked"}) Token[] tokens = tokenizer.tokenize(element);
+        if (tokens == null) {
           return;
         }
-
-        IElementType type = (element.getNode() != null) ? element.getNode().getElementType() : null;
-
-        if (type == null) {
-          return;
+        for (Token token : tokens) {
+          inspect(token, holder, isOnTheFly, getNamesValidators());
         }
-
-        boolean check = languages.contains(type.getLanguage()) && (elementTypes.contains(type.toString()));
-        if (!check) {
-          return;
-        }
-
-        Checker checker = CheckerFactory.getInstance().createChecker(element, holder, isOnTheFly);
-        if (checker == null) {
-          return;
-        }
-
-        final List<ProblemDescriptor> problems = checker.checkElement(element);
-        if (problems.isEmpty()) {
-          return;
-        }
-        checker.addDescriptors(problems);
       }
     };
+  }
+
+  private static void inspect(Token token, ProblemsHolder holder, boolean isOnTheFly, NamesValidator... validators) {
+    List<CheckArea> areaList = TextSplitter.splitText(token.getText());
+    if (areaList == null) {
+      return;
+    }
+    for (CheckArea area : areaList) {
+      boolean ignored = area.isIgnored();
+      boolean keyword = isKeyword(validators, token.getElement(), area.getWord());
+      if (!ignored && !keyword) {
+        inspect(area, token, holder, isOnTheFly);
+      }
+    }
+  }
+
+
+  private static void inspect(@NotNull CheckArea area, @NotNull Token token, @NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    SpellCheckerManager manager = SpellCheckerManager.getInstance(token.getElement().getProject());
+
+    final TextRange textRange = area.getTextRange();
+    final String word = area.getWord();
+
+    if (textRange == null || word == null) {
+      return;
+    }
+
+    if (manager.hasProblem(word)) {
+      List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+      if (isOnTheFly) {
+        if (!token.isUseRename()) {
+          fixes.add(new ChangeTo(textRange, word, token.getElement().getProject()));
+        }
+        else {
+          fixes.add(new RenameTo());
+        }
+      }
+
+      fixes.add(new AcceptWordAsCorrect(word));
+
+      holder.registerProblem(createProblemDescriptor(token, holder, textRange, word, fixes));
+    }
+
+  }
+
+  private static ProblemDescriptor createProblemDescriptor(Token token,
+                                                           ProblemsHolder holder,
+                                                           TextRange textRange,
+                                                           String word,
+                                                           Collection<LocalQuickFix> fixes) {
+    final String defaultDescription = SpellCheckerBundle.message("word.0.1.is.misspelled", word, token.getElement().getLanguage());
+    final String tokenDescription = token.getDescription();
+    final String description = tokenDescription == null ? defaultDescription : tokenDescription;
+    final TextRange highlightRange = TextRange.from(token.getOffset() + textRange.getStartOffset(), textRange.getLength());
+    final LocalQuickFix[] quickFixes = fixes.size() > 0 ? fixes.toArray(new LocalQuickFix[fixes.size()]) : null;
+    return holder.getManager()
+      .createProblemDescriptor(token.getElement(), highlightRange, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, quickFixes);
+  }
+
+  @Nullable
+  public static NamesValidator[] getNamesValidators() {
+    final Object[] extensions = Extensions.getExtensions("com.intellij.lang.namesValidator");
+    NamesValidator[] validators = null;
+    if (extensions != null) {
+      List<NamesValidator> validatorList = new ArrayList<NamesValidator>();
+      for (Object extension : extensions) {
+        if (extension instanceof LanguageExtensionPoint && ((LanguageExtensionPoint)extension).getInstance() instanceof NamesValidator) {
+          validatorList.add((NamesValidator)((LanguageExtensionPoint)extension).getInstance());
+        }
+      }
+      if (validatorList.size() > 0) {
+        validators = new NamesValidator[validatorList.size()];
+        validatorList.toArray(validators);
+      }
+    }
+    return validators;
+  }
+
+  private static boolean isKeyword(NamesValidator[] validators, PsiElement element, String word) {
+    if (validators == null) {
+      return false;
+    }
+    for (NamesValidator validator : validators) {
+      if (validator.isKeyword(word, element.getProject())) {
+        return true;
+      }
+    }
+    return false;
   }
 }

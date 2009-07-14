@@ -1,0 +1,27 @@
+package com.intellij.spellchecker.tokenizer;
+
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * Created by IntelliJ IDEA.
+ *
+ * @author shkate@jetbrains.com
+ */
+public class PsiIdentifierOwnerTokenizer extends Tokenizer<PsiNameIdentifierOwner> {
+
+  @Nullable
+  @Override
+  public Token[] tokenize(@NotNull PsiNameIdentifierOwner element) {
+    PsiElement identifier = element.getNameIdentifier();
+    if (identifier == null) {
+      return null;
+    }
+
+    return new Token[]{new Token<PsiElement>(identifier, identifier.getText(), true)};
+  }
+
+
+}

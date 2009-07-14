@@ -1,7 +1,7 @@
 package com.intellij.spellchecker.inspector;
 
 import com.intellij.spellchecker.CheckArea;
-import com.intellij.spellchecker.Splitter;
+import com.intellij.spellchecker.TextSplitter;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -17,35 +17,35 @@ public class SplitterTest extends TestCase {
 
   public void testSplitSimpleCamelCase() {
     String text = "simpleCamelCase";
-    List<CheckArea> checkAreas = Splitter.splitText(text);
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"simple", "Camel", "Case"});
     correctIgnored(checkAreas, text, new String[]{});
   }
 
   public void testSplitCamelCaseWithUpperCasedWord() {
     String text = "camelCaseJSP";
-    List<CheckArea> checkAreas = Splitter.splitText(text);
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"camel", "Case"});
     correctIgnored(checkAreas, text, new String[]{"JSP"});
   }
 
   public void testCapitalizedWithShortWords() {
     String text = "IntelliJ";
-    List<CheckArea> checkAreas = Splitter.splitText(text);
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{});
     correctIgnored(checkAreas, text, new String[]{"IntelliJ"});
   }
 
   public void testCapitalizedWithShortAndLongWords() {
     String text = "IntelliJTestTest";
-    List<CheckArea> checkAreas = Splitter.splitText(text);
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{});
     correctIgnored(checkAreas, text, new String[]{"IntelliJTestTest"});
   }
 
   public void testWordWithApostrophe1() {
     String text = "don't check";
-    List<CheckArea> checkAreas = Splitter.splitText(text);
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"don't", "check"});
     correctIgnored(checkAreas, text, new String[]{});
   }
@@ -53,14 +53,14 @@ public class SplitterTest extends TestCase {
 
   public void testWordWithApostrophe2() {
     String text = "customers'";
-    List<CheckArea> checkAreas = Splitter.splitText(text);
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"customers"});
     correctIgnored(checkAreas, text, new String[]{});
   }
 
   public void testWordWithApostrophe3() {
     String text = "customer's";
-    List<CheckArea> checkAreas = Splitter.splitText(text);
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"customer's"});
     correctIgnored(checkAreas, text, new String[]{});
   }
@@ -69,21 +69,21 @@ public class SplitterTest extends TestCase {
 
   public void testConstantName() {
     String text = "TEST_CONSTANT";
-    List<CheckArea> checkAreas = Splitter.splitText(text);
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"TEST","CONSTANT"});
     correctIgnored(checkAreas, text, new String[]{});
   }
 
   public void testLongConstantName() {
     String text = "TEST_VERY_VERY_LONG_AND_COMPLEX_CONSTANT";
-    List<CheckArea> checkAreas = Splitter.splitText(text);
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"TEST","VERY","VERY","LONG","COMPLEX","CONSTANT"});
     correctIgnored(checkAreas, text, new String[]{"AND"});
   }
 
    public void testJavaComments() {
     String text = "/*special symbols*/";
-    List<CheckArea> checkAreas = Splitter.splitText(text);
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"special","symbols"});
     correctIgnored(checkAreas, text, new String[]{});
   }
@@ -91,108 +91,108 @@ public class SplitterTest extends TestCase {
 
   public void testXmlComments() {
    String text = "<!--special symbols-->";
-   List<CheckArea> checkAreas = Splitter.splitText(text);
+   List<CheckArea> checkAreas = TextSplitter.splitText(text);
    correctListToCheck(checkAreas, text, new String[]{"special","symbols"});
    correctIgnored(checkAreas, text, new String[]{});
  }
 
   public void testCamelCaseInXmlComments() {
    String text = "<!--specialCase symbols-->";
-   List<CheckArea> checkAreas = Splitter.splitText(text);
+   List<CheckArea> checkAreas = TextSplitter.splitText(text);
    correctListToCheck(checkAreas, text, new String[]{"special","Case","symbols"});
    correctIgnored(checkAreas, text, new String[]{});
  }
 
   public void testWordsWithNumbers() {
    String text = "testCamelCase123";
-   List<CheckArea> checkAreas = Splitter.splitText(text);
+   List<CheckArea> checkAreas = TextSplitter.splitText(text);
    correctListToCheck(checkAreas, text, new String[]{"test","Camel","Case"});
    correctIgnored(checkAreas, text, new String[]{});
  }
 
   public void testCommentsWithWordsWithNumbers() {
     String text = "<!--specialCase456 symbols-->";
-    List<CheckArea> checkAreas = Splitter.splitText(text);
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"special","Case","symbols"});
     correctIgnored(checkAreas, text, new String[]{});
   }
 
   public void testCommentsWithAbr() {
     String text = "<!--JSPTestClass-->";
-    List<CheckArea> checkAreas = Splitter.splitText(text);
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"Test","Class"});
     correctIgnored(checkAreas, text, new String[]{"JSP"});
   }
 
   public void testStringLiterals() {
     String text = "test\ntest\n";
-    List<CheckArea> checkAreas = Splitter.splitText(text);
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"test", "test"});
     correctIgnored(checkAreas, text, new String[]{});
   }
 
   public void testCommentWithHtml() {
     String text = "<!--<li style='color:red;'>something go here</li> foooo barrrr <p> text text -->";
-    List<CheckArea> checkAreas = Splitter.splitText(text);
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"something","here","foooo","barrrr","text", "text"});
     correctIgnored(checkAreas, text, new String[]{"go"});
   }
 
   public void testSpecial() {
     String text = "test &nbsp; test";
-    List<CheckArea> checkAreas = Splitter.splitText(text);
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"test", "test"});
     correctIgnored(checkAreas, text, new String[]{"&nbsp;"});
   }
 
   public void testTooShort() {
     String text = "bgColor carLight";
-    List<CheckArea> checkAreas = Splitter.splitText(text);
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"Color", "Light"});
     correctIgnored(checkAreas, text, new String[]{"bg","car"});
   }
 
   public void testComplex() {
    String text = "shkate@gmail.com";
-   List<CheckArea> checkAreas = Splitter.splitText(text);
+   List<CheckArea> checkAreas = TextSplitter.splitText(text);
    correctListToCheck(checkAreas, text, new String[]{});
    correctIgnored(checkAreas, text, new String[]{});
  }
 
   public void testWordBeforeDelimeter() {
     String text = "badd,";
-    List<CheckArea> checkAreas = Splitter.splitText(text);
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"badd"});
     correctIgnored(checkAreas, text, new String[]{});
   }
   public void testWordAfterDelimeter() {
     String text = ",badd";
-    List<CheckArea> checkAreas = Splitter.splitText(text);
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"badd"});
     correctIgnored(checkAreas, text, new String[]{});
   }
 
   public void testWordInCapsBeforeDelimeter() {
      String text = "BADD,";
-     List<CheckArea> checkAreas = Splitter.splitText(text);
+     List<CheckArea> checkAreas = TextSplitter.splitText(text);
      correctListToCheck(checkAreas, text, new String[]{"BADD"});
      correctIgnored(checkAreas, text, new String[]{});
    }
    public void testWordInCapsAfterDelimeter() {
      String text = ",BADD";
-     List<CheckArea> checkAreas = Splitter.splitText(text);
+     List<CheckArea> checkAreas = TextSplitter.splitText(text);
      correctListToCheck(checkAreas, text, new String[]{"BADD"});
      correctIgnored(checkAreas, text, new String[]{});
    }
    public void testWordInCapsAfterDelimeter2() {
      String text = "BADD;";
-     List<CheckArea> checkAreas = Splitter.splitText(text);
+     List<CheckArea> checkAreas = TextSplitter.splitText(text);
      correctListToCheck(checkAreas, text, new String[]{"BADD"});
      correctIgnored(checkAreas, text, new String[]{});
    }
    public void testWordInCapsAfterDelimeter3() {
      String text = ";BADD;";
-     List<CheckArea> checkAreas = Splitter.splitText(text);
+     List<CheckArea> checkAreas = TextSplitter.splitText(text);
      correctListToCheck(checkAreas, text, new String[]{"BADD"});
      correctIgnored(checkAreas, text, new String[]{});
    }
