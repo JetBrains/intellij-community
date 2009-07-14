@@ -58,6 +58,7 @@ class TextEditorComponent extends JPanel implements DataProvider{
 
   private final MyEditorMouseListener myEditorMouseListener;
   private final MyEditorCaretListener myEditorCaretListener;
+  private final MyEditorSelectionListener myEditorSelectionListener;
   private final MyDocumentListener myDocumentListener;
   private final MyEditorPropertyChangeListener myEditorPropertyChangeListener;
   private final MyVirtualFileListener myVirtualFileListener;
@@ -89,6 +90,7 @@ class TextEditorComponent extends JPanel implements DataProvider{
 
     myEditorMouseListener = new MyEditorMouseListener();
     myEditorCaretListener = new MyEditorCaretListener();
+    myEditorSelectionListener = new MyEditorSelectionListener();
     myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
 
     myConnection = project.getMessageBus().connect();
@@ -163,6 +165,7 @@ class TextEditorComponent extends JPanel implements DataProvider{
 
     editor.addEditorMouseListener(myEditorMouseListener);
     editor.getCaretModel().addCaretListener(myEditorCaretListener);
+    editor.getSelectionModel().addSelectionListener(myEditorSelectionListener);
     ((EditorEx)editor).addPropertyChangeListener(myEditorPropertyChangeListener);
 
     ((EditorImpl) editor).setDropHandler(new FileDropHandler());
@@ -179,6 +182,7 @@ class TextEditorComponent extends JPanel implements DataProvider{
     EditorFactory.getInstance().releaseEditor(editor);
     editor.removeEditorMouseListener(myEditorMouseListener);
     editor.getCaretModel().removeCaretListener(myEditorCaretListener);
+    editor.getSelectionModel().removeSelectionListener(myEditorSelectionListener);
     ((EditorEx)editor).removePropertyChangeListener(myEditorPropertyChangeListener);
   }
 
@@ -305,6 +309,16 @@ class TextEditorComponent extends JPanel implements DataProvider{
       }
     }
   }
+
+  private final class MyEditorSelectionListener implements SelectionListener {
+    public void selectionChanged(SelectionEvent e) {
+      assertThread();
+      if (e.getEditor() == getEditor()) {
+        updateStatusBar();
+      }
+    }
+  }
+
 
   /**
    * Updates "modified" property
