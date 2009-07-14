@@ -30,6 +30,7 @@ import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -280,6 +281,8 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
 
         if (mySourceClass.equals(targetClass[0])) {
           return RefactoringBundle.message("source.and.destination.classes.should.be.different");
+        } else if (!mySourceClass.getLanguage().equals(targetClass[0].getLanguage())) {
+          return RefactoringBundle.message("move.to.different.language", UsageViewUtil.getType(mySourceClass), mySourceClass.getQualifiedName(), targetClass[0].getQualifiedName());
         }
         else {
           for (MemberInfo info : myMemberInfos) {

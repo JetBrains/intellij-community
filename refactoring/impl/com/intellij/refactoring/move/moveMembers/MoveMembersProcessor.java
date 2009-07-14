@@ -5,6 +5,7 @@
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -15,7 +16,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
@@ -31,7 +31,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -44,6 +43,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private String myNewVisibility; // "null" means "as is"
   private String myCommandName = MoveMembersImpl.REFACTORING_NAME;
   private boolean myMakeEnumConstant;
+  private MoveMembersOptions myOptions;
 
   public MoveMembersProcessor(Project project, MoveCallback moveCallback, MoveMembersOptions options) {
     super(project);
@@ -60,6 +60,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   private void setOptions(MoveMembersOptions dialog) {
+    myOptions = dialog;
     PsiMember[] members = dialog.getSelectedMembers();
     myMembersToMove.clear();
     myMembersToMove.addAll(Arrays.asList(members));
@@ -99,35 +100,17 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     for (PsiMember member : myMembersToMove) {
       for (PsiReference psiReference : ReferencesSearch.search(member)) {
         PsiElement ref = psiReference.getElement();
-        if (ref instanceof PsiReferenceExpression) {
-          PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
-          PsiExpression qualifier = refExpr.getQualifierExpression();
-          if (RefactoringHierarchyUtil.willBeInTargetClass(refExpr, myMembersToMove, myTargetClass, true)) {
-            // both member and the reference to it will be in target class
-            if (!isInMovedElement(refExpr)) {
-              if (qualifier != null) {
-                usagesList.add(new MyUsageInfo(member, refExpr, null, qualifier, psiReference));  // remove qualifier
-              }
-            }
-            else {
-              if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).isReferenceTo(member.getContainingClass())) {
-                usagesList.add(new MyUsageInfo(member, refExpr, null, qualifier, psiReference));  // change qualifier
-              }
-            }
-          }
-          else {
-            // member in target class, the reference will be outside target class
-            if (qualifier == null) {
-              usagesList.add(new MyUsageInfo(member, refExpr, myTargetClass, refExpr, psiReference)); // add qualifier
-            }
-            else {
-              usagesList.add(new MyUsageInfo(member, refExpr, myTargetClass, qualifier, psiReference)); // change qualifier
-            }
-          }
+        final MoveMemberHandler handler = MoveMemberHandler.EP_NAME.forLanguage(ref.getLanguage());
+        MoveMembersUsageInfo usage = null;
+        if (handler != null) {
+          usage = handler.getUsage(member, psiReference, myMembersToMove, myTargetClass);
+        }
+        if (usage != null) {
+          usagesList.add(usage);
         }
         else {
           if (!isInMovedElement(ref)) {
-            usagesList.add(new MyUsageInfo(member, ref, null, ref, psiReference));
+            usagesList.add(new MoveMembersUsageInfo(member, ref, null, ref, psiReference));
           }
         }
       }
@@ -155,60 +138,24 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(final UsageInfo[] usages) {
     try {
       // correct references to moved members from the outside
-      ArrayList<MyUsageInfo> otherUsages = new ArrayList<MyUsageInfo>();
+      LanguageExtension<MoveMemberHandler> extension=new LanguageExtension<MoveMemberHandler>("com.intellij.refactoring.moveMemberHandler");
+
+      ArrayList<MoveMembersUsageInfo> otherUsages = new ArrayList<MoveMembersUsageInfo>();
       for (UsageInfo usageInfo : usages) {
-        MyUsageInfo usage = (MyUsageInfo)usageInfo;
+        MoveMembersUsageInfo usage = (MoveMembersUsageInfo)usageInfo;
         if (!usage.reference.isValid()) continue;
-        if (usage.reference instanceof PsiReferenceExpression) {
-          PsiReferenceExpression refExpr = (PsiReferenceExpression)usage.reference;
-          PsiExpression qualifier = refExpr.getQualifierExpression();
-          if (qualifier != null) {
-            if (usage.qualifierClass != null) {
-              changeQualifier(refExpr, usage.qualifierClass);
-            }
-            else {
-              removeQualifier(refExpr);
-            }
-          }
-          else { // no qualifier
-            if (usage.qualifierClass != null) {
-              changeQualifier(refExpr, usage.qualifierClass);
-            }
-          }
+        final MoveMemberHandler handler = extension.forLanguage(usageInfo.getElement().getLanguage());
+        if (handler!=null) {
+          if (handler.changeExternalUsage(myOptions, usage)) continue;
         }
-        else {
-          otherUsages.add(usage);
-        }
+        otherUsages.add(usage);
       }
 
       // correct references inside moved members and outer references to Inner Classes
       for (PsiMember member : myMembersToMove) {
-        if (member instanceof PsiVariable) {
-          ((PsiVariable)member).normalizeDeclaration();
-        }
-        final RefactoringElementListener elementListener = getTransaction().getElementListener(member);
-        ChangeContextUtil.encodeContextInfo(member, true);
-
-        PsiElement anchor = getAnchor(member);
-
-        final PsiMember memberCopy;
-        if (myMakeEnumConstant && member instanceof PsiVariable && EnumConstantsUtil.isSuitableForEnumConstant(((PsiVariable)member).getType(), myTargetClass)) {
-          memberCopy = EnumConstantsUtil.createEnumConstant(myTargetClass, member.getName(), ((PsiVariable)member).getInitializer());
-        } else {
-          memberCopy = (PsiMember)member.copy();
-          if (member.getContainingClass().isInterface() && !myTargetClass.isInterface()) {
-            //might need to make modifiers explicit, see IDEADEV-11416
-            final PsiModifierList list = memberCopy.getModifierList();
-            assert list != null;
-            list.setModifierProperty(PsiModifier.STATIC, member.hasModifierProperty(PsiModifier.STATIC));
-            list.setModifierProperty(PsiModifier.FINAL, member.hasModifierProperty(PsiModifier.FINAL));
-            RefactoringUtil.setVisibility(list, VisibilityUtil.getVisibilityModifier(member.getModifierList()));
-          }
-        }
-
         ArrayList<PsiReference> refsToBeRebind = new ArrayList<PsiReference>();
-        for (Iterator<MyUsageInfo> iterator = otherUsages.iterator(); iterator.hasNext();) {
-          MyUsageInfo info = iterator.next();
+        for (Iterator<MoveMembersUsageInfo> iterator = otherUsages.iterator(); iterator.hasNext();) {
+          MoveMembersUsageInfo info = iterator.next();
           if (member.equals(info.member)) {
             PsiReference ref = info.getReference();
             if (ref != null) {
@@ -217,21 +164,22 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
             iterator.remove();
           }
         }
-        member.delete();
-
-        PsiMember newMember =
-          anchor != null ? (PsiMember)myTargetClass.addAfter(memberCopy, anchor) : (PsiMember)myTargetClass.add(memberCopy);
+        final RefactoringElementListener elementListener = getTransaction().getElementListener(member);
+        final MoveMemberHandler handler = extension.forLanguage(member.getLanguage());
+        PsiMember newMember=handler.doMove(myOptions, member, otherUsages);
+        elementListener.elementMoved(newMember);
 
         fixVisibility(newMember, usages);
         for (PsiReference reference : refsToBeRebind) {
           reference.bindToElement(newMember);
         }
-
-        elementListener.elementMoved(newMember);
       }
 
       // qualifier info must be decoded after members are moved
-      ChangeContextUtil.decodeContextInfo(myTargetClass, null, null);
+      //ChangeContextUtil.decodeContextInfo(myTargetClass, null, null);
+      final MoveMemberHandler handler = MoveMemberHandler.EP_NAME.forLanguage(myTargetClass.getLanguage());
+      if (handler != null) handler.decodeContextInfo(myTargetClass);
+
       myMembersToMove.clear();
       if (myMoveCallback != null) {
         myMoveCallback.refactoringCompleted();
@@ -240,38 +188,6 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-  }
-
-  @Nullable
-  private PsiElement getAnchor(final PsiMember member) {
-    if (member instanceof PsiField && member.hasModifierProperty(PsiModifier.STATIC)) {
-      final List<PsiField> referencedFields = new ArrayList<PsiField>();
-      final PsiExpression psiExpression = ((PsiField)member).getInitializer();
-      if (psiExpression != null) {
-        psiExpression.accept(new JavaRecursiveElementWalkingVisitor() {
-          @Override
-          public void visitReferenceExpression(final PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            final PsiElement psiElement = expression.resolve();
-            if (psiElement instanceof PsiField) {
-              final PsiField psiField = (PsiField)psiElement;
-              if (psiField.getContainingClass() == myTargetClass && !referencedFields.contains(psiField)) {
-                referencedFields.add(psiField);
-              }
-            }
-          }
-        });
-      }
-      if (!referencedFields.isEmpty()) {
-        Collections.sort(referencedFields, new Comparator<PsiField>() {
-          public int compare(final PsiField o1, final PsiField o2) {
-            return -PsiUtilBase.compareElementsByPosition(o1, o2);
-          }
-        });
-        return referencedFields.get(0);
-      }
-    }
-    return null;
   }
 
   private void fixVisibility(PsiMember newMember, final UsageInfo[] usages) throws IncorrectOperationException {
@@ -288,7 +204,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(myNewVisibility)) {
       for (UsageInfo usage : usages) {
-        if (usage instanceof MyUsageInfo) {
+        if (usage instanceof MoveMembersUsageInfo) {
           final PsiElement place = usage.getElement();
           if (place != null) {
             VisibilityUtil.escalateVisibility(newMember, place);
@@ -297,21 +213,6 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       }
     } else {
       RefactoringUtil.setVisibility(modifierList, myNewVisibility);
-    }
-  }
-
-
-  private static void removeQualifier(PsiReferenceExpression refExpr) throws IncorrectOperationException{
-    refExpr.setQualifierExpression(null);
-  }
-
-  private void changeQualifier(PsiReferenceExpression refExpr, PsiClass aClass) throws IncorrectOperationException{
-    if (RefactoringUtil.hasOnDemandStaticImport(refExpr, aClass)) {
-      removeQualifier(refExpr);
-    }
-    else {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
-      refExpr.setQualifierExpression(factory.createReferenceExpression(aClass));
     }
   }
 
@@ -336,16 +237,17 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
     Map<PsiMember, PsiModifierList> modifierListCopies = new HashMap<PsiMember, PsiModifierList>();
     for (PsiMember member : myMembersToMove) {
-      final PsiModifierList copy = (PsiModifierList)member.getModifierList().copy();
+      PsiModifierList copy = member.getModifierList();
+      if (copy!=null) copy= (PsiModifierList)copy.copy();
       if (newVisibility != null) {
-        RefactoringUtil.setVisibility(copy, newVisibility);
+        if (copy!=null) RefactoringUtil.setVisibility(copy, newVisibility);
       }
       modifierListCopies.put(member, copy);
     }
 
     for (UsageInfo usage : usages) {
-      if (usage instanceof MyUsageInfo) {
-        final MyUsageInfo usageInfo = (MyUsageInfo)usage;
+      if (usage instanceof MoveMembersUsageInfo) {
+        final MoveMembersUsageInfo usageInfo = (MoveMembersUsageInfo)usage;
         PsiElement element = usage.getElement();
         if (element != null) {
           final PsiMember member = usageInfo.member;
@@ -423,11 +325,12 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     for (PsiMember member : membersToMove) {
       checkUsedElements(member, member, membersToMove, targetClass, conflicts);
 
-      PsiModifierList modifierList = (PsiModifierList)member.getModifierList().copy();
+      PsiModifierList modifierList = member.getModifierList();
+      if (modifierList!=null) modifierList= (PsiModifierList)modifierList.copy();
 
       if (newVisibility != null) {
         try {
-          RefactoringUtil.setVisibility(modifierList, newVisibility);
+          if (modifierList!=null)    RefactoringUtil.setVisibility(modifierList, newVisibility);
         }
         catch (IncorrectOperationException ex) {
           /* do nothing and hope for the best */
@@ -545,12 +448,12 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
 
-  private static class MyUsageInfo extends MoveRenameUsageInfo {
+  public static class MoveMembersUsageInfo extends MoveRenameUsageInfo {
     public final PsiClass qualifierClass;
     public final PsiElement reference;
     public final PsiMember member;
 
-    public MyUsageInfo(PsiMember member, PsiElement element, PsiClass qualifierClass, PsiElement highlightElement, final PsiReference ref) {
+    public MoveMembersUsageInfo(PsiMember member, PsiElement element, PsiClass qualifierClass, PsiElement highlightElement, final PsiReference ref) {
       super(highlightElement, ref, member);
       this.member = member;
       this.qualifierClass = qualifierClass;

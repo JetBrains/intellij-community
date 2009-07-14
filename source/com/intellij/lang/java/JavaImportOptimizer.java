@@ -54,6 +54,6 @@ public class JavaImportOptimizer implements ImportOptimizer {
   }
 
   public boolean supports(PsiFile file) {
-    return true;
+    return file instanceof PsiJavaFile;
   }
 }

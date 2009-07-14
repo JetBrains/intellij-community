@@ -1,6 +1,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryChooserUtil;
+import com.intellij.lang.java.JavaFindUsagesProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -9,7 +10,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.MoveDestination;
@@ -21,7 +21,6 @@ import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import com.intellij.lang.java.JavaFindUsagesProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -217,82 +216,26 @@ public class MoveClassesOrPackagesUtil {
     }
   }
 
-// Does not process non-code usages!
+  // Does not process non-code usages!
   public static PsiClass doMoveClass(PsiClass aClass, MoveDestination moveDestination) throws IncorrectOperationException {
+    PsiClass newClass;
+    for (MoveClassHandler handler : MoveClassHandler.EP_NAME.getExtensions()) {
+      newClass = handler.doMoveClass(aClass, moveDestination);
+      if (newClass != null) return newClass;
+    }
+
     PsiFile file = aClass.getContainingFile();
     PsiDirectory newDirectory = moveDestination.getTargetDirectory(file);
-  final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(newDirectory);
+    final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(newDirectory);
 
-    PsiClass newClass;
-    if (file instanceof PsiJavaFile && ((PsiJavaFile)file).getClasses().length > 1) {
-      correctSelfReferences(aClass, newPackage);
-      final PsiClass created = JavaDirectoryService.getInstance().createClass(newDirectory, aClass.getName());
-      if (aClass.getDocComment() == null) {
-        final PsiDocComment createdDocComment = created.getDocComment();
-        if (createdDocComment != null) {
-          aClass.addAfter(createdDocComment, null);
-        }
-      }
-      newClass = (PsiClass)created.replace(aClass);
-      correctOldClassReferences(newClass, aClass);
-      aClass.delete();
-    }
-    else if (!newDirectory.equals(file.getContainingDirectory()) && newDirectory.findFile(file.getName()) != null) {
-      // moving second of two classes which were in the same file to a different directory (IDEADEV-3089)
-      correctSelfReferences(aClass, newPackage);
-      PsiFile newFile = newDirectory.findFile(file.getName());
-      newClass = (PsiClass) newFile.add(aClass);
-      aClass.delete();
-    }
-    else {
-      newClass = aClass;
-      if (!newDirectory.equals(file.getContainingDirectory())) {
-        aClass.getManager().moveFile(file, newDirectory);
-        if (file instanceof PsiClassOwner && newPackage != null) {
-          ((PsiClassOwner)file).setPackageName(newPackage.getQualifiedName());
-        }
+    newClass = aClass;
+    if (!newDirectory.equals(file.getContainingDirectory())) {
+      aClass.getManager().moveFile(file, newDirectory);
+      if (file instanceof PsiClassOwner && newPackage != null) {
+        ((PsiClassOwner)file).setPackageName(newPackage.getQualifiedName());
       }
     }
-
     return newClass;
-  }
-
-  private static void correctOldClassReferences(final PsiClass newClass, final PsiClass oldClass) {
-    newClass.accept(new JavaRecursiveElementVisitor() {
-      @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-        if (reference.isReferenceTo(oldClass)) {
-          try {
-            reference.bindToElement(newClass);
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-        }
-        super.visitReferenceElement(reference);
-      }
-    });
-  }
-
-  private static void correctSelfReferences(final PsiClass aClass, final PsiPackage newContainingPackage) {
-    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(aClass.getContainingFile().getContainingDirectory());
-    if (aPackage != null) {
-      aClass.accept(new JavaRecursiveElementWalkingVisitor() {
-        @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-          if (reference.isQualified() && reference.isReferenceTo(aClass)) {
-            final PsiElement qualifier = reference.getQualifier();
-            if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).isReferenceTo(aPackage)) {
-              try {
-                ((PsiJavaCodeReferenceElement)qualifier).bindToElement(newContainingPackage);
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-              }
-            }
-          }
-          super.visitReferenceElement(reference);
-        }
-      });
-    }
   }
 
   public static String getPackageName(PackageWrapper aPackage) {

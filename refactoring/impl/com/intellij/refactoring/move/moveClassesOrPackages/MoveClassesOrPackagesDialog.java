@@ -28,6 +28,7 @@ import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -330,17 +331,17 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       for (PsiElement element : myElementsToMove) {
         if (element instanceof PsiClass) {
           final PsiClass aClass = (PsiClass)element;
-          PsiElement toAdd;
+          /*PsiElement toAdd;
           if (aClass.getContainingFile() instanceof PsiJavaFile && ((PsiJavaFile)aClass.getContainingFile()).getClasses().length > 1) {
             toAdd = aClass;
           }
           else {
             toAdd = aClass.getContainingFile();
-          }
+          }*/
 
           final PsiDirectory targetDirectory = destination.getTargetIfExists(element.getContainingFile());
           if (targetDirectory != null) {
-            manager.checkMove(toAdd, targetDirectory);
+            manager.checkMove(aClass, targetDirectory);
           }
         }
       }
@@ -381,6 +382,15 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     for (PsiElement element : myElementsToMove) {
       if (PsiTreeUtil.isAncestor(element, targetClass, false)) {
         return RefactoringBundle.message("move.class.to.inner.move.to.self.error");
+      }
+      final Language targetClassLanguage = targetClass.getLanguage();
+      if (!element.getLanguage().equals(targetClassLanguage)) {
+        return RefactoringBundle
+          .message("move.to.different.language", UsageViewUtil.getType(element), ((PsiClass)element).getQualifiedName(),
+                   targetClass.getQualifiedName());
+      }
+      if (element.getLanguage().equals(Language.findLanguageByID("Groovy"))) {
+        return RefactoringBundle.message("dont.support.inner.classes", "Groovy");
       }
     }
 

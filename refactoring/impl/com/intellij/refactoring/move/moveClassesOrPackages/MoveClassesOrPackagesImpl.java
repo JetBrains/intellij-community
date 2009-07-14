@@ -10,7 +10,6 @@ import com.intellij.ide.util.DirectoryChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
@@ -18,15 +17,15 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.move.MoveCallback;
-import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.DirectoryAsPackageRenameHandler;
+import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -105,10 +104,13 @@ public class MoveClassesOrPackagesImpl {
           return null;
         }
 
-        final PsiFile file = aClass.getContainingFile();
-        String name = file instanceof PsiJavaFile && ((PsiJavaFile)file).getClasses().length > 1
-                      ? aClass.getName() + "." + StdFileTypes.JAVA.getDefaultExtension()
-                      : file.getName();
+        String name = null;
+        for (MoveClassHandler nameProvider : MoveClassHandler.EP_NAME.getExtensions()) {
+          name = nameProvider.getName(aClass);
+          if (name != null) break;
+        }
+        if (name == null) name = aClass.getContainingFile().getName();
+
         if (names.contains(name)) {
           String message = RefactoringBundle
             .getCannotRefactorMessage(RefactoringBundle.message("there.are.going.to.be.multiple.destination.files.with.the.same.name"));
