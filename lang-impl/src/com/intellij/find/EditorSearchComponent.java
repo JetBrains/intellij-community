@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -64,7 +65,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   private boolean myHasMatches = false;
   private final JCheckBox myCbRegexp;
   private final JCheckBox myCbWholeWords;
-  private final boolean myInitialTextOverridden = false;
+  private final JCheckBox myCbInComments;
+  private final JCheckBox myCbInLiterals;
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
@@ -133,22 +135,32 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     final JCheckBox cbMatchCase = new NonFocusableCheckBox("Case sensitive");
     myCbWholeWords = new NonFocusableCheckBox("Match whole words only");
     myCbRegexp = new NonFocusableCheckBox("Regex");
+    myCbInComments = new NonFocusableCheckBox("In comments");
+    myCbInLiterals = new NonFocusableCheckBox("In literals");
 
     leadPanel.add(cbMatchCase);
     leadPanel.add(myCbWholeWords);
     leadPanel.add(myCbRegexp);
+    leadPanel.add(myCbInComments);
+    leadPanel.add(myCbInLiterals);
 
     cbMatchCase.setSelected(isCaseSensitive());
     myCbWholeWords.setSelected(isWholeWords());
     myCbRegexp.setSelected(isRegexp());
+    myCbInComments.setSelected(isInComments());
+    myCbInLiterals.setSelected(isInLiterals());
 
     cbMatchCase.setMnemonic('C');
     myCbWholeWords.setMnemonic('M');
     myCbRegexp.setMnemonic('R');
+    myCbInComments.setMnemonic('o');
+    myCbInLiterals.setMnemonic('l');
 
     setSmallerFontAndOpaque(myCbWholeWords);
     setSmallerFontAndOpaque(cbMatchCase);
     setSmallerFontAndOpaque(myCbRegexp);
+    setSmallerFontAndOpaque(myCbInComments);
+    setSmallerFontAndOpaque(myCbInLiterals);
 
     cbMatchCase.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -173,6 +185,22 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         final boolean b = myCbRegexp.isSelected();
         FindManager.getInstance(myProject).getFindInFileModel().setRegularExpressions(b);
         myCbWholeWords.setEnabled(!b);
+        updateResults(true);
+      }
+    });
+
+    myCbInComments.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        final boolean b = myCbInComments.isSelected();
+        FindManager.getInstance(myProject).getFindInFileModel().setInCommentsOnly(b);
+        updateResults(true);
+      }
+    });
+
+    myCbInLiterals.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        final boolean b = myCbInLiterals.isSelected();
+        FindManager.getInstance(myProject).getFindInFileModel().setInStringLiteralsOnly(b);
         updateResults(true);
       }
     });
@@ -350,6 +378,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       FindManager findManager = FindManager.getInstance(myProject);
       FindModel model = new FindModel();
       model.setCaseSensitive(isCaseSensitive());
+      model.setInCommentsOnly(isInComments());
+      model.setInStringLiteralsOnly(isInLiterals());
 
       if (isRegexp()) {
         model.setWholeWordsOnly(false);
@@ -374,9 +404,11 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       model.setStringToFind(text);
       model.setSearchHighlighters(true);
       int offset = 0;
+      VirtualFile virtualFile = FindUtil.getVirtualFile(myEditor);
       ArrayList<FindResult> results = new ArrayList<FindResult>();
+
       while (true) {
-        FindResult result = findManager.findString(myEditor.getDocument().getCharsSequence(), offset, model);
+        FindResult result = findManager.findString(myEditor.getDocument().getCharsSequence(), offset, model, virtualFile);
         if (!result.isStringFound()) break;
         offset = result.getEndOffset();
         results.add(result);
@@ -390,8 +422,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
           currentOffset = Math.min(currentOffset, myEditor.getSelectionModel().getSelectionStart());
         }
 
-        if (!findAndSelectFirstUsage(findManager, model, currentOffset)) {
-          findAndSelectFirstUsage(findManager, model, 0);
+        if (!findAndSelectFirstUsage(findManager, model, currentOffset, virtualFile)) {
+          findAndSelectFirstUsage(findManager, model, 0, virtualFile);
         }
       }
 
@@ -448,6 +480,14 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     return FindManager.getInstance(myProject).getFindInFileModel().isWholeWordsOnly();
   }
 
+  private boolean isInComments() {
+    return FindManager.getInstance(myProject).getFindInFileModel().isInCommentsOnly();
+  }
+
+  private boolean isInLiterals() {
+    return FindManager.getInstance(myProject).getFindInFileModel().isInStringLiteralsOnly();
+  }
+
   private boolean isCaseSensitive() {
     return FindManager.getInstance(myProject).getFindInFileModel().isCaseSensitive();
   }
@@ -462,10 +502,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     updateResults(false);
   }
 
-  public void setSearchText(String text) {
-    mySearchField.setText(text);
-  }
-
   private void removeCurrentHighlights() {
     final HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(myProject);
     for (RangeHighlighter highlighter : myHighlighters) {
@@ -473,9 +509,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
   }
 
-  private boolean findAndSelectFirstUsage(final FindManager findManager, final FindModel model, final int offset) {
+  private boolean findAndSelectFirstUsage(final FindManager findManager, final FindModel model, final int offset, VirtualFile file) {
     final FindResult firstResult;
-    firstResult = findManager.findString(myEditor.getDocument().getCharsSequence(), offset, model);
+    firstResult = findManager.findString(myEditor.getDocument().getCharsSequence(), offset, model, file);
     if (firstResult.isStringFound()) {
       myEditor.getSelectionModel().setSelection(firstResult.getStartOffset(), firstResult.getEndOffset());
 

@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
@@ -55,6 +56,12 @@ public class FindUtil {
   private static final Key<Direction> KEY = Key.create("FindUtil.KEY");
 
   private FindUtil() {}
+
+  @Nullable static VirtualFile getVirtualFile(@NotNull Editor myEditor) {
+    Project project = myEditor.getProject();
+    PsiFile file = project != null ? PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument()):null;
+    return file != null ? file.getVirtualFile() : null;
+  }
 
   private enum Direction {
     UP, DOWN
@@ -188,8 +195,10 @@ public class FindUtil {
       findModel.setForward(true); // when find all there is no diff in direction
 
       int offset = 0;
+      VirtualFile virtualFile = getVirtualFile(editor);
+
       while (offset < textLength) {
-        FindResult result = findManager.findString(text, offset, findModel);
+        FindResult result = findManager.findString(text, offset, findModel, virtualFile);
         if (!result.isStringFound()) break;
 
         usages.add(new UsageInfo2UsageAdapter(new UsageInfo(psiFile, result.getStartOffset(), result.getEndOffset())));
@@ -506,7 +515,7 @@ public class FindUtil {
     FindManager findManager = FindManager.getInstance(project);
     Document document = editor.getDocument();
 
-    final FindResult result = findManager.findString(document.getCharsSequence(), offset, model);
+    final FindResult result = findManager.findString(document.getCharsSequence(), offset, model, getVirtualFile(editor));
     String stringToFind = model.getStringToFind();
     if (stringToFind == null) {
       return null;
@@ -610,10 +619,10 @@ public class FindUtil {
       Document document = editor.getDocument();
       FindResult result;
       if (newModel.isForward()) {
-        result = findManager.findString(document.getCharsSequence(), 0, model);
+        result = findManager.findString(document.getCharsSequence(), 0, model, getVirtualFile(editor));
       }
       else {
-        result = findManager.findString(document.getCharsSequence(), document.getTextLength(), model);
+        result = findManager.findString(document.getCharsSequence(), document.getTextLength(), model, getVirtualFile(editor));
       }
       if (!result.isStringFound()) {
         result = null;

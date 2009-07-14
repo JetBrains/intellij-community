@@ -32,16 +32,12 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.ui.LightweightHint;
@@ -49,6 +45,7 @@ import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.StringSearcher;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -306,23 +304,25 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     int startOffset = 0;
     final Lexer lexer;
 
-    final TokenSet tokensOfInterest;
+    TokenSet tokensOfInterest;
     final StringSearcher searcher;
     final Matcher matcher;
+    final Set<Language> relevantLanguages;
 
-    public CommentsLiteralsSearchData(VirtualFile lastFile, Lexer lexer, TokenSet tokensOfInterest,
+    public CommentsLiteralsSearchData(VirtualFile lastFile, Set<Language> relevantLanguages, Lexer lexer, TokenSet tokensOfInterest,
                                       StringSearcher searcher, Matcher matcher) {
       this.lastFile = lastFile;
       this.lexer = lexer;
       this.tokensOfInterest = tokensOfInterest;
       this.searcher = searcher;
       this.matcher = matcher;
+      this.relevantLanguages = relevantLanguages;
     }
   }
 
   private static final Key<CommentsLiteralsSearchData> ourCommentsLiteralsSearchDataKey = Key.create("comments.literals.search.data");
 
-  private static FindResult findInCommentsAndLiterals(CharSequence text, int offset, FindModel model, VirtualFile file) {
+  private static FindResult findInCommentsAndLiterals(CharSequence text, int offset, FindModel model, final VirtualFile file) {
     if (file == null) return NOT_FOUND_RESULT;
 
     FileType ftype = file.getFileType();
@@ -337,9 +337,30 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     if (data == null || data.lastFile != file) {
       Lexer lexer = getLexer(file, lang);
 
-      ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
-      TokenSet tokensOfInterest = model.isInCommentsOnly() ? definition.getCommentTokens(): TokenSet.EMPTY;
-      tokensOfInterest = TokenSet.orSet(tokensOfInterest, model.isInStringLiteralsOnly() ? definition.getStringLiteralElements() : TokenSet.EMPTY);
+      TokenSet tokensOfInterest = TokenSet.EMPTY;
+      final Language finalLang = lang;
+      Set<Language> relevantLanguages = ApplicationManager.getApplication().runReadAction(new Computable<Set<Language>>() {
+        public Set<Language> compute() {
+          THashSet<Language> result = new THashSet<Language>();
+
+          for(Project project:ProjectManager.getInstance().getOpenProjects()) {
+            FileViewProvider viewProvider = PsiManager.getInstance(project).findViewProvider(file);
+            if (viewProvider != null) {
+              result.addAll(viewProvider.getLanguages());
+              break;
+            }
+          }
+
+          if (result.size() == 0) {
+            result.add(finalLang);
+          }
+          return result;
+        }
+      });
+
+      for (Language relevantLanguage:relevantLanguages) {
+        tokensOfInterest = addTokenTypesForLanguage(model, relevantLanguage, tokensOfInterest);
+      }
 
       if(model.isInStringLiteralsOnly()) {
         // TODO: xml does not have string literals defined so we add XmlAttributeValue element type as convenience
@@ -360,7 +381,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
       Matcher matcher = model.isRegularExpressions() ? compileRegExp(model, ""):null;
       StringSearcher searcher = matcher != null ? null: createStringSearcher(model);
-      data = new CommentsLiteralsSearchData(file, lexer, tokensOfInterest, searcher, matcher);
+      data = new CommentsLiteralsSearchData(file, relevantLanguages, lexer, tokensOfInterest, searcher, matcher);
       model.putUserData(ourCommentsLiteralsSearchDataKey, data);
     }
 
@@ -368,7 +389,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
     IElementType tokenType;
     final Lexer lexer = data.lexer;
-    final TokenSet tokens = data.tokensOfInterest;
+    TokenSet tokens = data.tokensOfInterest;
 
     int lastGoodOffset = 0;
     boolean scanningForward = model.isForward();
@@ -404,12 +425,28 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
             }
           }
         }
+      } else {
+        Language tokenLang = tokenType.getLanguage();
+        if (tokenLang != lang && tokenLang != Language.ANY && !data.relevantLanguages.contains(tokenLang)) {
+          tokens = addTokenTypesForLanguage(model, tokenLang, tokens);
+          data.tokensOfInterest = tokens;
+          data.relevantLanguages.add(tokenLang);
+        }
       }
 
       lexer.advance();
     }
 
     return prevFindResult;
+  }
+
+  private static TokenSet addTokenTypesForLanguage(FindModel model, Language lang, TokenSet tokensOfInterest) {
+    ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
+    if (definition != null) {
+      tokensOfInterest = TokenSet.orSet(tokensOfInterest, model.isInCommentsOnly() ? definition.getCommentTokens(): TokenSet.EMPTY);
+      tokensOfInterest = TokenSet.orSet(tokensOfInterest, model.isInStringLiteralsOnly() ? definition.getStringLiteralElements() : TokenSet.EMPTY);
+    }
+    return tokensOfInterest;
   }
 
   private static Lexer getLexer(VirtualFile file, Language lang) {
