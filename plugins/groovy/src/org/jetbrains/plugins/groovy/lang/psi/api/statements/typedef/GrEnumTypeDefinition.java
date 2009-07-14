@@ -15,15 +15,16 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 
 /**
- * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
+ * @author Dmitry.Krasilschikov
  */
 public interface GrEnumTypeDefinition extends GrTypeDefinition {
   GrEnumConstant[] getEnumConstants();
 
+  @Nullable
   GrEnumConstantList getEnumConstantList();
 }

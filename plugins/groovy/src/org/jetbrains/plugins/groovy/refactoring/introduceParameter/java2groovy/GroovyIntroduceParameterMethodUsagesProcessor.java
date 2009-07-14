@@ -237,10 +237,10 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(data.getProject());
     GrMethod constructor =
       factory.createConstructorFromText(aClass.getName(), ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{}");
-    constructor = (GrMethod)CodeStyleManager.getInstance(data.getProject()).reformat(constructor);
     constructor = (GrMethod)aClass.add(constructor);
     PsiUtil.setModifierProperty(constructor, VisibilityUtil.getVisibilityModifier(aClass.getModifierList()), true);
     processAddSuperCall(data, new UsageInfo(constructor), usages);
+    constructor = (GrMethod)CodeStyleManager.getInstance(data.getProject()).reformat(constructor);
     return false;
   }
 

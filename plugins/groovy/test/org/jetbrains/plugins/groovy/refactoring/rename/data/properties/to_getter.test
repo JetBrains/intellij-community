@@ -16,7 +16,6 @@ a.foo = ""
 a.setFoo("asd")
 -----
 class A {
-
   def String foo = "asd"
 
   def setFoo(asd){}

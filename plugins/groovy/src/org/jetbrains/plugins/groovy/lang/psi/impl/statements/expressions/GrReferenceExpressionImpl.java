@@ -59,8 +59,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
@@ -576,20 +576,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       return getManager().areElementsEquivalent(element, resolve());
     }
     return false;
-  }
-
-  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-    if (isReferenceTo(element)) return this;
-
-    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod) element;
-
-      //todo implement all appropriate logic
-      return this;
-    } else {
-      return super.bindToElement(element);
-    }
   }
 
   public Object[] getVariants() {

@@ -21,14 +21,17 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
-import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 /**
  * @author ven
@@ -103,7 +106,19 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
           return bindWithQualifiedRef(qName);
         }
       }
-    } else if (element instanceof PsiPackage) {
+    } else if (element instanceof PsiMember) {
+      PsiMember member = (PsiMember)element;
+      if (!isPhysical()) {
+        // don't qualify reference: the isReferenceTo() check fails anyway, whether we have a static import for this member or not
+        return this;
+      }
+      final PsiClass psiClass = member.getContainingClass();
+      if (psiClass == null) throw new IncorrectOperationException();
+
+      String qName = psiClass.getQualifiedName() + "." + member.getName();
+      return bindWithQualifiedRef(qName);
+    }
+    else if (element instanceof PsiPackage) {
       final String qName = ((PsiPackage) element).getQualifiedName();
       return bindWithQualifiedRef(qName);
     }
@@ -116,8 +131,12 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
   }
 
   private PsiElement bindWithQualifiedRef(String qName) {
-    final GrCodeReferenceElement qualifiedRef = GroovyPsiElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
+    final GrTypeArgumentList list = getTypeArgumentList();
+    final String typeArgs = (list != null) ? list.getText() : "";
+    final String text = qName + typeArgs;
+    final GrCodeReferenceElement qualifiedRef = GroovyPsiElementFactory.getInstance(getProject()).createTypeOrPackageReference(text);
     getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
+    PsiUtil.shortenReference(qualifiedRef);
     return qualifiedRef;
   }
 

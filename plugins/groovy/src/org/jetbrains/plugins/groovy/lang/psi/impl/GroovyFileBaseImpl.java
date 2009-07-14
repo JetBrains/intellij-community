@@ -94,7 +94,8 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     PsiElement rangeStart = importStatement;
     if (before != null && !(before instanceof PsiImportStatement) && before != importStatement.getPrevSibling()) {
       rangeStart = before.getNextSibling();
-      addBefore(GroovyPsiElementFactory.getInstance(getProject()).createLineTerminator(2), rangeStart);
+      final PsiElement el = addBefore(GroovyPsiElementFactory.getInstance(getProject()).createLineTerminator(2), rangeStart);
+      rangeStart=el.getNextSibling();
     }
 
     PsiElement rangeEnd = importStatement.getNextSibling();

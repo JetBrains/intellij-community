@@ -160,24 +160,19 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
   }
 
   public void setModifierProperty(@NotNull @NonNls String name, boolean doSet) throws IncorrectOperationException {
+    if (PsiModifier.PACKAGE_LOCAL.equals(name)) {
+      return;
+    }
     if (doSet) {
       final ASTNode modifierNode = GroovyPsiElementFactory.getInstance(getProject()).createModifierFromText(name).getNode();
       if (!"def".equals(name)) {
         final PsiElement[] modifiers = getModifiers();
-        if (modifiers.length==1 && modifiers[0].getText().equals("def")) {
+        if (modifiers.length == 1 && modifiers[0].getText().equals("def")) {
           getNode().replaceChild(findChildByType(GroovyTokenTypes.kDEF).getNode(), modifierNode);
           return;
         }
       }
-      getNode().addChild(modifierNode);
-
-      /*final ASTNode node = getNode();
-      final ASTNode lastChildNode = node.getLastChildNode();
-      final GroovyPsiElementFactory elementFactory = GroovyPsiElementFactory.getInstance(getProject());
-      if (lastChildNode !=null && !GroovyTokenTypes.WHITE_SPACES_OR_COMMENTS.contains(lastChildNode.getElementType())) {
-        node.addChild(elementFactory.createWhiteSpace().getNode());
-      }
-      node.addChild(elementFactory.createModifierFromText(name).getNode());*/
+      addInternal(modifierNode, modifierNode, null, null);
     }
     else {
       final PsiElement[] modifiers = findChildrenByType(TokenSets.MODIFIERS, PsiElement.class);

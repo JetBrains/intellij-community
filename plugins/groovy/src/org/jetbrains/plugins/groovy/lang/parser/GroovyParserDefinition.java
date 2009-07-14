@@ -20,6 +20,7 @@ import com.intellij.lang.ParserDefinition;
 import static com.intellij.lang.ParserDefinition.SpaceRequirements.*;
 import static com.intellij.lang.ParserDefinition.SpaceRequirements.MUST_LINE_BREAK;
 import com.intellij.lang.PsiParser;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
@@ -87,6 +88,13 @@ public class GroovyParserDefinition implements ParserDefinition {
     else if (left.getElementType() == MODIFIERS && right.getElementType() == MODIFIERS) {
       return MUST;
     }
-    return MAY;
+    if (left.getElementType() == mSEMI) {
+      return MUST_LINE_BREAK;
+    }    
+
+    Lexer lexer=new GroovyLexer();
+    final SpaceRequirements spaceRequirements = LanguageUtil.canStickTokensTogetherByLexer(left, right, lexer);
+    
+    return spaceRequirements;
   }
 }

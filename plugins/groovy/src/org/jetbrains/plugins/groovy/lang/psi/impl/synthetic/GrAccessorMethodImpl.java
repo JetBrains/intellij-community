@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -90,7 +91,17 @@ public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccesso
   }
 
   public PsiElement copy() {
-    return new GrAccessorMethodImpl(myProperty, myIsSetter, getName());
+    //return new GrAccessorMethodImpl(myProperty, myIsSetter, getName());
+    //rename refactoring may create a copy using this method, add it to a class to check for conflicts, and then remove this copy.
+    final String modifiers = getModifierList().getText();
+    final String params;
+    if (myIsSetter) {
+      params="("+myProperty.getName()+")";
+    }
+    else {
+      params="()";
+    }
+    return GroovyPsiElementFactory.getInstance(getProject()).createMethodFromText(modifiers+" "+getName()+params+"{}");
   }
 
   public PsiFile getContainingFile() {

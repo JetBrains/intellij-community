@@ -42,7 +42,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
@@ -149,6 +151,13 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       throw new RuntimeException("Invalid arguments, text = " + text.toString());
     }
     return (GrVariableDeclaration) topStatements[0];
+  }
+
+  @Override
+  public GrEnumConstant createEnumConstantFromText(String text) {
+    GroovyFile file = (GroovyFile)createGroovyFile("enum E{" + text + "}");
+    final GrEnumTypeDefinition enumClass = (GrEnumTypeDefinition)file.getClasses()[0];
+    return enumClass.getEnumConstants()[0];    
   }
 
   public GrVariableDeclaration createFieldDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type) {
