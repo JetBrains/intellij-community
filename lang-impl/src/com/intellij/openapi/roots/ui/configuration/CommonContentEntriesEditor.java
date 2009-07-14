@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
@@ -323,7 +324,7 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
     }
   }
 
-  private class AddContentEntryAction extends IconWithTextAction {
+  private class AddContentEntryAction extends IconWithTextAction implements DumbAware {
     private final FileChooserDescriptor myDescriptor;
 
     public AddContentEntryAction() {
