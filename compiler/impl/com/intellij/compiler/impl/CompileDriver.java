@@ -530,6 +530,8 @@ public class CompileDriver {
         return ExitStatus.ERRORS;
       }
 
+      final long refreshStart = System.currentTimeMillis();
+
       // need this to make sure the VFS is built
       boolean needRecalcOutputDirs = false;
       //final List<VirtualFile> outputsToRefresh = new ArrayList<VirtualFile>();
@@ -594,6 +596,8 @@ public class CompileDriver {
       finally {
         progressIndicator.popState();
       }
+
+      CompilerUtil.logDuration("Initial VFS refresh", System.currentTimeMillis() - refreshStart);
 
       DumbService.getInstance(myProject).waitForSmartMode();
 
