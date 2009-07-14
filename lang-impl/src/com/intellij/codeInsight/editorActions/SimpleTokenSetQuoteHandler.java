@@ -10,7 +10,11 @@ public class SimpleTokenSetQuoteHandler implements QuoteHandler {
   protected final TokenSet myLiteralTokenSet;
 
   public SimpleTokenSetQuoteHandler(IElementType... _literalTokens) {
-    myLiteralTokenSet = TokenSet.create(_literalTokens);
+    this(TokenSet.create(_literalTokens));
+  }
+
+  public SimpleTokenSetQuoteHandler(TokenSet tokenSet) {
+    myLiteralTokenSet = tokenSet;
   }
 
   public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
