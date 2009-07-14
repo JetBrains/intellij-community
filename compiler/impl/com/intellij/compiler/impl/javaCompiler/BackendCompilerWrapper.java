@@ -361,10 +361,10 @@ public class BackendCompilerWrapper {
     final DependencyCache dependencyCache = myCompileContext.getDependencyCache();
 
     final long start = System.currentTimeMillis();
+    
     final Pair<int[], Set<VirtualFile>> deps =
         dependencyCache.findDependentClasses(myCompileContext, myProject, mySuccesfullyCompiledJavaFiles, myCompiler.getDependencyProcessor());
-    final long finishMarkingClasses = System.currentTimeMillis();
-    LOG.info("Dependent classes marked in " + (finishMarkingClasses - start)/60000 + " min " +((finishMarkingClasses - start)%60000)/1000 + "sec");
+    CompilerUtil.logDuration("Dependent classes marking", System.currentTimeMillis() - start);
 
     final TIntHashSet currentDeps = new TIntHashSet(deps.getFirst());
     currentDeps.removeAll(myProcessedNames.toArray());
@@ -418,8 +418,8 @@ public class BackendCompilerWrapper {
       throw _ex[0];
     }
     myCompileContext.getProgressIndicator().setText(CompilerBundle.message("progress.found.dependent.files", dependentFiles.size()));
-    final long finish = System.currentTimeMillis();
-    LOG.info("Total time spent on finding dependent files: " + (finish - start)/60000 + " min " +((finish - start)%60000)/1000 + "sec");
+
+    CompilerUtil.logDuration("Finding dependent files in total", System.currentTimeMillis() - start);
     return dependentFiles;
   }
 

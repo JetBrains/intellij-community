@@ -7,6 +7,7 @@ package com.intellij.compiler.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -23,6 +24,8 @@ import java.io.FileFilter;
 import java.util.*;
 
 public class CompilerUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerUtil");
+  
   public static String quotePath(String path) {
     if(path != null && path.indexOf(' ') != -1) {
       path = path.replaceAll("\\\\", "\\\\\\\\");
@@ -192,5 +195,9 @@ public class CompilerUtil {
         context.getProgressIndicator().popState();
       }
     }
+  }
+
+  public static void logDuration(final String activityName, long duration) {
+    LOG.info(activityName + " took " + duration + " ms: " + duration /60000 + " min " +(duration %60000)/1000 + "sec");
   }
 }

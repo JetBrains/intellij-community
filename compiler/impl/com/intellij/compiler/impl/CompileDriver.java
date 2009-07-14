@@ -342,11 +342,12 @@ public class CompileDriver {
           compileContext.commitZipFiles();
           
           final long finish = System.currentTimeMillis();
-          LOG.info("\tCOMPILATION FINISHED in " +
-                    (finish - start)/60000 + " min " +((finish - start)%60000)/1000 + "sec; errors: " +
-                    compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
-                    "; warnings: " +
-                    compileContext.getMessageCount(CompilerMessageCategory.WARNING)
+          CompilerUtil.logDuration(
+            "\tCOMPILATION FINISHED; Errors: " +
+            compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
+            "; warnings: " +
+            compileContext.getMessageCount(CompilerMessageCategory.WARNING),
+            finish - start
           );
           //if (LOG.isDebugEnabled()) {
           //  LOG.debug("COMPILATION FINISHED");

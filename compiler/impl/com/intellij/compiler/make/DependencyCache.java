@@ -6,6 +6,7 @@ package com.intellij.compiler.make;
 
 import com.intellij.compiler.SymbolTable;
 import com.intellij.compiler.classParsing.*;
+import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.DependencyProcessor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
@@ -223,8 +224,7 @@ public class DependencyCache {
     }
     myToUpdate = new TIntHashSet();
 
-    final long updateFinish = System.currentTimeMillis();
-    LOG.info("Dependency cache update took: " + (updateFinish - updateStart)/60000 + " min " +((updateFinish - updateStart)%60000)/1000 + "sec");
+    CompilerUtil.logDuration("Dependency cache update", System.currentTimeMillis() - updateStart);
     //pause();
   }
 
@@ -578,33 +578,40 @@ public class DependencyCache {
   }
 
   public void dispose() {
-    myClassesWithSourceRemoved.clear();
-    myMarkedFiles.clear();
-    myMarkedInfos.clear();
-    myToUpdate.clear();
-    myTraverseRoots.clear();
-    if (myNewClassesCache != null) {
-      myNewClassesCache.wipe();
-      myNewClassesCache = null;
-    }
-    myCacheNavigator = null;
+    final long start = System.currentTimeMillis();
+
     try {
-      if (myCache != null) {
-        myCache.dispose();
-        myCache = null;
+      myClassesWithSourceRemoved.clear();
+      myMarkedFiles.clear();
+      myMarkedInfos.clear();
+      myToUpdate.clear();
+      myTraverseRoots.clear();
+      if (myNewClassesCache != null) {
+        myNewClassesCache.wipe();
+        myNewClassesCache = null;
+      }
+      myCacheNavigator = null;
+      try {
+        if (myCache != null) {
+          myCache.dispose();
+          myCache = null;
+        }
+      }
+      catch (CacheCorruptedException e) {
+        LOG.info(e);
+      }
+      try {
+        if (mySymbolTable != null) {
+          mySymbolTable.dispose();
+          mySymbolTable = null;
+        }
+      }
+      catch (CacheCorruptedException e) {
+        LOG.info(e);
       }
     }
-    catch (CacheCorruptedException e) {
-      LOG.info(e); 
-    }
-    try {
-      if (mySymbolTable != null) {
-        mySymbolTable.dispose();
-        mySymbolTable = null;
-      }
-    }
-    catch (CacheCorruptedException e) {
-      LOG.info(e);
+    finally {
+      CompilerUtil.logDuration("Dependency cache disposal", System.currentTimeMillis() - start);
     }
   }
 
