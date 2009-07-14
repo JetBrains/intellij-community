@@ -5,6 +5,8 @@ import com.intellij.ide.util.GotoLineNumberDialog;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
@@ -17,7 +19,7 @@ import java.awt.event.MouseEvent;
 
 class PositionPanel extends TextPanel implements StatusBarPatch {
   public PositionPanel(StatusBar statusBar) {
-    super(false, "#########");
+    super(false, "#############");
 
     addMouseListener(new MouseAdapter() {
       public void mouseClicked(final MouseEvent e) {
@@ -48,14 +50,39 @@ class PositionPanel extends TextPanel implements StatusBarPatch {
   public JComponent getComponent() {
     return this;
   }
-  
-  public String updateStatusBar(final Editor selected, final JComponent componentSelected) {
-    if (selected != null) {
-      setText(selected.getCaretModel().getLogicalPosition().line + 1 + ":" + (selected.getCaretModel().getLogicalPosition().column + 1));
+
+  public String updateStatusBar(final Editor editor, final JComponent componentSelected) {
+    if (editor != null) {
+      StringBuilder message = new StringBuilder();
+
+      SelectionModel selectionModel = editor.getSelectionModel();
+      if (selectionModel.hasBlockSelection()) {
+        appendLogicalPosition(selectionModel.getBlockStart(), message);
+        message.append("-");
+        appendLogicalPosition(selectionModel.getBlockEnd(), message);
+      }
+      else {
+        LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
+
+        appendLogicalPosition(caret, message);
+        if (selectionModel.hasSelection()) {
+          int len = Math.abs(selectionModel.getSelectionStart() - selectionModel.getSelectionEnd());
+          message.append("/");
+          message.append(len);
+        }
+      }
+
+      setText(message.toString());
       return UIBundle.message("go.to.line.command.double.click");
     }
     clear();
     return null;
+  }
+
+  private static void appendLogicalPosition(LogicalPosition caret, StringBuilder message) {
+    message.append(caret.line + 1);
+    message.append(":");
+    message.append(caret.column + 1);
   }
 
   public void clear() {
