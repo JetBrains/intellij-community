@@ -51,6 +51,7 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
     finally {
       CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = true;
       CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX = old;
+      CompositeCompletionData.restrictCompletion(true, true);
     }
     assertEquals(stringList.get(1), result);
   }
