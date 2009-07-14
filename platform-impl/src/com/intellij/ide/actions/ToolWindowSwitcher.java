@@ -33,6 +33,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Arrays;
@@ -62,7 +64,7 @@ public class ToolWindowSwitcher extends AnAction {
     }
   }
 
-  private static class ToolWindowSwitcherPanel extends JPanel implements KeyListener {
+  private static class ToolWindowSwitcherPanel extends JPanel implements KeyListener, MouseListener {
     final JBPopup myPopup;
     final Map<ToolWindow, String> ids = new HashMap<ToolWindow, String>();
     final JList toolwindows;
@@ -104,11 +106,13 @@ public class ToolWindowSwitcher extends AnAction {
           twModel.addElement(tw);
         }
       }
+
       toolwindows = new JList(twModel);
       toolwindows.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
       toolwindows.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       toolwindows.setCellRenderer(new ToolWindowsRenderer(ids));
       toolwindows.addKeyListener(this);
+      toolwindows.addMouseListener(this);
       toolwindows.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e) {
           if (!toolwindows.getSelectionModel().isSelectionEmpty()) {
@@ -144,6 +148,7 @@ public class ToolWindowSwitcher extends AnAction {
       files.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
       files.setCellRenderer(new VirtualFilesRenderer(project));
       files.addKeyListener(this);
+      files.addMouseListener(this);
       files.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e) {
           if (!files.getSelectionModel().isSelectionEmpty()) {
@@ -355,6 +360,20 @@ public class ToolWindowSwitcher extends AnAction {
       }
     }
 
+    public void mouseClicked(MouseEvent e) {
+      final Object source = e.getSource();
+      if (source instanceof JList) {
+        JList jList = (JList)source;
+        if (jList.getSelectedIndex() == -1 && jList.getAnchorSelectionIndex() != -1) {
+          jList.setSelectedIndex(jList.getAnchorSelectionIndex());
+        }
+        if (e.getClickCount() > 1) navigate();
+      }
+    }
+    public void mousePressed(MouseEvent e) {}
+    public void mouseReleased(MouseEvent e) {}
+    public void mouseEntered(MouseEvent e) {}
+    public void mouseExited(MouseEvent e) {}
   }
 
   private static class VirtualFilesRenderer extends ColoredListCellRenderer {
