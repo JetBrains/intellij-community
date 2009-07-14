@@ -42,7 +42,7 @@ public class AbstractPopup implements JBPopup {
 
   private static final Image ourMacCorner = ImageLoader.loadFromResource("/general/macCorner.png");
 
-  private Popup myPopup;
+  private PopupComponent myPopup;
   private MyContentPanel myContent;
   private JComponent myPreferredFocusedComponent;
   private boolean myRequestFocus;
@@ -438,7 +438,7 @@ public class AbstractPopup implements JBPopup {
         JBAwtEventQueue.getInstance().blockNextEvents(((MouseEvent)e));
       }
 
-      myPopup.hide();
+      myPopup.hide(false);
 
       if (ApplicationManagerEx.getApplicationEx() != null) {
         StackingPopupDispatcher.getInstance().onPopupHidden(this);
@@ -464,7 +464,7 @@ public class AbstractPopup implements JBPopup {
 
   private void disposePopup() {
     if (myPopup != null) {
-      myPopup.hide();
+      myPopup.hide(true);
     }
     myPopup = null;
   }
@@ -569,7 +569,7 @@ public class AbstractPopup implements JBPopup {
 
     myRequestorComponent = owner;
 
-    myPopup = setupPopupFactory(myForcedHeavyweight || myResizable).getPopup(myOwner, myContent, targetBounds.x, targetBounds.y);
+    myPopup = getFactory(myForcedHeavyweight || myResizable).getPopup(myOwner, myContent, targetBounds.x, targetBounds.y);
 
     if (myResizable) {
       final JRootPane root = myContent.getRootPane();
@@ -786,21 +786,14 @@ public class AbstractPopup implements JBPopup {
     return null;
   }
 
-  private static PopupFactory setupPopupFactory(boolean forceHeavyweight) {
-    final PopupFactory factory = PopupFactory.getSharedInstance();
-
-    if (forceHeavyweight || !SystemInfo.isWindows) {
-      try {
-        final Method method = PopupFactory.class.getDeclaredMethod("setPopupType", int.class);
-        method.setAccessible(true);
-        method.invoke(factory, 2);
-
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
+  private PopupComponent.Factory getFactory(boolean forceHeavyweight) {
+    if (isPersistent()) {
+      return new PopupComponent.Factory.Dialog();
+    } else if (forceHeavyweight || !SystemInfo.isWindows) {
+      return new PopupComponent.Factory.AwtHeavyweight();
+    } else {
+      return new PopupComponent.Factory.AwtDefault();
     }
-    return factory;
   }
 
   public JComponent getContent() {
@@ -811,7 +804,7 @@ public class AbstractPopup implements JBPopup {
     setLocation(p, myPopup, myContent);
   }
 
-  private static void setLocation(final RelativePoint p, final Popup popup, Component content) {
+  private static void setLocation(final RelativePoint p, final PopupComponent popup, Component content) {
     if (popup == null) return;
 
     Component cmp;
@@ -1027,7 +1020,7 @@ public class AbstractPopup implements JBPopup {
  }
 
   public boolean isPersistent() {
-    return !myCancelOnClickOutside || !myCancelOnWindow;
+    return !myCancelOnClickOutside && !myCancelOnWindow;
   }
 
   public void setUiVisible(final boolean visible) {
