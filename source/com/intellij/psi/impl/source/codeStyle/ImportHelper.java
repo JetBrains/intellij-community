@@ -239,7 +239,7 @@ public class ImportHelper{
     }
 
     PsiClass curRefClass = helper.resolveReferencedClass(shortName, file);
-    if (refClass.equals(curRefClass)){
+    if (file.getManager().areElementsEquivalent(refClass, curRefClass)) {
       return true;
     }
 
