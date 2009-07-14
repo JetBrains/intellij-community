@@ -6,26 +6,25 @@
  */
 package com.theoryinpractice.testng.ui;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
-import com.intellij.execution.testframework.ui.TestStatusLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.model.*;
+import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
@@ -134,7 +133,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     return resultsTable;
   }
 
-  private void updateLabel(TestStatusLine label) {
+  private void updateStatusLine() {
     StringBuffer sb = new StringBuffer();
     if (end == 0) {
       sb.append("Running: ");
@@ -148,10 +147,10 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
       final long time = end - start;
       sb.append(" (").append(time == 0 ? "0.0 s" : NumberFormat.getInstance().format((double)time / 1000.0) + " s").append(")  ");
     }
-    label.setText(sb.toString());
+    myStatusLine.setText(sb.toString());
   }
 
-  public void testStarted(TestResultMessage result) {
+  public TestProxy testStarted(TestResultMessage result) {
     // TODO This should be an action button which rebuilds the tree when toggled.
     boolean flattenPackages = true;
     TestProxy classNode;
@@ -173,22 +172,44 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     if (TestNGConsoleProperties.TRACK_RUNNING_TEST.value(myProperties)) {
       selectTest(proxy);
     }
+    return proxy;
   }
 
   public boolean wasTestStarted(TestResultMessage resultMessage) {
     return started.get(resultMessage) != null;
   }
 
-  public void addTestResult(TestResultMessage result, List<Printable> output, int exceptionMark) {
+  public void addTestResult(final TestResultMessage result, List<Printable> output, int exceptionMark) {
     if (failedToStart != null) {
       output.addAll(failedToStart.getOutput());
       exceptionMark += failedToStart.getExceptionMark();
     }
 
     TestProxy testCase = started.get(result);
+    if (testCase == null) {
+      final PsiElement element = getPackageClassNodeFor(result).getPsiElement();
+      if (element instanceof PsiClass) {
+        final PsiMethod[] methods = ApplicationManager.getApplication().runReadAction(
+            new Computable<PsiMethod[]>() {
+              public PsiMethod[] compute() {
+                return ((PsiClass)element).findMethodsByName(result.getMethod(), true);
+              }
+            }
+        );
+        if (methods.length > 0 && !AnnotationUtil.isAnnotated(methods[0], Arrays.asList(TestNGUtil.CONFIG_ANNOTATIONS_FQN))) {
+          testCase = testStarted(result);
+        }
+      }
+    }
+
     if (testCase != null) {
       testCase.setResultMessage(result);
       failedToStart = null;
+
+      if (result.getResult() == MessageHelper.FAILED_TEST) {
+        failed.add(testCase);
+      }
+      model.addTestResult(result);
     }
     else {
       //do not remember testresultmessage: test hierarchy is not set
@@ -199,15 +220,11 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     testCase.setOutput(output);
     testCase.setExceptionMark(exceptionMark);
 
-    model.addTestResult(result);
-
-
     if (result.getResult() == MessageHelper.FAILED_TEST) {
-      failed.add(testCase);
       myStatusLine.setStatusColor(ColorProgressBar.RED);
     }
     myStatusLine.setFraction((double)count / total);
-    updateLabel(myStatusLine);
+    updateStatusLine();
   }
 
   private String packageNameFor(String fqnClassName) {
@@ -302,7 +319,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         animator.stopMovie();
-        updateLabel(myStatusLine);
+        updateStatusLine();
         if (total > count) {
           myStatusLine.setStatusColor(ColorProgressBar.YELLOW);
         }
