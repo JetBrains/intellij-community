@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author shkate@jetbrains.com
  */
-public class HtmlTokenizerFactory extends TokenizerFactory {
+public class HtmlSpellcheckingStrategy extends SpellcheckingStrategy {
   @NotNull
   @Override
     public Tokenizer getTokenizer(PsiElement element) {

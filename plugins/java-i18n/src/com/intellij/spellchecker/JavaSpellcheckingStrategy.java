@@ -8,7 +8,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
-import com.intellij.spellchecker.tokenizer.TokenizerFactory;
+import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author shkate@jetbrains.com
  */
-public class JavaTokenizerFactory extends TokenizerFactory{
+public class JavaSpellcheckingStrategy extends SpellcheckingStrategy {
 
   @NotNull
   @Override

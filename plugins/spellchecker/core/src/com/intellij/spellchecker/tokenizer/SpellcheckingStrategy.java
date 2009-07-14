@@ -13,10 +13,10 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author shkate@jetbrains.com
  */
-public class TokenizerFactory {
+public class SpellcheckingStrategy {
 
 
-  public static ExtensionPointName<TokenizerFactory> EP_NAME = ExtensionPointName.create("com.intellij.spellchecker.tokenizerFactory");
+  public static ExtensionPointName<SpellcheckingStrategy> EP_NAME = ExtensionPointName.create("com.intellij.spellchecker.support");
 
   @NotNull
   public Tokenizer getTokenizer(PsiElement element) {

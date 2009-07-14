@@ -37,7 +37,7 @@
   </actions>
 
   <extensionPoints>
-    <extensionPoint name="tokenizerFactory" interface="com.intellij.spellchecker.tokenizer.TokenizerFactory"/>
+    <extensionPoint name="support" interface="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
   </extensionPoints>
   
   <extensions defaultExtensionNs="com.intellij">
@@ -54,8 +54,8 @@
     <nameSuggestionProvider id="DictionarySuggestionProvider" implementation="com.intellij.spellchecker.DictionarySuggestionProvider"/>
     <severitiesProvider implementation="com.intellij.spellchecker.SpellCheckerSeveritiesProvider"/>
     
-    <spellchecker.tokenizerFactory implementation="com.intellij.spellchecker.tokenizer.TokenizerFactory"/>
-    <spellchecker.tokenizerFactory implementation="com.intellij.spellchecker.tokenizer.HtmlTokenizerFactory"/>
+    <spellchecker.support implementation="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
+    <spellchecker.support implementation="com.intellij.spellchecker.tokenizer.HtmlSpellcheckingStrategy"/>
   </extensions>
 </idea-plugin>
         

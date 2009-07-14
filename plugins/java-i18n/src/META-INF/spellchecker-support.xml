@@ -2,6 +2,6 @@
 
 <idea-plugin version="2">
   <extensions defaultExtensionNs="com.intellij.spellchecker">
-    <tokenizerFactory implementation="com.intellij.spellchecker.JavaTokenizerFactory"/>
+    <support implementation="com.intellij.spellchecker.JavaSpellcheckingStrategy"/>
   </extensions>
 </idea-plugin>
