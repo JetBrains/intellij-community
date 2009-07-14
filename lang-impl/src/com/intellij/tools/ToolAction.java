@@ -3,11 +3,12 @@ package com.intellij.tools;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 
 /**
  * @author Eugene Belyaev
  */
-public class ToolAction extends AnAction {
+public class ToolAction extends AnAction implements DumbAware {
   private final String myActionId;
 
   public ToolAction(Tool tool) {
