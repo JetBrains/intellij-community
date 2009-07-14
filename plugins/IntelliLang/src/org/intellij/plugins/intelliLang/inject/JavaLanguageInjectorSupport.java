@@ -299,14 +299,15 @@ public class JavaLanguageInjectorSupport implements LanguageInjectorSupport {
     return null;
   }
 
-  static void doEditInjection(final Project project, final MethodParameterInjection injection) {
+  static void doEditInjection(final Project project, final MethodParameterInjection template) {
     final Configuration configuration = Configuration.getInstance();
-    final MethodParameterInjection existing = configuration.findExistingInjection(injection);
-    if (existing != null) {
+    final MethodParameterInjection originalInjection = configuration.findExistingInjection(template);
+    final MethodParameterInjection newInjection = originalInjection == null ? template : originalInjection.copy();
+    if (originalInjection != null) {
       // merge method infos
       boolean found = false;
-      final MethodParameterInjection.MethodInfo curInfo = injection.getMethodInfos().iterator().next();
-      for (MethodParameterInjection.MethodInfo info : existing.getMethodInfos()) {
+      final MethodParameterInjection.MethodInfo curInfo = template.getMethodInfos().iterator().next();
+      for (MethodParameterInjection.MethodInfo info : newInjection.getMethodInfos()) {
         if (Comparing.equal(info.getMethodSignature(), curInfo.getMethodSignature())) {
           found = true;
           final boolean[] flags = curInfo.getParamFlags();
@@ -319,16 +320,13 @@ public class JavaLanguageInjectorSupport implements LanguageInjectorSupport {
         }
       }
       if (!found) {
-        final ArrayList<MethodParameterInjection.MethodInfo> methodInfos = new ArrayList<MethodParameterInjection.MethodInfo>(existing.getMethodInfos());
+        final ArrayList<MethodParameterInjection.MethodInfo> methodInfos = new ArrayList<MethodParameterInjection.MethodInfo>(newInjection.getMethodInfos());
         methodInfos.add(curInfo);
-        existing.setMethodInfos(methodInfos);
+        newInjection.setMethodInfos(methodInfos);
       }
     }
-    if (InjectLanguageAction.doEditConfigurable(project, new MethodParameterInjectionConfigurable(existing == null? injection : existing, null, project))) {
-      if (existing == null) {
-        configuration.getParameterInjections().add(injection);
-      }
-      configuration.configurationModified();
+    if (InjectLanguageAction.doEditConfigurable(project, new MethodParameterInjectionConfigurable(newInjection, null, project))) {
+      addRemoveInjections(project, configuration, Collections.singletonList(newInjection), Collections.singletonList(originalInjection), Collections.<PsiAnnotation>emptyList());
     }
   }
 

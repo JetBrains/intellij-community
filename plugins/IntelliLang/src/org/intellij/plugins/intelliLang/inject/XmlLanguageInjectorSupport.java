@@ -88,8 +88,8 @@ public class XmlLanguageInjectorSupport implements LanguageInjectorSupport {
     return true;
   }
 
-  private static void addRemoveInjections(final Project project, final Configuration configuration, final List<AbstractTagInjection> newInjections,
-                                          final List<AbstractTagInjection> originalInjections) {
+  private static void addRemoveInjections(final Project project, final Configuration configuration, final List<? extends AbstractTagInjection> newInjections,
+                                          final List<? extends AbstractTagInjection> originalInjections) {
     final UndoableAction action = new UndoableAction() {
       public void undo() throws UnexpectedUndoException {
         addRemoveInjectionsInner(project, configuration, originalInjections, newInjections);
@@ -116,7 +116,7 @@ public class XmlLanguageInjectorSupport implements LanguageInjectorSupport {
     }.execute();
   }
 
-  private static void addRemoveInjectionsInner(final Project project, final Configuration configuration, final List<AbstractTagInjection> newInjections, final List<AbstractTagInjection> originalInjections) {
+  private static void addRemoveInjectionsInner(final Project project, final Configuration configuration, final List<? extends AbstractTagInjection> newInjections, final List<? extends AbstractTagInjection> originalInjections) {
     configuration.getTagInjections().removeAll(originalInjections);
     configuration.getAttributeInjections().removeAll(originalInjections);
     for (AbstractTagInjection injection : newInjections) {
@@ -181,14 +181,12 @@ public class XmlLanguageInjectorSupport implements LanguageInjectorSupport {
     return false;
   }
 
-  private static void doEditInjection(final Project project, final XmlTagInjection injection) {
+  private static void doEditInjection(final Project project, final XmlTagInjection template) {
     final Configuration configuration = Configuration.getInstance();
-    final XmlTagInjection existing = configuration.findExistingInjection(injection);
-    if (InjectLanguageAction.doEditConfigurable(project, new XmlTagInjectionConfigurable(existing == null? injection : existing, null, project))) {
-      if (existing == null) {
-        configuration.getTagInjections().add(injection);
-        configuration.configurationModified();
-      }
+    final XmlTagInjection originalInjection = configuration.findExistingInjection(template);
+    final XmlTagInjection newInjection = originalInjection == null? template : originalInjection.copy();
+    if (InjectLanguageAction.doEditConfigurable(project, new XmlTagInjectionConfigurable(newInjection, null, project))) {
+      addRemoveInjections(project, configuration, Collections.singletonList(newInjection), Collections.singletonList(originalInjection));
     }
   }
 
@@ -208,14 +206,12 @@ public class XmlLanguageInjectorSupport implements LanguageInjectorSupport {
     return false;
   }
 
-  private static void doEditInjection(final Project project, final XmlAttributeInjection injection) {
+  private static void doEditInjection(final Project project, final XmlAttributeInjection template) {
     final Configuration configuration = Configuration.getInstance();
-    final XmlAttributeInjection existing = configuration.findExistingInjection(injection);
-    if (InjectLanguageAction.doEditConfigurable(project, new XmlAttributeInjectionConfigurable(existing == null ? injection : existing, null, project))) {
-      if (existing == null) {
-        configuration.getAttributeInjections().add(injection);
-        configuration.configurationModified();
-      }
+    final XmlAttributeInjection originalInjection = configuration.findExistingInjection(template);
+    final XmlAttributeInjection newInjection = originalInjection == null ? template : originalInjection.copy();
+    if (InjectLanguageAction.doEditConfigurable(project, new XmlAttributeInjectionConfigurable(newInjection, null, project))) {
+      addRemoveInjections(project, configuration, Collections.singletonList(newInjection), Collections.singletonList(originalInjection));
     }
   }
 
