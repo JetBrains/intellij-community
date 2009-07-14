@@ -55,14 +55,10 @@ public class PsiJavaPatterns extends StandardPatterns{
     return new PsiMethodPattern();
   }
 
-  public static PsiModifierListOwnerPattern.Capture<PsiParameter> psiParameter() {
-    return new PsiModifierListOwnerPattern.Capture<PsiParameter>(new InitialPatternCondition<PsiParameter>(PsiParameter.class) {
-      @Override
-      public boolean accepts(@Nullable Object o, ProcessingContext context) {
-        return o instanceof PsiParameter;
-      }
-    });
+  public static PsiParameterPattern psiParameter() {
+    return new PsiParameterPattern();
   }
+
   public static PsiModifierListOwnerPattern.Capture<PsiModifierListOwner> psiModifierListOwner() {
     return new PsiModifierListOwnerPattern.Capture<PsiModifierListOwner>(new InitialPatternCondition<PsiModifierListOwner>(PsiModifierListOwner.class) {
       @Override
