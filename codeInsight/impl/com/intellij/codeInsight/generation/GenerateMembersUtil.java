@@ -182,7 +182,6 @@ public class GenerateMembersUtil {
   public static PsiMethod substituteGenericMethod(PsiMethod method, PsiSubstitutor substitutor) {
     Project project = method.getProject();
     PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
-    boolean isRaw = PsiUtil.isRawSubstitutor(method, substitutor);
 
     PsiTypeParameter[] typeParams = method.getTypeParameters();
     try {
@@ -194,7 +193,7 @@ public class GenerateMembersUtil {
         newMethod.getNameIdentifier().replace(factory.createIdentifier(method.getName()));
       }
       else {
-        newMethod = factory.createMethod(method.getName(), substituteType(substitutor, returnType, isRaw));
+        newMethod = factory.createMethod(method.getName(), substituteType(substitutor, returnType));
       }
 
       RefactoringUtil.setVisibility(newMethod.getModifierList(), VisibilityUtil.getVisibilityModifier(method.getModifierList()));
@@ -210,7 +209,7 @@ public class GenerateMembersUtil {
       for (int i = 0; i < parameters.length; i++) {
         PsiParameter parameter = parameters[i];
         final PsiType parameterType = parameter.getType();
-        PsiType substituted = substituteType(substitutor, parameterType, isRaw);
+        PsiType substituted = substituteType(substitutor, parameterType);
         @NonNls String paramName = parameter.getName();
         final String[] baseSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, parameterType).names;
         boolean isBaseNameGenerated = false;
@@ -252,7 +251,7 @@ public class GenerateMembersUtil {
 
       PsiClassType[] thrownTypes = method.getThrowsList().getReferencedTypes();
       for (PsiClassType thrownType : thrownTypes) {
-        newMethod.getThrowsList().add(factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, thrownType, isRaw)));
+        newMethod.getThrowsList().add(factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, thrownType)));
       }
       return newMethod;
     }
@@ -262,8 +261,10 @@ public class GenerateMembersUtil {
     }
   }
 
-  private static PsiType substituteType(final PsiSubstitutor substitutor, final PsiType type, final boolean isRaw) {
-    return isRaw ? TypeConversionUtil.erasure(type) : substitutor.substitute(type);
+  private static PsiType substituteType(final PsiSubstitutor substitutor, final PsiType type) {
+    final PsiType psiType = substitutor.substitute(type);
+    if (psiType != null) return psiType;
+    return TypeConversionUtil.erasure(type);
   }
 
   public static PsiSubstitutor correctSubstitutor(PsiMethod method, PsiSubstitutor substitutor) {
