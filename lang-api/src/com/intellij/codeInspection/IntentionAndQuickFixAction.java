@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Gregory.Shrago
  */
 public abstract class IntentionAndQuickFixAction implements LocalQuickFix, IntentionAction{
+  public static IntentionAndQuickFixAction[] EMPTY_ARRAY = new IntentionAndQuickFixAction[0];
 
   @NotNull
   public abstract String getName();

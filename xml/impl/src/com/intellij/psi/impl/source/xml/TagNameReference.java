@@ -1,11 +1,11 @@
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.completion.XmlTagInsertHandler;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.codeInsight.lookup.MutableLookupElement;
-import com.intellij.codeInsight.completion.XmlTagInsertHandler;
-import com.intellij.codeInsight.TailType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;

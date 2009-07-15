@@ -16,11 +16,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,10 +44,12 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   @NonNls public static final String JAVAEE_NS = "http://java.sun.com/xml/ns/javaee/";
 
 
-  private final Map<String, Map<String,String>> myResources = new HashMap<String, Map<String, String>>();
+  private final Map<String, Map<String, String>> myResources = new HashMap<String, Map<String, String>>();
   private final Set<String> myResourceLocations = new HashSet<String>();
 
-  private final Map<String, XmlNSDescriptor> myImplicitNamespaces = new THashMap<String, XmlNSDescriptor>();
+  private final Set<NullableFunction<String, XmlNSDescriptor>> myImplicitNamespaces =
+    new THashSet<NullableFunction<String, XmlNSDescriptor>>();
+
   private final Set<String> myIgnoredResources = new HashSet<String>();
 
   private final AtomicNotNullLazyValue<Map<String, Map<String, String>>> myStdResources = new AtomicNotNullLazyValue<Map<String, Map<String, String>>>() {
@@ -87,18 +90,20 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public boolean isUserResource(VirtualFile file) {
-    return myResourceLocations.contains(file.getUrl()); 
+    return myResourceLocations.contains(file.getUrl());
   }
 
   @Nullable
-  static Map<String, String> getMap(@NotNull final Map<String, Map<String, String>> resources, @Nullable final String version,
-                                            final boolean create) {
+  static Map<String, String> getMap(@NotNull final Map<String, Map<String, String>> resources,
+                                    @Nullable final String version,
+                                    final boolean create) {
     Map<String, String> map = resources.get(version);
     if (map == null) {
       if (create) {
         map = new HashMap<String, String>();
-        resources.put(version,map);
-      } else if (version == null || !version.equals(DEFAULT_VERSION)) {
+        resources.put(version, map);
+      }
+      else if (version == null || !version.equals(DEFAULT_VERSION)) {
         map = resources.get(DEFAULT_VERSION);
       }
     }
@@ -112,11 +117,11 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
   public String getResourceLocation(@NonNls String url, String version) {
     Map<String, String> map = getMap(myResources, version, false);
-    String result = map != null ? map.get(url):null;
+    String result = map != null ? map.get(url) : null;
 
     if (result == null) {
       map = getMap(myStdResources.getValue(), version, false);
-      result = map != null ? map.get(url):null;
+      result = map != null ? map.get(url) : null;
     }
 
     if (result == null) {
@@ -152,16 +157,19 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
   public String[] getResourceUrls(@Nullable final FileType fileType, @NonNls final String version, final boolean includeStandard) {
     final List<String> result = new LinkedList<String>();
-    addResourcesFromMap(fileType, result,version, myResources);
+    addResourcesFromMap(fileType, result, version, myResources);
 
     if (includeStandard) {
-      addResourcesFromMap(fileType, result,version, myStdResources.getValue());
+      addResourcesFromMap(fileType, result, version, myStdResources.getValue());
     }
 
     return ArrayUtil.toStringArray(result);
   }
 
-  private static void addResourcesFromMap(@Nullable final FileType fileType, final List<String> result, String version, Map<String, Map<String, String>> resourcesMap) {
+  private static void addResourcesFromMap(@Nullable final FileType fileType,
+                                          final List<String> result,
+                                          String version,
+                                          Map<String, Map<String, String>> resourcesMap) {
     Map<String, String> resources = getMap(resourcesMap, version, false);
     if (resources == null) return;
     final Set<String> keySet = resources.keySet();
@@ -174,8 +182,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
         if (resource.endsWith(defaultExtension) &&
             resource.length() > defaultExtension.length() &&
-            resource.charAt(resource.length() - defaultExtension.length() - 1) == '.'
-          ) {
+            resource.charAt(resource.length() - defaultExtension.length() - 1) == '.') {
           result.add(key);
         }
       }
@@ -264,7 +271,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public void removeIgnoredResource(String url) {
-    if(myIgnoredResources.remove(url)) {
+    if (myIgnoredResources.remove(url)) {
       myModificationCount++;
       fireExternalResourceChanged();
     }
@@ -339,8 +346,17 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     }
   }
 
-  public void addImplicitNamespace(@NotNull final String ns, @NotNull XmlNSDescriptor descriptor, Disposable parentDisposable) {
-    myImplicitNamespaces.put(ns, descriptor);
+  public void registerImplicitNamespace(@NotNull final String ns, @NotNull final XmlNSDescriptor descriptor, Disposable parentDisposable) {
+    registerImplicitNamespace(new NullableFunction<String, XmlNSDescriptor>() {
+      public XmlNSDescriptor fun(String s) {
+        return ns.equals(s) ? descriptor : null;
+      }
+    }, parentDisposable);
+  }
+
+  public void registerImplicitNamespace(@NotNull final NullableFunction<String, XmlNSDescriptor> ns, Disposable parentDisposable) {
+    myImplicitNamespaces.add(ns);
+
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
         myImplicitNamespaces.remove(ns);
@@ -350,7 +366,11 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
   @Nullable
   public XmlNSDescriptor getImplicitNamespaceDescriptor(@NotNull final String ns) {
-    return myImplicitNamespaces.get(ns);
+    for (NullableFunction<String, XmlNSDescriptor> function : myImplicitNamespaces) {
+      XmlNSDescriptor descriptor = function.fun(ns);
+      if (descriptor != null) return descriptor;
+    }
+    return null;
   }
 
   private static ExternalResourceManagerImpl getProjectResources(Project project) {

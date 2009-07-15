@@ -237,10 +237,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
     return false;
   }
 
+  @Nullable
   public XmlAttributeDescriptor getAttribute(String localName, String namespace, final XmlTag context) {
     return getAttributeImpl(localName, namespace,null);
   }
 
+  @Nullable
   private XmlAttributeDescriptor getAttributeImpl(String localName, String namespace, Set<XmlTag> visited) {
     if (myTag == null) return null;
 

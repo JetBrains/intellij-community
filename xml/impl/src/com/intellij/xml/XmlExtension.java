@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.TagNameReference;
@@ -112,7 +113,10 @@ public abstract class XmlExtension {
 
   public void createAddAttributeFix(@NotNull final XmlAttribute attribute, final HighlightInfo highlightInfo) {
     final XmlTag tag = attribute.getParent();
-    final String namespace = attribute.getNamespace();
+    String namespace = attribute.getNamespace();
+
+    if(StringUtil.isEmptyOrSpaces(namespace)) namespace = tag.getNamespace();
+
     final XmlNSDescriptor nsDescriptor = tag.getNSDescriptor(namespace, true);
     if (nsDescriptor instanceof XmlUndefinedElementFixProvider) {
       final IntentionAction[] actions = ((XmlUndefinedElementFixProvider)nsDescriptor).createFixes(attribute);
