@@ -1,7 +1,7 @@
 package org.jetbrains.idea.maven.dom;
 
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -42,7 +42,9 @@ public class MavenDomUtil {
     if (!(file instanceof XmlFile)) return false;
 
     String name = file.getName();
-    return name.equals(MavenConstants.POM_XML) || name.endsWith("." + MavenConstants.POM_EXTENSION);
+    return name.equals(MavenConstants.POM_XML)
+           || name.endsWith("." + MavenConstants.POM_EXTENSION)
+           || name.equals(MavenConstants.SUPER_POM_XML);
   }
 
   public static boolean isProfilesFile(PsiFile file) {
@@ -133,7 +135,8 @@ public class MavenDomUtil {
     return DomManager.getDomManager(file.getProject()).getFileElement((XmlFile)file, clazz);
   }
 
-  public static XmlTag findTag(DomElement domElement, String path) {
+  @Nullable
+  public static XmlTag findTag(@NotNull DomElement domElement, @NotNull String path) {
     List<String> elements = StringUtil.split(path, ".");
     if (elements.isEmpty()) return null;
 
@@ -186,7 +189,7 @@ public class MavenDomUtil {
   }
 
   @Nullable
-  public static Property findProperty(@NotNull Project project, @NotNull String fileName, @NotNull String propName) {
+  public static PropertiesFile getPropertiesFile(@NotNull Project project, @NotNull String fileName) {
     VirtualFileSystem fs = MavenPropertiesVirtualFileSystem.getInstance();
     VirtualFile file = fs.findFileByPath(fileName);
     if (file == null) return null;
@@ -194,7 +197,13 @@ public class MavenDomUtil {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (!(psiFile instanceof PropertiesFile)) return null;
 
-    return ((PropertiesFile)psiFile).findPropertyByKey(propName);
+    return (PropertiesFile)psiFile;
+  }
+
+  @Nullable
+  public static Property findProperty(@NotNull Project project, @NotNull String fileName, @NotNull String propName) {
+    PropertiesFile propertiesFile = getPropertiesFile(project, fileName);
+    return propertiesFile == null ? null : propertiesFile.findPropertyByKey(propName);
   }
 
   public static List<DomFileElement<MavenDomProjectModel>> collectProjectPoms(final Project p) {

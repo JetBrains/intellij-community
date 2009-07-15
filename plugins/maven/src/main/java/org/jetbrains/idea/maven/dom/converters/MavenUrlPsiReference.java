@@ -6,9 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.FakePsiElement;
 
 public class MavenUrlPsiReference extends MavenPsiReference {
-  public MavenUrlPsiReference(PsiElement element,
-                           String text,
-                           TextRange range) {
+  public MavenUrlPsiReference(PsiElement element, String text, TextRange range) {
     super(element, text, range);
   }
 

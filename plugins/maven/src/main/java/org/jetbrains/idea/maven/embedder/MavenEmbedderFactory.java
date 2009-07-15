@@ -1,8 +1,13 @@
 package org.jetbrains.idea.maven.embedder;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import org.apache.maven.embedder.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.utils.JDOMReader;
@@ -17,6 +22,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Pattern;
+import java.net.URL;
 
 public class MavenEmbedderFactory {
   @NonNls private static final String PROP_MAVEN_HOME = "maven.home";
@@ -27,6 +34,7 @@ public class MavenEmbedderFactory {
   @NonNls private static final String BIN_DIR = "bin";
   @NonNls private static final String DOT_M2_DIR = ".m2";
   @NonNls private static final String CONF_DIR = "conf";
+  @NonNls private static final String LIB_DIR = "lib";
   @NonNls private static final String M2_CONF_FILE = "m2.conf";
 
   @NonNls private static final String REPOSITORY_DIR = "repository";
@@ -40,6 +48,7 @@ public class MavenEmbedderFactory {
     "verify", "install", "site", "deploy"};
 
   private static volatile Properties mySystemPropertiesCache;
+  private static final String SUPER_POM_PATH = "org/apache/maven/project/" + MavenConstants.SUPER_POM_XML;
 
   @Nullable
   public static File resolveMavenHomeDirectory(@Nullable String overrideMavenHome) {
@@ -80,6 +89,43 @@ public class MavenEmbedderFactory {
     if (directory == null) return null;
 
     return new File(new File(directory, CONF_DIR), MavenConstants.SETTINGS_XML);
+  }
+
+  @NotNull
+  public static VirtualFile resolveSuperPomFile(@Nullable String overrideMavenHome) {
+    VirtualFile result = doResolveSuperPomFile(overrideMavenHome);
+    if (result == null) {
+      URL resource = MavenEmbedderFactory.class.getResource("/" + SUPER_POM_PATH);
+      return VfsUtil.findFileByURL(resource);
+    }
+    return result;
+  }
+
+  @Nullable
+  private static VirtualFile doResolveSuperPomFile(String overrideMavenHome) {
+    File lib = resolveMavenLib(overrideMavenHome);
+    if (lib == null) return null;
+
+    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(lib);
+    if (file == null) return null;
+
+    VirtualFile root = JarFileSystem.getInstance().getJarRootForLocalFile(file);
+    if (root == null) return null;
+
+    return root.findFileByRelativePath(SUPER_POM_PATH);
+  }
+
+  private static File resolveMavenLib(String overrideMavenHome) {
+    File directory = resolveMavenHomeDirectory(overrideMavenHome);
+    if (directory == null) return null;
+    File libs = new File(directory, LIB_DIR);
+    Pattern pattern = Pattern.compile("maven-\\d+\\.\\d+\\.\\d+-uber\\.jar");
+    for (File each : libs.listFiles()) {
+      if (pattern.matcher(each.getName()).matches()) {
+        return each;
+      }
+    }
+    return null;
   }
 
   @Nullable

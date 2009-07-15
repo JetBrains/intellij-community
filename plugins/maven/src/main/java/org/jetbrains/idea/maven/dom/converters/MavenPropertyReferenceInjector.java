@@ -1,13 +1,13 @@
 package org.jetbrains.idea.maven.dom.converters;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomReferenceInjector;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 
-public class MavenDomPropertyReferenceInjector implements DomReferenceInjector {
+public class MavenPropertyReferenceInjector implements DomReferenceInjector {
   public String resolveString(@Nullable String unresolvedText, @NotNull ConvertContext context) {
     if (StringUtil.isEmptyOrSpaces(unresolvedText)) return unresolvedText;
     MavenDomProjectModel model = (MavenDomProjectModel)DomUtil.getFileElement(context.getInvocationElement()).getRootElement();
@@ -36,15 +36,9 @@ public class MavenDomPropertyReferenceInjector implements DomReferenceInjector {
       String propertyName = matcher.group(1);
       int from = range.getStartOffset() + matcher.start(1);
 
-      result.add(new MavenPropertyPsiReference(element, propertyName, from));
+      result.add(new MavenPropertyPsiReference(element, propertyName, TextRange.from(from, propertyName.length())));
     }
 
     return result.toArray(new PsiReference[result.size()]);
-  }
-
-  private Pair<VirtualFile, DomFileElement<MavenDomProjectModel>> getFileAndDom(ConvertContext context) {
-    DomFileElement<MavenDomProjectModel> dom = DomUtil.getFileElement(context.getInvocationElement());
-    VirtualFile virtualFile = dom.getOriginalFile().getVirtualFile();
-    return Pair.create(virtualFile, dom);
   }
 }

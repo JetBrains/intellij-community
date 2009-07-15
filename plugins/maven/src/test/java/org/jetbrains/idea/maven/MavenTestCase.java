@@ -325,6 +325,12 @@ public abstract class MavenTestCase extends TestCase {
     file.setBinaryContent(content.getBytes(), -1, file.getTimeStamp() + 1);
   }
 
+  protected void assertPathEquals(String expected, String actual) {
+    if (expected != null) expected = FileUtil.toSystemIndependentName(expected);
+    if (actual != null) actual = FileUtil.toSystemIndependentName(actual);
+    assertEquals(expected, actual);
+  }
+
   protected <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, Collection<T> expected) {
     assertOrderedElementsAreEqual(actual, expected.toArray());
   }

@@ -1,8 +1,8 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NotNull;
@@ -10,8 +10,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 
 import java.io.File;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -126,22 +126,25 @@ public class MavenGeneralSettings implements Cloneable {
     if (mavenSettingsFile != null) {
       if (!Comparing.equal(this.mavenSettingsFile, mavenSettingsFile)) {
         this.mavenSettingsFile = mavenSettingsFile;
-        
+
         myEffectiveLocalRepositoryCache = null;
         firePathChanged();
       }
     }
   }
 
-  public @Nullable File getEffectiveUserSettingsIoFile() {
+  @Nullable
+  public File getEffectiveUserSettingsIoFile() {
     return MavenEmbedderFactory.resolveUserSettingsFile(getMavenSettingsFile());
   }
 
-  public @Nullable File getEffectiveGlobalSettingsIoFile() {
+  @Nullable
+  public File getEffectiveGlobalSettingsIoFile() {
     return MavenEmbedderFactory.resolveGlobalSettingsFile(getMavenHome());
   }
 
-  public @Nullable VirtualFile getEffectiveUserSettingsFile() {
+  @Nullable
+  public VirtualFile getEffectiveUserSettingsFile() {
     File file = getEffectiveUserSettingsIoFile();
     return file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file);
   }
@@ -155,9 +158,15 @@ public class MavenGeneralSettings implements Cloneable {
     return result;
   }
 
-  public @Nullable VirtualFile getEffectiveGlobalSettingsFile() {
+  @Nullable
+  public VirtualFile getEffectiveGlobalSettingsFile() {
     File file = getEffectiveGlobalSettingsIoFile();
     return file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file);
+  }
+
+  @NotNull
+  public VirtualFile getEffectiveSuperPom() {
+    return MavenEmbedderFactory.resolveSuperPomFile(getMavenHome());
   }
 
   public boolean isPrintErrorStackTraces() {

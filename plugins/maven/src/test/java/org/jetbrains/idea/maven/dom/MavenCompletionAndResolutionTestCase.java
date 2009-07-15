@@ -107,15 +107,11 @@ public abstract class MavenCompletionAndResolutionTestCase extends MavenImportin
   }
 
   protected void assertCompletionVariantsInclude(VirtualFile f, String... expected) throws IOException {
-    List<String> actual = getCompletionVariants(f);
-    assertTrue(actual.toString(), actual.containsAll(Arrays.asList(expected)));
+    assertInclude(getCompletionVariants(f), expected);
   }
 
-  protected void assertCompletionVariantsIncludeOrdered(VirtualFile f, String... expected) throws IOException {
-    List<String> expectedList = Arrays.asList(expected);
-    List<String> actual = getCompletionVariants(f);
-    actual.retainAll(expectedList);
-    assertEquals(expectedList, actual);
+  protected void assertInclude(List<String> actual, String... expected) throws IOException {
+    assertTrue(actual.toString(), actual.containsAll(Arrays.asList(expected)));
   }
 
   protected void assertCompletionVariantsDoNotInclude(VirtualFile f, String... expected) throws IOException {

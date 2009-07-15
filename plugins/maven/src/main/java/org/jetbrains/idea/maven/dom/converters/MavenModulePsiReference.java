@@ -40,17 +40,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MavenModulePsiReference extends MavenPsiReference implements LocalQuickFixProvider {
-  final private VirtualFile myVirtualFile;
-  final private PsiFile myPsiFile;
-
-  public MavenModulePsiReference(PsiElement element,
-                              String text,
-                              TextRange range,
-                              VirtualFile virtualFile,
-                              PsiFile psiFile) {
+  public MavenModulePsiReference(PsiElement element, String text, TextRange range) {
     super(element, text, range);
-    myPsiFile = psiFile;
-    myVirtualFile = virtualFile;
   }
 
   public PsiElement resolve() {
@@ -143,7 +134,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
 
       String groupId = id.getGroupId() == null ? "groupId" : id.getGroupId();
       String artifactId = modulePomFile.getParent().getName();
-      String version= id.getVersion() == null ? "version" : id.getVersion();
+      String version = id.getVersion() == null ? "version" : id.getVersion();
 
       XmlFile psiFile = (XmlFile)PsiFileFactory.getInstance(project).createFileFromText(
         MavenConstants.POM_XML,

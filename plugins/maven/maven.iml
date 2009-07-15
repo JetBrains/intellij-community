@@ -59,6 +59,7 @@
           <root url="file://$MODULE_DIR$/../../../maven-src/components/src" />
           <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-toolchain/target/generated-sources/modello" />
           <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-distribution" />
+          <root url="file://$MODULE_DIR$/../../../maven-plexus-src/interpolation/src/main/java" />
         </SOURCES>
       </library>
     </orderEntry>

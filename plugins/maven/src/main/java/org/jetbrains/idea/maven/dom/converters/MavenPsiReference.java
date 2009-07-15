@@ -1,19 +1,33 @@
 package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public abstract class MavenPsiReference implements PsiReference {
-  protected final PsiElement myElement;
-  protected final String myText;
-  protected final TextRange myRange;
+  protected final @NotNull Project myProject;
+  protected final @NotNull MavenProjectsManager myProjectsManager;
 
-  public MavenPsiReference(PsiElement element,
-                           String text,
-                           TextRange range) {
+  protected final @NotNull PsiFile myPsiFile;
+  protected final @NotNull VirtualFile myVirtualFile;
+
+  protected final @NotNull PsiElement myElement;
+  protected final @NotNull String myText;
+  protected final @NotNull TextRange myRange;
+
+  public MavenPsiReference(@NotNull PsiElement element, @NotNull String text, @NotNull TextRange range) {
+    myProject = element.getProject();
+    myProjectsManager = MavenProjectsManager.getInstance(myProject);
+
+    myPsiFile = element.getContainingFile().getOriginalFile();
+    myVirtualFile = myPsiFile.getVirtualFile();
+
     myElement = element;
     myText = text;
     myRange = range;

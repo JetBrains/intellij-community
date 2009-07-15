@@ -29,6 +29,7 @@ import org.apache.maven.project.path.PathTranslator;
 import org.apache.maven.project.validation.ModelValidationResult;
 import org.apache.maven.reactor.MissingModuleException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -49,11 +50,8 @@ public class MavenProjectReader {
                                               VirtualFile file,
                                               List<String> activeProfiles,
                                               MavenProjectReaderProjectLocator locator) {
-    File localRepository = generalSettings.getEffectiveLocalRepository();
-
     Pair<Model, List<Profile>> readResult = doReadProjectModel(generalSettings,
                                                                file,
-                                                               localRepository,
                                                                activeProfiles,
                                                                new THashSet<VirtualFile>(),
                                                                locator);
@@ -74,7 +72,7 @@ public class MavenProjectReader {
                                         activeProfiles,
                                         Collections.EMPTY_LIST,
                                         Collections.EMPTY_SET,
-                                        localRepository,
+                                        generalSettings.getEffectiveLocalRepository(),
                                         mavenProject);
   }
 
@@ -84,7 +82,6 @@ public class MavenProjectReader {
 
   private Pair<Model, List<Profile>> doReadProjectModel(MavenGeneralSettings generalSettings,
                                                         VirtualFile file,
-                                                        File localRepository,
                                                         List<String> activeProfiles,
                                                         Set<VirtualFile> recursionGuard,
                                                         MavenProjectReaderProjectLocator locator) {
@@ -96,7 +93,7 @@ public class MavenProjectReader {
 
     List<Profile> activatedProfiles = applyProfiles(mavenModel, getBaseDir(file), activeProfiles);
     repairModelHeader(mavenModel);
-    resolveInheritance(generalSettings, mavenModel, file, localRepository, activeProfiles, recursionGuard, locator);
+    resolveInheritance(generalSettings, mavenModel, file, activeProfiles, recursionGuard, locator);
     repairModelBody(mavenModel);
 
     return Pair.create(mavenModel, activatedProfiles);
@@ -412,7 +409,6 @@ public class MavenProjectReader {
   private void resolveInheritance(final MavenGeneralSettings generalSettings,
                                   Model model,
                                   VirtualFile file,
-                                  final File localRepository,
                                   final List<String> activeProfiles,
                                   final Set<VirtualFile> recursionGuard,
                                   final MavenProjectReaderProjectLocator locator) {
@@ -420,41 +416,47 @@ public class MavenProjectReader {
     recursionGuard.add(file);
 
     Parent parent = model.getParent();
-    if (parent == null) return;
-
-    final String parentGroupId = parent.getGroupId();
-    final String parentArtifactId = parent.getArtifactId();
-    final String parentVersion = parent.getVersion();
+    final MavenParentDesc[] parentDesc = new MavenParentDesc[1];
+    if (parent != null) {
+      parentDesc[0] = new MavenParentDesc(new MavenId(parent.getGroupId(),
+                                                      parent.getArtifactId(),
+                                                      parent.getVersion()),
+                                          parent.getRelativePath());
+    }
 
     Model parentModel = new MavenParentProjectFileProcessor<Model>() {
-      protected VirtualFile findManagedFile(MavenId id) {
+      @Nullable
+      protected VirtualFile findManagedFile(@NotNull MavenId id) {
         return locator.findProjectFile(id);
       }
 
       @Override
+      @Nullable
       protected Model processRelativeParent(VirtualFile parentFile) {
         Model result = super.processRelativeParent(parentFile);
-        if (!(parentGroupId.equals(result.getGroupId())
-              && parentArtifactId.equals(result.getArtifactId())
-              && parentVersion.equals(result.getVersion()))) {
+        if (result == null) return null;
+
+        MavenId parentId = parentDesc[0].getParentId();
+        if (!(parentId.equals(result.getGroupId(), result.getArtifactId(), result.getVersion()))) {
           return null;
         }
         return result;
       }
 
       @Override
+      protected Model processSuperParent(VirtualFile parentFile) {
+        return null; // do not process superPom
+      }
+
+      @Override
       protected Model doProcessParent(VirtualFile parentFile) {
         return doReadProjectModel(generalSettings,
                                   parentFile,
-                                  localRepository,
                                   activeProfiles,
                                   recursionGuard,
                                   locator).first;
       }
-    }.process(file,
-              new MavenId(parentGroupId, parentArtifactId, parentVersion),
-              parent.getRelativePath(),
-              localRepository);
+    }.process(generalSettings, file, parentDesc[0]);
 
     if (parentModel != null) {
       new DefaultModelInheritanceAssembler().assembleModelInheritance(model, parentModel);

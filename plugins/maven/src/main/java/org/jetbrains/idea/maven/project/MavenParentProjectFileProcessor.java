@@ -11,37 +11,49 @@ import java.io.File;
 
 public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
   @Nullable
-  public RESULT_TYPE process(@NotNull VirtualFile projectFile,
-                             @NotNull MavenId parentId,
-                             @NotNull String parentRelativePath,
-                             @NotNull File localRepository) {
-    VirtualFile parentFile = findManagedFile(parentId);
+  public RESULT_TYPE process(@NotNull MavenGeneralSettings generalSettings,
+                             @NotNull VirtualFile projectFile,
+                             @Nullable MavenParentDesc parentDesc) {
+    VirtualFile superPom = generalSettings.getEffectiveSuperPom();
+    if (projectFile == superPom) return null;
+
     RESULT_TYPE result = null;
-    if (parentFile != null) {
-      result = processManagedParent(parentFile);
+
+    if (parentDesc != null) {
+      VirtualFile parentFile = findManagedFile(parentDesc.getParentId());
+      if (parentFile != null) {
+        result = processManagedParent(parentFile);
+      }
+
+      if (result == null) {
+        parentFile = projectFile.getParent().findFileByRelativePath(parentDesc.getParentRelativePath());
+        if (parentFile != null && parentFile.isDirectory()) {
+          parentFile = parentFile.findFileByRelativePath(MavenConstants.POM_XML);
+        }
+        if (parentFile != null) {
+          result = processRelativeParent(parentFile);
+        }
+      }
+
+      if (result == null) {
+        File parentIoFile = MavenArtifactUtil.getArtifactFile(generalSettings.getEffectiveLocalRepository(),
+                                                              parentDesc.getParentId(), "pom");
+        parentFile = LocalFileSystem.getInstance().findFileByIoFile(parentIoFile);
+        if (parentFile != null) {
+          result = processRepositoryParent(parentFile);
+        }
+      }
     }
 
     if (result == null) {
-      parentFile = projectFile.getParent().findFileByRelativePath(parentRelativePath);
-      if (parentFile != null && parentFile.isDirectory()) {
-        parentFile = parentFile.findFileByRelativePath(MavenConstants.POM_XML);
-      }
-      if (parentFile != null) {
-        result = processRelativeParent(parentFile);
-      }
+      result = processSuperParent(superPom);
     }
 
-    if (result == null) {
-      File parentIoFile = MavenArtifactUtil.getArtifactFile(localRepository, parentId, "pom");
-      parentFile = LocalFileSystem.getInstance().findFileByIoFile(parentIoFile);
-      if (parentFile != null) {
-        result = processRepositoryParent(parentFile);
-      }
-    }
     return result;
   }
 
-  protected abstract VirtualFile findManagedFile(MavenId id);
+  @Nullable
+  protected abstract VirtualFile findManagedFile(@NotNull MavenId id);
 
   @Nullable
   protected RESULT_TYPE processManagedParent(VirtualFile parentFile) {
@@ -55,6 +67,11 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
 
   @Nullable
   protected RESULT_TYPE processRepositoryParent(VirtualFile parentFile) {
+    return doProcessParent(parentFile);
+  }
+
+  @Nullable
+  protected RESULT_TYPE processSuperParent(VirtualFile parentFile) {
     return doProcessParent(parentFile);
   }
 

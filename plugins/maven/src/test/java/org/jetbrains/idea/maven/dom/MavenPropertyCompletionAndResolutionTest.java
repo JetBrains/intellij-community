@@ -1,11 +1,14 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfiles;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
+
+import java.util.List;
 
 public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAndResolutionTestCase {
   @Override
@@ -37,16 +40,6 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAnd
     assertResolved(myProjectPom, findTag("project.version"));
   }
 
-  public void testBuiltInVersionProperty() throws Exception {
-    createProjectPom("<groupId>test</groupId" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<name>${<caret>version}</name>");
-
-    assertResolved(myProjectPom, findTag("project.version"));
-  }
-
   public void testBuiltInBasedirProperty() throws Exception {
     createProjectPom("<groupId>test</groupId" +
                      "<artifactId>project</artifactId>" +
@@ -54,7 +47,24 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAnd
 
                      "<name>${<caret>basedir}</name>");
 
-    assertResolved(myProjectPom, PsiManager.getInstance(myProject).findDirectory(myProjectPom.getParent()));
+    PsiDirectory baseDir = PsiManager.getInstance(myProject).findDirectory(myProjectPom.getParent());
+    assertResolved(myProjectPom, baseDir);
+
+    createProjectPom("<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>${<caret>project.basedir}</name>");
+
+    assertResolved(myProjectPom, baseDir);
+
+    createProjectPom("<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>${<caret>pom.basedir}</name>");
+
+    assertResolved(myProjectPom, baseDir);
   }
 
   public void testResolutionWithSeveralProperties() throws Exception {
@@ -95,15 +105,35 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAnd
     assertUnresolved(myProjectPom);
   }
 
-  //public void testResolutionToAbsentProjectProperty() throws Exception {
-  //  createProjectPom("<groupId>test</groupId>" +
-  //                   "<artifactId>project</artifactId>" +
-  //                   "<version>1</version>" +
-  //
-  //                   "<name>${<caret>project.description}</name>");
-  //
-  //  assertResolved(myProjectPom, findTag("project.version"));
-  //}
+  public void testResolutionToAbsentProjectProperty() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>${<caret>project.description}</name>");
+
+    assertResolved(myProjectPom, findTag("project.name"));
+  }
+
+  public void testResolutionToAbsentPomProperty() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>${<caret>pom.description}</name>");
+
+    assertResolved(myProjectPom, findTag("project.name"));
+  }
+
+  public void testResolutionToAbsentUnclassifiedProperty() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>${<caret>description}</name>");
+
+    assertResolved(myProjectPom, findTag("project.name"));
+  }
 
   public void testResolutionToPomProperty() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
@@ -111,6 +141,16 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAnd
                      "<version>1</version>" +
 
                      "<name>${<caret>pom.version}</name>");
+
+    assertResolved(myProjectPom, findTag("project.version"));
+  }
+
+  public void testResolutionToUnclassifiedProperty() throws Exception {
+    createProjectPom("<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>${<caret>version}</name>");
 
     assertResolved(myProjectPom, findTag("project.version"));
   }
@@ -210,6 +250,16 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAnd
     assertResolved(myProjectPom, findTag(parent, "project.build.directory"));
   }
 
+  public void testResolutionToInheritedSuperPomProjectProperty() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>${<caret>project.build.finalName}</name>");
+
+    assertResolved(myProjectPom, findTag(getMavenGeneralSettings().getEffectiveSuperPom(), "project.build.finalName"));
+  }
+
   public void testHandleResolutionRecursion() throws Exception {
     createProjectPom("<groupId>test</groupId" +
                      "<artifactId>project</artifactId>" +
@@ -222,7 +272,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAnd
                      "  <relativePath>./parent/pom.xml</version>" +
                      "</parent>" +
 
-                     "<name>${<caret>project.build.directory}</name>");
+                     "<name>${<caret>project.description}</name>");
 
     createModulePom("parent",
                     "<groupId>test</groupId" +
@@ -236,7 +286,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAnd
                     "  <relativePath>../pom.xml</version>" +
                     "</parent>");
 
-    assertUnresolved(myProjectPom);
+    assertResolved(myProjectPom, findTag(myProjectPom, "project.name"));
   }
 
   public void testResolutionFromProperties() throws Exception {
@@ -331,7 +381,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAnd
     assertResolved(myProjectPom, findTag(profiles, "settings.profiles[1].properties.foo", MavenDomSettingsModel.class));
   }
 
-  public void testResolvingModelPropertiesInSettingsXml() throws Exception {
+  public void testResolvingSettingsModelProperties() throws Exception {
     VirtualFile profiles = updateSettingsXml("<localRepository>" + getRepositoryPath() + "</localRepository>");
 
     createProjectPom("<groupId>test</groupId" +
@@ -341,6 +391,26 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAnd
                      "<name>${<caret>settings.localRepository}</name>");
 
     assertResolved(myProjectPom, findTag(profiles, "settings.localRepository", MavenDomSettingsModel.class));
+  }
+
+  public void testResolvingAbsentSettingsModelProperties() throws Exception {
+    createProjectPom("<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>${<caret>settings.localRepository}</name>");
+
+    assertResolved(myProjectPom, findTag(myProjectPom, "project.name"));
+  }
+
+  public void testResolvingUnknownSettingsModelProperties() throws Exception {
+    createProjectPom("<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>${<caret>settings.foo.bar}</name>");
+
+    assertUnresolved(myProjectPom);
   }
 
   public void testResolvingPropertiesInProfilesXml() throws Exception {
@@ -441,90 +511,93 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAnd
                                                            "TEMP"));
   }
 
-  //public void testCompletion() throws Exception {
-  //  importProjectWithProfiles("one");
-  //
-  //  createProjectPom("<groupId>test</groupId" +
-  //                   "<artifactId>project</artifactId>" +
-  //                   "<version>1</version>" +
-  //
-  //                   "<parent>" +
-  //                   "  <groupId>test</groupId" +
-  //                   "  <artifactId>parent</artifactId>" +
-  //                   "  <version>1</version>" +
-  //                   "  <relativePath>./parent/pom.xml</version>" +
-  //                   "</parent>" +
-  //
-  //                   "<properties>" +
-  //                   "  <pomProp>value</pomProp>" +
-  //                   "</properties>" +
-  //
-  //                   "<profiles>" +
-  //                   "  <profile>" +
-  //                   "    <id>one</id>" +
-  //                   "    <properties>" +
-  //                   "      <pomProfilesProp>value</pomProfilesProp>" +
-  //                   "    </properties>" +
-  //                   "  </profile>" +
-  //                   "  <profile>" +
-  //                   "    <id>two</id>" +
-  //                   "    <properties>" +
-  //                   "      <pomProfilesPropInactive>value</pomProfilesPropInactive>" +
-  //                   "    </properties>" +
-  //                   "  </profile>" +
-  //                   "</profiles>" +
-  //
-  //                   "<name>${<caret>}</name>");
-  //
-  //  createProfilesXml("<profile>" +
-  //                    "  <id>one</id>" +
-  //                    "  <properties>" +
-  //                    "    <profilesXmlProp>value</profilesXmlProp>" +
-  //                    "  </properties>" +
-  //                    "</profile>");
-  //
-  //  createModulePom("parent",
-  //                  "<groupId>test</groupId" +
-  //                  "<artifactId>parent</artifactId>" +
-  //                  "<version>1</version>" +
-  //
-  //                  "<properties>" +
-  //                  "  <parentPomProp>value</parentPomProp>" +
-  //                  "</properties>" +
-  //
-  //                  "<profiles>" +
-  //                  "  <profile>" +
-  //                  "    <id>one</id>" +
-  //                  "    <properties>" +
-  //                  "      <parentPomProfilesProp>value</parentPomProfilesProp>" +
-  //                  "    </properties>" +
-  //                  "  </profile>" +
-  //                  "</profiles>");
-  //
-  //  createProfilesXml("parent",
-  //                    "<profile>" +
-  //                    "  <id>one</id>" +
-  //                    "  <properties>" +
-  //                    "    <parentProfilesXmlProp>value</parentProfilesXmlProp>" +
-  //                    "  </properties>" +
-  //                    "</profile>");
-  //
-  //  updateSettingsXml("<profiles>" +
-  //                    "  <profile>" +
-  //                    "    <id>one</id>" +
-  //                    "    <properties>" +
-  //                    "      <settingsXmlProp>value</settingsXmlProp>" +
-  //                    "    </properties>" +
-  //                    "  </profile>" +
-  //                    "</profiles>");
-  //
-  //  assertCompletionVariantsIncludeOrdered(myProjectPom,
-  //                                         "pomProp", "pomProfilesProp", "profilesXmlProp",
-  //                                         "parentPomProp", "parentPomProfilesProp", "parentPomProfilesPropInactive", "parentProfilesXmlProp",
-  //                                         "settingsXmlProp",
-  //                                         "project.artifactId", "pom.artifactId",
-  //                                         "version", "basedir",
-  //                                         "settings.localRepository",
-  //                                         "user.home", "env.TEMP");
-  //}
+  public void testCompletion() throws Exception {
+    importProjectWithProfiles("one");
+
+    createProjectPom("<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     "  <groupId>test</groupId" +
+                     "  <artifactId>parent</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <relativePath>./parent/pom.xml</version>" +
+                     "</parent>" +
+
+                     "<properties>" +
+                     "  <pomProp>value</pomProp>" +
+                     "</properties>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <properties>" +
+                     "      <pomProfilesProp>value</pomProfilesProp>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <properties>" +
+                     "      <pomProfilesPropInactive>value</pomProfilesPropInactive>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>" +
+
+                     "<name>${<caret>}</name>");
+
+    createProfilesXml("<profile>" +
+                      "  <id>one</id>" +
+                      "  <properties>" +
+                      "    <profilesXmlProp>value</profilesXmlProp>" +
+                      "  </properties>" +
+                      "</profile>");
+
+    createModulePom("parent",
+                    "<groupId>test</groupId" +
+                    "<artifactId>parent</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<properties>" +
+                    "  <parentPomProp>value</parentPomProp>" +
+                    "</properties>" +
+
+                    "<profiles>" +
+                    "  <profile>" +
+                    "    <id>one</id>" +
+                    "    <properties>" +
+                    "      <parentPomProfilesProp>value</parentPomProfilesProp>" +
+                    "    </properties>" +
+                    "  </profile>" +
+                    "</profiles>");
+
+    createProfilesXml("parent",
+                      "<profile>" +
+                      "  <id>one</id>" +
+                      "  <properties>" +
+                      "    <parentProfilesXmlProp>value</parentProfilesXmlProp>" +
+                      "  </properties>" +
+                      "</profile>");
+
+    updateSettingsXml("<profiles>" +
+                      "  <profile>" +
+                      "    <id>one</id>" +
+                      "    <properties>" +
+                      "      <settingsXmlProp>value</settingsXmlProp>" +
+                      "    </properties>" +
+                      "  </profile>" +
+                      "</profiles>");
+
+    List<String> variants = getCompletionVariants(myProjectPom);
+    assertInclude(variants, "pomProp", "pomProfilesProp", "pomProfilesPropInactive", "profilesXmlProp");
+    assertInclude(variants,
+                  "parentPomProp",
+                  "parentPomProfilesProp",
+                  "parentProfilesXmlProp");
+    assertInclude(variants, "artifactId", "project.artifactId", "pom.artifactId");
+    assertInclude(variants, "basedir", "project.basedir", "pom.basedir");
+    assertInclude(variants, "settingsXmlProp");
+    assertInclude(variants, "settings.localRepository");
+    assertInclude(variants, "user.home", "env.TEMP");
+  }
 }

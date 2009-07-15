@@ -53,18 +53,20 @@ public class MavenId implements Serializable {
     return getDisplayString();
   }
 
+  public boolean equals(String groupId, String artifactId, String version) {
+    if (myGroupId != null ? !myGroupId.equals(groupId) : groupId != null) return false;
+    if (myArtifactId != null ? !myArtifactId.equals(artifactId) : artifactId != null) return false;
+    if (myVersion != null ? !myVersion.equals(version) : version != null) return false;
+    return true;
+  }
+
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    MavenId projectId = (MavenId)o;
-
-    if (myGroupId != null ? !myGroupId.equals(projectId.myGroupId) : projectId.myGroupId != null) return false;
-    if (myArtifactId != null ? !myArtifactId.equals(projectId.myArtifactId) : projectId.myArtifactId != null) return false;
-    if (myVersion != null ? !myVersion.equals(projectId.myVersion) : projectId.myVersion != null) return false;
-
-    return true;
+    MavenId other = (MavenId)o;
+    return equals(other.getGroupId(), other.myArtifactId, other.myVersion);
   }
 
   @Override

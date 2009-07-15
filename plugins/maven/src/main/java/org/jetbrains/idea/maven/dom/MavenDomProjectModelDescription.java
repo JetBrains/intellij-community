@@ -1,7 +1,7 @@
 package org.jetbrains.idea.maven.dom;
 
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.dom.converters.MavenDomPropertyReferenceInjector;
+import org.jetbrains.idea.maven.dom.converters.MavenPropertyReferenceInjector;
 
 public class MavenDomProjectModelDescription extends MavenDomFileDescription<MavenDomProjectModel> {
   public MavenDomProjectModelDescription() {
@@ -11,6 +11,6 @@ public class MavenDomProjectModelDescription extends MavenDomFileDescription<Mav
   @Override
   protected void initializeFileDescription() {
     super.initializeFileDescription();
-    registerReferenceInjector(new MavenDomPropertyReferenceInjector());
+    registerReferenceInjector(new MavenPropertyReferenceInjector());
   }
 }
