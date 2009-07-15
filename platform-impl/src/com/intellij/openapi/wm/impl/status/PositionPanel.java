@@ -53,26 +53,34 @@ class PositionPanel extends TextPanel implements StatusBarPatch {
 
   public String updateStatusBar(final Editor editor, final JComponent componentSelected) {
     if (editor != null) {
-      StringBuilder message = new StringBuilder();
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          if (!editor.isDisposed()) {
+            StringBuilder message = new StringBuilder();
 
-      SelectionModel selectionModel = editor.getSelectionModel();
-      if (selectionModel.hasBlockSelection()) {
-        appendLogicalPosition(selectionModel.getBlockStart(), message);
-        message.append("-");
-        appendLogicalPosition(selectionModel.getBlockEnd(), message);
-      }
-      else {
-        LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
+            SelectionModel selectionModel = editor.getSelectionModel();
+            if (selectionModel.hasBlockSelection()) {
+              LogicalPosition start = selectionModel.getBlockStart();
+              LogicalPosition end = selectionModel.getBlockEnd();
+              appendLogicalPosition(start, message);
+              message.append("-");
+              appendLogicalPosition(new LogicalPosition(Math.abs(end.column - start.column) - 1, Math.abs(end.line - start.line)), message);
+            }
+            else {
+              LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
 
-        appendLogicalPosition(caret, message);
-        if (selectionModel.hasSelection()) {
-          int len = Math.abs(selectionModel.getSelectionStart() - selectionModel.getSelectionEnd());
-          message.append("/");
-          message.append(len);
+              appendLogicalPosition(caret, message);
+              if (selectionModel.hasSelection()) {
+                int len = Math.abs(selectionModel.getSelectionStart() - selectionModel.getSelectionEnd());
+                message.append("/");
+                message.append(len);
+              }
+            }
+
+            setText(message.toString());
+          }
         }
-      }
-
-      setText(message.toString());
+      });
       return UIBundle.message("go.to.line.command.double.click");
     }
     clear();
