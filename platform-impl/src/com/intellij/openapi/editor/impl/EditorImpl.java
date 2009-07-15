@@ -2112,13 +2112,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     FoldRegion outermostCollapsed = myFoldingModel.getCollapsedRegionAtOffset(offset);
     if (outermostCollapsed != null && offset > outermostCollapsed.getStartOffset()) {
-      if (offset < getDocument().getTextLength() - 1) {
+      if (offset < getDocument().getTextLength()) {
         offset = outermostCollapsed.getStartOffset();
         LogicalPosition foldStart = offsetToLogicalPosition(offset);
         return logicalToVisualPosition(foldStart);
       }
       else {
-        offset = outermostCollapsed.getEndOffset() + 3;
+        offset = outermostCollapsed.getEndOffset() + 3;  // WTF?
       }
     }
 
