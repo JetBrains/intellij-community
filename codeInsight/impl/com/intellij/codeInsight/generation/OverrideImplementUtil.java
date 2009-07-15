@@ -451,7 +451,8 @@ public class OverrideImplementUtil {
     final String toMerge = PropertiesComponent.getInstance(project).getValue(PROP_COMBINED_OVERRIDE_IMPLEMENT);
     final Ref<Boolean> merge = Ref.create(!"false".equals(toMerge));
 
-    final MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(merge.get().booleanValue() ? all : onlyPrimary, false, true, project,
+    final boolean isAll = merge.get().booleanValue();
+    final MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(isAll ? all : onlyPrimary, false, true, project,
                                                                                       PsiUtil.isLanguageLevel5OrHigher(aClass)) {
 
       @Override
@@ -480,6 +481,7 @@ public class OverrideImplementUtil {
     registerHandlerForComplementaryAction(project, editor, aClass, toImplement, chooser);
 
     chooser.setCopyJavadocVisible(true);
+    chooser.selectElements(isAll ? all : onlyPrimary);
     chooser.show();
     if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
 
