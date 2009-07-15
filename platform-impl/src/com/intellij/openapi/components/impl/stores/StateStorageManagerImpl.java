@@ -374,18 +374,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   public ExternalizationSession startExternalization() {
     if (mySession != null) {
-      final StringBuffer sb = new StringBuffer();
-
-      final Map<Thread,StackTraceElement[]> traces = Thread.getAllStackTraces();
-      for (final Map.Entry<Thread, StackTraceElement[]> entry : traces.entrySet()) {
-        sb.append("\n").append(entry.getKey().getName()).append("\n");
-        final StackTraceElement[] value = entry.getValue();
-        for (final StackTraceElement stackTraceElement : value) {
-          sb.append(stackTraceElement).append('\n');
-        }
-      }
-
-      LOG.error("Starting duplicate externalization session: dumping threads..." + sb.toString());
+      LOG.error("Starting duplicate externalization session: " + mySession);
     }
     ExternalizationSession session = new MyExternalizationSession();
 
