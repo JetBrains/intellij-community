@@ -765,6 +765,9 @@
     <action id="NewElement">
       <keyboard-shortcut first-keystroke="alt INSERT"/>
     </action>
+    <action id="NewElementSamePlace">
+      <keyboard-shortcut first-keystroke="control alt INSERT"/>
+    </action>
     <action id="EditorSplitLine">
       <keyboard-shortcut first-keystroke="control ENTER"/>
     </action>

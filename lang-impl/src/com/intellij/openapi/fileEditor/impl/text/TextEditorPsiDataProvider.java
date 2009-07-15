@@ -4,16 +4,15 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.EditorDataProvider;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.ide.IdeView;
 import org.jetbrains.annotations.Nullable;
 
 public class TextEditorPsiDataProvider implements EditorDataProvider {
@@ -56,6 +55,25 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     }
     if (dataId.equals(DataConstants.PSI_FILE)) {
       return getPsiFile(e, file);
+    }
+    if (LangDataKeys.IDE_VIEW.getName().equals(dataId)) {
+      final PsiFile psiFile = PsiManager.getInstance(e.getProject()).findFile(file);
+      final PsiDirectory psiDirectory = psiFile != null ? psiFile.getParent() : null;
+      if (psiDirectory != null && psiDirectory.isPhysical()) {
+        return new IdeView() {
+
+          public void selectElement(final PsiElement element) {
+          }
+
+          public PsiDirectory[] getDirectories() {
+            return new PsiDirectory[]{psiDirectory};
+          }
+
+          public PsiDirectory getOrChooseDirectory() {
+            return psiDirectory;
+          }
+        };
+      }
     }
     return null;
   }

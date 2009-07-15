@@ -582,6 +582,8 @@
       <add-to-group group-id="EditCreateDeleteGroup" anchor="first"/>
     </action>
 
+    <action id="NewElementSamePlace" class="com.intellij.ide.actions.NewElementSamePlaceAction"/>
+
     <action id="ChangeCodeStyleScheme" class="com.intellij.ide.actions.QuickChangeCodeStyleSchemeAction">
       <add-to-group group-id="ChangeScheme" anchor="after" relative-to-action="ChangeColorScheme"/>
     </action>

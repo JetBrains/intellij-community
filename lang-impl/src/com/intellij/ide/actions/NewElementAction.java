@@ -16,13 +16,17 @@ public class NewElementAction extends AnAction implements DumbAware {
 
   protected void showPopup(DataContext dataContext) {
     final ListPopup popup = JBPopupFactory.getInstance()
-      .createActionGroupPopup(IdeBundle.message("title.popup.new.element"),
+      .createActionGroupPopup(getPopupTitle(),
                               getGroup(),
                               dataContext,
                               false, false, false,
                               null, -1, LangDataKeys.PRESELECT_NEW_ACTION_CONDITION.getData(dataContext));
 
     popup.showInBestPositionFor(dataContext);
+  }
+
+  protected String getPopupTitle() {
+    return IdeBundle.message("title.popup.new.element");
   }
 
   public void update(AnActionEvent event){
