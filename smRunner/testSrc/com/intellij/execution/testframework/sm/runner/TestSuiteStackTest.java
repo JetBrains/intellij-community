@@ -48,7 +48,7 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
     assertEquals(mySuite, myTestSuiteStack.getCurrentSuite());
   }
 
-  public void testPopSuite() {
+  public void testPopSuite() throws Throwable {
     final String suiteName = mySuite.getName();
 
     AssertionUtil.assertException(new AssertionErrorCase() {
