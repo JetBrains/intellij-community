@@ -21,6 +21,8 @@ package com.intellij.util.containers;
 
 import java.util.ArrayList;
 import java.util.EmptyStackException;
+import java.util.List;
+import java.util.RandomAccess;
 
 public class Stack<T> extends ArrayList<T> {
   public void push(T t) {
@@ -41,5 +43,27 @@ public class Stack<T> extends ArrayList<T> {
 
   public boolean empty() {
     return isEmpty();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o instanceof RandomAccess && o instanceof List) {
+      List other = (List) o;
+      if (size() != other.size()) {
+        return false;
+      }
+
+      for (int i = 0; i < other.size(); i++) {
+        Object o1 = other.get(i);
+        Object o2 = get(i);
+        if (!(o1==null ? o2==null : o1.equals(o2))) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    return super.equals(o);
   }
 }
