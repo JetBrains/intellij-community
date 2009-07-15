@@ -9,6 +9,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -26,6 +27,8 @@ import com.intellij.xml.actions.ValidateXmlActionHandler;
 import com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection;
 import com.intellij.xml.util.XmlResourceResolver;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.ide.highlighter.XHtmlFileType;
 import org.jetbrains.annotations.NonNls;
 import org.xml.sax.SAXParseException;
 
@@ -315,11 +318,12 @@ public class ExternalDocumentValidator {
 
   public static synchronized void doValidation(final XmlDocument document, final Validator.ValidationHost host) {
     final PsiFile containingFile = document.getContainingFile();
-    if (containingFile == null ||
-        ( containingFile.getFileType() != StdFileTypes.XML &&
-          containingFile.getFileType() != StdFileTypes.XHTML
-        )
-      ) {
+    if (containingFile == null) {
+      return;
+    }
+
+    final FileType fileType = containingFile.getViewProvider().getVirtualFile().getFileType();
+    if (fileType != XmlFileType.INSTANCE && fileType != XHtmlFileType.INSTANCE) {
       return;
     }
 

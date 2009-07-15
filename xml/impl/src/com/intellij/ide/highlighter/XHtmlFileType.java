@@ -40,8 +40,9 @@ import javax.swing.*;
 
 public class XHtmlFileType extends HtmlFileType {
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/xhtml.png");
+  public static final XHtmlFileType INSTANCE = new XHtmlFileType();
 
-  public XHtmlFileType() {
+  private XHtmlFileType() {
     super(XHTMLLanguage.INSTANCE);
   }
 

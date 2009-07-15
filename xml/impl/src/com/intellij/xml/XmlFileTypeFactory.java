@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public class XmlFileTypeFactory extends FileTypeFactory {
   public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
     consumer.consume(new HtmlFileType(), "html;htm;sht;shtm;shtml");
-    consumer.consume(new XHtmlFileType(), "xhtml");
+    consumer.consume(XHtmlFileType.INSTANCE, "xhtml");
     consumer.consume(new DTDFileType(), "dtd;ent;mod");
 
     consumer.consume(XmlFileType.INSTANCE, "xml;xsd;tld;xsl;jnlp;wsdl;hs;jhm;ant;mxm;mxml;xul");
