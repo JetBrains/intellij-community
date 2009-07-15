@@ -796,7 +796,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       resizeLexems(myCurrentLexem + 1);
     }
 
-    myLexStarts[myCurrentLexem] = myLexer.getTokenStart(); // $ terminating token.;
+    myLexStarts[myCurrentLexem] = myText.length(); // $ terminating token.;
     myLexStarts[myCurrentLexem + 1] = 0;
     myLexTypes[myCurrentLexem] = null;
 
