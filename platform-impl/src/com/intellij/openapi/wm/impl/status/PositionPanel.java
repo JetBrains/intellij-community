@@ -64,7 +64,7 @@ class PositionPanel extends TextPanel implements StatusBarPatch {
               LogicalPosition end = selectionModel.getBlockEnd();
               appendLogicalPosition(start, message);
               message.append("-");
-              appendLogicalPosition(new LogicalPosition(Math.abs(end.column - start.column) - 1, Math.abs(end.line - start.line)), message);
+              appendLogicalPosition(new LogicalPosition(Math.abs(end.line - start.line), Math.abs(end.column - start.column) - 1), message);
             }
             else {
               LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
