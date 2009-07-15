@@ -320,9 +320,9 @@ public class Cache {
     }
   }
 
-  public FieldInfo[] getFields(int classDeclarationId) throws CacheCorruptedException{
+  public FieldInfo[] getFields(int qName) throws CacheCorruptedException{
     try {
-      final ClassInfo classInfo = myQNameToClassInfoMap.get(new StorageClassId(classDeclarationId));
+      final ClassInfo classInfo = myQNameToClassInfoMap.get(new StorageClassId(qName));
       return classInfo != null? classInfo.getFields() : FieldInfo.EMPTY_ARRAY;
     }
     catch (Throwable e) {
@@ -471,28 +471,44 @@ public class Cache {
 
   /** @NotNull */
   public Dependency[] getBackDependencies(final int classQName) throws CacheCorruptedException{
+    return getBackDependencies(classQName, ALL_DEPENDENCIES);
+  }
+
+  public static final byte DEPENDENCIES_ON_CLASSES = 0x1;
+  public static final byte DEPENDENCIES_ON_FIELDS = 0x2;
+  public static final byte DEPENDENCIES_ON_METHODS = 0x4;
+  public static final byte ALL_DEPENDENCIES = DEPENDENCIES_ON_CLASSES | DEPENDENCIES_ON_FIELDS | DEPENDENCIES_ON_METHODS;
+
+  /** @NotNull */
+  public Dependency[] getBackDependencies(int classQName, byte dependencyKindMask) throws CacheCorruptedException {
     try {
       final TIntObjectHashMap<Dependency> dependencies = new TIntObjectHashMap<Dependency>();
-      for (final int referencer : getClassReferencers(classQName)) {
-        if (referencer != classQName) { // skip self-dependencies
-          addDependency(dependencies, referencer);
-        }
-      }
-
-      for (final FieldInfo field : getFields(classQName)) {
-        for (int referencer : getFieldReferencers(classQName, field.getName())) {
+      if ((dependencyKindMask & DEPENDENCIES_ON_CLASSES) != 0) {
+        for (final int referencer : getClassReferencers(classQName)) {
           if (referencer != classQName) { // skip self-dependencies
-            final Dependency dependency = addDependency(dependencies, referencer);
-            dependency.addMemberInfo(field);
+            addDependency(dependencies, referencer);
           }
         }
       }
 
-      for (final MethodInfo methodId : getMethods(classQName)) {
-        for (int referencer : getMethodReferencers(classQName, methodId.getName(), methodId.getDescriptor())) {
-          if (referencer != classQName) {
-            final Dependency dependency = addDependency(dependencies, referencer);
-            dependency.addMemberInfo(methodId);
+      if ((dependencyKindMask & DEPENDENCIES_ON_FIELDS) != 0) {
+        for (final FieldInfo field : getFields(classQName)) {
+          for (int referencer : getFieldReferencers(classQName, field.getName())) {
+            if (referencer != classQName) { // skip self-dependencies
+              final Dependency dependency = addDependency(dependencies, referencer);
+              dependency.addMemberInfo(field);
+            }
+          }
+        }
+      }
+
+      if ((dependencyKindMask & DEPENDENCIES_ON_METHODS) != 0) {
+        for (final MethodInfo methodId : getMethods(classQName)) {
+          for (int referencer : getMethodReferencers(classQName, methodId.getName(), methodId.getDescriptor())) {
+            if (referencer != classQName) {
+              final Dependency dependency = addDependency(dependencies, referencer);
+              dependency.addMemberInfo(methodId);
+            }
           }
         }
       }
@@ -539,9 +555,9 @@ public class Cache {
     }
   }
 
-  public int[] getClassReferencers(int classDeclarationId) throws CacheCorruptedException {
+  public int[] getClassReferencers(int qName) throws CacheCorruptedException {
     try {
-      return myQNameToReferencersMap.getValues(new StorageClassId(classDeclarationId));
+      return myQNameToReferencersMap.getValues(new StorageClassId(qName));
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);

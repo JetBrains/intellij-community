@@ -542,7 +542,7 @@ class JavaDependencyProcessor {
   }
 
   private void markUseDependenciesOnEquivalentMethods(final int checkedInfoQName, Set<MethodInfo> methodsToCheck, int methodsClassName) throws CacheCorruptedException {
-    final Dependency[] backDependencies = myDependencyCache.getCache().getBackDependencies(checkedInfoQName);
+    final Dependency[] backDependencies = myDependencyCache.getCache().getBackDependencies(checkedInfoQName, Cache.DEPENDENCIES_ON_METHODS);
     for (Dependency dependency : backDependencies) {
       if (myDependencyCache.isTargetClassInfoMarked(dependency)) continue;
       if (isDependentOnEquivalentMethods(dependency.getUsedMethods(), methodsToCheck)) {
@@ -559,11 +559,10 @@ class JavaDependencyProcessor {
 
   private void markUseDependenciesOnFields(final int classQName, TIntHashSet fieldNames) throws CacheCorruptedException {
     final Cache oldCache = myDependencyCache.getCache();
-    Dependency[] backDependencies = oldCache.getBackDependencies(classQName);
+    final Dependency[] backDependencies = oldCache.getBackDependencies(classQName, Cache.DEPENDENCIES_ON_FIELDS);
     for (Dependency useDependency : backDependencies) {
       if (!myDependencyCache.isTargetClassInfoMarked(useDependency)) {
-        FieldInfo[] usedFields = useDependency.getUsedFields();
-        for (FieldInfo field : usedFields) {
+        for (FieldInfo field : useDependency.getUsedFields()) {
           if (fieldNames.contains(field.getName())) {
             if (myDependencyCache.markTargetClassInfo(useDependency)) {
               if (LOG.isDebugEnabled()) {
