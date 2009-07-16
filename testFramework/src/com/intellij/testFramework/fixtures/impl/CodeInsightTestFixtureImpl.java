@@ -1214,7 +1214,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                           myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(loader.newFileText, selEndLine, 0) +
                           1);
     }
-    else {
+    else if (myEditor != null) {
       Assert.assertTrue("has no selection", !myEditor.getSelectionModel().hasSelection());
     }
   }
