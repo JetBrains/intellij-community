@@ -4,8 +4,10 @@
 package com.intellij.openapi.wm.impl.commands;
 
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Expirable;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.impl.FloatingDecorator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,13 +22,20 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
   private final boolean myForced;
   private final ActionCallback myDoneCallback;
 
-  public RequestFocusInEditorComponentCmd(@NotNull final FileEditorManagerEx editorManager, final Runnable finishCallBack, boolean forced){
+  private IdeFocusManager myFocusManager;
+  private Expirable myTimestamp;
+
+  public RequestFocusInEditorComponentCmd(@NotNull final FileEditorManagerEx editorManager, IdeFocusManager
+                                          focusManager, final Runnable finishCallBack, boolean forced){
     super(finishCallBack);
     myEditorManager = editorManager;
     myComponent = myEditorManager.getPreferredFocusedComponent();
     myForced = forced;
+    myFocusManager = focusManager;
 
     myDoneCallback = new ActionCallback();
+
+    myTimestamp = myFocusManager.getTimestamp();
   }
 
   public ActionCallback getDoneCallback() {
@@ -35,6 +44,12 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
 
   public final void run(){
     try{
+      if (myTimestamp.isExpired()) {
+        myDoneCallback.setRejected();
+        return;
+      }
+
+
       final Window owner=SwingUtilities.getWindowAncestor(myEditorManager.getComponent());
       if(owner==null){
         return;
@@ -56,7 +71,7 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
       }
 
       if(myComponent != null){
-        myManager.getFocusManager().requestFocus(myComponent, myForced).notifyWhenDone(myDoneCallback);
+        myFocusManager.requestFocus(myComponent, myForced).notifyWhenDone(myDoneCallback);
       } else {
         myDoneCallback.setRejected();
       }

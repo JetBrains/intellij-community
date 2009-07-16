@@ -240,6 +240,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       if (SystemInfo.isMacOSLeopard) {
         if (window instanceof JWindow) {
           ((JWindow)window).getRootPane().putClientProperty("Window.alpha", 1.0f - ratio);
+        } else if (window instanceof JDialog) {
+          ((JDialog)window).getRootPane().putClientProperty("Window.alpha", 1.0f - ratio);
         }
       }
       else if (AWTUtilitiesWrapper.isTranslucencySupported(AWTUtilitiesWrapper.TRANSLUCENT)) {

@@ -127,6 +127,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private IdeEventQueue myQueue;
   private KeyProcessorConext myKeyProcessorContext = new KeyProcessorConext();
 
+  private long myTimestamp;
+
   /**
    * invoked by reflection
    */
@@ -1373,7 +1375,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (myProject.isDisposed()) return new ActionCallback.Done();
     final CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
     final RequestFocusInEditorComponentCmd command =
-      new RequestFocusInEditorComponentCmd(FileEditorManagerEx.getInstanceEx(myProject), commandProcessor, forced);
+      new RequestFocusInEditorComponentCmd(FileEditorManagerEx.getInstanceEx(myProject), getFocusManager(), commandProcessor, forced);
     commandList.add(command);
     return command.getDoneCallback();
   }
@@ -1381,7 +1383,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void appendRequestFocusInToolWindowCmd(final String id, final ArrayList<FinalizableCommand> commandList, boolean forced) {
     final ToolWindowImpl toolWindow = (ToolWindowImpl)getToolWindow(id);
     final FocusWatcher focusWatcher = myId2FocusWatcher.get(id);
-    commandList.add(new RequestFocusInToolWindowCmd(toolWindow, focusWatcher, myWindowManager.getCommandProcessor(), forced));
+    commandList.add(new RequestFocusInToolWindowCmd(getFocusManager(), toolWindow, focusWatcher, myWindowManager.getCommandProcessor(), forced));
   }
 
   /**
@@ -1533,7 +1535,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private void restartIdleAlarm() {
     myIdleAlarm.cancelAllRequests();
-    myIdleAlarm.addRequest(myIdleRunnable, 20);
+    myIdleAlarm.addRequest(myIdleRunnable, Registry.intValue("actionSystem.focusIdleTimeout"));
   }
 
   private void flushIdleRequests() {
@@ -1592,7 +1594,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public boolean isFocusTransferReady() {
-    return myFocusRequests.isEmpty() && (myQueue == null || !myQueue.isSuspendMode());
+    if (!myFocusRequests.isEmpty()) return false;
+    if (myQueue == null) return true;
+
+    return !myQueue.isSuspendMode() && !myQueue.hasFocusEventsPending();
   }
 
   private boolean isIdleQueueEmpty() {
@@ -1637,6 +1642,15 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }.saveAllocation(), true);
   }
 
+  public Expirable getTimestamp() {
+    return new Expirable() {
+      long myOwnStamp = myTimestamp;
+
+      public boolean isExpired() {
+        return myOwnStamp < myTimestamp;
+      }
+    };
+  }
 
   /**
    * This command creates and shows <code>FloatingDecorator</code>.
@@ -1963,6 +1977,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                 forceFinishFocusSettledown(command, result);
               }
             };
+
+          myTimestamp++;
 
           command.run().doWhenDone(new Runnable() {
             public void run() {

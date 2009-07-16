@@ -1,6 +1,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
@@ -50,5 +51,14 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
 
   public ActionCallback requestDefaultFocus(boolean forced) {
     return new ActionCallback.Done();
+  }
+
+  @Override
+  public Expirable getTimestamp() {
+    return new Expirable() {
+      public boolean isExpired() {
+        return false;
+      }
+    };
   }
 }

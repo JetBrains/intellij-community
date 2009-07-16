@@ -2,6 +2,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
@@ -64,6 +65,11 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
 
   public ActionCallback requestDefaultFocus(boolean forced) {
     return myToolWindowManager.requestDefaultFocus(forced);
+  }
+
+  @Override
+  public Expirable getTimestamp() {
+    return myToolWindowManager.getTimestamp();
   }
 
   public boolean isFocusBeingTransferred() {

@@ -1,6 +1,7 @@
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Expirable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -49,6 +50,15 @@ public class PassThroughtIdeFocusManager extends IdeFocusManager {
 
   public ActionCallback requestDefaultFocus(boolean forced) {
     return new ActionCallback.Done();
+  }
+
+  @Override
+  public Expirable getTimestamp() {
+    return new Expirable() {
+      public boolean isExpired() {
+        return false;
+      }
+    };
   }
 
   @Override

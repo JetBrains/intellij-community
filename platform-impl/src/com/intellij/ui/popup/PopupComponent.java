@@ -1,6 +1,7 @@
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ReflectionUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,6 +14,8 @@ public interface PopupComponent {
   void hide(boolean dispose);
 
   void show();
+
+  Window getWindow();
 
   interface Factory {
     PopupComponent getPopup(Component owner, Component content, int x, int y);
@@ -71,6 +74,10 @@ public interface PopupComponent {
       myDialog.setLocation(x, y);
     }
 
+    public Window getWindow() {
+      return myDialog;
+    }
+
     public void hide(boolean dispose) {
       myDialog.setVisible(false);
       if (dispose) {
@@ -97,6 +104,11 @@ public interface PopupComponent {
 
     public void show() {
       myPopup.show();
+    }
+
+    public Window getWindow() {
+      final Component c = (Component)ReflectionUtil.getField(Popup.class, myPopup, Component.class, "component");
+      return c instanceof JWindow ? (JWindow)c : null;
     }
   }
 

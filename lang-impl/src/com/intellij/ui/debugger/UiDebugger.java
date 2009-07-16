@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
@@ -13,6 +14,8 @@ import com.intellij.ui.tabs.impl.JBTabsImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
@@ -54,6 +57,33 @@ public class UiDebugger extends JPanel implements Disposable {
       @Override
       protected String getDimensionServiceKey() {
         return "UiDebugger";
+      }
+
+      @Override
+      protected JComponent createSouthPanel() {
+        final JPanel result = new JPanel(new BorderLayout());
+        result.add(super.createSouthPanel(), BorderLayout.EAST);
+        final JSlider slider = new JSlider(0, 100);
+        slider.setValue(100);
+        slider.addChangeListener(new ChangeListener() {
+          public void stateChanged(ChangeEvent e) {
+            final int value = slider.getValue();
+            float alpha = value / 100f;
+
+            final Window wnd = SwingUtilities.getWindowAncestor(slider);
+            if (wnd != null) {
+              final WindowManagerEx mgr = WindowManagerEx.getInstanceEx();
+              if (value == 100) {
+                mgr.setAlphaModeEnabled(wnd, false);
+              } else {
+                mgr.setAlphaModeEnabled(wnd, true);
+                mgr.setAlphaModeRatio(wnd, 1f - alpha);
+              }
+            }
+          }
+        });
+        result.add(slider, BorderLayout.WEST);
+        return result;
       }
 
       @Override

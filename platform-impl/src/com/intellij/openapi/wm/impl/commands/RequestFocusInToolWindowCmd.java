@@ -2,8 +2,10 @@ package com.intellij.openapi.wm.impl.commands;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.FocusWatcher;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
@@ -25,12 +27,17 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
   private final FocusWatcher myFocusWatcher;
 
   private final boolean myForced;
+  private IdeFocusManager myFocusManager;
+  private Expirable myTimestamp;
 
-  public RequestFocusInToolWindowCmd(final ToolWindowImpl toolWindow, final FocusWatcher focusWatcher, final Runnable finishCallBack, boolean forced) {
+  public RequestFocusInToolWindowCmd(IdeFocusManager focusManager, final ToolWindowImpl toolWindow, final FocusWatcher focusWatcher, final Runnable finishCallBack, boolean forced) {
     super(finishCallBack);
     myToolWindow = toolWindow;
     myFocusWatcher = focusWatcher;
     myForced = forced;
+    myFocusManager = focusManager;
+
+    myTimestamp = myFocusManager.getTimestamp();
   }
 
   public final void run() {
@@ -43,6 +50,11 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
 
   private void processRequestFocus() {
     try {
+
+      if (myTimestamp.isExpired()) {
+        return;
+      }
+
       Component preferredFocusedComponent = myFocusWatcher.getFocusedComponent();
 
       if (preferredFocusedComponent == null && myToolWindow.getContentManager().getSelectedContent() != null) {

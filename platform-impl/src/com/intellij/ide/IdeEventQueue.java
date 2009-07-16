@@ -724,4 +724,8 @@ public class IdeEventQueue extends EventQueue {
   public boolean isSuspendMode() {
     return mySuspendMode;
   }
+
+  public boolean hasFocusEventsPending() {
+    return peekEvent(FocusEvent.FOCUS_GAINED) != null || peekEvent(FocusEvent.FOCUS_LOST) != null;
+  }
 }

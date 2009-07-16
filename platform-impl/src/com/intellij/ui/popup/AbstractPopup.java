@@ -4,8 +4,8 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.JBAwtEventQueue;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +23,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ChildFocusWatcher;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -34,8 +33,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class AbstractPopup implements JBPopup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.AbstractPopup");
@@ -1027,14 +1028,14 @@ public class AbstractPopup implements JBPopup {
     if (myPopup != null) {
       if (visible) {
         myPopup.show();
-        final JWindow window = getPopupWindow();
+        final Window window = getPopupWindow();
         if (window != null && myRestoreWindowSize != null) {
           window.setSize(myRestoreWindowSize);
           myRestoreWindowSize = null;
         }
       }
       else {
-        final JWindow window = getPopupWindow();
+        final Window window = getPopupWindow();
         if (window != null) {
           myRestoreWindowSize = window.getSize();
           window.hide();
@@ -1043,9 +1044,8 @@ public class AbstractPopup implements JBPopup {
     }
   }
 
-  private JWindow getPopupWindow() {
-    final Component c = (Component)ReflectionUtil.getField(Popup.class, myPopup, Component.class, "component");
-    return c instanceof JWindow ? (JWindow)c : null;
+  private Window getPopupWindow() {
+    return myPopup.getWindow();
   }
 
   public void setUserData(ArrayList<Object> userData) {
