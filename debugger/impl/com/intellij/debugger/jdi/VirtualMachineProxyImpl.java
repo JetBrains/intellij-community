@@ -110,13 +110,20 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   public Collection<ThreadReferenceProxyImpl> allThreads() {
     if(myAllThreadsDirty) {
       myAllThreadsDirty = false;
-      final List<ThreadReference> list = myVirtualMachine.allThreads();
-      myAllThreads = new java.util.HashMap<ThreadReference, ThreadReferenceProxyImpl>(list.size());
-      // the following will populate the map from scratch
-      for (final ThreadReference threadReference : list) {
-        getThreadReferenceProxy(threadReference);
+
+      final List<ThreadReference> currentThreads = myVirtualMachine.allThreads();
+      final Map<ThreadReference, ThreadReferenceProxyImpl> result = new HashMap<ThreadReference, ThreadReferenceProxyImpl>();
+
+      for (final ThreadReference threadReference : currentThreads) {
+        ThreadReferenceProxyImpl proxy = myAllThreads.get(threadReference);
+        if(proxy == null) {
+          proxy = new ThreadReferenceProxyImpl(this, threadReference);
+        }
+        result.put(threadReference, proxy);
       }
+      myAllThreads = result;
     }
+
     return myAllThreads.values();
   }
 
