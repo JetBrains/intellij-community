@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.numeric;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
@@ -59,6 +60,9 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
     @SuppressWarnings({"PublicField"})
     public boolean ignoreCharConversions = false;
 
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreConstantConversions = false;
+
     @Override
     @NotNull
     public String getDisplayName() {
@@ -71,10 +75,14 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
         final MultipleCheckboxOptionsPanel optionsPanel =
                 new MultipleCheckboxOptionsPanel(this);
         optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-                "implicit.numeric.conversion.ignore.option"),
+                "implicit.numeric.conversion.ignore.widening.conversion.option"),
                 "ignoreWideningConversions");
-        optionsPanel.addCheckbox("Ignore conversions from and to char",
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "implicit.numeric.conversion.ignore.char.conversion.option"),
                 "ignoreCharConversions");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "implicit.numeric.conversion.ignore.constant.conversion.option"),
+                "ignoreConstantConversions");
         return optionsPanel;
     }
 
@@ -104,8 +112,8 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
 
         private final String m_name;
 
-         ImplicitNumericConversionFix(PsiExpression expression,
-                                      PsiType expectedType) {
+        ImplicitNumericConversionFix(PsiExpression expression,
+                                     PsiType expectedType) {
             if (isConvertible(expression, expectedType)) {
                 m_name = InspectionGadgetsBundle.message(
                         "implicit.numeric.conversion.convert.quickfix",
@@ -322,6 +330,19 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
             if (parent instanceof PsiParenthesizedExpression) {
                 return;
             }
+            if (ignoreConstantConversions) {
+                PsiExpression rootExpression = expression;
+                while (rootExpression instanceof PsiParenthesizedExpression) {
+                    final PsiParenthesizedExpression parenthesizedExpression =
+                            (PsiParenthesizedExpression)rootExpression;
+                    rootExpression = parenthesizedExpression.getExpression();
+                }
+                if (rootExpression instanceof PsiLiteralExpression) {
+                    return;
+                } else if (PsiUtil.isConstantExpression(rootExpression)) {
+                    return;
+                }
+            }
             final PsiType expressionType = expression.getType();
             if (expressionType == null) {
                 return;
@@ -329,14 +350,14 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
             if (!ClassUtils.isPrimitiveNumericType(expressionType)) {
                 return;
             }
-          if (PsiType.CHAR.equals(expressionType)) {
-            if (ignoreCharConversions) {
-              return;
+            if (PsiType.CHAR.equals(expressionType)) {
+                if (ignoreCharConversions) {
+                    return;
+                }
+                if (isArgumentOfStringIndexOf(parent)) {
+                    return;
+                }
             }
-            if (isArgumentOfStringIndexOf(parent)) {
-              return;
-            }
-          }
             final PsiType expectedType =
                     ExpectedTypeUtils.findExpectedType(expression, true);
             if (!ClassUtils.isPrimitiveNumericType(expectedType)) {
@@ -377,6 +398,9 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
                 return false;
             }
             final PsiClass aClass = method.getContainingClass();
+            if (aClass == null) {
+                return false;
+            }
             final String className = aClass.getQualifiedName();
             return "java.lang.String".equals(className);
         }
