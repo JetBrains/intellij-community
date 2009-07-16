@@ -8,6 +8,8 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 public class StringRef {
+  public static final StringRef[] EMPTY_ARRAY = new StringRef[0];
+  
   private int id;
   private String name;
   private final PersistentStringEnumerator store;
@@ -85,7 +87,6 @@ public class StringRef {
     return nameId != 0 ? new StringRef(nameId, store) : null;
   }
 
-  private static final StringRef[] EMPTY_ARRAY = new StringRef[0];
   public static StringRef[] createArray(int count) {
     return count == 0 ? EMPTY_ARRAY : new StringRef[count];
   }
