@@ -310,6 +310,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       while (parent != tempStmt.getParent()) {
         tempStmt = tempStmt.getParent();
       }
+      GrStatement toAdd = (GrStatement)tempStmt.copy();
       GrBlockStatement blockStatement = factory.createBlockStatement();
       if (parent instanceof GrLoopStatement) {
         ((GrLoopStatement) parent).replaceBody(blockStatement);
@@ -321,8 +322,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
           ifStatement.replaceElseBranch(blockStatement);
         }
       }
-      blockStatement.getBlock().addStatementBefore(((GrStatement) tempStmt), null);
-      GrStatement statement = blockStatement.getBlock().getStatements()[0];
+      GrStatement statement = blockStatement.getBlock().addStatementBefore(toAdd, null);
       if (statement instanceof GrReturnStatement) {
         expr = ((GrReturnStatement) statement).getReturnValue();
       } else {
