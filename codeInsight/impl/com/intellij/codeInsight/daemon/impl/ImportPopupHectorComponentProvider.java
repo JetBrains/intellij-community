@@ -6,7 +6,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.HectorComponentPanel;
 import com.intellij.openapi.editor.HectorComponentPanelsProvider;
@@ -54,7 +53,7 @@ public class ImportPopupHectorComponentProvider implements HectorComponentPanels
       public void reset() {
         myImportPopupCheckBox.setSelected(analyzer.isImportHintsEnabled(file));
         myImportPopupCheckBox.setEnabled(analyzer.isAutohintsAvailable(file));
-        myImportPopupCheckBox.setVisible(notInLibrary && languages.contains(StdLanguages.JAVA));
+        myImportPopupCheckBox.setVisible(notInLibrary);
       }
 
       public void disposeUIResources() {
