@@ -231,13 +231,13 @@ public class JavaLanguageInjectorSupport implements LanguageInjectorSupport {
     if (parameterIndex >= psiMethod.getParameterList().getParametersCount()) return false;
     final PsiModifierList methodModifiers = psiMethod.getModifierList();
     if (methodModifiers.hasModifierProperty(PsiModifier.PRIVATE) || methodModifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-      return doAddLanguageAnnotation(project, parameterIndex >0? psiMethod.getParameterList().getParameters()[parameterIndex - 1] : psiMethod, languageId);
+      return doAddLanguageAnnotation(project, parameterIndex >= 0? psiMethod.getParameterList().getParameters()[parameterIndex] : psiMethod, languageId);
     }
     final PsiClass containingClass = psiMethod.getContainingClass();
     assert containingClass != null;
     final PsiModifierList classModifiers = containingClass.getModifierList();
     if (classModifiers != null && (classModifiers.hasModifierProperty(PsiModifier.PRIVATE) || classModifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL))) {
-      return doAddLanguageAnnotation(project, parameterIndex >0? psiMethod.getParameterList().getParameters()[parameterIndex - 1] : psiMethod, languageId);
+      return doAddLanguageAnnotation(project, parameterIndex >= 0? psiMethod.getParameterList().getParameters()[parameterIndex] : psiMethod, languageId);
     }
 
     final String className = containingClass.getQualifiedName();
