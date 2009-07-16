@@ -354,7 +354,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
     myFileDocumentManager.saveAllDocuments();
     
-    //LOG.info("===============START DISPOSING INDEX===========================");
+    LOG.info("START INDEX SHUTDOWN");
     myChangedFilesUpdater.forceUpdate();
 
     for (ID<?, ?> indexId : myIndices.keySet()) {
@@ -370,7 +370,7 @@ public class FileBasedIndex implements ApplicationComponent {
     myFileContentAttic.dispose();
 
     FileUtil.delete(getMarkerFile());
-    //LOG.info("===============END DISPOSING INDEX===========================");
+    LOG.info("END INDEX SHUTDOWN");
   }
 
   public void flushCaches() {
