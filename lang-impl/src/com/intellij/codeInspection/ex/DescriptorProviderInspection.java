@@ -86,6 +86,10 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
       new File(ourOutputPath).mkdirs();
       final File file = new File(fileName);
       final CharArrayWriter writer = new CharArrayWriter();
+      if (!file.exists()) {
+        writer.append("<").append(InspectionsBundle.message("inspection.problems")).append(" is_local_tool=\"")
+          .append(Boolean.toString(this instanceof LocalInspectionToolWrapper)).append("\">\n");
+      }
       for (Object o : list) {
         final Element element = (Element)o;
         pathMacroManager.collapsePaths(element);

@@ -301,7 +301,8 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
               new File(outputPath).mkdirs();
               final File file = new File(outputPath, toolName + ext);
               if (isLocalTool) {
-                outStream = localInspectionFilePreparations(file, outStream, isLocalToolAttribute, isLocalTool);
+                outStream = new BufferedOutputStream(new FileOutputStream(file, true));
+                outStream.write(("</" + InspectionsBundle.message("inspection.problems") + ">").getBytes());
               }
               else {
                 PathMacroManager.getInstance(getProject()).collapsePaths(doc.getRootElement());
@@ -331,32 +332,6 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       InspectionTool.setOutputPath(null);
       RUN_GLOBAL_TOOLS_ONLY = oldToolsSettings;
     }
-  }
-
-  private static OutputStream localInspectionFilePreparations(final File file,
-                                                              OutputStream outStream,
-                                                              final String localToolAttribute,
-                                                              final boolean localTool) throws IOException {
-    BufferedReader reader = null;
-    try {
-      StringBuilder buf = new StringBuilder();
-      reader = new BufferedReader(new FileReader(file));
-      String line = reader.readLine();
-      while (line != null) {
-        buf.append(line).append("\n");
-        line = reader.readLine();
-      }
-      outStream = new BufferedOutputStream(new FileOutputStream(file));
-      outStream.write(("<" + InspectionsBundle.message("inspection.problems") + " " + localToolAttribute + "=\"" + localTool + "\">").getBytes());
-      outStream.write(buf.toString().getBytes());
-      outStream.write(("</" + InspectionsBundle.message("inspection.problems") + ">").getBytes());
-    }
-    finally {
-      if (reader != null){
-        reader.close();
-      }
-    }
-    return outStream;
   }
 
 
