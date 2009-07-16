@@ -169,7 +169,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     final String packageName = StringUtil.getPackageName(qualifiedName);
     final PsiPackage pkg = findPackage(packageName);
     final String className = StringUtil.getShortName(qualifiedName);
-    if (pkg == null) {
+    if (pkg == null && packageName.length() < qualifiedName.length()) {
       final List<PsiClass> containingClasses = findClassesInDumbMode(packageName, scope);
       if (containingClasses.size() == 1) {
         return filterByName(className, containingClasses.get(0).getInnerClasses());
