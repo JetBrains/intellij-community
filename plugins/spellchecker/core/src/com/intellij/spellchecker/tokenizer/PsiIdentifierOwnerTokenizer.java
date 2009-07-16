@@ -19,8 +19,9 @@ public class PsiIdentifierOwnerTokenizer extends Tokenizer<PsiNameIdentifierOwne
     if (identifier == null) {
       return null;
     }
+    int offset = identifier.getStartOffsetInParent();
 
-    return new Token[]{new Token<PsiElement>(identifier, identifier.getText(), true)};
+    return new Token[]{new Token<PsiElement>(element, identifier.getText(), true, offset)};
   }
 
 
