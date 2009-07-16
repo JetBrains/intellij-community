@@ -107,8 +107,8 @@ public class FileManagerImpl implements FileManager {
 
           for (Language language : provider.getLanguages()) {
             final PsiFile psi = provider.getPsi(language);
-            if (psi != null) {
-              psi.subtreeChanged();
+            if (psi instanceof PsiFileImpl) {
+              ((PsiFileImpl)psi).clearCaches();
             }
           }
         }
