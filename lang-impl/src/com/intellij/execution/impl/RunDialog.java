@@ -80,8 +80,18 @@ public class RunDialog extends DialogWrapper {
   }
 
   public static boolean editConfiguration(final Project project, final RunnerAndConfigurationSettingsImpl configuration, final String title) {
+    return editConfiguration(project, configuration, title, null, null);
+  }
+
+  public static boolean editConfiguration(final Project project, final RunnerAndConfigurationSettingsImpl configuration, final String title, final String okText, final Icon okIcon) {
     final SingleConfigurationConfigurable<RunConfiguration> configurable = SingleConfigurationConfigurable.editSettings(configuration);
-    final SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable);
+    final SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable) {
+      {
+        if (okIcon != null) setOKButtonIcon(okIcon);
+        if (okText != null) setOKButtonText(okText);
+      }
+    };
+    
     dialog.setTitle(title);
     dialog.show();
     return dialog.isOK();

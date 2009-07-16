@@ -45,14 +45,14 @@ public class ExecutionUtil {
     final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     LOG.assertTrue(component != null, "component MUST not be null!");
     if (!RunManagerImpl.canRunConfiguration(configuration, executor)) {
-      final boolean result = RunDialog.editConfiguration(project, configuration, "Edit configuration");
+      final boolean result = RunDialog.editConfiguration(project, configuration, "Edit configuration", executor.getActionName(), executor.getIcon());
       if (!result) {
         return;
       }
 
       while (!RunManagerImpl.canRunConfiguration(configuration, executor)) {
         if (0 == Messages.showOkCancelDialog(project, "Configuration is still wrong. Do you want to edit it again?", "Change configuration settings", Messages.getErrorIcon())) {
-          final boolean result2 = RunDialog.editConfiguration(project, configuration, "Edit configuration");
+          final boolean result2 = RunDialog.editConfiguration(project, configuration, "Edit configuration", executor.getActionName(), executor.getIcon());
           if (!result2) {
             return;
           }

@@ -280,16 +280,19 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   public final void dispatch(KeyEvent event) {
-    if (event.getID() != KeyEvent.KEY_PRESSED) {
+    if (event.getID() != KeyEvent.KEY_PRESSED && event.getID() != KeyEvent.KEY_RELEASED) {
       return;
     }
-    final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyChar(), event.getModifiers(), false);
-    if (getInputMap().get(stroke) != null) {
-      final Action action = getActionMap().get(getInputMap().get(stroke));
-      if (action != null && action.isEnabled()) {
-        action.actionPerformed(new ActionEvent(getContent(), event.getID(), "", event.getWhen(), event.getModifiers()));
-        return;
-      }
+
+    if (event.getID() == KeyEvent.KEY_PRESSED) {
+      final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyChar(), event.getModifiers(), false);
+      if (proceedKeyEvent(event, stroke)) return;
+    }
+
+    if (event.getID() == KeyEvent.KEY_RELEASED) {
+      final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyCode(), event.getModifiers(), true);
+      proceedKeyEvent(event, stroke);
+      return;
     }
 
     myMnemonicsSearch.process(event);
@@ -297,6 +300,17 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
     if (event.isConsumed()) return;
     process(event);
+  }
+
+  private boolean proceedKeyEvent(KeyEvent event, KeyStroke stroke) {
+    if (getInputMap().get(stroke) != null) {
+      final Action action = getActionMap().get(getInputMap().get(stroke));
+      if (action != null && action.isEnabled()) {
+        action.actionPerformed(new ActionEvent(getContent(), event.getID(), "", event.getWhen(), event.getModifiers()));
+        return true;
+      }
+    }
+    return false;
   }
 
   protected void process(KeyEvent aEvent) {
