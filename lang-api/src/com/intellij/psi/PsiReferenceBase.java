@@ -31,7 +31,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
 
   protected final T myElement;
   private TextRange myRange;
-  protected final boolean mySoft;
+  protected boolean mySoft;
 
   public PsiReferenceBase(T element, TextRange range, boolean soft) {
     myElement = element;

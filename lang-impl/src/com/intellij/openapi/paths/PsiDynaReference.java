@@ -35,29 +35,21 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   private int myChoosenOne = -1;
   private ResolveResult[] myCachedResult;
 
-  public PsiDynaReference(final T psiElement, boolean soft) {
-    super(psiElement, soft);
+  public PsiDynaReference(final T psiElement) {
+    super(psiElement, true);
   }
 
   public void addReferences(Collection<PsiReference> references) {
     myReferences.addAll(references);
+    for (PsiReference reference : references) {
+      if (!reference.isSoft()) mySoft = false;
+    }
   }
 
   public void addReference(PsiReference reference) {
     myReferences.add(reference);
+    if (!reference.isSoft()) mySoft = false;
   }
-
-  public TextRange getMinimumRangeInElement() {
-    int start = 0;
-    int end = Integer.MAX_VALUE;
-    for (PsiReference ref: myReferences) {
-      final TextRange range = ref.getRangeInElement();
-      start = Math.max(start, range.getStartOffset());
-      end = Math.min(end, range.getEndOffset());
-    }
-    return new TextRange(start, end);
-  }
-
 
   public TextRange getRangeInElement() {
 
@@ -223,6 +215,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     }
   }
 
+  @SuppressWarnings({"UnresolvedPropertyKey"})
   public String getUnresolvedMessagePattern() {
     final PsiReference reference = chooseReference();
 
