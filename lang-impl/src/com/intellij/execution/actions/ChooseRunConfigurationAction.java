@@ -49,6 +49,11 @@ public class ChooseRunConfigurationAction extends AnAction {
           registerActions(this, getInputMap(), getActionMap());
         }};
 
+    final Executor alternateExecutor = getAlternateExecutor();
+    if (alternateExecutor != null) {
+      popup.setAdText(String.format("Press SHIFT for %s", alternateExecutor.getActionName()));
+    }
+    
     popup.showCenteredInCurrentWindow(project);
   }
 

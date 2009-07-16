@@ -271,6 +271,10 @@ public class AbstractPopup implements JBPopup {
     show(aContainer, popupPoint.x, popupPoint.y, false);
   }
 
+  public void setAdText(@NotNull final String s) {
+    myContent.add(HintUtil.createAdComponent(s), BorderLayout.SOUTH);
+  }
+
   public static Point getCenterOf(final Component aContainer, final JComponent content) {
     final JComponent component = getTargetComponent(aContainer);
 
