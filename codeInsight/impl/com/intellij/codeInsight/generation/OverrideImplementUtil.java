@@ -481,7 +481,11 @@ public class OverrideImplementUtil {
     registerHandlerForComplementaryAction(project, editor, aClass, toImplement, chooser);
 
     chooser.setCopyJavadocVisible(true);
-    chooser.selectElements(isAll ? all : onlyPrimary);
+
+    if (toImplement) {
+      chooser.selectElements(isAll ? all : onlyPrimary);
+    }
+    
     chooser.show();
     if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
 
