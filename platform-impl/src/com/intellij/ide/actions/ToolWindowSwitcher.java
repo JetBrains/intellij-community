@@ -1,8 +1,6 @@
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -33,14 +31,11 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -64,7 +59,7 @@ public class ToolWindowSwitcher extends AnAction {
     }
   }
 
-  private static class ToolWindowSwitcherPanel extends JPanel implements KeyListener, MouseListener {
+  private class ToolWindowSwitcherPanel extends JPanel implements KeyListener, MouseListener {
     final JBPopup myPopup;
     final Map<ToolWindow, String> ids = new HashMap<ToolWindow, String>();
     final JList toolwindows;
@@ -73,6 +68,9 @@ public class ToolWindowSwitcher extends AnAction {
     final JLabel pathLabel = new JLabel(" ");
     final JPanel descriptions;
     final Project project;
+    final int CTRL_KEY;
+    final int ALT_KEY;
+
 
     ToolWindowSwitcherPanel(Project project) {
       super(new BorderLayout(0, 0));
@@ -103,8 +101,13 @@ public class ToolWindowSwitcher extends AnAction {
         final ToolWindow tw = twManager.getToolWindow(id);
         if (tw.isAvailable()) {
           ids.put(tw, id);
-          twModel.addElement(tw);
         }
+      }
+
+      final ArrayList<ToolWindow> windows = new ArrayList<ToolWindow>(ids.keySet());
+      Collections.sort(windows, new ToolWindowComparator());
+      for (ToolWindow window : windows) {
+        twModel.addElement(window);
       }
 
       toolwindows = new JList(twModel);
@@ -201,6 +204,15 @@ public class ToolWindowSwitcher extends AnAction {
         }
       });
 
+      final int modifiers = getModifiers(ToolWindowSwitcher.this.getShortcutSet());
+      if ((modifiers & Event.ALT_MASK) != 0) {
+        ALT_KEY = KeyEvent.VK_CONTROL;
+        CTRL_KEY = KeyEvent.VK_ALT;
+      } else {
+        ALT_KEY = KeyEvent.VK_ALT;
+        CTRL_KEY = KeyEvent.VK_CONTROL;
+      }
+
       final IdeFrameImpl ideFrame = WindowManagerEx.getInstanceEx().getFrame(project);
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, this)
           .setResizable(false)
@@ -216,6 +228,13 @@ public class ToolWindowSwitcher extends AnAction {
           }
         }).createPopup();
       myPopup.showInCenterOf(ideFrame.getContentPane());
+    }
+
+    private int getModifiers(ShortcutSet shortcutSet) {
+      if (shortcutSet == null
+          || shortcutSet.getShortcuts().length == 0
+          || !(shortcutSet.getShortcuts()[0] instanceof KeyboardShortcut)) return Event.CTRL_MASK;
+      return ((KeyboardShortcut)shortcutSet.getShortcuts()[0]).getFirstKeyStroke().getModifiers();
     }
 
     public void keyTyped(KeyEvent e) {
@@ -238,22 +257,19 @@ public class ToolWindowSwitcher extends AnAction {
         case KeyEvent.VK_ESCAPE:
           cancel();
           break;
-        case KeyEvent.VK_ALT:
-          if (isFilesSelected()) {
-            goLeft();
-          } else {
-            goRight();
-          }
-          break;
+      }
+      if (e.getKeyCode() == ALT_KEY) {
+        if (isFilesSelected()) {
+          goLeft();
+        } else {
+          goRight();
+        }        
       }
     }
 
     public void keyReleased(KeyEvent e) {
-      switch (e.getKeyCode()) {
-        case KeyEvent.VK_CONTROL:
-        case KeyEvent.VK_ENTER:
+      if (e.getKeyCode() == CTRL_KEY || e.getKeyCode() == KeyEvent.VK_ENTER) {
           navigate();
-          break;
       }
     }
 
@@ -348,7 +364,7 @@ public class ToolWindowSwitcher extends AnAction {
       }
     }
 
-    private static class RecentFilesComparator implements Comparator<VirtualFile> {
+    private class RecentFilesComparator implements Comparator<VirtualFile> {
       private final VirtualFile[] recentFiles;
 
       public RecentFilesComparator(Project project) {
@@ -357,6 +373,12 @@ public class ToolWindowSwitcher extends AnAction {
 
       public int compare(VirtualFile vf1, VirtualFile vf2) {
         return ArrayUtil.find(recentFiles, vf2) - ArrayUtil.find(recentFiles, vf1);
+      }
+    }
+
+    private class ToolWindowComparator implements Comparator<ToolWindow> {
+      public int compare(ToolWindow o1, ToolWindow o2) {
+        return ids.get(o1).compareTo(ids.get(o2));
       }
     }
 
@@ -385,12 +407,12 @@ public class ToolWindowSwitcher extends AnAction {
 
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       if (value instanceof VirtualFile) {
-        VirtualFile virtualFile = (VirtualFile)value;
-        String name = virtualFile.getName();
+        final VirtualFile virtualFile = (VirtualFile)value;
+        final String name = virtualFile.getPresentableName();
         setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, myProject));
 
-        FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
-        TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null, null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
+        final FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
+        final TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null, null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
         append(name, SimpleTextAttributes.fromTextAttributes(attributes));
       }
     }
@@ -407,10 +429,10 @@ public class ToolWindowSwitcher extends AnAction {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       if (value instanceof ToolWindow) {
         final ToolWindow tw = (ToolWindow)value;
-        String name = ids.get(tw);
+        final String name = ids.get(tw);
         setIcon(getIcon(tw));
 
-        TextAttributes attributes = new TextAttributes(Color.BLACK, null, null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
+        final TextAttributes attributes = new TextAttributes(Color.BLACK, null, null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
         append(name, SimpleTextAttributes.fromTextAttributes(attributes));
       }
     }
