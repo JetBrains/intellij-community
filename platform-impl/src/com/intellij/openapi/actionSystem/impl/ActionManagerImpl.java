@@ -1034,38 +1034,28 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
   public void preloadActionGroup(final String groupId) {
     final AnAction action = getAction(groupId);
-    if (action instanceof DefaultActionGroup) {
-      preloadActionGroup((DefaultActionGroup) action);
+    if (action instanceof ActionGroup) {
+      preloadActionGroup((ActionGroup) action);
     }
   }
 
-  private void preloadActionGroup(final DefaultActionGroup group) {
-    final AnAction[] actions = group.getChildActionsOrStubs(null);
-    for (AnAction action : actions) {
-      if (action instanceof ActionStub) {
-        AnAction convertedAction = null;
-        synchronized (myLock) {
-          final String id = myAction2Id.get(action);
-          if (id != null) {
-            convertedAction = convert((ActionStub)action);
-          }
-        }
-        if (convertedAction instanceof PreloadableAction) {
-          final PreloadableAction preloadableAction = (PreloadableAction)convertedAction;
-          preloadableAction.preload();
-        }
-        myActionsPreloaded++;
-        if (myActionsPreloaded % 10 == 0) {
-          try {
-            Thread.sleep(300);
-          }
-          catch (InterruptedException e) {
-            // ignore
-          }
-        }
+  private void preloadActionGroup(final ActionGroup group) {
+    for (AnAction action : group.getChildren(null)) {
+      if (action instanceof PreloadableAction) {
+        ((PreloadableAction)action).preload();
       }
-      else if (action instanceof DefaultActionGroup) {
-        preloadActionGroup((DefaultActionGroup) action);
+      else if (action instanceof ActionGroup) {
+        preloadActionGroup((ActionGroup)action);
+      }
+      
+      myActionsPreloaded++;
+      if (myActionsPreloaded % 10 == 0) {
+        try {
+          Thread.sleep(300);
+        }
+        catch (InterruptedException e) {
+          // ignore
+        }
       }
     }
   }
