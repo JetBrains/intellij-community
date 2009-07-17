@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -183,17 +183,31 @@ public class NonNlsUtils {
             PsiExpression expression,
             PsiExpressionList expressionList) {
         final PsiElement parent = expressionList.getParent();
-        if (!(parent instanceof PsiMethodCallExpression)) {
+        final PsiParameterList parameterList;
+        if (parent instanceof PsiMethodCallExpression) {
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression) parent;
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (isReferenceToNonNlsAnnotatedElement(qualifier)) {
+                return true;
+            }
+            final PsiMethod method = methodCallExpression.resolveMethod();
+            if (method == null) {
+                return false;
+            }
+            parameterList = method.getParameterList();
+        } else if (parent instanceof PsiNewExpression) {
+            final PsiNewExpression newExpression = (PsiNewExpression) parent;
+            final PsiMethod constructor = newExpression.resolveConstructor();
+            if (constructor == null) {
+                return false;
+            }
+            parameterList = constructor.getParameterList();
+        } else {
             return false;
-        }
-        final PsiMethodCallExpression methodCallExpression =
-                (PsiMethodCallExpression) parent;
-        final PsiReferenceExpression methodExpression =
-                methodCallExpression.getMethodExpression();
-        final PsiExpression qualifier =
-                methodExpression.getQualifierExpression();
-        if (isReferenceToNonNlsAnnotatedElement(qualifier)) {
-            return true;
         }
         final PsiExpression[] expressions = expressionList.getExpressions();
         int index = -1;
@@ -203,11 +217,6 @@ public class NonNlsUtils {
                 index = i;
             }
         }
-        final PsiMethod method = methodCallExpression.resolveMethod();
-        if (method == null) {
-            return false;
-        }
-        final PsiParameterList parameterList = method.getParameterList();
         final PsiParameter[] parameters = parameterList.getParameters();
         if (parameters.length == 0) {
             return false;
