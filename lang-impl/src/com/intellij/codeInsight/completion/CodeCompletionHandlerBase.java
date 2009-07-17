@@ -445,15 +445,17 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   public static final Key<SoftReference<PsiFile>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
 
   protected PsiFile createFileCopy(PsiFile file) {
-    final SoftReference<PsiFile> reference = file.getUserData(FILE_COPY_KEY);
-    if (reference != null) {
-      final PsiFile copy = reference.get();
-      if (copy != null && copy.isValid() && copy.getClass().equals(file.getClass())) {
-        final Document document = copy.getViewProvider().getDocument();
-        assert document != null;
-        document.setText(file.getText());
-        PsiDocumentManager.getInstance(copy.getProject()).commitDocument(document);
-        return copy;
+    if (file.isPhysical()) {
+      final SoftReference<PsiFile> reference = file.getUserData(FILE_COPY_KEY);
+      if (reference != null) {
+        final PsiFile copy = reference.get();
+        if (copy != null && copy.isValid() && copy.getClass().equals(file.getClass())) {
+          final Document document = copy.getViewProvider().getDocument();
+          assert document != null;
+          document.setText(file.getText());
+          PsiDocumentManager.getInstance(copy.getProject()).commitDocument(document);
+          return copy;
+        }
       }
     }
 
