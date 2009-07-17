@@ -66,5 +66,5 @@ public interface PyElementGenerator {
   <T> T createFromText(final Project project, Class<T> aClass, final String text);
   <T> T createFromText(final Project project, Class<T> aClass, final String text, final int[] path);
 
-  PyParameter createParameter(@NotNull final Project project, @NotNull String name);
+  PyNamedParameter createParameter(@NotNull final Project project, @NotNull String name);
 }

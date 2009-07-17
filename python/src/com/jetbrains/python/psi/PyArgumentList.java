@@ -36,6 +36,9 @@ public interface PyArgumentList extends PyElement {
   void addArgumentFirst(PyExpression arg);
   void addArgumentAfter(PyExpression argument, PyExpression afterThis);
 
+  /**
+   * @return the call expression to which this argument list belongs; not null in correctly parsed cases.
+   */
   @Nullable
   PyCallExpression getCallExpression();
 
@@ -68,7 +71,22 @@ public interface PyArgumentList extends PyElement {
     /**
      * @return A mapping parameter->argument for non-starred parameters (but includes starred argument).
      */
-    @NotNull Map<PyExpression, PyParameter> getPlainMappedParams();
+    @NotNull Map<PyExpression, PyNamedParameter> getPlainMappedParams();
+
+    /**
+     * Consider a piece of Python 2.x code:
+     * <pre>
+     * def f(a, (b, c,), d):
+     *   ...
+     *
+     * x = (1, 2)
+     * f(10, x, 20)
+     * </pre>
+     * Here, argument <tt>x</tt> successfully maps to both <tt>b</tt> and <tt>c</tt> parameters.
+     * This case is rare, so a separate method is introduced, to keep {@link AnalysisResult#getPlainMappedParams()} simple.
+     * @return mapping of arguments to nested parameters that get collectively mapped to that argument.
+     */
+    @NotNull Map<PyExpression, List<PyNamedParameter>> getNestedMappedParams();
 
     /**
      * @return First *arg, or null.
@@ -79,7 +97,7 @@ public interface PyArgumentList extends PyElement {
     /**
      * @return A list of parameters mapped to a *arg.
      */
-    @NotNull List<PyParameter> getTupleMappedParams();
+    @NotNull List<PyNamedParameter> getTupleMappedParams();
 
     /**
      * @return First **arg, or null.
@@ -90,13 +108,13 @@ public interface PyArgumentList extends PyElement {
     /**
      * @return A list of parameters mapped to an **arg.
      */
-    @NotNull List<PyParameter> getKwdMappedParams();
+    @NotNull List<PyNamedParameter> getKwdMappedParams();
 
     /**
      * @return A list of parameters for which no arguments were found ('missing').
      */
     @NotNull
-    List<PyParameter> getUnmappedParams();
+    List<PyNamedParameter> getUnmappedParams();
 
 
     /**
@@ -106,7 +124,7 @@ public interface PyArgumentList extends PyElement {
     Map<PyExpression, EnumSet<ArgFlag>> getArgumentFlags();
 
     /**
-     * @return result of a resolveCallee() against the function call to which the paramater list belongs.
+     * @return result of a resolveCallee() against the function call to which the parameter list belongs.
      */
     @Nullable
     PyCallExpression.PyMarkedFunction getMarkedFunction();

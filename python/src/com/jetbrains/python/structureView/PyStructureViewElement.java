@@ -22,13 +22,13 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.Icons;
 import com.jetbrains.python.PyIcons;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,175 +43,169 @@ import java.util.Set;
  */
 public class PyStructureViewElement implements StructureViewTreeElement {
 
-    private enum Visibility {
-      NORMAL, // visible
-      INVISIBLE, // not visible: e.g. local to function
-      PRIVATE,  // "__foo" in a class
-      PREDEFINED // like "__init__"; only if really visible
-    }
-    private PyElement my_element;
-    private Visibility my_visibility;
-    private Icon my_icon;
+  private enum Visibility {
+    NORMAL, // visible
+    INVISIBLE, // not visible: e.g. local to function
+    PRIVATE,  // "__foo" in a class
+    PREDEFINED // like "__init__"; only if really visible
+  }
 
-    public PyStructureViewElement(PyElement element, Visibility vis) {
-      my_element = element;
-      my_visibility = vis;
-    }
+  private PyElement my_element;
+  private Visibility my_visibility;
+  private Icon my_icon;
 
-    public PyStructureViewElement(PyElement element) {
-      this(element, Visibility.NORMAL);
-    }
-    public PyElement getValue() {
-        return my_element;
-    }
+  public PyStructureViewElement(PyElement element, Visibility vis) {
+    my_element = element;
+    my_visibility = vis;
+  }
 
-    public void navigate(boolean requestFocus) {
-        ((NavigationItem)my_element).navigate(requestFocus);
-    }
+  public PyStructureViewElement(PyElement element) {
+    this(element, Visibility.NORMAL);
+  }
 
-    public boolean canNavigate() {
-        return ((NavigationItem)my_element).canNavigate();
-    }
+  public PyElement getValue() {
+    return my_element;
+  }
 
-    public boolean canNavigateToSource() {
-        return ((NavigationItem)my_element).canNavigateToSource();
-    }
+  public void navigate(boolean requestFocus) {
+    ((NavigationItem)my_element).navigate(requestFocus);
+  }
 
-    public void setIcon(Icon icon) {
-      my_icon = icon;
-    }
+  public boolean canNavigate() {
+    return ((NavigationItem)my_element).canNavigate();
+  }
 
-    public StructureViewTreeElement[] getChildren() {
-        final Set<PyElement> childrenElements = new HashSet<PyElement>();
-        my_element.acceptChildren(new PyElementVisitor() {
-            @Override public void visitElement(PsiElement element) {
-                if (isWorthyClassItem(element)) {
-                  childrenElements.add((PyElement)element);
-                }
-                else {
-                  element.acceptChildren(this);
-                }
-            }
+  public boolean canNavigateToSource() {
+    return ((NavigationItem)my_element).canNavigateToSource();
+  }
 
-            @Override public void visitPyParameter(final PyParameter node) {
-                // Do not add parameters to structure view
-            }
-        });
+  public void setIcon(Icon icon) {
+    my_icon = icon;
+  }
 
-        StructureViewTreeElement[] children = new StructureViewTreeElement[childrenElements.size()];
-        int i = 0;
-        for (PyElement element : childrenElements) {
-          // look at functions and predefined __names__
-          Visibility vis = Visibility.NORMAL;
-          if (PsiTreeUtil.getParentOfType(element, PyFunction.class) != null) {
-            // whatever is defined inside a def, is hidden
-            vis = Visibility.INVISIBLE;
+  public StructureViewTreeElement[] getChildren() {
+    final Set<PyElement> childrenElements = new HashSet<PyElement>();
+    my_element.acceptChildren(new PyElementVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        if (isWorthyClassItem(element)) {
+          childrenElements.add((PyElement)element);
+        }
+        else {
+          element.acceptChildren(this);
+        }
+      }
+
+      public void visitPyParameter(final PyNamedParameter node) {
+        // Do not add parameters to structure view
+      }
+    });
+
+    StructureViewTreeElement[] children = new StructureViewTreeElement[childrenElements.size()];
+    int i = 0;
+    for (PyElement element : childrenElements) {
+      // look at functions and predefined __names__
+      Visibility vis = Visibility.NORMAL;
+      if (PsiTreeUtil.getParentOfType(element, PyFunction.class) != null) {
+        // whatever is defined inside a def, is hidden
+        vis = Visibility.INVISIBLE;
+      }
+      else {
+        String name = element.getName();
+        if (name != null && name.startsWith("__")) {
+          if (PyNames.UnderscoredNames.contains(name)) {
+            vis = Visibility.PREDEFINED;
           }
           else {
-            String name = element.getName();
-            if (name != null && name.startsWith("__")) {
-              if (PyNames.UnderscoredNames.contains(name)) vis = Visibility.PREDEFINED;
-              else vis = Visibility.PRIVATE;
-            }
-          }
-          children[i] = new PyStructureViewElement(element, vis);
-          if (element instanceof PyClass) {
-            PyClass the_exception = PyBuiltinCache.getInstance(element.getProject()).getClass("Exception"); 
-            final PyClass cls = (PyClass)element;
-            for (PyClass anc : cls.iterateAncestors()) {
-              if (anc == the_exception) {
-                ((PyStructureViewElement)(children[i])).setIcon(Icons.EXCEPTION_CLASS_ICON);
-                break;
-              }
-            }
-          }
-          i += 1;
-        }
-
-        return children;
-    }
-
-    static boolean isWorthyClassItem(PsiElement element) {
-      if (element instanceof PyClass) return true;
-      if (element instanceof PyFunction) return true;
-      if ((element instanceof PyTargetExpression) && ((PyTargetExpression)element).getQualifier() == null) {
-        PsiElement e = element.getParent();
-        if (e instanceof PyAssignmentStatement) {
-          e = e.getParent();
-          if (e instanceof PyStatementList) {
-            e = e.getParent();
-            if (e instanceof PyClass) {
-              return true;
-            }
+            vis = Visibility.PRIVATE;
           }
         }
       }
-      return false;
+      children[i] = new PyStructureViewElement(element, vis);
+      if (element instanceof PyClass) {
+        PyClass the_exception = PyBuiltinCache.getInstance(element.getProject()).getClass("Exception");
+        final PyClass cls = (PyClass)element;
+        for (PyClass anc : cls.iterateAncestors()) {
+          if (anc == the_exception) {
+            ((PyStructureViewElement)(children[i])).setIcon(Icons.EXCEPTION_CLASS_ICON);
+            break;
+          }
+        }
+      }
+      i += 1;
     }
 
-    public ItemPresentation getPresentation() {
-        return new ItemPresentation() {
-            public String getPresentableText() {
-                if (my_element instanceof PyFunction) {
-                    PsiElement[] children = my_element.getChildren();
-                    if (children.length > 0 && children [0] instanceof PyParameterList) {
-                        PyParameterList argList = (PyParameterList) children [0];
-                        StringBuilder result = new StringBuilder(((PsiNamedElement)my_element).getName());
-                        // TODO: reuse logic from PyParameterInfoHandler
-                        result.append("(");
-                        boolean first = true;
-                        for(PsiElement e: argList.getChildren()) {
-                            if (e instanceof PyParameter) {
-                                if (first) {
-                                    first = false;
-                                }
-                                else {
-                                    result.append(",");
-                                }
-                                PyParameter p = (PyParameter) e;
-                                if (p.isPositionalContainer()) {
-                                    result.append("*");
-                                }
-                                else if (p.isKeywordContainer()) {
-                                    result.append("**");
-                                }
-                                result.append(p.getName());
-                            }
-                        }
-                        result.append(")");
-                        return result.toString();
-                    }
-                }
-                return ((PsiNamedElement)my_element).getName();
-            }
+    return children;
+  }
 
-            public @Nullable TextAttributesKey getTextAttributesKey() {
-                return null;
-            }
-
-            public @Nullable String getLocationString() {
-                return null;
-            }
-
-            public Icon getIcon(boolean open) {
-              Icon normal_icon = my_element.getIcon(Iconable.ICON_FLAG_OPEN);
-              if (my_icon != null) normal_icon = my_icon; // override normal 
-              if (my_visibility == Visibility.NORMAL) {
-                return normal_icon;
-              }
-              else {
-                LayeredIcon icon = new LayeredIcon(2);
-                icon.setIcon(normal_icon, 0);
-                Icon overlay = null;
-                if (my_visibility == Visibility.PRIVATE) overlay = PyIcons.PRIVATE;
-                else if (my_visibility == Visibility.PREDEFINED) overlay = PyIcons.PREDEFINED;
-                else if (my_visibility == Visibility.INVISIBLE) overlay = PyIcons.INVISIBLE; 
-                if (overlay != null) {
-                  icon.setIcon(overlay, 1);
-                }
-                return icon;
-              }
-            }
-        };
+  static boolean isWorthyClassItem(PsiElement element) {
+    if (element instanceof PyClass) return true;
+    if (element instanceof PyFunction) return true;
+    if ((element instanceof PyTargetExpression) && ((PyTargetExpression)element).getQualifier() == null) {
+      PsiElement e = element.getParent();
+      if (e instanceof PyAssignmentStatement) {
+        e = e.getParent();
+        if (e instanceof PyStatementList) {
+          e = e.getParent();
+          if (e instanceof PyClass) {
+            return true;
+          }
+        }
+      }
     }
+    return false;
+  }
+
+  public ItemPresentation getPresentation() {
+    return new ItemPresentation() {
+      public String getPresentableText() {
+        if (my_element instanceof PyFunction) {
+          PsiElement[] children = my_element.getChildren();
+          if (children.length > 0 && children[0] instanceof PyParameterList) {
+            PyParameterList argList = (PyParameterList)children[0];
+            StringBuilder result = new StringBuilder(my_element.getName());
+            ParamHelper.appendParameterList(argList, result);
+            return result.toString();
+          }
+        }
+        return my_element.getName();
+      }
+
+      public
+      @Nullable
+      TextAttributesKey getTextAttributesKey() {
+        return null;
+      }
+
+      public
+      @Nullable
+      String getLocationString() {
+        return null;
+      }
+
+      public Icon getIcon(boolean open) {
+        Icon normal_icon = my_element.getIcon(Iconable.ICON_FLAG_OPEN);
+        if (my_icon != null) normal_icon = my_icon; // override normal
+        if (my_visibility == Visibility.NORMAL) {
+          return normal_icon;
+        }
+        else {
+          LayeredIcon icon = new LayeredIcon(2);
+          icon.setIcon(normal_icon, 0);
+          Icon overlay = null;
+          if (my_visibility == Visibility.PRIVATE) {
+            overlay = PyIcons.PRIVATE;
+          }
+          else if (my_visibility == Visibility.PREDEFINED) {
+            overlay = PyIcons.PREDEFINED;
+          }
+          else if (my_visibility == Visibility.INVISIBLE) overlay = PyIcons.INVISIBLE;
+          if (overlay != null) {
+            icon.setIcon(overlay, 1);
+          }
+          return icon;
+        }
+      }
+    };
+  }
 }

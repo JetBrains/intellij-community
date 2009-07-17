@@ -3,6 +3,7 @@ package com.jetbrains.python.actions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,13 +93,7 @@ class ImportCandidateHolder {
       parent = myImportElement.getParent();
     }
     if (myImportable instanceof PyFunction) {
-      sb.append("(");
-      // below: ", ".join([x.getRepr(False) for x in getParameters()])
-      PyParameter[] params = ((PyFunction)myImportable).getParameterList().getParameters();
-      String[] param_reprs = new String[params.length];
-      for (int i=0; i < params.length; i += 1) param_reprs[i] = params[i].getRepr(false);
-      PyUtil.joinSubarray(param_reprs, 0, params.length, ", ", sb);
-      sb.append(")");
+      ParamHelper.appendParameterList(((PyFunction)myImportable).getParameterList(), sb);
     }
     else if (myImportable instanceof PyClass) {
       PyClass[] supers = ((PyClass)myImportable).getSuperClasses();

@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NonNls;
@@ -41,7 +41,7 @@ public class AddSelfQuickFix implements LocalQuickFix {
         final PythonLanguage pythonLanguage = (PythonLanguage)language;
         PyElementGenerator generator = pythonLanguage.getElementGenerator();
         // TODO: generalize, move to generator
-        PyParameter new_param = generator.createFromText(project, PyParameter.class, "def f(self): pass", new int[]{0, 3, 1});
+        PyNamedParameter new_param = generator.createFromText(project, PyNamedParameter.class, "def f(self): pass", new int[]{0, 3, 1});
         param_list.addParameter(new_param);
       }
     }

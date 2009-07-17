@@ -18,10 +18,14 @@ public interface PyElementTypes {
 
   TokenSet PARAMETER_LIST_SET = TokenSet.create(PARAMETER_LIST);  
 
-  PyStubElementType<PyParameterStub, PyParameter> FORMAL_PARAMETER = new PyFormalParameterElementType();
+  PyStubElementType<PyNamedParameterStub, PyNamedParameter> NAMED_PARAMETER = new PyNamedParameterElementType();
+  PyStubElementType<PyTupleParameterStub, PyTupleParameter> TUPLE_PARAMETER = new PyTupleParameterElementType();
+
+  TokenSet PARAMETERS = TokenSet.create(NAMED_PARAMETER, TUPLE_PARAMETER);
+
   PyStubElementType<PyDecoratorStub, PyDecorator> DECORATOR_CALL = new PyDecoratorCallElementType();
 
-  TokenSet FORMAL_PARAMETER_SET = TokenSet.create(FORMAL_PARAMETER);
+  TokenSet FORMAL_PARAMETER_SET = TokenSet.create(NAMED_PARAMETER);
 
   // Deprecated PyElementType DECORATED_FUNCTION_DECLARATION = new PyElementType("DECORATED_FUNCTION_DECLARATION", PyDecoratedFunctionImpl.class);
   PyElementType ARGUMENT_LIST = new PyElementType("ARGUMENT_LIST", PyArgumentListImpl.class);
@@ -123,6 +127,6 @@ public interface PyElementTypes {
   PyElementType ELSE_PART = new PyElementType("ELSE_PART", PyElsePartImpl.class);
 
   TokenSet PARTS = TokenSet.create(IF_PART_IF, IF_PART_ELIF, FOR_PART, WHILE_PART, TRY_PART, FINALLY_PART, ELSE_PART); 
-  TokenSet ELIFS = TokenSet.create(IF_PART_ELIF); 
+  TokenSet ELIFS = TokenSet.create(IF_PART_ELIF);
 
 }

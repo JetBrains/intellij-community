@@ -1,5 +1,5 @@
 PyFile:YieldInAugAssignment.py
-  PyFunction
+  PyFunction('g')
     PsiElement(Py:DEF_KEYWORD)('def')
     PsiWhiteSpace(' ')
     PsiElement(Py:IDENTIFIER)('g')

@@ -37,7 +37,7 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
 
   @NotNull
   public String getType(@NotNull PsiElement element) {
-    if (element instanceof PyParameter) return "parameter";
+    if (element instanceof PyNamedParameter) return "parameter";
     if (element instanceof PyFunction) return "function";
     if (element instanceof PyClass) return "class";
     if (element instanceof PyReferenceExpression || element instanceof PyTargetExpression) return "variable";

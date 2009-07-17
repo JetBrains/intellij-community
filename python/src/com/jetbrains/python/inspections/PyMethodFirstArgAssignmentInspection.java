@@ -72,7 +72,8 @@ public class PyMethodFirstArgAssignmentInspection  extends LocalInspectionTool {
       // what is our first param?
       PyParameter[] params = method.getParameterList().getParameters();
       if (params.length < 1) return null; // no params
-      PyParameter first_parm = params[0];
+      PyNamedParameter first_parm = params[0].getAsNamed();
+      if (first_parm == null) return null;
       if (first_parm.isKeywordContainer() || first_parm.isPositionalContainer()) return null; // legal but crazy cases; back off
       final String first_param_name = first_parm.getName();
       if (first_param_name == null || first_param_name.length() < 1) return null; // ignore cases of incorrect code
@@ -122,7 +123,7 @@ public class PyMethodFirstArgAssignmentInspection  extends LocalInspectionTool {
     private void markDefinition(PyElement definer) {
       final String first_param_name = extractFirstParamName(definer);
       if (first_param_name != null && first_param_name.equals(definer.getName())) {
-        complain(definer.getNode().findChildByType(PyTokenTypes.IDENTIFIER).getPsi(), first_param_name);
+        complain(definer.getNode().findChildByType(PyTokenTypes.IDENTIFIER).getPsi(), first_param_name); // no NPE here, or we won't have the name
       }
     }
 

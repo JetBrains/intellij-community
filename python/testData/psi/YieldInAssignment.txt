@@ -1,5 +1,5 @@
 PyFile:YieldInAssignment.py
-  PyFunction
+  PyFunction('f')
     PsiElement(Py:DEF_KEYWORD)('def')
     PsiWhiteSpace(' ')
     PsiElement(Py:IDENTIFIER)('f')

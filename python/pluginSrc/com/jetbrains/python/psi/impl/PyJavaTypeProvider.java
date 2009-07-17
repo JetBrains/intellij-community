@@ -1,10 +1,9 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.PyType;
@@ -36,10 +35,10 @@ public class PyJavaTypeProvider implements PyTypeProvider {
     return null;
   }
 
-  public PyType getParameterType(final PyParameter param, final PyFunction func) {
+  public PyType getParameterType(final PyNamedParameter param, final PyFunction func) {
     if (!(param.getParent() instanceof PyParameterList)) return null;
-    PyParameter[] params = ((PyParameterList) param.getParent()).getParameters();
-    final int index = ArrayUtil.indexOf(params, param);
+    List<PyNamedParameter> params = ParamHelper.collectNamedParameters((PyParameterList) param.getParent());
+    final int index = params.indexOf(param);
     if (index < 0) return null;
     final List<PyType> superMethodParameterTypes = new ArrayList<PyType>();
     PySuperMethodsSearch.search(func).forEach(new Processor<PsiElement>() {

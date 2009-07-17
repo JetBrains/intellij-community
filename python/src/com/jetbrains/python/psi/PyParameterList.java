@@ -36,13 +36,6 @@ public interface PyParameterList extends PyElement, StubBasedPsiElement<PyParame
    * Adds a paramter to list, after all other parameters.
    * @param param what to add
    */
-  void addParameter(PyParameter param);
+  void addParameter(PyNamedParameter param);
 
-  /**
-   * Python 2.x allows for declarations like {@code def foo(a, (b, c))} that auto-unpack complex tuple parameters.
-   * From caller side, such functions contain a smaller number of parameters, some of them unnamed and structurally constrained.  
-   * (This is considered evil and eschewed in Py3k.)
-   * @return true if the parameter list contains a tuple-based declaration.
-   */
-  boolean containsTuples();
 }

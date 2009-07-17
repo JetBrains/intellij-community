@@ -24,7 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.stubs.PyParameterStub;
+import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
@@ -39,19 +39,19 @@ import javax.swing.*;
  * Time: 23:04:59
  * To change this template use File | Settings | File Templates.
  */
-public class PyParameterImpl extends PyPresentableElementImpl<PyParameterStub> implements PyParameter {
-  public PyParameterImpl(ASTNode astNode) {
+public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParameterStub> implements PyNamedParameter {
+  public PyNamedParameterImpl(ASTNode astNode) {
     super(astNode);
   }
 
-  public PyParameterImpl(final PyParameterStub stub) {
-    super(stub, PyElementTypes.FORMAL_PARAMETER);
+  public PyNamedParameterImpl(final PyNamedParameterStub stub) {
+    super(stub, PyElementTypes.NAMED_PARAMETER);
   }
 
   @Nullable
   @Override
   public String getName() {
-    final PyParameterStub stub = getStub();
+    final PyNamedParameterStub stub = getStub();
     if (stub != null) {
       return stub.getName();
     }
@@ -73,7 +73,7 @@ public class PyParameterImpl extends PyPresentableElementImpl<PyParameterStub> i
   }
 
   public boolean isPositionalContainer() {
-    final PyParameterStub stub = getStub();
+    final PyNamedParameterStub stub = getStub();
     if (stub != null) {
       return stub.isPositionalContainer();
     }
@@ -83,7 +83,7 @@ public class PyParameterImpl extends PyPresentableElementImpl<PyParameterStub> i
   }
 
   public boolean isKeywordContainer() {
-    final PyParameterStub stub = getStub();
+    final PyNamedParameterStub stub = getStub();
     if (stub != null) {
       return stub.isKeywordContainer();
     }
@@ -119,6 +119,14 @@ public class PyParameterImpl extends PyPresentableElementImpl<PyParameterStub> i
     return Icons.PARAMETER_ICON;
   }
 
+  public PyNamedParameter getAsNamed() {
+    return this;
+  }
+
+  public PyTupleParameter getAsTuple() {
+    return null; // we're not a tuple
+  }
+
   public PyType getType() {
     if (getParent() instanceof PyParameterList) {
       PyParameterList parameterList = (PyParameterList) getParent();
@@ -138,5 +146,10 @@ public class PyParameterImpl extends PyPresentableElementImpl<PyParameterStub> i
       }
     }
     return null;
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() + "('" + getName() + "')";
   }
 }

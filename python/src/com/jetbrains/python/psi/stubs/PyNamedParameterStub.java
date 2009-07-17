@@ -4,9 +4,9 @@
 package com.jetbrains.python.psi.stubs;
 
 import com.intellij.psi.stubs.NamedStub;
-import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyNamedParameter;
 
-public interface PyParameterStub extends NamedStub<PyParameter> {
+public interface PyNamedParameterStub extends NamedStub<PyNamedParameter> {
   boolean isPositionalContainer();
   boolean isKeywordContainer();
 }

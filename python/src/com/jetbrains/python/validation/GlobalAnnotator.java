@@ -16,40 +16,50 @@
 
 package com.jetbrains.python.validation;
 
+import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.ParamHelper;
 
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 13.06.2005
- * Time: 15:33:24
- * To change this template use File | Settings | File Templates.
+ * Annotates errors in 'global' statements.
  */
 public class GlobalAnnotator extends PyAnnotator {
-    @Override public void visitPyGlobalStatement(final PyGlobalStatement node) {
-        PyFunction function = node.getContainingElement(PyFunction.class);
-        if (function != null) {
-            PyParameterList paramList = function.getParameterList();
-            PyParameter[] params = paramList.getParameters();
-            Set<String> paramNames = new HashSet<String>();
-            for (PyParameter param: params) {
-                paramNames.add(param.getName());
-            }
-            for (PyReferenceExpression expr: node.getGlobals()) {
-                if (paramNames.contains(expr.getReferencedName())) {
-                    getHolder().createErrorAnnotation(expr.getTextRange(), "name is used as both global and parameter");
-                }
-                PsiElement resolvedElement = expr.resolve();
-                if (resolvedElement != null && PsiTreeUtil.isAncestor(function, resolvedElement, true)) {
-                    getHolder().createWarningAnnotation(expr.getTextRange(), "name '" + expr.getReferencedName() +
-                        "' is assigned to before global declaration");
-                }
-            }
+  @Override
+  public void visitPyGlobalStatement(final PyGlobalStatement node) {
+    PyFunction function = node.getContainingElement(PyFunction.class);
+    if (function != null) {
+      PyParameterList paramList = function.getParameterList();
+      // collect param names
+      final Set<String> paramNames = new HashSet<String>();
+
+      ParamHelper.walkDownParamArray(
+        paramList.getParameters(),
+        new ParamHelper.ParamVisitor() {
+          @Override
+          public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
+            paramNames.add(param.getName());
+          }
         }
+      );
+
+      // check globals
+      final AnnotationHolder holder = getHolder();
+      for (PyReferenceExpression expr : node.getGlobals()) {
+        final String expr_name = expr.getReferencedName();
+        if (paramNames.contains(expr_name)) {
+          holder.createErrorAnnotation(expr.getTextRange(), PyBundle.message("ANN.$0.both.global.and.param", expr_name));
+        }
+        PsiElement resolvedElement = expr.resolve();
+        if (resolvedElement != null && PsiTreeUtil.isAncestor(function, resolvedElement, true)) {
+          getHolder().createWarningAnnotation(expr.getTextRange(),PyBundle.message("ANN.$0.both.global.and.param", expr_name));
+        }
+      }
     }
+  }
 }

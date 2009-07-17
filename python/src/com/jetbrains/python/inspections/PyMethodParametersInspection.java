@@ -103,23 +103,31 @@ public class PyMethodParametersInspection extends LocalInspectionTool {
           }
         }
         else {
-          String pname = params[0].getText();
-          // every dup, swap, drop, or dup+drop of "self"
-          @NonNls String[] mangled = {"eslf", "sself", "elf", "felf", "slef", "seelf", "slf", "sslf", "sefl", "sellf", "sef", "seef"};
-          for (String typo : mangled) {
-            if (typo.equals(pname)) {
-              registerProblem(params[0].getNode().getPsi(), PyBundle.message("INSP.probably.mistyped.self"), new RenameToSelfQuickFix());
-              return;
+          PyNamedParameter first_param = params[0].getAsNamed();
+          if (first_param != null) {
+            String pname = first_param.getText();
+            // every dup, swap, drop, or dup+drop of "self"
+            @NonNls String[] mangled = {"eslf", "sself", "elf", "felf", "slef", "seelf", "slf", "sslf", "sefl", "sellf", "sef", "seef"};
+            for (String typo : mangled) {
+              if (typo.equals(pname)) {
+                registerProblem(params[0].getNode().getPsi(), PyBundle.message("INSP.probably.mistyped.self"), new RenameToSelfQuickFix());
+                return;
+              }
+            }
+            // TODO: check for style settings
+            if (decoratedJustWith(node, PyNames.CLASSMETHOD)) {
+              if (!"cls".equals(pname)) {
+                registerProblem(plist, PyBundle.message("INSP.usually.named.cls"));
+              }
+            }
+            else if (!"self".equals(pname) && !decoratedJustWith(node, PyNames.STATICMETHOD)) {
+              registerProblem(plist, PyBundle.message("INSP.usually.named.self"));
             }
           }
-          // TODO: check for style settings
-          if (decoratedJustWith(node, PyNames.CLASSMETHOD)) {
-            if (!"cls".equals(pname)) {
-              registerProblem(plist, PyBundle.message("INSP.usually.named.cls"));
+          else { // the unusual case of a method with first tuple param
+            if (!decoratedJustWith(node, PyNames.STATICMETHOD)) {
+              registerProblem(plist, PyBundle.message("INSP.first.param.must.not.be.tuple"));
             }
-          }
-          else if (!"self".equals(pname) && !decoratedJustWith(node, PyNames.STATICMETHOD)) {
-            registerProblem(plist, PyBundle.message("INSP.usually.named.self"));
           }
         }
       }

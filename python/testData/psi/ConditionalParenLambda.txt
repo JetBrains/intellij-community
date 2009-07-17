@@ -23,7 +23,7 @@ PyFile:ConditionalParenLambda.py
             PsiElement(Py:LAMBDA_KEYWORD)('lambda')
             PsiWhiteSpace(' ')
             PyParameterList
-              PyParameter
+              PyNamedParameter('x')
                 PsiElement(Py:IDENTIFIER)('x')
               PsiElement(Py:COLON)(':')
             PsiWhiteSpace(' ')

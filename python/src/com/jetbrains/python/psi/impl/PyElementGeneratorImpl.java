@@ -261,7 +261,7 @@ public class PyElementGeneratorImpl implements PyElementGenerator {
 
   static int[] PATH_PARAMETER = {0, 3, 1};
 
-  public PyParameter createParameter(@NotNull final Project project, @NotNull String name) {
-    return createFromText(project, PyParameter.class, "def f("+name+"): pass", PATH_PARAMETER);
+  public PyNamedParameter createParameter(@NotNull final Project project, @NotNull String name) {
+    return createFromText(project, PyNamedParameter.class, "def f("+name+"): pass", PATH_PARAMETER);
   }
 }

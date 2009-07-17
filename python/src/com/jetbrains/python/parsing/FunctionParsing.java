@@ -133,7 +133,7 @@ public class FunctionParsing extends Parsing {
           myBuilder.advanceLexer();
           getExpressionParser().parseSingleExpression(false);
         }
-        parameter.done(PyElementTypes.FORMAL_PARAMETER);
+        parameter.done(PyElementTypes.NAMED_PARAMETER);
       }
       else {
         myBuilder.error(message("PARSE.expected.formal.param.name"));
@@ -150,12 +150,13 @@ public class FunctionParsing extends Parsing {
 
   private void parseParameterSubList() {
     assertCurrentToken(PyTokenTypes.LPAR);
+    final PsiBuilder.Marker tuple = myBuilder.mark();
     myBuilder.advanceLexer();
     while (true) {
       if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
         final PsiBuilder.Marker parameter = myBuilder.mark();
         myBuilder.advanceLexer();
-        parameter.done(PyElementTypes.FORMAL_PARAMETER);
+        parameter.done(PyElementTypes.NAMED_PARAMETER);
       }
       else if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
         parseParameterSubList();
@@ -170,5 +171,6 @@ public class FunctionParsing extends Parsing {
       }
       myBuilder.advanceLexer();
     }
+    tuple.done(PyElementTypes.TUPLE_PARAMETER);
   }
 }

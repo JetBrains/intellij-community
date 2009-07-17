@@ -35,11 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 29.05.2005
- * Time: 23:01:25
- * To change this template use File | Settings | File Templates.
+ * Implements PyFunction.
  */
 public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> implements PyFunction {
   public PyFunctionImpl(ASTNode astNode) {
@@ -127,8 +123,8 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   {
     /*
     if (lastParent != null && lastParent.getParent() == this) {
-      final PyParameter[] params = getParameterList().getParameters();
-      for (PyParameter param : params) {
+      final PyNamedParameter[] params = getParameterList().getParameters();
+      for (PyNamedParameter param : params) {
         if (!processor.execute(param, substitutor)) return false;
       }
     }
@@ -171,4 +167,8 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return false; 
   }
 
+  @Override
+  public String toString() {
+    return super.toString() + "('" + getName() + "')";
+  }
 }

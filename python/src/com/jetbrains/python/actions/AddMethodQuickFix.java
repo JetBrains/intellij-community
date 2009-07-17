@@ -13,6 +13,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -90,11 +91,17 @@ public class AddMethodQuickFix implements LocalQuickFix {
 
   private static void showTemplateBuilder(PyFunction method) {
     method = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(method);
-    TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(method);
-    PyParameter[] parameters = method.getParameterList().getParameters();
-    for (int i = 1; i < parameters.length; i++) {
-      builder.replaceElement(parameters [i], parameters [i].getName());
-    }
+
+    final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(method);
+    ParamHelper.walkDownParamArray(
+      method.getParameterList().getParameters(),
+      new ParamHelper.ParamVisitor() {
+        public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
+          builder.replaceElement(param, param.getName());
+        }
+      }
+    );
+
     builder.replaceElement(method.getStatementList(), "pass");
 
     builder.run();

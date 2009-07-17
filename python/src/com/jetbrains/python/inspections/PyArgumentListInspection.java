@@ -68,13 +68,13 @@ public class PyArgumentListInspection  extends LocalInspectionTool {
       // X XX debug
       PyCallExpression call_ex = node.getCallExpression();
       System.out.println(PyResolveUtil.getReadableRepr(call_ex));
-      for (Map.Entry<PyExpression, PyParameter> entry : result.getPlainMappedParams().entrySet()) {
+      for (Map.Entry<PyExpression, PyNamedParameter> entry : result.getPlainMappedParams().entrySet()) {
         System.out.println(
           PyResolveUtil.getReadableRepr(entry.getValue()) +
           " -> " + PyResolveUtil.getReadableRepr(entry.getKey())
       PyCallExpression call_ex = node.getCallExpression();
       System.out.println(PyResolveUtil.getReadableRepr(call_ex));
-      for (Map.Entry<PyExpression, PyParameter> entry : result.getPlainMappedParams().entrySet()) {
+      for (Map.Entry<PyExpression, PyNamedParameter> entry : result.getPlainMappedParams().entrySet()) {
         System.out.println(
           PyResolveUtil.getReadableRepr(entry.getValue()) +
           " -> " + PyResolveUtil.getReadableRepr(entry.getKey())
@@ -116,16 +116,21 @@ public class PyArgumentListInspection  extends LocalInspectionTool {
             PyFunction decofunc = mkfunc.getFunction();
             int first_param_offset =  mkfunc.getImplicitOffset();
             PyParameter[] params = decofunc.getParameterList().getParameters();
-            if (params.length < first_param_offset || params[first_param_offset-1].isKeywordContainer()) {
-              // no paramaters left to pass function implicitly, or wrong param type
+            PyNamedParameter alleged_first_param = params[first_param_offset-1].getAsNamed();
+            if (params.length < first_param_offset || alleged_first_param == null || alleged_first_param.isKeywordContainer()) {
+              // no parameters left to pass function implicitly, or wrong param type
               registerProblem(deco, PyBundle.message("INSP.func.$0.lacks.first.arg", decofunc.getName()));
             }
             else {
               // possible unfilled params
               for (int i=first_param_offset; i < params.length; i += 1) {
-                PyParameter par = params[i];
-                if (! par.isKeywordContainer() && ! par.isPositionalContainer() && (par.getDefaultValue() == null)) {
-                  registerProblem(deco, PyBundle.message("INSP.parameter.$0.unfilled", par.getName()));
+                PyNamedParameter par = params[i].getAsNamed();
+                // param tuples, non-starred or non-default won't do
+                if (par == null || (! par.isKeywordContainer() && ! par.isPositionalContainer() && (par.getDefaultValue() == null))) {
+                  String par_name;
+                  if (par != null) par_name = par.getName();
+                  else par_name = "(...)"; // can't be bothered to find the first non-tuple inside it
+                  registerProblem(deco, PyBundle.message("INSP.parameter.$0.unfilled", par_name));
                 }
               }
             }
@@ -166,7 +171,7 @@ public class PyArgumentListInspection  extends LocalInspectionTool {
       if (our_node != null) {
         ASTNode close_paren = our_node.findChildByType(PyTokenTypes.RPAR);
         if (close_paren != null) {
-          for (PyParameter param : result.getUnmappedParams()) {
+          for (PyNamedParameter param : result.getUnmappedParams()) {
             holder.registerProblem(close_paren.getPsi(), PyBundle.message("INSP.parameter.$0.unfilled", param.getName()));
           }
         }

@@ -276,7 +276,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
 
     final List<PyTargetExpression> result = new ArrayList<PyTargetExpression>();
-    // NOTE: maybe treeCrawlUp would be more precise, but currently it works well enough to not care. 
+    // NOTE: maybe treeCrawlUp would be more precise, but currently it works well enough; don't care. 
     initMethod.getStatementList().accept(new PyRecursiveElementVisitor() {
       public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
         super.visitPyAssignmentStatement(node);

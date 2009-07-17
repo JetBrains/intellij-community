@@ -19,7 +19,6 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
 import org.jetbrains.annotations.NotNull;
@@ -46,36 +45,17 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
   }
 
   public PyParameter[] getParameters() {
-    return getStubOrPsiChildren(PyElementTypes.FORMAL_PARAMETER, new PyParameter[0]);
+    return getStubOrPsiChildren(PyElementTypes.PARAMETERS, new PyParameter[0]);
   }
 
-  public void addParameter(final PyParameter param) {
+  public void addParameter(final PyNamedParameter param) {
     PsiElement paren = getLastChild();
     if (paren != null && ")".equals(paren.getText())) {
       PyUtil.ensureWritable(this);
-      ASTNode beforeWhat = paren.getNode(); // the closing bracket will be this
+      ASTNode beforeWhat = paren.getNode(); // the closing paren will be this
       PyParameter[] params = getParameters();
       PyUtil.addListNode(this, param, beforeWhat, true, params.length == 0);
     }
-  }
-
-  public boolean containsTuples() {
-    // look for an opening paren after first paren. parser makes no efort to sort them; maybe should be fixed someday.
-    // find opening LPAR; some whitespace may come first
-    PsiElement seeker;
-    for (seeker = getFirstChild(); seeker != null; seeker = seeker.getNextSibling()) { // C invented this flexible construct, why not use it?
-      ASTNode node = seeker.getNode();
-      if (node != null && node.getElementType() == PyTokenTypes.LPAR) break;
-    }
-    // an LPAR inside
-    while (seeker != null) {
-      seeker = seeker.getNextSibling(); // step over the LPAR we just saw
-      if (seeker != null) {
-        ASTNode node = seeker.getNode();
-        if (node != null && node.getElementType() == PyTokenTypes.LPAR) return true;
-      }
-    }
-    return false;
   }
 
   @NotNull

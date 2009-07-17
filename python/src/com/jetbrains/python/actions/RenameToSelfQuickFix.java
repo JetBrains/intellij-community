@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyNamedParameter;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,10 +22,10 @@ public class RenameToSelfQuickFix implements LocalQuickFix {
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiElement elt = descriptor.getPsiElement();
-    if (elt != null && elt instanceof PyParameter && elt.isWritable()) {
+    if (elt != null && elt instanceof PyNamedParameter && elt.isWritable()) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          final PyParameter the_self = PythonLanguage.getInstance().getElementGenerator().createParameter(project, "self");
+          final PyNamedParameter the_self = PythonLanguage.getInstance().getElementGenerator().createParameter(project, "self");
           try {
             elt.replace(the_self);
           }

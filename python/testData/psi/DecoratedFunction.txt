@@ -1,5 +1,5 @@
 PyFile:DecoratedFunction.py
-  PyFunction
+  PyFunction('foo')
     PyDecoratorList
       PyDecorator: @staticmethod
         PsiElement(Py:AT)('@')

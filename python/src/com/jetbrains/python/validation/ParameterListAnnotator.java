@@ -17,47 +17,55 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.util.containers.HashSet;
-import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.impl.ParamHelper;
+
+import java.util.Set;
 
 /**
  * Checks for anomalies in parameter lists of function declarations.
- * User: yole
- * Date: 12.06.2005
  */
 public class ParameterListAnnotator extends PyAnnotator {
-    @Override public void visitPyParameterList(final PyParameterList node) {
-        HashSet<String> parameterNames = new HashSet<String>();
-        PyParameter[] parameters = node.getParameters();
+  @Override
+  public void visitPyParameterList(final PyParameterList paramlist) {
+    ParamHelper.walkDownParamArray(
+      paramlist.getParameters(),
+      new ParamHelper.ParamVisitor() {
+        Set<String> parameterNames = new HashSet<String>();
         boolean hadPositionalContainer = false, hadKeywordContainer = false;
         boolean hadDefaultValue = false;
-        for (PyParameter parameter: parameters) {
-            if (parameterNames.contains(parameter.getName())) {
-                getHolder().createErrorAnnotation(parameter, "duplicate parameter name");
+        @Override
+        public void visitNamedParameter(PyNamedParameter parameter, boolean first, boolean last) {
+          if (parameterNames.contains(parameter.getName())) {
+            getHolder().createErrorAnnotation(parameter, PyBundle.message("ANN.duplicate.param.name"));
+          }
+          parameterNames.add(parameter.getName());
+          if (parameter.isPositionalContainer()) {
+            if (hadKeywordContainer) {
+              getHolder().createErrorAnnotation(parameter, PyBundle.message("ANN.starred.param.after.kwparam"));
             }
-            parameterNames.add(parameter.getName());
-            if (parameter.isPositionalContainer()) {
-                if (hadKeywordContainer) {
-                    getHolder().createErrorAnnotation(parameter, "* parameter after ** paremeter");
-                }
-                hadPositionalContainer = true;
+            hadPositionalContainer = true;
+          }
+          else if (parameter.isKeywordContainer()) {
+            hadKeywordContainer = true;
+          }
+          else {
+            if (hadPositionalContainer || hadKeywordContainer) {
+              getHolder().createErrorAnnotation(parameter, PyBundle.message("ANN.regular.param.after.starred"));
             }
-            else if (parameter.isKeywordContainer()) {
-                hadKeywordContainer = true;
+            if (parameter.getDefaultValue() != null) {
+              hadDefaultValue = true;
             }
             else {
-                if (hadPositionalContainer || hadKeywordContainer) {
-                    getHolder().createErrorAnnotation(parameter, "regular parameter after * or ** parameter");
-                }
-                if (parameter.getDefaultValue() != null) {
-                    hadDefaultValue = true;
-                }
-                else {
-                    if (hadDefaultValue) {
-                        getHolder().createErrorAnnotation(parameter, "non-default parameter follows default parameter");
-                    }
-                }
+              if (hadDefaultValue) {
+                getHolder().createErrorAnnotation(parameter, PyBundle.message("ANN.non.default.param.after.default"));
+              }
             }
+          }
         }
-    }
+      }
+    );
+  }
 }

@@ -189,7 +189,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
       }
     }
     if (!good) {
-      throw new IllegalArgumentException("Expression " + afterThis + " is not an argument (" + getArguments() + ")");
+      throw new IllegalArgumentException("Expression " + afterThis + " is not an argument (" + Arrays.toString(getArguments()) + ")");
     }
     // CASES:
     ASTNode node = afterThis.getNode().getTreeNext();
@@ -247,10 +247,11 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   }
 
   public AnalysisResult analyzeCall() {
-    AnalysisResultImpl ret = new AnalysisResultImpl();
+    final AnalysisResultImpl ret = new AnalysisResultImpl();
     PyExpression[] arguments = getArguments();
     // declaration-based checks
     // proper arglist is: [positional,...][name=value,...][*tuple,][**dict]
+    // where "positional" may be a tuple of nested "positional" parameters, too.
     // following the spec: http://docs.python.org/ref/calls.html
     PyCallExpression call = getCallExpression();
     if (call != null) {
@@ -259,21 +260,24 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
       if (resolved_callee != null) {
         PyFunction func = resolved_callee.getFunction();
         PyParameterList paramlist = func.getParameterList();
-        if (paramlist.containsTuples()) return null; // NOTE: we're not ready to handle this yet.  
         PyParameter[] params = paramlist.getParameters();
         // prepare args and slots
         List<PyExpression> unmatched_args = new LinkedList<PyExpression>();
         Collections.addAll(unmatched_args, arguments);
         Map<String, PyExpression> param_slots = new HashMap<String, PyExpression>();
-        PyParameter kwd_slot = null; // the *tuple. might be just boolean, but this way debugging is easier
-        PyParameter tuple_slot = null; // the **kwd
+        PyNamedParameter kwd_slot = null; // the *tuple. might be just boolean, but this way debugging is easier
+        PyNamedParameter tuple_slot = null; // the **kwd
         PyStarArgument kwd_arg = null;
         PyStarArgument tuple_arg = null;
+        final List<PyExpression> unmatched_subargs = new LinkedList<PyExpression>(); // unmatched nested arguments will go here
         // all slots are initially empty, *x and **x are not among slots
         for (PyParameter a_param : params) {
-          if (a_param.isPositionalContainer()) tuple_slot = a_param;
-          else if (a_param.isKeywordContainer()) kwd_slot = a_param;
-          else param_slots.put(a_param.getName(), null);
+          PyNamedParameter n_param = a_param.getAsNamed();
+          if (n_param != null) {
+            if (n_param.isPositionalContainer()) tuple_slot = n_param;
+            else if (n_param.isKeywordContainer()) kwd_slot = n_param;
+            else param_slots.put(a_param.getName(), null);
+          }
         }
         // look for star args
         for (PyExpression arg : arguments) {
@@ -310,19 +314,28 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
         ListIterator<PyExpression> unmatched_arg_iter = unmatched_args.listIterator();
         // check positional args
         while (unmatched_arg_iter.hasNext() && (param_index < params.length)) {
-          PyExpression arg = unmatched_arg_iter.next(); // current arg
-          PyParameter param = params[param_index];      // its matching param
-          if (
-            arg instanceof PyKeywordArgument || arg instanceof PyStarArgument ||
-            param.isKeywordContainer() || param.isPositionalContainer()
-          ) {
-            seen_tuple_arg |= (arg == tuple_arg);
-            seen_kwd_arg |= (arg == kwd_arg);
-            unmatched_arg_iter.previous(); // step back
-            break;
+          final PyExpression arg = unmatched_arg_iter.next(); // current arg
+          PyParameter a_param = params[param_index];      // its matching param
+          PyNamedParameter n_param = a_param.getAsNamed();
+          if (n_param != null) { // named
+            if (
+              arg instanceof PyKeywordArgument || arg instanceof PyStarArgument ||
+              n_param.isKeywordContainer() || n_param.isPositionalContainer()
+            ) {
+              seen_tuple_arg |= (arg == tuple_arg);
+              seen_kwd_arg |= (arg == kwd_arg);
+              unmatched_arg_iter.previous(); // step back
+              break;
+            }
+            param_slots.put(n_param.getName(), arg); // it cannot yet contain this name unless function definition is broken
+            ret.my_plain_mapped_params.put(arg, n_param);
           }
-          param_slots.put(param.getName(), arg); // it cannot yet contain this name unless function definition is broken
-          ret.my_plain_mapped_params.put(arg, param);
+          else { // tuple: it may contain only positionals or other tuples.
+            unmatched_arg_iter.previous(); // step back so that the visitor takes this arg again
+            MyParamVisitor visitor = new MyParamVisitor(unmatched_arg_iter, ret);
+            visitor.enterTuple(a_param.getAsTuple()); // will recurse as needed
+            unmatched_subargs.addAll(visitor.getUnmatchedSubargs()); // what it's seen 
+          }
           unmatched_arg_iter.remove(); // it has been matched
           param_index += 1;
         }
@@ -390,47 +403,56 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
           }
         }
         if (seen_tuple_arg) { // link remaining params to *arg if present
-          for (PyParameter param : params) {
-            final String param_name = param.getName();
-            if (
-                (param.getDefaultValue() == null) &&   // has no default value
-                param_slots.containsKey(param_name) && // known as a slot
-                (param_slots.get(param_name) == null)  // the slot yet unfilled
-            ) {
-              param_slots.put(param_name, tuple_arg);
-              unmatched_args.remove(tuple_arg);
+          for (PyParameter a_param : params) {
+            PyNamedParameter n_param = a_param.getAsNamed();
+            if (n_param != null) {
+              final String param_name = n_param.getName();
+              if (
+                  (n_param.getDefaultValue() == null) &&   // has no default value
+                  param_slots.containsKey(param_name) && // known as a slot
+                  (param_slots.get(param_name) == null)  // the slot yet unfilled
+              ) {
+                param_slots.put(param_name, tuple_arg);
+                unmatched_args.remove(tuple_arg);
+              }
             }
           }
         }
         if (seen_kwd_arg) { // link remaining params to **kwarg if present
-          for (PyParameter param : params) {
-            final String param_name = param.getName();
-            if (
-                (param.getDefaultValue() == null) &&   // has no default value
-                param_slots.containsKey(param_name) && // known as a slot
-                (param_slots.get(param_name) == null)  // the slot yet unfilled
-            ) {
-              param_slots.put(param_name, kwd_arg);
-              unmatched_args.remove(kwd_arg);
+          for (PyParameter a_param : params) {
+            PyNamedParameter n_param = a_param.getAsNamed();
+            if (n_param != null) {
+              final String param_name = n_param.getName();
+              if (
+                  (n_param.getDefaultValue() == null) &&   // has no default value
+                  param_slots.containsKey(param_name) && // known as a slot
+                  (param_slots.get(param_name) == null)  // the slot yet unfilled
+              ) {
+                param_slots.put(param_name, kwd_arg);
+                unmatched_args.remove(kwd_arg);
+              }
             }
           }
         }
         // check and collect all yet unfilled params without default values
-        Map<String, PyParameter> unfilled_params = new HashMap<String, PyParameter>();
-        for (PyParameter param : params) {
-          final String param_name = param.getName();
-          if (
-              (param.getDefaultValue() == null) &&   // has no default value
-              param_slots.containsKey(param_name) && // known as a slot
-              (param_slots.get(param_name) == null)  // the slot yet unfilled
-          ) {
-            if (tuple_arg != null) {
-              // An *arg, if present, fills all positional params
-              param_slots.put(param_name, tuple_arg);
-              unmatched_args.remove(tuple_arg);
-            }
-            else {
-              unfilled_params.put(param_name, param);
+        Map<String, PyNamedParameter> unfilled_params = new HashMap<String, PyNamedParameter>();
+        for (PyParameter a_param : params) {
+          PyNamedParameter n_param = a_param.getAsNamed();
+          if (n_param != null) {
+            final String param_name = n_param.getName();
+            if (
+                (n_param.getDefaultValue() == null) &&   // has no default value
+                param_slots.containsKey(param_name) && // known as a slot
+                (param_slots.get(param_name) == null)  // the slot yet unfilled
+            ) {
+              if (tuple_arg != null) {
+                // An *arg, if present, fills all positional params
+                param_slots.put(param_name, tuple_arg);
+                unmatched_args.remove(tuple_arg);
+              }
+              else {
+                unfilled_params.put(param_name, n_param);
+              }
             }
           }
         }
@@ -445,26 +467,32 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
         }
         // maybe we did not map a star arg because all eligible params have defaults; time to be less picky now. 
         if (tuple_arg != null && ret.my_tuple_mapped_params.isEmpty()) { // link remaining params to *arg if nothing else is mapped to it
-          for (PyParameter param : params) {
-            final String param_name = param.getName();
-            if (
-                param_slots.containsKey(param_name) && // known as a slot
-                (param_slots.get(param_name) == null)  // the slot yet unfilled
-            ) {
-              param_slots.put(param_name, tuple_arg);
-              unmatched_args.remove(tuple_arg);
+          for (PyParameter a_param : params) {
+            PyNamedParameter n_param = a_param.getAsNamed();
+            if (n_param != null) {
+              final String param_name = n_param.getName();
+              if (
+                  param_slots.containsKey(param_name) && // known as a slot
+                  (param_slots.get(param_name) == null)  // the slot yet unfilled
+              ) {
+                param_slots.put(param_name, tuple_arg);
+                unmatched_args.remove(tuple_arg);
+              }
             }
           }
         }
         if (kwd_arg != null && ret.my_kwd_mapped_params.isEmpty()) { // link remaining params to **kwarg if nothing else is mapped to it
-          for (PyParameter param : params) {
-            final String param_name = param.getName();
-            if (
-                param_slots.containsKey(param_name) && // known as a slot
-                (param_slots.get(param_name) == null)  // the slot yet unfilled
-            ) {
-              param_slots.put(param_name, kwd_arg);
-              unmatched_args.remove(kwd_arg);
+          for (PyParameter a_param : params) {
+            PyNamedParameter n_param = a_param.getAsNamed();
+            if (n_param != null) {
+              final String param_name = n_param.getName();
+              if (
+                  param_slots.containsKey(param_name) && // known as a slot
+                  (param_slots.get(param_name) == null)  // the slot yet unfilled
+              ) {
+                param_slots.put(param_name, kwd_arg);
+                unmatched_args.remove(kwd_arg);
+              }
             }
           }
         }
@@ -482,48 +510,122 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
           ret.markArgument(arg, ArgFlag.IS_UNMAPPED);
         }
         // any params still unfilled?
-        for (final PyParameter param : unfilled_params.values()) {
+        for (final PyNamedParameter param : unfilled_params.values()) {
           // getHolder().createErrorAnnotation(close_paren, "parameter '" + param_name + "' unfilled");
           ret.my_unmapped_params.add(param);
         }
         // copy the mapping of args
-        for (PyParameter param : params) {
-          PyExpression arg = param_slots.get(param.getName());
-          if (arg != null) {
-            if (arg instanceof PyStarArgument) {
-              PyStarArgument star_arg = (PyStarArgument)arg;
-              if (star_arg.isKeyword()) ret.my_kwd_mapped_params.add(param);
-              else ret.my_tuple_mapped_params.add(param);
+        for (PyParameter a_param : params) {
+          PyNamedParameter n_param = a_param.getAsNamed();
+          if (n_param != null) {
+            PyExpression arg = param_slots.get(n_param.getName());
+            if (arg != null) {
+              if (arg instanceof PyStarArgument) {
+                PyStarArgument star_arg = (PyStarArgument)arg;
+                if (star_arg.isKeyword()) ret.my_kwd_mapped_params.add(n_param);
+                else ret.my_tuple_mapped_params.add(n_param);
+              }
+              else ret.my_plain_mapped_params.put(arg, n_param);
             }
-            else ret.my_plain_mapped_params.put(arg, param);
           }
         }
         // copy starred args
         ret.my_kwd_arg = kwd_arg;
         ret.my_tuple_arg = tuple_arg;
+        // add unmatched nested arguments
+        for (PyExpression subarg : unmatched_subargs) {
+          ret.my_arg_flags.put(subarg, EnumSet.of(ArgFlag.IS_UNMAPPED));
+        }
       }
     }
     return ret;
   }
 
+  private static class MyParamVisitor extends PyElementVisitor {
+    private Iterator<PyExpression> myArgIterator;
+    private AnalysisResultImpl myResult;
+    private List<PyExpression> myUnmatchedSubargs;
 
-  protected /*static*/ class AnalysisResultImpl implements AnalysisResult {
+    private MyParamVisitor(Iterator<PyExpression> arg_iterator, AnalysisResultImpl ret) {
+      myArgIterator = arg_iterator;
+      myResult = ret;
+      myUnmatchedSubargs = new ArrayList<PyExpression>(5); // arbitrary 'enough'
+    }
 
-    protected Map<PyExpression, PyParameter> my_plain_mapped_params;
-    protected PyStarArgument my_tuple_arg;
-    protected PyStarArgument my_kwd_arg;
-    protected List<PyParameter> my_tuple_mapped_params;
-    protected List<PyParameter> my_kwd_mapped_params;
-    protected List<PyParameter> my_unmapped_params;
-    protected Map<PyExpression, EnumSet<ArgFlag>> my_arg_flags;
-    protected PyCallExpression.PyMarkedFunction my_marked_func;
+    private Collection<PyExpression> getUnmatchedSubargs() {
+      return myUnmatchedSubargs;
+    }
+
+    @Override
+    public void visitPyParameter(PyParameter node) {
+      PyNamedParameter named = node.getAsNamed();
+      if (named != null) enterNamed(named);
+      else enterTuple(node.getAsTuple());
+    }
+
+    public void enterTuple(PyTupleParameter param) {
+      PyExpression arg = null;
+      if (myArgIterator.hasNext()) arg = myArgIterator.next();
+      // try to unpack a tuple expr in argument, if there's any
+      PyExpression[] elements = null;
+      if (arg instanceof PyParenthesizedExpression) {
+        PyExpression inner_expr = ((PyParenthesizedExpression)arg).getContainedExpression();
+        if (inner_expr instanceof PyTupleExpression) elements = ((PyTupleExpression)inner_expr).getElements();
+      }
+      else if (arg instanceof PyListLiteralExpression) {
+        elements = ((PyListLiteralExpression)arg).getElements();
+      }
+      final PyParameter[] nested_params = param.getContents();
+      if (elements != null) { // recursively map expression's tuple to parameter's.
+        MyParamVisitor visitor = new MyParamVisitor(Arrays.asList(elements).iterator(), myResult);
+        for (PyParameter nested : nested_params) nested.accept(visitor);
+        myUnmatchedSubargs.addAll(visitor.getUnmatchedSubargs());
+      }
+      else { // map all what's inside to this arg
+        final List<PyNamedParameter> nested_mapped = new ArrayList<PyNamedParameter>(nested_params.length);
+        ParamHelper.walkDownParamArray(
+          nested_params,
+          new ParamHelper.ParamVisitor() {
+            @Override public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
+              nested_mapped.add(param);
+            }
+          }
+        );
+        myResult.my_nested_mapped_params.put(arg, nested_mapped);
+      }
+    }
+
+    public void enterNamed(PyNamedParameter param) {
+      if (myArgIterator.hasNext()) {
+        PyExpression subarg = myArgIterator.next();
+        myResult.my_plain_mapped_params.put(subarg, param);
+      }
+      else {
+        myResult.my_unmapped_params.add(param);
+      }
+      // ...and *arg or **arg just won't parse inside a tuple, no need to handle it here
+    }
+  }
+
+  private class AnalysisResultImpl implements PyArgumentList.AnalysisResult {
+
+    private Map<PyExpression, PyNamedParameter> my_plain_mapped_params; // one param per arg
+    private Map<PyExpression, List<PyNamedParameter>> my_nested_mapped_params; // one arg sweeps a nested tuple of params
+    private PyStarArgument my_tuple_arg; // the *arg
+    private PyStarArgument my_kwd_arg;   // the **arg
+    private List<PyNamedParameter> my_tuple_mapped_params; // params mapped to *arg
+    private List<PyNamedParameter> my_kwd_mapped_params;   // params mapped to **arg
+    private List<PyNamedParameter> my_unmapped_params;
+    private Map<PyExpression, EnumSet<PyArgumentList.ArgFlag>> my_arg_flags; // flags of every arg
+    private PyCallExpression.PyMarkedFunction my_marked_func;
 
     public AnalysisResultImpl() {
       // full of empty containers
-      my_plain_mapped_params = new HashMap<PyExpression, PyParameter>();
-      my_tuple_mapped_params = new ArrayList<PyParameter>();
-      my_kwd_mapped_params = new ArrayList<PyParameter>();
-      my_unmapped_params = new ArrayList<PyParameter>();
+      my_plain_mapped_params = new HashMap<PyExpression, PyNamedParameter>();
+      my_nested_mapped_params = new HashMap<PyExpression, List<PyNamedParameter>>(); 
+      my_tuple_mapped_params = new ArrayList<PyNamedParameter>();
+      my_kwd_mapped_params = new ArrayList<PyNamedParameter>();
+      my_unmapped_params = new ArrayList<PyNamedParameter>();
       my_arg_flags = new HashMap<PyExpression, EnumSet<ArgFlag>>();
       my_marked_func = null;
     }
@@ -531,8 +633,13 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     /**
      * @return A mapping argument->parameter for non-starred arguments (but includes starred parameters).
      */
-    public @NotNull Map<PyExpression, PyParameter> getPlainMappedParams() {
+    public @NotNull Map<PyExpression, PyNamedParameter> getPlainMappedParams() {
       return my_plain_mapped_params;
+    }
+
+    @NotNull
+    public Map<PyExpression, List<PyNamedParameter>> getNestedMappedParams() {
+      return my_nested_mapped_params;
     }
 
     /**
@@ -545,7 +652,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     /**
      * @return A list of parameters mapped to an *arg.
      */
-    public @NotNull List<PyParameter> getTupleMappedParams(){
+    public @NotNull List<PyNamedParameter> getTupleMappedParams(){
       return my_tuple_mapped_params;
     }
 
@@ -559,7 +666,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     /**
      * @return A list of parameters mapped to an **arg.
      */
-    public @NotNull List<PyParameter> getKwdMappedParams(){
+    public @NotNull List<PyNamedParameter> getKwdMappedParams(){
       return my_kwd_mapped_params;
     }
 
@@ -567,7 +674,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
      * @return A list of parameters for which no arguments were found ('missing').
      */
     public @NotNull
-    List<PyParameter> getUnmappedParams(){
+    List<PyNamedParameter> getUnmappedParams(){
       return my_unmapped_params;
     }
 

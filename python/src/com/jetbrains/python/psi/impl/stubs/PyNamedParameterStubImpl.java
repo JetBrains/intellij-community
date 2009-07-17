@@ -6,16 +6,16 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.PyParameter;
-import com.jetbrains.python.psi.stubs.PyParameterStub;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
 
-public class PyParameterStubImpl extends StubBase<PyParameter> implements PyParameterStub {
+public class PyNamedParameterStubImpl extends StubBase<PyNamedParameter> implements PyNamedParameterStub {
   private final String myName;
   private final boolean myPositionalContainer;
   private final boolean myKeywordContainer;
 
-  public PyParameterStubImpl(String name, boolean isPositionalContainer, boolean isKeywordContainer, StubElement parent) {
-    super(parent, PyElementTypes.FORMAL_PARAMETER);
+  public PyNamedParameterStubImpl(String name, boolean isPositionalContainer, boolean isKeywordContainer, StubElement parent) {
+    super(parent, PyElementTypes.NAMED_PARAMETER);
 
     myName = name;
     myPositionalContainer = isPositionalContainer;
