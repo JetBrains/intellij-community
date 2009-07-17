@@ -139,6 +139,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   }
 
   public void loadState(final Element state) {
+    myScopes.clear();
     List sets = state.getChildren(SCOPE_TAG);
     for (Object set : sets) {
       addScope(readScope((Element)set));

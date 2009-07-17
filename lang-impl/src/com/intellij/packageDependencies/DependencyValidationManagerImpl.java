@@ -198,6 +198,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
       }
     }
 
+    myRules.clear();
     List rules = element.getChildren(DENY_RULE_KEY);
     for (Object rule1 : rules) {
       DependencyRule rule = readRule((Element)rule1);
