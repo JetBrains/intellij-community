@@ -35,6 +35,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.theoryinpractice.testng.model.TestClassFilter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.TestNG;
 import org.testng.annotations.*;
@@ -161,7 +162,8 @@ public class TestNGUtil implements TestFramework
       }
     } else if (element instanceof PsiMethod) {
       //if it's a method, we check if the class it's in has a global @Test annotation
-      PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+      PsiClass psiClass = ((PsiMethod)element).getContainingClass();
+      LOG.assertTrue(psiClass != null, element.getClass());
       if (AnnotationUtil.isAnnotated(psiClass, TEST_ANNOTATION_FQN, false, true)) {
         //even if it has a global test, we ignore private methods
         boolean isPrivate = element.hasModifierProperty(PsiModifier.PRIVATE);
@@ -172,14 +174,14 @@ public class TestNGUtil implements TestFramework
     return false;
   }
 
-  private static boolean hasTestJavaDoc(PsiDocCommentOwner element, final boolean checkJavadoc) {
+  private static boolean hasTestJavaDoc(@NotNull PsiDocCommentOwner element, final boolean checkJavadoc) {
     if (checkJavadoc) {
       return getTextJavaDoc(element) != null;
     }
     return false;
   }
 
-  private static PsiDocTag getTextJavaDoc(final PsiDocCommentOwner element) {
+  private static PsiDocTag getTextJavaDoc(@NotNull final PsiDocCommentOwner element) {
     final PsiDocComment docComment = element.getDocComment();
     if (docComment != null) {
       return docComment.findTagByName("testng.test");
