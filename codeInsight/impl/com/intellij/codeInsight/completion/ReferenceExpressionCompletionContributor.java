@@ -106,11 +106,13 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
               addSecondCompletionVariants(element, reference, baseItem, parameters, result);
             }
 
-            BasicExpressionCompletionContributor.processDataflowExpressionTypes(element, null, new Consumer<CastingLookupElementDecorator>() {
-              public void consume(CastingLookupElementDecorator baseItem) {
-                addSecondCompletionVariants(element, reference, baseItem, parameters, result);
-              }
-            });
+            if (!psiElement().afterLeaf(".").accepts(element)) {
+              BasicExpressionCompletionContributor.processDataflowExpressionTypes(element, null, new Consumer<CastingLookupElementDecorator>() {
+                public void consume(CastingLookupElementDecorator baseItem) {
+                  addSecondCompletionVariants(element, reference, baseItem, parameters, result);
+                }
+              });
+            }
           }
         }
       }
