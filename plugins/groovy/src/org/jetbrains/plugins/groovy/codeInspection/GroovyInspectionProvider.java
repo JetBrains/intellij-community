@@ -51,6 +51,7 @@ public class GroovyInspectionProvider implements InspectionToolProvider, Applica
         UnassignedVariableAccessInspection.class,
         MissingReturnInspection.class,
 
+        GroovyAssignabilityCheckInspection.class,
         GroovyResultOfAssignmentUsedInspection.class,
         GroovyAssignmentCanBeOperatorAssignmentInspection.class,
         GroovyAssignmentToForLoopParameterInspection.class,

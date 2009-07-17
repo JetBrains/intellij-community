@@ -656,12 +656,13 @@ public class PsiUtil {
     if (resolveResult != null) {
       element = resolveResult.getElement();
     }
-
-    if (!(element instanceof PsiField || element instanceof GrAccessorMethod)) {
-      return false;
+    if (element instanceof PsiField) {
+      return isRawMemberAccess(resolveResult.getSubstitutor(), ((PsiField)element).getType());
     }
-
-    return isRawMemberAccess(resolveResult.getSubstitutor(), ref.getType());
+    else if (element instanceof GrAccessorMethod) {
+      return isRawMemberAccess(resolveResult.getSubstitutor(), ((GrAccessorMethod)element).getReturnType());
+    }
+    return false;
   }
 
   private static boolean isRawIndexPropertyAccess(GrIndexProperty expr) {

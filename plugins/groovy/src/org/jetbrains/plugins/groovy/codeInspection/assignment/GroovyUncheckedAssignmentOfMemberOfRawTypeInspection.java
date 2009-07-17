@@ -53,7 +53,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
   protected String buildErrorString(Object... args) {
     PsiType expectedType = (PsiType)args[0];
     PsiType rType = (PsiType)args[1];
-    return GroovyBundle.message("cannot.assign", rType.getInternalCanonicalText(), expectedType.getInternalCanonicalText());
+    return GroovyBundle.message("cannot.assign", rType.getPresentableText(), expectedType.getPresentableText());
   }
 
   @Override

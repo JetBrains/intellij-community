@@ -3,4 +3,4 @@ class X<T>{
 }
 X x=new X();
 x.field="abc";
-String s=<warning descr="Cannot assign 'java.lang.Object' to 'java.lang.String'">x.field</warning>;
+String s=<warning descr="Cannot assign 'Object' to 'String'">x.field</warning>;

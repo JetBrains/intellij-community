@@ -9,6 +9,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 
 import java.io.IOException;
 
@@ -100,7 +101,7 @@ public class GroovyHighlightingTest extends JavaCodeInsightFixtureTestCase {
     myFixture.enableInspections(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection());
     doTest();
   }
-  
+
   public void testRawArrayStyleAccess() throws Throwable {
     myFixture.enableInspections(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection());
     doTest();
@@ -116,4 +117,8 @@ public class GroovyHighlightingTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testIncompatibleTypesAssignments() throws Throwable {
+    myFixture.enableInspections(new GroovyAssignabilityCheckInspection());
+    doTest();
+  }
 }
