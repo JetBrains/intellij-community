@@ -179,7 +179,8 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
             if (i + paramsCount >= args.length
                 && method != null
                 && method.getParameterList().getParametersCount() == i+2
-                && method.getParameterList().getParameters()[i+1].isVarArgs()) {              
+                && method.getParameterList().getParameters()[i+1].isVarArgs()
+                && !hasArrayTypeAt(i+1, methodCall)) {
               myProblems.add(myManager.createProblemDescriptor(methodCall,
                                                                CodeInsightBundle.message("property.has.more.parameters.than.passed", key, paramsCount, args.length-i-1),
                                                                new LocalQuickFix[0], 
@@ -189,6 +190,12 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
           }
         }
       }
+    }
+
+    private boolean hasArrayTypeAt(int i, PsiMethodCallExpression methodCall) {
+      return methodCall != null
+             && methodCall.getArgumentList().getExpressionTypes().length > i
+             && methodCall.getArgumentList().getExpressionTypes()[i] instanceof PsiArrayType;
     }
 
     private static boolean isComputablePropertyExpression(PsiExpression expression) {
