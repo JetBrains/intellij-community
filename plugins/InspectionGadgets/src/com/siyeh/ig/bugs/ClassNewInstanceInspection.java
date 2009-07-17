@@ -70,6 +70,9 @@ public class ClassNewInstanceInspection extends BaseInspection {
                     (PsiReferenceExpression)parent;
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
+            if (qualifier == null) {
+                return;
+            }
             final PsiElement grandParent = parent.getParent();
             if (!(grandParent instanceof PsiMethodCallExpression)) {
                 return;
@@ -173,12 +176,18 @@ public class ClassNewInstanceInspection extends BaseInspection {
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
+            if (qualifier == null) {
+                return;
+            }
             final PsiType qualifierType = qualifier.getType();
             if (!(qualifierType instanceof PsiClassType)) {
                 return;
             }
             final PsiClassType classType = (PsiClassType)qualifierType;
             final PsiClass aClass = classType.resolve();
+            if (aClass == null) {
+                return;
+            }
             final String className = aClass.getQualifiedName();
             if (!"java.lang.Class".equals(className)) {
                 return;
