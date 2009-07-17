@@ -17,11 +17,12 @@ package com.intellij.ui.treeStructure.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
-public class CollapseAllAction extends AnAction {
+public class CollapseAllAction extends AnAction implements DumbAware {
 
   protected JTree myTree;
 
