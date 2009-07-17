@@ -205,16 +205,18 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
   ) {
     cat.append("@");
     name_wrapper.apply(PyUtil.getReadableRepr(deco.getCallee(), true), cat);
-    PyArgumentList arglist = deco.getArgumentList();
-    if (arglist != null) {
-      List<String> argnames = FP.map(
-        FP.combine(LReadableRepr, arg_wrapper),
-        Arrays.asList(arglist.getArguments())
-      );
+    if (deco.hasArgumentList()) {
+      PyArgumentList arglist = deco.getArgumentList();
+      if (arglist != null) {
+        List<String> argnames = FP.map(
+          FP.combine(LReadableRepr, arg_wrapper),
+          Arrays.asList(arglist.getArguments())
+        );
 
-      cat.append("(");
-      join(", ", argnames, cat);
-      cat.append(")");
+        cat.append("(");
+        join(", ", argnames, cat);
+        cat.append(")");
+      }
     }
     return cat;
   }
