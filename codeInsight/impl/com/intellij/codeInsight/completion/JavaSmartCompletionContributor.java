@@ -106,6 +106,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, psiElement().afterLeaf(psiElement().withText("(").withParent(PsiTypeCastExpression.class)), new CompletionProvider<CompletionParameters>() {
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         for (final ExpectedTypeInfo type : getExpectedTypes(parameters)) {
+          if (type.getType() == PsiType.VOID) {
+            continue;
+          }
+
           final LookupElement item = new LookupElementDecorator<LookupItem>(PsiTypeLookupItem.createLookupItem(type.getDefaultType())) {
             @Override
             public AutoCompletionPolicy getAutoCompletionPolicy() {
@@ -117,8 +121,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
               final PsiElement position = AnalyzingJavaSmartCompletionContributor.getPosition(context, this);
               final Editor editor = context.getEditor();
               if (or(psiElement(PsiParenthesizedExpression.class),
-                     psiElement().afterLeaf(
-                       psiElement().withText("(").withParent(PsiTypeCastExpression.class))).accepts(position)) {
+                     psiElement().afterLeaf(psiElement().withText("(").withParent(PsiTypeCastExpression.class))).accepts(position)) {
                 editor.getDocument().deleteString(context.getSelectionEndOffset(),
                                                   context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
               }
