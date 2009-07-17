@@ -139,6 +139,8 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
         if (idx > -1) listenersTable.setSelectedIndex(idx);
       }
     });
+    propertiesFile.getComponent().getTextField().setDocument(model.getPropertiesFileDocument());
+    outputDirectory.getComponent().getTextField().setDocument(model.getOutputDirectoryDocument());
   }
 
   private void evaluateModuleClassPath() {
@@ -211,8 +213,6 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
 
     listenerModel.setListenerList(data.TEST_LISTENERS);
 
-    propertiesFile.getComponent().getTextField().setDocument(model.getPropertiesFileDocument());
-    outputDirectory.getComponent().getTextField().setDocument(model.getOutputDirectoryDocument());
 
     annotationType.getComponent().setSelectedItem(data.ANNOTATION_TYPE);
   }
