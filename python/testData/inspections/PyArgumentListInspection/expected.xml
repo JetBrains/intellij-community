@@ -120,14 +120,4 @@
     <line>132</line>
     <description>Parameter 'p2' unfilled</description>
   </problem>
-  <problem>
-    <file>badarglist.py</file>
-    <line>144</line>
-    <description>This argument list cannot be analyzed</description>
-  </problem>
-  <problem>
-    <file>badarglist.py</file>
-    <line>145</line>
-    <description>This argument list cannot be analyzed</description>
-  </problem>
 </problems>

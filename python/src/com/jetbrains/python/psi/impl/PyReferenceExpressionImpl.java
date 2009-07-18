@@ -433,7 +433,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       if (callee instanceof PyReferenceExpression) {
         PsiElement def = ((PyReferenceExpression)callee).resolve();
         if (def instanceof PyFunction) {
-          ((PyFunction)def).getParameterList().accept(
+          ((PyFunction)def).getParameterList().acceptChildren(
             new PyElementVisitor() {
               @Override
               public void visitPyParameter(PyParameter par) {
