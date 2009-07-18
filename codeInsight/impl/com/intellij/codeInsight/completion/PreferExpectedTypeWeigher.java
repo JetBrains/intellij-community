@@ -36,7 +36,9 @@ public class PreferExpectedTypeWeigher extends CompletionWeigher {
   private enum MyResult {
     normal,
     expected,
+    exactlyExpected,
     ofDefaultType,
+    exactlyDefault,
     expectedNoSelect
   }
 
@@ -76,11 +78,23 @@ public class PreferExpectedTypeWeigher extends CompletionWeigher {
     for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
       final PsiType defaultType = expectedInfo.getDefaultType();
       final PsiType expectedType = expectedInfo.getType();
-      if (defaultType != expectedType && defaultType.isAssignableFrom(itemType)) {
-        return MyResult.ofDefaultType;
+      if (defaultType != expectedType) {
+        if (defaultType.equals(itemType)) {
+          return MyResult.exactlyDefault;
+        }
+
+        if (defaultType.isAssignableFrom(itemType)) {
+          return MyResult.ofDefaultType;
+        }
       }
-      if ((location.getCompletionType() == CompletionType.BASIC || PsiType.VOID.equals(expectedType)) && expectedType.isAssignableFrom(itemType)) {
-        return MyResult.expected;
+      if ((location.getCompletionType() == CompletionType.BASIC || PsiType.VOID.equals(expectedType))) {
+        if (expectedType.equals(itemType)) {
+          return MyResult.exactlyExpected;
+        }
+
+        if (expectedType.isAssignableFrom(itemType)) {
+          return MyResult.expected;
+        }
       }
     }
 

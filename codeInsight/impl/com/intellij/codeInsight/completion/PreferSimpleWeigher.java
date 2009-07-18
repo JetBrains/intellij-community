@@ -18,6 +18,9 @@ public class PreferSimpleWeigher extends CompletionWeigher {
     if (lookupItem != null) {
       return -lookupItem.getBracketsCount();
     }
+    if (item.as(CastingLookupElementDecorator.class) != null) {
+      return -239;
+    }
     return 0;
   }
 }

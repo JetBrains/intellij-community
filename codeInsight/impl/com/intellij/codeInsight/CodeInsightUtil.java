@@ -228,7 +228,7 @@ public class CodeInsightUtil {
           public Boolean compute() {
             if (!context.isValid() || !inheritor.isValid() || !facade.getResolveHelper().isAccessible(inheritor, context, null)) return true;
 
-            if(inheritor.getQualifiedName() == null && !manager.areElementsEquivalent(inheritor.getContainingFile(), context.getContainingFile())){
+            if(inheritor.getQualifiedName() == null && !manager.areElementsEquivalent(inheritor.getContainingFile(), context.getContainingFile().getOriginalFile())){
               return true;
             }
 
