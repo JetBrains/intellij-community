@@ -82,8 +82,7 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
   }
 
   private static boolean isToStrikeout(LookupItem item) {
-    Object o = item.getObject();
-    return o instanceof LookupValueWithUIHint2 && ((LookupValueWithUIHint2)o).isStrikeout();
+    return item.getAttribute(LookupItem.DEPRECATED_ATTR) != null;
   }
 
   private static String getName(final LookupItem item){

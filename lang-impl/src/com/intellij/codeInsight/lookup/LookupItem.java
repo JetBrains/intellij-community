@@ -44,6 +44,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   public static final Object SUBSTITUTOR = Key.create("SUBSTITUTOR");
   public static final Object TYPE = Key.create("TYPE");
   public static final Object INDICATE_ANONYMOUS = Key.create("INDICATE ANONYMOUS");
+  public static final Key<Object> DEPRECATED_ATTR = Key.create("DEPRECATED");
 
   public static final Key<Comparable[]> WEIGHT = Key.create("WEIGHT");
 
@@ -246,6 +247,11 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
 
   public LookupItem<T> setBold() {
     setAttribute(HIGHLIGHTED_ATTR, "");
+    return this;
+  }
+
+  public LookupItem<T> setDeprecated(boolean deprecated) {
+    setAttribute(DEPRECATED_ATTR, deprecated ? "" : null);
     return this;
   }
 
