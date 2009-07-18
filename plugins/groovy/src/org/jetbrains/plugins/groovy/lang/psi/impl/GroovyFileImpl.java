@@ -350,8 +350,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
         final ASTNode currNode = currentPackage.getNode();
         assert currNode != null;
         fileNode.removeChild(currNode);
-        return;
       }
+      return;
     }
     final GrTopStatement newPackage = GroovyPsiElementFactory.getInstance(getProject()).createTopElementFromText("package " + packageName);
     final ASTNode newNode = newPackage.getNode();
