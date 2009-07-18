@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.io.File;
 
 /**
  * @by Maxim.Mossienko
@@ -50,6 +51,8 @@ public class URIReferenceProvider extends PsiReferenceProvider {
   @NonNls private static final String URN = "urn:";
   @NonNls private static final String FILE = "file:";
   @NonNls private static final String CLASSPATH = "classpath:/";
+  @NonNls
+  private static final String NAMESPACE_ATTR_NAME = "namespace";
 
   public static class DependentNSReference extends BasicAttributeValueReference implements QuickFixProvider {
     private final URLReference myReference;
@@ -114,10 +117,16 @@ public class URIReferenceProvider extends PsiReferenceProvider {
       return refs.toArray(new PsiReference[refs.size()]);
     }
 
-    if (isUrlText(s) || (parent instanceof XmlAttribute && ((XmlAttribute)parent).isNamespaceDeclaration())) {
+    if (isUrlText(s) ||
+        (parent instanceof XmlAttribute &&
+          ( ((XmlAttribute)parent).isNamespaceDeclaration() ||
+            NAMESPACE_ATTR_NAME.equals(((XmlAttribute)parent).getName())
+          )
+         )
+      ) {
       if (!s.startsWith(XmlUtil.TAG_DIR_NS_PREFIX)) {
         final boolean namespaceSoftRef = parent instanceof XmlAttribute &&
-          "namespace".equals(((XmlAttribute)parent).getName()) &&
+          NAMESPACE_ATTR_NAME.equals(((XmlAttribute)parent).getName()) &&
           ((XmlAttribute)parent).getParent().getAttributeValue("schemaLocation") != null;
 
         return getUrlReference(element, namespaceSoftRef);
