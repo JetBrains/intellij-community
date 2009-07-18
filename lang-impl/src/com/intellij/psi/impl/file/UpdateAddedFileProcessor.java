@@ -16,26 +16,15 @@ public abstract class UpdateAddedFileProcessor {
 
   public abstract boolean canProcessElement(PsiFile element);
 
-  protected boolean isDefault() {
-    return false;
-  }
-
   public abstract void update(PsiFile element, @Nullable PsiFile originalElement) throws IncorrectOperationException;
 
   @Nullable
   public static UpdateAddedFileProcessor forElement(PsiFile element) {
-    UpdateAddedFileProcessor defaultProcessor = null;
-    
     for(UpdateAddedFileProcessor processor: Extensions.getExtensions(EP_NAME)) {
-      if (processor.isDefault()) {
-        defaultProcessor = processor;
-        continue;
-      }
-
       if (processor.canProcessElement(element)) {
         return processor;
       }
     }
-    return defaultProcessor;
+    return null;
   }
 }

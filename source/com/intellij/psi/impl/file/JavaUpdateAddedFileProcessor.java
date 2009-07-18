@@ -1,10 +1,7 @@
 package com.intellij.psi.impl.file;
 
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.ChangeUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -13,21 +10,19 @@ import com.intellij.util.IncorrectOperationException;
  *         Time: 3:33:07 PM
  */
 public class JavaUpdateAddedFileProcessor extends UpdateAddedFileProcessor {
-  public boolean canProcessElement(final PsiFile element) {
-    return true;
-  }
-
-  @Override
-  protected boolean isDefault() {
-    return true;
+  public boolean canProcessElement(final PsiFile file) {
+    return file instanceof PsiClassOwner;
   }
 
   public void update(final PsiFile element, PsiFile originalElement) throws IncorrectOperationException {
-    final TreeElement tree = (TreeElement)SourceTreeToPsiMap.psiElementToTree(element);
-    if (tree == null) return;
+    if (PsiUtilBase.getTemplateLanguageFile(element) != element.getContainingFile()) return;
 
-    ChangeUtil.encodeInformation(tree);
-    PsiUtil.updatePackageStatement(element);
-    ChangeUtil.decodeInformation((TreeElement)SourceTreeToPsiMap.psiElementToTree(element));
+    PsiDirectory dir = element.getContainingDirectory();
+    if (dir == null) return;
+    PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(dir);
+    if (aPackage == null) return;
+    String packageName = aPackage.getQualifiedName();
+
+    ((PsiClassOwner)element).setPackageName(packageName);
   }
 }

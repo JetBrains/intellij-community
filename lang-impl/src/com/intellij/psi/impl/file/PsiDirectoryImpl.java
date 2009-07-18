@@ -24,6 +24,9 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.ChangeUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.util.ArrayUtil;
@@ -346,7 +349,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
       if (copyPsi == null) {
         LOG.error("Could not find file '"+copyVFile+"' after copying '"+vFile+"'");
       }
-      updateAddedFile(copyPsi, originalFile);
+      updateAddedFile(copyPsi);
       return copyPsi;
     }
     catch (IOException e) {
@@ -355,10 +358,17 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
   }
 
-  private static void updateAddedFile(PsiFile copyPsi, PsiFile originalFile) throws IncorrectOperationException {
+  private static void updateAddedFile(PsiFile copyPsi) throws IncorrectOperationException {
     final UpdateAddedFileProcessor processor = UpdateAddedFileProcessor.forElement(copyPsi);
     if (processor != null) {
+      final TreeElement tree = (TreeElement)SourceTreeToPsiMap.psiElementToTree(copyPsi);
+      if (tree != null) {
+        ChangeUtil.encodeInformation(tree);
+      }
       processor.update(copyPsi, null);
+      if (tree != null) {
+        ChangeUtil.decodeInformation(tree);
+      }
     }
   }
 
@@ -420,7 +430,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
         psiDocumentManager.commitAllDocuments();
 
         PsiFile newFile = myManager.findFile(newVFile);
-        updateAddedFile(newFile, null);
+        updateAddedFile(newFile);
 
         return newFile;
       }

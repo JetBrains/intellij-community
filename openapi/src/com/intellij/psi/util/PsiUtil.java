@@ -18,7 +18,6 @@ package com.intellij.psi.util;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -180,38 +179,6 @@ public final class PsiUtil extends PsiUtilBase {
   public static boolean isVariableNameUnique(@NotNull String name, @NotNull PsiElement place) {
     PsiResolveHelper helper = JavaPsiFacade.getInstance(place.getProject()).getResolveHelper();
     return helper.resolveReferencedVariable(name, place) == null;
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static void updatePackageStatement(PsiFile file) throws IncorrectOperationException {
-    if (!(file instanceof PsiJavaFile) || isInJspFile(file)) return;
-
-    PsiDirectory dir = file.getContainingDirectory();
-    if (dir == null) return;
-    PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(dir);
-    if (aPackage == null) return;
-    String packageName = aPackage.getQualifiedName();
-    PsiPackageStatement statement = ((PsiJavaFile) file).getPackageStatement();
-    if (statement != null) {
-      if (packageName.length() > 0) {
-        statement.getPackageReference().bindToElement(aPackage);
-      }
-      else {
-        statement.delete();
-      }
-    }
-    else {
-      if (packageName.length() > 0) {
-        String text = "package " + packageName + ";";
-        String ext = StdFileTypes.JAVA.getDefaultExtension();
-        PsiJavaFile dummyFile = (PsiJavaFile)PsiFileFactory.getInstance(file.getProject()).createFileFromText("_Dummy_." + ext, text);
-        statement = dummyFile.getPackageStatement();
-        if (statement == null) {
-          throw new IncorrectOperationException();
-        }
-        file.add(statement);
-      }
-    }
   }
 
   /**
