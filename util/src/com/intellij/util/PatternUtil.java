@@ -16,9 +16,11 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 
-import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -26,12 +28,12 @@ import org.jetbrains.annotations.NonNls;
 
 public class PatternUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.PatternUtil");
-  private static final HashMap ourEscapeRulls = new HashMap();
+  private static final HashMap<String, String> ourEscapeRules = new HashMap<String, String>();
 
   static {
     // '.' should be escaped first
-    ourEscapeRulls.put("\\*", ".*");
-    ourEscapeRulls.put("\\?", ".");
+    ourEscapeRules.put("*", ".*");
+    ourEscapeRules.put("?", ".");
     escape2('+');
     escape2('(');
     escape2(')');
@@ -39,30 +41,25 @@ public class PatternUtil {
     escape2(']');
     escape2('/');
     escape2('^');
-    escape3('$');
+    escape2('$');
     escape2('{');
     escape2('}');
     escape2('|');
   }
 
   private static void escape2(char symbol) {
-    ourEscapeRulls.put("\\" + symbol, "\\\\" + symbol);
-  }
-
-  private static void escape3(char symbol) {
-    ourEscapeRulls.put("\\" + symbol, "\\\\\\" + symbol);
+    ourEscapeRules.put(""+symbol, "\\" + symbol);
   }
 
   public static String convertToRegex(String mask) {
-    String[] strings = mask.split("\\\\", -1);
+    List<String> strings = StringUtil.split(mask,"\\");
     StringBuffer pattern = new StringBuffer();
     String separator = "";
-    for (int i = 0; i < strings.length; i++) {
-      String string = strings[i];
-      string = string.replaceAll("\\.", "\\\\.");
-      for (Iterator iterator = ourEscapeRulls.keySet().iterator(); iterator.hasNext();) {
-        String toEscape = (String) iterator.next();
-        string = string.replaceAll(toEscape, (String) ourEscapeRulls.get(toEscape));
+
+    for (String string:strings) {
+      string = StringUtil.replace(string, ".", "\\.");
+      for (Map.Entry<String, String> e: ourEscapeRules.entrySet()) {
+        string = StringUtil.replace(string, e.getKey(), e.getValue());
       }
       pattern.append(separator);
       separator = "\\\\";

@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Options;
@@ -289,13 +290,14 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     if (isPatternNegated(wildcardPattern)) {
       wildcardPattern = wildcardPattern.substring(1);
     }
+
+    wildcardPattern = StringUtil.replace(wildcardPattern, "\\!", "!");
+    wildcardPattern = StringUtil.replace(wildcardPattern, ".", "\\.");
+    wildcardPattern = StringUtil.replace(wildcardPattern, "*?", ".+");
+    wildcardPattern = StringUtil.replace(wildcardPattern, "?*", ".+");
+    wildcardPattern = StringUtil.replace(wildcardPattern, "*", ".*");
+    wildcardPattern = StringUtil.replace(wildcardPattern, "?", ".");
     return wildcardPattern.
-      replaceAll("\\\\!", "!").
-      replaceAll("\\.", "\\\\.").
-      replaceAll("\\*\\?", ".+").
-      replaceAll("\\?\\*", ".+").
-      replaceAll("\\*", ".*").
-      replaceAll("\\?", ".").
       replaceAll("(?:\\.\\*)+", ".*")  // optimization
     ;
   }
