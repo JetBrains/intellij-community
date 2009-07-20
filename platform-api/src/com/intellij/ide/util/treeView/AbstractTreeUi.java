@@ -294,6 +294,12 @@ class AbstractTreeUi {
 //todo [kirillk] afraid to do so just in release day, to uncomment
 //    myTreeStructure = null;
     myBuilder = null;
+
+    myNodeActions.clear();
+    myPendingNodeActions.clear();
+    myDeferredSelections.clear();
+    myDeferredExpansions.clear();
+    myYeildingDoneRunnables.clear();
   }
 
   public boolean isReleased() {
@@ -2005,6 +2011,7 @@ class AbstractTreeUi {
   }
 
   private void runDone(@Nullable Runnable done) {
+    if (isReleased()) return;
     if (done == null) return;
 
     if (isYeildingNow()) {
