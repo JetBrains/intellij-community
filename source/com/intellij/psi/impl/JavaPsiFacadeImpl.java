@@ -219,6 +219,10 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   public PsiPackage findPackage(@NotNull String qualifiedName) {
     PsiPackage aPackage = myPackageCache.get(qualifiedName);
     if (aPackage == null) {
+      if (DumbService.getInstance(getProject()).isDumb()) {
+        return findPackageDefault(qualifiedName);
+      }
+
       for (PsiElementFinder finder : myElementFinders) {
         aPackage = finder.findPackage(qualifiedName);
         if (aPackage != null) {
@@ -320,6 +324,20 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     return false;
   }
 
+  private PsiPackage findPackageDefault(String qualifiedName) {
+    final PsiPackage aPackage = myFileManager.findPackage(qualifiedName);
+    if (aPackage == null && myCurrentMigration != null) {
+      final PsiPackage migrationPackage = myCurrentMigration.getMigrationPackage(qualifiedName);
+      if (migrationPackage != null) return migrationPackage;
+    }
+
+    if (packagePrefixExists(qualifiedName)) {
+      return new PsiPackageImpl((PsiManagerEx)PsiManager.getInstance(myProject), qualifiedName);
+    }
+
+    return aPackage;
+  }
+
   private class PsiElementFinderImpl extends PsiElementFinder {
     public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
       PsiClass psiClass = myFileManager.findClass(qualifiedName, scope);
@@ -344,17 +362,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     }
 
     public PsiPackage findPackage(@NotNull String qualifiedName) {
-      final PsiPackage aPackage = myFileManager.findPackage(qualifiedName);
-      if (aPackage == null && myCurrentMigration != null) {
-        final PsiPackage migrationPackage = myCurrentMigration.getMigrationPackage(qualifiedName);
-        if (migrationPackage != null) return migrationPackage;
-      }
-
-      if (packagePrefixExists(qualifiedName)) {
-        return new PsiPackageImpl((PsiManagerEx)PsiManager.getInstance(myProject), qualifiedName);
-      }
-
-      return aPackage;
+      return findPackageDefault(qualifiedName);
     }
 
     @NotNull
