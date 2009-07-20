@@ -8,12 +8,15 @@ import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NewBuildException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.net.IOExceptionDialog;
@@ -24,11 +27,7 @@ import java.awt.*;
 import java.io.IOException;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Feb 17, 2005
- * Time: 11:12:23 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class ITNReporter extends ErrorReportSubmitter {
   private static int previousExceptionThreadId = 0;
@@ -89,6 +88,18 @@ public class ITNReporter extends ErrorReportSubmitter {
         if (message != null) {
           descBuilder.append("Error message: ").append(message).append("\n");
         }
+
+        Throwable t = event.getThrowable();
+        if (t != null) {
+          final PluginId pluginId = IdeErrorsDialog.findPluginId(t);
+          if (pluginId != null) {
+            final IdeaPluginDescriptor ideaPluginDescriptor = ApplicationManager.getApplication().getPlugin(pluginId);
+            if (ideaPluginDescriptor != null && !ideaPluginDescriptor.isBundled()) {
+              descBuilder.append("Plugin version: ").append(ideaPluginDescriptor.getVersion()).append("\n");
+            }
+          }
+        }
+
         if (previousExceptionThreadId != 0) {
           descBuilder.append("Previous exception is: ").append(URL_HEADER).append(previousExceptionThreadId).append("\n");
         }
