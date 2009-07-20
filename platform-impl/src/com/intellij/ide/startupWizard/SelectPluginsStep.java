@@ -73,20 +73,11 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
       }
     });
 
-    final int checkboxWidth = new JCheckBox().getPreferredSize().width;
-
     myPluginsList.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(final MouseEvent e) {
-        final int idx = myPluginsList.locationToIndex(e.getPoint());
-        if (idx >= 0) {
-          final Rectangle baseRect = myPluginsList.getCellBounds(idx, idx);
-          baseRect.setSize(checkboxWidth, baseRect.height);
-          if (baseRect.contains(e.getPoint())) {
-            toggleSelection();
-            e.consume();
-          }
-        }
+        toggleSelection();
+        e.consume();
       }
     });
     myPluginsList.addKeyListener(new KeyAdapter() {
