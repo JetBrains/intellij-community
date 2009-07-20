@@ -35,7 +35,8 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
         final PsiClassOwner classOwner = (PsiClassOwner)o;
         PsiClass[] classes = classOwner.getClasses();
         final VirtualFile file = classOwner.getVirtualFile();
-        if (classes.length == 1 && !(classes[0] instanceof SyntheticElement) && file != null && index.isInSourceContent(file)) {
+        if (classes.length == 1 && !(classes[0] instanceof SyntheticElement) && file != null &&
+            (index.isInSourceContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file))) {
           result.add(new ClassTreeNode(myProject, classes[0], settings1));
         } else {
           result.add(new PsiClassOwnerTreeNode(classOwner, settings1));
