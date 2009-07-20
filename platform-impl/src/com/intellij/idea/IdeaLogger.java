@@ -81,13 +81,14 @@ public class IdeaLogger extends Logger {
 
   public void error(String message, Throwable t, String... details) {
     if (t instanceof ProcessCanceledException) {
-      myLogger.error("Do not log ProcessCanceledException. Logged at: ", new Throwable());
       myLogger.error("Do not log ProcessCanceledException. Thrown at:", t);
+      myLogger.error("Do not log ProcessCanceledException. Logged at: ", new Throwable());
       throw (ProcessCanceledException)t;
     }
 
     if (t.getClass().getName().contains("ReparsedSuccessfullyException")) {
-      myLogger.error("Do not log ProcessCanceledException. Logged at: ", new Throwable());
+      myLogger.error("Do not log ReparsedSuccessfullyException. Thrown at: ", t);
+      myLogger.error("Do not log ReparsedSuccessfullyException. Logged at: ", new Throwable());
       throw (RuntimeException)t;
     }
 
