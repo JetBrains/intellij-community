@@ -25,7 +25,6 @@ import com.intellij.psi.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +33,6 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.text.MessageFormat;
 import java.util.*;
@@ -271,14 +269,12 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
         myBuilders.put(typeName, builder);
 
-        final HierarchyNodeDescriptor baseDescriptor = structure.getBaseDescriptor();
-        builder.buildNodeForElement(baseDescriptor);
-        final DefaultMutableTreeNode node = builder.getNodeForElement(baseDescriptor);
-        if (node != null) {
-          final TreePath path = new TreePath(node.getPath());
-          tree.expandPath(path);
-          TreeUtil.selectPath(tree, path);
-        }
+        final HierarchyNodeDescriptor descriptor = structure.getBaseDescriptor();
+        builder.select(descriptor, new Runnable() {
+          public void run() {
+            builder.expand(descriptor, null);
+          }
+        });
       }
       finally {
         restoreCursor();
