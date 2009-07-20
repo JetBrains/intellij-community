@@ -102,7 +102,10 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     while (rangeEnd instanceof PsiWhiteSpace || hasElementType(rangeEnd, GroovyTokenTypes.mSEMI)) {
       rangeEnd = rangeEnd.getNextSibling();
     }
-    deleteChildRange(rangeStart, hasElementType(rangeEnd, GroovyTokenTypes.mNLS) ? rangeEnd : rangeEnd.getPrevSibling());
+    final PsiElement last = hasElementType(rangeEnd, GroovyTokenTypes.mNLS) ? rangeEnd : rangeEnd.getPrevSibling();
+    if (rangeStart != null && last != null) {
+      deleteChildRange(rangeStart, last);
+    }
   }
 
   private static boolean hasElementType(PsiElement next, final IElementType type) {
