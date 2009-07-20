@@ -80,12 +80,19 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       PsiElement element = token.getPrevSibling();
       while(element instanceof PsiWhiteSpace) element = element.getPrevSibling();
 
-      if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_START_TAG_START) {
-        PsiElement parent = element.getParent();
+      if (element instanceof XmlToken) {
+        if (((XmlToken)element).getTokenType() == XmlTokenType.XML_START_TAG_START) {
+          PsiElement parent = element.getParent();
 
-        if (parent instanceof XmlTag && !(token.getNextSibling() instanceof OuterLanguageElement)) {
-          XmlTag tag = (XmlTag)parent;
-          checkTag(tag);
+          if (parent instanceof XmlTag && !(token.getNextSibling() instanceof OuterLanguageElement)) {
+            checkTag((XmlTag)parent);
+          }
+        }
+      } else {
+        PsiElement parent = token.getParent();
+
+        if (parent instanceof XmlAttribute && !(token.getNextSibling() instanceof OuterLanguageElement)) {
+          checkAttribute((XmlAttribute) parent);
         }
       }
     }
@@ -305,7 +312,9 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     return tag instanceof HtmlTag && XmlUtil.HTML_URI.equals(tag.getNamespace()) ? HighlightInfoType.WARNING : HighlightInfoType.WRONG_REF;
   }
 
-  @Override public void visitXmlAttribute(XmlAttribute attribute) {
+  @Override public void visitXmlAttribute(XmlAttribute attribute) {}
+
+  private void checkAttribute(XmlAttribute attribute) {
     XmlTag tag = attribute.getParent();
 
     if (attribute.isNamespaceDeclaration()) {
