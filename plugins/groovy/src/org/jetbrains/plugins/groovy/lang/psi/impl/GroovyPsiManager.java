@@ -230,7 +230,7 @@ public class GroovyPsiManager {
       type = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, element, type);
     }
     if (!type.isValid()) {
-      LOG.error("Type is invalid: " + type);
+      LOG.error("Type is invalid: " + type + "; element: " + element + " of class " + element.getClass());
     }
     return PsiType.NULL.equals(type) ? null : type;
   }
