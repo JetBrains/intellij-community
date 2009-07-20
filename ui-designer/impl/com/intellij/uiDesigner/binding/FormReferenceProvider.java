@@ -106,9 +106,14 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     final PsiFile _f = PsiFileFactory.getInstance(project).createFileFromText("a.xml", file.getText());
 
     final XmlFile xmlFile = (XmlFile)_f;
-    final XmlDocument document = xmlFile.getDocument();
+    final XmlTag rootTag = ApplicationManager.getApplication().runReadAction(new Computable<XmlTag>() {
+      public XmlTag compute() {
+        final XmlDocument document = xmlFile.getDocument();
 
-    final XmlTag rootTag = document.getRootTag();
+        return document.getRootTag();
+      }
+    });
+
 
     if (rootTag == null || !Utils.FORM_NAMESPACE.equals(rootTag.getNamespace())) {
       return;
