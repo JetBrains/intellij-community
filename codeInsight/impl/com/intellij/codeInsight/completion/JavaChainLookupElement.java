@@ -151,7 +151,11 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   }
 
   public PsiType getType() {
-    return JavaCompletionUtil.getQualifiedMemberReferenceType(JavaCompletionUtil.getLookupElementType(myQualifier), (PsiMember)getObject());
+    final Object object = getObject();
+    if (object instanceof PsiMember) {
+      return JavaCompletionUtil.getQualifiedMemberReferenceType(JavaCompletionUtil.getLookupElementType(myQualifier), (PsiMember)object);
+    }
+    return ((PsiVariable) object).getType();
   }
 
 }
