@@ -53,7 +53,6 @@ public class TypeArguments implements GroovyElementTypes {
 
     if (ParserUtils.getToken(builder, mGT)) {
       rb.drop();
-      ParserUtils.getToken(builder, mNLS);
     } else {
       rb.rollbackTo();
       builder.error(GroovyBundle.message("gt.expected"));
