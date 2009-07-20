@@ -287,7 +287,7 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
 
     @NonNls
     private static String calcMethodName(final String methodSignature) {
-      final String s = methodSignature.split("\\(", 2)[0];
+      final String s = StringUtil.split(methodSignature, "(").get(0);
       return s.length() == 0 ? "<none>" : s;
     }
 
