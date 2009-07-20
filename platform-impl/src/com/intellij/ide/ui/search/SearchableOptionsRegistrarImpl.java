@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.DocumentEvent;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * User: anna
@@ -51,6 +52,8 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl");
   public static final int LOAD_FACTOR = 20;
+  @NonNls
+  private static final Pattern REG_EXP = Pattern.compile("[\\W&&[^_-]]");
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public SearchableOptionsRegistrarImpl() {
@@ -340,7 +343,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   public Set<String> getProcessedWordsWithoutStemming(@NotNull String text) {
     Set<String> result = new HashSet<String>();
     @NonNls final String toLowerCase = text.toLowerCase();
-    final String[] options = toLowerCase.split("[\\W&&[^_-]]");
+    final String[] options = REG_EXP.split(toLowerCase);
     if (options != null) {
       for (String opt : options) {
         if (opt == null) continue;
@@ -356,7 +359,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   public Set<String> getProcessedWords(@NotNull String text) {
     Set<String> result = new HashSet<String>();
     @NonNls final String toLowerCase = text.toLowerCase();
-    final String[] options = toLowerCase.split("[\\W&&[^_-]]");
+    final String[] options = REG_EXP.split(toLowerCase);
     if (options != null) {
       for (String opt : options) {
         if (isStopWord(opt)) continue;
