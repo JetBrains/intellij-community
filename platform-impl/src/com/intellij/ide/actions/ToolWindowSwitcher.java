@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
@@ -40,7 +41,7 @@ import java.util.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class ToolWindowSwitcher extends AnAction {
+public class ToolWindowSwitcher extends AnAction implements DumbAware {
   private static volatile ToolWindowSwitcherPanel SWITCHER = null;
   private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
   private static final Color SEPARATOR_COLOR = BORDER_COLOR.brighter();
