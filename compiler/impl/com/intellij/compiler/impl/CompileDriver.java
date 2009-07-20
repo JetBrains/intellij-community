@@ -1703,6 +1703,10 @@ public class CompileDriver {
       for (File file : nonExistingOutputPaths) {
         final boolean succeeded = file.mkdirs();
         if (!succeeded) {
+          if (file.exists()) {
+            // for overlapping paths, this one might have been created as an intermediate path on a previous iteration
+            continue;
+          }
           Messages.showMessageDialog(myProject, CompilerBundle.message("error.failed.to.create.directory", file.getPath()),
                                      CommonBundle.getErrorTitle(), Messages.getErrorIcon());
           return false;
