@@ -30,7 +30,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
@@ -57,6 +59,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.regex.Pattern;
 
 public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   private final GroovyScriptConfigurationFactory factory;
@@ -137,13 +140,21 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   }
 
   private void configureJavaParams(JavaParameters params, Module module) throws CantRunException {
-
-    // Setting up classpath
-    RunnerUtil.configureScriptSystemClassPath(params, module);
-
     params.setCharset(null);
+    params.setJdk(ModuleRootManager.getInstance(module).getSdk());
 
     params.setWorkingDirectory(getAbsoluteWorkDir());
+
+    final Pattern pattern = Pattern.compile(".*[\\\\/]groovy[^\\\\/]*jar");
+    groovyJar:
+    for (Library library : GroovyConfigUtils.getInstance().getSDKLibrariesByModule(module)) {
+      for (VirtualFile root : library.getFiles(OrderRootType.CLASSES)) {
+        if (pattern.matcher(root.getPresentableUrl()).matches()) {
+          params.getClassPath().add(root);
+          break groovyJar;
+        }
+      }
+    }
 
     //add starter configuration parameters
     String groovyHome = getGroovyHome(module);
