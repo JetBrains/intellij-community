@@ -76,7 +76,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     private void checkAssignability(@NotNull PsiType expectedType, @NotNull GrExpression expression, GroovyPsiElement element) {
       if (PsiUtil.isRawClassMemberAccess(expression)) return; //GRVY-2197
       final PsiType rType = expression.getType();
-      if (!TypesUtil.isAssignable(expectedType, rType, element.getManager(), element.getResolveScope())) {
+      if (rType != null && !TypesUtil.isAssignable(expectedType, rType, element.getManager(), element.getResolveScope())) {
         registerError(element, rType.getPresentableText(), expectedType.getPresentableText());
       }
     }
