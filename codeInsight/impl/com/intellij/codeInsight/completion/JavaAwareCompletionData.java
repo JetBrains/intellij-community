@@ -188,8 +188,7 @@ public class JavaAwareCompletionData extends CompletionData{
       final String className = containingClass.getName();
       ret.setLookupString(className + "." + ret.getLookupString());
     }
-    ret.setAttribute(LookupItem.FORCE_QUALIFY, "");
-    return ret;
+    return ret.forceQualify();
   }
 
 

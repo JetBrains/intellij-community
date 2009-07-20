@@ -250,6 +250,11 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return this;
   }
 
+  public LookupItem<T> forceQualify() {
+    setAttribute(FORCE_QUALIFY, "");
+    return this;
+  }
+
   public LookupItem<T> setDeprecated(boolean deprecated) {
     setAttribute(DEPRECATED_ATTR, deprecated ? "" : null);
     return this;
