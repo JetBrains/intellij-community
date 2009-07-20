@@ -371,9 +371,10 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     public Object[] getVariants() {
       final List<MutableLookupElement<String>> variants = new ArrayList<MutableLookupElement<String>>();
 
-      final XmlElementDescriptor parentDescriptor = getParent().getDescriptor();
+      final XmlTag declarationTag = getParent();
+      LOG.assertTrue(declarationTag.isValid());
+      final XmlElementDescriptor parentDescriptor = declarationTag.getDescriptor();
       if (parentDescriptor != null){
-        final XmlTag declarationTag = getParent();
         final XmlAttribute[] attributes = declarationTag.getAttributes();
         XmlAttributeDescriptor[] descriptors = parentDescriptor.getAttributesDescriptors(declarationTag);
 
