@@ -17,6 +17,8 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="Ant" level="project" />
+    <orderEntry type="library" name="JUnit3" level="project" />
   </component>
 </module>
 

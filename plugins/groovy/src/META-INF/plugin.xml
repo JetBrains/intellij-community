@@ -122,6 +122,9 @@
 
     <directClassInheritorsSearch implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyDirectInheritorsSearcher"/>
 
+    <!--TestRun-->
+    <testSrcLocator implementation="org.jetbrains.plugins.grails.tests.runner.GrailsUrlProvider"/>
+    
     <!--Run/debug-->
     <configurationType implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType"/>
     <configurationProducer implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationProducer"/>
