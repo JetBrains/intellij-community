@@ -605,16 +605,26 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     myCurrentConfigurable = configurable;
 
     if (configurable != null) {
-      myDetails.setContent(configurable.createComponent());
-      if (!isInitialized(configurable)) {
-        configurable.reset();
-        initializeConfigurable(configurable);
+      final JComponent comp = configurable.createComponent();
+      if (comp == null) {
+        setEmpty();
+        LOG.error("createComponent() returned null. configurable=" + configurable);
+      } else {
+        myDetails.setContent(comp);
+        if (!isInitialized(configurable)) {
+          configurable.reset();
+          initializeConfigurable(configurable);
+        }
+         myHistory.pushPlaceForElement(TREE_OBJECT, configurable.getEditableObject());
       }
-       myHistory.pushPlaceForElement(TREE_OBJECT, configurable.getEditableObject());
     } else {
-      myDetails.setContent(null);
-      myDetails.setEmptyContentText(getEmptySelectionString());
+      setEmpty();
     }
+  }
+
+  private void setEmpty() {
+    myDetails.setContent(null);
+    myDetails.setEmptyContentText(getEmptySelectionString());
   }
 
   public String getHelpTopic() {
