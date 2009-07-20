@@ -184,6 +184,9 @@ public class CompletionData {
 
     final String prefix = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
+        if (!insertedElement.isValid()) {
+          return "";
+        }
         return getReferencePrefix(insertedElement, offsetInFile);
       }
     });
