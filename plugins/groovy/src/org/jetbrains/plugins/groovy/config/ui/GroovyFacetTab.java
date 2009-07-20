@@ -122,7 +122,7 @@ public class GroovyFacetTab extends FacetEditorTab {
   public void reset() {
     (myConfiguration.isCompileGroovyFiles() ? myCompile : myCopyToOutput).setSelected(true);
     final Boolean isGrails = myConfiguration.getGrailsApplication();
-    myIsGrails.setEnabled(isGrails != null);
+    myIsGrails.setEnabled(hasGrailsLibrary());
     myIsGrails.setSelected(isGrails != null && isGrails.booleanValue());
     myManagedLibrariesEditor.updateLibraryList();
   }
