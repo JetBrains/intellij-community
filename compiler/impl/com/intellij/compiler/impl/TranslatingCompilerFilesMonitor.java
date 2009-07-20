@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.PersistentStringEnumerator;
@@ -195,77 +194,64 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           final Map<VirtualFile, SourceFileInfo> compiledSources = new HashMap<VirtualFile, SourceFileInfo>();
           final Set<VirtualFile> forceRecompile = new HashSet<VirtualFile>();
 
-          CompilerUtil.runInContext(context, "Saving compiled files info...", new ThrowableRunnable<IOException>(){
-            public void run() throws IOException {
-              context.getProgressIndicator().setFraction(0);
-              int i =0;
-              for (TranslatingCompiler.OutputItem item : successfullyCompiled) {
-                context.getProgressIndicator().checkCanceled();
-                final VirtualFile sourceFile = item.getSourceFile();
-                context.getProgressIndicator().setText2(sourceFile.getPresentableUrl());
-                context.getProgressIndicator().setFraction(1.0*i++/successfullyCompiled.length/2); //first loop
-                final boolean isSourceValid = sourceFile.isValid();
-                SourceFileInfo srcInfo = compiledSources.get(sourceFile);
-                if (isSourceValid && srcInfo == null) {
-                  srcInfo = loadSourceInfo(sourceFile);
-                  if (srcInfo != null) {
-                    srcInfo.clearPaths(projectId);
+          for (TranslatingCompiler.OutputItem item : successfullyCompiled) {
+            final VirtualFile sourceFile = item.getSourceFile();
+            final boolean isSourceValid = sourceFile.isValid();
+            SourceFileInfo srcInfo = compiledSources.get(sourceFile);
+            if (isSourceValid && srcInfo == null) {
+              srcInfo = loadSourceInfo(sourceFile);
+              if (srcInfo != null) {
+                srcInfo.clearPaths(projectId);
+              }
+              else {
+                srcInfo = new SourceFileInfo();
+              }
+              compiledSources.put(sourceFile, srcInfo);
+            }
+
+            final String outputPath = item.getOutputPath();
+            if (outputPath != null) { // can be null for packageinfo
+              final VirtualFile outputFile = lfs.findFileByPath(outputPath);
+
+              //assert outputFile != null : "Virtual file was not found for \"" + outputPath + "\"";
+
+              if (outputFile != null) {
+                if (!sourceFile.equals(outputFile)) {
+                  final String outputRoot = item.getOutputRootDirectory();
+                  final String className = MakeUtil.relativeClassPathToQName(outputPath.substring(outputRoot.length()), '/');
+                  if (isSourceValid) {
+                    srcInfo.addOutputPath(projectId, outputPath);
+                    saveOutputInfo(outputFile, new OutputFileInfo(sourceFile.getPath(), className));
                   }
                   else {
-                    srcInfo = new SourceFileInfo();
-                  }
-                  compiledSources.put(sourceFile, srcInfo);
-                }
-
-                final String outputPath = item.getOutputPath();
-                if (outputPath != null) { // can be null for packageinfo
-                  final VirtualFile outputFile = lfs.findFileByPath(outputPath);
-
-                  //assert outputFile != null : "Virtual file was not found for \"" + outputPath + "\"";
-
-                  if (outputFile != null) {
-                    if (!sourceFile.equals(outputFile)) {
-                      final String outputRoot = item.getOutputRootDirectory();
-                      final String className = MakeUtil.relativeClassPathToQName(outputPath.substring(outputRoot.length()), '/');
-                      if (isSourceValid) {
-                        srcInfo.addOutputPath(projectId, outputPath);
-                        saveOutputInfo(outputFile, new OutputFileInfo(sourceFile.getPath(), className));
-                      }
-                      else {
-                        markOutputPathForDeletion(projectId, outputPath, className, sourceFile.getUrl());
-                      }
-                    }
-                  }
-                  else {  // output file was not found
-                    LOG.warn("TranslatingCompilerFilesMonitor.update():  Virtual file was not found for \"" + outputPath + "\"");
-                    if (isSourceValid) {
-                      forceRecompile.add(sourceFile);
-                    }
+                    markOutputPathForDeletion(projectId, outputPath, className, sourceFile.getUrl());
                   }
                 }
               }
-              final long compilationStartStamp = ((CompileContextEx)context).getStartCompilationStamp();
-              i = 0;
-              for (Map.Entry<VirtualFile, SourceFileInfo> entry : compiledSources.entrySet()) {
-                context.getProgressIndicator().checkCanceled();
-                final SourceFileInfo info = entry.getValue();
-                final VirtualFile file = entry.getKey();
-                context.getProgressIndicator().setText2(file.getPresentableUrl());
-                context.getProgressIndicator().setFraction(0.5+1.0 * i++ / compiledSources.size()/2);  //2nd loop
-
-                final long fileStamp = file.getTimeStamp();
-                info.updateTimestamp(projectId, fileStamp);
-                saveSourceInfo(file, info);
-                removeSourceForRecompilation(projectId, Math.abs(getFileId(file)));
-                if (fileStamp > compilationStartStamp && !((CompileContextEx)context).isGenerated(file) || forceRecompile.contains(file)) {
-                  // changes were made during compilation, need to re-schedule compilation
-                  // it is important to invoke removeSourceForRecompilation() before to make sure
-                  // the corresponding output paths will be scheduled for deletion
-                  addSourceForRecompilation(projectId, file, info);
+              else {  // output file was not found
+                LOG.warn("TranslatingCompilerFilesMonitor.update():  Virtual file was not found for \"" + outputPath + "\"");
+                if (isSourceValid) {
+                  forceRecompile.add(sourceFile);
                 }
               }
             }
-          });
+          }
+          final long compilationStartStamp = ((CompileContextEx)context).getStartCompilationStamp();
+          for (Map.Entry<VirtualFile, SourceFileInfo> entry : compiledSources.entrySet()) {
+            final SourceFileInfo info = entry.getValue();
+            final VirtualFile file = entry.getKey();
+
+            final long fileStamp = file.getTimeStamp();
+            info.updateTimestamp(projectId, fileStamp);
+            saveSourceInfo(file, info);
+            removeSourceForRecompilation(projectId, Math.abs(getFileId(file)));
+            if ((fileStamp > compilationStartStamp && !((CompileContextEx)context).isGenerated(file)) || forceRecompile.contains(file)) {
+              // changes were made during compilation, need to re-schedule compilation
+              // it is important to invoke removeSourceForRecompilation() before to make sure
+              // the corresponding output paths will be scheduled for deletion
+              addSourceForRecompilation(projectId, file, info);
+            }
+          }
         }
         catch (IOException e) {
           exceptions[0] = e;
