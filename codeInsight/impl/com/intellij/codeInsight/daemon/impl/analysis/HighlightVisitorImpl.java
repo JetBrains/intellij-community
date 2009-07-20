@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -704,7 +705,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
       }
 
-      if (!variable.hasModifierProperty(PsiModifier.FINAL) && HighlightControlFlowUtil.isReassigned(variable, myFinalVarProblems, myParameterIsReassigned)) {
+      if (!variable.hasModifierProperty(PsiModifier.FINAL) && isReassigned(variable)) {
         myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, ref));
       }
       else {
@@ -840,7 +841,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitVariable(variable);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVariableInitializerType(variable));
 
-    if (HighlightControlFlowUtil.isReassigned(variable, myFinalVarProblems, myParameterIsReassigned)) {
+    if (isReassigned(variable)) {
       myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, variable.getNameIdentifier()));
     }
     else {
@@ -849,6 +850,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         if (child instanceof PsiErrorElement && child.getPrevSibling() == variable.getNameIdentifier()) return;
       }
       myHolder.add(HighlightNamesUtil.highlightVariable(variable, variable.getNameIdentifier()));
+    }
+  }
+
+  private boolean isReassigned(PsiVariable variable) {
+    try {
+      return HighlightControlFlowUtil.isReassigned(variable, myFinalVarProblems, myParameterIsReassigned);
+    }
+    catch (IndexNotReadyException e) {
+      return false;
     }
   }
 }
