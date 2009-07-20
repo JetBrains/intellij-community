@@ -933,7 +933,7 @@ public class CompileDriver {
                     final File file = trinity.getFirst();
                     final boolean deleted = deleteFile(file);
                     if (isTestMode && deleted) {
-                      CompilerManagerImpl.addDeletedPath(FileUtil.toSystemIndependentName(file.getPath()));
+                      CompilerManagerImpl.addDeletedPath(file.getPath());
                     }
                   }
                 }
@@ -1357,7 +1357,13 @@ public class CompileDriver {
             context.getProgressIndicator().setFraction((double)++current / total);
             context.getProgressIndicator().setText2(outputPath.getPath());
             filesToRefresh.add(outputPath);
+            if (isTestMode) {
+              LOG.assertTrue(outputPath.exists());
+            }
             if (!deleteFile(outputPath)) {
+              if (isTestMode && outputPath.exists()) {
+                LOG.error("Was not able to delete output file: " + outputPath.getPath());
+              }
               continue;
             }
             wereFilesDeleted[0] = true;
