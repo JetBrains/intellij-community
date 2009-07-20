@@ -814,7 +814,7 @@ public class PluginManager {
 
       URI fileURL = file.toURI();
       URL jarURL = new URL(
-        "jar:" + fileURL.toASCIIString().replace("!", "%21") + "!/META-INF/" + fileName
+        "jar:" + StringUtil.replace(fileURL.toASCIIString(), "!", "%21") + "!/META-INF/" + fileName
       );
 
       descriptor.readExternal(jarURL);
