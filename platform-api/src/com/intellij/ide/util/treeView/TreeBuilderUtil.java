@@ -18,6 +18,7 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.openapi.diagnostic.Logger;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -28,6 +29,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TreeBuilderUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.TreeBuilderUtil");
+
   public static void storePaths(AbstractTreeBuilder treeBuilder, DefaultMutableTreeNode root, List<Object> pathsToExpand, List<Object> selectionPaths, boolean storeElementsOnly) {
     if (!treeBuilder.wasRootNodeInitialized()) return;
 
@@ -47,12 +50,16 @@ public class TreeBuilderUtil {
     for (final Object childNode1 : childNodes) {
       DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)childNode1;
       TreePath path = new TreePath(childNode.getPath());
+      final Object userObject = childNode.getUserObject();
       if (tree.isPathSelected(path)) {
-        selectionPaths.add(storeElementsOnly ? ((NodeDescriptor)childNode.getUserObject()).getElement() : path);
+        if (!(userObject instanceof NodeDescriptor)) {
+          LOG.assertTrue(false, "Node: " + childNode + "; userObject: " + userObject + " of class " + userObject.getClass());
+        }
+        selectionPaths.add(storeElementsOnly ? ((NodeDescriptor)userObject).getElement() : path);
       }
       if (tree.isExpanded(path) || childNode.getChildCount() == 0) {
-        pathsToExpand.add(storeElementsOnly && childNode.getUserObject()instanceof NodeDescriptor
-                          ? ((NodeDescriptor)childNode.getUserObject()).getElement()
+        pathsToExpand.add(storeElementsOnly && userObject instanceof NodeDescriptor
+                          ? ((NodeDescriptor)userObject).getElement()
                           : path);
         _storePaths(tree, childNode, pathsToExpand, selectionPaths, storeElementsOnly);
       }
