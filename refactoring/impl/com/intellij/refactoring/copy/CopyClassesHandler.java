@@ -1,58 +1,44 @@
 package com.intellij.refactoring.copy;
 
-import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditorHelper;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class CopyClassesHandler implements CopyHandlerDelegate {
   public boolean canCopy(PsiElement[] elements) {
-    elements = convertToTopLevelClass(elements);
-    for (PsiElement element : elements) {
-      if (element instanceof JspClass || element instanceof JspHolderMethod) return false;
-    }
-
-    if (elements.length == 1) {
-      if (elements[0] instanceof PsiClass && elements[0].getParent() instanceof PsiFile && elements[0].getLanguage() == StdLanguages.JAVA) {
-        return true;
-      }
-    }
-
-    return false;
+    return canCopyClass(elements);
   }
 
-  private static PsiElement[] convertToTopLevelClass(final PsiElement[] elements) {
+  public static boolean canCopyClass(PsiElement... elements) {
+    return convertToTopLevelClass(elements) != null;
+  }
+
+  @Nullable
+  private static PsiClass convertToTopLevelClass(final PsiElement[] elements) {
     if (elements.length == 1) {
-      return new PsiElement[] { getTopLevelClass(elements [0]) };
+      return getTopLevelClass(elements [0]);
     }
-    return elements;
+    return null;
   }
 
   public void doCopy(PsiElement[] elements, PsiDirectory defaultTargetDirectory) {
-    elements = convertToTopLevelClass(elements);
-    Project project = elements [0].getProject();
     FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.copyClass");
-    PsiClass aClass = (PsiClass)elements[0];
+    PsiClass aClass = convertToTopLevelClass(elements);
+    assert aClass != null;
+    Project project = aClass.getProject();
     if (defaultTargetDirectory == null) {
-      final PsiFile containingFile = aClass.getContainingFile();
-      if (containingFile != null) { // ???
-        defaultTargetDirectory = containingFile.getContainingDirectory();
-      }
+      defaultTargetDirectory = aClass.getContainingFile().getContainingDirectory();
     }
     CopyClassDialog dialog = new CopyClassDialog(aClass, defaultTargetDirectory, project, false);
     dialog.setTitle(RefactoringBundle.message("copy.handler.copy.class"));
@@ -65,9 +51,8 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
   }
 
   public void doClone(PsiElement element) {
-    element = getTopLevelClass(element);
     FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.copyClass");
-    PsiClass aClass = (PsiClass)element;
+    PsiClass aClass = getTopLevelClass(element);
     Project project = element.getProject();
 
     CopyClassDialog dialog = new CopyClassDialog(aClass, null, project, true);
@@ -121,41 +106,31 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
   public static PsiElement doCopyClass(final PsiClass aClass, final String copyClassName, final PsiDirectory targetDirectory)
       throws IncorrectOperationException {
     PsiElement elementToCopy = aClass.getNavigationElement();
-    ChangeContextUtil.encodeContextInfo(elementToCopy, true);
-    PsiClass classCopy = (PsiClass)elementToCopy.copy();
-    ChangeContextUtil.clearContextInfo(aClass);
+
+    final PsiClass classCopy = (PsiClass)elementToCopy.copy();
     classCopy.setName(copyClassName);
-    final String fileName = copyClassName + "." + StdFileTypes.JAVA.getDefaultExtension();
+
+    final String fileName = copyClassName + "." + elementToCopy.getContainingFile().getOriginalFile().getViewProvider().getVirtualFile().getExtension();
     final PsiFile createdFile = targetDirectory.copyFileFrom(fileName, elementToCopy.getContainingFile());
     PsiElement newElement = createdFile;
-    if (createdFile instanceof PsiJavaFile) {
-      final PsiClass[] classes = ((PsiJavaFile)createdFile).getClasses();
-      assert classes.length > 0 : createdFile.getText();
-      createdFile.deleteChildRange(classes[0], classes[classes.length - 1]);
-      PsiClass newClass = (PsiClass)createdFile.add(classCopy);
-      ChangeContextUtil.decodeContextInfo(newClass, newClass, null);
-      replaceClassOccurrences(newClass, (PsiClass) elementToCopy);
+    if (createdFile instanceof PsiClassOwner) {
+      for (final PsiClass psiClass : ((PsiClassOwner)createdFile).getClasses()) {
+        if (!(psiClass instanceof SyntheticElement)) {
+          createdFile.deleteChildRange(psiClass, psiClass);
+        }
+      }
+
+      final PsiClass newClass = (PsiClass)createdFile.add(classCopy);
+
+      for (final PsiReference reference : ReferencesSearch.search(aClass, new LocalSearchScope(newClass)).findAll()) {
+        reference.bindToElement(newClass);
+      }
+
+      new OptimizeImportsProcessor(aClass.getProject(), createdFile).run();
+
       newElement = newClass;
     }
     return newElement;
-  }
-
-  private static void replaceClassOccurrences(final PsiClass newClass, final PsiClass oldClass) throws IncorrectOperationException {
-    final List<PsiJavaCodeReferenceElement> selfReferences = new ArrayList<PsiJavaCodeReferenceElement>();
-    newClass.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitReferenceElement(final PsiJavaCodeReferenceElement reference) {
-        super.visitReferenceElement(reference);
-        final PsiElement target = reference.resolve();
-        if (target == null) return;
-        if (target == oldClass || target.getNavigationElement() == oldClass) {
-          selfReferences.add(reference);
-        }
-      }
-    });
-    for (PsiJavaCodeReferenceElement selfReference : selfReferences) {
-      selfReference.bindToElement(newClass);
-    }
   }
 
   @Nullable
@@ -165,9 +140,15 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
       if (element instanceof PsiClass && element.getParent() instanceof PsiFile) break;
       element = element.getParent();
     }
-    if (element instanceof PsiJavaFile) {
-      PsiClass[] classes = ((PsiJavaFile)element).getClasses();
+    if (element instanceof PsiClassOwner) {
+      PsiClass[] classes = ((PsiClassOwner)element).getClasses();
       if (classes.length > 0) {
+        for (final PsiClass aClass : classes) {
+          if (aClass instanceof SyntheticElement) {
+            return null;
+          }
+        }
+
         element = classes[0];
       }
     }

@@ -5,7 +5,10 @@
  * SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 
-import java.util.*;
+import java.util.AbstractList;
+import java.util.Collection;
+import java.util.List;
+import java.util.RandomAccess;
 
 /**
  * Resizable-array implementation of the <tt>List</tt> interface.  Implements
