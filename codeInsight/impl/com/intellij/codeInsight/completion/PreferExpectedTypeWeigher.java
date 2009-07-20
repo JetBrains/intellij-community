@@ -57,7 +57,7 @@ public class PreferExpectedTypeWeigher extends CompletionWeigher {
     if (expectedInfos == null) return MyResult.normal;
 
     PsiType itemType = JavaCompletionUtil.getPsiType(object);
-    if (itemType == null) return MyResult.normal;
+    if (itemType == null || !itemType.isValid()) return MyResult.normal;
 
     final LookupItem lookupItem = item.as(LookupItem.class);
     if (lookupItem != null) {
@@ -78,6 +78,10 @@ public class PreferExpectedTypeWeigher extends CompletionWeigher {
     for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
       final PsiType defaultType = expectedInfo.getDefaultType();
       final PsiType expectedType = expectedInfo.getType();
+      if (!expectedType.isValid()) {
+        return MyResult.normal;
+      }
+
       if (defaultType != expectedType) {
         if (defaultType.equals(itemType)) {
           return MyResult.exactlyDefault;
