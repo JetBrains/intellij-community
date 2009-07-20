@@ -1,11 +1,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -20,7 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -53,11 +51,7 @@ public class GrTypeDefinitionBodyImpl extends GroovyPsiElementImpl implements Gr
     if (myFields == null) {
       GrVariableDeclaration[] declarations = findChildrenByClass(GrVariableDeclaration.class);
       if (declarations.length == 0) return GrField.EMPTY_ARRAY;
-      List<GrField> result = new SortedList<GrField>(new Comparator<GrField>() {
-        public int compare(GrField o1, GrField o2) {
-          return o1.getTextOffset() < o2.getTextOffset() ? -1 : 1;
-        }
-      });
+      List<GrField> result = new ArrayList<GrField>();
       for (GrVariableDeclaration declaration : declarations) {
         GrVariable[] variables = declaration.getVariables();
         for (GrVariable variable : variables) {
