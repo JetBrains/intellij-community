@@ -68,8 +68,7 @@ public class LoadingOrder {
     myName = text;
     boolean last = false;
     boolean first = false;
-    final String[] strings = text.split(",");
-    for (final String string : strings) {
+    for (final String string : StringUtil.split(text, ",")) {
       String trimmed = string.trim();
       if (trimmed.equalsIgnoreCase(FIRST_STR)) first = true;
       else if (trimmed.equalsIgnoreCase(LAST_STR)) last = true;
