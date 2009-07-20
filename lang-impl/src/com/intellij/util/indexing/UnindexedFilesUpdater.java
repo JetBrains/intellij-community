@@ -166,6 +166,10 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
                     return;
                   }
 
+                  if (myProject.isDisposed()) {
+                    return;
+                  }
+
                   updateUi.consume(file);
 
                   doProcessFile(fileContent);
