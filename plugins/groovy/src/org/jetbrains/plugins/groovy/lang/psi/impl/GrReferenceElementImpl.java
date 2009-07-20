@@ -123,7 +123,7 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
       return bindWithQualifiedRef(qName);
     }
 
-    throw new IncorrectOperationException("Cannot bind");
+    throw new IncorrectOperationException("Cannot bind to:" + element + " of class " + element.getClass());
   }
 
   private boolean mayInsertImport() {
