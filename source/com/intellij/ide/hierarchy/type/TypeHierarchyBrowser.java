@@ -1,5 +1,6 @@
 package com.intellij.ide.hierarchy.type;
 
+import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.ide.hierarchy.TypeHierarchyBrowserBase;
@@ -15,10 +16,13 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.ui.PopupHandler;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.text.MessageFormat;
 import java.util.Comparator;
-import java.util.Hashtable;
+import java.util.Map;
 
 public final class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.type.TypeHierarchyBrowser");
@@ -32,38 +36,45 @@ public final class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
     return psiElement instanceof PsiClass && ((PsiClass)psiElement).isInterface();
   }
 
-  protected void createTrees(final Hashtable<String, JTree> trees) {
+  protected void createTrees(@NotNull Map<String, JTree> trees) {
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_TYPE_HIERARCHY_POPUP);
     final BaseOnThisTypeAction baseOnThisTypeAction = new BaseOnThisTypeAction();
-    final JTree tree1 = createTreeWithoutActions();
+    final JTree tree1 = createTree(true);
     PopupHandler.installPopupHandler(tree1, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
     baseOnThisTypeAction
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree1);
     trees.put(TYPE_HIERARCHY_TYPE, tree1);
 
-    final JTree tree2 = createTreeWithoutActions();
+    final JTree tree2 = createTree(true);
     PopupHandler.installPopupHandler(tree2, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
     baseOnThisTypeAction
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree2);
     trees.put(SUPERTYPES_HIERARCHY_TYPE, tree2);
 
-    final JTree tree3 = createTreeWithoutActions();
+    final JTree tree3 = createTree(true);
     PopupHandler.installPopupHandler(tree3, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
     baseOnThisTypeAction
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree3);
     trees.put(SUBTYPES_HIERARCHY_TYPE, tree3);
   }
 
-  protected PsiClass getPsiElementFromNodeDescriptor(final Object userObject) {
-    if (!(userObject instanceof TypeHierarchyNodeDescriptor)) return null;
-    return ((TypeHierarchyNodeDescriptor)userObject).getPsiClass();
+
+  @Override
+  protected String getContentDisplayName(@NotNull String typeName, @NotNull PsiElement element) {
+    return MessageFormat.format(typeName, ClassPresentationUtil.getNameForClass((PsiClass)element, false));
   }
 
-  protected String getNameForClass(final PsiElement element) {
-    return ClassPresentationUtil.getNameForClass((PsiClass)element, false);
+  protected PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
+    if (!(descriptor instanceof TypeHierarchyNodeDescriptor)) return null;
+    return ((TypeHierarchyNodeDescriptor)descriptor).getPsiClass();
   }
 
-  protected boolean isApplicableElement(final PsiElement element) {
+  @Nullable
+  protected JPanel createLegendPanel() {
+    return null;
+  }
+
+  protected boolean isApplicableElement(@NotNull final PsiElement element) {
     return element instanceof PsiClass;
   }
 
@@ -71,7 +82,7 @@ public final class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
     return JavaHierarchyUtil.getComparator(myProject);
   }
 
-  protected HierarchyTreeStructure createHierarchyTreeStructure(final String typeName, final PsiElement psiElement) {
+  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final String typeName, @NotNull final PsiElement psiElement) {
     if (SUPERTYPES_HIERARCHY_TYPE.equals(typeName)) {
       return new SupertypesHierarchyTreeStructure(myProject, (PsiClass)psiElement);
     }

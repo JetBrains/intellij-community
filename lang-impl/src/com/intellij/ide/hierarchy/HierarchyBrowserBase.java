@@ -3,28 +3,52 @@ package com.intellij.ide.hierarchy;
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.Content;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.TreeToolTipHandler;
+import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.util.ArrayList;
 
 /**
  * @author yole
  */
 public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel implements HierarchyBrowser, Disposable, DataProvider {
-  protected Content myContent;
+  private static final HierarchyNodeDescriptor[] EMPTY_DESCRIPTORS = new HierarchyNodeDescriptor[0];
 
-  protected HierarchyBrowserBase() {
+  protected Content myContent;
+  private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
+  protected final Project myProject;
+
+  protected HierarchyBrowserBase(Project project) {
     super(true, true);
+    myProject = project;
+    myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
+
+      protected boolean isAutoScrollMode() {
+        return HierarchyBrowserManager.getInstance(myProject).getState().IS_AUTOSCROLL_TO_SOURCE;
+      }
+
+      protected void setAutoScrollMode(final boolean state) {
+        HierarchyBrowserManager.getInstance(myProject).getState().IS_AUTOSCROLL_TO_SOURCE = state;
+      }
+    };
   }
 
   public void setContent(final Content content) {
@@ -45,89 +69,146 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
 
   protected ActionToolbar createToolbar(final String place, final String helpID) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
-    addSpecificActions(actionGroup);
+    appendActions(actionGroup, helpID);
+    return ActionManager.getInstance().createActionToolbar(place, actionGroup, true);
+  }
+
+  protected void appendActions(@NotNull DefaultActionGroup actionGroup, @Nullable String helpID) {
+    actionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
     actionGroup.add(new CloseAction());
     if (helpID != null) {
       actionGroup.add(new ContextHelpAction(helpID));
     }
-
-    return ActionManager.getInstance().createActionToolbar(place, actionGroup, true);
-  }
-
-  protected void addSpecificActions(DefaultActionGroup actionGroup) {
   }
 
   protected abstract JTree getCurrentTree();
 
   @Nullable
-  protected TreePath getSelectedPath() {
+  protected abstract PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor);
+
+  protected DefaultMutableTreeNode getSelectedNode() {
     final JTree tree = getCurrentTree();
     if (tree == null) return null;
-    return tree.getSelectionPath();
-  }
-
-  @Nullable
-  protected PsiElement extractPsiElement(final TreePath path) {
+    final TreePath path = tree.getSelectionPath();
     if (path == null) return null;
     final Object lastPathComponent = path.getLastPathComponent();
     if (!(lastPathComponent instanceof DefaultMutableTreeNode)) return null;
-    final Object userObject = ((DefaultMutableTreeNode)lastPathComponent).getUserObject();
-    return getPsiElementFromNodeDescriptor(userObject);
+    return (DefaultMutableTreeNode)lastPathComponent;
   }
 
-  @Nullable
-  protected abstract PsiElement getPsiElementFromNodeDescriptor(Object userObject);
-
-  @Nullable
-  protected PsiElement getSelectedElement() {
-    final TreePath path = getSelectedPath();
-    return extractPsiElement(path);
+  protected final PsiElement getSelectedElement() {
+    final DefaultMutableTreeNode node = getSelectedNode();
+    HierarchyNodeDescriptor descriptor = getDescriptor(node);
+    return descriptor != null ? getElementFromDescriptor(descriptor) : null;
   }
 
-  protected PsiElement[] getSelectedElements() {
-    JTree currentTree = getCurrentTree();
-    if (currentTree == null) return PsiElement.EMPTY_ARRAY;
-    TreePath[] paths = currentTree.getSelectionPaths();
-    if (paths == null) return PsiElement.EMPTY_ARRAY;
-    ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
-    for (TreePath path : paths) {
-      PsiElement psiElement = extractPsiElement(path);
-      if (psiElement == null || !psiElement.isValid()) continue;
-      psiElements.add(psiElement);
+  protected HierarchyNodeDescriptor getDescriptor(DefaultMutableTreeNode node) {
+    final Object userObject = node.getUserObject();
+    if (userObject instanceof HierarchyNodeDescriptor) {
+      return (HierarchyNodeDescriptor)userObject;
     }
-    return psiElements.toArray(new PsiElement[psiElements.size()]);
+    return null;
   }
 
-  @Nullable
-  protected Navigatable[] getNavigatables() {
-    final PsiElement[] objects = getSelectedElements();
-    if (objects == null || objects.length == 0) return null;
+  public final HierarchyNodeDescriptor[] getSelectedDescriptors() {
+    final JTree tree = getCurrentTree();
+    if (tree == null) {
+      return EMPTY_DESCRIPTORS;
+    }
+    final TreePath[] paths = tree.getSelectionPaths();
+    if (paths == null || paths.length == 0) {
+      return EMPTY_DESCRIPTORS;
+    }
+    final ArrayList<HierarchyNodeDescriptor> list = new ArrayList<HierarchyNodeDescriptor>(paths.length);
+    for (final TreePath path : paths) {
+      final Object lastPathComponent = path.getLastPathComponent();
+      if (lastPathComponent instanceof DefaultMutableTreeNode) {
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
+        HierarchyNodeDescriptor descriptor = getDescriptor(node);
+        if (descriptor != null) {
+          list.add(descriptor);
+        }
+      }
+    }
+    return list.toArray(new HierarchyNodeDescriptor[list.size()]);
+  }
+
+  private PsiElement[] getSelectedElements() {
+    HierarchyNodeDescriptor[] descriptors = getSelectedDescriptors();
+    ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
+    for (HierarchyNodeDescriptor descriptor : descriptors) {
+      PsiElement element = getElementFromDescriptor(descriptor);
+      if (element != null) elements.add(element);
+    }
+    return elements.toArray(new PsiElement[elements.size()]);
+  }
+
+
+  private Navigatable[] getNavigatables() {
+    final HierarchyNodeDescriptor[] selectedDescriptors = getSelectedDescriptors();
+    if (selectedDescriptors == null || selectedDescriptors.length == 0) return null;
     final ArrayList<Navigatable> result = new ArrayList<Navigatable>();
-    for (final PsiElement element : objects) {
-      if (element.isValid() && element instanceof NavigatablePsiElement) {
-        result.add((NavigatablePsiElement) element);
+    for (HierarchyNodeDescriptor descriptor : selectedDescriptors) {
+      Navigatable navigatable = getNavigatable(descriptor);
+      if (navigatable != null) {
+        result.add(navigatable);
       }
     }
     return result.toArray(new Navigatable[result.size()]);
   }
 
-  public Object getData(@NonNls final String dataId) {
-    if (DataConstants.PSI_ELEMENT.equals(dataId)) {
-      final PsiElement anElement = getSelectedElement();
-      return anElement != null && anElement.isValid() ? anElement : null;
+  private Navigatable getNavigatable(HierarchyNodeDescriptor descriptor) {
+    if (descriptor instanceof Navigatable && descriptor.isValid()) {
+      return (Navigatable)descriptor;
     }
-    if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
-      return getNavigatables();
-    }
-    if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
-      return getSelectedElements();
+
+    PsiElement element = getElementFromDescriptor(descriptor);
+    if (element instanceof NavigatablePsiElement && element.isValid()) {
+      return (NavigatablePsiElement)element;
     }
     return null;
   }
 
-  public final class CloseAction extends CloseTabToolbarAction {
+  @Nullable
+  public Object getData(@NonNls final String dataId) {
+      if (DataConstants.PSI_ELEMENT.equals(dataId)) {
+      final PsiElement anElement = getSelectedElement();
+      return anElement != null && anElement.isValid() ? anElement : null;
+    }
+    if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
+      return getSelectedElements();
+    }
+    if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+      return null;
+    }
+    if (DataConstants.NAVIGATABLE.equals(dataId)) {
+      final DefaultMutableTreeNode selectedNode = getSelectedNode();
+      if (selectedNode == null) return null;
+      final HierarchyNodeDescriptor descriptor = getDescriptor(selectedNode);
+      if (descriptor == null) return null;
+      return getNavigatable(descriptor);
+    }
+    if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
+      return getNavigatables();
+    }
+    return null;
+  }
+
+  private final class CloseAction extends CloseTabToolbarAction {
     public final void actionPerformed(final AnActionEvent e) {
       myContent.getManager().removeContent(myContent, true);
     }
   }
+
+  protected void configureTree(Tree tree) {
+    tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
+    tree.setToggleClickCount(-1);
+    tree.setCellRenderer(new HierarchyNodeRenderer());
+    UIUtil.setLineStyleAngled(tree);
+    new TreeSpeedSearch(tree);
+    TreeUtil.installActions(tree);
+    TreeToolTipHandler.install(tree);
+    myAutoScrollToSourceHandler.install(tree);
+  }
+
 }

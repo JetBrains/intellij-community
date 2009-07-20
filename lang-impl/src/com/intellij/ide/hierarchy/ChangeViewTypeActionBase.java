@@ -18,7 +18,7 @@ abstract class ChangeViewTypeActionBase extends ToggleAction {
 
   public final boolean isSelected(final AnActionEvent event) {
     final TypeHierarchyBrowserBase browser = getTypeHierarchyBrowser(event.getDataContext());
-    return browser != null && getTypeName().equals(browser.getCurrentViewName());
+    return browser != null && getTypeName().equals(browser.getCurrentViewType());
   }
 
   protected abstract String getTypeName();
@@ -46,6 +46,6 @@ abstract class ChangeViewTypeActionBase extends ToggleAction {
   }
 
   protected static TypeHierarchyBrowserBase getTypeHierarchyBrowser(final DataContext context) {
-    return (TypeHierarchyBrowserBase)context.getData(TypeHierarchyBrowserBase.TYPE_HIERARCHY_BROWSER_ID);
+    return (TypeHierarchyBrowserBase)context.getData(TypeHierarchyBrowserBase.TYPE_HIERARCHY_BROWSER_DATA_KEY);
   }
 }
