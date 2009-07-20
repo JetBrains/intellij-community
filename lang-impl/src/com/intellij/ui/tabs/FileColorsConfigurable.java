@@ -56,7 +56,9 @@ public class FileColorsConfigurable implements Configurable, NonDefaultProjectCo
   }
 
   public void disposeUIResources() {
-    Disposer.dispose(myPanel);
-    myPanel = null;
+    if (myPanel !=  null) {
+      Disposer.dispose(myPanel);
+      myPanel = null;
+    }
   }
 }
