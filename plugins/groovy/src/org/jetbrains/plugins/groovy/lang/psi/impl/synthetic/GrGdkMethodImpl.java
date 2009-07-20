@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -33,6 +34,7 @@ import java.util.LinkedHashSet;
  * @author ven
  */
 public class GrGdkMethodImpl extends LightMethod implements GrGdkMethod {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl");
   private final PsiMethod myMethod;
 
   private LightParameterList myParameterList = null;
@@ -94,7 +96,9 @@ public class GrGdkMethodImpl extends LightMethod implements GrGdkMethod {
       public LightParameter[] compute() {
         LightParameter[] result = new LightParameter[parmNames.length];
         for (int i = 0; i < result.length; i++) {
-          result[i] = new LightParameter(manager, parmNames[i], null, originalParameters[i + 1].getType(), GrGdkMethodImpl.this);
+          final PsiParameter parameter = originalParameters[i + 1];
+          LOG.assertTrue(parameter.isValid());
+          result[i] = new LightParameter(manager, parmNames[i], null, parameter.getType(), GrGdkMethodImpl.this);
 
         }
         return result;
