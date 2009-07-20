@@ -7,8 +7,11 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +26,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   }
 
   public Collection<AbstractTreeNode> modify(AbstractTreeNode parent, Collection<AbstractTreeNode> children, ViewSettings settings) {
+    final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     for (final AbstractTreeNode child : children) {
       Object o = child.getValue();
@@ -30,7 +34,8 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
         final ViewSettings settings1 = ((ProjectViewNode)parent).getSettings();
         final PsiClassOwner classOwner = (PsiClassOwner)o;
         PsiClass[] classes = classOwner.getClasses();
-        if (classes.length == 1 && !(classes[0] instanceof SyntheticElement)) {
+        final VirtualFile file = classOwner.getVirtualFile();
+        if (classes.length == 1 && !(classes[0] instanceof SyntheticElement) && file != null && index.isInSourceContent(file)) {
           result.add(new ClassTreeNode(myProject, classes[0], settings1));
         } else {
           result.add(new PsiClassOwnerTreeNode(classOwner, settings1));
