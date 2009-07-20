@@ -23,8 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 /**
  * @author Maxim.Medvedev
@@ -91,6 +89,7 @@ public class GroovyChangeContextUtil {
           return;
         }
       }
+      /*
       else if (element instanceof GrReferenceExpression) {
         final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
         final GrReferenceExpression refExpr = (GrReferenceExpression)element;
@@ -119,8 +118,9 @@ public class GroovyChangeContextUtil {
           }
         }
       }
+      */
 
-      PsiClass refClass = element.getCopyableUserData(REF_TO_CLASS);
+      /*PsiClass refClass = element.getCopyableUserData(REF_TO_CLASS);
       element.putCopyableUserData(REF_TO_CLASS, null);
 
       if (refClass != null && refClass.isValid()) {
@@ -128,7 +128,7 @@ public class GroovyChangeContextUtil {
         if (ref != null) {
           ref.bindToElement(refClass);
         }
-      }
+      }*/
 
     }
   }

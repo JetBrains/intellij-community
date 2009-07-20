@@ -27,6 +27,8 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.ChangeUtil;
+import org.jetbrains.plugins.groovy.lang.GroovyChangeUtilSupport;
 import com.intellij.refactoring.rename.RenameInputValidator;
 import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
 import com.intellij.util.Function;
@@ -52,6 +54,8 @@ public class GroovyLoader implements ApplicationComponent {
 
   public void initComponent() {
     GroovyEditorActionsManager.registerGroovyEditorActions();
+
+    ChangeUtil.registerCopyHandler(new GroovyChangeUtilSupport());
 
     //Register Keyword completion
     setupCompletion();

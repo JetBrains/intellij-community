@@ -405,9 +405,10 @@ public class PsiUtil {
   }
 
   public static void shortenReference(GrCodeReferenceElement ref) {
-    if (ref.getQualifier() != null && mayShorten(ref)) {
+    if (ref.getQualifier() != null && (PsiTreeUtil.getParentOfType(ref, GrDocMemberReference.class) != null ||
+                                       PsiTreeUtil.getParentOfType(ref, GrDocComment.class) == null)) {
       final PsiElement resolved = ref.resolve();
-      if (resolved instanceof PsiClass) {
+      if (resolved instanceof PsiClass && mayShorten(ref)) {
         ref.setQualifier(null);
         try {
           ref.bindToElement(resolved);
@@ -419,9 +420,21 @@ public class PsiUtil {
     }
   }
 
-  private static boolean mayShorten(GrCodeReferenceElement ref) {
-    if (PsiTreeUtil.getParentOfType(ref, GrDocMemberReference.class) != null) return true;
-    return PsiTreeUtil.getParentOfType(ref, GrDocComment.class) == null;
+  private static boolean mayShorten(@NotNull GrCodeReferenceElement ref) {
+    GrCodeReferenceElement cur = (GrCodeReferenceElement)ref.copy();
+    while (true) {
+      final GrCodeReferenceElement qualifier = cur.getQualifier();
+      if (qualifier == null) {
+        return true;
+      }
+      if (!(qualifier.resolve() instanceof PsiClass)) {
+        final PsiClass correctResolved = (PsiClass)cur.resolve();
+        cur.setQualifier(null);
+        final PsiClass rawResolved = (PsiClass)cur.resolve();
+        return rawResolved == null || cur.getManager().areElementsEquivalent(correctResolved, rawResolved);
+      }
+      cur = qualifier;
+    }
   }
 
   @Nullable

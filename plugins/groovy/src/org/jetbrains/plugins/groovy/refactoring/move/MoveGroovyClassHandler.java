@@ -17,9 +17,11 @@
 package org.jetbrains.plugins.groovy.refactoring.move;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassHandler;
 import com.intellij.util.IncorrectOperationException;
@@ -27,11 +29,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.actions.NewGroovyActionBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
 
 /**
@@ -87,42 +87,24 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
   }
 
   private static void correctOldClassReferences(final PsiClass newClass, final PsiClass oldClass) {
-    ((GroovyPsiElement)newClass).accept(new GroovyRecursiveElementVisitor() {
-      @Override
-      public void visitReferenceExpression(GrReferenceExpression reference) {
-        if (reference.isReferenceTo(oldClass)) {
-          try {
-            reference.bindToElement(newClass);
-          }
-          catch (IncorrectOperationException e) {
-            //here is an exception
-          }
-        }
-        super.visitReferenceExpression(reference);
-      }
-    });
+    for (PsiReference reference : ReferencesSearch.search(oldClass, new LocalSearchScope(newClass)).findAll()) {
+      reference.bindToElement(newClass);
+    }
   }
 
   private static void correctSelfReferences(final PsiClass aClass, final PsiPackage newContainingPackage) {
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(aClass.getContainingFile().getContainingDirectory());
-    if (aPackage != null) {
-      ((GroovyPsiElement)aClass).accept(new GroovyRecursiveElementVisitor() {
-        @Override
-        public void visitReferenceExpression(GrReferenceExpression reference) {
-          if (reference.isQualified() && reference.isReferenceTo(aClass)) {
-            final PsiElement qualifier = reference.getQualifier();
-            if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).isReferenceTo(aPackage)) {
-              try {
-                ((PsiJavaCodeReferenceElement)qualifier).bindToElement(newContainingPackage);
-              }
-              catch (IncorrectOperationException e) {
-                //here is an exception
-              }
-            }
-          }
-          super.visitReferenceExpression(reference);
+    if (aPackage == null) {
+      return;
+    }
+
+    for (PsiReference reference : ReferencesSearch.search(aClass, new LocalSearchScope(aClass)).findAll()) {
+      if (reference instanceof GrCodeReferenceElement) {
+        final GrCodeReferenceElement qualifier = ((GrCodeReferenceElement)reference).getQualifier();
+        if (qualifier != null) {
+          qualifier.bindToElement(newContainingPackage);
         }
-      });
+      }
     }
   }
 
