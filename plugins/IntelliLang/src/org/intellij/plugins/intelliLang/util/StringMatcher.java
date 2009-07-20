@@ -22,6 +22,7 @@ import com.intellij.util.containers.WeakHashMap;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.List;
 
 /**
  * Simple abstraction of a String matcher that can be based on simple and vastly more
@@ -203,7 +204,7 @@ public abstract class StringMatcher<T> {
     if (target.equals(".*")) return ANY_PATTERN;
     if (target.equals(NONE.getPattern())) return NONE;
 
-    final String[] branches = target.split("\\|");
+    final List<String> branches = StringUtil.split(target,"|");
     final Set<StringMatcher> matchers = new LinkedHashSet<StringMatcher>();
 
     for (String branch : branches) {
