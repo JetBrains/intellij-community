@@ -509,6 +509,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     final XmlTag tag = getXmlTag();
     final int index = info.second;
     if (tag != null) {
+      LOG.assertTrue(tag.isValid());
       final List<XmlTag> tags = DomImplUtil.findSubTags(tag.getSubTags(), evaluatedXmlName, getFile());
       if (tags.size() > index) {
         return myManager.getSemService().getSemElement(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, tags.get(index));
