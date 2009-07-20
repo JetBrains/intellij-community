@@ -68,8 +68,8 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   }
 
   @Override
-  public Expirable getTimestamp() {
-    return myToolWindowManager.getTimestamp();
+  public Expirable getTimestamp(boolean trackOnlyForcedCommands) {
+    return myToolWindowManager.getTimestamp(trackOnlyForcedCommands);
   }
 
   public boolean isFocusBeingTransferred() {

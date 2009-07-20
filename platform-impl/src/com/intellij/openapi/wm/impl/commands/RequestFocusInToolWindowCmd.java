@@ -37,7 +37,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
     myForced = forced;
     myFocusManager = focusManager;
 
-    myTimestamp = myFocusManager.getTimestamp();
+    myTimestamp = myFocusManager.getTimestamp(true);
   }
 
   public final void run() {

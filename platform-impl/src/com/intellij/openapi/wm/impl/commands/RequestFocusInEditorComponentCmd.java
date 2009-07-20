@@ -35,7 +35,7 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
 
     myDoneCallback = new ActionCallback();
 
-    myTimestamp = myFocusManager.getTimestamp();
+    myTimestamp = myFocusManager.getTimestamp(true);
   }
 
   public ActionCallback getDoneCallback() {

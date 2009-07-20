@@ -126,6 +126,6 @@ public abstract class IdeFocusManager {
     return owner != null ? findInstanceByComponent(owner) : findInstanceByContext(null);
   }
 
-  public abstract Expirable getTimestamp();
+  public abstract Expirable getTimestamp(boolean trackOnlyForcedCommands);
 
 }

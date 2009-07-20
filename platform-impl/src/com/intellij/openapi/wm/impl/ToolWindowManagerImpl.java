@@ -127,7 +127,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private IdeEventQueue myQueue;
   private KeyProcessorConext myKeyProcessorContext = new KeyProcessorConext();
 
-  private long myTimestamp;
+  private long myCmdTimestamp;
+  private long myForcedCmdTimestamp;
 
   /**
    * invoked by reflection
@@ -1642,12 +1643,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }.saveAllocation(), true);
   }
 
-  public Expirable getTimestamp() {
+  public Expirable getTimestamp(final boolean trackOnlyForcedCommands) {
     return new Expirable() {
-      long myOwnStamp = myTimestamp;
+      long myOwnStamp = trackOnlyForcedCommands ? myForcedCmdTimestamp : myCmdTimestamp;
 
       public boolean isExpired() {
-        return myOwnStamp < myTimestamp;
+        return myOwnStamp < (trackOnlyForcedCommands ? myForcedCmdTimestamp : myCmdTimestamp);
       }
     };
   }
@@ -1978,7 +1979,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
               }
             };
 
-          myTimestamp++;
+          myCmdTimestamp++;
+          if (forced) {
+            myForcedCmdTimestamp++;
+          }
 
           command.run().doWhenDone(new Runnable() {
             public void run() {

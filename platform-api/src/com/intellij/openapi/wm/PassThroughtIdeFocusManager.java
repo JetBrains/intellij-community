@@ -53,7 +53,7 @@ public class PassThroughtIdeFocusManager extends IdeFocusManager {
   }
 
   @Override
-  public Expirable getTimestamp() {
+  public Expirable getTimestamp(boolean trackOnlyForcedCommands) {
     return new Expirable() {
       public boolean isExpired() {
         return false;
