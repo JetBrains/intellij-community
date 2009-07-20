@@ -314,8 +314,9 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
                                              PsiType qualifierType,
                                              final PsiType expectedType) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(place.getProject()).getElementFactory();
-    final JavaCodeFragment block = elementFactory.createCodeBlockCodeFragment(qualifierType.getCanonicalText() + " xxx; xxx.xxx;", place, false);
-    final PsiReferenceExpression mockRef = (PsiReferenceExpression) ((PsiExpressionStatement)block.getChildren()[2]).getExpression();
+    final JavaCodeFragment block = elementFactory.createCodeBlockCodeFragment(qualifierType.getCanonicalText() + " xxx;xxx.xxx;", place, false);
+    final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)block.getChildren()[2];
+    final PsiReferenceExpression mockRef = (PsiReferenceExpression) expressionStatement.getExpression();
 
     final ElementFilter filter = getReferenceFilter(place, true, true);
     for (final LookupElement item : JavaSmartCompletionContributor.completeReference(place, mockRef, filter, false)) {
