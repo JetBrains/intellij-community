@@ -2,7 +2,10 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
@@ -1256,6 +1259,31 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
       if (!myCatchStack.isEmpty()) {
         addMethodThrows(ctr);
+      }
+
+      final PsiAnonymousClass psiAnonymousClass = expression.getAnonymousClass();
+      if (psiAnonymousClass != null) {
+        final PsiMethod[] methods = psiAnonymousClass.getMethods();
+        for (PsiMethod method : methods) {
+          final PsiCodeBlock body = method.getBody();
+          if (body != null) {
+            addInstruction(myInstructionFactory.createPushInstruction(DfaUnknownValue.getInstance(), expression));
+            final ConditionalGotoInstruction condGoto = myInstructionFactory.createConditionalGotoInstruction(0, false, expression);
+            addInstruction(condGoto);
+            final GosubInstruction gosub = myInstructionFactory.createGosubInstruction(getStartOffset(body));
+            addInstruction(gosub);
+            condGoto.setOffset(gosub.getIndex() + 1);
+          }
+        }
+        addInstruction(myInstructionFactory.createGotoInstruction(getEndOffset(expression)));
+
+        for (PsiMethod method : methods) {
+          final PsiCodeBlock body = method.getBody();
+          if (body != null) {
+            visitCodeBlock(body);
+            addInstruction(myInstructionFactory.createReturnFromSubInstruction());
+          }
+        }
       }
     }
 
