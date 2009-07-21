@@ -570,9 +570,18 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       return getManager().areElementsEquivalent(element, resolve());
     }
     if (element instanceof GrField && ((GrField) element).isProperty()) {
-      return getManager().areElementsEquivalent(element, resolve());
-    } else
-    if (element instanceof PsiNamedElement && Comparing.equal(((PsiNamedElement) element).getName(), getReferenceName())) {
+      final PsiElement target = resolve();
+      if (getManager().areElementsEquivalent(element, target)) {
+        return true;
+      }
+
+      for (final GrAccessorMethod getter : ((GrField)element).getGetters()) {
+        if (getManager().areElementsEquivalent(getter, target)) {
+          return true;
+        }
+      }
+      return getManager().areElementsEquivalent(((GrField)element).getSetter(), target);
+    } else if (element instanceof PsiNamedElement && Comparing.equal(((PsiNamedElement) element).getName(), getReferenceName())) {
       return getManager().areElementsEquivalent(element, resolve());
     }
     return false;

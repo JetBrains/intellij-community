@@ -109,7 +109,7 @@ public class PsiUtil {
   public static boolean isGetterName(String name) {
     if (name == null) return false;
     if (name.startsWith("get") && !name.equals("get")) {
-      String tail = StringUtil.trimStart("get", name);
+      String tail = StringUtil.trimStart(name, "get");
       return tail.equals(StringUtil.capitalize(tail));
 
     }
@@ -119,7 +119,7 @@ public class PsiUtil {
   public static boolean isSetterName(String name) {
     if (name == null) return false;
     if (name.startsWith("set") && !name.equals("set")) {
-      String tail = StringUtil.trimStart("set", name);
+      String tail = StringUtil.trimStart(name, "set");
       return tail.equals(StringUtil.capitalize(tail));
 
     }
@@ -340,15 +340,18 @@ public class PsiUtil {
     String methodName = method.getName();
     if (methodName.length() <= "is".length()) return false;
 
-    if (!methodName.startsWith("get") ||
-        methodName.length() <= "get".length() ||
-        !Character.isUpperCase(methodName.charAt("get".length()))) {
-      if (!methodName.startsWith("is") || !Character.isUpperCase(methodName.charAt("is".length()))) return false;
+    if (!isGetterName(methodName)) {
+      if (!methodName.startsWith("is")) return false;
+      if (!isUpperCase(methodName.charAt("is".length()))) return false;
     }
 
     if (propertyName != null && !checkPropertyName(method, propertyName)) return false;
 
     return method.getParameterList().getParameters().length == 0;
+  }
+
+  private static boolean isUpperCase(char c) {
+    return c == Character.toUpperCase(c);
   }
 
   private static boolean checkPropertyName(PsiMethod method, @NotNull String propertyName) {
@@ -358,7 +361,7 @@ public class PsiUtil {
       accessorNamePart = ((GrAccessorMethod)method).getProperty().getName();
     } else {
       accessorNamePart = methodName.startsWith("is") ? methodName.substring(2) : methodName.substring(3); //"set" or "get" or "is"
-      if (Character.isLowerCase(accessorNamePart.charAt(0))) return false;
+      if (!isUpperCase(accessorNamePart.charAt(0))) return false;
       accessorNamePart = StringUtil.decapitalize(accessorNamePart);
     }
 
@@ -377,9 +380,7 @@ public class PsiUtil {
 
     String methodName = method.getName();
 
-    if (!methodName.startsWith("set") ||
-        methodName.length() <= "set".length() ||
-        !Character.isUpperCase(methodName.charAt("set".length()))) {
+    if (!isSetterName(methodName)) {
       return false;
     }
 

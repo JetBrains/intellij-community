@@ -209,6 +209,14 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     assertTrue(ref.resolve() instanceof GrVariable);
   }
 
+  public void testUnderscoredField() throws Exception {
+    PsiReference ref = configureByFile("underscoredField/UnderscoredField.groovy");
+    final GrAccessorMethod accessorMethod = assertInstanceOf(ref.resolve(), GrAccessorMethod.class);
+    final GrField field = accessorMethod.getProperty();
+    assertTrue(ref.isReferenceTo(accessorMethod));
+    assertTrue(ref.isReferenceTo(field));
+  }
+
   private void doTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();
