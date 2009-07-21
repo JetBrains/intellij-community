@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
@@ -694,13 +695,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
         result.add(additionalAction);
       }
     }
-    result.add(new AnAction(VcsBundle.message("action.name.refresh"), VcsBundle.message("action.desctiption.refresh"),
-                            IconLoader.getIcon("/actions/sync.png")) {
-      public void actionPerformed(AnActionEvent e) {
-        refresh();
-
-      }
-    });
+    result.add(new RefreshFileHistoryAction());
 
     if (!popup && supportsTree()) {
       result.add(new MyShowAsTreeAction());
@@ -729,7 +724,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     return myProvider;
   }
 
-  private class MyShowAsTreeAction extends ToggleAction {
+  private class MyShowAsTreeAction extends ToggleAction implements DumbAware {
     public MyShowAsTreeAction() {
       super(VcsBundle.message("action.name.show.files.as.tree"), null, Icons.SMALL_VCS_CONFIGURABLE);
     }
@@ -1257,7 +1252,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     myUpdateAlarm.dispose();
   }
 
-  abstract class AbstractActionForSomeSelection extends AnAction {
+  abstract class AbstractActionForSomeSelection extends AnAction implements DumbAware {
     private final int mySuitableSelectedElements;
     private final FileHistoryPanelImpl mySelectionProvider;
 
@@ -1481,6 +1476,17 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       if (myHistorySession.isCurrentRevision(revision.getRevisionNumber())) {
         makeBold(component);
       }
+    }
+  }
+
+  private class RefreshFileHistoryAction extends AnAction implements DumbAware {
+    public RefreshFileHistoryAction() {
+      super(VcsBundle.message("action.name.refresh"), VcsBundle.message("action.desctiption.refresh"), IconLoader.getIcon("/actions/sync.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      refresh();
+
     }
   }
 }

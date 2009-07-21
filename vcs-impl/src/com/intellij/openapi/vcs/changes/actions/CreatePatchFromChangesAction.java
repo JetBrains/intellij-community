@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
@@ -27,7 +28,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class CreatePatchFromChangesAction extends AnAction {
+public class CreatePatchFromChangesAction extends AnAction implements DumbAware {
   public CreatePatchFromChangesAction() {
     super(VcsBundle.message("action.name.create.patch.for.selected.revisions"),
           VcsBundle.message("action.description.create.patch.for.selected.revisions"), IconLoader.getIcon("/actions/createPatch.png"));
