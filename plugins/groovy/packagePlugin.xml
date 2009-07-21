@@ -141,7 +141,7 @@
       <include name="plugins/CSS/lib/css.jar"/>
       <include name="${jdk.home.jetgroovy_compile_with_jdk}/lib/tools.jar"/>
       <include name="lib/ant/lib/ant.jar"/>
-      <include name="lib/groovy-all-1.6.0.jar"/>
+      <include name="lib/groovy-all-1.6.3.jar"/>
       <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/charsets.jar"/>
       <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/deploy.jar"/>
       <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/javaws.jar"/>
