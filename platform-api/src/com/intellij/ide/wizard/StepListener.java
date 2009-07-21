@@ -16,10 +16,12 @@
 
 package com.intellij.ide.wizard;
 
+import java.util.EventListener;
+
 /**
  * @author Dmitry Avdeev
  */
-public interface StepListener {
+public interface StepListener extends EventListener {
 
   void stateChanged();
 }
