@@ -444,6 +444,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   private void updateDetails() {
     final Configurable current = getContext().getCurrentConfigurable();
+
+    assert current != null;
+
     final ConfigurableContent content = myConfigurable2Content.get(current);
     content.set(myContentWrapper);
   }
@@ -841,7 +844,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
 
     private ActionCallback updateIfCurrent(final Configurable configurable) {
-      if (getContext().getCurrentConfigurable() == configurable) {
+      if (getContext().getCurrentConfigurable() == configurable && configurable != null) {
         updateDetails();
         final ConfigurableContent content = myConfigurable2Content.get(configurable);
         content.updateBannerActions();
