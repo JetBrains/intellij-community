@@ -123,9 +123,10 @@ mNUM_BIG_DECIMAL = {mNUM_INT_PART} ( ("." {mDIGIT}+ {mEXPONENT}? {mBIG_SUFFIX}?)
 /////////////////////      identifiers      ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-mLETTER = !(!([:jletter:] | "_") | "$")
+mLETTER = [:letter:] | "_"
 
-mIDENT = {mLETTER} ({mLETTER} | {mDIGIT})*
+mIDENT = {mLETTER} ({mLETTER} | {mDIGIT} | \$)*
+mIDENT_NOBUCKS = {mLETTER} ({mLETTER} | {mDIGIT})*
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -267,13 +268,13 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 
 // Single double-quoted GString
 <IN_SINGLE_IDENT>{
-  {mIDENT}                                {  yybegin(IN_SINGLE_DOT);
+  {mIDENT_NOBUCKS}                        {  yybegin(IN_SINGLE_DOT);
                                              return mIDENT;  }
   [^]                                     {  yypushback(yytext().length());
                                              yybegin(IN_SINGLE_GSTRING);  }
 }
 <IN_SINGLE_DOT>{
-  "." {mIDENT}                            {  yypushback(yytext().length() - 1);
+  "." {mIDENT_NOBUCKS}                    {  yypushback(yytext().length() - 1);
                                              yybegin(IN_SINGLE_IDENT);
                                              return mDOT;  }
   [^]                                     {  yypushback(yytext().length());
@@ -282,7 +283,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 
 <IN_SINGLE_GSTRING_DOLLAR> {
 
-  {mIDENT}                                {  yybegin(IN_SINGLE_DOT);
+  {mIDENT_NOBUCKS}                        {  yybegin(IN_SINGLE_DOT);
                                              return mIDENT; }
   "{"                                     {  blockStack.push(mLPAREN);
                                              braceCount.push(mLCURLY);
@@ -354,13 +355,13 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 
 // Triple double-quoted GString
 <IN_TRIPLE_IDENT>{
-  {mIDENT}                                {  yybegin(IN_TRIPLE_DOT);
+  {mIDENT_NOBUCKS}                        {  yybegin(IN_TRIPLE_DOT);
                                              return mIDENT;  }
   [^]                                     {  yypushback(yytext().length());
                                              yybegin(IN_TRIPLE_GSTRING);  }
 }
 <IN_TRIPLE_DOT>{
-  "."{mIDENT}                             {  yypushback(yytext().length() - 1);
+  "."{mIDENT_NOBUCKS}                     {  yypushback(yytext().length() - 1);
                                              yybegin(IN_TRIPLE_NLS);
                                              return mDOT;  }
   [^]                                     {  yypushback(yytext().length());
@@ -376,7 +377,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 }
 
 <IN_TRIPLE_GSTRING_DOLLAR> {
-  {mIDENT}                                {  yybegin(IN_TRIPLE_DOT);
+  {mIDENT_NOBUCKS}                        {  yybegin(IN_TRIPLE_DOT);
                                              return mIDENT; }
   "{"                                     {  blockStack.push(mLBRACK);
                                              braceCount.push(mLCURLY);
@@ -407,7 +408,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 ////////////////////  regexes //////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 <KING_STATE> {  // Processing nasty $ signs
-  ("{" | {mIDENT})                        {  yypushback(yytext().length());
+  ("{" | {mIDENT_NOBUCKS})                {  yypushback(yytext().length());
                                              gStringStack.push(mDIV);       // For regexes
                                              yybegin(IN_REGEX_DOLLAR); }
 
@@ -417,7 +418,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 }
 
 <KING_STATE_CONTENT> {  // Processing nasty $ signs
-  ("{" | {mIDENT})                        {  yypushback(yytext().length());
+  ("{" | {mIDENT_NOBUCKS})                {  yypushback(yytext().length());
                                              gStringStack.push(mDIV);       // For regexes
                                              yybegin(IN_REGEX_DOLLAR); }
 
@@ -503,13 +504,13 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 }
 
 <IN_REGEX_IDENT>{
-  {mIDENT}                                {  yybegin(IN_REGEX_DOT);
+  {mIDENT_NOBUCKS}                        {  yybegin(IN_REGEX_DOT);
                                              return mIDENT;  }
   [^]                                     {  yypushback(yytext().length());
                                              yybegin(IN_REGEX);  }
 }
 <IN_REGEX_DOT>{
-  "."{mIDENT}                             {  yypushback(yytext().length() - 1);
+  "."{mIDENT_NOBUCKS}                     {  yypushback(yytext().length() - 1);
                                              yybegin(IN_REGEX_IDENT);
                                              return mDOT;  }
   [^]                                     {  yypushback(yytext().length());
@@ -518,7 +519,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 
 <IN_REGEX_DOLLAR> {
 
-  {mIDENT}                                {  yybegin(IN_REGEX_DOT);
+  {mIDENT_NOBUCKS}                        {  yybegin(IN_REGEX_DOT);
                                              return mIDENT; }
   "{"                                     {  blockStack.push(mDIV);
                                              braceCount.push(mLCURLY);
