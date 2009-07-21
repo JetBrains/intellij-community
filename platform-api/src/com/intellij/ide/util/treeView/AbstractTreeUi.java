@@ -360,12 +360,10 @@ class AbstractTreeUi {
   }
 
   private boolean isNodeValidForElement(final Object element, final DefaultMutableTreeNode node) {
-    return isValid(element) && (isSameHierarchy(element, node) || isValidChildOfParent(element, node));
+    return isSameHierarchy(element, node) || isValidChildOfParent(element, node);
   }
 
   private boolean isValidChildOfParent(final Object element, final DefaultMutableTreeNode node) {
-    if (!isValid(element)) return false;
-
     final DefaultMutableTreeNode parent = (DefaultMutableTreeNode)node.getParent();
     final Object parentElement = getElementFor(parent);
     if (!isInStructure(parentElement)) return false;
@@ -377,7 +375,7 @@ class AbstractTreeUi {
       for (int i = 0; i < parent.getChildCount(); i++) {
         final TreeNode child = parent.getChildAt(i);
         final Object eachElement = getElementFor(child);
-        if (isValid(eachElement) && element.equals(eachElement)) return true;
+        if (element.equals(eachElement)) return true;
       }
     }
 
@@ -616,10 +614,20 @@ class AbstractTreeUi {
   protected void doUpdateNode(DefaultMutableTreeNode node) {
     if (!(node.getUserObject() instanceof NodeDescriptor)) return;
     NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
-    Object element = getElementFromDescriptor(descriptor);
-    if (!isValid(element)) return;
-
-    if (update(descriptor, false)) {
+    Object prevElement = getElementFromDescriptor(descriptor);
+    if (prevElement == null) return;
+    boolean changes = update(descriptor, false);
+    if (getElementFromDescriptor(descriptor) == null) {
+      LOG.assertTrue(false, "element == null, updateSubtree should be invoked for parent! builder=" +
+                            getBuilder() +
+                            ", prevElement = " +
+                            prevElement +
+                            ", node = " +
+                            node +
+                            "; parentDescriptor=" +
+                            descriptor.getParentDescriptor());
+    }
+    if (changes) {
       updateNodeImageAndPosition(node);
     }
   }
@@ -638,7 +646,7 @@ class AbstractTreeUi {
 
     final NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
 
-    if (!isValid(descriptor)) return;
+    if (descriptor == null) return;
 
     if (myUnbuiltNodes.contains(node)) {
       processUnbuilt(node, descriptor, pass);
@@ -656,7 +664,7 @@ class AbstractTreeUi {
     myUpdatingChildren.add(node);
     processAllChildren(node, elementToIndexMap, pass).doWhenDone(new Runnable() {
       public void run() {
-        if (isDisposed(node) || !isValid(node)) {
+        if (isDisposed(node)) {
           return;
         }
 
@@ -843,17 +851,12 @@ class AbstractTreeUi {
         public void run() {
           if (pass.isExpired()) return;
 
-          final boolean nodeValid = isValid(pass.getNode());
-
-          if (nodeValid && getUpdater().isRerunNeededFor(pass)) {
+          if (getUpdater().isRerunNeededFor(pass)) {
             getUpdater().addSubtreeToUpdate(pass);
             result.setRejected();
           }
-          else if (nodeValid) {
+          else {
             processRunnable.run().notify(result);
-          } else {
-            pass.expire();
-            result.setRejected();
           }
         }
       }, pass);
@@ -954,7 +957,7 @@ class AbstractTreeUi {
                                             final ArrayList<TreeNode> childNodes) {
 
 
-    if (pass.isExpired() || !isValid(node)) return new ActionCallback.Rejected();
+    if (pass.isExpired()) return new ActionCallback.Rejected();
 
     if (childNodes.size() == 0) return new ActionCallback.Done();
 
@@ -1275,13 +1278,16 @@ class AbstractTreeUi {
 
     NodeDescriptor childDesc = childDescriptor;
     
-    if (!isValid(childDesc)) {
+
+    if (childDesc == null) {
       pass.expire();
       return new ActionCallback.Rejected();
     }
-
     Object oldElement = getElementFromDescriptor(childDesc);
-
+    if (oldElement == null) {
+      pass.expire();
+      return new ActionCallback.Rejected();
+    }
     boolean changes = update(childDesc, false);
     boolean forceRemapping = false;
     Object newElement = getElementFromDescriptor(childDesc);
@@ -1375,11 +1381,11 @@ class AbstractTreeUi {
     if (isLoadingNode(node)) return true;
 
     final Object elementInTree = getElementFor(node);
-    if (!isValid(elementInTree)) return false;
+    if (elementInTree == null) return false;
 
     final TreeNode parentNode = node.getParent();
     final Object parentElementInTree = getElementFor(parentNode);
-    if (!isValid(parentElementInTree)) return false;
+    if (parentElementInTree == null) return false;
 
     final Object parentElement = getTreeStructure().getParentElement(elementInTree);
 
@@ -1414,9 +1420,7 @@ class AbstractTreeUi {
 
           if (isAdjustedSelection && myUpdaterState != null) {
             final Object toSelectElement = getElementFor(toSelect.getLastPathComponent());
-            if (isValid(toSelectElement)) {
-              myUpdaterState.addAdjustedSelection(toSelectElement, isExpiredAdjustement);
-            }
+            myUpdaterState.addAdjustedSelection(toSelectElement, isExpiredAdjustement);
           }
         }
       }
@@ -1519,7 +1523,8 @@ class AbstractTreeUi {
     insertLoadingNode(node, true);
   }
 
-  private boolean isValid(DefaultMutableTreeNode node) {
+
+ private boolean isValid(DefaultMutableTreeNode node) {
     if (node == null) return false;
     final Object object = node.getUserObject();
     if (object instanceof NodeDescriptor) {
@@ -1669,7 +1674,7 @@ class AbstractTreeUi {
   private void updateNodeImageAndPosition(final DefaultMutableTreeNode node) {
     if (!(node.getUserObject() instanceof NodeDescriptor)) return;
     NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
-    if (!isValid(descriptor)) return;
+    if (getElementFromDescriptor(descriptor) == null) return;
     DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode)node.getParent();
     if (parentNode != null) {
       int oldIndex = parentNode.getIndex(node);
@@ -2096,7 +2101,7 @@ class AbstractTreeUi {
                              final int expandIndex,
                              @NotNull final Runnable onDone) {
     final Object element = getElementFor(toExpand);
-    if (!isValid(element)) {
+    if (element == null) {
       runDone(onDone);
       return;
     }
