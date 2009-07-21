@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
@@ -87,7 +88,7 @@ public class SelectWordHandler extends EditorActionHandler {
       }
     }
 
-    while (element instanceof PsiWhiteSpace) {
+    while (element instanceof PsiWhiteSpace || element != null && StringUtil.isEmpty(element.getText().trim())) {
       while (element.getNextSibling() == null) {
         if (element instanceof PsiFile) return;
         final PsiElement parent = element.getParent();
