@@ -15,22 +15,28 @@
  */
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 
 public class RemoveParenthesesFromMethodCallIntention extends Intention {
 
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
     return new RemoveParenthesesFromMethodPredicate();
+  }
+
+  @Override
+  protected boolean isStopElement(PsiElement element) {
+    return element instanceof GrStatementOwner;
   }
 
   protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {

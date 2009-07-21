@@ -78,12 +78,16 @@ public abstract class Intention implements IntentionAction {
         return element;
       } else {
         element = element.getParent();
-        if (element instanceof PsiFile) {
+        if (isStopElement(element)) {
           break;
         }
       }
     }
     return null;
+  }
+
+  protected boolean isStopElement(PsiElement element) {
+    return element instanceof PsiFile;
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {

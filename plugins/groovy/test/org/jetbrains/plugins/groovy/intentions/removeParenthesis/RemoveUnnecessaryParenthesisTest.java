@@ -16,11 +16,7 @@
 
 package org.jetbrains.plugins.groovy.intentions.removeParenthesis;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-
-import java.util.List;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -32,21 +28,14 @@ public class RemoveUnnecessaryParenthesisTest extends JavaCodeInsightFixtureTest
     return "/svnPlugins/groovy/testdata/intentions/removeParenth/";
   }
 
-  public void testRemoveUnnecessaryParenthesis() throws Exception {
-    String fileBefore = getTestName(false) + ".groovy";
+  public void testRemoveUnnecessaryParenthesis() throws Throwable {
+    myFixture.configureByFile(getTestName(false) + ".groovy");
+    myFixture.launchAction(assertOneElement(myFixture.filterAvailableIntentions("Remove Unnecessary Parentheses")));
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+  }
 
-    try {
-      List<IntentionAction> intentions = myFixture.getAvailableIntentions(fileBefore);
-      IntentionAction action = CodeInsightTestUtil.findIntentionByText(intentions, "Remove Unnecessary Parentheses");
-      myFixture.copyFileToProject(fileBefore);
-
-      assert action != null;
-      myFixture.launchAction(action);
-
-      myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
-    }
-    catch (Throwable throwable) {
-      throwable.printStackTrace();
-    }
+  public void testNothingInsideClosure() throws Throwable {
+    myFixture.configureByFile(getTestName(false) + ".groovy");
+    assertEmpty(myFixture.filterAvailableIntentions("Remove Unnecessary Parentheses"));
   }
 }
