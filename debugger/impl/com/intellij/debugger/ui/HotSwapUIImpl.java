@@ -17,7 +17,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -123,7 +122,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
           application.invokeLater(new Runnable() {
             public void run() {
               final String message = DebuggerBundle.message("status.hotswap.uptodate");
-              ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.DEBUG, MessageType.INFO, message, Messages.getInformationIcon(), null);
+              ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.DEBUG, MessageType.INFO, message, null, null);
               WindowManager.getInstance().getStatusBar(myProject).setInfo(message);
             }
           }, ModalityState.NON_MODAL);

@@ -88,7 +88,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
               }
             }
             final String message = msg.toString();
-            ToolWindowManager.getInstance(getProject()).notifyByBalloon(ToolWindowId.DEBUG, MessageType.INFO, message, Messages.getInformationIcon(), null);
+            ToolWindowManager.getInstance(getProject()).notifyByBalloon(ToolWindowId.DEBUG, MessageType.INFO, message, null, null);
             WindowManager.getInstance().getStatusBar(getProject()).setInfo(message);
           }
           finally {
