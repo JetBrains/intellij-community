@@ -745,8 +745,8 @@ public class GroovyAnnotator implements Annotator {
     Annotation annotation = holder.createInfoAnnotation(refExpr.getReferenceNameElement(), null);
     if (member instanceof GrAccessorMethod) member = ((GrAccessorMethod)member).getProperty();
 
-    if (member instanceof PsiField && isStatic) {
-      annotation.setTextAttributes(DefaultHighlighter.STATIC_FIELD);
+    if (member instanceof PsiField ) {
+      annotation.setTextAttributes(isStatic ? DefaultHighlighter.STATIC_FIELD : DefaultHighlighter.INSTANCE_FIELD);
       return;
     }
     if (member instanceof PsiMethod) {
@@ -941,10 +941,8 @@ public class GroovyAnnotator implements Annotator {
     if (member instanceof PsiField) {
       GrField field = (GrField)member;
       PsiElement identifier = field.getNameIdentifierGroovy();
-      if (field.hasModifierProperty(PsiModifier.STATIC)) {
-        Annotation annotation = holder.createInfoAnnotation(identifier, null);
-        annotation.setTextAttributes(DefaultHighlighter.STATIC_FIELD);
-      }
+      final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
+      holder.createInfoAnnotation(identifier, null).setTextAttributes(isStatic ? DefaultHighlighter.STATIC_FIELD : DefaultHighlighter.INSTANCE_FIELD);
     }
   }
 

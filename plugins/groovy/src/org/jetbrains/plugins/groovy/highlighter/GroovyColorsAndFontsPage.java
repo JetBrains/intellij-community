@@ -66,6 +66,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
       new AttributesDescriptor(DefaultHighlighter.UNRESOLVED_ACCESS_ID, DefaultHighlighter.UNRESOLVED_ACCESS),
       new AttributesDescriptor(DefaultHighlighter.ANNOTATION_ID, DefaultHighlighter.ANNOTATION),
       new AttributesDescriptor(DefaultHighlighter.STATIC_FIELD_ID, DefaultHighlighter.STATIC_FIELD),
+      new AttributesDescriptor(DefaultHighlighter.STATIC_FIELD_ID, DefaultHighlighter.INSTANCE_FIELD),
       new AttributesDescriptor(DefaultHighlighter.STATIC_METHOD_ACCESS_ID, DefaultHighlighter.STATIC_METHOD_ACCESS),
     };
 
@@ -90,9 +91,10 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
            " */</gdoc>\n" +
            "<annotation>@SpecialBean</annotation> \n" +
            "class Demo {\n" +
+           "  def <instfield>property</instfield>\n" +
            "//This is a line comment\n" +
            "/* This is a block comment */\n" +
-           "  static def foo(int i) { return [i, i] }\n" +
+           "  static def foo(int i) { return [i, i, <instfield>property</instfield>] }\n" +
            "  static def <statfield>panel</statfield> = new JPanel()\n" +
            "}\n" +
            "\n" +
@@ -111,6 +113,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
     map.put("annotation", DefaultHighlighter.ANNOTATION);
     map.put("statmet", DefaultHighlighter.STATIC_METHOD_ACCESS);
     map.put("statfield", DefaultHighlighter.STATIC_FIELD);
+    map.put("instfield", DefaultHighlighter.INSTANCE_FIELD);
     map.put("untyped", DefaultHighlighter.UNTYPED_ACCESS);
     map.put("gdoc", DefaultHighlighter.DOC_COMMENT_CONTENT);
     map.put("doctag", DefaultHighlighter.DOC_COMMENT_TAG);
