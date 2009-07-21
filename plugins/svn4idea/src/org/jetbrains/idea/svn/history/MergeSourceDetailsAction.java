@@ -2,8 +2,9 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -13,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import javax.swing.*;
 import java.awt.event.KeyEvent;
 
-public class MergeSourceDetailsAction extends AnAction {
+public class MergeSourceDetailsAction extends AnAction implements DumbAware {
   private static Icon myIcon;
 
   @Override

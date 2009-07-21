@@ -18,6 +18,7 @@ package git4idea.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -35,7 +36,7 @@ import git4idea.ui.GitUIUtil;
 /**
  * Initial code for show submitted files action, this action is accessed from history view
  */
-public class GitShowAllSubmittedFilesAction extends AnAction {
+public class GitShowAllSubmittedFilesAction extends AnAction implements DumbAware {
 
   /**
    * A constructor

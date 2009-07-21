@@ -303,8 +303,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
   }
 
   public AnAction[] getAdditionalActions(final FileHistoryPanel panel) {
-    final MergeSourceDetailsAction mergeSourceAction = new MergeSourceDetailsAction();
-    return new AnAction[]{new ShowAllSubmittedFilesAction(), mergeSourceAction};
+    return new AnAction[]{new ShowAllSubmittedFilesAction(), new MergeSourceDetailsAction()};
   }
 
   public boolean isDateOmittable() {
