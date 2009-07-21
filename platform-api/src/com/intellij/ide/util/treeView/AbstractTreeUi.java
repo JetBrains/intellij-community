@@ -546,8 +546,14 @@ class AbstractTreeUi {
   }
 
   private void assertIsDispatchThread() {
-    if (myTree.isShowing()) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myTree.isShowing() && !SwingUtilities.isEventDispatchThread()) {
+      LOG.error("Must be in event-dispatch thread");
+    }
+  }
+
+  private void assertNotDispatchThread() {
+    if (SwingUtilities.isEventDispatchThread()) {
+      LOG.error("Must not be in event-dispatch thread");
     }
   }
 
@@ -1136,7 +1142,9 @@ class AbstractTreeUi {
     final Ref<Object[]> children = new Ref<Object[]>();
     Runnable buildRunnable = new Runnable() {
       public void run() {
-        if (isReleased()) return;
+        if (isReleased()) {
+          return;
+        }
 
         update(descriptor, true);
         Object element = getElementFromDescriptor(descriptor);
@@ -1557,7 +1565,7 @@ class AbstractTreeUi {
   protected void addTaskToWorker(@NotNull final Runnable bgReadActionRunnable,
                                  boolean first,
                                  @Nullable final Runnable edtPostRunnable,
-                                 @Nullable final Runnable finilizeEdtRunnable) {
+                                 @Nullable final Runnable finalizeEdtRunnable) {
     registerWorkerTask(bgReadActionRunnable);
 
     final Runnable pooledThreadWithProgressRunnable = new Runnable() {
@@ -1566,8 +1574,12 @@ class AbstractTreeUi {
           return;
         }
 
-        getBuilder().runBackgroundLoading(new Runnable() {
+        final AbstractTreeBuilder builder = getBuilder();
+
+        builder.runBackgroundLoading(new Runnable() {
           public void run() {
+            assertNotDispatchThread();
+
             if (isReleased()) {
               return;
             }
@@ -1575,27 +1587,33 @@ class AbstractTreeUi {
             try {
               bgReadActionRunnable.run();
 
-              if (edtPostRunnable != null) {
-                getBuilder().updateAfterLoadedInBackground(new Runnable() {
+              if (edtPostRunnable != null && !isReleased()) {
+                builder.updateAfterLoadedInBackground(new Runnable() {
                   public void run() {
                     try {
+                      assertIsDispatchThread();
+
+                      if (isReleased()) {
+                        return;
+                      }
+
                       edtPostRunnable.run();
                     }
                     finally {
-                      unregisterWorkerTask(bgReadActionRunnable, finilizeEdtRunnable);
+                      unregisterWorkerTask(bgReadActionRunnable, finalizeEdtRunnable);
                     }
                   }
                 });
               }
               else {
-                unregisterWorkerTask(bgReadActionRunnable, finilizeEdtRunnable);
+                unregisterWorkerTask(bgReadActionRunnable, finalizeEdtRunnable);
               }
             }
             catch (ProcessCanceledException e) {
-              unregisterWorkerTask(bgReadActionRunnable, finilizeEdtRunnable);
+              unregisterWorkerTask(bgReadActionRunnable, finalizeEdtRunnable);
             }
             catch (Throwable t) {
-              unregisterWorkerTask(bgReadActionRunnable, finilizeEdtRunnable);
+              unregisterWorkerTask(bgReadActionRunnable, finalizeEdtRunnable);
               throw new RuntimeException(t);
             }
           }
