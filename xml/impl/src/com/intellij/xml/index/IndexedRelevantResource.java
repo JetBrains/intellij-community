@@ -8,6 +8,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.AdditionalIndexedRootsScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ public class IndexedRelevantResource<K, V> implements Comparable<IndexedRelevant
         }
         return true;
       }
-    }, GlobalSearchScope.allScope(module.getProject()));
+    }, new AdditionalIndexedRootsScope(GlobalSearchScope.allScope(module.getProject())));
     Collections.sort(resources);
     return resources;
   }

@@ -4,6 +4,7 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,7 +21,11 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
   private final Set<VirtualFile> myRoots = new THashSet<VirtualFile>();
 
   public AdditionalIndexableFileSet() {
-    for (IndexedRootsProvider provider : IndexedRootsProvider.EP_NAME.getExtensions()) {
+    this(Extensions.getExtensions(IndexedRootsProvider.EP_NAME));
+  }
+
+  public AdditionalIndexableFileSet(IndexedRootsProvider... extensions) {
+    for (IndexedRootsProvider provider : extensions) {
       for (String url : provider.getRootsToIndex()) {
         ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), myRoots);
       }
