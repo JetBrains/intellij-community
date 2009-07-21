@@ -15,14 +15,12 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
+import com.intellij.psi.StubBasedPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterListOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.annotations.NotNull;
-import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 
 /**
- * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
+ * @author Dmitry.Krasilschikov
  */
-public interface GrClassDefinition extends GrTypeDefinition, GrTypeParameterListOwner {
+public interface GrClassDefinition extends GrTypeDefinition, GrTypeParameterListOwner, StubBasedPsiElement<GrTypeDefinitionStub> {
 }

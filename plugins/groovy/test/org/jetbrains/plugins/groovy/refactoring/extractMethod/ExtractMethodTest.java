@@ -22,7 +22,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
@@ -88,20 +88,15 @@ public class ExtractMethodTest extends ActionTestCase {
     String fileText = data[0];
     final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
     String result = processFile(psiFile);
-    //System.out.println("------------------------ " + testName + " ------------------------");
-    //System.out.println(result);
-    //System.out.println("");
     return result;
   }
-
 
   public static Test suite() {
     return new ExtractMethodTest();
   }
 
   protected IdeaProjectTestFixture createFixture() {
-    final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createFixtureBuilder();
+    TestFixtureBuilder<IdeaProjectTestFixture> builder = JavaTestFixtureFactory.createFixtureBuilder();
     JavaModuleFixtureBuilder fixtureBuilder = builder.addModule(JavaModuleFixtureBuilder.class);
     fixtureBuilder.addJdk(TestUtils.getMockJdkHome());
     fixtureBuilder.addLibraryJars("GROOVY", TestUtils.getMockGrailsLibraryHome(), TestUtils.GROOVY_JAR);

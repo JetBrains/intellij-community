@@ -166,4 +166,8 @@ public class GroovyCompletionTest extends JavaCodeInsightFixtureTestCase {
   public void testNotInstanceofDoesntHelpDetermineType2() throws Throwable {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
   }
+
+  public void testTypeParameterCompletion() throws Throwable {
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "put", "putAll");
+  }
 }

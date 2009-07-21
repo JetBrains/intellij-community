@@ -15,12 +15,12 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.types;
 
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import com.intellij.psi.PsiTypeParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 /**
  * @author ilyas
  */
-public interface GrTypeParameter extends GroovyPsiElement, PsiTypeParameter {
+public interface GrTypeParameter extends GrTypeDefinition, PsiTypeParameter {
   public static final GrTypeParameter[] EMPTY_ARRAY = new GrTypeParameter[0];
 }

@@ -52,6 +52,7 @@ public class ImmutableAnnotationProcessor implements NonCodeMembersProcessor {
     GrTypeDefinition grClass = (GrTypeDefinition)psiClass;
 
     PsiModifierList modifierList = grClass.getModifierList();
+    if (modifierList==null) return true;
     assert modifierList instanceof GrModifierList;
 
     GrAnnotation[] annotations = ((GrModifierList)modifierList).getAnnotations();

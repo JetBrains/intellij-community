@@ -23,9 +23,12 @@ import org.jetbrains.annotations.Nullable;
  * @date: 28.03.2007
  */
 public interface GrWildcardTypeArgument extends GrTypeElement {
+  GrWildcardTypeArgument[] EMPTY_ARRAY = new GrWildcardTypeArgument[0];
+
   @Nullable
   GrTypeElement getBoundTypeElement();
 
   boolean isExtends();
+
   boolean isSuper();
 }

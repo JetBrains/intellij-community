@@ -18,21 +18,30 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -41,6 +50,70 @@ import java.util.List;
  * @author ilyas
  */
 public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeParameter {
+  public GrTypeDefinitionBody getBody() {
+    return null;
+  }
+
+  @NotNull
+  public GrClassInitializer[] getInitializersGroovy() {
+    return GrClassInitializer.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public GrMembersDeclaration[] getMemberDeclarations() {
+    return GrMembersDeclaration.EMPTY_ARRAY;
+  }
+
+  public GrWildcardTypeArgument[] getTypeParametersGroovy() {
+    return GrWildcardTypeArgument.EMPTY_ARRAY;
+  }
+
+  public GrExtendsClause getExtendsClause() {
+    return null;
+  }
+
+  public GrImplementsClause getImplementsClause() {
+    return null;
+  }
+
+  public String[] getSuperClassNames() {
+    final PsiReference[] types = getExtendsList().getReferences();
+    List<String> names = new ArrayList<String>(types.length);
+    for (PsiReference type : types) {
+      names.add(type.getCanonicalText());
+    }
+    return names.toArray(new String[names.size()]);
+  }
+
+  @NotNull
+  public GrMethod[] getGroovyMethods() {
+    return GrMethod.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public PsiMethod[] findCodeMethodsByName(@NonNls String name, boolean checkBases) {
+    return GrClassImplUtil.findCodeMethodsByName(this, name, checkBases);
+  }
+
+  @NotNull
+  public PsiMethod[] findCodeMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
+    return GrClassImplUtil.findCodeMethodsBySignature(this, patternMethod, checkBases);
+  }
+
+  public PsiElement getLBraceGroovy() {
+    return null;
+  }
+
+  public PsiElement getRBraceGroovy() {
+    return null;
+  }
+
+  public <T extends GrMembersDeclaration> T addMemberDeclaration(T decl, PsiElement anchorBefore) throws IncorrectOperationException {
+    throw new UnsupportedOperationException("Cannot add member declaration to GrTypeParameter");
+  }
+
+  public void removeMemberDeclaration(GrMembersDeclaration decl) {
+  }
 
   public GrTypeParameterImpl(@NotNull ASTNode node) {
     super(node);
@@ -92,7 +165,7 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
 
   @Nullable
   public PsiClass getSuperClass() {
-    return null;
+    return GrClassImplUtil.getSuperClass(this);
   }
 
   public PsiClass[] getInterfaces() {
@@ -101,19 +174,17 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
 
   @NotNull
   public PsiClass[] getSupers() {
-    return PsiClass.EMPTY_ARRAY;
+    return GrClassImplUtil.getSupers(this);
   }
 
   @NotNull
   public PsiClassType[] getSuperTypes() {
-    final PsiClassType[] extendsTypes = getExtendsListTypes();
-    if (extendsTypes.length > 0) return extendsTypes;
-    return new PsiClassType[]{JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME, getResolveScope())};
+    return GrClassImplUtil.getSuperTypes(this);
   }
 
   @NotNull
-  public PsiField[] getFields() {
-    return PsiField.EMPTY_ARRAY;
+  public GrField[] getFields() {
+    return GrField.EMPTY_ARRAY;
   }
 
   @NotNull
@@ -137,48 +208,48 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
   }
 
   @NotNull
-  public PsiField[] getAllFields() {
-    return new PsiField[0];
+  public GrField[] getAllFields() {
+    return GrClassImplUtil.getAllFields(this);
   }
 
   @NotNull
   public PsiMethod[] getAllMethods() {
-    return new PsiMethod[0];
+    return GrClassImplUtil.getAllMethods(this);
   }
 
   @NotNull
   public PsiClass[] getAllInnerClasses() {
-    return new PsiClass[0];
+    return PsiClass.EMPTY_ARRAY;
   }
 
   @Nullable
   public PsiField findFieldByName(@NonNls String name, boolean checkBases) {
-    return null;
+    return GrClassImplUtil.findFieldByName(this, name, checkBases);
   }
 
   @Nullable
   public PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases) {
-    return null;
+    return GrClassImplUtil.findMethodBySignature(this, patternMethod, checkBases);
   }
 
   @NotNull
   public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
-    return new PsiMethod[0];
+    return GrClassImplUtil.findCodeMethodsBySignature(this, patternMethod, checkBases);
   }
 
   @NotNull
   public PsiMethod[] findMethodsByName(@NonNls String name, boolean checkBases) {
-    return new PsiMethod[0];
+    return GrClassImplUtil.findCodeMethodsByName(this, name, checkBases);
   }
 
   @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls String name, boolean checkBases) {
-    return Collections.emptyList(); //todo
+    return GrClassImplUtil.findMethodsAndTheirSubstitutorsByName(this, name, checkBases);
   }
 
   @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
-    return Collections.emptyList(); //todo
+    return GrClassImplUtil.getAllMethodsAndTheirSubstitutors(this);
   }
 
   @Nullable
@@ -227,11 +298,11 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
     final PsiElement parent = getParent();
     if (parent == null) throw new PsiInvalidElementAccessException(this);
     final PsiElement parentParent = parent.getParent();
-    return (PsiTypeParameterListOwner) parentParent;
+    return (PsiTypeParameterListOwner)parentParent;
   }
 
   public int getIndex() {
-    final GrTypeParameterList list = (GrTypeParameterList) getParent();
+    final GrTypeParameterList list = (GrTypeParameterList)getParent();
     return list.getTypeParameterIndex(this);
   }
 
@@ -241,7 +312,7 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
   }
 
   @NotNull
-  private PsiElement getNameIdentifierGroovy() {
+  public PsiElement getNameIdentifierGroovy() {
     PsiElement result = findChildByType(GroovyElementTypes.mIDENT);
     assert result != null;
     return result;
@@ -265,15 +336,6 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
     return false;
   }
 
-  @Nullable
-  public PsiMetaData getMetaData() {
-    return null;
-  }
-
-  public boolean isMetaEnough() {
-    return false;
-  }
-
   public boolean hasTypeParameters() {
     return false;
   }
@@ -291,4 +353,9 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
   public String getName() {
     return getNameIdentifierGroovy().getText();
   }
+
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
+    return GrClassImplUtil.processDeclarations(this, processor, state, lastParent, place);
+  }
+
 }

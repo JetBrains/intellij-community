@@ -18,11 +18,13 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
+import com.intellij.psi.StubBasedPsiElement;
 
 /**
  * @author Dmitry.Krasilschikov
  */
-public interface GrEnumTypeDefinition extends GrTypeDefinition {
+public interface GrEnumTypeDefinition extends GrTypeDefinition, StubBasedPsiElement<GrTypeDefinitionStub> {
   GrEnumConstant[] getEnumConstants();
 
   @Nullable

@@ -15,9 +15,11 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
+import com.intellij.psi.StubBasedPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
+
 /**
- * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
+ * @author Dmitry.Krasilschikov
  */
-public interface GrAnnotationTypeDefinition extends GrTypeDefinition {
+public interface GrAnnotationTypeDefinition extends GrTypeDefinition, StubBasedPsiElement<GrTypeDefinitionStub> {
 }

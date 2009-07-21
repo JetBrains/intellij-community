@@ -72,6 +72,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -198,6 +199,7 @@ public class GroovyAnnotator implements Annotator {
   private static void checkImplementedMethodsOfClass(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
     if (typeDefinition.hasModifierProperty(PsiModifier.ABSTRACT)) return;
     if (typeDefinition.isEnum() || typeDefinition.isAnnotationType()) return;
+    if (typeDefinition instanceof GrTypeParameter) return;
 
     Collection<CandidateInfo> methodsToImplement = OverrideImplementUtil.getMethodsToOverrideImplement(typeDefinition, true);
     methodsToImplement = ContainerUtil.findAll(methodsToImplement, new Condition<CandidateInfo>() {
