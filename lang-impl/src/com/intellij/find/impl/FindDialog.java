@@ -304,13 +304,13 @@ final class FindDialog extends DialogWrapper {
 
     topOptionsPanel.add(createFindOptionsPanel());
     if (!myModel.isMultipleFiles()){
-      topOptionsPanel.add(createDirectionPanel());
-      gbConstraints.gridwidth = GridBagConstraints.RELATIVE;
-      JPanel bottomOptionsPanel = new JPanel();
-      bottomOptionsPanel.setLayout(new GridLayout(1, 2, 8, 0));
-      optionsPanel.add(bottomOptionsPanel, gbConstraints);
-      bottomOptionsPanel.add(createScopePanel());
-      bottomOptionsPanel.add(createOriginPanel());
+      JPanel leftOptionsPanel = new JPanel();
+      leftOptionsPanel.setLayout(new GridLayout(3, 1, 0, 4));
+
+      leftOptionsPanel.add(createDirectionPanel());
+      leftOptionsPanel.add(createOriginPanel());
+      leftOptionsPanel.add(createScopePanel());
+      topOptionsPanel.add(leftOptionsPanel);
     }
     else{
       optionsPanel.add(createGlobalScopePanel(), gbConstraints);
