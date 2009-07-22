@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
 import com.intellij.codeInsight.template.*;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.ui.Messages;
@@ -39,7 +40,7 @@ import java.util.List;
  *
  * @since 5.1
  */
-public class CreateClassAction extends CreateInPackageFromTemplateActionBase {
+public class CreateClassAction extends CreateInPackageFromTemplateActionBase implements DumbAware {
   public CreateClassAction() {
     super(IdeBundle.message("action.create.new.class"),
           IdeBundle.message("action.create.new.class"), Icons.CLASS_ICON);
