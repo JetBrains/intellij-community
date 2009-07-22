@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,12 +43,18 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   public void invoke(final Project project, Editor editor, PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    int offset = editor.getCaretModel().getOffset();
-    PsiElement element = findTargetElement(project, editor, offset);
-    if (element == null) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
-      chooseAmbiguousTarget(editor, offset);
-      return;
+    PsiElement element;
+    try {
+      int offset = editor.getCaretModel().getOffset();
+      element = findTargetElement(project, editor, offset);
+      if (element == null) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
+        chooseAmbiguousTarget(editor, offset);
+        return;
+      }
+    }
+    finally {
+      DumbService.getInstance(project).showDumbModeNotification("Navigation is not available here during index update");
     }
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
