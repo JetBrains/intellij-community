@@ -2,6 +2,7 @@
   <actions>
     <action id="CaptureMemorySnapShot" class="com.intellij.util.CaptureMemorySnapshotAction" icon="/actions/profileMemory.png"/>
     <action id="CaptureCPUUsageData" class="com.intellij.util.CaptureCPUUsageDataAction" icon="/actions/profuleCPU.png"/>
+    <action id="CaptureAllocations" class="com.intellij.util.CaptureAllocationsAction" icon="/actions/profileMemory.png" internal="true"/>
     <action id="ContextHelp" class="com.intellij.ide.actions.ContextHelpAction"/>
     <action id="RunGc" class="com.intellij.ide.actions.RunGcAction"/>
     <action id="ShowPopupMenu" class="com.intellij.ide.actions.ShowPopupMenuAction"/>
@@ -291,6 +292,7 @@
       <separator/>
       <reference ref="CaptureMemorySnapShot"/>
       <reference ref="CaptureCPUUsageData"/>
+      <reference ref="CaptureAllocations"/>
 
     </group>
 
