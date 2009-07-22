@@ -130,10 +130,14 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
   }
 
   protected static void findCollisionsAgainstNewName(final PsiMember memberToRename, final String newName, final List<? super MemberHidesStaticImportUsageInfo> result) {
+    if (!memberToRename.isPhysical()) {
+      return;
+    }
+
     final List<PsiReference> potentialConflicts = new ArrayList<PsiReference>();
     PsiMember prototype = (PsiMember)memberToRename.copy();
     try {
-      ((PsiNamedElement) prototype).setName(newName);
+      ((PsiNamedElement)prototype).setName(newName);
       if (prototype instanceof PsiEnumConstant) {
         final PsiEnumConstantInitializer initializer = ((PsiEnumConstant)prototype).getInitializingClass();
         if (initializer != null) {
@@ -141,13 +145,14 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
           // an initializer existing 'in the air' validates the invariant (IDEADEV-28840)
           initializer.delete();
         }
-      } else if (prototype instanceof PsiField) {
+      }
+      else if (prototype instanceof PsiField) {
         final PsiExpression initializer = ((PsiField)prototype).getInitializer();
         if (initializer != null) {
           initializer.delete();
         }
       }
-      prototype = (PsiMember) memberToRename.getContainingClass().add(prototype);
+      prototype = (PsiMember)memberToRename.getContainingClass().add(prototype);
 
       ReferencesSearch.search(prototype).forEach(new Processor<PsiReference>() {
         public boolean process(final PsiReference psiReference) {
