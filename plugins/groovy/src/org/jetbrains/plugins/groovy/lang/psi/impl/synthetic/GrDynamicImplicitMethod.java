@@ -325,10 +325,6 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
     return true;
   }
 
-  public boolean isPhysical() {
-    return true;
-  }
-
   public String getPresentableText() {
     return getName();
   }

@@ -28,7 +28,7 @@ import java.util.*;
  */
 public class DClassElement implements DNamedElement {
   public String myName;
-  public Map<String, DPropertyElement> myNamesToProperties = new HashMap<String, DPropertyElement>();
+  public Set<DPropertyElement> myProperties = new HashSet<DPropertyElement>();
   public Set<DMethodElement> myMethods = new HashSet<DMethodElement>();
   private Project myProject;
 
@@ -51,21 +51,26 @@ public class DClassElement implements DNamedElement {
   }
 
   public void addProperty(DPropertyElement propertyElement) {
-    myNamesToProperties.put(propertyElement.getName(), propertyElement);
+    myProperties.add(propertyElement);
   }
 
   protected void addProperties(Collection<DPropertyElement> properties) {
     for (DPropertyElement property : properties) {
-      myNamesToProperties.put(property.getName(), property);
+      addProperty(property);
     }
   }
 
   public DPropertyElement getPropertyByName(String propertyName) {
-    return myNamesToProperties.get(propertyName);
+    for (final DPropertyElement property : myProperties) {
+      if (propertyName.equals(property.getName())) {
+        return property;
+      }
+    }
+    return null;
   }
 
   public Collection<DPropertyElement> getProperties() {
-    return myNamesToProperties.values();
+    return myProperties;
   }
 
   public Set<DMethodElement> getMethods() {
@@ -80,8 +85,8 @@ public class DClassElement implements DNamedElement {
     myName = name;
   }
 
-  public DPropertyElement removeProperty(String name) {
-    return myNamesToProperties.remove(name);
+  public void removeProperty(DPropertyElement name) {
+    myProperties.remove(name);
   }
 
   public boolean removeMethod(DMethodElement methodElement) {
@@ -102,7 +107,7 @@ public class DClassElement implements DNamedElement {
   public int hashCode() {
     int result;
     result = (myName != null ? myName.hashCode() : 0);
-    result = 31 * result + (myNamesToProperties != null ? myNamesToProperties.hashCode() : 0);
+    result = 31 * result + (myProperties != null ? myProperties.hashCode() : 0);
     result = 31 * result + (myMethods != null ? myMethods.hashCode() : 0);
     return result;
   }
@@ -117,12 +122,9 @@ public class DClassElement implements DNamedElement {
     return null;
   }
 
-  public DClassElement bindToTree() {
-    return DynamicManager.getInstance(myProject).getRootElement().mergeAddClass(this);
-  }
-
   public boolean containsElement(DItemElement itemElement){
-    return myNamesToProperties.keySet().contains(itemElement.getName()) ||
-        (itemElement instanceof DMethodElement && myMethods.contains(itemElement));
+    //noinspection SuspiciousMethodCalls
+    return myProperties.contains(itemElement) ||
+           (itemElement instanceof DMethodElement && myMethods.contains(itemElement));
   }
 }

@@ -205,7 +205,7 @@ public class DynamicManagerImpl extends DynamicManager {
     final DClassElement classElement = getClassElementByItem(propertyElement);
     assert classElement != null;
 
-    classElement.removeProperty(propertyElement.getName());
+    classElement.removeProperty(propertyElement);
   }
 
   @NotNull
@@ -275,9 +275,11 @@ public class DynamicManagerImpl extends DynamicManager {
 
     final DPropertyElement oldPropertyElement = classElement.getPropertyByName(oldPropertyName);
     if (oldPropertyElement == null) return null;
-    classElement.removeProperty(oldPropertyName);
+    classElement.removeProperty(oldPropertyElement);
     classElement.addProperty(new DPropertyElement(oldPropertyElement.isStatic(), newPropertyName, oldPropertyElement.getType()));
     fireChange();
+    DynamicToolWindowWrapper.getInstance(getProject()).rebuildTreePanel();
+
 
     return newPropertyName;
   }
@@ -362,6 +364,8 @@ public class DynamicManagerImpl extends DynamicManager {
     if (oldMethodElement != null) {
       oldMethodElement.setName(newName);
     }
+    DynamicToolWindowWrapper.getInstance(getProject()).rebuildTreePanel();
+    fireChange();
   }
 
   public Iterable<PsiMethod> getMethods(final String classQname) {

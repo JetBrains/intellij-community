@@ -153,10 +153,6 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
     return true;
   }
 
-  public boolean isPhysical() {
-    return true;
-  }
-
   @Nullable
   public Icon getIcon(boolean open) {
     return GroovyIcons.PROPERTY;

@@ -17,8 +17,11 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrDynamicImplicitMethod;
@@ -54,7 +57,7 @@ public class DMethodElement extends DItemElement implements Comparable {
   }
 
   @NotNull
-  public PsiMethod getPsi(PsiManager manager, String containingClassName) {
+  public PsiMethod getPsi(PsiManager manager, final String containingClassName) {
     if (myImplicitMethod != null) return myImplicitMethod;
 
     final String type = getType();
@@ -66,10 +69,17 @@ public class DMethodElement extends DItemElement implements Comparable {
       staticModifier = PsiModifier.STATIC;
     }
 
+    final String[] argumentsTypes = QuickfixUtil.getArgumentsTypes(myPairs);
     final GrMethod method = GroovyPsiElementFactory.getInstance(manager.getProject())
-        .createMethodFromText(staticModifier, getName(), type, QuickfixUtil.getArgumentsTypes(myPairs));
+        .createMethodFromText(staticModifier, getName(), type, argumentsTypes);
 
-    myImplicitMethod = new GrDynamicImplicitMethod(manager, method, containingClassName);
+    myImplicitMethod = new GrDynamicImplicitMethod(manager, method, containingClassName) {
+      @Override
+      public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+        DynamicManager.getInstance(getProject()).replaceDynamicMethodName(containingClassName, getName(), name, argumentsTypes);
+        return super.setName(name);
+      }
+    };
     return myImplicitMethod;
   }
 
