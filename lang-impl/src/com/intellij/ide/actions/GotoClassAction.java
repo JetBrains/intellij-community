@@ -6,9 +6,6 @@ import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ModalityState;
@@ -22,8 +19,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     assert project != null;
     if (DumbService.getInstance(project).isDumb()) {
-      project.getMessageBus().syncPublisher(Notifications.TOPIC).notify("dumb", "Goto Class action is not available until indices are built, using Goto File instead", "", NotificationType.INFORMATION, NotificationListener.REMOVE);
-
+      DumbService.getInstance(project).showDumbModeNotification("Goto Class action is not available until indices are built, using Goto File instead");
 
       myInAction = null;
       new GotoFileAction().gotoActionPerformed(e);
