@@ -6,6 +6,7 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.ui.popup.BalloonHandler;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,9 +14,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DumbModeIndicator implements ProjectComponent {
   private final Project myProject;
+  private final Alarm myAlarm;
 
   public DumbModeIndicator(Project project) {
     myProject = project;
+    myAlarm = new Alarm(project);
   }
 
   public void projectOpened() {
@@ -26,13 +29,18 @@ public class DumbModeIndicator implements ProjectComponent {
       }
 
       public void enteredDumbMode() {
-        myHandler = DumbService.getInstance(myProject).showDumbModeNotification(
-          "Index update is in progress...<br>" +
-          "During this process some actions that require these indices won't be available.<br>" +
-          "<a href=\'help\'>Click here for more info</a>");
+        myAlarm.addRequest(new Runnable() {
+          public void run() {
+            myHandler = DumbService.getInstance(myProject).showDumbModeNotification(
+              "Index update is in progress...<br>" +
+              "During this process some actions that require these indices won't be available.<br>" +
+              "<a href=\'help\'>Click here for more info</a>");
+          }
+        }, 1000);
       }
 
       public void exitDumbMode() {
+        myAlarm.cancelAllRequests();
         if (myHandler != null) myHandler.hide();
         myHandler = null;
       }
