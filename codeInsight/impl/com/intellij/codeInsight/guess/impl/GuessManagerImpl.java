@@ -5,6 +5,7 @@ import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.RunnerResult;
+import com.intellij.codeInspection.dataFlow.StandardInstructionVisitor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -142,7 +143,9 @@ public class GuessManagerImpl extends GuessManager {
         return new ExpressionTypeMemoryState(getFactory());
       }
     };
-    if (runner.analyzeMethod(lastScope) == RunnerResult.OK) {
+    final StandardInstructionVisitor expressionTypeVisitor = new StandardInstructionVisitor() {
+    };
+    if (runner.analyzeMethod(lastScope, expressionTypeVisitor) == RunnerResult.OK) {
       final Map<PsiExpression, PsiType> map = factory.getResult();
       if (map != null) {
         return map;

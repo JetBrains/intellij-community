@@ -16,6 +16,11 @@ public class PopInstruction extends Instruction {
     return super.apply(runner, memState);
   }
 
+  @Override
+  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+    return apply(runner, stateBefore);
+  }
+
   public String toString() {
     return "POP";
   }

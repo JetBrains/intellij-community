@@ -5,7 +5,9 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInspection.dataFlow.RunnerResult;
 import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
+import com.intellij.codeInspection.dataFlow.StandardInstructionVisitor;
 import com.intellij.codeInspection.dataFlow.instructions.BranchingInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -334,13 +336,13 @@ public class ExtractMethodProcessor implements MatchProvider {
     final PsiIfStatement statementFromText = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + outputVariable.getName() + " == null);", null);
     block.add(statementFromText);
 
-    final RunnerResult rc = dfaRunner.analyzeMethod(block);
+    final RunnerResult rc = dfaRunner.analyzeMethod(block, new StandardInstructionVisitor());
     if (rc == RunnerResult.OK) {
       if (dfaRunner.problemsDetected()) {
-        final Pair<Set<com.intellij.codeInspection.dataFlow.instructions.Instruction>,Set<com.intellij.codeInspection.dataFlow.instructions.Instruction>>
+        final Pair<Set<Instruction>,Set<Instruction>>
           conditionalExpressions = dfaRunner.getConstConditionalExpressions();
-        final Set<com.intellij.codeInspection.dataFlow.instructions.Instruction> falseSet = conditionalExpressions.getSecond();
-        for (com.intellij.codeInspection.dataFlow.instructions.Instruction instruction : falseSet) {
+        final Set<Instruction> falseSet = conditionalExpressions.getSecond();
+        for (Instruction instruction : falseSet) {
           if (instruction instanceof BranchingInstruction) {
             if (((BranchingInstruction)instruction).getPsiAnchor().getText().equals(statementFromText.getCondition().getText())) {
               return true;

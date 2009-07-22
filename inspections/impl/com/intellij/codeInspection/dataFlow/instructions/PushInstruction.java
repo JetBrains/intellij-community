@@ -24,6 +24,11 @@ public class PushInstruction extends Instruction {
     return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(getIndex() + 1),memState)};
   }
 
+  @Override
+  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+    return visitor.visitPush(this, runner, stateBefore);
+  }
+
   public String toString() {
     return "PUSH " + myValue;
   }

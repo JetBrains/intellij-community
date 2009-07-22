@@ -17,6 +17,11 @@ public class EmptyStackInstruction extends Instruction {
     return new DfaInstructionState[] {new DfaInstructionState(nextInstruction, dfaMemoryState)};
   }
 
+  @Override
+  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+    return visitor.visitEmptyStack(this, runner, stateBefore);
+  }
+
   public String toString() {
     return "EMTY_STACK";
   }

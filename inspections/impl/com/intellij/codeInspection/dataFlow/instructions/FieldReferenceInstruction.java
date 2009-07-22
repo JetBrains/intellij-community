@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow.instructions;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiArrayAccessExpression;
 import com.intellij.psi.PsiExpression;
@@ -22,6 +23,11 @@ public class FieldReferenceInstruction extends Instruction {
     myExpression = expression;
     myIsPhysical = expression.isPhysical();
     mySyntheticFieldName = syntheticFieldName;
+  }
+
+  @Override
+  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+    return visitor.visitFieldReference(this, runner, stateBefore);
   }
 
   public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {

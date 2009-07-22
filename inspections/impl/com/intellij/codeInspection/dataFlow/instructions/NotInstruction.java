@@ -21,6 +21,11 @@ public class NotInstruction extends Instruction {
     return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(getIndex() + 1), memState)};
   }
 
+  @Override
+  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+    return visitor.visitNot(this, runner, stateBefore);
+  }
+
   public String toString() {
     return "NOT";
   }

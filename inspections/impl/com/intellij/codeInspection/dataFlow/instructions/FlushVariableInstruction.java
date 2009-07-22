@@ -28,6 +28,11 @@ public class FlushVariableInstruction extends Instruction {
     return new DfaInstructionState[] {new DfaInstructionState(nextInstruction, memState)};
   }
 
+  @Override
+  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+    return visitor.visitFlushVariable(this, runner, stateBefore);
+  }
+
   public String toString() {
     return "FLUSH " + (myVariable != null ? myVariable.toString() : " all fields");
   }

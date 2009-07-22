@@ -22,7 +22,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.EmptyStackException;
@@ -59,10 +58,7 @@ public class DataFlowRunner {
     return myInstructionFactory;
   }
 
-  public RunnerResult analyzeMethod(PsiElement psiBlock) {
-    return analyzeMethod(psiBlock, null);
-  }
-  public RunnerResult analyzeMethod(PsiElement psiBlock, @Nullable PsiElement endElement) {
+  public RunnerResult analyzeMethod(PsiElement psiBlock, InstructionVisitor visitor) {
     final boolean isInMethod = psiBlock.getParent() instanceof PsiMethod;
 
     try {
@@ -70,8 +66,7 @@ public class DataFlowRunner {
       final ControlFlow flow = analyzer.buildControlFlow(psiBlock);
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
 
-      int endOffset = endElement == null ? flow.getInstructionCount() : flow.getStartOffset(endElement);
-      if (endOffset == -1) endOffset = flow.getInstructionCount();
+      int endOffset = flow.getInstructionCount();
       myInstructions = flow.getInstructions();
       myFields = flow.getFields();
 
@@ -124,7 +119,7 @@ public class DataFlowRunner {
           }
         }
 
-        DfaInstructionState[] after = instruction.apply(this, instructionState.getMemoryState());
+        DfaInstructionState[] after = instruction.accept(this, instructionState.getMemoryState(), visitor);
         if (after != null) {
           for (DfaInstructionState state : after) {
             Instruction nextInstruction = state.getInstruction();

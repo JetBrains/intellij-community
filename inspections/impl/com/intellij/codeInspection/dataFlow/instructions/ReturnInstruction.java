@@ -15,6 +15,11 @@ public class ReturnInstruction extends Instruction {
     return DfaInstructionState.EMPTY_ARRAY;
   }
 
+  @Override
+  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+    return apply(runner, stateBefore);
+  }
+
   public String toString() {
     return "RETURN";
   }

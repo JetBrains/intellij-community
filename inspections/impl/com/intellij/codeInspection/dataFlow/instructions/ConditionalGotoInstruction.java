@@ -12,6 +12,7 @@ package com.intellij.codeInspection.dataFlow.instructions;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiElement;
 
@@ -67,6 +68,11 @@ public class ConditionalGotoInstruction extends BranchingInstruction {
     }
 
     return result.toArray(new DfaInstructionState[result.size()]);
+  }
+
+  @Override
+  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+    return visitor.visitConditionalGoto(this, runner, stateBefore);
   }
 
   private void markBranchReachable(boolean isTrueBranch) {

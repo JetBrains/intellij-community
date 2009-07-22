@@ -12,6 +12,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiExpression;
@@ -44,6 +45,11 @@ public class AssignInstruction extends Instruction {
     memState.push(dfaDest);
 
     return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, memState)};
+  }
+
+  @Override
+  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+    return visitor.visitAssign(this, runner, stateBefore);
   }
 
   protected void onAssigningToNotNullableVariable(final DataFlowRunner runner) {

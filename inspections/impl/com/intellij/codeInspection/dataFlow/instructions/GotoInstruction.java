@@ -11,6 +11,7 @@ package com.intellij.codeInspection.dataFlow.instructions;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 
 
 public class GotoInstruction extends Instruction {
@@ -23,6 +24,11 @@ public class GotoInstruction extends Instruction {
   public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
     Instruction nextInstruction = runner.getInstruction(myOffset);
     return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, memState)};
+  }
+
+  @Override
+  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+    return apply(runner, stateBefore);
   }
 
   public String toString() {

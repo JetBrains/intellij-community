@@ -21,7 +21,12 @@ public class InstructionFactory {
   }
 
   public BinopInstruction createInstanceofInstruction(@NotNull PsiElement psiAnchor, @NotNull final PsiExpression left, @NotNull final PsiType castType) {
-    return new BinopInstruction(PsiKeyword.INSTANCEOF, psiAnchor, psiAnchor.getProject());
+    return new BinopInstruction(PsiKeyword.INSTANCEOF, psiAnchor, psiAnchor.getProject()) {
+      @Override
+      public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+        return visitor.visitInstanceof(this, runner, stateBefore);
+      }
+    };
   }
 
   public BinopInstruction createBinopInstruction(@NonNls String opSign, PsiElement psiAnchor, Project project) {
@@ -38,10 +43,6 @@ public class InstructionFactory {
 
   public DupInstruction createDupInstruction() {
     return new DupInstruction();
-  }
-
-  public EmptyInstruction createEmptyInstruction() {
-    return new EmptyInstruction();
   }
 
   public EmptyStackInstruction createEmptyStackInstruction() {
@@ -72,7 +73,12 @@ public class InstructionFactory {
   }
 
   public MethodCallInstruction createCastInstruction(@NotNull PsiExpression context, DfaValueFactory factory, PsiType castType) {
-    return new MethodCallInstruction(context, factory, MethodCallInstruction.MethodType.CAST, castType);
+    return new MethodCallInstruction(context, factory, MethodCallInstruction.MethodType.CAST, castType) {
+      @Override
+      public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+        return visitor.visitCast(this, runner, stateBefore);
+      }
+    };
   }
 
   public NotInstruction createNotInstruction() {
@@ -106,6 +112,11 @@ public class InstructionFactory {
         memState.pop();
         memState.push(DfaUnknownValue.getInstance());
         return super.apply(runner, memState);
+      }
+
+      @Override
+      public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+        return apply(runner, stateBefore);
       }
     };
   }

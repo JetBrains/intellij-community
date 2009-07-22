@@ -11,6 +11,7 @@ package com.intellij.codeInspection.dataFlow.instructions;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -122,6 +123,11 @@ public class BinopInstruction extends BranchingInstruction {
     }
 
     return new DfaInstructionState[]{new DfaInstructionState(next, memState)};
+  }
+
+  @Override
+  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+    return visitor.visitBinop(this, runner, stateBefore);
   }
 
   private DfaValue getNonNullStringValue(final DfaValueFactory factory) {

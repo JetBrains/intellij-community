@@ -12,6 +12,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -112,6 +113,11 @@ public class MethodCallInstruction extends Instruction {
         memState.flushFields(runner);
       }
     }
+  }
+
+  @Override
+  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+    return visitor.visitMethodCall(this, runner, stateBefore);
   }
 
   protected void onInstructionProducesNPE(final DataFlowRunner runner) {

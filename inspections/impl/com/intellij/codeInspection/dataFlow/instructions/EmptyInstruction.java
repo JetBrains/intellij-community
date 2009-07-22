@@ -18,6 +18,11 @@ public class EmptyInstruction extends Instruction {
     return new DfaInstructionState[] {new DfaInstructionState(nextInstruction, nextState)};
   }
 
+  @Override
+  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+    return apply(runner, stateBefore);
+  }
+
   public String toString() {
     return "EMPTY";
   }

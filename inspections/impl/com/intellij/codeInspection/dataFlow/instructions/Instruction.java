@@ -11,6 +11,7 @@ package com.intellij.codeInspection.dataFlow.instructions;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -26,6 +27,8 @@ public abstract class Instruction {
   public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState stateBefore) {
     return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(getIndex() + 1), stateBefore)};
   }
+  
+  public abstract DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor);
 
   public boolean isMemoryStateProcessed(DfaMemoryState dfaMemState) {
     for (DfaMemoryState state : myProcessedStates) {

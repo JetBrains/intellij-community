@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow.instructions;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiReturnStatement;
 
@@ -27,6 +28,11 @@ public class CheckReturnValueInstruction extends Instruction {
 
   protected void onNullableReturn(final DataFlowRunner runner) {
 
+  }
+
+  @Override
+  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+    return visitor.visitCheckReturnValue(this, runner, stateBefore);
   }
 
   public PsiReturnStatement getReturn() {

@@ -44,7 +44,8 @@ public class StandardDataFlowRunner extends DataFlowRunner {
     mySuggestNullableAnnotations = suggestNullableAnnotations;
   }
 
-  public RunnerResult analyzeMethod(PsiElement psiBlock, PsiElement endElement) {
+  @Override
+  public RunnerResult analyzeMethod(PsiElement psiBlock, InstructionVisitor visitor) {
     myIsInMethod = psiBlock.getParent() instanceof PsiMethod;
 
     if (myIsInMethod) {
@@ -52,7 +53,7 @@ public class StandardDataFlowRunner extends DataFlowRunner {
       myInNullableMethod = AnnotationUtil.isNullable(method);
       myInNotNullMethod = AnnotationUtil.isNotNull(method);
     }
-    return super.analyzeMethod(psiBlock, endElement);
+    return super.analyzeMethod(psiBlock, visitor);
   }
 
   public void onInstructionProducesNPE(Instruction instruction) {

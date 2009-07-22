@@ -47,7 +47,7 @@ public class DfaUtil {
         public Result<MultiValuesMap<PsiVariable, PsiExpression>> compute() {
           final ValuableDataFlowRunner runner = new ValuableDataFlowRunner(context);
           final MultiValuesMap<PsiVariable, PsiExpression> result;
-          if (runner.analyzeMethod(topLevelBlock) == RunnerResult.OK) {
+          if (runner.analyzeMethod(topLevelBlock, new StandardInstructionVisitor()) == RunnerResult.OK) {
             result = runner.getAllVariableValues();
           }
           else {

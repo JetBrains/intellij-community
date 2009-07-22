@@ -68,7 +68,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   private void analyzeCodeBlock(final PsiCodeBlock body, ProblemsHolder holder) {
     if (body == null) return;
     final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(SUGGEST_NULLABLE_ANNOTATIONS);
-    final RunnerResult rc = dfaRunner.analyzeMethod(body);
+    final RunnerResult rc = dfaRunner.analyzeMethod(body, new StandardInstructionVisitor());
     if (rc == RunnerResult.OK) {
       if (dfaRunner.problemsDetected()) {
         createDescription(dfaRunner, holder);
