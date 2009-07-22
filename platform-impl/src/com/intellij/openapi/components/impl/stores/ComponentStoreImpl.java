@@ -378,9 +378,17 @@ abstract class ComponentStoreImpl implements IComponentStore {
             mySettingsSavingComponents.toArray(new SettingsSavingComponent[mySettingsSavingComponents.size()]);
 
         for (SettingsSavingComponent settingsSavingComponent : settingsComponents) {
-          settingsSavingComponent.save();
+          try {
+            settingsSavingComponent.save();
+          }
+          catch (StateStorage.StateStorageException e) {
+            LOG.info(e);
+            throw new IOException(e.getMessage());
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
         }
-
 
         myStorageManagerSaveSession.save();
       }
