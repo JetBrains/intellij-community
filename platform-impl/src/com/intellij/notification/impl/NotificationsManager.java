@@ -42,6 +42,10 @@ public class NotificationsManager extends NotificationsBase implements Applicati
     myModel.clear(createFilter(project, true));
   }
 
+  public void archive() {
+    myModel.archive();
+  }
+
   @NotNull
   public String getComponentName() {
     return "NotificationsManager";
@@ -116,6 +120,10 @@ public class NotificationsManager extends NotificationsBase implements Applicati
 
   public Collection<Notification> getByType(@Nullable final NotificationType type, @Nullable final Project project) {
     return myModel.getByType(type, createFilter(project, false));
+  }
+
+  public Collection<Notification> getArchive(@Nullable Project project) {
+    return myModel.getArchive(createFilter(project, false));
   }
 
   private static class ProjectFilter implements NotNullFunction<Notification, Boolean> {

@@ -7,18 +7,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author spleaner
  */
 public class NotificationModel<T extends Notification> {
 
-  private final LinkedList<T> myNotifications = new LinkedList<T>();
+  private final List<T> myNotifications = ContainerUtil.createEmptyCOWList();
   private final List<NotificationModelListener<T>> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<T> myArchive = ContainerUtil.createEmptyCOWList();
 
   public void addListener(@NotNull final NotificationModelListener<T> listener) {
     myListeners.add(listener);
@@ -29,9 +27,22 @@ public class NotificationModel<T extends Notification> {
   }
 
   public void add(@NotNull final T notification) {
-    myNotifications.addFirst(notification);
+    myNotifications.add(0, notification);
     for (NotificationModelListener<T> listener : myListeners) {
       listener.notificationsAdded(notification);
+    }
+  }
+
+  public void archive() {
+    if (myNotifications.size() > 0) {
+      myArchive.addAll(myNotifications);
+
+      final T[] tba = myNotifications.toArray((T[])Array.newInstance(myNotifications.get(0).getClass(), myNotifications.size()));
+      myNotifications.clear();
+
+      for (final NotificationModelListener<T> listener : myListeners) {
+        listener.notificationsArchived(tba);
+      }
     }
   }
 
@@ -73,6 +84,9 @@ public class NotificationModel<T extends Notification> {
       if (myNotifications.contains(notification)) {
         tbr.add(notification);
         myNotifications.remove(notification);
+      } else if (myArchive.contains(notification)) {
+        tbr.add(notification);
+        myArchive.remove(notification);
       }
     }
 
@@ -180,5 +194,16 @@ public class NotificationModel<T extends Notification> {
         remove(all.toArray(a));
       }
     }
+  }
+
+  public Collection<T> getArchive(@NotNull NotNullFunction<T, Boolean> filter) {
+    final LinkedList<T> result = new LinkedList<T>();
+    for (final T notification : myArchive) {
+      if (filter.fun(notification)) {
+        result.add(notification);
+      }
+    }
+
+    return Collections.unmodifiableList(result);
   }
 }

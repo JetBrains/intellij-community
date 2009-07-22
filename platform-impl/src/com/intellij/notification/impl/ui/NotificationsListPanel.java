@@ -2,12 +2,15 @@ package com.intellij.notification.impl.ui;
 
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.impl.*;
+import com.intellij.notification.impl.Notification;
+import com.intellij.notification.impl.NotificationModelListener;
+import com.intellij.notification.impl.NotificationsManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +21,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -33,12 +37,11 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
   private JList myList;
   private NotificationsListModel myDataModel;
 
-  private JComponent myActiveContentComponent;
-  private JComponent myInactiveContentComponent;
-
   private Wrapper myContentPane = new Wrapper();
   private NotificationComponent myNotificationComponent;
   private Project myProject;
+  private JComponent myFilterBar;
+  private boolean myArchive;
 
   public NotificationsListPanel(@NotNull final NotificationComponent component) {
     setLayout(new BorderLayout());
@@ -55,7 +58,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
         if (i >= 0) {
           final Object o = getModel().getElementAt(i);
           if (o instanceof Notification) {
-            return ((Notification) o).getDescription();
+            return ((Notification)o).getDescription();
           }
         }
 
@@ -71,9 +74,9 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       public void mouseClicked(final MouseEvent e) {
         if (e.getClickCount() % 2 == 0) {
           final int index = myList.locationToIndex(e.getPoint());
-          final Notification notification = getManager().getAt(index, myProject);
-          if (notification != null) {
-            performNotificationAction(notification);
+          final Object o = myList.getModel().getElementAt(index);
+          if (o instanceof Notification) {
+            performNotificationAction((Notification) o);
           }
         }
       }
@@ -89,29 +92,19 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
     final JScrollPane scrollPane = new JScrollPane(myList);
     scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-//    scrollPane.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
-//    scrollPane.setBackground(Color.WHITE);
 
     final JPanel wrapperPane = new JPanel();
     wrapperPane.setLayout(new BorderLayout());
 
     wrapperPane.add(scrollPane, BorderLayout.CENTER);
-    wrapperPane.add(buildFilterBar(myDataModel), BorderLayout.NORTH);
 
-    myActiveContentComponent = wrapperPane;
+    myFilterBar = buildFilterBar(myDataModel);
+    wrapperPane.add(myFilterBar, BorderLayout.NORTH);
 
-    myInactiveContentComponent = new JLabel("No notifications.", JLabel.CENTER) {
-      @Override
-      public Dimension getPreferredSize() {
-        return getEmptyPreferredSize();
-      }
-    };
-
-    myInactiveContentComponent.setFocusable(true);
-
-    switchLayout();
-
+    myContentPane.setContent(wrapperPane);
     add(myContentPane, BorderLayout.CENTER);
+
+    updateButtons();
   }
 
   private static NotificationsManager getManager() {
@@ -127,33 +120,95 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
 
     createFilterButton(box, buttonGroup, "All", new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
+        myArchive = false;
         listModel.filter(null);
         resetSelection();
+      }
+    }, new NotNullFunction<MyButton, String>() {
+      @NotNull
+      public String fun(MyButton myButton) {
+        final int i = getManager().count(myProject);
+        if (i > 0) {
+          return String.format("All (%s)", i);
+        } else {
+          return "All";
+        }
       }
     }, true);
 
     createFilterButton(box, buttonGroup, "Error", new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
+        myArchive = false;
         listModel.filter(NotificationType.ERROR);
         resetSelection();
+      }
+    }, new NotNullFunction<MyButton, String>() {
+      @NotNull
+      public String fun(MyButton myButton) {
+        final int i = getManager().getByType(NotificationType.ERROR, myProject).size();
+        if (i > 0) {
+          return String.format("Error (%s)", i);
+        }
+
+        return "Error";
       }
     }, false);
 
     createFilterButton(box, buttonGroup, "Warning", new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
+        myArchive = false;
         listModel.filter(NotificationType.WARNING);
         resetSelection();
+      }
+    }, new NotNullFunction<MyButton, String>() {
+      @NotNull
+      public String fun(MyButton myButton) {
+        final int i = getManager().getByType(NotificationType.WARNING, myProject).size();
+        if (i > 0) {
+          return String.format("Warning (%s)", i);
+        }
+
+        return "Warning";
       }
     }, false);
 
     createFilterButton(box, buttonGroup, "Information", new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
+        myArchive = false;
         listModel.filter(NotificationType.INFORMATION);
         resetSelection();
+      }
+    }, new NotNullFunction<MyButton, String>() {
+      @NotNull
+      public String fun(MyButton myButton) {
+        final int i = getManager().getByType(NotificationType.INFORMATION, myProject).size();
+        if (i > 0) {
+          return String.format("Information (%s)", i);
+        }
+
+        return "Information";
       }
     }, false);
 
     box.add(Box.createHorizontalGlue());
+
+    createFilterButton(box, buttonGroup, "Archive", new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myArchive = true;
+        listModel.showArchive();
+        resetSelection();
+      }
+    }, new NotNullFunction<MyButton, String>() {
+      @NotNull
+      public String fun(MyButton myButton) {
+        final int i = getManager().getArchive(myProject).size();
+        if (i > 0) {
+          return String.format("Archive (%s)", i);
+        }
+
+        return "Archive";
+      }
+    }, false);
 
     return box;
   }
@@ -164,8 +219,19 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
     }
   }
 
-  private static void createFilterButton(final JPanel parent, final ButtonGroup group, final String title, final ActionListener listener, final boolean active) {
-    final StickyButton b = new StickyButton(title, listener);
+  private static void createFilterButton(final JPanel parent,
+                                         final ButtonGroup group,
+                                         final String title,
+                                         final ActionListener listener,
+                                         final NotNullFunction<MyButton, String> titleCallback,
+                                         final boolean active) {
+    final StickyButton b = new MyButton(title, listener) {
+      @Override
+      public void updateTitle() {
+        setText(titleCallback.fun(this));
+      }
+    };
+
     parent.add(b);
     group.add(b);
     b.setSelected(active);
@@ -173,30 +239,26 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
 
   public void notificationsAdded(@NotNull final Notification... notification) {
     myDataModel.rebuildList();
-    switchLayout();
+    updateButtons();
   }
 
   public void notificationsRemoved(@NotNull final Notification... notification) {
     myDataModel.rebuildList();
-    switchLayout();
+    updateButtons();
   }
 
-  private void switchLayout() {
-    final int count = getManager().count(myProject);
+  public void notificationsArchived(@NotNull Notification... notification) {
+    myDataModel.rebuildList();
+    updateButtons();
+  }
 
-    if (count > 0) {
-      if (myActiveContentComponent.getParent() == null) {
-        myContentPane.removeAll();
-        myContentPane.setContent(myActiveContentComponent);
-      }
-    } else {
-      if (myInactiveContentComponent.getParent() == null) {
-        myContentPane.removeAll();
-        myContentPane.setContent(myInactiveContentComponent);
+  private void updateButtons() {
+    final Component[] components = myFilterBar.getComponents();
+    for (final Component c : components) {
+      if (c instanceof MyButton) {
+        ((MyButton)c).updateTitle();
       }
     }
-
-    revalidateAll();
   }
 
   private void performNotificationAction(final Notification notification) {
@@ -205,13 +267,6 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       getManager().remove(notification);
       revalidateAll();
     }
-  }
-
-  private static Dimension getEmptyPreferredSize() {
-    final Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
-    size.width *= 0.3d;
-    size.height *= 0.3d;
-    return size;
   }
 
   static Dimension getMinSize() {
@@ -246,7 +301,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       final List<Notification> tbr = new ArrayList<Notification>();
       for (int i = min; i <= max; i++) {
         if (model.isSelectedIndex(i)) {
-          final Notification notification = (Notification) myDataModel.getElementAt(i);
+          final Notification notification = (Notification)myDataModel.getElementAt(i);
           if (notification != null) {
             final NotificationListener.Continue onRemove = notification.getListener().onRemove();
             if (onRemove == NotificationListener.Continue.REMOVE) {
@@ -272,7 +327,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myContentPane.getTargetComponent() == myActiveContentComponent ? myList : myInactiveContentComponent;
+    return myList;
   }
 
   public boolean showOrHide() {
@@ -287,29 +342,35 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
     }
 
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(this, getPreferredFocusedComponent());
-    final JBPopup popup =
-        builder.setResizable(true)
-            .setMinSize(getMinSize())
-            .setDimensionServiceKey(null, "NotificationsPopup", true)
-            .setCancelOnClickOutside(false)
-            .setBelongsToGlobalPopupStack(false)
-            .setCancelButton(new MinimizeButton("Hide"))
-            .setMovable(true)
-            .setRequestFocus(true)
-            .setTitle("Notifications")
-            .createPopup();
+    final JBPopup popup = builder.setResizable(true).setMinSize(getMinSize()).setDimensionServiceKey(null, "NotificationsPopup", true)
+      .setCancelOnClickOutside(false).setBelongsToGlobalPopupStack(false).setCancelButton(new MinimizeButton("Hide")).setMovable(true)
+      .setRequestFocus(true).setTitle("Notifications").createPopup();
 
     popup.addListener(new JBPopupListener.Adapter() {
-          @Override
-          public void onClosed(LightweightWindowEvent event) {
-            getManager().removeListener(NotificationsListPanel.this);
-          }
-        });
+      @Override
+      public void onClosed(LightweightWindowEvent event) {
+        final NotificationsManager manager = getManager();
+        manager.removeListener(NotificationsListPanel.this);
+        manager.archive();
+      }
+    });
 
     getManager().addListener(this);
     myPopupRef = new WeakReference<JBPopup>(popup);
     popup.showInCenterOf(SwingUtilities.getRootPane(myNotificationComponent));
     return true;
+  }
+
+  private abstract static class MyButton extends StickyButton {
+    private MyButton(String text, ActionListener listener) {
+      super(text, listener);
+    }
+
+    private MyButton(String text) {
+      super(text);
+    }
+
+    public abstract void updateTitle();
   }
 
   private static class NotificationsListRenderer extends JPanel implements ListCellRenderer {
@@ -334,9 +395,13 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       add(myTimestampLabel);
     }
 
-    public Component getListCellRendererComponent(final JList list, final Object value, final int index, final boolean isSelected, final boolean cellHasFocus) {
+    public Component getListCellRendererComponent(final JList list,
+                                                  final Object value,
+                                                  final int index,
+                                                  final boolean isSelected,
+                                                  final boolean cellHasFocus) {
       LOG.assertTrue(value instanceof Notification);
-      final Notification notification = (Notification) value;
+      final Notification notification = (Notification)value;
 
       setIcon(notification.getIcon());
       final Color color = list.getSelectionBackground();
@@ -344,9 +409,10 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
 
       if (cellHasFocus) {
         setBorder(BorderFactory.createCompoundBorder(SEPARATION_BORDER,
-            BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, color),
-                BorderFactory.createEmptyBorder(4, 2, 2, 2))));
-      } else {
+                                                     BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, color),
+                                                                                        BorderFactory.createEmptyBorder(4, 2, 2, 2))));
+      }
+      else {
         setBorder(BorderFactory.createCompoundBorder(SEPARATION_BORDER, DEFAULT_BORDER));
       }
 
@@ -372,10 +438,20 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
     private List<Notification> myNotifications = new ArrayList<Notification>();
     private NotificationType myType;
     private Project myProject;
+    private NotNullFunction<Project, Collection<Notification>> myRebuildFunction;
 
     private NotificationsListModel(@Nullable Project project) {
       myProject = project;
       rebuildList();
+    }
+
+    private static NotNullFunction<Project, Collection<Notification>> createDefaultRebuildFunction() {
+      return new NotNullFunction<Project, Collection<Notification>>() {
+        @NotNull
+        public Collection<Notification> fun(Project project) {
+          return getManager().getByType(null, project);
+        }
+      };
     }
 
     public int getSize() {
@@ -386,16 +462,40 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       return myNotifications.get(index);
     }
 
+    private void rebuildList(NotNullFunction<Project, Collection<Notification>> fun) {
+      myRebuildFunction = fun;
+      rebuildList();
+    }
+
     private void rebuildList() {
+      if (myRebuildFunction == null) {
+        myRebuildFunction = createDefaultRebuildFunction();
+      }
+
       myNotifications.clear();
-      myNotifications.addAll(getManager().getByType(myType, myProject));
+      myNotifications.addAll(myRebuildFunction.fun(myProject));
 
       fireContentsChanged(this, 0, myNotifications.size() - 1);
     }
 
     public void filter(final NotificationType type) {
       myType = type;
-      rebuildList();
+      rebuildList(new NotNullFunction<Project, Collection<Notification>>() {
+        @NotNull
+        public Collection<Notification> fun(Project project) {
+          return getManager().getByType(type, project);
+        }
+      });
+    }
+
+    public void showArchive() {
+      myType = null;
+      rebuildList(new NotNullFunction<Project, Collection<Notification>>() {
+        @NotNull
+        public Collection<Notification> fun(Project project) {
+          return getManager().getArchive(myProject);
+        }
+      });
     }
   }
 }

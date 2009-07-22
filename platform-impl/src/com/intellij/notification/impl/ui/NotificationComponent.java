@@ -142,6 +142,14 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
     });
   }
 
+  public void notificationsArchived(@NotNull Notification... notification) {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        updateStatus(false);
+      }
+    });
+  }
+
   @SuppressWarnings({"SSBasedInspection"})
   public void notificationsRemoved(@NotNull final Notification... notifications) {
     SwingUtilities.invokeLater(new Runnable() {
