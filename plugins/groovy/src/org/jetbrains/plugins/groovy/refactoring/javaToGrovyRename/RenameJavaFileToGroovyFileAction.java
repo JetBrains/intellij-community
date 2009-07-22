@@ -22,8 +22,9 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,7 +36,7 @@ import org.jetbrains.plugins.groovy.config.GroovyFacet;
 /**
  * @author ven
  */
-public class RenameJavaFileToGroovyFileAction extends AnAction {
+public class RenameJavaFileToGroovyFileAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
     final PsiFile file = e.getData(DataKeys.PSI_FILE);
     assert isEnabled(file);
