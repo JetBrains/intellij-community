@@ -265,6 +265,8 @@ final class EditorTabbedContainer implements Disposable {
 
     ShadowAction myShadow;
     private final TabInfo myTabInfo;
+    private final Icon myIcon = IconLoader.getIcon("/actions/close.png");
+    private final Icon myHoveredIcon = IconLoader.getIcon("/actions/closeHovered.png");
 
     public CloseTab(JComponent c, TabInfo info) {
       myTabInfo = info;
@@ -273,8 +275,8 @@ final class EditorTabbedContainer implements Disposable {
 
     @Override
     public void update(final AnActionEvent e) {
-      e.getPresentation().setIcon(IconLoader.getIcon("/actions/close.png"));
-      e.getPresentation().setHoveredIcon(IconLoader.getIcon("/actions/closeHovered.png"));
+      e.getPresentation().setIcon(myIcon);
+      e.getPresentation().setHoveredIcon(myHoveredIcon);
       e.getPresentation().setVisible(UISettings.getInstance().SHOW_CLOSE_BUTTON);
     }
 
