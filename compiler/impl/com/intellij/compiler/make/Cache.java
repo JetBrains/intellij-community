@@ -191,9 +191,18 @@ public class Cache {
     }
   }
 
-  public int[] getReferencedClassQNames(int classId) throws CacheCorruptedException {
+  public int[] getReferencedClasses(int classId) throws CacheCorruptedException {
     try {
       return myQNameToReferencedClassesMap.getValues(new StorageClassId(classId));
+    }
+    catch (Throwable e) {
+      throw new CacheCorruptedException(e);
+    }
+  }
+
+  public void clearReferencedClasses(int qName) throws CacheCorruptedException {
+    try {
+      myQNameToReferencedClassesMap.remove(new StorageClassId(qName));
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
@@ -315,15 +324,6 @@ public class Cache {
     }
   }
 
-  public void addReferencedClass(int classId, int referencedClassName) throws CacheCorruptedException {
-    try {
-      myQNameToReferencedClassesMap.addValue(new StorageClassId(classId), referencedClassName);
-    }
-    catch (Throwable e) {
-      throw new CacheCorruptedException(e);
-    }
-  }
-
   public FieldInfo[] getFields(int qName) throws CacheCorruptedException{
     try {
       final ClassInfo classInfo = myQNameToClassInfoMap.get(new StorageClassId(qName));
@@ -419,9 +419,13 @@ public class Cache {
     }
   }
 
-  public void addClassReferencer(int classDeclarationId, int referencerQName) throws CacheCorruptedException {
+  public void addClassReferencer(int qName, int referencerQName) throws CacheCorruptedException {
     try {
-      myQNameToReferencersMap.addValue(new StorageClassId(classDeclarationId), referencerQName);
+      final StorageClassId classId = new StorageClassId(qName);
+      if (myQNameToClassInfoMap.containsMapping(classId)) {
+        myQNameToReferencersMap.addValue(classId, referencerQName);
+        myQNameToReferencedClassesMap.addValue(new StorageClassId(referencerQName), qName);
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
@@ -437,9 +441,12 @@ public class Cache {
     }
   }
 
-  public void addFieldReferencer(int classQName, int fieldName, int referencerQName) throws CacheCorruptedException {
+  public void addFieldReferencer(int qName, int fieldName, int referencerQName) throws CacheCorruptedException {
     try {
-      myQNameToFieldReferencersMap.addValue(new StorageFieldId(classQName, fieldName), referencerQName);
+      if (myQNameToClassInfoMap.containsMapping(new StorageClassId(qName))) {
+        myQNameToFieldReferencersMap.addValue(new StorageFieldId(qName, fieldName), referencerQName);
+        myQNameToReferencedClassesMap.addValue(new StorageClassId(referencerQName), qName);
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
@@ -455,9 +462,12 @@ public class Cache {
     }
   }
 
-  public void addMethodReferencer(int classQName, int methodName, int methodDescriptor, int referencerQName) throws CacheCorruptedException {
+  public void addMethodReferencer(int qName, int methodName, int methodDescriptor, int referencerQName) throws CacheCorruptedException {
     try {
-      myQNameToMethodReferencersMap.addValue(new StorageMethodId(classQName, methodName, methodDescriptor), referencerQName);
+      if (myQNameToClassInfoMap.containsMapping(new StorageClassId(qName))) {
+        myQNameToMethodReferencersMap.addValue(new StorageMethodId(qName, methodName, methodDescriptor), referencerQName);
+        myQNameToReferencedClassesMap.addValue(new StorageClassId(referencerQName), qName);
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
@@ -622,33 +632,5 @@ public class Cache {
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
-  }
-
-  public boolean isClassReferenced(final int classDeclarationId, final int referencerClassQName) throws CacheCorruptedException {
-    final int[] referencers = getClassReferencers(classDeclarationId);
-    for (int referencer : referencers) {
-      if (referencerClassQName == referencer) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public boolean isFieldReferenced(int classQName, final int fieldName, final int referencerClassQName) throws CacheCorruptedException {
-    for (int referencer : getFieldReferencers(classQName, fieldName)) {
-      if (referencerClassQName == referencer) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public boolean isMethodReferenced(final int classQName, final int methodName, final int methodDescriptor, final int referencerClassQName) throws CacheCorruptedException {
-    for (final int referencer : getMethodReferencers(classQName, methodName, methodDescriptor)) {
-      if (referencerClassQName == referencer) {
-        return true;
-      }
-    }
-    return false;
   }
 }

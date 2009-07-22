@@ -152,7 +152,7 @@ public class DependencyCache {
     for (final int qName : namesToUpdate) {
       indicator.setFraction(i++*1.0/namesToUpdate.length/4);
       // process use-dependencies
-      for (int referencedClassQName : cache.getReferencedClassQNames(qName)) {
+      for (int referencedClassQName : cache.getReferencedClasses(qName)) {
         if (!cache.containsClass(referencedClassQName)) {
           continue;
         }
@@ -166,6 +166,7 @@ public class DependencyCache {
           cache.removeMethodReferencer(referencedClassQName, methodId.getName(), methodId.getDescriptor(), qName);
         }
       }
+      cache.clearReferencedClasses(qName);
       // process inheritance dependencies
       navigator.walkSuperClasses(qName, new ClassInfoProcessor() {
         public boolean process(int classQName) throws CacheCorruptedException {
@@ -237,7 +238,6 @@ public class DependencyCache {
       final int[] bounds = findBounds(genericClassSignature);
       for (int boundClassQName : bounds) {
         cache.addClassReferencer(boundClassQName, classQName);
-        cache.addReferencedClass(classQName, boundClassQName);
       }
     }
 
@@ -264,7 +264,6 @@ public class DependencyCache {
       else { // reference to class
         cache.addClassReferencer(declaringClassName, classQName);
       }
-      cache.addReferencedClass(classQName, declaringClassName);
     }
     final SymbolTable symbolTable = getSymbolTable();
 
@@ -278,7 +277,6 @@ public class DependencyCache {
       }
       final int cls = symbolTable.getId(className);
       cache.addClassReferencer(cls, classQName);
-      cache.addReferencedClass(classQName, cls);
     }
 
     for (final MethodInfo methodInfo : cache.getMethods(classQName)) {
@@ -295,7 +293,6 @@ public class DependencyCache {
       if (returnTypeClassName != null) {
         final int returnTypeClassQName = symbolTable.getId(returnTypeClassName);
         cache.addClassReferencer(returnTypeClassQName, classQName);
-        cache.addReferencedClass(classQName, returnTypeClassQName);
       }
 
       String[] parameterSignatures = CacheUtils.getParameterSignatures(methodInfo, symbolTable);
@@ -304,7 +301,6 @@ public class DependencyCache {
         if (paramClassName != null) {
           final int paramClassId = symbolTable.getId(paramClassName);
           cache.addClassReferencer(paramClassId, classQName);
-          cache.addReferencedClass(classQName, paramClassId);
         }
       }
     }
@@ -337,12 +333,10 @@ public class DependencyCache {
       return;
     }
     final Cache cache = getCache();
-    final int classId = classQName;
     for (AnnotationConstantValue annotation : annotations) {
       final int annotationQName = annotation.getAnnotationQName();
 
       cache.addClassReferencer(annotationQName, classQName);
-      cache.addReferencedClass(classId, annotationQName);
 
       final AnnotationNameValuePair[] memberValues = annotation.getMemberValues();
       for (final AnnotationNameValuePair nameValuePair : memberValues) {
