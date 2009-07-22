@@ -173,12 +173,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
     else {
       //already registered
-      final VirtualFilePointerImpl pointer1 = pointer;
-      Disposer.register(parentDisposable, new Disposable() {
-        public void dispose() {
-          pointer1.dispose();
-        }
-      });
+      Disposer.register(parentDisposable, new DelegatingDisposable(pointer));
     }
 
     return pointer;
@@ -433,6 +428,23 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       myUrlsToUpdate = null;
       myEvents = null;
       myPointersToUdate = null;
+    }
+  }
+
+  private static class DelegatingDisposable implements Disposable {
+    private final VirtualFilePointerImpl myPointer;
+
+    public DelegatingDisposable(VirtualFilePointerImpl pointer) {
+      myPointer = pointer;
+    }
+
+    public void dispose() {
+      myPointer.dispose();
+    }
+
+    @Override
+    public String toString() {
+      return "D:" + myPointer.toString();
     }
   }
 }
