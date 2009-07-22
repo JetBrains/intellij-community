@@ -22,6 +22,7 @@ import com.intellij.ide.actions.CreateClassAction;
 import com.intellij.ide.actions.CreateInPackageFromTemplateActionBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
@@ -35,7 +36,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-public class NewGroovyClassAction extends CreateInPackageFromTemplateActionBase {
+public class NewGroovyClassAction extends CreateInPackageFromTemplateActionBase implements DumbAware {
   public NewGroovyClassAction() {
     super(GroovyBundle.message("newclass.menu.action.text"),
         GroovyBundle.message("newclass.menu.action.description"),
