@@ -63,7 +63,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
   private static boolean initComplete;
   private static Map<Language, SpellcheckingStrategy> factories = new HashMap<Language, SpellcheckingStrategy>();
 
-  private static void init() {
+  private synchronized static void init() {
     if (initComplete) return;
     final SpellcheckingStrategy[] spellcheckingStrategies = Extensions.getExtensions(SpellcheckingStrategy.EP_NAME);
     if (spellcheckingStrategies != null) {
@@ -83,7 +83,6 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-
 
     return new PsiElementVisitor() {
 
