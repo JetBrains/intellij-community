@@ -370,12 +370,6 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   private ArrayList<Shortcut> _getShortcuts(final String actionId) {
     KeymapManagerEx keymapManager = getKeymapManager();
     ArrayList<Shortcut> listOfShortcuts = myActionId2ListOfShortcuts.get(actionId);
-
-    final String actionBinding = keymapManager.getActionBinding(actionId);
-    if (actionBinding != null) {
-      listOfShortcuts.addAll(_getShortcuts(actionBinding));
-    }
-
     if (listOfShortcuts != null) {
       listOfShortcuts = new ArrayList<Shortcut>(listOfShortcuts);
     }
@@ -383,6 +377,10 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
       listOfShortcuts = new ArrayList<Shortcut>();
     }
 
+    final String actionBinding = keymapManager.getActionBinding(actionId);
+    if (actionBinding != null) {
+      listOfShortcuts.addAll(_getShortcuts(actionBinding));
+    }
 
     return listOfShortcuts;
   }
