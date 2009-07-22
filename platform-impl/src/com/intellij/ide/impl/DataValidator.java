@@ -13,10 +13,11 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Array;
 import java.util.Map;
 
-public abstract class DataValidator <T> {
+public abstract class DataValidator<T> {
   private static boolean ourExtensionsLoaded;
 
-  public static final ExtensionPointName<KeyedLazyInstanceEP<DataValidator>> EP_NAME = ExtensionPointName.create("com.intellij.dataValidator");
+  public static final ExtensionPointName<KeyedLazyInstanceEP<DataValidator>> EP_NAME =
+    ExtensionPointName.create("com.intellij.dataValidator");
 
   Logger LOG = Logger.getInstance("#com.intellij.ide.impl.DataValidator");
 
@@ -39,7 +40,7 @@ public abstract class DataValidator <T> {
   private static <T> DataValidator<T> getValidator(String dataId) {
     if (!ourExtensionsLoaded) {
       ourExtensionsLoaded = true;
-      for(KeyedLazyInstanceEP<DataValidator> ep: Extensions.getExtensions(EP_NAME)) {
+      for (KeyedLazyInstanceEP<DataValidator> ep : Extensions.getExtensions(EP_NAME)) {
         ourValidators.put(ep.key, ep.getInstance());
       }
     }
@@ -49,7 +50,7 @@ public abstract class DataValidator <T> {
   public static <T> T findInvalidData(String dataId, Object data, final Object dataSource) {
     if (data == null) return null;
     DataValidator<T> validator = getValidator(dataId);
-    if (validator != null) return validator.findInvalid(dataId, (T) data, dataSource);
+    if (validator != null) return validator.findInvalid(dataId, (T)data, dataSource);
     return null;
   }
 
@@ -68,8 +69,10 @@ public abstract class DataValidator <T> {
 
     public T[] findInvalid(final String dataId, T[] array, final Object dataSource) {
       for (T element : array) {
-        LOG.assertTrue(element != null, "Data isn't valid. " + dataId + "=null Provided by: " + dataSource.getClass().getName() + " (" +
-                            dataSource.toString() + ")");
+        if (element == null) {
+          LOG.assertTrue(false, "Data isn't valid. " + dataId + "=null Provided by: " + dataSource.getClass().getName() +
+                                " (" + dataSource.toString() + ")");
+        }
         T invalid = myElementValidator.findInvalid(dataId, element, dataSource);
         if (invalid != null) {
           T[] result = (T[])Array.newInstance(array[0].getClass(), 1);
