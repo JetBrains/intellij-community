@@ -16,6 +16,8 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -270,7 +272,11 @@ public class DefaultActionGroup extends ActionGroup {
           continue outer;
         }
       }
-      throw new IllegalStateException("unknown stub: " + stub.getId());
+      throw new IllegalStateException("unknown stub: " + stub.getId() + "; actions=" + StringUtil.join(mySortedChildren, new Function<AnAction, String>() {
+        public String fun(AnAction action) {
+          return action.getTemplatePresentation().getText() + " of class " + action.getClass();
+        }
+      }, ","));
     }
     return children;
   }
