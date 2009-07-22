@@ -60,22 +60,23 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     return SpellCheckerManager.getHighlightDisplayLevel();
   }
 
-  private static boolean initComplete;
-  private static Map<Language, SpellcheckingStrategy> factories = new HashMap<Language, SpellcheckingStrategy>();
+  private static final Map<Language, SpellcheckingStrategy> factories = new HashMap<Language, SpellcheckingStrategy>();
 
-  private synchronized static void init() {
-    if (initComplete) return;
-    final SpellcheckingStrategy[] spellcheckingStrategies = Extensions.getExtensions(SpellcheckingStrategy.EP_NAME);
-    if (spellcheckingStrategies != null) {
-      for (SpellcheckingStrategy spellcheckingStrategy : spellcheckingStrategies) {
-        final Language language = spellcheckingStrategy.getLanguage();
-        if (language != Language.ANY) {
-          factories.put(language, spellcheckingStrategy);
+  private static void ensureFactoriesAreLoaded() {
+      synchronized (factories) {
+        if (!factories.isEmpty()) return;
+        final SpellcheckingStrategy[] spellcheckingStrategies = Extensions.getExtensions(SpellcheckingStrategy.EP_NAME);
+        if (spellcheckingStrategies != null) {
+          for (SpellcheckingStrategy spellcheckingStrategy : spellcheckingStrategies) {
+            final Language language = spellcheckingStrategy.getLanguage();
+            if (language != Language.ANY) {
+              factories.put(language, spellcheckingStrategy);
+            }
+          }
         }
       }
     }
-    initComplete = true;
-  }
+
 
   private static SpellcheckingStrategy getFactoryByLanguage(@NotNull Language lang) {
     return factories.containsKey(lang) ? factories.get(lang) : factories.get(PlainTextLanguage.INSTANCE);
@@ -88,9 +89,9 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
       @Override
       public void visitElement(PsiElement element) {
-        if (!initComplete) {
-          init();
-        }
+
+        ensureFactoriesAreLoaded();
+
         final SpellcheckingStrategy factoryByLanguage = getFactoryByLanguage(element.getLanguage());
         final Tokenizer tokenizer = factoryByLanguage.getTokenizer(element);
 

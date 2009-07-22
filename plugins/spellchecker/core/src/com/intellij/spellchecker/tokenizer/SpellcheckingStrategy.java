@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public class SpellcheckingStrategy {
 
 
-  public static ExtensionPointName<SpellcheckingStrategy> EP_NAME = ExtensionPointName.create("com.intellij.spellchecker.support");
+  public static final ExtensionPointName<SpellcheckingStrategy> EP_NAME = ExtensionPointName.create("com.intellij.spellchecker.support");
 
   @NotNull
   public Tokenizer getTokenizer(PsiElement element) {
