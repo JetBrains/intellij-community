@@ -22,4 +22,8 @@ public class MalformedFormatString {
         String invalid = String.format("%s %s" + local, 1); // this is valid according to the inspector (INCORRECT!)
         String interesting = String.format("%s %s" + "hmm", 1); // this is invalid according to the inspector (correct)
     }
+
+    public void outOfMemory() {
+        String.format("%2147483640$s", "s");
+    }
 }

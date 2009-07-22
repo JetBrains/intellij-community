@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,10 +43,10 @@ class FormatDecode{
 
     private static final Validator FLOAT_VALIDATOR = new FloatValidator();
 
-    public static Validator[] decode(String line){
-        final ArrayList<Validator> args = new ArrayList<Validator>();
+    public static Validator[] decode(String formatString, int argumentCount){
+        final ArrayList<Validator> parameters = new ArrayList<Validator>();
 
-        final Matcher matcher = fsPattern.matcher(line);
+        final Matcher matcher = fsPattern.matcher(formatString);
         int implicit = 0;
         int pos = 0;
         for(int i = 0; matcher.find(i); i = matcher.end()){
@@ -96,28 +96,31 @@ class FormatDecode{
                         throw new UnknownFormatException(matcher.group());
                 }
             }
-            argAt(allowed, pos, args);
+            argAt(allowed, pos, parameters, argumentCount);
         }
 
-        return args.toArray(new Validator[args.size()]);
+        return parameters.toArray(new Validator[parameters.size()]);
     }
 
-    private static void argAt(Validator val, int pos, ArrayList<Validator> args){
-        if(pos < args.size()){
-            final Validator old = args.get(pos);
+    private static void argAt(Validator val, int pos,
+                              ArrayList<Validator> parameters,
+                              int argumentCount){
+        if(pos < parameters.size()){
+            final Validator old = parameters.get(pos);
             // it's OK to overwrite ALL with something more specific
             // it's OK to ignore overwrite of something else with ALL or itself
             if (old == ALL_VALIDATOR) {
-                args.set(pos, val);
+                parameters.set(pos, val);
             } else if (val != ALL_VALIDATOR && val != old) {
                 throw new DuplicateFormatFlagsException(
                         "requires both " + old.type() + " and " + val.type());
             }
         } else{
-            while(pos > args.size()) {
-                args.add(ALL_VALIDATOR);
+            while(pos > parameters.size() &&
+                    argumentCount > parameters.size()) {
+                parameters.add(ALL_VALIDATOR);
             }
-            args.add(val);
+            parameters.add(val);
         }
     }
 
@@ -165,7 +168,8 @@ class FormatDecode{
 
         public boolean valid(PsiType type){
             final String text = type.getCanonicalText();
-            return PsiType.CHAR.equals(type) || "java.lang.Character".equals(text);
+            return PsiType.CHAR.equals(type) ||
+                    "java.lang.Character".equals(text);
         }
 
         public String type(){

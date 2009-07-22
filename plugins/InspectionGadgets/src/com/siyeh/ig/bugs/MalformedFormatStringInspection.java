@@ -40,20 +40,20 @@ public class MalformedFormatStringInspection extends BaseInspection{
     @Override
     @NotNull
     public String buildErrorString(Object... infos){
-        final String value = (String)infos[0];
+        final Object value = infos[0];
         final Validator[] validators;
-        try{
-            validators = FormatDecode.decode(value);
-        } catch(Exception ignore){
+        if (value instanceof Exception) {
             return InspectionGadgetsBundle.message(
                     "malformed.format.string.problem.descriptor.malformed");
+        } else {
+            validators = (Validator[]) value;
         }
-        final int numArgs = ((Integer)infos[1]).intValue();
-        if(validators.length < numArgs){
+        final int argumentCount = ((Integer)infos[1]).intValue();
+        if(validators.length < argumentCount){
             return InspectionGadgetsBundle.message(
                     "malformed.format.string.problem.descriptor.too.many.arguments");
         }
-        if(validators.length > numArgs){
+        if(validators.length > argumentCount){
             return InspectionGadgetsBundle.message(
                     "malformed.format.string.problem.descriptor.too.few.arguments");
         }
@@ -131,16 +131,17 @@ public class MalformedFormatStringInspection extends BaseInspection{
             if(!callTakesFormatString(expression)){
                 return;
             }
+            final int argumentCount = arguments.length - (formatArgPosition + 1);
             final Validator[] validators;
             try{
-                validators = FormatDecode.decode(value);
-            } catch(Exception ignore){
-                registerError(formatArgument, value);
+                validators = FormatDecode.decode(value, argumentCount);
+            } catch(Exception e){
+                registerError(formatArgument, e);
                 return;
             }
-            final int numArgs = arguments.length - (formatArgPosition + 1);
-            if(validators.length != numArgs){
-                registerError(formatArgument, value, Integer.valueOf(numArgs));
+            if(validators.length != argumentCount){
+                registerError(formatArgument, validators,
+                        Integer.valueOf(argumentCount));
                 return;
             }
             for(int i = 0; i < validators.length; i++){
@@ -148,8 +149,8 @@ public class MalformedFormatStringInspection extends BaseInspection{
                 final PsiType argType =
                         arguments[i + formatArgPosition + 1].getType();
                 if(!validator.valid(argType)){
-                    registerError(formatArgument, value,
-                            Integer.valueOf(numArgs));
+                    registerError(formatArgument, validators,
+                            Integer.valueOf(argumentCount));
                     return;
                 }
             }
