@@ -25,8 +25,8 @@ import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Set;
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * @author Eugene Belyaev
@@ -286,14 +286,18 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   }
 
   private THashMap<KeyStroke,ArrayList<String>> getKeystroke2ListOfIds() {
-    myKeystroke2ListOfIds = myKeystroke2ListOfIds != null ? myKeystroke2ListOfIds : new THashMap<KeyStroke, ArrayList<String>>();
-    fillKeystroke2ListOfIds(myKeystroke2ListOfIds, KeyboardShortcut.class);
+    if (myKeystroke2ListOfIds == null) {
+      myKeystroke2ListOfIds = new THashMap<KeyStroke, ArrayList<String>>();
+      fillKeystroke2ListOfIds(myKeystroke2ListOfIds, KeyboardShortcut.class);
+    }
     return myKeystroke2ListOfIds;
   }
 
   private THashMap<KeyboardModifierGestureShortuct,ArrayList<String>> getGesture2ListOfIds() {
-    myGesture2ListOfIds = myGesture2ListOfIds != null ? myGesture2ListOfIds : new THashMap<KeyboardModifierGestureShortuct, ArrayList<String>>();
-    fillKeystroke2ListOfIds(myGesture2ListOfIds, KeyboardModifierGestureShortuct.class);
+    if (myGesture2ListOfIds == null) {
+      myGesture2ListOfIds = new THashMap<KeyboardModifierGestureShortuct, ArrayList<String>>();
+      fillKeystroke2ListOfIds(myGesture2ListOfIds, KeyboardModifierGestureShortuct.class);
+    }
     return myGesture2ListOfIds;
   }
 
@@ -366,6 +370,12 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   private ArrayList<Shortcut> _getShortcuts(final String actionId) {
     KeymapManagerEx keymapManager = getKeymapManager();
     ArrayList<Shortcut> listOfShortcuts = myActionId2ListOfShortcuts.get(actionId);
+
+    final String actionBinding = keymapManager.getActionBinding(actionId);
+    if (actionBinding != null) {
+      listOfShortcuts.addAll(_getShortcuts(actionBinding));
+    }
+
     if (listOfShortcuts != null) {
       listOfShortcuts = new ArrayList<Shortcut>(listOfShortcuts);
     }
@@ -373,10 +383,6 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
       listOfShortcuts = new ArrayList<Shortcut>();
     }
 
-    final String actionBinding = keymapManager.getActionBinding(actionId);
-    if (actionBinding != null) {
-      listOfShortcuts.addAll(_getShortcuts(actionBinding));
-    }
 
     return listOfShortcuts;
   }
