@@ -1,6 +1,7 @@
 package com.intellij.ui.tabs;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.MessageType;
 import org.jetbrains.annotations.NotNull;
@@ -123,6 +124,13 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     warningPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     warningPanel.add(new JLabel("Scopes are processed from top to bottom with Local colors first.",
                              MessageType.WARNING.getDefaultIcon(), SwingConstants.LEFT));
+    final JButton editScopes = new JButton("Manage Scopes...");
+    editScopes.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        EditScopesDialog.editConfigurable(myManager.getProject(), null, true);
+      }
+    });
+    warningPanel.add(editScopes, BorderLayout.EAST);
     add(warningPanel, BorderLayout.SOUTH);
   }
 
