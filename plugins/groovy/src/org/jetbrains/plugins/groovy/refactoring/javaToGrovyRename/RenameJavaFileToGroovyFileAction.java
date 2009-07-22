@@ -22,12 +22,15 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.config.GroovyFacet;
 
 /**
  * @author ven
@@ -74,8 +77,16 @@ public class RenameJavaFileToGroovyFileAction extends AnAction {
     }
   }
 
-  private boolean isEnabled(PsiFile file) {
-    return file != null && (file.getLanguage() == StdLanguages.JAVA || file.getLanguage() == GroovyFileType.GROOVY_LANGUAGE) &&
-        file.getManager().isInProject(file);
+  private static boolean isEnabled(PsiFile file) {
+    if (file == null) {
+      return false;
+    }
+
+    if (!(file.getLanguage() == StdLanguages.JAVA || file.getLanguage() == GroovyFileType.GROOVY_LANGUAGE)) {
+      return false;
+    }
+
+    final Module module = ModuleUtil.findModuleForPsiElement(file);
+    return module != null && GroovyFacet.getInstance(module) != null;
   }
 }
