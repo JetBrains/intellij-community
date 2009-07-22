@@ -11,12 +11,19 @@ package com.intellij.codeInspection.dataFlow.instructions;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
+import com.intellij.psi.PsiElement;
 
 public class PushInstruction extends Instruction {
   private final DfaValue myValue;
+  private final PsiElement myPlace;
 
-  public PushInstruction(DfaValue value) {
+  public PushInstruction(DfaValue value, PsiElement place) {
     myValue = value != null ? value : DfaUnknownValue.getInstance();
+    myPlace = place;
+  }
+
+  public PsiElement getPlace() {
+    return myPlace;
   }
 
   public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {

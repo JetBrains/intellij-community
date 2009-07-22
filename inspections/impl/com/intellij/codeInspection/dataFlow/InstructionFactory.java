@@ -90,7 +90,7 @@ public class InstructionFactory {
   }
 
   public PushInstruction createPushInstruction(DfaValue value, final PsiExpression expression) {
-    return new PushInstruction(value);
+    return new PushInstruction(value, expression);
   }
 
   public ReturnFromSubInstruction createReturnFromSubInstruction() {

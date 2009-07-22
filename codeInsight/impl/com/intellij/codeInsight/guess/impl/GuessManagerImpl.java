@@ -2,10 +2,9 @@
 package com.intellij.codeInsight.guess.impl;
 
 import com.intellij.codeInsight.guess.GuessManager;
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
-import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.RunnerResult;
-import com.intellij.codeInspection.dataFlow.StandardInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.TypeCastInstruction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -17,6 +16,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -125,7 +125,7 @@ public class GuessManagerImpl extends GuessManager {
   }
 
   @NotNull
-  private Map<PsiExpression, PsiType> _getDataFlowExpressionTypes(final PsiExpression forPlace) {
+  private static Map<PsiExpression, PsiType> _getDataFlowExpressionTypes(final PsiExpression forPlace) {
     PsiElement scope = forPlace.getParent();
     PsiElement lastScope = scope;
     while(true){
@@ -137,16 +137,16 @@ public class GuessManagerImpl extends GuessManager {
       }
     }
 
-    final ExpressionTypeInstructionFactory factory = new ExpressionTypeInstructionFactory(forPlace);
+    final ExpressionTypeInstructionFactory factory = new ExpressionTypeInstructionFactory();
     DataFlowRunner runner = new DataFlowRunner(factory) {
       protected DfaMemoryState createMemoryState() {
         return new ExpressionTypeMemoryState(getFactory());
       }
     };
-    final StandardInstructionVisitor expressionTypeVisitor = new StandardInstructionVisitor() {
-    };
-    if (runner.analyzeMethod(lastScope, expressionTypeVisitor) == RunnerResult.OK) {
-      final Map<PsiExpression, PsiType> map = factory.getResult();
+
+    final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(forPlace);
+    if (runner.analyzeMethod(lastScope, visitor) == RunnerResult.OK) {
+      final Map<PsiExpression, PsiType> map = visitor.getResult();
       if (map != null) {
         return map;
       }
@@ -309,4 +309,41 @@ public class GuessManagerImpl extends GuessManager {
     return null;
   }
 
+  private static class ExpressionTypeInstructionVisitor extends StandardInstructionVisitor {
+    private Map<PsiExpression, PsiType> myResult;
+    private PsiElement myForPlace;
+
+    private ExpressionTypeInstructionVisitor(PsiElement forPlace) {
+      myForPlace = forPlace;
+    }
+
+    public Map<PsiExpression, PsiType> getResult() {
+      return myResult;
+    }
+
+    @Override
+    public DfaInstructionState[] visitTypeCast(TypeCastInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+      ((ExpressionTypeMemoryState) memState).setExpressionType(instruction.getCasted(), instruction.getCastTo());
+      return super.visitTypeCast(instruction, runner, memState);
+    }
+
+    @Override
+    public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+      if (myForPlace == instruction.getPlace()) {
+        final Map<PsiExpression, PsiType> map = ((ExpressionTypeMemoryState)memState).getStates();
+        if (myResult == null) {
+          myResult = new THashMap<PsiExpression, PsiType>(map, ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY);
+        } else {
+          final Iterator<PsiExpression> iterator = myResult.keySet().iterator();
+          while (iterator.hasNext()) {
+            PsiExpression psiExpression = iterator.next();
+            if (!myResult.get(psiExpression).equals(map.get(psiExpression))) {
+              iterator.remove();
+            }
+          }
+        }
+      }
+      return super.visitPush(instruction, runner, memState);
+    }
+  }
 }

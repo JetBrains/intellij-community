@@ -31,6 +31,14 @@ public class TypeCastInstruction extends Instruction {
     return myCastExpression;
   }
 
+  public PsiExpression getCasted() {
+    return myCasted;
+  }
+
+  public PsiType getCastTo() {
+    return myCastTo;
+  }
+
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
     return visitor.visitTypeCast(this, runner, stateBefore);

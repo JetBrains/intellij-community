@@ -948,7 +948,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(pop);
     final PushInstruction pushSuccess = new PushInstruction(and
                                                             ? myFactory.getConstFactory().getFalse()
-                                                            : myFactory.getConstFactory().getTrue());
+                                                            : myFactory.getConstFactory().getTrue(), null);
     addInstruction(pushSuccess);
 
     toPopAndPushSuccess.setOffset(pop.getIndex());
@@ -965,7 +965,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     GotoInstruction overPushFalse = new GotoInstruction(-1);
     addInstruction(overPushFalse);
-    PushInstruction pushFalse = new PushInstruction(myFactory.getConstFactory().getFalse());
+    PushInstruction pushFalse = new PushInstruction(myFactory.getConstFactory().getFalse(), null);
     addInstruction(pushFalse);
 
     firstTrueGoto.setOffset(pushFalse.getIndex());

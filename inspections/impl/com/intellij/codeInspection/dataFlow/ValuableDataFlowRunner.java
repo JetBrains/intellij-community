@@ -58,7 +58,7 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
     }
 
     public PushInstruction createPushInstruction(final DfaValue value, final PsiExpression expression) {
-      return new PushInstruction(value){
+      return new PushInstruction(value, expression){
         public DfaInstructionState[] apply(final DataFlowRunner runner, final DfaMemoryState memState) {
           if (myContext == expression) {
             final Map<DfaVariableValue,DfaVariableState> map = ((MyDfaMemoryState)memState).getVariableStates();
