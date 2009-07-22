@@ -26,8 +26,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public final class ObjectTree<T> {
@@ -269,6 +269,10 @@ public final class ObjectTree<T> {
     for (ObjectTreeListener each : myListeners) {
       each.objectExecuted(object);
     }
+  }
+
+  public int size() {
+    return myObject2NodeMap.size();
   }
 
   private static class MyTHashSet<T> extends THashSet<T> {

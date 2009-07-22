@@ -66,6 +66,8 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
 
     myComponent.setLayout(new BorderLayout());
     myComponent.add(splitter, BorderLayout.CENTER);
+    JLabel countLabel = new JLabel("Total disposable count: " + Disposer.getTree().size());
+    myComponent.add(countLabel, BorderLayout.SOUTH);
 
     addTree(new DisposerTree(this), "All", false);
     addTree(new DisposerTree(this), "Watch", true);
