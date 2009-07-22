@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -812,27 +811,11 @@ public class AbstractPopup implements JBPopup {
   private static void setLocation(final RelativePoint p, final PopupComponent popup, Component content) {
     if (popup == null) return;
 
-    Component cmp;
-    try {
-      final Method method = Popup.class.getDeclaredMethod("getComponent");
-      method.setAccessible(true);
-      cmp = (Component)method.invoke(popup);
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-      return;
-    }
+    final Window wnd = popup.getWindow();
+    assert wnd != null;
 
-    if (cmp instanceof Window) {
-      ((Window)cmp).pack();
-    }
-    else {
-      final Point screenPoint = p.getPoint(cmp.getParent());
-      final Dimension prefSize = content.getPreferredSize();
-      cmp.setBounds(screenPoint.x, screenPoint.y, prefSize.width, prefSize.height);
-      cmp.validate();
-      cmp.repaint();
-    }
+    wnd.pack();
+    wnd.setLocation(p.getScreenPoint());
   }
 
   public void pack() {
