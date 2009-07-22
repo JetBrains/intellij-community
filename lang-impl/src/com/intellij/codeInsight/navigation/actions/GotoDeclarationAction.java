@@ -13,6 +13,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.diagnostic.Logger;
@@ -53,8 +54,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
         return;
       }
     }
-    finally {
+    catch (IndexNotReadyException e) {
       DumbService.getInstance(project).showDumbModeNotification("Navigation is not available here during index update");
+      return;
     }
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
