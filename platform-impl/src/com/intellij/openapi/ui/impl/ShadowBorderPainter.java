@@ -8,6 +8,7 @@ import java.awt.image.BufferedImage;
 
 /**
  * @author spleaner
+ * @author Konstantin Bulenkov
  */
 public class ShadowBorderPainter {
   private static final Icon TOP = IconLoader.getIcon("/ide/shadow/top.png");
@@ -23,36 +24,69 @@ public class ShadowBorderPainter {
   public static final int TOP_SIZE = 20;
   public static final int BOTTOM_SIZE = 49;
 
+  private static final Icon POPUP_TOP = IconLoader.getIcon("/ide/shadow/popup/top.png");
+  private static final Icon POPUP_TOP_RIGHT = IconLoader.getIcon("/ide/shadow/popup/top-right.png");
+  private static final Icon POPUP_RIGHT = IconLoader.getIcon("/ide/shadow/popup/right.png");
+  private static final Icon POPUP_BOTTOM_RIGHT = IconLoader.getIcon("/ide/shadow/popup/bottom-right.png");
+  private static final Icon POPUP_BOTTOM = IconLoader.getIcon("/ide/shadow/popup/bottom.png");
+  private static final Icon POPUP_BOTTOM_LEFT = IconLoader.getIcon("/ide/shadow/popup/bottom-left.png");
+  private static final Icon POPUP_LEFT = IconLoader.getIcon("/ide/shadow/popup/left.png");
+  private static final Icon POPUP_TOP_LEFT = IconLoader.getIcon("/ide/shadow/popup/top-left.png");
+
+  public static final int POPUP_SIDE_SIZE = 7;
+  public static final int POPUP_TOP_SIZE = 4;
+  public static final int POPUP_BOTTOM_SIZE = 10;
+
   private ShadowBorderPainter() {
   }
 
-  public static BufferedImage createShadow(final JComponent c, final int width, final int height) {
+  public static BufferedImage createShadow(final JComponent c, final int width, final int height, boolean isPopup) {
     final GraphicsConfiguration graphicsConfiguration = GraphicsEnvironment.getLocalGraphicsEnvironment().
         getDefaultScreenDevice().getDefaultConfiguration();
 
-    final BufferedImage image = graphicsConfiguration.createCompatibleImage(width, height, Transparency.TRANSLUCENT);;
+    final BufferedImage image = graphicsConfiguration.createCompatibleImage(width, height, Transparency.TRANSLUCENT);
     final Graphics2D g = image.createGraphics();
 
-    TOP_LEFT.paintIcon(c, g, 0, 0);
-    TOP_RIGHT.paintIcon(c, g, width - SIDE_SIZE * 2, 0);
+    final Icon topLeft = isPopup ? POPUP_TOP_LEFT : TOP_LEFT;
+    final Icon topRight = isPopup ? POPUP_TOP_RIGHT : TOP_RIGHT;
+    final Icon bottom = isPopup ? POPUP_BOTTOM : BOTTOM;
+    final Icon top = isPopup ? POPUP_TOP : TOP;
+    final Icon bottomRight = isPopup ? POPUP_BOTTOM_RIGHT : BOTTOM_RIGHT;
+    final Icon bottomLeft = isPopup ? POPUP_BOTTOM_LEFT : BOTTOM_LEFT;
+    final Icon left = isPopup ? POPUP_LEFT : LEFT;
+    final Icon right = isPopup ? POPUP_RIGHT : RIGHT;
+    final int sideSize = isPopup ? POPUP_SIDE_SIZE : SIDE_SIZE;
+    final int bottomSize = isPopup ? POPUP_BOTTOM_SIZE : BOTTOM_SIZE;
 
-    for (int _x = SIDE_SIZE * 2; _x < width - SIDE_SIZE * 2; _x ++) {
-      TOP.paintIcon(c, g, _x, 0);
+
+    topLeft.paintIcon(c, g, 0, 0);
+    topRight.paintIcon(c, g, width - sideSize * 2, 0);
+
+    for (int _x = sideSize * 2; _x < width - sideSize * 2; _x ++) {
+      top.paintIcon(c, g, _x, 0);
     }
 
-    for (int _x = BOTTOM_SIZE * 2; _x < width - BOTTOM_SIZE * 2; _x ++) {
-      BOTTOM.paintIcon(c, g, _x, height - BOTTOM_SIZE);
+    for (int _x = bottomSize * 2; _x < width - bottomSize * 2; _x ++) {
+      bottom.paintIcon(c, g, _x, height - bottomSize);
     }
 
-    for (int _y = SIDE_SIZE * 2; _y < height - BOTTOM_SIZE * 2; _y ++) {
-      LEFT.paintIcon(c, g, 0, _y);
-      RIGHT.paintIcon(c, g, width - SIDE_SIZE, _y);
+    for (int _y = sideSize * 2; _y < height - bottomSize * 2; _y ++) {
+      left.paintIcon(c, g, 0, _y);
+      right.paintIcon(c, g, width - sideSize, _y);
     }
 
-    BOTTOM_RIGHT.paintIcon(c, g, width - BOTTOM_SIZE * 2, height - BOTTOM_SIZE * 2);
-    BOTTOM_LEFT.paintIcon(c, g, 0, height - BOTTOM_SIZE * 2);
+    bottomRight.paintIcon(c, g, width - bottomSize * 2, height - bottomSize * 2);
+    bottomLeft.paintIcon(c, g, 0, height - bottomSize * 2);
 
     g.dispose();
     return image;
+  }
+
+  public static BufferedImage createShadow(final JComponent c, final int width, final int height) {
+    return createShadow(c, width, height, false);
+  }
+
+  public static BufferedImage createPopupShadow(final JComponent c, final int width, final int height) {
+    return createShadow(c, width, height, true);
   }
 }

@@ -5,8 +5,8 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
@@ -30,10 +30,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.*;
@@ -60,7 +57,7 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
     }
   }
 
-  private class ToolWindowSwitcherPanel extends JPanel implements KeyListener, MouseListener {
+  private class ToolWindowSwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener {
     final JBPopup myPopup;
     final Map<ToolWindow, String> ids = new HashMap<ToolWindow, String>();
     final JList toolwindows;
@@ -71,7 +68,6 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
     final Project project;
     final int CTRL_KEY;
     final int ALT_KEY;
-
 
     ToolWindowSwitcherPanel(Project project) {
       super(new BorderLayout(0, 0));
@@ -117,6 +113,7 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
       toolwindows.setCellRenderer(new ToolWindowsRenderer(ids));
       toolwindows.addKeyListener(this);
       toolwindows.addMouseListener(this);
+      toolwindows.addMouseMotionListener(this);
       toolwindows.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e) {
           if (!toolwindows.getSelectionModel().isSelectionEmpty()) {
@@ -153,6 +150,7 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
       files.setCellRenderer(new VirtualFilesRenderer(project));
       files.addKeyListener(this);
       files.addMouseListener(this);
+      files.addMouseMotionListener(this);
       files.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e) {
           if (!files.getSelectionModel().isSelectionEmpty()) {
@@ -182,7 +180,6 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
         }
 
         public void valueChanged(final ListSelectionEvent e) {
-          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               updatePathLabel();
@@ -220,8 +217,8 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
           .setModalContext(false)
           .setFocusable(true)
           .setRequestFocus(true)
-          .setMovable(true)
           .setTitle("Switcher")
+          .setMovable(false)
           .setCancelCallback(new Computable<Boolean>() {
           public Boolean compute() {
             SWITCHER = null;
@@ -267,6 +264,7 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
         }        
       }
     }
+
 
     public void keyReleased(KeyEvent e) {
       if (e.getKeyCode() == CTRL_KEY || e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -390,13 +388,34 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
         if (jList.getSelectedIndex() == -1 && jList.getAnchorSelectionIndex() != -1) {
           jList.setSelectedIndex(jList.getAnchorSelectionIndex());
         }
-        if (e.getClickCount() > 1) navigate();
+        if (jList.getSelectedIndex() != -1) {
+          navigate();
+        }
       }
     }
+
+    private boolean mouseMovedFirstTime = true;
+    public void mouseMoved(MouseEvent e) {
+      if (mouseMovedFirstTime) {
+        mouseMovedFirstTime = false;
+        return;
+      }
+      
+      final Object source = e.getSource();
+      if (source instanceof JList) {
+        JList list = (JList)source;
+        int index = list.locationToIndex(e.getPoint());
+        if (0 <= index && index < list.getModel().getSize()) {
+          list.setSelectedIndex(index);        
+        }
+      }
+    }
+
     public void mousePressed(MouseEvent e) {}
     public void mouseReleased(MouseEvent e) {}
     public void mouseEntered(MouseEvent e) {}
     public void mouseExited(MouseEvent e) {}
+    public void mouseDragged(MouseEvent e) {}
   }
 
   private static class VirtualFilesRenderer extends ColoredListCellRenderer {

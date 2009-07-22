@@ -176,15 +176,12 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @NotNull
   public JBPopup createPopup() {
     final AbstractPopup popup = new AbstractPopup().init(myProject, myComponent, myPrefferedFocusedComponent, myRequestFocus, myFocusable, myForceHeavyweight,
-                                              myDimensionServiceKey, myResizable, myMovable ? myTitle != null ? myTitle : "" : null,
+                                              myMovable, myDimensionServiceKey, myResizable, myTitle,
                                               myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCommandButton,
                                               myCancelButton,
                                               myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
                                               myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd,
                                               myHeaderAlwaysFocusable, myKeyboardActions, mySettingsButtons);
-    if (myProject != null) {
-      popup.setProject(myProject);
-    }
     if (myUserData != null) {
       popup.setUserData(myUserData);
     }
