@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
@@ -260,9 +261,9 @@ public class PsiUtil {
           result.add(argType);
         }
       }
-      return result.toArray(PsiType.EMPTY_ARRAY);
+      return result.toArray(new PsiType[result.size()]);
     } else if (parent instanceof GrConstructorInvocation || parent instanceof GrEnumConstant) {
-      final GrArgumentList argList = (GrArgumentList)((GrCall)parent).getArgumentList();
+      final GrArgumentList argList = ((GrCall)parent).getArgumentList();
       if (argList == null) return PsiType.EMPTY_ARRAY;
 
       List<PsiType> result = new ArrayList<PsiType>();
@@ -406,8 +407,10 @@ public class PsiUtil {
   }
 
   public static void shortenReference(GrCodeReferenceElement ref) {
-    if (ref.getQualifier() != null && (PsiTreeUtil.getParentOfType(ref, GrDocMemberReference.class) != null ||
-                                       PsiTreeUtil.getParentOfType(ref, GrDocComment.class) == null)) {
+    if (ref.getQualifier() != null &&
+        (PsiTreeUtil.getParentOfType(ref, GrDocMemberReference.class) != null ||
+         PsiTreeUtil.getParentOfType(ref, GrDocComment.class) == null) &&
+        PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) == null) {
       final PsiElement resolved = ref.resolve();
       if (resolved instanceof PsiClass && mayShorten(ref)) {
         ref.setQualifier(null);
