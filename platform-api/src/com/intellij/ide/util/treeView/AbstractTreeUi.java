@@ -623,15 +623,11 @@ class AbstractTreeUi {
     Object prevElement = getElementFromDescriptor(descriptor);
     if (prevElement == null) return;
     boolean changes = update(descriptor, false);
-    if (getElementFromDescriptor(descriptor) == null) {
-      LOG.assertTrue(false, "element == null, updateSubtree should be invoked for parent! builder=" +
-                            getBuilder() +
-                            ", prevElement = " +
-                            prevElement +
-                            ", node = " +
-                            node +
-                            "; parentDescriptor=" +
-                            descriptor.getParentDescriptor());
+    if (!isValid(descriptor)) {
+      if (isInStructure(prevElement)) {
+        getUpdater().addSubtreeToUpdateByElement(getTreeStructure().getParentElement(prevElement));
+        return;
+      }
     }
     if (changes) {
       updateNodeImageAndPosition(node);
