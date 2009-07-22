@@ -27,6 +27,11 @@ public class CachedPersistentHashMap<Key, Value> extends PersistentHashMap<Key, 
     super.put(key, value);
   }
 
+  public synchronized void appendData(Key key, ValueDataAppender appender) throws IOException {
+    myCache.remove(key);
+    super.appendData(key, appender);
+  }
+
   @Nullable
   public synchronized Value get(Key key) throws IOException {
     final SoftReference<Value> ref = myCache.get(key);

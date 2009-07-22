@@ -229,13 +229,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (filters1.length != filters2.length) {
       return false;
     }
-    Set<ClassFilter> f1 = new HashSet<ClassFilter>();
-    Set<ClassFilter> f2 = new HashSet<ClassFilter>();
-    for (int idx = 0; idx < filters1.length; idx++) {
-      f1.add(filters1[idx]);
+    final Set<ClassFilter> f1 = new HashSet<ClassFilter>(Math.max((int) (filters1.length/.75f) + 1, 16));
+    final Set<ClassFilter> f2 = new HashSet<ClassFilter>(Math.max((int) (filters2.length/.75f) + 1, 16));
+    for (ClassFilter filter : filters1) {
+      f1.add(filter);
     }
-    for (int idx = 0; idx < filters2.length; idx++) {
-      f2.add(filters2[idx]);
+    for (ClassFilter aFilters2 : filters2) {
+      f2.add(aFilters2);
     }
     return f2.equals(f1);
   }
@@ -271,8 +271,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       Attribute attr1 = i1.next();
       Attribute attr2 = i2.next();
 
-      if (!Comparing.equal(attr1.getName(), attr2.getName()) ||
-          !Comparing.equal(attr1.getValue(), attr2.getValue())) {
+      if (!Comparing.equal(attr1.getName(), attr2.getName()) || !Comparing.equal(attr1.getValue(), attr2.getValue())) {
         return false;
       }
     }
@@ -281,7 +280,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public static boolean elementsEqual(Element e1, Element e2) {
     if(e1 == null) return e2 == null;
-    return Comparing.equal(e1.getName(),        e2.getName()) &&
+    return Comparing.equal(e1.getName(), e2.getName()) &&
            elementListsEqual  ((List<Element>  )e1.getChildren  (), (List<Element>  )e2.getChildren  ()) &&
            attributeListsEqual((List<Attribute>)e1.getAttributes(), (List<Attribute>)e2.getAttributes());
   }
