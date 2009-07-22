@@ -1,6 +1,7 @@
 package com.intellij.ui;
 
 import javax.swing.*;
+import javax.swing.table.TableModel;
 import java.awt.*;
 
 public class TableToolTipHandler extends AbstractToolTipHandler<TableCellKey, JTable> {
@@ -24,6 +25,10 @@ public class TableToolTipHandler extends AbstractToolTipHandler<TableCellKey, JT
 
   public Component getRendererComponent(TableCellKey key) {
     int modelColumnIndex = myComponent.convertColumnIndexToModel(key.myColumnIndex);
+    final TableModel model = myComponent.getModel();
+    if (key.myRowIndex < 0 || key.myRowIndex >= model.getRowCount()
+        || key.myColumnIndex < 0 || key.myColumnIndex >= model.getColumnCount()) return null;
+
     return myComponent.getCellRenderer(key.myRowIndex, key.myColumnIndex).
       getTableCellRendererComponent(myComponent,
                                     myComponent.getModel().getValueAt(key.myRowIndex, modelColumnIndex),
