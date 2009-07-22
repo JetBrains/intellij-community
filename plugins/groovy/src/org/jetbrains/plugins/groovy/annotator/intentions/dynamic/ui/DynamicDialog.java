@@ -30,7 +30,6 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspClass;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -229,7 +228,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     final TypeConstraint[] constrants = GroovyExpectedTypesUtil.calculateTypeConstraints(QuickfixUtil.isCall(myReferenceExpression) ? (GrExpression) myReferenceExpression.getParent() : myReferenceExpression);
 
     PsiType type = constrants.length == 1 ? constrants[0].getDefaultType() : TypesUtil.getJavaLangObject(myReferenceExpression);
-    myTypeComboBox.getEditor().setItem(createDocument(type.getPresentableText()));
+    myTypeComboBox.getEditor().setItem(createDocument(type.getCanonicalText()));
   }
 
   protected void addDataChangeListener() {
@@ -323,7 +322,7 @@ public abstract class DynamicDialog extends DialogWrapper {
       if (typeQualifiedName != null) {
         mySettings.setType(typeQualifiedName);
       } else {
-        mySettings.setType(type.getPresentableText());
+        mySettings.setType(type.getCanonicalText());
       }
     }
 
@@ -407,23 +406,6 @@ public abstract class DynamicDialog extends DialogWrapper {
 
     public PsiClass getContainingClass() {
       return myContainingClass;
-    }
-  }
-
-  class TypeItem {
-    private final PsiType myPsiType;
-
-    TypeItem(PsiType psiType) {
-      myPsiType = psiType;
-    }
-
-    public String toString() {
-      return myPsiType.getPresentableText();
-    }
-
-    @NotNull
-    String getPresentableText() {
-      return myPsiType.getPresentableText();
     }
   }
 

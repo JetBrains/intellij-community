@@ -25,7 +25,7 @@ public class DynamicPropertyDialog extends DynamicDialog {
   public DynamicPropertyDialog(GrReferenceExpression referenceExpression) {
     super(referenceExpression);
 
-    setTitle(GroovyBundle.message("add.dynamic.property"));
+    setTitle(GroovyBundle.message("add.dynamic.property", referenceExpression.getReferenceName()));
     setUpTypeLabel(GroovyBundle.message("dynamic.method.property.type"));
   }
 }

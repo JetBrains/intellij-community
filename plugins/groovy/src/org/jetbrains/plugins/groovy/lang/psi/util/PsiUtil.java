@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.fileType.GspFileType;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
@@ -410,7 +411,8 @@ public class PsiUtil {
     if (ref.getQualifier() != null &&
         (PsiTreeUtil.getParentOfType(ref, GrDocMemberReference.class) != null ||
          PsiTreeUtil.getParentOfType(ref, GrDocComment.class) == null) &&
-        PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) == null) {
+         PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) == null &&
+         PsiTreeUtil.getParentOfType(ref, GroovyCodeFragment.class) == null) {
       final PsiElement resolved = ref.resolve();
       if (resolved instanceof PsiClass && mayShorten(ref)) {
         ref.setQualifier(null);

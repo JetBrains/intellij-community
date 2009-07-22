@@ -33,6 +33,8 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.ui.*;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
@@ -113,10 +115,10 @@ public class DynamicToolWindowWrapper {
       myToolWindow.setToHideOnEmptyContent(true);
 
       final JPanel panel = buildBigPanel();
-      final JComponent component = myToolWindow.getComponent();
-      if (component != null) {
-        component.add(panel);
-      }
+      final ContentManager contentManager = myToolWindow.getContentManager();
+      final Content content = contentManager.getFactory().createContent(panel, "", false);
+      content.setPreferredFocusableComponent(myTreeTable);
+      contentManager.addContent(content);
     }
 
     return myToolWindow;
