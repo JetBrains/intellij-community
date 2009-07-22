@@ -303,7 +303,7 @@ public class PluginManager {
       if (!shouldLoadPlugins()) return true;
     }
 
-    final boolean checkModuleDependencies = !ourAvailableModules.isEmpty();
+    final boolean checkModuleDependencies = !ourAvailableModules.isEmpty() && !ourAvailableModules.contains("com.intellij.modules.all");
     if (checkModuleDependencies && !hasModuleDependencies(descriptor)) {
       return true;
     }
