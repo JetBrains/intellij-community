@@ -41,7 +41,8 @@ import java.util.Set;
 public abstract class AbstractGroovyLibraryManager extends LibraryManager {
   public static final ExtensionPointName<LibraryManager> EP_NAME = ExtensionPointName.create("org.intellij.groovy.libraryManager");
 
-  protected static String generatePointerName(ProjectSettingsContext context, String version, AbstractConfigUtils configUtils) {
+  @NotNull
+  protected static String generatePointerName(ProjectSettingsContext context, String version, GroovyLibraryConfigurer configUtils) {
     final Set<String> usedLibraryNames = CollectionFactory.newTroveSet();
     for (Library library : getAllDefinedLibraries(((ProjectConfigurableContext)context).getContainer())) {
       usedLibraryNames.add(library.getName());
@@ -66,7 +67,7 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
     return "Create new " + getLibraryCategoryName() + " library...";
   }
 
-  protected Library createLibrary(ProjectSettingsContext context, final AbstractConfigUtils configUtils, Icon bigIcon) {
+  protected Library createLibrary(ProjectSettingsContext context, final GroovyLibraryConfigurer configUtils, Icon bigIcon) {
     final String libraryKind = getLibraryCategoryName();
     final Module module = context.getModule();
     final Project project = module.getProject();
