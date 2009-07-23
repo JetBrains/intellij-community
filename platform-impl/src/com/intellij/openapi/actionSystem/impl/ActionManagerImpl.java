@@ -1040,7 +1040,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   private void preloadActionGroup(final ActionGroup group) {
-    for (AnAction action : group.getChildren(null)) {
+    final AnAction[] children = ApplicationManager.getApplication().runReadAction(new Computable<AnAction[]>() {
+      public AnAction[] compute() {
+        if (ApplicationManager.getApplication().isDisposed()) {
+          return AnAction.EMPTY_ARRAY;
+        }
+
+        return group.getChildren(null);
+      }
+    });
+    for (AnAction action : children) {
       if (action instanceof PreloadableAction) {
         ((PreloadableAction)action).preload();
       }
