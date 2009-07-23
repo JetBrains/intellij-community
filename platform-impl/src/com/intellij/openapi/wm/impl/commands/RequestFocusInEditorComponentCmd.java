@@ -45,8 +45,12 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
   public final void run(){
     try{
       if (myTimestamp.isExpired()) {
-        myDoneCallback.setRejected();
-        return;
+        final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (owner != null && owner == myComponent) {
+          myDoneCallback.setDone();
+        } else {
+          myDoneCallback.setRejected();
+        }
       }
 
 
