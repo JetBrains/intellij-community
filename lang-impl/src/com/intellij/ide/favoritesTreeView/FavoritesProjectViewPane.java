@@ -57,6 +57,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
         myProjectView.changeView(ID, listName);
       }
     };
+    myFavoritesManager.addFavoritesListener(myFavoritesListener);
   }
 
   public String getTitle() {
@@ -90,6 +91,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
 
   public void dispose() {
     myViewPanel = null;
+    myFavoritesManager.removeFavoritesListener(myFavoritesListener);
     super.dispose();
   }
 
@@ -142,27 +144,5 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
 
   public void addToolbarActions(final DefaultActionGroup group) {
     group.add(ActionManager.getInstance().getAction(IdeActions.RENAME_FAVORITES_LIST)); 
-  }
-
-  //project component related
-  public void projectOpened() {
-    myProjectView.addProjectPane(this);
-    myFavoritesManager.addFavoritesListener(myFavoritesListener);
-  }
-
-  public void projectClosed() {
-  }
-
-  @NonNls
-  public String getComponentName() {
-    return "FavoritesProjectViewPane";
-  }
-
-  public void initComponent() {
-
-  }
-
-  public void disposeComponent() {
-    myFavoritesManager.removeFavoritesListener(myFavoritesListener);
   }
 }

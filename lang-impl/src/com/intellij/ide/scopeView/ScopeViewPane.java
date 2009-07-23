@@ -97,6 +97,8 @@ public class ScopeViewPane extends AbstractProjectViewPane {
 
   public void dispose() {
     myViewPanel = null;
+    myDependencyValidationManager.removeScopeListener(myScopeListener);
+    myNamedScopeManager.removeScopeListener(myScopeListener);
     super.dispose();
   }
 
@@ -175,29 +177,6 @@ public class ScopeViewPane extends AbstractProjectViewPane {
 
   public SelectInTarget createSelectInTarget() {
     return new ScopePaneSelectInTarget(myProject);
-  }
-
-  // project component related
-  public void projectOpened() {
-    myProjectView.addProjectPane(this);
-  }
-
-  public void projectClosed() {
-  }
-
-  @NotNull
-  @NonNls
-  public String getComponentName() {
-    return "ScopeViewComponent";
-  }
-
-  public void initComponent() {
-
-  }
-
-  public void disposeComponent() {
-    myDependencyValidationManager.removeScopeListener(myScopeListener);
-    myNamedScopeManager.removeScopeListener(myScopeListener);
   }
 
   protected Object exhumeElementFromNode(final DefaultMutableTreeNode node) {

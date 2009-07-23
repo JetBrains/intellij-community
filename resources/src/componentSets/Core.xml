@@ -54,12 +54,6 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.ide.projectView.impl.PackageViewPane</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.openapi.roots.impl.LanguageLevelUpdater</implementation-class>
     </component>
   </project-components>

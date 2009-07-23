@@ -2,12 +2,15 @@ package com.intellij.projectView;
 
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.idea.IdeaTestUtil;
+import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -52,64 +55,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   }
 
   protected AbstractProjectViewPSIPane createPane() {
-    final AbstractProjectViewPSIPane pane = new AbstractProjectViewPSIPane(myProject) {
-      public SelectInTarget createSelectInTarget() {
-        return null;
-      }
-
-      @NonNls
-      public String getComponentName() {
-        return "comp name";
-      }
-
-      protected AbstractTreeUpdater createTreeUpdater(AbstractTreeBuilder treeBuilder) {
-        return new AbstractTreeUpdater(treeBuilder);
-      }
-
-      @NotNull
-      protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel treeModel) {
-        return new ProjectTreeBuilder(myProject, myTree, treeModel, AlphaComparator.INSTANCE,
-                                      (ProjectAbstractTreeStructureBase)myTreeStructure) {
-          protected AbstractTreeUpdater createUpdater() {
-            return createTreeUpdater(this);
-          }
-
-          protected void addTaskToWorker(final Runnable runnable, boolean first, final Runnable postRunnable) {
-            runnable.run();
-            postRunnable.run();
-          }
-        };
-      }
-
-      protected ProjectAbstractTreeStructureBase createStructure() {
-        return (ProjectAbstractTreeStructureBase)myStructure;
-      }
-
-      protected ProjectViewTree createTree(DefaultTreeModel treeModel) {
-        return new ProjectViewTree(treeModel) {
-          public DefaultMutableTreeNode getSelectedNode() {
-            return null;
-          }
-        };
-      }
-
-      public Icon getIcon() {
-        return null;
-      }
-
-      @NotNull
-      public String getId() {
-        return "";
-      }
-
-      public String getTitle() {
-        return null;
-      }
-
-      public int getWeight() {
-        return 0;
-      }
-    };
+    final AbstractProjectViewPSIPane pane = new MyAbstractProjectViewPSIPane();
     pane.createComponent();
     myPanes.add(pane);
     return pane;
@@ -229,5 +175,87 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
   protected PsiDirectory getPackageDirectory() {
     return getPackageDirectory(getPackageRelativePath());
+  }
+
+  private class MyAbstractProjectViewPSIPane extends AbstractProjectViewPSIPane {
+    public MyAbstractProjectViewPSIPane() {
+      super(BaseProjectViewTestCase.this.myProject);
+    }
+
+    public SelectInTarget createSelectInTarget() {
+      return null;
+    }
+
+    @NonNls
+    public String getComponentName() {
+      return "comp name";
+    }
+
+    protected AbstractTreeUpdater createTreeUpdater(AbstractTreeBuilder treeBuilder) {
+      return new AbstractTreeUpdater(treeBuilder);
+    }
+
+    @NotNull
+    protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel treeModel) {
+      return new ProjectTreeBuilder(myProject, myTree, treeModel, AlphaComparator.INSTANCE,
+                                    (ProjectAbstractTreeStructureBase)myTreeStructure) {
+        protected AbstractTreeUpdater createUpdater() {
+          return createTreeUpdater(this);
+        }
+
+        protected void addTaskToWorker(final Runnable runnable, boolean first, final Runnable postRunnable) {
+          runnable.run();
+          postRunnable.run();
+        }
+      };
+    }
+
+    protected ProjectAbstractTreeStructureBase createStructure() {
+      return (ProjectAbstractTreeStructureBase)myStructure;
+    }
+
+    protected ProjectViewTree createTree(DefaultTreeModel treeModel) {
+      return new ProjectViewTree(treeModel) {
+        public DefaultMutableTreeNode getSelectedNode() {
+          return null;
+        }
+      };
+    }
+
+    public Icon getIcon() {
+      return null;
+    }
+
+    @NotNull
+    public String getId() {
+      return "";
+    }
+
+    public String getTitle() {
+      return null;
+    }
+
+    public int getWeight() {
+      return 0;
+    }
+
+    public void projectOpened() {
+      final Runnable runnable = new DumbAwareRunnable() {
+        public void run() {
+          final ProjectView projectView = ProjectView.getInstance(myProject);
+          projectView.addProjectPane(MyAbstractProjectViewPSIPane.this);
+        }
+      };
+      StartupManager.getInstance(myProject).registerPostStartupActivity(runnable);
+    }
+
+    public void projectClosed() {
+    }
+
+    public void initComponent() { }
+
+    public void disposeComponent() {
+
+    }
   }
 }

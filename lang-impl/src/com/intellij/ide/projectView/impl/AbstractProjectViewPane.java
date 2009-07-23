@@ -20,8 +20,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -53,7 +53,9 @@ import java.util.List;
 import java.util.Map;
 
 
-public abstract class AbstractProjectViewPane implements JDOMExternalizable, DataProvider, ProjectComponent, Disposable  {
+public abstract class AbstractProjectViewPane implements DataProvider, Disposable  {
+  public static ExtensionPointName<AbstractProjectViewPane> EP_NAME = ExtensionPointName.create("com.intellij.projectViewPane");
+
   protected final Project myProject;
   private Runnable myTreeChangeListener;
   protected DnDAwareTree myTree;
@@ -91,6 +93,10 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   public final void setSubId(@Nullable String subId) {
     saveExpandedPaths();
     mySubId = subId;
+  }
+
+  public boolean isInitiallyVisible() {
+    return true;
   }
 
   /**

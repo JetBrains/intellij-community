@@ -6,22 +6,6 @@
       <option name="workspace" value="true"/>
       <skipForDefaultProject/>
     </component>
-    <component>
-      <implementation-class>com.intellij.ide.projectView.impl.ProjectViewPane</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDefaultProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.ide.scopeView.ScopeViewPane</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDefaultProject/>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesProjectViewPane</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDefaultProject/>
-    </component>
 
     <component>
       <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesManager</implementation-class>

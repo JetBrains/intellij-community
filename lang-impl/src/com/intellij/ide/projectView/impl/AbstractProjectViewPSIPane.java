@@ -6,7 +6,6 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
-import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
@@ -15,8 +14,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
@@ -187,25 +184,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   protected abstract ProjectAbstractTreeStructureBase createStructure();
 
   protected abstract ProjectViewTree createTree(DefaultTreeModel treeModel);
-
-  public void projectOpened() {
-    final Runnable runnable = new DumbAwareRunnable() {
-      public void run() {
-        final ProjectView projectView = ProjectView.getInstance(myProject);
-        projectView.addProjectPane(AbstractProjectViewPSIPane.this);
-      }
-    };
-    StartupManager.getInstance(myProject).registerPostStartupActivity(runnable);
-  }
-
-  public void projectClosed() {
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-
-  }
 
   protected abstract AbstractTreeUpdater createTreeUpdater(AbstractTreeBuilder treeBuilder);
 

@@ -28,6 +28,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -136,6 +137,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
   private static final Icon HIDE_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/hideEmptyPackages.png");
   @NonNls private static final String ELEMENT_NAVIGATOR = "navigator";
+  @NonNls private static final String ELEMENT_PANES = "panes";
+  @NonNls private static final String ELEMENT_PANE = "pane";
   @NonNls private static final String ATTRIBUTE_CURRENT_VIEW = "currentView";
   @NonNls private static final String ATTRIBUTE_CURRENT_SUBVIEW = "currentSubView";
   @NonNls private static final String ELEMENT_FLATTEN_PACKAGES = "flattenPackages";
@@ -147,6 +150,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   @NonNls private static final String ELEMENT_AUTOSCROLL_TO_SOURCE = "autoscrollToSource";
   @NonNls private static final String ELEMENT_AUTOSCROLL_FROM_SOURCE = "autoscrollFromSource";
   @NonNls private static final String ELEMENT_SORT_BY_TYPE = "sortByType";
+  private static final String ATTRIBUTE_ID = "id";
   private ComboBox myCombo;
   private JPanel myViewContentPanel;
   private JPanel myActionGroupPanel;
@@ -164,6 +168,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private final MessageBusConnection myConnection;
   private JPanel myTopPanel;
   private ActionToolbar myToolBar;
+  private Map<String, Element> myUninitializedPaneState = new HashMap<String, Element>();
 
   public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, SelectInManager selectInManager, final ToolWindowManagerEx toolWindowManager) {
     myProject = project;
@@ -447,6 +452,11 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   // public for tests
   public synchronized void setupImpl() {
+    setupImpl(true);
+  }
+
+  // public for tests
+  public synchronized void setupImpl(final boolean loadPaneExtensions) {
     myCombo.setRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         if (value == null) return this;
@@ -526,6 +536,24 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         splitterProportions.restoreSplitterProportions(myPanel);
       }
     });
+
+    if (loadPaneExtensions) {
+      for(AbstractProjectViewPane pane: Extensions.getExtensions(AbstractProjectViewPane.EP_NAME, myProject)) {
+        if (myUninitializedPaneState.containsKey(pane.getId())) {
+          try {
+            pane.readExternal(myUninitializedPaneState.get(pane.getId()));
+          }
+          catch (InvalidDataException e) {
+            // ignore
+          }
+          myUninitializedPaneState.remove(pane.getId());
+        }
+        if (pane.isInitiallyVisible()) {
+          addProjectPane(pane);
+        }
+        Disposer.register(this, pane);
+      }
+    }
 
     isInitialized = true;
     doAddUninitializedPanes();
@@ -1203,6 +1231,31 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
       splitterProportions.readExternal(navigatorElement);
     }
+    Element panesElement = parentNode.getChild(ELEMENT_PANES);
+    if (panesElement != null) {
+      readPaneState(panesElement);
+    }
+  }
+
+  private void readPaneState(Element panesElement) {
+    @SuppressWarnings({"unchecked"})
+    final List<Element> paneElements = panesElement.getChildren(ELEMENT_PANE);
+
+    for (Element paneElement : paneElements) {
+      String paneId = paneElement.getAttributeValue(ATTRIBUTE_ID);
+      final AbstractProjectViewPane pane = myId2Pane.get(paneId);
+      if (pane != null) {
+        try {
+          pane.readExternal(paneElement);
+        }
+        catch (InvalidDataException e) {
+          // ignore
+        }
+      }
+      else {
+        myUninitializedPaneState.put(paneId, paneElement);
+      }
+    }
   }
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
@@ -1232,6 +1285,27 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     // for compatibility with idea 5.1
     @Deprecated @NonNls final String ATTRIBUTE_SPLITTER_PROPORTION = "splitterProportion";
     navigatorElement.setAttribute(ATTRIBUTE_SPLITTER_PROPORTION, "0.5");
+
+    Element panesElement = new Element(ELEMENT_PANES);
+    writePaneState(panesElement);
+    parentNode.addContent(panesElement);
+  }
+
+  private void writePaneState(Element panesElement) {
+    for (AbstractProjectViewPane pane : myId2Pane.values()) {
+      Element paneElement = new Element(ELEMENT_PANE);
+      paneElement.setAttribute(ATTRIBUTE_ID, pane.getId());
+      try {
+        pane.writeExternal(paneElement);
+      }
+      catch (WriteExternalException e) {
+        continue;
+      }
+      panesElement.addContent(paneElement);
+    }
+    for (Element element : myUninitializedPaneState.values()) {
+      panesElement.addContent((Element) element.clone());
+    }
   }
 
   public boolean isAutoscrollToSource(String paneId) {
