@@ -1,13 +1,6 @@
 <components>
   <project-components>
     <component>
-      <interface-class>com.intellij.ide.projectView.ProjectView</interface-class>
-      <implementation-class>com.intellij.ide.projectView.impl.ProjectViewImpl</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDefaultProject/>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesManager</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDefaultProject/>

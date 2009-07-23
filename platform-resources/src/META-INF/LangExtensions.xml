@@ -474,7 +474,11 @@
                   serviceImplementation="com.intellij.codeInspection.ex.InspectionManagerEx"/>
   <projectService serviceInterface="com.intellij.usageView.UsageViewManager"
                   serviceImplementation="com.intellij.usageView.impl.UsageViewManagerImpl"/>
+  <projectService serviceInterface="com.intellij.ide.projectView.ProjectView"
+                  serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewImpl"/>
 
+  <toolWindow id="Project" anchor="left" icon="/general/toolWindowProject.png"
+              factoryClass="com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory"/>
   <toolWindow id="TODO" anchor="bottom" icon="/general/toolWindowTodo.png"
               factoryClass="com.intellij.ide.todo.TodoToolWindowFactory"/>
   <toolWindow id="Structure" anchor="left" icon="/general/toolWindowStructure.png" secondary="true"

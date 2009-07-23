@@ -1,6 +1,7 @@
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,7 +11,7 @@ import java.util.Collection;
 
 public abstract class ProjectView {
   public static ProjectView getInstance(Project project) {
-    return project.getComponent(ProjectView.class);
+    return ServiceManager.getService(project, ProjectView.class);
   }
 
   public abstract void select(Object element, VirtualFile file, boolean requestFocus);

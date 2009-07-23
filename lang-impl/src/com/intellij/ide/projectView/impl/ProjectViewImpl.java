@@ -25,17 +25,17 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -46,7 +46,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
@@ -87,7 +86,15 @@ import java.awt.event.FocusListener;
 import java.util.*;
 import java.util.List;
 
-public final class ProjectViewImpl extends ProjectView implements JDOMExternalizable, ProjectComponent, Disposable {
+@State(
+  name="ProjectView",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$WORKSPACE_FILE$"
+    )}
+)
+public final class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ProjectViewImpl");
   private final CopyPasteDelegator myCopyPasteDelegator;
   private boolean isInitialized;
@@ -262,33 +269,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     myPanel.setBorder(new ToolWindow.Border(true, false, false, false));
   }
 
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
-  }
-
-  public void projectClosed() {
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    if (toolWindowManager != null) {
-      toolWindowManager.unregisterToolWindow(ToolWindowId.PROJECT_VIEW);
-    }
-    dispose();
-  }
-
-  public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (myProject.isDisposed()) return;
-            setupImpl();
-          }
-        }, ModalityState.NON_MODAL);
-      }
-    });
-  }
-
   public synchronized void addProjectPane(final AbstractProjectViewPane pane) {
     myUninitializedPanes.add(pane);
     if (isInitialized) {
@@ -450,12 +430,12 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   // public for tests
-  public synchronized void setupImpl() {
-    setupImpl(true);
+  public synchronized void setupImpl(final ToolWindow toolWindow) {
+    setupImpl(toolWindow, true);
   }
 
   // public for tests
-  public synchronized void setupImpl(final boolean loadPaneExtensions) {
+  public synchronized void setupImpl(final ToolWindow toolWindow, final boolean loadPaneExtensions) {
     myCombo.setRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         if (value == null) return this;
@@ -496,9 +476,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     myActionGroupPanel.setLayout(new BorderLayout());
     myActionGroupPanel.add(toolbarComponent, BorderLayout.CENTER);
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-      ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.PROJECT_VIEW, false, ToolWindowAnchor.LEFT, myProject, true);
+    if (toolWindow != null) {
       final ContentManager contentManager = toolWindow.getContentManager();
       final Content content = contentManager.getFactory().createContent(getComponent(), ToolWindowId.PROJECT_VIEW, false);
       contentManager.addContent(content);
@@ -1209,7 +1187,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     parentNode.addContent(e);
   }
 
-  public void readExternal(Element parentNode) throws InvalidDataException {
+  public void loadState(Element parentNode) {
     Element navigatorElement = parentNode.getChild(ELEMENT_NAVIGATOR);
     if (navigatorElement != null) {
       mySavedPaneId = navigatorElement.getAttributeValue(ATTRIBUTE_CURRENT_VIEW);
@@ -1228,7 +1206,12 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       readOption(navigatorElement.getChild(ELEMENT_AUTOSCROLL_FROM_SOURCE), myAutoscrollFromSource);
       readOption(navigatorElement.getChild(ELEMENT_SORT_BY_TYPE), mySortByType);
 
-      splitterProportions.readExternal(navigatorElement);
+      try {
+        splitterProportions.readExternal(navigatorElement);
+      }
+      catch (InvalidDataException e) {
+        // ignore
+      }
     }
     Element panesElement = parentNode.getChild(ELEMENT_PANES);
     if (panesElement != null) {
@@ -1257,7 +1240,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
   }
 
-  public void writeExternal(Element parentNode) throws WriteExternalException {
+  public Element getState() {
+    Element parentNode = new Element("projectView");
     Element navigatorElement = new Element(ELEMENT_NAVIGATOR);
     AbstractProjectViewPane currentPane = getCurrentProjectViewPane();
     if (currentPane != null) {
@@ -1278,7 +1262,12 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     writeOption(navigatorElement, mySortByType, ELEMENT_SORT_BY_TYPE);
 
     splitterProportions.saveSplitterProportions(myPanel);
-    splitterProportions.writeExternal(navigatorElement);
+    try {
+      splitterProportions.writeExternal(navigatorElement);
+    }
+    catch (WriteExternalException e) {
+      // ignore
+    }
     parentNode.addContent(navigatorElement);
 
     // for compatibility with idea 5.1
@@ -1288,6 +1277,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     Element panesElement = new Element(ELEMENT_PANES);
     writePaneState(panesElement);
     parentNode.addContent(panesElement);
+    return parentNode;
   }
 
   private void writePaneState(Element panesElement) {
