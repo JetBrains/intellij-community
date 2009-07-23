@@ -24,6 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.ide.highlighter.XmlFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ class XsltFormattingModelBuilder implements CustomFormattingModelBuilder {
 
     public boolean isEngagedToFormat(PsiElement context) {
         final PsiFile file = context.getContainingFile();
-        return file != null && (file.getFileType() == XMLLanguage.INSTANCE
+        return file != null && (file.getFileType() == XmlFileType.INSTANCE
                 && file.getLanguage() == XMLLanguage.INSTANCE);
     }
 
