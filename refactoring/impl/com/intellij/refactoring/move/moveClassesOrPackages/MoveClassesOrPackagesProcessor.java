@@ -48,8 +48,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   private boolean mySearchInNonJavaFiles;
   private final PackageWrapper myTargetPackage;
   private final MoveCallback myMoveCallback;
-  private final MoveDestination myMoveDestination;
-  private NonCodeUsageInfo[] myNonCodeUsages;
+  protected final MoveDestination myMoveDestination;
+  protected NonCodeUsageInfo[] myNonCodeUsages;
 
   public MoveClassesOrPackagesProcessor(
     Project project,
@@ -146,7 +146,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     return myMoveDestination.getTargetPackage();
   }
 
-  private static class ConflictsUsageInfo extends UsageInfo {
+  protected static class ConflictsUsageInfo extends UsageInfo {
     private final ArrayList<String> myConflicts;
 
     public ConflictsUsageInfo(PsiElement pseudoElement, ArrayList<String> conflicts) {

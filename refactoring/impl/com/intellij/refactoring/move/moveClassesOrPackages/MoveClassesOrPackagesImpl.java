@@ -166,7 +166,7 @@ public class MoveClassesOrPackagesImpl {
     return true;
   }
 
-  private static String getInitialTargetPackageName(PsiElement initialTargetElement, final PsiElement[] movedElements) {
+  public static String getInitialTargetPackageName(PsiElement initialTargetElement, final PsiElement[] movedElements) {
     String name = getContainerPackageName(initialTargetElement);
     if (name == null) {
       if (movedElements != null) {
@@ -250,7 +250,7 @@ public class MoveClassesOrPackagesImpl {
   }
 
 
-  private static PsiDirectory getInitialTargetDirectory(PsiElement initialTargetElement, final PsiElement[] movedElements) {
+  public static PsiDirectory getInitialTargetDirectory(PsiElement initialTargetElement, final PsiElement[] movedElements) {
     PsiDirectory initialTargetDirectory = getContainerDirectory(initialTargetElement);
     if (initialTargetDirectory == null) {
       if (movedElements != null) {
@@ -267,7 +267,7 @@ public class MoveClassesOrPackagesImpl {
   }
 
   @Nullable
-  private static PsiDirectory getContainerDirectory(final PsiElement psiElement) {
+  public static PsiDirectory getContainerDirectory(final PsiElement psiElement) {
     if (psiElement instanceof PsiPackage) {
       return null; //??
     }

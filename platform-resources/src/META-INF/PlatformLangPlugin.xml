@@ -56,7 +56,7 @@
                     serviceImplementation="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable$Factory"/>
 
     <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler"/>
-    <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler"/>
+    <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler" id="moveFileOrDir"/>
     <applicationService serviceInterface="com.intellij.codeEditor.printing.FileSeparatorProvider"
                         serviceImplementation="com.intellij.codeEditor.printing.FileSeparatorProvider"/>
 
