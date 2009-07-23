@@ -186,7 +186,7 @@ public class PluginManager {
         descriptor.insertDependency(corePluginDescriptor);
       }
     }
-    
+
     mergeOptionalConfigs(idToDescriptorMap);
 
     // sort descriptors according to plugin dependencies
@@ -229,11 +229,13 @@ public class PluginManager {
   }
 
   private static void mergeOptionalConfigs(Map<PluginId, IdeaPluginDescriptorImpl> descriptors) {
+    final Map<PluginId, IdeaPluginDescriptorImpl> descriptorsWithModules = new HashMap<PluginId, IdeaPluginDescriptorImpl>(descriptors);
+    addModulesAsDependents(descriptorsWithModules);
     for (IdeaPluginDescriptorImpl descriptor : descriptors.values()) {
       final Map<PluginId, IdeaPluginDescriptorImpl> optionalDescriptors = descriptor.getOptionalDescriptors();
       if (optionalDescriptors != null && !optionalDescriptors.isEmpty()) {
         for (Map.Entry<PluginId, IdeaPluginDescriptorImpl> entry: optionalDescriptors.entrySet()) {
-          if (descriptors.containsKey(entry.getKey())) {
+          if (descriptorsWithModules.containsKey(entry.getKey())) {
             descriptor.mergeOptionalConfig(entry.getValue());  
           }
         }
