@@ -5,6 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -100,7 +101,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     return myGenericValue.getStringValue();
   }
 
-  protected Converter<T> getConverter() {
+  public Converter<T> getConverter() {
     return WrappingConverter.getDeepestConverter(myGenericValue.getConverter(), myGenericValue);
   }
 
@@ -162,6 +163,11 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
       ArrayList<Object> result = new ArrayList<Object>();
       final ConvertContext convertContext = getConvertContext();
       for (T variant: resolvingConverter.getVariants(convertContext)) {
+        LookupElement lookupElement = resolvingConverter.createLookupElement(variant);
+        if (lookupElement != null) {
+          result.add(lookupElement);
+          continue;
+        }
         String name = converter.toString(variant, convertContext);
         if (name != null) {
           result.add(ElementPresentationManager.getInstance().createVariant(variant, name, ((ResolvingConverter)converter).getPsiElement(variant)));

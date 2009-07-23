@@ -16,6 +16,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -181,6 +182,10 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
     return LocalQuickFix.EMPTY_ARRAY;
   }
 
+  @Nullable
+  public LookupElement createLookupElement(T t) {
+    return null;
+  }
 
   /**
    * Adds {@link #getVariants(ConvertContext)} functionality to a simple String value.
