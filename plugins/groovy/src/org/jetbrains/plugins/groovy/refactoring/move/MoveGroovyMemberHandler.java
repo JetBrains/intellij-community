@@ -17,24 +17,24 @@
 package org.jetbrains.plugins.groovy.refactoring.move;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.moveMembers.MoveMemberHandler;
 import com.intellij.refactoring.move.moveMembers.MoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 import com.intellij.refactoring.util.EnumConstantsUtil;
+import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VisibilityUtil;
-import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -127,7 +127,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
     if (targetClass == null) return null;
     PsiElement anchor = getAnchor(member, targetClass);
 
-    PsiMember memberCopy = null;
+    PsiMember memberCopy;
 
     GroovyChangeContextUtil.encodeContextInfo(member);
 
@@ -167,7 +167,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
       }
       member.delete();
       if (anchor != null) anchor = anchor.getParent();
-      parentCopy = (GrVariableDeclaration) targetClass.addAfter(parentCopy, anchor);
+      parentCopy = (GrVariableDeclaration)targetClass.addAfter(parentCopy, anchor);
       return parentCopy.getMembers()[0];
     }
     else if (member instanceof GrMethod) {
@@ -185,7 +185,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
       memberCopy = (PsiMember)targetClass.addAfter(memberCopy, anchor);
     }
     else {
-      memberCopy = (PsiMember)member.copy();      
+      memberCopy = (PsiMember)member.copy();
       member.delete();
       memberCopy = (PsiMember)targetClass.addAfter(memberCopy, anchor);
     }

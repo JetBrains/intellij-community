@@ -24,8 +24,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.NameHint;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.Function;
@@ -389,8 +389,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   public synchronized void clearCaches() {
     super.clearCaches();
-    myScriptClass = null;
-    myScriptClassInitialized = false;
+//    myScriptClass = null;
+//    myScriptClassInitialized = false;
     mySyntheticArgsParameter = null;
   }
 

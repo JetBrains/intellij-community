@@ -16,15 +16,15 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.BaseScopeProcessor;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,41 +50,31 @@ import java.util.List;
  * @author ven
  */
 public class GroovyScriptClass extends LightElement implements GrMemberOwner, SyntheticElement {
-  private String myQualifiedName;
-  private String myName;
   private final GroovyFile myFile;
   private final PsiMethod myMainMethod;
   private final PsiMethod myRunMethod;
   private static final String MAIN_METHOD_TEXT = "public static final void main(java.lang.String[] args) {}";
   private static final String RUN_METHOD_TEXT = "public java.lang.Object run() {return null;}";
-                                                            
+
   public GroovyScriptClass(GroovyFile file) {
     super(file.getManager(), file.getLanguage());
     myFile = file;
     myMainMethod = new GroovyScriptMethod(this, MAIN_METHOD_TEXT);
     myRunMethod = new GroovyScriptMethod(this, RUN_METHOD_TEXT);
-    cachesNames();
   }
 
-  private void cachesNames() {
-    String name = myFile.getName();
-    int i = name.indexOf('.');
-    myName = i > 0 ? name.substring(0, i) : name;
-    String packageName = myFile.getPackageName();
-    myQualifiedName = packageName.length() > 0 ? packageName + "." + myName : myName;
-  }
 
   public String toString() {
-    return "Script Class:" + myQualifiedName;
+    return "Script Class:" + getQualifiedName();
   }
 
   public String getText() {
-    return "class " + myName + " {}";
+    return "class " + getName() + " {}";
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor) visitor).visitClass(this);
+      ((JavaElementVisitor)visitor).visitClass(this);
     }
   }
 
@@ -106,7 +96,13 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
 
   @NotNull
   public String getQualifiedName() {
-    return myQualifiedName;
+    final String packName = myFile.getPackageName();
+    if (packName.length() == 0) {
+      return getName();
+    }
+    else {
+      return packName + "." + getName();
+    }
   }
 
   public boolean isInterface() {
@@ -164,7 +160,9 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
 
   @NotNull
   public PsiClassType[] getSuperTypes() {
-    return new PsiClassType[]{JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(GroovyFileBase.SCRIPT_BASE_CLASS_NAME, getResolveScope())};
+    return new PsiClassType[]{
+      JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(GroovyFileBase.SCRIPT_BASE_CLASS_NAME,
+                                                                                          getResolveScope())};
   }
 
   public PsiClass getContainingClass() {
@@ -280,7 +278,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
 
   // very special method!
   public PsiElement getScope() {
-    return null;
+    return myFile;
   }
 
   public boolean isInheritorDeep(PsiClass baseClass, PsiClass classToByPass) {
@@ -291,8 +289,11 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
   }
 
+  @NotNull
   public String getName() {
-    return myName;
+    String name = myFile.getName();
+    int i = name.indexOf('.');
+    return i > 0 ? name.substring(0, i) : name;
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
@@ -305,7 +306,6 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
       }
     }
     myFile.setName(name + "." + ext);
-    cachesNames();
     return this;
   }
 
@@ -325,12 +325,16 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     return false;
   }
 
-  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
     for (GrTopLevelDefintion defintion : myFile.getTopLevelDefinitions()) {
       if (!ResolveUtil.processElement(processor, defintion)) return false;
     }
 
     final PsiClass scriptClass = getSuperClass();
+    //noinspection RedundantIfStatement
     if (scriptClass != null && !scriptClass.processDeclarations(new BaseScopeProcessor() {
       public boolean execute(PsiElement element, ResolveState state) {
         return !(element instanceof PsiNamedElement) || ResolveUtil.processElement(processor, (PsiNamedElement)element);
@@ -343,7 +347,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     }, state, lastParent, place)) {
       return false;
     }
-    
+
     return true;
   }
 

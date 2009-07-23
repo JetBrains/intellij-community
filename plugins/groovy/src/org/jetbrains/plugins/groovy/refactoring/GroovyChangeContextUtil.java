@@ -19,6 +19,8 @@ package org.jetbrains.plugins.groovy.refactoring;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
@@ -34,6 +36,7 @@ public class GroovyChangeContextUtil {
   private static final Key<Object> KEY_ENCODED = Key.create("KEY_ENCODED");
 
   public static void encodeContextInfo(PsiElement element) {
+    if (!(element instanceof GroovyPsiElement)) return;
     if (element instanceof GrThisReferenceExpression) {
       GrThisReferenceExpression thisExpr = (GrThisReferenceExpression)element;
       final PsiClass containingClass = PsiTreeUtil.getParentOfType(thisExpr, PsiClass.class);
@@ -75,6 +78,7 @@ public class GroovyChangeContextUtil {
   }
 
   public static void decodeContextInfo(PsiElement element, PsiClass thisClass, GrExpression thisAccessExpr) {
+    if (!(element instanceof GroovyPsiElement)) return;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       decodeContextInfo(child, thisClass, thisAccessExpr);
     }
@@ -89,7 +93,7 @@ public class GroovyChangeContextUtil {
           return;
         }
       }
-      /*
+
       else if (element instanceof GrReferenceExpression) {
         final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
         final GrReferenceExpression refExpr = (GrReferenceExpression)element;
@@ -118,9 +122,8 @@ public class GroovyChangeContextUtil {
           }
         }
       }
-      */
 
-      /*PsiClass refClass = element.getCopyableUserData(REF_TO_CLASS);
+      PsiClass refClass = element.getCopyableUserData(REF_TO_CLASS);
       element.putCopyableUserData(REF_TO_CLASS, null);
 
       if (refClass != null && refClass.isValid()) {
@@ -128,8 +131,7 @@ public class GroovyChangeContextUtil {
         if (ref != null) {
           ref.bindToElement(refClass);
         }
-      }*/
-
+      }
     }
   }
 }
