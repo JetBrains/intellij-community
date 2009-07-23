@@ -16,22 +16,30 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 
-public abstract class AutoScrollFromSourceHandler {
+public abstract class AutoScrollFromSourceHandler implements Disposable {
   protected final Project myProject;
 
   protected AutoScrollFromSourceHandler(Project project) {
+    this(project, null);
+  }
+
+  protected AutoScrollFromSourceHandler(Project project, Disposable parentDisposable) {
     myProject = project;
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, this);
+    }
   }
 
   protected abstract boolean isAutoScrollMode();
   protected abstract void setAutoScrollMode(boolean state);
   public abstract void install();
-  public abstract void dispose();
 
   public ToggleAction createToggleAction() {
     return new ToggleAction(UIBundle.message("autoscroll.from.source.action.name"),

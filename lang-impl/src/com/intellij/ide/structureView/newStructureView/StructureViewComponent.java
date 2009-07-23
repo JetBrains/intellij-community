@@ -133,7 +133,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myAbstractTreeBuilder.getTree().setCellRenderer(new NodeRenderer());
 
     myAutoScrollToSourceHandler = new MyAutoScrollToSourceHandler();
-    myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler(myProject);
+    myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler(myProject, this);
 
     JComponent toolbarComponent =
       ActionManager.getInstance().createActionToolbar(ActionPlaces.STRUCTURE_VIEW_TOOLBAR, createActionGroup(), true).getComponent();
@@ -531,7 +531,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     // this will also dispose wrapped TreeModel
     myTreeModelWrapper.dispose();
     myFileEditor = null;
-    myAutoScrollFromSourceHandler.dispose();
   }
 
   public boolean isDisposed() {
@@ -605,8 +604,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
     private FileEditorPositionListener myFileEditorPositionListener;
 
-    private MyAutoScrollFromSourceHandler(Project project) {
-      super(project);
+    private MyAutoScrollFromSourceHandler(Project project, Disposable parentDisposable) {
+      super(project, parentDisposable);
     }
 
     public void install() {

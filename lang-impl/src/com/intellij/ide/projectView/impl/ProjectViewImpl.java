@@ -263,7 +263,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   public void disposeComponent() {
-    myAutoScrollFromSourceHandler.dispose();
   }
 
   public void initComponent() {
@@ -1470,7 +1469,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     private FileEditorManagerAdapter myEditorManagerListener;
 
     public MyAutoScrollFromSourceHandler() {
-      super(ProjectViewImpl.this.myProject);
+      super(ProjectViewImpl.this.myProject, ProjectViewImpl.this);
     }
 
     public void install() {
