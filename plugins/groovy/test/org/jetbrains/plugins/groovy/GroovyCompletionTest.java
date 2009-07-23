@@ -170,4 +170,33 @@ public class GroovyCompletionTest extends JavaCodeInsightFixtureTestCase {
   public void testTypeParameterCompletion() throws Throwable {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "put", "putAll");
   }
+
+  public void testCatchClauseParameter() throws Throwable {
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "getStackTrace", "getStackTraceDepth", "getStackTraceElement");
+  }
+
+  public void testFieldSuggestedOnce1() throws Throwable {
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
+    assertNull(myFixture.getLookupElements());
+  }
+
+  public void testFieldSuggestedOnce2() throws Throwable {
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
+    assertNull(myFixture.getLookupElements());
+  }
+
+  public void testFieldSuggestedOnce3() throws Throwable {
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
+    assertNull(myFixture.getLookupElements());
+  }
+
+  public void testFieldSuggestedOnce4() throws Throwable {
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
+    assertNull(myFixture.getLookupElements());
+  }
+
+  public void testFieldSuggestedOnce5() throws Throwable {
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
+    assertNull(myFixture.getLookupElements());
+  }
 }

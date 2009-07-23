@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
@@ -90,6 +91,8 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
           return result;
         }
       }
+    } else if (parent instanceof GrCatchClause) {
+      return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, getResolveScope()); 
     }
 
     String argumentName = getElementToCompare();

@@ -44,9 +44,9 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -61,6 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwne
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -348,8 +349,17 @@ public class PsiUtil {
     }
 
     if (propertyName != null && !checkPropertyName(method, propertyName)) return false;
-
+    final PsiClass psiClass = method.getContainingClass();
+    if (!isProperty(getPropertyNameByGetter(method), psiClass)) return false;
     return method.getParameterList().getParameters().length == 0;
+  }
+
+  private static boolean isProperty(@NotNull String propertyName, @Nullable PsiClass psiClass) {
+    if (psiClass != null) {
+      final PsiField field = psiClass.findFieldByName(propertyName, true);
+      if (field instanceof GrField && !((GrField)field).isProperty()) return false;
+    }
+    return true;
   }
 
   private static boolean isUpperCase(char c) {
@@ -387,7 +397,8 @@ public class PsiUtil {
     }
 
     if (propertyName != null && !checkPropertyName(method, propertyName)) return false;
-
+    final PsiClass psiClass = method.getContainingClass();
+    if (!isProperty(getPropertyNameBySetter(method), psiClass)) return false;
     return method.getParameterList().getParametersCount() == 1;
   }
 
@@ -457,7 +468,15 @@ public class PsiUtil {
 
   public static String getPropertyNameByGetter(PsiMethod getterMethod) {
     @NonNls String methodName = getterMethod.getName();
-    return methodName.startsWith("get") && methodName.length() > 3 ? decapitalize(methodName.substring(3)) : methodName;
+    if (methodName.startsWith("get") && methodName.length() > 3) {
+      return decapitalize(methodName.substring(3));
+    }
+    else if (methodName.startsWith("is") && methodName.length() > 2) {
+      return decapitalize(methodName.substring(2));
+    }
+    else {
+      return methodName;
+    }
   }
 
   public static String getPropertyNameBySetter(PsiMethod setterMethod) {

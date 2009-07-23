@@ -17,10 +17,11 @@ import org.jetbrains.plugins.grails.lang.gsp.resolve.taglib.GspTagLibUtil;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
@@ -116,6 +117,14 @@ public class CompleteReferenceExpression {
         }
 
         propertyVariants = ArrayUtil.mergeArrays(propertyVariants, clazz.getFields(), Object.class);
+
+        List<Object> variantList = new ArrayList<Object>();
+        for (Object variant : propertyVariants) {
+          if (variant instanceof GrField && ((GrField)variant).isProperty()) continue;
+          variantList.add(variant);
+        }
+
+        propertyVariants = variantList.toArray(new Object[variantList.size()]);
       }
     }
 
