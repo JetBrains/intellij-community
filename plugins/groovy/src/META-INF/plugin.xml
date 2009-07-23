@@ -42,6 +42,7 @@
     <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.VetoableAnnotationProcessor"/>
     <libraryManager implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryManager"/>
     <libraryManager implementation="org.jetbrains.plugins.grails.config.GrailsLibraryManager"/>
+    <!--<libraryManager implementation="org.jetbrains.plugins.groovy.griffon.GriffonLibraryManager"/>-->
     <libraryManager implementation="org.jetbrains.plugins.gant.config.GantLibraryManager"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.gant.debugger.GantPositionManagerHelper"/>
   </extensions>
@@ -206,8 +207,8 @@
                     serviceImplementation="org.jetbrains.plugins.grails.references.domain.DomainClassMembersProvider"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.doc.GroovyDocGenerationManager"
                     serviceImplementation="org.jetbrains.plugins.groovy.doc.GroovyDocGenerationManager"/>
-    <projectService serviceInterface="org.jetbrains.plugins.grails.console.GrailsConsole"
-                    serviceImplementation="org.jetbrains.plugins.grails.console.GrailsConsole"/>
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.mvc.MvcConsole"
+                    serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcConsole"/>
 
     <moduleService serviceInterface="org.jetbrains.plugins.grails.plugins.control.GrailsPluginManager"
                    serviceImplementation="org.jetbrains.plugins.grails.plugins.control.GrailsPluginManagerImpl"/>
@@ -546,7 +547,7 @@
       <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyAddImportsPassFactory</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.grails.config.GrailsModuleStructureSynchronizer</implementation-class>
+      <implementation-class>org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer</implementation-class>
     </component>
   </project-components>
 
