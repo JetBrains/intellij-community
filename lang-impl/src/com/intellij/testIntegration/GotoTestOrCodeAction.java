@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -12,7 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.idea.ActionsBundle;
 
-public class GotoTestOrCodeAction extends BaseCodeInsightAction {
+public class GotoTestOrCodeAction extends BaseCodeInsightAction implements DumbAware {
   protected CodeInsightActionHandler getHandler(){
     return new GotoTestOrCodeHandler();
   }

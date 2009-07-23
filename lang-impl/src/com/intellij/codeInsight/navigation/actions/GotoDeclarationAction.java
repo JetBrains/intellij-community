@@ -6,19 +6,23 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
+import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +31,7 @@ import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
 
-public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler {
+public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.actions.GotoDeclarationAction");
   protected CodeInsightActionHandler getHandler() {
     return this;

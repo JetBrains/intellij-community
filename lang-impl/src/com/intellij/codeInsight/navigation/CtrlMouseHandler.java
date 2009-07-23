@@ -339,7 +339,12 @@ public class CtrlMouseHandler implements ProjectComponent {
     PsiElement targetElement = null;
 
     if (browseMode == BrowseMode.TypeDeclaration) {
-      targetElement = GotoTypeDeclarationAction.findSymbolType(editor, offset);
+      try {
+        targetElement = GotoTypeDeclarationAction.findSymbolType(editor, offset);
+      }
+      catch (IndexNotReadyException e) {
+        showDumbModeNotification(myProject);
+      }
     }
     else if (browseMode == BrowseMode.Declaration) {
       PsiReference ref = TargetElementUtilBase.findReference(editor, offset);

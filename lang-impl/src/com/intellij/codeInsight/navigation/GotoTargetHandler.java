@@ -8,6 +8,8 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.Navigatable;
@@ -27,9 +29,14 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   public void invoke(Project project, Editor editor, PsiFile file) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(getFeatureUsedKey());
 
-    Pair<PsiElement, PsiElement[]> sourceAndTarget = getSourceAndTargetElements(editor, file);
-    if (sourceAndTarget.first != null) {
-      show(project, editor, file, sourceAndTarget.first, sourceAndTarget.second);
+    try {
+      Pair<PsiElement, PsiElement[]> sourceAndTarget = getSourceAndTargetElements(editor, file);
+      if (sourceAndTarget.first != null) {
+        show(project, editor, file, sourceAndTarget.first, sourceAndTarget.second);
+      }
+    }
+    catch (IndexNotReadyException e) {
+      DumbService.getInstance(project).showDumbModeNotification("Navigation is not available here during index update");
     }
   }
 

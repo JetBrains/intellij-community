@@ -10,6 +10,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -22,7 +25,7 @@ import java.util.Set;
 /**
  *
  */
-public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler{
+public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware {
 
   protected CodeInsightActionHandler getHandler(){
     return this;
@@ -45,13 +48,18 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     int offset = editor.getCaretModel().getOffset();
-    PsiElement[] symbolTypes = findSymbolTypes(editor, offset);
-    if (symbolTypes == null || symbolTypes.length == 0) return;
-    if (symbolTypes.length == 1) {
-      navigate(project, symbolTypes[0]);
+    try {
+      PsiElement[] symbolTypes = findSymbolTypes(editor, offset);
+      if (symbolTypes == null || symbolTypes.length == 0) return;
+      if (symbolTypes.length == 1) {
+        navigate(project, symbolTypes[0]);
+      }
+      else {
+        NavigationUtil.getPsiElementPopup(symbolTypes, CodeInsightBundle.message("choose.type.popup.title")).showInBestPositionFor(editor);
+      }
     }
-    else {
-      NavigationUtil.getPsiElementPopup(symbolTypes, CodeInsightBundle.message("choose.type.popup.title")).showInBestPositionFor(editor);
+    catch (IndexNotReadyException e) {
+      DumbService.getInstance(project).showDumbModeNotification("Type information is not available during index update");
     }
   }
 
