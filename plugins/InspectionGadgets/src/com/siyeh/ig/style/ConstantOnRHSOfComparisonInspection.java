@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,12 +68,17 @@ public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
             final PsiBinaryExpression expression =
                     (PsiBinaryExpression) descriptor.getPsiElement();
             final PsiExpression rhs = expression.getROperand();
+            if (rhs == null) {
+                return;
+            }
             final PsiExpression lhs = expression.getLOperand();
             final PsiJavaToken sign = expression.getOperationSign();
-            assert rhs != null;
             final String rhsText = rhs.getText();
             final String flippedComparison =
                     ComparisonUtils.getFlippedComparison(sign);
+            if (flippedComparison == null) {
+                return;
+            }
             final String lhsText = lhs.getText();
             replaceExpression(expression,
                     rhsText + ' ' + flippedComparison + ' ' + lhsText);
