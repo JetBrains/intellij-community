@@ -15,18 +15,9 @@
  */
 package org.intellij.plugins.xpathView.ui;
 
-import static org.intellij.plugins.xpathView.util.Copyable.Util.copy;
-import org.intellij.plugins.xpathView.util.MyPsiUtil;
-import org.intellij.plugins.xpathView.util.Namespace;
-import org.intellij.plugins.xpathView.util.Variable;
-
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -40,16 +31,15 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.ui.Table;
+import org.intellij.lang.xpath.XPathFileType;
+import org.intellij.lang.xpath.context.*;
+import org.intellij.lang.xpath.psi.XPathElement;
+import static org.intellij.plugins.xpathView.util.Copyable.Util.copy;
+import org.intellij.plugins.xpathView.util.MyPsiUtil;
+import org.intellij.plugins.xpathView.util.Namespace;
+import org.intellij.plugins.xpathView.util.Variable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import org.intellij.lang.xpath.XPathFileType;
-import org.intellij.lang.xpath.context.ContextProvider;
-import org.intellij.lang.xpath.context.ContextType;
-import org.intellij.lang.xpath.context.AbstractVariableContext;
-import org.intellij.lang.xpath.context.NamespaceContext;
-import org.intellij.lang.xpath.context.VariableContext;
-import org.intellij.lang.xpath.psi.XPathElement;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -57,12 +47,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.xml.namespace.QName;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class EditContextDialog extends DialogWrapper {
     private final DimensionService myDimensionService = DimensionService.getInstance();
@@ -169,7 +155,7 @@ public class EditContextDialog extends DialogWrapper {
                     }
                     Collections.sort(allURIs);
 
-                    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
+                    final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
                     final AddNamespaceDialog dlg = new AddNamespaceDialog(project, myUnresolvedPrefixes, allURIs, AddNamespaceDialog.Mode.EDITABLE);
                     dlg.show();
                     if (dlg.isOK()) {

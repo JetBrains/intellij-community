@@ -121,7 +121,7 @@ public class XPathAppComponent implements ApplicationComponent, JDOMExternalizab
         }
 
         public void actionPerformed(AnActionEvent event) {
-            final Editor editor = DataKeys.EDITOR.getData(event.getDataContext());
+            final Editor editor = LangDataKeys.EDITOR.getData(event.getDataContext());
             if (editor != null) {
                 if (HighlighterUtil.hasHighlighters(editor)) {
                     final int offset = editor.getCaretModel().getOffset();

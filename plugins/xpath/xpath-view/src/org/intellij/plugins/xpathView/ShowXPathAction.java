@@ -15,13 +15,10 @@
  */
 package org.intellij.plugins.xpathView;
 
-import org.intellij.plugins.xpathView.support.XPathSupport;
-import org.intellij.plugins.xpathView.util.HighlighterUtil;
-
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -34,6 +31,8 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.LightweightHint;
+import org.intellij.plugins.xpathView.support.XPathSupport;
+import org.intellij.plugins.xpathView.util.HighlighterUtil;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -61,7 +60,7 @@ public class ShowXPathAction extends XPathAction {
     }
 
     public void actionPerformed(AnActionEvent e) {
-        final Editor editor = DataKeys.EDITOR.getData(e.getDataContext());
+        final Editor editor = LangDataKeys.EDITOR.getData(e.getDataContext());
         if (editor == null) {
             return;
         }

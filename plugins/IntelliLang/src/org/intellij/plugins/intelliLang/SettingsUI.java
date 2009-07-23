@@ -20,7 +20,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
@@ -129,7 +129,7 @@ class SettingsUI {
     descriptor.setDescription("Please select the configuration file (usually named IntelliLang.xml) to import.");
     descriptor.setTitle("Import Configuration");
 
-    descriptor.putUserData(DataKeys.MODULE_CONTEXT, DataKeys.MODULE.getData(dataContext));
+    descriptor.putUserData(LangDataKeys.MODULE_CONTEXT, LangDataKeys.MODULE.getData(dataContext));
 
     final FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, myProject);
 

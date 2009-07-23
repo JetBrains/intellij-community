@@ -15,11 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.associations.impl;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
@@ -86,11 +82,11 @@ public class AssociationsGroup extends ActionGroup {
 
     @Nullable
     static Project getProject(@Nullable AnActionEvent e) {
-        return e != null ? DataKeys.PROJECT.getData(e.getDataContext()) : null;
+        return e != null ? LangDataKeys.PROJECT.getData(e.getDataContext()) : null;
     }
 
     @Nullable
     static PsiFile getPsiFile(@Nullable AnActionEvent e) {
-        return e != null ? DataKeys.PSI_FILE.getData(e.getDataContext()) : null;
+        return e != null ? LangDataKeys.PSI_FILE.getData(e.getDataContext()) : null;
     }
 }

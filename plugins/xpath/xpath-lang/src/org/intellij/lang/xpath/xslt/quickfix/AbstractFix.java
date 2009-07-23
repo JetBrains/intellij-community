@@ -21,7 +21,7 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -91,7 +91,7 @@ public abstract class AbstractFix implements IntentionAction {
             public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
                 Editor editor;
                 if (requiresEditor) {
-                    editor = (Editor)DataManager.getInstance().getDataContext().getData(DataKeys.EDITOR.getName());
+                    editor = (Editor)DataManager.getInstance().getDataContext().getData(LangDataKeys.EDITOR.getName());
                     if (editor == null) {
                         if ((editor = FileEditorManager.getInstance(project).getSelectedTextEditor()) == null) {
                             return;

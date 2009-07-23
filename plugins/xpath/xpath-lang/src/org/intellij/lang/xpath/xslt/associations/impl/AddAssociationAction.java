@@ -20,7 +20,7 @@ import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
@@ -39,7 +39,7 @@ class AddAssociationAction extends AnAction {
     public void actionPerformed(AnActionEvent e) {
         final PsiFile psiFile = AssociationsGroup.getPsiFile(e);
         if (psiFile == null) return;
-        final Project project = DataKeys.PROJECT.getData(e.getDataContext());
+        final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
         if (project == null) return;
 
         addAssociation(e, psiFile);

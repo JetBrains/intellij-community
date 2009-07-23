@@ -61,11 +61,11 @@ public abstract class XsltRefactoringActionBase extends AnAction implements Hook
     }
 
     protected void updateImpl(AnActionEvent e) {
-        final PsiFile file = DataKeys.PSI_FILE.getData(e.getDataContext());
+        final PsiFile file = LangDataKeys.PSI_FILE.getData(e.getDataContext());
         if (file != null) {
             final PsiFile context = PsiTreeUtil.getContextOfType(file, XmlFile.class, false);
             if (context != null && XsltSupport.isXsltFile(context)) {
-                final Editor editor = DataKeys.EDITOR.getData(e.getDataContext());
+                final Editor editor = LangDataKeys.EDITOR.getData(e.getDataContext());
                 e.getPresentation().setEnabled(editor != null);
             }
         }
@@ -92,9 +92,9 @@ public abstract class XsltRefactoringActionBase extends AnAction implements Hook
     }
 
     public void actionPerformed(AnActionEvent e) {
-        final Editor editor = DataKeys.EDITOR.getData(e.getDataContext());
-        final PsiFile file = DataKeys.PSI_FILE.getData(e.getDataContext());
-        final Project project = DataKeys.PROJECT.getData(e.getDataContext());
+        final Editor editor = LangDataKeys.EDITOR.getData(e.getDataContext());
+        final PsiFile file = LangDataKeys.PSI_FILE.getData(e.getDataContext());
+        final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
 
         if (project != null && editor != null && file != null) {
             final PsiFile context = PsiTreeUtil.getContextOfType(file, XmlFile.class, false);

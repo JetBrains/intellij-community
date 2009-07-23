@@ -19,7 +19,7 @@ import com.intellij.find.FindProgressIndicator;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -132,14 +132,14 @@ public class XPathEvalAction extends XPathAction {
     }
 
     public void actionPerformed(AnActionEvent event) {
-        final Project project = DataKeys.PROJECT.getData(event.getDataContext());
+        final Project project = LangDataKeys.PROJECT.getData(event.getDataContext());
         if (project == null) {
             // no active project
             LOG.debug("No project");
             return;
         }
 
-        Editor editor = DataKeys.EDITOR.getData(event.getDataContext());
+        Editor editor = LangDataKeys.EDITOR.getData(event.getDataContext());
         if (editor == null) {
             FileEditorManager fem = FileEditorManager.getInstance(project);
             editor = fem.getSelectedTextEditor();

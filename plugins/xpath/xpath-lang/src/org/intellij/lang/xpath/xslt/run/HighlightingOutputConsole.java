@@ -18,9 +18,9 @@ package org.intellij.lang.xpath.xslt.run;
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
@@ -84,7 +84,7 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
 
     @Nullable
     private EditorEx getEditor() {
-        return (EditorEx)((DataProvider)myConsole).getData(DataKeys.EDITOR.getName());
+        return (EditorEx)((DataProvider)myConsole).getData(LangDataKeys.EDITOR.getName());
     }
 
     public JComponent getPreferredFocusableComponent() {
@@ -93,7 +93,7 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
 
     @Nullable
     public Object getData(@NonNls String dataId) {
-        if (dataId.equals(DataKeys.EDITOR.getName())) {
+        if (dataId.equals(LangDataKeys.EDITOR.getName())) {
             return getEditor();
         }
         return null;

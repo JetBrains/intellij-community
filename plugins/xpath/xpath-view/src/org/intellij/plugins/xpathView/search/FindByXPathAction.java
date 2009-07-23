@@ -16,24 +16,22 @@
 
 package org.intellij.plugins.xpathView.search;
 
-import org.intellij.plugins.xpathView.Config;
-import org.intellij.plugins.xpathView.XPathAppComponent;
-import org.intellij.plugins.xpathView.XPathEvalAction;
-import org.intellij.plugins.xpathView.XPathProjectComponent;
-import org.intellij.plugins.xpathView.support.XPathSupport;
-import org.intellij.plugins.xpathView.ui.InputExpressionDialog;
-
 import com.intellij.find.FindProgressIndicator;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
 import com.intellij.usages.*;
-
+import org.intellij.plugins.xpathView.Config;
+import org.intellij.plugins.xpathView.XPathAppComponent;
+import org.intellij.plugins.xpathView.XPathEvalAction;
+import org.intellij.plugins.xpathView.XPathProjectComponent;
+import org.intellij.plugins.xpathView.support.XPathSupport;
+import org.intellij.plugins.xpathView.ui.InputExpressionDialog;
 import org.jaxen.JaxenException;
 import org.jaxen.XPathSyntaxException;
 
@@ -42,13 +40,13 @@ import java.util.Collections;
 public class FindByXPathAction extends AnAction {
 
     public void update(AnActionEvent e) {
-        final Project project = DataKeys.PROJECT.getData(e.getDataContext());
+        final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
         e.getPresentation().setEnabled(project != null);
     }
 
     public void actionPerformed(AnActionEvent e) {
-        final Project project = DataKeys.PROJECT.getData(e.getDataContext());
-        final Module module = DataKeys.MODULE.getData(e.getDataContext());
+        final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
+        final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
 
         if (project != null) {
             executeSearch(project, module);

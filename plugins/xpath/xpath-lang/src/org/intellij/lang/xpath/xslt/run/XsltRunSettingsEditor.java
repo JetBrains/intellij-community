@@ -15,22 +15,12 @@
  */
 package org.intellij.lang.xpath.xslt.run;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -56,12 +46,11 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.Table;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 import org.intellij.lang.xpath.xslt.associations.impl.AnyXMLDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -71,12 +60,8 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Enumeration;
+import java.util.*;
 import java.util.List;
-import java.util.Vector;
 
 class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
     private final Project myProject;
@@ -385,12 +370,12 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
             if (xmlInputFile != null) {
                 final Module contextModule = ProjectRootManager.getInstance(s.getProject()).getFileIndex().getModuleForFile(xmlInputFile);
                 if (contextModule != null) {
-                    myXmlDescriptor.putUserData(DataKeys.MODULE_CONTEXT, contextModule);
+                    myXmlDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, contextModule);
                 } else {
-                    myXmlDescriptor.putUserData(DataKeys.MODULE_CONTEXT, s.getModule());
+                    myXmlDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, s.getModule());
                 }
             } else {
-                myXmlDescriptor.putUserData(DataKeys.MODULE_CONTEXT, s.getModule());
+                myXmlDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, s.getModule());
             }
 
             myFileType.setSelectedItem(s.getFileType());
@@ -403,11 +388,11 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
             final Module module = s.getModule();
             if (module != null) {
                 myModule.setSelectedItem(module);
-                myXsltDescriptor.putUserData(DataKeys.MODULE_CONTEXT, module);
+                myXsltDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, module);
             } else {
                 final VirtualFile xsltFile = s.findXsltFile();
                 if (xsltFile != null) {
-                    myXsltDescriptor.putUserData(DataKeys.MODULE_CONTEXT, ProjectRootManager.getInstance(s.getProject()).getFileIndex().getModuleForFile(xsltFile));
+                    myXsltDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, ProjectRootManager.getInstance(s.getProject()).getFileIndex().getModuleForFile(xsltFile));
                 }
                 myModule.setSelectedIndex(0);
             }
