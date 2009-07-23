@@ -39,11 +39,13 @@ public class ProjectClasspathTraversing {
     public List<String> getOutputs(Module module) {
       ArrayList<String> outputs = new ArrayList<String>();
       final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
-      String testOutput = compilerModuleExtension.getCompilerOutputUrlForTests();
-      if (myIncludeTests && testOutput != null) outputs.add(testOutput);
-      String output = compilerModuleExtension.getCompilerOutputUrl();
-      if ((!Comparing.equal(output, testOutput) || !myIncludeTests) && output != null) {
-        outputs.add(output);
+      if (compilerModuleExtension != null) {
+        String testOutput = compilerModuleExtension.getCompilerOutputUrlForTests();
+        if (myIncludeTests && testOutput != null) outputs.add(testOutput);
+        String output = compilerModuleExtension.getCompilerOutputUrl();
+        if ((!Comparing.equal(output, testOutput) || !myIncludeTests) && output != null) {
+          outputs.add(output);
+        }
       }
       return outputs;
     }

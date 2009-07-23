@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class CompilerProjectExtension {
 
-  public static CompilerProjectExtension getInstance(Project project) {
+  public static @Nullable CompilerProjectExtension getInstance(Project project) {
     return ServiceManager.getService(project, CompilerProjectExtension.class);
   }
 

@@ -14,7 +14,7 @@ public abstract class CompilerModuleExtension extends ModuleExtension {
   @NonNls public static final String PRODUCTION = "production";
   @NonNls public static final String TEST = "test";
 
-  public static CompilerModuleExtension getInstance(final Module module) {
+  public static @Nullable CompilerModuleExtension getInstance(final Module module) {
     return ModuleRootManager.getInstance(module).getModuleExtension(CompilerModuleExtension.class);
   }
 
