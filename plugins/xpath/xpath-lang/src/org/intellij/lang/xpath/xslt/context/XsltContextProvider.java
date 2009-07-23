@@ -16,8 +16,8 @@
 package org.intellij.lang.xpath.xslt.context;
 
 import com.intellij.lang.LanguageRefactoringSupport;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleFieldCache;
@@ -292,7 +292,7 @@ public class XsltContextProvider extends ContextProvider {
                 final String namespace = namespaceDeclarations.get(prefix);
                 if (isIgnoredNamespace(prefix, namespace)) continue;
 
-                final XmlTag tag = ef.createTagFromText("<dummy-tag xmlns='" + namespace + "' />", StdLanguages.XML);
+                final XmlTag tag = ef.createTagFromText("<dummy-tag xmlns='" + namespace + "' />", XMLLanguage.INSTANCE);
                 final XmlDocument document = PsiTreeUtil.getParentOfType(tag, XmlDocument.class);
                 final XmlNSDescriptor rootDescriptor = tag.getNSDescriptor(tag.getNamespace(), true);
                 if (rootDescriptor == null ||

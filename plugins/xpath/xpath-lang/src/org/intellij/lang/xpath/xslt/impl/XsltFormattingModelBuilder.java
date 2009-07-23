@@ -16,15 +16,14 @@
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.formatting.CustomFormattingModelBuilder;
-import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.lang.StdLanguages;
-import com.intellij.lang.ASTNode;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,8 +36,8 @@ class XsltFormattingModelBuilder implements CustomFormattingModelBuilder {
 
     public boolean isEngagedToFormat(PsiElement context) {
         final PsiFile file = context.getContainingFile();
-        return file != null && (file.getFileType() == StdFileTypes.XML
-                && file.getLanguage() == StdLanguages.XML);
+        return file != null && (file.getFileType() == XMLLanguage.INSTANCE
+                && file.getLanguage() == XMLLanguage.INSTANCE);
     }
 
     @Nullable

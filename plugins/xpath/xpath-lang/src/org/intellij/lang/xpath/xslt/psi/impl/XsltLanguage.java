@@ -15,20 +15,13 @@
  */
 package org.intellij.lang.xpath.xslt.psi.impl;
 
-import org.intellij.lang.xpath.psi.XPathVariable;
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.psi.XsltParameter;
-import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
-import org.intellij.lang.xpath.xslt.psi.XsltVariable;
-import org.intellij.lang.xpath.xslt.refactoring.introduceVariable.XsltIntroduceVariableAction;
-
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageRefactoringSupport;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.psi.PsiElement;
@@ -37,6 +30,12 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.RefactoringActionHandler;
+import org.intellij.lang.xpath.psi.XPathVariable;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.psi.XsltParameter;
+import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
+import org.intellij.lang.xpath.xslt.psi.XsltVariable;
+import org.intellij.lang.xpath.xslt.refactoring.introduceVariable.XsltIntroduceVariableAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +68,7 @@ public class XsltLanguage extends Language {
     private static class MyFindUsagesProvider implements FindUsagesProvider {
         @Nullable
         public WordsScanner getWordsScanner() {
-            return LanguageFindUsages.INSTANCE.forLanguage(StdLanguages.XML).getWordsScanner();
+            return LanguageFindUsages.INSTANCE.forLanguage(XMLLanguage.INSTANCE).getWordsScanner();
         }
 
         public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {

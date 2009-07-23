@@ -15,9 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
-
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -26,7 +24,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.StdLanguages;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class CreateTemplateFix extends AbstractFix {
@@ -71,7 +70,7 @@ public class CreateTemplateFix extends AbstractFix {
 
         // this is a bit ugly, but seems like the only way to get a newline between the closing tag of the previous and
         // the start tag of the newly created tag
-        final XmlTag dummy1 = (XmlTag)parentTag.addAfter(XmlElementFactory.getInstance(project).createTagFromText(DUMMY_TAG, StdLanguages.XML), tag);
+        final XmlTag dummy1 = (XmlTag)parentTag.addAfter(XmlElementFactory.getInstance(project).createTagFromText(DUMMY_TAG, XMLLanguage.INSTANCE), tag);
         templateTag = (XmlTag)parentTag.addAfter(templateTag, dummy1);
         templateTag = (XmlTag)tag.getManager().getCodeStyleManager().reformat(templateTag);
 
