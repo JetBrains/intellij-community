@@ -14,8 +14,16 @@ public class SvnTrunkCheckoutStrategy extends CheckoutStrategy {
 
   @Override
   public File getResult() {
-    if (getCvsPath().getName().equals("trunk") && getCvsPath().getParent() != null) {
-      return new File(getSelectedLocation(), getCvsPath().getParent());
+    File path = getCvsPath();
+    if (path.getName().equalsIgnoreCase("trunk") && (path.getParent() != null)) {
+      return new File(getSelectedLocation(), path.getParent());
+    }
+    path = path.getParentFile();
+    if ((path != null) && path.getName().equalsIgnoreCase("branches") && (path.getParent() != null)) {
+      return new File(getSelectedLocation(), path.getParent());
+    }
+    if ((path != null) && path.getName().equalsIgnoreCase("tags") && (path.getParent() != null)) {
+      return new File(getSelectedLocation(), path.getParent());
     }
     return null;
   }
