@@ -197,6 +197,16 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
     if (elementToCopy instanceof PsiFile) {
       PsiFile file = (PsiFile)elementToCopy;
       String name = newName == null ? file.getName() : newName;
+      final PsiFile existing = targetDirectory.findFile(name);
+      if (existing!=null) {
+        final int selection = Messages.showDialog(
+                String.format("File '%s' already exists in directory '%s'", name, targetDirectory.getVirtualFile().getPath()),
+                "Copy",
+                new String[]{"Overwrite", "Skip"}, 0, Messages.getQuestionIcon());
+        if (selection == 0 && file != existing) {
+          existing.delete();
+        } else return null;
+      }
       return targetDirectory.copyFileFrom(name, file);
     }
     else if (elementToCopy instanceof PsiDirectory) {
@@ -205,7 +215,8 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
         return null;
       }
       if (newName == null) newName = directory.getName();
-      final PsiDirectory subdirectory = targetDirectory.createSubdirectory(newName);
+      final PsiDirectory existing = targetDirectory.findSubdirectory(newName);
+      final PsiDirectory subdirectory = (existing!=null) ? existing : targetDirectory.createSubdirectory(newName);
       VfsUtil.doActionAndRestoreEncoding(directory.getVirtualFile(), new ThrowableComputable<VirtualFile, IOException>() {
         public VirtualFile compute() {
           return subdirectory.getVirtualFile();
