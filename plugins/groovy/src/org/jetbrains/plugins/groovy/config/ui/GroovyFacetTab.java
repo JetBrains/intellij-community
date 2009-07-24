@@ -46,7 +46,7 @@ public class GroovyFacetTab extends FacetEditorTab {
   private JPanel myPanel;
   private JRadioButton myCompile;
   private JRadioButton myCopyToOutput;
-  private JCheckBox myIsGrails;
+  private JCheckBox myIsMvc;
   private JPanel myManagedLibrariesPanel;
 
   private final ManagedLibrariesEditor myManagedLibrariesEditor;
@@ -60,13 +60,13 @@ public class GroovyFacetTab extends FacetEditorTab {
 
     myManagedLibrariesEditor.getFacetEditorContext().addFacetContextChangeListener(new FacetContextChangeListener() {
       public void moduleRootsChanged(ModifiableRootModel rootModel) {
-        final boolean hasGrails = hasMvcLibrary();
-        if (!myIsGrails.isEnabled() && hasGrails) {
-          myIsGrails.setEnabled(true);
-          myIsGrails.setSelected(true);
-        } else if (!hasGrails) {
-          myIsGrails.setEnabled(false);
-          myIsGrails.setSelected(false);
+        final boolean hasMvc = hasMvcLibrary();
+        if (!myIsMvc.isEnabled() && hasMvc) {
+          myIsMvc.setEnabled(true);
+          myIsMvc.setSelected(true);
+        } else if (!hasMvc) {
+          myIsMvc.setEnabled(false);
+          myIsMvc.setSelected(false);
         }
       }
 
@@ -97,7 +97,7 @@ public class GroovyFacetTab extends FacetEditorTab {
     if (myCompile.isSelected() != myConfiguration.isCompileGroovyFiles()) {
       return true;
     }
-    if (isGrailsApplication() != myConfiguration.getMvcApplication()) {
+    if (isMvcApplication() != myConfiguration.getMvcApplication()) {
       return true;
     }
 
@@ -111,19 +111,19 @@ public class GroovyFacetTab extends FacetEditorTab {
 
   public void apply() throws ConfigurationException {
     myConfiguration.setCompileGroovyFiles(myCompile.isSelected());
-    myConfiguration.setMvcApplication(isGrailsApplication());
+    myConfiguration.setMvcApplication(isMvcApplication());
   }
 
   @Nullable
-  private Boolean isGrailsApplication() {
-    return myIsGrails.isEnabled() ? myIsGrails.isSelected() : null;
+  private Boolean isMvcApplication() {
+    return myIsMvc.isEnabled() ? myIsMvc.isSelected() : null;
   }
 
   public void reset() {
     (myConfiguration.isCompileGroovyFiles() ? myCompile : myCopyToOutput).setSelected(true);
     final Boolean isMvc = myConfiguration.getMvcApplication();
-    myIsGrails.setEnabled(hasMvcLibrary());
-    myIsGrails.setSelected(isMvc != null && isMvc.booleanValue());
+    myIsMvc.setEnabled(hasMvcLibrary());
+    myIsMvc.setSelected(isMvc != null && isMvc.booleanValue());
     myManagedLibrariesEditor.updateLibraryList();
   }
 
