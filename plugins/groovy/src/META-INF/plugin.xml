@@ -407,7 +407,11 @@
     <projectService serviceInterface="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"
                     serviceImplementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"/>
 
-    <projectViewPane implementation="org.jetbrains.plugins.grails.projectView.v2.GrailsProjectViewPane"/>
+    <toolWindow id="Grails" anchor="left" secondary="false" icon="/org/jetbrains/plugins/grails/images/grails.png"
+                factoryClass="org.jetbrains.plugins.grails.projectView.v2.GrailsToolWindowFactory"
+                conditionClass="org.jetbrains.plugins.grails.projectView.v2.GrailsToolWindowFactory"/>
+
+    <selectInTarget implementation="org.jetbrains.plugins.grails.projectView.v2.GrailsProjectViewSelectInTarget"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
