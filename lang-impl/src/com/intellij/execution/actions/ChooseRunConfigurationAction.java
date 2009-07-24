@@ -34,6 +34,7 @@ public class ChooseRunConfigurationAction extends AnAction {
   private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
 
   private Executor myCurrentExecutor;
+  private boolean myEditConfiguration;
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -61,6 +62,19 @@ public class ChooseRunConfigurationAction extends AnAction {
     inputMap.put(KeyStroke.getKeyStroke("shift pressed SHIFT"), "alternateExecutor");
     inputMap.put(KeyStroke.getKeyStroke("released SHIFT"), "restoreDefaultExecutor");
     inputMap.put(KeyStroke.getKeyStroke("shift ENTER"), "invokeAction");
+    inputMap.put(KeyStroke.getKeyStroke("F4"), "editConfiguration");
+
+    actionMap.put("editConfiguration", new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        myEditConfiguration = true;
+        try {
+          listPopup.handleSelect(true);
+        } finally {
+          myEditConfiguration = false;
+        }
+
+      }
+    });
 
     actionMap.put("invokeAction", new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -89,6 +103,18 @@ public class ChooseRunConfigurationAction extends AnAction {
       listPopup.setCaption(executor.getActionName());
     }
   }
+
+  void editConfiguration(@NotNull final Project project, @NotNull final RunnerAndConfigurationSettingsImpl configuration) {
+    final Executor executor = getCurrentExecutor();
+    assert executor != null;
+
+    if (RunDialog.editConfiguration(project, configuration, "Edit configuration settings", executor.getActionName(),
+                                    executor.getIcon())) {
+      RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
+      ExecutionUtil.executeConfiguration(project, configuration, executor, DataManager.getInstance().getDataContext());
+    }
+  }
+
 
   @Nullable
   protected Executor getDefaultExecutor() {
@@ -289,6 +315,19 @@ public class ChooseRunConfigurationAction extends AnAction {
 
     @Override
     public PopupStep onChosen(final ItemWrapper wrapper, boolean finalChoice) {
+      if (myAction.myEditConfiguration) {
+        final Object o = wrapper.getValue();
+        if (o instanceof RunnerAndConfigurationSettingsImpl) {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              myAction.editConfiguration(myProject, (RunnerAndConfigurationSettingsImpl) o);
+            }
+          });
+
+          return FINAL_CHOICE;
+        }
+      }
+
       final Executor executor = myAction.getCurrentExecutor();
       assert executor != null;
 
@@ -351,14 +390,7 @@ public class ChooseRunConfigurationAction extends AnAction {
       result.add(new ActionWrapper("Edit...", EDIT_ICON) {
         @Override
         public void perform() {
-          final Executor executor = action.getCurrentExecutor();
-          assert executor != null;
-
-          if (RunDialog.editConfiguration(project, settings, "Edit configuration settings", executor.getActionName(),
-                                          executor.getIcon())) {
-            RunManagerEx.getInstanceEx(project).setSelectedConfiguration(settings);
-            ExecutionUtil.executeConfiguration(project, settings, executor, DataManager.getInstance().getDataContext());
-          }
+          action.editConfiguration(project, settings);
         }
       });
 
