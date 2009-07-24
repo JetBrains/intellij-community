@@ -609,7 +609,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     PsiElement element = file.findElementAt(startOffset);
     if (element instanceof PsiIdentifier) {
       PsiElement parent = element.getParent();
-      if (parent instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement)parent).isQualified()) {
+      if (parent instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement)parent).isQualified() && !(parent.getParent() instanceof PsiPackageStatement)) {
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)parent;
 
         if (!aClass.getManager().areElementsEquivalent(aClass, resolveReference(ref))) {
