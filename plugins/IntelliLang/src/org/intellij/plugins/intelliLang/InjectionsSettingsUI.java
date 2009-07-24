@@ -48,6 +48,7 @@ import org.jetbrains.annotations.Nls;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -133,6 +134,13 @@ public class InjectionsSettingsUI implements Configurable {
       }
     });
 
+    new AnAction("Toggle") {
+      @Override
+      public void actionPerformed(final AnActionEvent e) {
+        performToggleAction();
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myInjectionsTable);
+
     myRoot.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.NORTH);
     myRoot.add(tablePanel, BorderLayout.CENTER);
   }
@@ -141,7 +149,7 @@ public class InjectionsSettingsUI implements Configurable {
     return myRoot;
   }
 
-  public void reset() {
+  public void reset() {                                                 
     myInjections.clear();
     for (BaseInjection injection : myOriginalInjections) {
       myInjections.add(injection.copy());
@@ -166,6 +174,19 @@ public class InjectionsSettingsUI implements Configurable {
     myInjectionsTable.updateUI();    
   }
 
+  private void performToggleAction() {
+    final List<BaseInjection> selectedInjections = getSelectedInjections();
+    boolean enabledExists = false;
+    boolean disabledExists = false;
+    for (BaseInjection injection : selectedInjections) {
+      if (injection.isEnabled()) enabledExists = true;
+      else disabledExists = true;
+      if (enabledExists && disabledExists) break;
+    }
+    boolean allEnabled = !enabledExists && disabledExists;
+    performSelectedInjectionsEnabled(allEnabled);
+  }
+
   private void performRemove() {
     final int selectedRow = myInjectionsTable.getSelectedRow();
     if (selectedRow < 0) return;
@@ -183,8 +204,8 @@ public class InjectionsSettingsUI implements Configurable {
   }
 
   private void performAdd(final AnActionEvent button) {
-    // todo
-    Messages.showInfoMessage("Unfortunately this functionality is not yet implemented.\nUse in place \'Inject language\' intention action.", "Add Injection");
+    // todo add popup 
+    Messages.showInfoMessage(myProject, "Unfortunately this functionality is not yet implemented.\nUse in place \'Inject language\' intention action.", "Add Injection");
   }
 
   @Nls
