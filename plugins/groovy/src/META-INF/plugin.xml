@@ -42,7 +42,7 @@
     <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.VetoableAnnotationProcessor"/>
     <libraryManager implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryManager"/>
     <libraryManager implementation="org.jetbrains.plugins.grails.config.GrailsLibraryManager"/>
-    <!--<libraryManager implementation="org.jetbrains.plugins.groovy.griffon.GriffonLibraryManager"/>-->
+    <libraryManager implementation="org.jetbrains.plugins.groovy.griffon.GriffonLibraryManager"/>
     <libraryManager implementation="org.jetbrains.plugins.gant.config.GantLibraryManager"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.gant.debugger.GantPositionManagerHelper"/>
   </extensions>
@@ -195,6 +195,8 @@
 
     <configurationType implementation="org.jetbrains.plugins.grails.runner.GrailsRunConfigurationType"/>
     <configurationType implementation="org.jetbrains.plugins.grails.tests.runner.GrailsTestRunConfigurationType"/>
+    <configurationType implementation="org.jetbrains.plugins.groovy.griffon.GriffonRunConfigurationType"/>
+
     <configurationProducer implementation="org.jetbrains.plugins.grails.tests.runner.GrailsTestRunConfigurationProducer"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory"
