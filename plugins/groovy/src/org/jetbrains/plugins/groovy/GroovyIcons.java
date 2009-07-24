@@ -44,5 +44,4 @@ public interface GroovyIcons {
 
   Icon DYNAMIC_PROPERTY_TOOL_WINDOW_ICON = IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/dynamicProperty.png");
 
-  Icon GRIFFON_ICON = IconLoader.findIcon("/org/jetbrains/plugins/griffon/griffon.png");
 }
