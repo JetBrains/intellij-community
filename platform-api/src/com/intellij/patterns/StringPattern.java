@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.regex.Pattern;
 
 /**
  * @author peter
@@ -46,6 +47,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
       }
     });
   }
+
   @NotNull
   public StringPattern contains(@NonNls @NotNull final String s) {
     return with(new PatternCondition<String>("contains") {
@@ -53,6 +55,16 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
         return str.contains(s);
       }
 
+    });
+  }
+
+  @NotNull
+  public StringPattern matches(@NonNls @NotNull final String s) {
+    final Pattern pattern = Pattern.compile(s);
+    return with(new PatternCondition<String>("matches") {
+      public boolean accepts(@NotNull final String str, final ProcessingContext context) {
+        return pattern.matcher(str).matches();
+      }
     });
   }
 
