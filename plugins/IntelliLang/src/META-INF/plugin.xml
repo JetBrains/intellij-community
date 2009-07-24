@@ -16,20 +16,12 @@
 
   <depends>RegExpLanguage</depends>
   <depends optional="true" config-file="intellilang-xpath-support.xml">XPathView</depends>
+  <depends optional="true" config-file="intellilang-java-support.xml">com.intellij.modules.java</depends>
+  <depends optional="true" config-file="intellilang-xml-support.xml">com.intellij.modules.xml</depends>
 
   <idea-version since-build="8300" />
 
   <vendor email="sascha.weinreuter@cit.de" logo="/org/intellij/plugins/intelliLang/icon_small.png">Sascha Weinreuter</vendor>
-
-  <change-notes><![CDATA[<p>
-    * First Diana compatible release<br>
-  </p>
-  <p>
-    The complete change-history is available
-    <a href="http://www.jetbrains.net/confluence/display/CONTEST/IntelliLang#IntelliLang-History">here</a>
-  </p>]]></change-notes>
-
-  <!--<depends optional="true">XPathView</depends>-->
 
   <extensionPoints>
     <extensionPoint name="languageSupport"
@@ -37,9 +29,6 @@
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />
-    <intentionAction>
-      <className>org.intellij.plugins.intelliLang.inject.quickedit.QuickEditAction</className>
-    </intentionAction>
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.InjectLanguageAction</className>
     </intentionAction>
@@ -50,29 +39,20 @@
       <className>org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction</className>
     </intentionAction>
 
-    <compiler implementation="org.intellij.plugins.intelliLang.pattern.compiler.impl.PatternValidationCompiler"/>
+    <intentionAction>
+      <className>org.intellij.plugins.intelliLang.inject.quickedit.QuickEditAction</className>
+    </intentionAction>
 
-    <inspectionToolProvider implementation="org.intellij.plugins.intelliLang.inject.validation.InspectionProvider"/>
-    <inspectionToolProvider implementation="org.intellij.plugins.intelliLang.pattern.InspectionProvider"/>
     <highlightErrorFilter implementation="org.intellij.plugins.intelliLang.inject.CustomErrorElementFilter"/>
 
     <applicationService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
                         serviceImplementation="org.intellij.plugins.intelliLang.Configuration"/>
     <applicationConfigurable implementation="org.intellij.plugins.intelliLang.Settings"/>
 
-    <concatenationAwareInjector implementation="org.intellij.plugins.intelliLang.inject.ConcatenationInjector"/>
-
-    <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.XmlLanguageInjector"/>
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector"/>
-    <psi.referenceContributor implementation="org.intellij.plugins.intelliLang.inject.LanguageReferenceProvider"/>
+    <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.MissingSupportLanguageInjector" order="last"/>
 
     <projectService serviceInterface="org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry"
                     serviceImplementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry"/>
   </extensions>
-
-  <extensions defaultExtensionNs="org.intellij.intelliLang">
-    <languageSupport implementation="org.intellij.plugins.intelliLang.inject.XmlLanguageInjectorSupport"/>
-    <languageSupport implementation="org.intellij.plugins.intelliLang.inject.JavaLanguageInjectorSupport"/>
-  </extensions>
-
 </idea-plugin>

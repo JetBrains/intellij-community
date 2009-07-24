@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -41,6 +42,7 @@ import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.intellij.plugins.intelliLang.Configuration;
 
 import javax.swing.*;
 import java.util.*;
@@ -60,14 +62,9 @@ public class InjectLanguageAction implements IntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiLanguageInjectionHost host = findInjectionHost(editor, file);
-    if (host == null) {
-      return false;
-    }
-    final List<Pair<PsiElement, TextRange>> injectedPsi = host.getInjectedPsi();
-    if (injectedPsi == null || injectedPsi.isEmpty()) {
-      return true;
-    }
-    return false;
+    if (host == null) return false;
+    final List<Pair<PsiElement, TextRange>> injectedPsi = InjectedLanguageUtil.getInjectedPsiFiles(host);
+    return injectedPsi == null || injectedPsi.isEmpty();
   }
 
   @Nullable
@@ -81,12 +78,13 @@ public class InjectLanguageAction implements IntentionAction {
     assert host != null;
     doChooseLanguageToInject(new Processor<String>() {
       public boolean process(final String languageId) {
+        if (defaultFunctionalityWorked(host, languageId)) return false;
         final Language language = InjectedLanguage.findLanguageById(languageId);
         try {
           for (LanguageInjectorSupport support : Extensions.getExtensions(LanguageInjectorSupport.EP_NAME)) {
             if (support.addInjectionInPlace(language, host)) return false;
           }
-          TemporaryPlacesRegistry.getInstance(project).addTempInjection(host, InjectedLanguage.create(languageId));
+          TemporaryPlacesRegistry.getInstance(project).addHostWithUndo(host, InjectedLanguage.create(languageId));
         }
         finally {
           FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
@@ -94,6 +92,10 @@ public class InjectLanguageAction implements IntentionAction {
         return false;
       }
     });
+  }
+
+  private static boolean defaultFunctionalityWorked(final PsiLanguageInjectionHost host, final String languageId) {
+    return Configuration.getInstance().setHostInjectionEnabled(host, Collections.singleton(languageId), false);
   }
 
   private static boolean doChooseLanguageToInject(final Processor<String> onChosen) {

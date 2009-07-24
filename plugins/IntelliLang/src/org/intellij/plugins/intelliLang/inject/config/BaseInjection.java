@@ -17,22 +17,28 @@ package org.intellij.plugins.intelliLang.inject.config;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.util.SmartList;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.RegExp;
+import org.intellij.plugins.intelliLang.PatternBasedInjectionHelper;
+import org.jdom.CDATA;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,24 +46,46 @@ import java.util.regex.Pattern;
 /**
  * Injection base class: Contains properties for language-id, prefix and suffix.
  */
-public abstract class BaseInjection<T extends BaseInjection, I extends PsiElement> implements Injection<I>, Cloneable,
-                                                                                              PersistentStateComponent<Element> {
+public class BaseInjection implements Injection, PersistentStateComponent<Element> {
 
-  @NotNull
+  @NotNull private final String mySupportId;
+  private String myDisplayName;
+
   private String myInjectedLanguageId = "";
-  @NotNull
   private String myPrefix = "";
-  @NotNull
   private String mySuffix = "";
 
-  @NotNull @NonNls
+  @NonNls
   private String myValuePattern = "";
   private Pattern myCompiledValuePattern;
   private boolean mySingleFile;
 
+  public BaseInjection(final String id) {
+    mySupportId = id;
+  }
+
+  @NotNull
+  private final List<InjectionPlace> myPlaces = new ArrayList<InjectionPlace>();
+
+  @NotNull
+  public List<InjectionPlace> getInjectionPlaces() {
+    return myPlaces;
+  }
+
+
+  @NotNull
+  public String getSupportId() {
+    return mySupportId;
+  }
+
   @NotNull
   public String getInjectedLanguageId() {
     return myInjectedLanguageId;
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return myDisplayName;
   }
 
   public void setInjectedLanguageId(@NotNull String injectedLanguageId) {
@@ -66,7 +94,7 @@ public abstract class BaseInjection<T extends BaseInjection, I extends PsiElemen
 
   @NotNull
   public String getPrefix() {
-    return myPrefix == null ? "" : myPrefix;
+    return myPrefix;
   }
 
   public void setPrefix(@NotNull String prefix) {
@@ -75,11 +103,15 @@ public abstract class BaseInjection<T extends BaseInjection, I extends PsiElemen
 
   @NotNull
   public String getSuffix() {
-    return mySuffix == null ? "" : mySuffix;
+    return mySuffix;
+  }
+
+  public void setSuffix(@NotNull String suffix) {
+    mySuffix = suffix;
   }
 
   @NotNull
-  public List<TextRange> getInjectedArea(final I element) {
+  public List<TextRange> getInjectedArea(final PsiElement element) {
     final TextRange textRange = ElementManipulators.getValueTextRange(element);
     if (myCompiledValuePattern == null) {
       return Collections.singletonList(textRange);
@@ -98,33 +130,61 @@ public abstract class BaseInjection<T extends BaseInjection, I extends PsiElemen
     }
   }
 
-  public void setSuffix(@NotNull String suffix) {
-    mySuffix = suffix;
+  public boolean isEnabled() {
+    for (InjectionPlace place : myPlaces) {
+      if (place.getElementPattern() != null && place.isEnabled()) return true;
+    }
+    return false;
+  }
+  
+  public boolean acceptsPsiElement(final PsiElement element) {
+    for (InjectionPlace place : myPlaces) {
+      if (place.isEnabled() && place.getElementPattern() != null && place.getElementPattern().accepts(element)) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  @SuppressWarnings({"unchecked"})
-  public T copy() {
-    try {
-      return (T)clone();
+  public boolean intersectsWith(final BaseInjection template) {
+    if (!Comparing.equal(getInjectedLanguageId(), template.getInjectedLanguageId())) return false;
+    for (InjectionPlace other : template.getInjectionPlaces()) {
+      if (findPlaceByText(other.getText()) != null) return true;
     }
-    catch (CloneNotSupportedException e) {
-      throw new Error(e);
-    }
+    return false;
   }
 
-  @SuppressWarnings({"RedundantIfStatement"})
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    final BaseInjection that = (BaseInjection)o;
-
+  public boolean sameLanguageParameters(final BaseInjection that) {
     if (!myInjectedLanguageId.equals(that.myInjectedLanguageId)) return false;
     if (!myPrefix.equals(that.myPrefix)) return false;
     if (!mySuffix.equals(that.mySuffix)) return false;
     if (!myValuePattern.equals(that.myValuePattern)) return false;
     if (mySingleFile != that.mySingleFile) return false;
+    return true;
+  }
 
+  @Nullable
+  public InjectionPlace findPlaceByText(final String text) {
+    for (InjectionPlace cur : myPlaces) {
+      if (Comparing.equal(text, cur.getText())) return cur;
+    }
+    return null;
+  }
+
+  @SuppressWarnings({"unchecked"})
+  public BaseInjection copy() {
+    return new BaseInjection(mySupportId).copyFrom(this);
+  }
+
+  @SuppressWarnings({"RedundantIfStatement"})
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || !(o instanceof BaseInjection)) return false;
+
+    final BaseInjection that = (BaseInjection)o;
+
+    if (!sameLanguageParameters(that)) return false;
+    if (!myPlaces.equals(that.myPlaces)) return false;
     return true;
   }
 
@@ -137,15 +197,21 @@ public abstract class BaseInjection<T extends BaseInjection, I extends PsiElemen
     return result;
   }
 
-  public void copyFrom(@NotNull T other) {
+  public BaseInjection copyFrom(@NotNull BaseInjection other) {
     assert this != other;
 
     myInjectedLanguageId = other.getInjectedLanguageId();
     myPrefix = other.getPrefix();
     mySuffix = other.getSuffix();
 
+    myDisplayName = other.getDisplayName();
+
     setValuePattern(other.getValuePattern());
     mySingleFile = other.mySingleFile;
+
+    myPlaces.clear();
+    myPlaces.addAll(other.getInjectionPlaces());
+    return this;
   }
 
   public void loadState(Element element) {
@@ -157,25 +223,83 @@ public abstract class BaseInjection<T extends BaseInjection, I extends PsiElemen
       setValuePattern(JDOMExternalizer.readString(e, "VALUE_PATTERN"));
       mySingleFile = JDOMExternalizer.readBoolean(e, "SINGLE_FILE");
       readExternalImpl(e);
+      initializePlaces();
+    }
+    else {
+      myDisplayName = StringUtil.notNullize(element.getChildText("display-name"));
+      myInjectedLanguageId = StringUtil.notNullize(element.getAttributeValue("language"));
+      myPrefix = StringUtil.notNullize(element.getChildText("prefix"));
+      mySuffix = StringUtil.notNullize(element.getChildText("suffix"));
+      setValuePattern(element.getChildText("value-pattern"));
+      mySingleFile = element.getChild("single-file") != null;
+      readExternalImpl(element);
+      for (Element placeElement : (List<Element>)element.getChildren("place")) {
+        final boolean enabled = !Boolean.TRUE.equals(placeElement.getAttributeValue("disabled"));
+        final String text = placeElement.getText();
+        myPlaces.add(new InjectionPlace(text, PatternBasedInjectionHelper.createElementPattern(text, getDisplayName()), enabled));
+      }
     }
   }
 
-  protected abstract void readExternalImpl(Element e);
+  public void initializePlaces() {
+    if (myPlaces.isEmpty()) {
+      for (String text : generatePlaces()) {
+        myPlaces.add(new InjectionPlace(text, PatternBasedInjectionHelper.createElementPattern(text, getDisplayName()), true));
+      }
+    }
+    else {
+      final ArrayList<InjectionPlace> copy = new ArrayList<InjectionPlace>(myPlaces);
+      myPlaces.clear();
+      for (InjectionPlace place : copy) {
+        if (StringUtil.isNotEmpty(place.getText()) && place.getElementPattern() == null) {
+          myPlaces.add(new InjectionPlace(place.getText(), PatternBasedInjectionHelper.createElementPattern(place.getText(), getDisplayName()), place.isEnabled()));
+        }
+        else {
+          myPlaces.add(place);
+        }
+      }
+    }
+  }
+
+  protected List<String> generatePlaces() {
+    return Collections.emptyList();
+  }
+
+  protected void readExternalImpl(Element e) {}
 
   public final Element getState() {
-    final Element e = new Element(getClass().getSimpleName());
-
-    JDOMExternalizer.write(e, "LANGUAGE", myInjectedLanguageId);
-    JDOMExternalizer.write(e, "PREFIX", myPrefix);
-    JDOMExternalizer.write(e, "SUFFIX", mySuffix);
-    JDOMExternalizer.write(e, "VALUE_PATTERN", myValuePattern);
-    JDOMExternalizer.write(e, "SINGLE_FILE", mySingleFile);
-
+    final Element e = new Element("injection");
+    e.setAttribute("language", myInjectedLanguageId);
+    e.setAttribute("injector-id", mySupportId);
+    e.addContent(new Element("display-name").setText(getDisplayName()));
+    if (StringUtil.isNotEmpty(myPrefix)) {
+      e.addContent(new Element("prefix").setText(myPrefix));
+    }
+    if (StringUtil.isNotEmpty(mySuffix)) {
+      e.addContent(new Element("suffix").setText(mySuffix));
+    }
+    if (StringUtil.isNotEmpty(myValuePattern)) {
+      e.addContent(new Element("value-pattern").setText(myValuePattern));
+    }
+    if (mySingleFile) {
+      e.addContent(new Element("single-file"));
+    }
+    final ArrayList<InjectionPlace> places = new ArrayList<InjectionPlace>(myPlaces);
+    Collections.sort(places, new Comparator<InjectionPlace>() {
+      public int compare(final InjectionPlace o1, final InjectionPlace o2) {
+        return Comparing.compare(o1.getText(), o2.getText());
+      }
+    });
+    for (InjectionPlace place : places) {
+      final Element child = new Element("place").setContent(new CDATA(place.getText()));
+      if (!place.isEnabled()) child.setAttribute("disabled", "true");
+      e.addContent(child);
+    }
     writeExternalImpl(e);
     return e;
   }
 
-  protected abstract void writeExternalImpl(Element e);
+  protected void writeExternalImpl(Element e) {}
 
   @NotNull
   public String getValuePattern() {
@@ -238,4 +362,27 @@ public abstract class BaseInjection<T extends BaseInjection, I extends PsiElemen
     return list;
   }
 
+  public void mergeOriginalPlacesFrom(final BaseInjection injection, final boolean enabled) {
+    for (InjectionPlace place : injection.getInjectionPlaces()) {
+      if (findPlaceByText(place.getText()) == null) {
+        if (enabled || !place.isEnabled()) {
+          myPlaces.add(place);
+        }
+        else {
+          myPlaces.add(new InjectionPlace(place.getText(), place.getElementPattern(), false));
+        }
+      }
+    }
+  }
+
+  public void setPlaceEnabled(@Nullable final String text, final boolean enabled) {
+    for (int i = 0; i < myPlaces.size(); i++) {
+      final InjectionPlace cur = myPlaces.get(i);
+      if (text == null || Comparing.equal(text, cur.getText())) {
+        if (cur.isEnabled() != enabled) {
+          myPlaces.set(i, new InjectionPlace(cur.getText(), cur.getElementPattern(), enabled));
+        }
+      }
+    }
+  }
 }

@@ -15,15 +15,14 @@
  */
 package org.intellij.plugins.intelliLang.inject.config;
 
-import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
-import org.jdom.Element;
+import org.intellij.plugins.intelliLang.PatternBasedInjectionHelper;
 import org.jetbrains.annotations.NotNull;
 
-public class XmlTagInjection extends AbstractTagInjection<XmlTagInjection, XmlText> {
+import java.util.Collections;
+import java.util.List;
 
-  private boolean myApplyToSubTagTexts;
+public class XmlTagInjection extends AbstractTagInjection {
 
   public XmlTagInjection() {
     setTagName("<none>");
@@ -33,52 +32,24 @@ public class XmlTagInjection extends AbstractTagInjection<XmlTagInjection, XmlTe
     return matches(context) && matchXPath(context);
   }
 
+  @NotNull
   public String getDisplayName() {
     final String name = getTagName();
     return name.length() > 0 ? name : "*";
   }
 
-  public boolean isApplyToSubTagTexts() {
-    return myApplyToSubTagTexts;
+  @Override
+  public XmlTagInjection copy() {
+    return new XmlTagInjection().copyFrom(this);
   }
 
-  public void setApplyToSubTagTexts(final boolean applyToSubTagTexts) {
-    myApplyToSubTagTexts = applyToSubTagTexts;
+  public XmlTagInjection copyFrom(@NotNull BaseInjection o) {
+    super.copyFrom(o);
+    return this;
   }
 
   @Override
-  public void copyFrom(@NotNull final XmlTagInjection other) {
-    super.copyFrom(other);
-    setApplyToSubTagTexts(other.isApplyToSubTagTexts());
-  }
-
-  @Override
-  protected void readExternalImpl(final Element e) {
-    super.readExternalImpl(e);
-    myApplyToSubTagTexts = JDOMExternalizer.readBoolean(e, "APPLY_TO_SUBTAGS");
-  }
-
-  @Override
-  protected void writeExternalImpl(final Element e) {
-    super.writeExternalImpl(e);
-    JDOMExternalizer.write(e, "APPLY_TO_SUBTAGS", myApplyToSubTagTexts);
-  }
-
-  public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
-
-    final XmlTagInjection that = (XmlTagInjection)o;
-
-    if (myApplyToSubTagTexts != that.myApplyToSubTagTexts) return false;
-
-    return true;
-  }
-
-  public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + (myApplyToSubTagTexts ? 1 : 0);
-    return result;
+  protected List<String> generatePlaces() {
+    return Collections.singletonList(PatternBasedInjectionHelper.getPatternString(this));
   }
 }

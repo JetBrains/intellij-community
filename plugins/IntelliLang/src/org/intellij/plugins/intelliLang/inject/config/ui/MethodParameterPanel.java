@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
@@ -40,7 +39,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.util.Function;
 import com.intellij.util.Icons;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
@@ -50,7 +48,6 @@ import com.intellij.ui.treeStructure.treetable.TreeColumnInfo;
 import gnu.trove.THashMap;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -188,11 +185,11 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
             if (modifiers.hasModifierProperty(PsiModifier.PRIVATE) || modifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
               return false;
             }
-            if (isInjectable(method.getReturnType(), method.getProject())) return true;
+            if (MethodParameterInjection.isInjectable(method.getReturnType(), method.getProject())) return true;
             final PsiParameter[] parameters = method.getParameterList().getParameters();
             return null != ContainerUtil.find(parameters, new Condition<PsiParameter>() {
               public boolean value(PsiParameter p) {
-                return isInjectable(p.getType(), p.getProject());
+                return MethodParameterInjection.isInjectable(p.getType(), p.getProject());
               }
             });
           }
@@ -271,7 +268,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
         curInfo.setReturnFlag(info.isReturnFlag());
       }
       else {
-        final PsiMethod missingMethod = makeMethod(info.getMethodSignature());
+        final PsiMethod missingMethod = MethodParameterInjection.makeMethod(myProject, info.getMethodSignature());
         myData.put(missingMethod, info.copy());
       }
     }
@@ -281,19 +278,6 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
       PsiMethod method = (PsiMethod)((DefaultMutableTreeNode)enumeration.nextElement()).getUserObject();
       assert myData.containsKey(method);
     }
-  }
-
-  @Nullable
-  private PsiMethod makeMethod(String signature) {
-    if (StringUtil.isEmpty(signature)) return null;
-    try {
-      return JavaPsiFacade.getInstance(myProject).getElementFactory().
-          createMethodFromText("void " + MethodParameterInjection.fixSignature(signature, true) + "{}", null);
-    }
-    catch (IncorrectOperationException e) {
-      // something wrong
-    }
-    return null;
   }
 
   public JPanel getComponent() {
@@ -316,14 +300,14 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
             final Object userObject = o.getUserObject();
             if (userObject instanceof PsiMethod) {
               final PsiMethod method = (PsiMethod)userObject;
-              return isInjectable(method.getReturnType(), method.getProject()) ?
+              return MethodParameterInjection.isInjectable(method.getReturnType(), method.getProject()) ?
                      myData.get(method).isReturnFlag() : null;
             }
             else if (userObject instanceof PsiParameter) {
               final PsiMethod method = getMethod(o);
               final PsiParameter parameter = (PsiParameter)userObject;
               final int index = method.getParameterList().getParameterIndex(parameter);
-              return isInjectable(parameter.getType(), method.getProject()) ?
+              return MethodParameterInjection.isInjectable(parameter.getType(), method.getProject()) ?
                      myData.get(method).getParamFlags()[index] : null;
             }
             return null;
@@ -369,19 +353,6 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
         }, new TreeColumnInfo("Method/Parameters")
     };
-  }
-
-  public static boolean isInjectable(@Nullable final PsiType type, final Project project) {
-    if (type == null) return false;
-    if (type instanceof PsiPrimitiveType) return false;
-    if (project.isDefault()) {
-      @NonNls final String text = type.getPresentableText();
-      if (text == null) return false;
-      return text.equals("java.lang.String") || text.equals("java.lang.String...") || text.equals("java.lang.String[]");
-    }
-    else {
-      return type.equalsToText("java.lang.String") || type.equalsToText("java.lang.String...") || type.equalsToText("java.lang.String[]");
-    }
   }
 
   private class BrowseClassListener implements ActionListener {

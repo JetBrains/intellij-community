@@ -19,12 +19,16 @@ import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import org.intellij.plugins.intelliLang.PatternBasedInjectionHelper;
 import org.intellij.plugins.intelliLang.util.StringMatcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class XmlAttributeInjection extends AbstractTagInjection<XmlAttributeInjection, XmlAttributeValue> {
+import java.util.Collections;
+import java.util.List;
+
+public class XmlAttributeInjection extends AbstractTagInjection {
 
   @NotNull @NonNls
   private StringMatcher myAttributeNameMatcher = StringMatcher.NONE;
@@ -54,6 +58,7 @@ public class XmlAttributeInjection extends AbstractTagInjection<XmlAttributeInje
     return element instanceof XmlAttribute && matches((XmlAttribute)element);
   }
 
+  @NotNull
   public String getDisplayName() {
     final String tag = getTagName();
     final String attributeName = getAttributeName();
@@ -68,6 +73,11 @@ public class XmlAttributeInjection extends AbstractTagInjection<XmlAttributeInje
     return attributeName;
   }
 
+  @Override
+  protected List<String> generatePlaces() {
+    return Collections.singletonList(PatternBasedInjectionHelper.getPatternString(this));
+  }
+
   private boolean matches(@NotNull XmlAttribute attr) {
     // mind IDEA-5206
     final boolean b = myAttributeNameMatcher.matches(attr.getLocalName()) &&
@@ -77,22 +87,32 @@ public class XmlAttributeInjection extends AbstractTagInjection<XmlAttributeInje
     return b && matchXPath(attr);
   }
 
-  public void copyFrom(@NotNull XmlAttributeInjection other) {
-    super.copyFrom(other);
-    setAttributeName(other.getAttributeName());
-    setAttributeNamespace(other.getAttributeNamespace());
+  @Override
+  public XmlAttributeInjection copy() {
+    return new XmlAttributeInjection().copyFrom(this);
+  }
+
+  @Override
+  public XmlAttributeInjection copyFrom(@NotNull BaseInjection o) {
+    super.copyFrom(o);
+    if (o instanceof XmlAttributeInjection) {
+      final XmlAttributeInjection other = (XmlAttributeInjection)o;
+      setAttributeName(other.getAttributeName());
+      setAttributeNamespace(other.getAttributeNamespace());
+    }
+    return this;
   }
 
   protected void readExternalImpl(Element e) {
     super.readExternalImpl(e);
-    setAttributeName(JDOMExternalizer.readString(e, "ATT_NAME"));
-    setAttributeNamespace(JDOMExternalizer.readString(e, "ATT_NAMESPACE"));
+    if (e.getAttribute("injector-id") == null) {
+      setAttributeName(JDOMExternalizer.readString(e, "ATT_NAME"));
+      setAttributeNamespace(JDOMExternalizer.readString(e, "ATT_NAMESPACE"));
+    }
   }
 
   protected void writeExternalImpl(Element e) {
     super.writeExternalImpl(e);
-    JDOMExternalizer.write(e, "ATT_NAME", myAttributeNameMatcher.getPattern());
-    JDOMExternalizer.write(e, "ATT_NAMESPACE", myAttributeNamespace);
   }
 
   @SuppressWarnings({"RedundantIfStatement"})

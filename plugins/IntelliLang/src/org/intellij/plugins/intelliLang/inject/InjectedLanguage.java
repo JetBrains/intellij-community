@@ -17,6 +17,7 @@ package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.*;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
+import com.intellij.openapi.fileTypes.FileTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,7 +107,7 @@ public final class InjectedLanguage {
   }
 
   private static boolean isInjectableLanguage(Language language) {
-    if (language == Language.ANY || language == StdLanguages.TEXT) {
+    if (language == Language.ANY || language == FileTypes.PLAIN_TEXT.getLanguage()) {
       return false;
     }
     if (language.getID().startsWith("$")) {

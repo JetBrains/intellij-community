@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
 import static org.intellij.plugins.intelliLang.inject.InjectLanguageAction.findInjectionHost;
@@ -51,11 +52,9 @@ public class EditInjectionSettingsAction implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiLanguageInjectionHost host = findInjectionHost(editor, file);
-    if (host == null) {
-      return false;
-    }
-    List<Pair<PsiElement, TextRange>> injectedPsi = host.getInjectedPsi();
+    final PsiLanguageInjectionHost host = findInjectionHost(editor, file);
+    if (host == null) return false;
+    final List<Pair<PsiElement, TextRange>> injectedPsi = InjectedLanguageUtil.getInjectedPsiFiles(host);
     return injectedPsi != null && !injectedPsi.isEmpty();
   }
 

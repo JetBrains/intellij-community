@@ -3,6 +3,7 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -15,14 +16,18 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
+import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * @author cdr
@@ -52,7 +57,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       final String id = AnnotationUtilEx.calcAnnotationValue(annotations, "value");
       final String prefix = AnnotationUtilEx.calcAnnotationValue(annotations, "prefix");
       final String suffix = AnnotationUtilEx.calcAnnotationValue(annotations, "suffix");
-      final MethodParameterInjection injection = new MethodParameterInjection();
+      final BaseInjection injection = new BaseInjection(LanguageInjectorSupport.JAVA_SUPPORT_ID);
       if (prefix != null) injection.setPrefix(prefix);
       if (suffix != null) injection.setSuffix(suffix);
       if (id != null) injection.setInjectedLanguageId(id);
@@ -67,12 +72,10 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     processLiteralExpressionInjectionsInner(myInjectionConfiguration, new Processor<Info>() {
       public boolean process(final Info info) {
         if (processAnnotationInjections(info.unparsable, info.owner, processor, operands)) return false; // annotated element
-        for (MethodParameterInjection injection : info.injections) {
-          if (injection.isApplicable(info.method)) {
-            processInjectionWithContext(info.unparsable, injection, processor, operands);
-            if (injection.isTerminal()) {
-              return false;
-            }
+        for (BaseInjection injection : info.injections) {
+          processInjectionWithContext(info.unparsable, injection, processor, operands);
+          if (injection.isTerminal()) {
+            return false;
           }
         }
         return true;
@@ -83,20 +86,20 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
   public static class Info {
     final PsiModifierListOwner owner;
     final PsiMethod method;
-    final Collection<MethodParameterInjection> injections;
+    final List<BaseInjection> injections;
     final boolean unparsable;
-    final Trinity<String, Integer, Integer> key;
+    final int parameterIndex;
 
     public Info(final PsiModifierListOwner owner,
                 final PsiMethod method,
-                final Collection<MethodParameterInjection> injections,
+                final List<BaseInjection> injections,
                 final boolean unparsable,
-                final Trinity<String, Integer, Integer> key) {
+                final int parameterIndex) {
       this.owner = owner;
       this.method = method;
       this.injections = injections;
       this.unparsable = unparsable;
-      this.key = key;
+      this.parameterIndex = parameterIndex;
     }
   }
 
@@ -117,18 +120,17 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       if (owner == null) continue;
 
       final PsiMethod psiMethod;
-      final Trinity<String, Integer, Integer> trin;
+      final int parameterIndex;
       if (owner instanceof PsiParameter) {
         psiMethod = PsiTreeUtil.getParentOfType(owner, PsiMethod.class, false);
         final PsiParameterList parameterList = psiMethod == null? null : psiMethod.getParameterList();
         // don't check catchblock parameters & etc.
         if (parameterList == null || parameterList != owner.getParent()) continue;
-        trin = Trinity.create(psiMethod.getName(), parameterList.getParametersCount(),
-                              parameterList.getParameterIndex((PsiParameter)owner));
+        parameterIndex = parameterList.getParameterIndex((PsiParameter)owner);
       }
       else if (owner instanceof PsiMethod) {
         psiMethod = (PsiMethod)owner;
-        trin = Trinity.create(psiMethod.getName(), psiMethod.getParameterList().getParametersCount(), -1);
+        parameterIndex = -1;
       }
       else if (configuration.isResolveReferences() &&
                owner instanceof PsiVariable && visitedVars.add(owner)) {
@@ -143,21 +145,30 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
             }
           }
         }
-        trin = null;
+        parameterIndex = -1;
         psiMethod = null;
       }
       else {
-        trin = null;
+        parameterIndex = -1;
         psiMethod = null;
       }
-      final Collection<MethodParameterInjection> injections =
-        trin == null? Collections.<MethodParameterInjection>emptyList() : configuration.getPossibleCachedInjections(trin);
-      final Info info = new Info(owner, psiMethod, injections, unparsable, trin);
+      final List<BaseInjection> injections;
+      if (psiMethod == null) {
+        injections = Collections.emptyList();
+      }
+      else {
+        injections = ContainerUtil.findAll(configuration.getInjections(LanguageInjectorSupport.JAVA_SUPPORT_ID), new Condition<BaseInjection>() {
+          public boolean value(final BaseInjection injection) {
+            return injection.acceptsPsiElement(owner);
+          }
+        });
+      }
+      final Info info = new Info(owner, psiMethod, injections, unparsable, parameterIndex);
       if (!processor.process(info)) return;
     }
   }
 
-  private static void processInjectionWithContext(final boolean unparsable, final MethodParameterInjection injection,
+  private static void processInjectionWithContext(final boolean unparsable, final BaseInjection injection,
                                                   final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor,
                                                   final PsiElement... operands) {
     final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());

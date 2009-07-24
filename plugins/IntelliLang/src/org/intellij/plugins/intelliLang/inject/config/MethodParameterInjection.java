@@ -17,17 +17,21 @@ package org.intellij.plugins.intelliLang.inject.config;
 
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.intellij.plugins.intelliLang.PatternBasedInjectionHelper;
+import org.intellij.plugins.intelliLang.inject.LanguageInjectorSupport;
 
 import java.util.*;
 
-public class MethodParameterInjection extends BaseInjection<MethodParameterInjection, PsiLiteralExpression> {
+public class MethodParameterInjection extends BaseInjection {
   @NotNull
   private String myClassName = "";
 
@@ -36,16 +40,8 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
 
   private boolean myApplyInHierarchy = true;
 
-  public boolean isApplicable(@NotNull final PsiMethod method) {
-    final PsiClass psiClass = method.getContainingClass();
-    if (psiClass == null) return false;
-    boolean classApplicable = myClassName.equals(psiClass.getQualifiedName());
-    if (!classApplicable && myApplyInHierarchy) {
-      final GlobalSearchScope scope = GlobalSearchScope.allScope(method.getProject());
-      final PsiClass baseClass = JavaPsiFacade.getInstance(method.getProject()).findClass(myClassName, scope);
-      classApplicable = baseClass != null && psiClass.isInheritor(baseClass, true);
-    }
-    return classApplicable;
+  public MethodParameterInjection() {
+    super(LanguageInjectorSupport.JAVA_SUPPORT_ID);
   }
 
   @NotNull
@@ -76,25 +72,31 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
     myApplyInHierarchy = applyInHierarchy;
   }
 
-  public void copyFrom(@NotNull MethodParameterInjection other) {
-    super.copyFrom(other);
-    myClassName = other.getClassName();
-    myParameterMap.clear();
-    for (MethodInfo info : other.myParameterMap.values()) {
-      myParameterMap.put(info.methodSignature, info.copy());
+  public MethodParameterInjection copyFrom(@NotNull BaseInjection o) {
+    super.copyFrom(o);
+    if (o instanceof MethodParameterInjection) {
+      final MethodParameterInjection other = (MethodParameterInjection)o;
+      myClassName = other.getClassName();
+      myParameterMap.clear();
+      for (MethodInfo info : other.myParameterMap.values()) {
+        myParameterMap.put(info.methodSignature, info.copy());
+      }
+      myApplyInHierarchy = other.isApplyInHierarchy();
     }
-    myApplyInHierarchy = other.isApplyInHierarchy();
+    return this;
   }
 
   protected void readExternalImpl(Element e) {
-    setClassName(JDOMExternalizer.readString(e, "CLASS"));
-    setApplyInHierarchy(JDOMExternalizer.readBoolean(e, "APPLY_IN_HIERARCHY"));
-    readOldFormat(e);
-    final THashMap<String, String> map = new THashMap<String, String>();
-    JDOMExternalizer.readMap(e, map, null, "SIGNATURES");
-    for (String s : map.keySet()) {
-      final String fixedSignature = fixSignature(s, false);
-      myParameterMap.put(fixedSignature, new MethodInfo(fixedSignature, map.get(s)));
+    if (e.getAttribute("injector-id") == null) {
+      setClassName(JDOMExternalizer.readString(e, "CLASS"));
+      setApplyInHierarchy(JDOMExternalizer.readBoolean(e, "APPLY_IN_HIERARCHY"));
+      readOldFormat(e);
+      final THashMap<String, String> map = new THashMap<String, String>();
+      JDOMExternalizer.readMap(e, map, null, "SIGNATURES");
+      for (String s : map.keySet()) {
+        final String fixedSignature = fixSignature(s, false);
+        myParameterMap.put(fixedSignature, new MethodInfo(fixedSignature, map.get(s)));
+      }
     }
   }
 
@@ -116,21 +118,17 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
   }
 
   protected void writeExternalImpl(Element e) {
-    JDOMExternalizer.write(e, "CLASS", myClassName);
-    JDOMExternalizer.write(e, "APPLY_IN_HIERARCHY", myApplyInHierarchy);
-    final THashMap<String, String> map = new THashMap<String, String>();
-    for (String s : myParameterMap.keySet()) {
-      map.put(s, myParameterMap.get(s).getFlagsString());
-    }
-    JDOMExternalizer.writeMap(e, map, null, "SIGNATURES");
   }
 
 
   @Override
   public MethodParameterInjection copy() {
-    final MethodParameterInjection result = new MethodParameterInjection();
-    result.copyFrom(this);
-    return result;
+    return new MethodParameterInjection().copyFrom(this);
+  }
+
+  @Override
+  protected List<String> generatePlaces() {
+    return PatternBasedInjectionHelper.getPatternString(this);
   }
 
   @SuppressWarnings({"RedundantIfStatement"})
@@ -156,6 +154,7 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
     return result;
   }
 
+  @NotNull
   public String getDisplayName() {
     final String className = getClassName();
     if (StringUtil.isEmpty(className)) return "<unnamed>";
@@ -210,12 +209,38 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
   @NotNull
   private static String buildSignature(@NotNull PsiMethod method) {
     return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-                                      PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES);
+                                      PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES | PsiFormatUtil.SHOW_RAW_TYPE);
   }
 
   public static MethodInfo createMethodInfo(final PsiMethod method) {
     final String signature = buildSignature(method);
     return new MethodInfo(signature, new boolean[method.getParameterList().getParametersCount()], false);
+  }
+
+  public static boolean isInjectable(@Nullable final PsiType type, final Project project) {
+    if (type == null) return false;
+    if (type instanceof PsiPrimitiveType) return false;
+    if (project.isDefault()) {
+      @NonNls final String text = type.getPresentableText();
+      if (text == null) return false;
+      return text.equals("java.lang.String") || text.equals("java.lang.String...") || text.equals("java.lang.String[]");
+    }
+    else {
+      return type.equalsToText("java.lang.String") || type.equalsToText("java.lang.String...") || type.equalsToText("java.lang.String[]");
+    }
+  }
+
+  @Nullable
+  public static PsiMethod makeMethod(final Project project, final String signature) {
+    if (StringUtil.isEmpty(signature)) return null;
+    try {
+      return JavaPsiFacade.getInstance(project).getElementFactory().
+          createMethodFromText("void " + fixSignature(signature, true) + "{}", null);
+    }
+    catch (IncorrectOperationException e) {
+      // something wrong
+    }
+    return null;
   }
 
   public static class MethodInfo {

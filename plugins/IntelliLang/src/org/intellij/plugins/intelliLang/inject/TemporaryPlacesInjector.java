@@ -18,13 +18,11 @@ package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -41,16 +39,13 @@ public class TemporaryPlacesInjector implements MultiHostInjector {
   }
 
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement context) {
-    final PsiElement originalContext = PsiUtil.getOriginalElement(context, context.getClass());
-    final List<Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>,InjectedLanguage>> list =
-      TemporaryPlacesRegistry.getInstance(context.getProject()).getTempInjectionsSafe();
-    for (final Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage> pair : list) {
-      if (pair.first.getElement() == originalContext) {
-        final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
-        XmlLanguageInjector.registerInjection(pair.second.getLanguage(), Collections.singletonList(
-          Trinity.create(host, pair.second, ElementManipulators.getManipulator(host).getRangeInElement(host))), context.getContainingFile(), registrar);
-        return;
-      }
+    final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
+    final PsiLanguageInjectionHost originalHost = PsiUtilBase.getOriginalElement(host, host.getClass());
+    final List<TemporaryPlacesRegistry.TemporaryPlace> list = TemporaryPlacesRegistry.getInstance(context.getProject()).getTempInjectionsSafe(originalHost);
+    for (final TemporaryPlacesRegistry.TemporaryPlace pair : list) {
+      XmlLanguageInjector.registerInjection(pair.language.getLanguage(), Collections.singletonList(
+        Trinity.create(host, pair.language, ElementManipulators.getManipulator(host).getRangeInElement(host))), context.getContainingFile(),
+                                            registrar);
     }
   }
 

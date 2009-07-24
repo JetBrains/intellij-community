@@ -18,10 +18,11 @@ package org.intellij.plugins.intelliLang.inject.config;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.PsiElement;
 import org.intellij.plugins.intelliLang.util.StringMatcher;
+import org.intellij.plugins.intelliLang.inject.LanguageInjectorSupport;
 import org.jaxen.JaxenException;
 import org.jaxen.XPath;
 import org.jdom.Element;
@@ -29,7 +30,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
@@ -42,7 +42,7 @@ import java.util.TreeSet;
  *
  * @see org.intellij.plugins.intelliLang.inject.config.XPathSupportProxy
  */
-public abstract class AbstractTagInjection<T extends AbstractTagInjection, I extends PsiElement> extends BaseInjection<T, I> {
+public class AbstractTagInjection extends BaseInjection {
 
   @NotNull @NonNls
   private StringMatcher myTagName = StringMatcher.ANY;
@@ -54,6 +54,12 @@ public abstract class AbstractTagInjection<T extends AbstractTagInjection, I ext
   private String myXPathCondition = "";
   private Object myCompiledXPathCondition;
 
+  private boolean myApplyToSubTagTexts;
+
+  public AbstractTagInjection() {
+    super(LanguageInjectorSupport.XML_SUPPORT_ID);
+  }
+
   @NotNull
   public String getTagName() {
     return myTagName.getPattern();
@@ -61,6 +67,12 @@ public abstract class AbstractTagInjection<T extends AbstractTagInjection, I ext
 
   public void setTagName(@NotNull @NonNls String tagName) {
     myTagName = StringMatcher.create(tagName);
+  }
+
+  @Override
+  public boolean acceptsPsiElement(final PsiElement element) {
+    return super.acceptsPsiElement(element) &&
+           (!(element instanceof XmlElement) || matchXPath((XmlElement)element));
   }
 
   @NotNull
@@ -126,23 +138,45 @@ public abstract class AbstractTagInjection<T extends AbstractTagInjection, I ext
     return true;
   }
 
-  public void copyFrom(@NotNull T other) {
-    super.copyFrom(other);
-    myTagName = other.myTagName;
-    myTagNamespace = other.myTagNamespace;
-    setXPathCondition(other.getXPathCondition());
+  @Override
+  public AbstractTagInjection copy() {
+    return new AbstractTagInjection().copyFrom(this);
+  }
+
+  public AbstractTagInjection copyFrom(@NotNull BaseInjection o) {
+    super.copyFrom(o);
+    if (o instanceof AbstractTagInjection) {
+      final AbstractTagInjection other = (AbstractTagInjection)o;
+      myTagName = other.myTagName;
+      myTagNamespace = other.myTagNamespace;
+      setXPathCondition(other.getXPathCondition());
+
+      setApplyToSubTagTexts(other.isApplyToSubTagTexts());
+    }
+    return this;
   }
 
   protected void readExternalImpl(Element e) {
-    setTagName(JDOMExternalizer.readString(e, "TAGNAME"));
-    setTagNamespace(JDOMExternalizer.readString(e, "TAGNAMESPACE"));
-    setXPathCondition(JDOMExternalizer.readString(e, "XPATH_CONDITION"));
+    if (e.getAttribute("injector-id") == null) {
+      setTagName(JDOMExternalizer.readString(e, "TAGNAME"));
+      setTagNamespace(JDOMExternalizer.readString(e, "TAGNAMESPACE"));
+      setXPathCondition(JDOMExternalizer.readString(e, "XPATH_CONDITION"));
+
+      myApplyToSubTagTexts = JDOMExternalizer.readBoolean(e, "APPLY_TO_SUBTAGS");
+    }
+    else {
+      setXPathCondition(e.getChildText("xpath-condition"));
+      myApplyToSubTagTexts = e.getChild("apply-to-subtags") != null;
+    }
   }
 
   protected void writeExternalImpl(Element e) {
-    JDOMExternalizer.write(e, "TAGNAME", getTagName());
-    JDOMExternalizer.write(e, "TAGNAMESPACE", getTagNamespace());
-    JDOMExternalizer.write(e, "XPATH_CONDITION", myXPathCondition);
+    if (StringUtil.isNotEmpty(myXPathCondition)) {
+      e.addContent(new Element("xpath-condition").setText(myXPathCondition));
+    }
+    if (myApplyToSubTagTexts) {
+      e.addContent(new Element("apply-to-subtags"));
+    }
   }
 
   @SuppressWarnings({"RedundantIfStatement"})
@@ -157,6 +191,7 @@ public abstract class AbstractTagInjection<T extends AbstractTagInjection, I ext
     if (!myTagNamespace.equals(that.myTagNamespace)) return false;
     if (!myXPathCondition.equals(that.myXPathCondition)) return false;
 
+    if (myApplyToSubTagTexts != that.myApplyToSubTagTexts) return false;
     return true;
   }
 
@@ -165,6 +200,8 @@ public abstract class AbstractTagInjection<T extends AbstractTagInjection, I ext
     result = 31 * result + myTagName.hashCode();
     result = 31 * result + myTagNamespace.hashCode();
     result = 31 * result + myXPathCondition.hashCode();
+
+    result = 31 * result + (myApplyToSubTagTexts ? 1 : 0);
     return result;
   }
 
@@ -180,5 +217,13 @@ public abstract class AbstractTagInjection<T extends AbstractTagInjection, I ext
       }
     }
     return myXPathCondition.length() == 0;
+  }
+
+  public boolean isApplyToSubTagTexts() {
+    return myApplyToSubTagTexts;
+  }
+
+  public void setApplyToSubTagTexts(final boolean applyToSubTagTexts) {
+    myApplyToSubTagTexts = applyToSubTagTexts;
   }
 }

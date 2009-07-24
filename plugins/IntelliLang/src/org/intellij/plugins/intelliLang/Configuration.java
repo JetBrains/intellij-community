@@ -15,18 +15,35 @@
  */
 package org.intellij.plugins.intelliLang;
 
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoableAction;
+import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
-import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
-import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
-import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.util.FileContentUtil;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PairProcessor;
+import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import org.intellij.plugins.intelliLang.inject.LanguageInjectorSupport;
+import org.intellij.plugins.intelliLang.inject.config.*;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jdom.xpath.XPath;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Configuration that holds configured xml tag, attribute and method parameter
@@ -41,116 +59,134 @@ import java.util.*;
  * validation and for substituting non-compile time constant expression.
  */
 @State(
-    name = Configuration.COMPONENT_NAME,
-    storages = {
-      @Storage(id = "dir", file = "$APP_CONFIG$/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)
-        })
+  name = Configuration.COMPONENT_NAME,
+  storages = {@Storage(id = "dir", file = "$APP_CONFIG$/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)})
 public final class Configuration implements PersistentStateComponent<Element> {
   static final Logger LOG = Logger.getInstance(Configuration.class.getName());
 
-  @NonNls
-  static final String COMPONENT_NAME = "LanguageInjectionConfiguration";
+  @NonNls public static final String COMPONENT_NAME = "LanguageInjectionConfiguration";
 
   // element names
+  @NonNls private static final String TAG_INJECTION_NAME = "TAGS";
+  @NonNls private static final String ATTRIBUTE_INJECTION_NAME = "ATTRIBUTES";
+  @NonNls private static final String PARAMETER_INJECTION_NAME = "PARAMETERS";
+  @NonNls private static final String INSTRUMENTATION_TYPE_NAME = "INSTRUMENTATION";
+  @NonNls private static final String LANGUAGE_ANNOTATION_NAME = "LANGUAGE_ANNOTATION";
+  @NonNls private static final String PATTERN_ANNOTATION_NAME = "PATTERN_ANNOTATION";
+  @NonNls private static final String SUBST_ANNOTATION_NAME = "SUBST_ANNOTATION";
+  @NonNls private static final String ENTRY_NAME = "entry";
+  @NonNls private static final String RESOLVE_REFERENCES = "RESOLVE_REFERENCES";
 
-  @NonNls
-  private static final String TAG_INJECTION_NAME = "TAGS";
-  @NonNls
-  private static final String ATTRIBUTE_INJECTION_NAME = "ATTRIBUTES";
-  @NonNls
-  private static final String PARAMETER_INJECTION_NAME = "PARAMETERS";
-  @NonNls
-  private static final String INSTRUMENTATION_TYPE_NAME = "INSTRUMENTATION";
-  @NonNls
-  private static final String LANGUAGE_ANNOTATION_NAME = "LANGUAGE_ANNOTATION";
-  @NonNls
-  private static final String PATTERN_ANNOTATION_NAME = "PATTERN_ANNOTATION";
-  @NonNls
-  private static final String SUBST_ANNOTATION_NAME = "SUBST_ANNOTATION";
-  @NonNls
-  private static final String ENTRY_NAME = "entry";
-  @NonNls
-  private static final String RESOLVE_REFERENCES = "RESOLVE_REFERENCES";
-
-  // injection configuration
-
-  private final List<XmlTagInjection> myTagInjections = new ArrayList<XmlTagInjection>();
-  private final List<XmlAttributeInjection> myAttributeInjections = new ArrayList<XmlAttributeInjection>();
-  private final List<MethodParameterInjection> myParameterInjections = new ArrayList<MethodParameterInjection>();
+  private final Map<String, List<BaseInjection>> myInjections = new ConcurrentFactoryMap<String, List<BaseInjection>>() {
+    @Override
+    protected List<BaseInjection> create(final String key) {
+      return new CopyOnWriteArrayList<BaseInjection>();
+    }
+  };
 
   // runtime pattern validation instrumentation
-  @NotNull
-  private InstrumentationType myInstrumentationType = InstrumentationType.ASSERT;
+  @NotNull private InstrumentationType myInstrumentationType = InstrumentationType.ASSERT;
 
   // annotation class names
-
-  @NotNull
-  private String myLanguageAnnotation;
-  @NotNull
-  private String myPatternAnnotation;
-  @NotNull
-  private String mySubstAnnotation;
+  @NotNull private String myLanguageAnnotation;
+  @NotNull private String myPatternAnnotation;
+  @NotNull private String mySubstAnnotation;
 
   private boolean myResolveReferences;
 
   // cached annotation name pairs
-
   private Pair<String, ? extends Set<String>> myLanguageAnnotationPair;
   private Pair<String, ? extends Set<String>> myPatternAnnotationPair;
   private Pair<String, ? extends Set<String>> mySubstAnnotationPair;
 
   private volatile long myModificationCount;
+  private boolean myMergeWithDefault;
 
-  Configuration() {
+  public Configuration() {
+    myMergeWithDefault = true;
     setLanguageAnnotation("org.intellij.lang.annotations.Language");
     setPatternAnnotation("org.intellij.lang.annotations.Pattern");
     setSubstAnnotation("org.intellij.lang.annotations.Subst");
   }
 
   public void loadState(final Element element) {
-    readExternal(myTagInjections, element.getChild(TAG_INJECTION_NAME), new Factory<XmlTagInjection>() {
+    final THashMap<String, LanguageInjectorSupport> supports = new THashMap<String, LanguageInjectorSupport>();
+    for (LanguageInjectorSupport support : Extensions.getExtensions(LanguageInjectorSupport.EP_NAME)) {
+      supports.put(support.getId(), support);
+    }
+    myInjections.get(LanguageInjectorSupport.XML_SUPPORT_ID).addAll(readExternal(element.getChild(TAG_INJECTION_NAME), new Factory<XmlTagInjection>() {
       public XmlTagInjection create() {
         return new XmlTagInjection();
       }
-    });
-    readExternal(myAttributeInjections, element.getChild(ATTRIBUTE_INJECTION_NAME), new Factory<XmlAttributeInjection>() {
+    }));
+    myInjections.get(LanguageInjectorSupport.XML_SUPPORT_ID).addAll(readExternal(element.getChild(ATTRIBUTE_INJECTION_NAME), new Factory<XmlAttributeInjection>() {
       public XmlAttributeInjection create() {
         return new XmlAttributeInjection();
       }
-    });
-    readExternal(myParameterInjections, element.getChild(PARAMETER_INJECTION_NAME), new Factory<MethodParameterInjection>() {
+    }));
+    myInjections.get(LanguageInjectorSupport.JAVA_SUPPORT_ID).addAll(readExternal(element.getChild(PARAMETER_INJECTION_NAME), new Factory<MethodParameterInjection>() {
       public MethodParameterInjection create() {
         return new MethodParameterInjection();
       }
-    });
-
+    }));
+    for (Element child : (List<Element>)element.getChildren("injection")){
+      final String key = child.getAttributeValue("injector-id");
+      final LanguageInjectorSupport support = supports.get(key);
+      final BaseInjection injection = support == null ? new BaseInjection(key) : support.createInjection(child);
+      injection.loadState(child);
+      myInjections.get(key).add(injection);
+    }
     setInstrumentationType(JDOMExternalizerUtil.readField(element, INSTRUMENTATION_TYPE_NAME));
     setLanguageAnnotation(JDOMExternalizerUtil.readField(element, LANGUAGE_ANNOTATION_NAME));
     setPatternAnnotation(JDOMExternalizerUtil.readField(element, PATTERN_ANNOTATION_NAME));
     setSubstAnnotation(JDOMExternalizerUtil.readField(element, SUBST_ANNOTATION_NAME));
     final String resolveReferences = JDOMExternalizerUtil.readField(element, RESOLVE_REFERENCES);
     setResolveReferences(resolveReferences == null || Boolean.parseBoolean(resolveReferences));
+    if (myMergeWithDefault) {
+      mergeWithDefaultConfiguration();
+      // todo init places here in order not to run twice??
+    }
+  }
+
+  private void mergeWithDefaultConfiguration() {
+    try {
+      final Configuration cfg = load(getClass().getClassLoader().getResourceAsStream("/" + COMPONENT_NAME + ".xml"));
+      if (cfg == null) return; // very strange
+      importFrom(cfg);
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+    }
   }
 
   public Element getState() {
     final Element element = new Element(COMPONENT_NAME);
-    writeExternal(element, TAG_INJECTION_NAME, myTagInjections);
-    writeExternal(element, ATTRIBUTE_INJECTION_NAME, myAttributeInjections);
-    writeExternal(element, PARAMETER_INJECTION_NAME, myParameterInjections);
 
     JDOMExternalizerUtil.writeField(element, INSTRUMENTATION_TYPE_NAME, myInstrumentationType.toString());
     JDOMExternalizerUtil.writeField(element, LANGUAGE_ANNOTATION_NAME, myLanguageAnnotation);
     JDOMExternalizerUtil.writeField(element, PATTERN_ANNOTATION_NAME, myPatternAnnotation);
     JDOMExternalizerUtil.writeField(element, SUBST_ANNOTATION_NAME, mySubstAnnotation);
     JDOMExternalizerUtil.writeField(element, RESOLVE_REFERENCES, String.valueOf(myResolveReferences));
+
+    final List<String> injectoIds = new ArrayList<String>(myInjections.keySet());
+    Collections.sort(injectoIds);
+    for (String key : injectoIds) {
+      final List<BaseInjection> injections = new ArrayList<BaseInjection>(myInjections.get(key));
+      Collections.sort(injections, new Comparator<BaseInjection>() {
+        public int compare(final BaseInjection o1, final BaseInjection o2) {
+          return Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
+        }
+      });
+      for (BaseInjection injection : injections) {
+        element.addContent(injection.getState());
+      }
+    }
     return element;
   }
 
   @SuppressWarnings({"unchecked"})
-  private static <T extends BaseInjection> void readExternal(List<T> injections, Element element, Factory<T> factory)
-      {
-    injections.clear();
-
+  private static <T extends BaseInjection> List<T> readExternal(Element element, Factory<T> factory) {
+    final List<T> injections = new ArrayList<T>();
     if (element != null) {
       final List<Element> list = element.getChildren(ENTRY_NAME);
       for (Element entry : list) {
@@ -159,29 +195,7 @@ public final class Configuration implements PersistentStateComponent<Element> {
         injections.add(o);
       }
     }
-  }
-
-  private static <T extends BaseInjection> void writeExternal(Element parent, String name, List<T> injections) {
-    final Element element = new Element(name);
-    parent.addContent(element);
-
-    for (T injection : injections) {
-      final Element entry = new Element(ENTRY_NAME);
-      element.addContent(entry);
-      entry.addContent(injection.getState());
-    }
-  }
-
-  public List<XmlTagInjection> getTagInjections() {
-    return myTagInjections;
-  }
-
-  public List<XmlAttributeInjection> getAttributeInjections() {
-    return myAttributeInjections;
-  }
-
-  public List<MethodParameterInjection> getParameterInjections() {
-    return myParameterInjections;
+    return injections;
   }
 
   public static Configuration getInstance() {
@@ -241,47 +255,57 @@ public final class Configuration implements PersistentStateComponent<Element> {
   }
 
   @Nullable
-  public static Configuration load(VirtualFile file) throws IOException, JDOMException, InvalidDataException {
-    final InputStream is = file.getInputStream();
-    final Document document = JDOMUtil.loadDocument(is);
-
-    final String name = "'" + COMPONENT_NAME + "'";
-
-    //noinspection unchecked
-    final List<Element> list = XPath.selectNodes(document, "//component[@name=" + name + "]");
-
-    if (list.size() == 1) {
-      final Configuration cfg = new Configuration();
-      cfg.loadState(list.get(0));
-      return cfg;
+  public static Configuration load(final InputStream is) throws IOException, JDOMException, InvalidDataException {
+    try {
+      final Document document = JDOMUtil.loadDocument(is);
+      final ArrayList<Element> elements = new ArrayList<Element>();
+      elements.add(document.getRootElement());
+      elements.addAll(document.getRootElement().getChildren("component"));
+      final Element element = ContainerUtil.find(elements, new Condition<Element>() {
+        public boolean value(final Element element) {
+          return "component".equals(element.getName()) && COMPONENT_NAME.equals(element.getAttributeValue("name"));
+        }
+      });
+      if (element != null) {
+        final Configuration cfg = new Configuration();
+        cfg.setMergeWithDefault(false);
+        cfg.loadState(element);
+        return cfg;
+      }
+      return null;
     }
-    return null;
+    finally {
+      is.close();
+    }
   }
 
   /**
    * Import from another configuration (e.g. imported file). Returns the number of imported items.
    */
-  public int importFrom(Configuration cfg) {
+  public int importFrom(final Configuration cfg) {
     int n = 0;
-    for (XmlTagInjection injection : cfg.myTagInjections) {
-      if (!myTagInjections.contains(injection)) {
-        myTagInjections.add(injection);
-        n++;
+    for (LanguageInjectorSupport support : Extensions.getExtensions(LanguageInjectorSupport.EP_NAME)) {
+      final List<BaseInjection> mineInjections = myInjections.get(support.getId());
+      for (BaseInjection other : cfg.getInjections(support.getId())) {
+        final BaseInjection existing = findExistingInjection(other);
+        if (existing == null) {
+          n ++;
+          mineInjections.add(other);
+        }
+        else {
+          if (existing.equals(other)) continue;
+          boolean placesAdded = false;
+          for (InjectionPlace place : other.getInjectionPlaces()) {
+            if (existing.findPlaceByText(place.getText()) == null) {
+              existing.getInjectionPlaces().add(place);
+              placesAdded = true;
+            }
+          }
+          if (placesAdded) n++;
+        }
       }
     }
-    for (XmlAttributeInjection injection : cfg.myAttributeInjections) {
-      if (!myAttributeInjections.contains(injection)) {
-        myAttributeInjections.add(injection);
-        n++;
-      }
-    }
-    for (MethodParameterInjection injection : cfg.myParameterInjections) {
-      if (!myParameterInjections.contains(injection)) {
-        myParameterInjections.add(injection);
-        n++;
-      }
-    }
-    if (n < 0) configurationModified();
+    if (n >= 0) configurationModified();
     return n;
   }
 
@@ -302,39 +326,48 @@ public final class Configuration implements PersistentStateComponent<Element> {
   }
 
   @Nullable
-  public <T extends BaseInjection> T findExistingInjection(final T injection) {
-    if (injection instanceof XmlAttributeInjection) {
-      final XmlAttributeInjection template = (XmlAttributeInjection)injection;
-      for (XmlAttributeInjection cur : myAttributeInjections) {
-        if (Comparing.equal(cur.getInjectedLanguageId(), template.getInjectedLanguageId()) &&
-            Comparing.equal(cur.getAttributeName(), template.getAttributeName()) &&
-            Comparing.equal(cur.getAttributeNamespace(), template.getAttributeNamespace()) &&
-            Comparing.equal(cur.getTagName(), template.getTagName()) &&
-            Comparing.equal(cur.getTagNamespace(), template.getTagNamespace())) {
-          return (T)cur;
-        }
-      }
-    }
-    else if (injection instanceof XmlTagInjection) {
-      final XmlTagInjection template = (XmlTagInjection)injection;
-      for (XmlTagInjection cur : myTagInjections) {
-        if (Comparing.equal(cur.getInjectedLanguageId(), template.getInjectedLanguageId()) &&
-            Comparing.equal(cur.getTagName(), template.getTagName()) &&
-            Comparing.equal(cur.getTagNamespace(), template.getTagNamespace())) {
-          return (T)cur;
-        }
-      }
-    }
-    else if (injection instanceof MethodParameterInjection) {
-      final MethodParameterInjection template = (MethodParameterInjection)injection;
-      for (MethodParameterInjection cur : myParameterInjections) {
-        if (Comparing.equal(cur.getInjectedLanguageId(), template.getInjectedLanguageId()) &&
-            Comparing.equal(cur.getClassName(), template.getClassName())) {
-          return (T)cur;
-        }
-      }
+  public BaseInjection findExistingInjection(@NotNull final BaseInjection injection) {
+    final List<BaseInjection> list = getInjections(injection.getSupportId());
+    for (BaseInjection cur : list) {
+      if (cur.intersectsWith(injection)) return cur;
     }
     return null;
+  }
+
+  public boolean setHostInjectionEnabled(final PsiLanguageInjectionHost host, final Collection<String> languages, final boolean enabled) {
+    final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>();
+    final ArrayList<BaseInjection> newInjections = new ArrayList<BaseInjection>();
+    for (LanguageInjectorSupport support : Extensions.getExtensions(LanguageInjectorSupport.EP_NAME)) {
+      for (BaseInjection injection : getInjections(support.getId())) {
+        if (!languages.contains(injection.getInjectedLanguageId())) continue;
+        boolean replace = false;
+        final ArrayList<InjectionPlace> newPlaces = new ArrayList<InjectionPlace>();
+        for (InjectionPlace place : injection.getInjectionPlaces()) {
+          if (place.isEnabled() != enabled && place.getElementPattern() != null &&
+              (place.getElementPattern().accepts(host) || place.getElementPattern().accepts(host.getParent()))) {
+            newPlaces.add(new InjectionPlace(place.getText(), place.getElementPattern(), enabled));
+            replace = true;
+          }
+          else newPlaces.add(place);
+        }
+        if (replace) {
+          originalInjections.add(injection);
+          final BaseInjection newInjection = injection.copy();
+          newInjection.getInjectionPlaces().clear();
+          newInjection.getInjectionPlaces().addAll(newPlaces);
+          newInjections.add(newInjection);
+        }
+      }
+    }
+    if (!originalInjections.isEmpty()) {
+      replaceInjectionsWithUndo(host.getProject(), newInjections, originalInjections, Collections.<PsiElement>emptyList());
+      return true;
+    }
+    return false;
+  }
+
+  public void setMergeWithDefault(final boolean mergeWithDefault) {
+    myMergeWithDefault = mergeWithDefault;
   }
 
   public enum InstrumentationType {
@@ -345,51 +378,83 @@ public final class Configuration implements PersistentStateComponent<Element> {
     return myInstrumentationType;
   }
 
-  private long myCacheModificationCount;
-  private MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection> myMethodCache;
+  @NotNull
+  public List<BaseInjection> getInjections(final String injectorId) {
+    return Collections.unmodifiableList(myInjections.get(injectorId));
+  }
 
-  private MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection> getMethodCache() {
-    if (myMethodCache != null && getModificationCount() == myCacheModificationCount) {
-      return myMethodCache;
-    }
-    myCacheModificationCount = getModificationCount();
-    final MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection> tmpMap =
-      new MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection>();
-    for (MethodParameterInjection injection : getParameterInjections()) {
-      for (MethodParameterInjection.MethodInfo info : injection.getMethodInfos()) {
-        final boolean[] flags = info.getParamFlags();
-        for (int i = 0; i < flags.length; i++) {
-          if (!flags[i]) continue;
-          tmpMap.put(Trinity.create(info.getMethodName(), flags.length, i), injection);
-        }
-        if (info.isReturnFlag()) {
-          tmpMap.put(Trinity.create(info.getMethodName(), 0, -1), injection);
-        }
+  public Set<String> getAllInjectorIds() {
+    return Collections.unmodifiableSet(new THashSet<String>(myInjections.keySet()));
+  }
+
+  public void replaceInjectionsWithUndo(final Project project,
+                                final List<? extends BaseInjection> newInjections,
+                                final List<? extends BaseInjection> originalInjections,
+                                final List<? extends PsiElement> psiElementsToRemove) {
+    replaceInjectionsWithUndo(project, newInjections, originalInjections, psiElementsToRemove,
+                      new PairProcessor<List<? extends BaseInjection>, List<? extends BaseInjection>>() {
+      public boolean process(final List<? extends BaseInjection> add, final List<? extends BaseInjection> remove) {
+        replaceInjections(add, remove);
+        return true;
       }
-    }
-    myMethodCache = tmpMap;
-    return tmpMap;
+    });
   }
 
-  public Collection<MethodParameterInjection> getPossibleCachedInjections(final Trinity<String, Integer, Integer> key) {
-    final Collection<MethodParameterInjection> list = getMethodCache().get(key);
-    return list == null? Collections.<MethodParameterInjection>emptyList() : list;
+  public static <T> void replaceInjectionsWithUndo(final Project project, final T add, final T remove,
+                                final List<? extends PsiElement> psiElementsToRemove,
+                                final PairProcessor<T, T> actualProcessor) {
+    final UndoableAction action = new UndoableAction() {
+      public void undo() throws UnexpectedUndoException {
+        actualProcessor.process(remove, add);
+      }
+
+      public void redo() throws UnexpectedUndoException {
+        actualProcessor.process(add, remove);
+      }
+
+      public DocumentReference[] getAffectedDocuments() {
+        return DocumentReference.EMPTY_ARRAY;
+      }
+
+      public boolean isComplex() {
+        return true;
+      }
+
+    };
+    final List<PsiFile> psiFiles = ContainerUtil.mapNotNull(psiElementsToRemove, new NullableFunction<PsiElement, PsiFile>() {
+      public PsiFile fun(final PsiElement psiAnnotation) {
+        return psiAnnotation instanceof PsiCompiledElement ? null : psiAnnotation.getContainingFile();
+      }
+    });
+    new WriteCommandAction.Simple(project, psiFiles.toArray(new PsiFile[psiFiles.size()])) {
+      public void run() {
+        for (PsiElement annotation : psiElementsToRemove) {
+          annotation.delete();
+        }
+        actualProcessor.process(add, remove);
+        UndoManager.getInstance(project).undoableActionPerformed(action);
+      }
+
+      @Override
+      protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
+        return UndoConfirmationPolicy.REQUEST_CONFIRMATION;
+      }
+    }.execute();
   }
 
-
-  public static boolean clearMethodParameterFlag(final MethodParameterInjection.MethodInfo info, final Trinity<String, Integer, Integer> key) {
-    if (!Comparing.equal(info.getMethodName(), key.first)) return false;
-    final int length = key.second.intValue();
-    final int index = key.third.intValue();
-    if (info.isReturnFlag() && length == 0 && index == 0) {
-      info.setReturnFlag(false);
-      return true;
+  public void replaceInjections(final List<? extends BaseInjection> newInjections, final List<? extends BaseInjection> originalInjections) {
+    for (BaseInjection injection : originalInjections) {
+      myInjections.get(injection.getSupportId()).remove(injection);
     }
-    else if (info.getParamFlags().length == length && index < length && index >= 0) {
-      info.getParamFlags()[index] = false;
-      return true;
+    for (BaseInjection injection : newInjections) {
+      injection.initializePlaces();
+      myInjections.get(injection.getSupportId()).add(injection);
     }
-    return false;
+    configurationModified();
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+    }
   }
+
 
 }

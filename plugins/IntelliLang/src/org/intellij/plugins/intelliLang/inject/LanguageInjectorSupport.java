@@ -2,8 +2,15 @@ package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Gregory.Shrago
@@ -13,10 +20,26 @@ public interface LanguageInjectorSupport {
 
   Key<Boolean> HAS_UNPARSABLE_FRAGMENTS = Key.create("HAS_UNPARSABLE_FRAGMENTS");
 
+  @NonNls String XML_SUPPORT_ID = "xml";
+  @NonNls String JAVA_SUPPORT_ID = "java";
+
+  @NonNls
+  @NotNull
+  String getId();
+
+  @NotNull
+  Class[] getPatternClasses();
+
   boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement);
 
   boolean removeInjectionInPlace(final PsiLanguageInjectionHost psiElement);
 
   boolean editInjectionInPlace(final PsiLanguageInjectionHost psiElement);
 
+  BaseInjection createInjection(final Element element);
+
+  //?
+  //void setupPresentation(final Injection injection, final Presentation presentation);
+
+  Configurable[] createSettings(final Project project, final Configuration configuration);
 }

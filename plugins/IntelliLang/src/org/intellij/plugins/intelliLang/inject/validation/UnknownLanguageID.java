@@ -21,7 +21,6 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.Language;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiConstantEvaluationHelperImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class UnknownLanguageID extends LocalInspectionTool {
-  private static final PsiConstantEvaluationHelperImpl CONSTANT_EVALUATION_HELPER = new PsiConstantEvaluationHelperImpl();
 
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
@@ -69,7 +67,8 @@ public class UnknownLanguageID extends LocalInspectionTool {
               final PsiAnnotationMemberValue value = valuePair.getValue();
               if (value instanceof PsiExpression) {
                 final PsiExpression expression = (PsiExpression)value;
-                final Object id = CONSTANT_EVALUATION_HELPER.computeConstantExpression(expression);
+                final Object id = JavaPsiFacade.getInstance(expression.getProject()).
+                  getConstantEvaluationHelper().computeConstantExpression(expression);
                 if (id instanceof String) {
                   final Language language = InjectedLanguage.findLanguageById((String)id);
                   if (language == null) {
