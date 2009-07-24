@@ -491,6 +491,9 @@ final class FindDialog extends DialogWrapper {
 
     findOptionsPanel.add(myCbWholeWordsOnly);
 
+    myCbRegularExpressions = createCheckbox(FindBundle.message("find.options.regular.expressions"));
+    findOptionsPanel.add(myCbRegularExpressions);
+
     myCbInCommentsOnly = createCheckbox(FindBundle.message("find.options.comments.only"));
 
     findOptionsPanel.add(myCbInCommentsOnly);
@@ -499,8 +502,6 @@ final class FindDialog extends DialogWrapper {
 
     findOptionsPanel.add(myCbInStringLiteralsOnly);
 
-    myCbRegularExpressions = createCheckbox(FindBundle.message("find.options.regular.expressions"));
-    findOptionsPanel.add(myCbRegularExpressions);
 
     ActionListener actionListener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
