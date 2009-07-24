@@ -98,6 +98,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ProjectViewImpl");
   private final CopyPasteDelegator myCopyPasteDelegator;
   private boolean isInitialized;
+  private boolean myExtensionsLoaded = false;
   private final Project myProject;
 
   // + options
@@ -177,7 +178,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
   private Map<String, Element> myUninitializedPaneState = new HashMap<String, Element>();
   private Map<String, SelectInTarget> mySelectInTargets = new HashMap<String, SelectInTarget>();
 
-  public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, SelectInManager selectInManager, final ToolWindowManagerEx toolWindowManager) {
+  public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, final ToolWindowManagerEx toolWindowManager) {
     myProject = project;
 
     constructUi();
@@ -270,6 +271,10 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
 
   public synchronized void addProjectPane(final AbstractProjectViewPane pane) {
     myUninitializedPanes.add(pane);
+    SelectInTarget selectInTarget = pane.createSelectInTarget();
+    if (selectInTarget != null) {
+      mySelectInTargets.put(pane.getId(), selectInTarget);
+    }                                   
     if (isInitialized) {
       doAddUninitializedPanes();
     }
@@ -293,6 +298,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
       }
     }
     myId2Pane.remove(idToRemove);
+    mySelectInTargets.remove(idToRemove);
     viewSelectionChanged();
   }
 
@@ -332,10 +338,6 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
       myCombo.insertItemAt(Pair.create(id, subId), index++);
     }
     myCombo.setMaximumRowCount(myCombo.getItemCount());
-    SelectInTarget selectInTarget = newPane.createSelectInTarget();
-    if (selectInTarget != null) {
-      mySelectInTargets.put(id, selectInTarget);
-    }
 
     if (id.equals(mySavedPaneId)) {
       changeView(mySavedPaneId, mySavedPaneSubId);
@@ -502,25 +504,31 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
     });
 
     if (loadPaneExtensions) {
-      for(AbstractProjectViewPane pane: Extensions.getExtensions(AbstractProjectViewPane.EP_NAME, myProject)) {
-        if (myUninitializedPaneState.containsKey(pane.getId())) {
-          try {
-            pane.readExternal(myUninitializedPaneState.get(pane.getId()));
-          }
-          catch (InvalidDataException e) {
-            // ignore
-          }
-          myUninitializedPaneState.remove(pane.getId());
-        }
-        if (pane.isInitiallyVisible()) {
-          addProjectPane(pane);
-        }
-        Disposer.register(this, pane);
-      }
+      ensurePanesLoaded();
     }
 
     isInitialized = true;
     doAddUninitializedPanes();
+  }
+
+  private void ensurePanesLoaded() {
+    if (myExtensionsLoaded) return;
+    myExtensionsLoaded = true;
+    for(AbstractProjectViewPane pane: Extensions.getExtensions(AbstractProjectViewPane.EP_NAME, myProject)) {
+      if (myUninitializedPaneState.containsKey(pane.getId())) {
+        try {
+          pane.readExternal(myUninitializedPaneState.get(pane.getId()));
+        }
+        catch (InvalidDataException e) {
+          // ignore
+        }
+        myUninitializedPaneState.remove(pane.getId());
+      }
+      if (pane.isInitiallyVisible()) {
+        addProjectPane(pane);
+      }
+      Disposer.register(this, pane);
+    }
   }
 
   private final FocusListener myLabelFocusListener = new FocusListener() {
@@ -659,7 +667,16 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
   }
 
   public AbstractProjectViewPane getProjectViewPaneById(String id) {
-    return myId2Pane.get(id);
+    final AbstractProjectViewPane pane = myId2Pane.get(id);
+    if (pane != null) {
+      return pane;
+    }
+    for (AbstractProjectViewPane viewPane : myUninitializedPanes) {
+      if (viewPane.getId().equals(id)) {
+        return viewPane;
+      }
+    }
+    return null;
   }
 
   public AbstractProjectViewPane getCurrentProjectViewPane() {
@@ -1609,6 +1626,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
 
   @Override
   public Collection<SelectInTarget> getSelectInTargets() {
+    ensurePanesLoaded();
     return mySelectInTargets.values();
   }
 }
