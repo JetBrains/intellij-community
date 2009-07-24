@@ -24,7 +24,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.*;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
@@ -300,7 +303,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
       UiNotifyConnector.doWhenFirstShown(label, new Runnable() {
         public void run() {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
+          ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
             public void run() {
               toolWindow.getContentManager().removeAllContents(false);
               factory.createToolWindowContent(myProject, toolWindow);
