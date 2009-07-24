@@ -168,7 +168,6 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
     }
   };
   private final FileEditorManager myFileEditorManager;
-  private final SelectInManager mySelectInManager;
   private final MyPanel myDataProvider;
   private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
   private static final Icon BULLET_ICON = IconLoader.getIcon("/general/bullet.png");
@@ -176,6 +175,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
   private JPanel myTopPanel;
   private ActionToolbar myToolBar;
   private Map<String, Element> myUninitializedPaneState = new HashMap<String, Element>();
+  private Map<String, SelectInTarget> mySelectInTargets = new HashMap<String, SelectInTarget>();
 
   public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, SelectInManager selectInManager, final ToolWindowManagerEx toolWindowManager) {
     myProject = project;
@@ -185,7 +185,6 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
 
     Disposer.register(myProject, this);
     myFileEditorManager = fileEditorManager;
-    mySelectInManager = selectInManager;
     myTreeChangeListener = new Runnable() {
       public void run() {
         updateToolWindowTitle();
@@ -281,8 +280,6 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
     //assume we are completely initialized here
     String idToRemove = pane.getId();
 
-    removeSelectInTargetsFor(pane);
-
     if (!myId2Pane.containsKey(idToRemove)) return;
     pane.removeTreeChangeListener();
     for (int i = myCombo.getItemCount() - 1; i >= 0; i--) {
@@ -297,16 +294,6 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
     }
     myId2Pane.remove(idToRemove);
     viewSelectionChanged();
-  }
-
-  private void removeSelectInTargetsFor(final AbstractProjectViewPane pane) {
-    SelectInTarget[] targets = mySelectInManager.getTargets();
-    for (SelectInTarget target : targets) {
-      if (pane.getId().equals(target.getMinorViewId())) {
-        mySelectInManager.removeTarget(target);
-        break;
-      }
-    }
   }
 
   private synchronized void doAddUninitializedPanes() {
@@ -347,7 +334,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
     myCombo.setMaximumRowCount(myCombo.getItemCount());
     SelectInTarget selectInTarget = newPane.createSelectInTarget();
     if (selectInTarget != null) {
-      mySelectInManager.addTarget(selectInTarget);
+      mySelectInTargets.put(id, selectInTarget);
     }
 
     if (id.equals(mySavedPaneId)) {
@@ -1500,16 +1487,9 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
 
       final MySelectInContext selectInContext = new MySelectInContext(file, editor);
 
-      final SelectInTarget[] targets = mySelectInManager.getTargets();
-      for (SelectInTarget target : targets) {
-        if (!ToolWindowId.PROJECT_VIEW.equals(target.getToolWindowId())) continue;
-        String compatiblePaneViewId = target.getMinorViewId();
-        if (!Comparing.strEqual(compatiblePaneViewId, getCurrentViewId())) continue;
-
-        if (target.canSelect(selectInContext)) {
-          target.selectIn(selectInContext, false);
-          break;
-        }
+      final SelectInTarget target = mySelectInTargets.get(getCurrentViewId());
+      if (target != null && target.canSelect(selectInContext)) {
+        target.selectIn(selectInContext, false);
       }
     }
 
@@ -1625,5 +1605,10 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
 
   public Collection<String> getPaneIds() {
     return myId2Pane.keySet();
+  }
+
+  @Override
+  public Collection<SelectInTarget> getSelectInTargets() {
+    return mySelectInTargets.values();
   }
 }

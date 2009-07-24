@@ -1,8 +1,8 @@
 package com.intellij.ide.favoritesTreeView;
 
+import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
-import com.intellij.ide.SelectInContext;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,6 +22,7 @@ public class FavoritesViewSelectInTarget extends ProjectViewSelectInTarget {
   }
 
   protected boolean canSelect(final PsiFileSystemItem file) {
+    if (!super.canSelect(file)) return false;
     return findSuitableFavoritesList(file.getVirtualFile(), myProject, null) != null;
   }
 

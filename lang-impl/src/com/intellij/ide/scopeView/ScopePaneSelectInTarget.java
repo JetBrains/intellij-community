@@ -1,8 +1,8 @@
 package com.intellij.ide.scopeView;
 
+import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
-import com.intellij.ide.SelectInContext;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -28,6 +28,7 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
   }
 
   public boolean canSelect(PsiFileSystemItem fileSystemItem) {
+    if (!super.canSelect(fileSystemItem)) return false;
     if (!(fileSystemItem instanceof PsiFile)) return false;
     PsiFile file = (PsiFile) fileSystemItem;
     NamedScopesHolder scopesHolder = DependencyValidationManager.getInstance(myProject);

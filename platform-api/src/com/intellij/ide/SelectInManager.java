@@ -17,9 +17,9 @@ package com.intellij.ide;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,13 +58,7 @@ public class SelectInManager  {
   public SelectInTarget[] getTargets() {
     checkLoadExtensions();
     SelectInTarget[] targets = myTargets.toArray(new SelectInTarget[myTargets.size()]);
-    Arrays.sort(targets, new Comparator<SelectInTarget>() {
-      public int compare(final SelectInTarget o1, final SelectInTarget o2) {
-        if (o1.getWeight() < o2.getWeight()) return -1;
-        if (o1.getWeight() > o2.getWeight()) return 1;
-        return 0;
-      }
-    });
+    Arrays.sort(targets, new SelectInTargetComparator());
 
     if (DumbService.getInstance(myProject).isDumb()) {
       final List<SelectInTarget> awareList = (List)ContainerUtil.findAll(targets, DumbAware.class);
@@ -92,5 +86,13 @@ public class SelectInManager  {
 
   public static SelectInManager getInstance(Project project) {
     return ServiceManager.getService(project, SelectInManager.class);
+  }
+
+  public static class SelectInTargetComparator implements Comparator<SelectInTarget> {
+    public int compare(final SelectInTarget o1, final SelectInTarget o2) {
+      if (o1.getWeight() < o2.getWeight()) return -1;
+      if (o1.getWeight() > o2.getWeight()) return 1;
+      return 0;
+    }
   }
 }

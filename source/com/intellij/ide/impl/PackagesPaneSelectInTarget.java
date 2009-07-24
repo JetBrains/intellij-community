@@ -1,8 +1,8 @@
 package com.intellij.ide.impl;
 
+import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
-import com.intellij.ide.SelectInContext;
 import com.intellij.ide.projectView.impl.PackageViewPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -21,6 +21,7 @@ public class PackagesPaneSelectInTarget extends ProjectViewSelectInTarget {
   }
 
   public boolean canSelect(PsiFileSystemItem file) {
+    if (!super.canSelect(file)) return false;
     final VirtualFile vFile = PsiUtilBase.getVirtualFile(file);
 
     return canSelect(vFile);

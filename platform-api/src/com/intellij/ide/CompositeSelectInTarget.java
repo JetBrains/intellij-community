@@ -16,15 +16,14 @@
 
 package com.intellij.ide;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+
 /**
  * @author Gregory.Shrago
  */
 public interface CompositeSelectInTarget extends SelectInTarget{
-  String[] getSubIds();
-
-  void setSubId(String subId);
-
-  boolean isSubIdSelectable(String subId, SelectInContext context);
-
-  String getSubIdPresentableName(String subId);
+  @NotNull
+  Collection<SelectInTarget> getSubTargets(SelectInContext context);
 }

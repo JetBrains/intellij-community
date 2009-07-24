@@ -343,6 +343,7 @@
 
   <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor"/>
 
+  <selectInTarget implementation="com.intellij.ide.impl.ProjectViewSelectInGroupTarget"/>
   <selectInTarget implementation="com.intellij.ide.navigationToolbar.SelectInNavBarTarget"/>
   <selectInTarget implementation="com.intellij.ide.impl.StructureViewSelectInTarget"/>
 

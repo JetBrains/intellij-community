@@ -1,5 +1,6 @@
 package com.intellij.ide.projectView;
 
+import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -68,4 +69,6 @@ public abstract class ProjectView {
   public abstract AbstractProjectViewPane getCurrentProjectViewPane();
 
   public abstract Collection<String> getPaneIds();
+
+  public abstract Collection<SelectInTarget> getSelectInTargets();
 }
