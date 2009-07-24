@@ -145,32 +145,32 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return replacePromptDialog.getExitCode();
   }
 
-  public boolean showFindDialog(FindModel model) {
-    FindDialog findDialog = new FindDialog(myProject, model);
-    findDialog.show();
-    if (!findDialog.isOK()){
-      return false;
-    }
+  public void showFindDialog(@NotNull final FindModel model, @NotNull final Runnable okHandler) {
+    FindDialog findDialog = new FindDialog(myProject, model, new Runnable(){
+      public void run() {
+        String stringToFind = model.getStringToFind();
+        if (stringToFind == null || stringToFind.length() == 0){
+          return;
+        }
+        FindSettings.getInstance().addStringToFind(stringToFind);
+        if (!model.isMultipleFiles()){
+          setFindWasPerformed();
+        }
+        if (model.isReplaceState()){
+          FindSettings.getInstance().addStringToReplace(model.getStringToReplace());
+        }
+        if (model.isMultipleFiles() && !model.isProjectScope()){
+          FindSettings.getInstance().addDirectory(model.getDirectoryName());
 
-    String stringToFind = model.getStringToFind();
-    if (stringToFind == null || stringToFind.length() == 0){
-      return false;
-    }
-    FindSettings.getInstance().addStringToFind(stringToFind);
-    if (!model.isMultipleFiles()){
-      setFindWasPerformed();
-    }
-    if (model.isReplaceState()){
-      FindSettings.getInstance().addStringToReplace(model.getStringToReplace());
-    }
-    if (model.isMultipleFiles() && !model.isProjectScope()){
-      FindSettings.getInstance().addDirectory(model.getDirectoryName());
-
-      if (model.getDirectoryName()!=null) {
-        myFindInProjectModel.setWithSubdirectories(model.isWithSubdirectories());
+          if (model.getDirectoryName()!=null) {
+            myFindInProjectModel.setWithSubdirectories(model.isWithSubdirectories());
+          }
+        }
+        okHandler.run();
       }
-    }
-    return true;
+    });
+    findDialog.setModal(false);
+    findDialog.show();
   }
 
   @NotNull

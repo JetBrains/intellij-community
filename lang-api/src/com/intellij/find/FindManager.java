@@ -47,9 +47,9 @@ public abstract class FindManager {
    * perform the actual find or replace operation.
    *
    * @param model the model containing the settings of a find or replace operation.
-   * @return true if the dialog was closed with OK, false if it was cancelled.
+   * @param okHandler Will be executed after doOkAction
    */
-  public abstract boolean showFindDialog(FindModel model);
+  public abstract void showFindDialog(@NotNull FindModel model, @NotNull Runnable okHandler);
 
   /**
    * Shows a replace prompt dialog for the specfied replace operation.

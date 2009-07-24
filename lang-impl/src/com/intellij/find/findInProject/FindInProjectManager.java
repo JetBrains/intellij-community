@@ -33,7 +33,7 @@ public class FindInProjectManager {
   }
 
   public void findInProject(DataContext dataContext) {
-    boolean isOpenInNewTabEnabled;
+    final boolean isOpenInNewTabEnabled;
     final boolean[] toOpenInNewTab = new boolean[1];
     Content selectedContent = UsageViewManager.getInstance(myProject).getSelectedContent(true);
     if (selectedContent != null && selectedContent.isPinned()) {
@@ -61,52 +61,53 @@ public class FindInProjectManager {
       }
     }
 
-    if (!findManager.showFindDialog(findModel)){
-      findModel.setOpenInNewTabVisible(false);
-      return;
-    }
-    findModel.setOpenInNewTabVisible(false);
-    final PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(findModel, myProject);
-    if (findModel.getDirectoryName() != null && psiDirectory == null){
-      return;
-    }
-    if (isOpenInNewTabEnabled) {
-      myToOpenInNewTab = toOpenInNewTab[0] = findModel.isOpenInNewTab();
-    }
-
-    com.intellij.usages.UsageViewManager manager = com.intellij.usages.UsageViewManager.getInstance(myProject);
-
-    if (manager == null) return;
-    findManager.getFindInProjectModel().copyFrom(findModel);
-    final FindModel findModelCopy = (FindModel)findModel.clone();
-    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(myToOpenInNewTab, findModelCopy);
-    final boolean showPanelIfOnlyOneUsage = !FindSettings.getInstance().isSkipResultsWithOneUsage();
-
-    FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
-
-    manager.searchAndShowUsages(
-        new UsageTarget[] { new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind())},
-      new Factory<UsageSearcher>() {
-        public UsageSearcher create() {
-          return new UsageSearcher() {
-            public void generate(final Processor<Usage> processor) {
-              myIsFindInProgress = true;
-
-              try {
-                FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject,
-                                             new AdapterProcessor<UsageInfo, Usage>(processor, UsageInfo2UsageAdapter.CONVERTER));
-              }
-              finally {
-                myIsFindInProgress = false;
-              }
-            }
-          };
+    findManager.showFindDialog(findModel, new Runnable() {
+      public void run() {
+        findModel.setOpenInNewTabVisible(false);
+        final PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(findModel, myProject);
+        if (findModel.getDirectoryName() != null && psiDirectory == null){
+          return;
         }
-      },
-      processPresentation,
-      presentation,
-      null
-    );
+        if (isOpenInNewTabEnabled) {
+          myToOpenInNewTab = toOpenInNewTab[0] = findModel.isOpenInNewTab();
+        }
+
+        com.intellij.usages.UsageViewManager manager = com.intellij.usages.UsageViewManager.getInstance(myProject);
+
+        if (manager == null) return;
+        findManager.getFindInProjectModel().copyFrom(findModel);
+        final FindModel findModelCopy = (FindModel)findModel.clone();
+        final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(myToOpenInNewTab, findModelCopy);
+        final boolean showPanelIfOnlyOneUsage = !FindSettings.getInstance().isSkipResultsWithOneUsage();
+
+        FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
+
+        manager.searchAndShowUsages(
+            new UsageTarget[] { new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind())},
+          new Factory<UsageSearcher>() {
+            public UsageSearcher create() {
+              return new UsageSearcher() {
+                public void generate(final Processor<Usage> processor) {
+                  myIsFindInProgress = true;
+
+                  try {
+                    FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject,
+                                                 new AdapterProcessor<UsageInfo, Usage>(processor, UsageInfo2UsageAdapter.CONVERTER));
+                  }
+                  finally {
+                    myIsFindInProgress = false;
+                  }
+                }
+              };
+            }
+          },
+          processPresentation,
+          presentation,
+          null
+        );
+      }
+    });
+    findModel.setOpenInNewTabVisible(false);
   }
 
   public boolean isWorkInProgress() {

@@ -46,8 +46,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  *
@@ -116,12 +116,12 @@ public class FindUtil {
     doSearch(project, editor, caretOffset, true, model, true);
   }
 
-  public static void find(Project project, Editor editor) {
+  public static void find(final Project project, final Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    FindManager findManager = FindManager.getInstance(project);
+    final FindManager findManager = FindManager.getInstance(project);
     String s = editor.getSelectionModel().getSelectedText();
 
-    FindModel model = (FindModel)findManager.getFindInFileModel().clone();
+    final FindModel model = (FindModel)findManager.getFindInFileModel().clone();
     if (s != null) {
       if (s.indexOf('\n') >= 0) {
         model.setGlobal(false);
@@ -138,48 +138,48 @@ public class FindUtil {
     model.setReplaceState(false);
     model.setFindAllEnabled(PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) != null);
 
-    if (!findManager.showFindDialog(model)) {
-      return;
-    }
+    findManager.showFindDialog(model, new Runnable() {
+      public void run() {
+        if (model.isFindAll()) {
+          findManager.setFindNextModel(model);
+          findAll(project, editor, model);
+          return;
+        }
 
-    if (model.isFindAll()) {
-      findManager.setFindNextModel(model);
-      findAll(project, editor, model);
-      return;
-    }
+        if (!model.isGlobal() && editor.getSelectionModel().hasSelection()) {
+          int offset = model.isForward()
+                       ? editor.getSelectionModel().getSelectionStart()
+                       : editor.getSelectionModel().getSelectionEnd();
+          ScrollType scrollType = model.isForward() ? ScrollType.CENTER_DOWN : ScrollType.CENTER_UP;
+          moveCaretAndDontChangeSelection(editor, offset, scrollType);
+        }
 
-    if (!model.isGlobal() && editor.getSelectionModel().hasSelection()) {
-      int offset = model.isForward()
-                   ? editor.getSelectionModel().getSelectionStart()
-                   : editor.getSelectionModel().getSelectionEnd();
-      ScrollType scrollType = model.isForward() ? ScrollType.CENTER_DOWN : ScrollType.CENTER_UP;
-      moveCaretAndDontChangeSelection(editor, offset, scrollType);
-    }
+        int offset;
+        if (model.isGlobal()) {
+          if (model.isFromCursor()) {
+            offset = editor.getCaretModel().getOffset();
+          }
+          else {
+            offset = model.isForward() ? 0 : editor.getDocument().getTextLength();
+          }
+        }
+        else {
+          // in selection
 
-    int offset;
-    if (model.isGlobal()) {
-      if (model.isFromCursor()) {
-        offset = editor.getCaretModel().getOffset();
-      }
-      else {
-        offset = model.isForward() ? 0 : editor.getDocument().getTextLength();
-      }
-    }
-    else {
-      // in selection
+          if (!editor.getSelectionModel().hasSelection()) {
+            // TODO[anton] actually, this should never happen - Find dialog should not allow such combination
+            findManager.setFindNextModel(null);
+            return;
+          }
 
-      if (!editor.getSelectionModel().hasSelection()) {
-        // TODO[anton] actually, this should never happen - Find dialog should not allow such combination
+          offset = model.isForward() ? editor.getSelectionModel().getSelectionStart() : editor.getSelectionModel().getSelectionEnd();
+        }
+
         findManager.setFindNextModel(null);
-        return;
+        findManager.getFindInFileModel().copyFrom(model);
+        doSearch(project, editor, offset, true, model, true);
       }
-
-      offset = model.isForward() ? editor.getSelectionModel().getSelectionStart() : editor.getSelectionModel().getSelectionEnd();
-    }
-
-    findManager.setFindNextModel(null);
-    findManager.getFindInFileModel().copyFrom(model);
-    doSearch(project, editor, offset, true, model, true);
+    });
   }
 
   public static void findAll(final Project project, final Editor editor, final FindModel findModel) {
@@ -314,10 +314,10 @@ public class FindUtil {
     }
   }
 
-  public static boolean replace(Project project, Editor editor) {
-    FindManager findManager = FindManager.getInstance(project);
-    FindModel model = (FindModel)findManager.getFindInFileModel().clone();
-    String s = editor.getSelectionModel().getSelectedText();
+  public static void replace(final Project project, final Editor editor) {
+    final FindManager findManager = FindManager.getInstance(project);
+    final FindModel model = (FindModel)findManager.getFindInFileModel().clone();
+    final String s = editor.getSelectionModel().getSelectedText();
     if (s != null) {
       if (s.indexOf('\n') >= 0) {
         model.setGlobal(false);
@@ -332,51 +332,52 @@ public class FindUtil {
     }
     model.setReplaceState(true);
 
-    if (!findManager.showFindDialog(model)) {
-      return false;
-    }
-    if (!model.isGlobal() && editor.getSelectionModel().hasSelection()) {
-      int offset = model.isForward()
-                   ? editor.getSelectionModel().getSelectionStart()
-                   : editor.getSelectionModel().getSelectionEnd();
-      ScrollType scrollType = model.isForward() ? ScrollType.CENTER_DOWN : ScrollType.CENTER_UP;
-      moveCaretAndDontChangeSelection(editor, offset, scrollType);
-    }
-    int offset;
-    if (model.isGlobal()) {
-      if (model.isFromCursor()) {
-        offset = editor.getCaretModel().getOffset();
-        if (!model.isForward()) {
-          offset++;
+    findManager.showFindDialog(model, new Runnable() {
+      public void run() {
+        if (!model.isGlobal() && editor.getSelectionModel().hasSelection()) {
+          int offset = model.isForward()
+                       ? editor.getSelectionModel().getSelectionStart()
+                       : editor.getSelectionModel().getSelectionEnd();
+          ScrollType scrollType = model.isForward() ? ScrollType.CENTER_DOWN : ScrollType.CENTER_UP;
+          moveCaretAndDontChangeSelection(editor, offset, scrollType);
         }
-      }
-      else {
-        offset = model.isForward() ? 0 : editor.getDocument().getTextLength();
-      }
-    }
-    else {
-      // in selection
+        int offset;
+        if (model.isGlobal()) {
+          if (model.isFromCursor()) {
+            offset = editor.getCaretModel().getOffset();
+            if (!model.isForward()) {
+              offset++;
+            }
+          }
+          else {
+            offset = model.isForward() ? 0 : editor.getDocument().getTextLength();
+          }
+        }
+        else {
+          // in selection
 
-      if (!editor.getSelectionModel().hasSelection()) {
-        // TODO[anton] actually, this should never happen - Find dialog should not allow such combination
+          if (!editor.getSelectionModel().hasSelection()) {
+            // TODO[anton] actually, this should never happen - Find dialog should not allow such combination
+            findManager.setFindNextModel(null);
+            return;
+          }
+
+          offset = model.isForward() ? editor.getSelectionModel().getSelectionStart() : editor.getSelectionModel().getSelectionEnd();
+        }
+
+        if (s != null && editor.getSelectionModel().hasSelection() && s.equals(model.getStringToFind())) {
+          if (model.isFromCursor() && model.isForward()) {
+            offset = Math.min(editor.getSelectionModel().getSelectionStart(), offset);
+          }
+          else if (model.isFromCursor() && !model.isForward()) {
+            offset = Math.max(editor.getSelectionModel().getSelectionEnd(), offset);
+          }
+        }
         findManager.setFindNextModel(null);
-        return false;
+        findManager.getFindInFileModel().copyFrom(model);
+        replace(project, editor, offset, model);
       }
-
-      offset = model.isForward() ? editor.getSelectionModel().getSelectionStart() : editor.getSelectionModel().getSelectionEnd();
-    }
-
-    if (s != null && editor.getSelectionModel().hasSelection() && s.equals(model.getStringToFind())) {
-      if (model.isFromCursor() && model.isForward()) {
-        offset = Math.min(editor.getSelectionModel().getSelectionStart(), offset);
-      }
-      else if (model.isFromCursor() && !model.isForward()) {
-        offset = Math.max(editor.getSelectionModel().getSelectionEnd(), offset);
-      }
-    }
-    findManager.setFindNextModel(null);
-    findManager.getFindInFileModel().copyFrom(model);
-    return replace(project, editor, offset, model);
+    });
   }
 
   private static boolean replace(Project project, Editor editor, int offset, FindModel model) {

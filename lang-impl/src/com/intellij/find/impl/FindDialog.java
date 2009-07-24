@@ -69,6 +69,7 @@ final class FindDialog extends DialogWrapper {
   private StateRestoringCheckBox myCbWithSubdirectories;
   private JCheckBox myCbToOpenInNewTab;
   private final FindModel myModel;
+  private final Runnable myOkHandler;
   private FixedSizeButton mySelectDirectoryButton;
   private StateRestoringCheckBox useFileFilter;
   private ComboBox myFileFilter;
@@ -80,10 +81,11 @@ final class FindDialog extends DialogWrapper {
   private JRadioButton myRbCustomScope;
   private ScopeChooserCombo myScopeCombo;
 
-  public FindDialog(Project project, FindModel model){
+  public FindDialog(Project project, FindModel model, Runnable myOkHandler){
     super(project, true);
     myProject = project;
     myModel = model;
+    this.myOkHandler = myOkHandler;
 
     if (myModel.isReplaceState()){
       if (myModel.isMultipleFiles()){
@@ -448,6 +450,7 @@ final class FindDialog extends DialogWrapper {
 
     myModel.copyFrom(validateModel);
     super.doOKAction();
+    myOkHandler.run();
   }
 
   public void doHelpAction() {
