@@ -27,12 +27,12 @@ import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.grails.config.GrailsLibraryManager;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.config.GroovyFacetConfiguration;
-import org.jetbrains.plugins.groovy.config.LibraryManager;
-import org.jetbrains.plugins.groovy.config.GroovyLibraryManager;
+import org.jetbrains.plugins.groovy.MvcLibraryManager;
 import org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager;
+import org.jetbrains.plugins.groovy.config.GroovyFacetConfiguration;
+import org.jetbrains.plugins.groovy.config.GroovyLibraryManager;
+import org.jetbrains.plugins.groovy.config.LibraryManager;
 
 import javax.swing.*;
 
@@ -60,7 +60,7 @@ public class GroovyFacetTab extends FacetEditorTab {
 
     myManagedLibrariesEditor.getFacetEditorContext().addFacetContextChangeListener(new FacetContextChangeListener() {
       public void moduleRootsChanged(ModifiableRootModel rootModel) {
-        final boolean hasGrails = hasGrailsLibrary();
+        final boolean hasGrails = hasMvcLibrary();
         if (!myIsGrails.isEnabled() && hasGrails) {
           myIsGrails.setEnabled(true);
           myIsGrails.setSelected(true);
@@ -75,13 +75,13 @@ public class GroovyFacetTab extends FacetEditorTab {
     });
     myManagedLibrariesEditor.shouldHaveLibrary(new Condition<LibraryManager>() {
       public boolean value(LibraryManager libraryManager) {
-        return libraryManager instanceof GrailsLibraryManager || libraryManager instanceof GroovyLibraryManager;
+        return libraryManager instanceof MvcLibraryManager || libraryManager instanceof GroovyLibraryManager;
       }
     }, "Groovy/Grails is not configured yet");
   }
 
-  private boolean hasGrailsLibrary() {
-    return myManagedLibrariesEditor.findUsedLibrary(GrailsLibraryManager.class) != null;
+  private boolean hasMvcLibrary() {
+    return myManagedLibrariesEditor.findUsedLibrary(MvcLibraryManager.class) != null;
   }
 
   @Nls
@@ -97,7 +97,7 @@ public class GroovyFacetTab extends FacetEditorTab {
     if (myCompile.isSelected() != myConfiguration.isCompileGroovyFiles()) {
       return true;
     }
-    if (isGrailsApplication() != myConfiguration.getGrailsApplication()) {
+    if (isGrailsApplication() != myConfiguration.getMvcApplication()) {
       return true;
     }
 
@@ -111,7 +111,7 @@ public class GroovyFacetTab extends FacetEditorTab {
 
   public void apply() throws ConfigurationException {
     myConfiguration.setCompileGroovyFiles(myCompile.isSelected());
-    myConfiguration.setGrailsApplication(isGrailsApplication());
+    myConfiguration.setMvcApplication(isGrailsApplication());
   }
 
   @Nullable
@@ -121,9 +121,9 @@ public class GroovyFacetTab extends FacetEditorTab {
 
   public void reset() {
     (myConfiguration.isCompileGroovyFiles() ? myCompile : myCopyToOutput).setSelected(true);
-    final Boolean isGrails = myConfiguration.getGrailsApplication();
-    myIsGrails.setEnabled(hasGrailsLibrary());
-    myIsGrails.setSelected(isGrails != null && isGrails.booleanValue());
+    final Boolean isMvc = myConfiguration.getMvcApplication();
+    myIsGrails.setEnabled(hasMvcLibrary());
+    myIsGrails.setSelected(isMvc != null && isMvc.booleanValue());
     myManagedLibrariesEditor.updateLibraryList();
   }
 

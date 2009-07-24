@@ -320,7 +320,7 @@ public class ManagedLibrariesEditor {
   }
 
   @Nullable
-  public Library findUsedLibrary(Class<? extends LibraryManager> managedBy) {
+  public Library findUsedLibrary(Class<?> managedBy) {
     for (final ManagedLibrary library : getUsedLibraries()) {
       if (managedBy.isInstance(library.manager)) {
         return library.library;
