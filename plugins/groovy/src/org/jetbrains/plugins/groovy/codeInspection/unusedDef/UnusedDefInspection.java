@@ -111,14 +111,14 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
             PsiElement parent = element.getParent();
             PsiElement toHighlight = null;
             if (parent instanceof GrAssignmentExpression) {
-              toHighlight = ((GrAssignmentExpression) parent).getRValue();
+              toHighlight = ((GrAssignmentExpression) parent).getLValue();
             } if (parent instanceof GrPostfixExpression) {
               toHighlight = parent;
             }
             if (toHighlight == null) toHighlight = element;
             problemsHolder.registerProblem(toHighlight, GroovyInspectionBundle.message("unused.assignment.tooltip"), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
           } else if (element instanceof GrVariable) {
-            problemsHolder.registerProblem(((GrVariable) element).getInitializerGroovy(), GroovyInspectionBundle.message("unused.assignment.tooltip"), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+            problemsHolder.registerProblem(((GrVariable) element).getNameIdentifierGroovy(), GroovyInspectionBundle.message("unused.assignment.tooltip"), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
           }
         }
         return true;
