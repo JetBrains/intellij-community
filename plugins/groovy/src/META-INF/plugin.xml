@@ -74,7 +74,7 @@
     <liveTemplateContext implementation="org.jetbrains.plugins.groovy.GroovyTemplateContextType"/>
     <liveTemplateContext implementation="org.jetbrains.plugins.grails.GspTemplateContextType"/>
 
-    <roots.watchedRootsProvider implementation="org.jetbrains.plugins.grails.GrailsWatchedRootProvider"/>
+    <roots.watchedRootsProvider implementation="org.jetbrains.plugins.groovy.mvc.MvcWatchedRootProvider"/>
 
     <gotoSymbolContributor implementation="org.jetbrains.plugins.groovy.gotoclass.GroovyGoToSymbolContributor"/>
     <lang.refactoringSupport language="Groovy"
