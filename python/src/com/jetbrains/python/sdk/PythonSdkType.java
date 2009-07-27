@@ -239,9 +239,16 @@ public class PythonSdkType extends SdkType {
   }
 
 
-  protected SdkModificator setupSdkPathsUnderProgress(final Sdk sdk, ProgressIndicator indicator) {
+  protected SdkModificator setupSdkPathsUnderProgress(final Sdk sdk, @Nullable ProgressIndicator indicator) {
     final SdkModificator sdkModificator = sdk.getSdkModificator();
-    String sdk_path = sdk.getHomePath();
+    setupSdkPaths(sdkModificator, indicator);
+
+    return sdkModificator;
+    //sdkModificator.commitChanges() must happen outside, and probably in a different thread.
+  }
+
+  public static void setupSdkPaths(SdkModificator sdkModificator, ProgressIndicator indicator) {
+    String sdk_path = sdkModificator.getHomePath();
     String bin_path = getInterpreterPath(sdk_path);
     @NonNls final String stubs_path =
         PathManager.getSystemPath() + File.separator + "python_stubs" + File.separator + sdk_path.hashCode() + File.separator;
@@ -280,9 +287,6 @@ public class PythonSdkType extends SdkType {
       sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path), OrderRootType.SOURCES);
     }
     generateBinaryStubs(sdk_path, stubs_path, indicator);
-
-    return sdkModificator;
-    //sdkModificator.commitChanges() must happen outside, and probably in a different thread.
   }
 
   private static List<String> getSysPath(String sdk_path, String bin_path) {

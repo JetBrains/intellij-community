@@ -2,6 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.InspectionTestCase;
 import com.jetbrains.python.inspections.*;
 
@@ -9,6 +10,11 @@ import com.jetbrains.python.inspections.*;
  * @author yole
  */
 public class PythonInspectionsTest extends InspectionTestCase {
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return PythonMockSdk.findOrCreate();
+  }
+
   public void testReturnValueFromInit() throws Exception {
     final JythonManager manager = JythonManager.getInstance();
     manager.execScriptFromResource("inspections/inspections.py"); // could be moved to setUp() if more jython-based inspections existed
