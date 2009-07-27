@@ -25,8 +25,8 @@ import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -961,12 +961,11 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
       if (previouslyUsedName != null) {
         myDeletedNames.add(previouslyUsedName);
-
-        if (info.getCurrentFileName() != null) {
-          myFilesToDelete.add(info.getCurrentFileName());
-        }
       }
 
+      if (info.getCurrentFileName() != null) {
+        myFilesToDelete.add(info.getCurrentFileName());
+      }
     }
 
   }
