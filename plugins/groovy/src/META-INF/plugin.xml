@@ -408,10 +408,13 @@
                     serviceImplementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"/>
 
     <toolWindow id="Grails" anchor="left" secondary="false" icon="/org/jetbrains/plugins/grails/images/grails.png"
-                factoryClass="org.jetbrains.plugins.grails.projectView.v2.GrailsToolWindowFactory"
-                conditionClass="org.jetbrains.plugins.grails.projectView.v2.GrailsToolWindowFactory"/>
+                factoryClass="org.jetbrains.plugins.grails.projectView.GrailsToolWindowFactory"
+                conditionClass="org.jetbrains.plugins.grails.projectView.GrailsToolWindowFactory"/>
+    <toolWindow id="Griffon" anchor="left" secondary="false" icon="/org/jetbrains/plugins/griffon/griffon.png"
+                factoryClass="org.jetbrains.plugins.groovy.griffon.GriffonToolWindowFactory"
+                conditionClass="org.jetbrains.plugins.groovy.griffon.GriffonToolWindowFactory"/>
 
-    <selectInTarget implementation="org.jetbrains.plugins.grails.projectView.v2.GrailsProjectViewSelectInTarget"/>
+    <selectInTarget implementation="org.jetbrains.plugins.groovy.mvc.projectView.MvcProjectViewSelectInTarget"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
@@ -535,6 +538,9 @@
   <project-components>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.compiler.GroovyCompilerLoader</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.mvc.projectView.MvcViewManager</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.grails.editor.EditorDecorator</implementation-class>
