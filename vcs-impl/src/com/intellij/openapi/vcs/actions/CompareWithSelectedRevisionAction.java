@@ -18,11 +18,11 @@ import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.ui.table.TableView;
+import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.Consumer;
 import com.intellij.util.TreeItem;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,6 +30,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
+import java.util.Date;
 import java.util.List;
 
 public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
@@ -66,7 +67,8 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
 
   private static final ColumnInfo<VcsFileRevision, String> DATE_TABLE_COLUMN = new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revision.list.revision")) {
     public String valueOf(final VcsFileRevision vcsFileRevision) {
-      return VcsRevisionListCellRenderer.DATE_FORMAT.format(vcsFileRevision.getRevisionDate());
+      final Date date = vcsFileRevision.getRevisionDate();
+      return date == null ? "" : VcsRevisionListCellRenderer.DATE_FORMAT.format(date);
     }
   };
 
