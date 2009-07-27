@@ -461,8 +461,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     if (item == null ||
         item instanceof EmptyLookupItem ||
         item.getObject() instanceof DeferredUserLookupValue &&
-        item instanceof LookupItem &&
-        !((DeferredUserLookupValue)item.getObject()).handleUserSelection((LookupItem)item, myProject)) {
+        item.as(LookupItem.class) != null &&
+        !((DeferredUserLookupValue)item.getObject()).handleUserSelection(item.as(LookupItem.class), myProject)) {
       fireItemSelected(null, completionChar);
       return;
     }
