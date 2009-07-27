@@ -50,11 +50,23 @@ public class MavenProjectsTreeIgnoresTest extends MavenProjectsTreeTestCase {
     myLog = "";
   }
 
+  public void testDoNotSendNotificationsIfNothingChanged() throws Exception {
+    myTree.setIgnoredState(Collections.singletonList(myRoots.get(0)), true);
+
+    assertEquals("ignored: m1 ", myLog);
+    myLog = "";
+
+    myTree.setIgnoredState(Collections.singletonList(myRoots.get(0)), true);
+
+    assertEquals("", myLog);
+  }
+
   private class MyLoggingListener extends MavenProjectsTree.ListenerAdapter {
     @Override
     public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored) {
       if (!ignored.isEmpty()) myLog += "ignored: " + format(ignored) + " ";
       if (!unignored.isEmpty()) myLog += "unignored: " + format(unignored) + " ";
+      if (ignored.isEmpty() && unignored.isEmpty()) myLog += "empty ";
     }
 
     private String format(List<MavenProject> projects) {

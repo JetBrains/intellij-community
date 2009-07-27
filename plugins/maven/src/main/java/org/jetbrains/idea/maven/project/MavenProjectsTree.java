@@ -268,7 +268,7 @@ public class MavenProjectsTree {
     List<MavenProject> unignored = new ArrayList<MavenProject>(ignoredBefore);
     unignored.removeAll(ignoredAfter);
 
-    if (ignoredBefore.isEmpty() && ignoredAfter.isEmpty()) return;
+    if (ignored.isEmpty() && unignored.isEmpty()) return;
 
     fireProjectsIgnoredStateChanged(ignored, unignored);
   }
