@@ -26,6 +26,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -267,8 +268,8 @@ public class GrClassImplUtil {
           }
         }
 
-        final boolean isGetter = PsiUtil.isGetterName(name);
-        final boolean isSetter = PsiUtil.isSetterName(name);
+        final boolean isGetter = GroovyPropertyUtils.isGetterName(name);
+        final boolean isSetter = GroovyPropertyUtils.isSetterName(name);
         if (isGetter || isSetter) {
           final String propName = StringUtil.decapitalize(name.substring(3));
           if (propName.length() > 0) {
@@ -477,7 +478,12 @@ public class GrClassImplUtil {
     return info == null ? null : (PsiField)info.getElement();
   }
 
-  public static GrField[] getAllFields(GrTypeDefinition grType) {
-    return GrField.EMPTY_ARRAY;   //todo
+  public static PsiField[] getAllFields(GrTypeDefinition grType) {
+    Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(grType);
+    return ContainerUtil.map2Array(fieldsMap.values(), PsiField.class, new Function<CandidateInfo, PsiField>() {
+      public PsiField fun(CandidateInfo entry) {
+        return (PsiField)entry.getElement();
+      }
+    });
   }
 }

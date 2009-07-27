@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -30,7 +29,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.TIntStack;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.fileType.GspFileType;
@@ -46,7 +44,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -105,26 +102,6 @@ public class PsiUtil {
         return isLValue((GroovyPsiElement)parent);
       }
       return parent instanceof GrAssignmentExpression && element.equals(((GrAssignmentExpression)parent).getLValue());
-    }
-    return false;
-  }
-
-  public static boolean isGetterName(String name) {
-    if (name == null) return false;
-    if (name.startsWith("get") && !name.equals("get")) {
-      String tail = StringUtil.trimStart(name, "get");
-      return tail.equals(StringUtil.capitalize(tail));
-
-    }
-    return false;
-  }
-
-  public static boolean isSetterName(String name) {
-    if (name == null) return false;
-    if (name.startsWith("set") && !name.equals("set")) {
-      String tail = StringUtil.trimStart(name, "set");
-      return tail.equals(StringUtil.capitalize(tail));
-
     }
     return false;
   }
@@ -325,83 +302,6 @@ public class PsiUtil {
     return TokenSets.REFERENCE_NAMES.contains(lexer.getTokenType()) && lexer.getTokenEnd() == text.length();
   }
 
-  public static boolean isSimplePropertyAccessor(PsiMethod method) {
-    return isSimplePropertyGetter(method) || isSimplePropertySetter(method);
-  }
-
-  //do not check return type
-  public static boolean isSimplePropertyGetter(PsiMethod method) {
-    return isSimplePropertyGetter(method, null);
-  }
-
-  //do not check return type
-  public static boolean isSimplePropertyGetter(PsiMethod method, String propertyName) {
-    if (method == null) return false;
-
-    if (method.isConstructor()) return false;
-
-    String methodName = method.getName();
-    if (methodName.length() <= "is".length()) return false;
-
-    if (!isGetterName(methodName)) {
-      if (!methodName.startsWith("is")) return false;
-      if (!isUpperCase(methodName.charAt("is".length()))) return false;
-    }
-
-    if (propertyName != null && !checkPropertyName(method, propertyName)) return false;
-    final PsiClass psiClass = method.getContainingClass();
-    if (!isProperty(getPropertyNameByGetter(method), psiClass)) return false;
-    return method.getParameterList().getParameters().length == 0;
-  }
-
-  private static boolean isProperty(@NotNull String propertyName, @Nullable PsiClass psiClass) {
-    if (psiClass != null) {
-      final PsiField field = psiClass.findFieldByName(propertyName, true);
-      if (field instanceof GrField && !((GrField)field).isProperty()) return false;
-    }
-    return true;
-  }
-
-  private static boolean isUpperCase(char c) {
-    return c == Character.toUpperCase(c);
-  }
-
-  private static boolean checkPropertyName(PsiMethod method, @NotNull String propertyName) {
-    String methodName = method.getName();
-    String accessorNamePart;
-    if (method instanceof GrAccessorMethod) {
-      accessorNamePart = ((GrAccessorMethod)method).getProperty().getName();
-    } else {
-      accessorNamePart = methodName.startsWith("is") ? methodName.substring(2) : methodName.substring(3); //"set" or "get" or "is"
-      if (!isUpperCase(accessorNamePart.charAt(0))) return false;
-      accessorNamePart = StringUtil.decapitalize(accessorNamePart);
-    }
-
-    if (!propertyName.equals(accessorNamePart)) return false;
-    return true;
-  }
-
-  public static boolean isSimplePropertySetter(PsiMethod method) {
-    return isSimplePropertySetter(method, null);
-  }
-
-  public static boolean isSimplePropertySetter(PsiMethod method, String propertyName) {
-    if (method == null) return false;
-
-    if (method.isConstructor()) return false;
-
-    String methodName = method.getName();
-
-    if (!isSetterName(methodName)) {
-      return false;
-    }
-
-    if (propertyName != null && !checkPropertyName(method, propertyName)) return false;
-    final PsiClass psiClass = method.getContainingClass();
-    if (!isProperty(getPropertyNameBySetter(method), psiClass)) return false;
-    return method.getParameterList().getParametersCount() == 1;
-  }
-
   public static void shortenReferences(GroovyPsiElement element) {
     doShorten(element);
   }
@@ -464,30 +364,6 @@ public class PsiUtil {
 
     if (parent == null) return null;
     return ((GrTopLevelDefintion)parent);
-  }
-
-  public static String getPropertyNameByGetter(PsiMethod getterMethod) {
-    @NonNls String methodName = getterMethod.getName();
-    if (methodName.startsWith("get") && methodName.length() > 3) {
-      return decapitalize(methodName.substring(3));
-    }
-    else if (methodName.startsWith("is") && methodName.length() > 2) {
-      return decapitalize(methodName.substring(2));
-    }
-    else {
-      return methodName;
-    }
-  }
-
-  public static String getPropertyNameBySetter(PsiMethod setterMethod) {
-    @NonNls String methodName = setterMethod.getName();
-    return methodName.startsWith("set") && methodName.length() > 3 ? decapitalize(methodName.substring(3)) : methodName;
-  }
-
-  private static String decapitalize(String s) {
-    final char[] chars = s.toCharArray();
-    chars[0] = Character.toLowerCase(chars[0]);
-    return new String(chars);
   }
 
   public static boolean isStaticsOK(PsiModifierListOwner owner, PsiElement place) {
@@ -681,7 +557,7 @@ public class PsiUtil {
     final PsiElement element = resolveResults[0].getElement();
     if (element instanceof PsiMethod) {
       PsiType returnType = ((PsiMethod)element).getReturnType();
-      return isRawMemberAccess(resolveResults[0].getSubstitutor(), returnType);
+      return isRawType(returnType, resolveResults[0].getSubstitutor());
     }
     return false;
   }
@@ -695,10 +571,10 @@ public class PsiUtil {
       element = resolveResult.getElement();
     }
     if (element instanceof PsiField) {
-      return isRawMemberAccess(resolveResult.getSubstitutor(), ((PsiField)element).getType());
+      return isRawType(((PsiField)element).getType(), resolveResult.getSubstitutor());
     }
     else if (element instanceof GrAccessorMethod) {
-      return isRawMemberAccess(resolveResult.getSubstitutor(), ((GrAccessorMethod)element).getReturnType());
+      return isRawType(((GrAccessorMethod)element).getReturnType(), resolveResult.getSubstitutor());
     }
     return false;
   }
@@ -741,7 +617,7 @@ public class PsiUtil {
           type = ((PsiMethod)element).getReturnType();
         }
       }
-      return isRawMemberAccess(resolveResult.getSubstitutor(), type);
+      return isRawType(type, resolveResult.getSubstitutor());
     }
     return false;
   }
@@ -763,9 +639,9 @@ public class PsiUtil {
     return false;
   }
 
-  private static boolean isRawMemberAccess(PsiSubstitutor substitutor, PsiType memberType) {
-    if (memberType instanceof PsiClassType) {
-      final PsiClass returnClass = ((PsiClassType)memberType).resolve();
+  public static boolean isRawType(PsiType type, PsiSubstitutor substitutor) {
+    if (type instanceof PsiClassType) {
+      final PsiClass returnClass = ((PsiClassType)type).resolve();
       if (returnClass instanceof PsiTypeParameter) {
         final PsiTypeParameter typeParameter = (PsiTypeParameter)returnClass;
         final PsiType substitutedType = substitutor.substitute(typeParameter);

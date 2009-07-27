@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisRe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.EnumSet;
@@ -48,11 +49,11 @@ public class PropertyResolverProcessor extends ResolverProcessor {
     if (myName != null && element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
       boolean lValue = myPlace instanceof GroovyPsiElement && PsiUtil.isLValue((GroovyPsiElement) myPlace);
-      if (!lValue && PsiUtil.isSimplePropertyGetter(method, myName)) {
+      if (!lValue && GroovyPropertyUtils.isSimplePropertyGetter(method, myName)) {
         myCandidates.clear();
         super.execute(element, state);
         return false;
-      } else if (lValue && PsiUtil.isSimplePropertySetter(method, myName)) {
+      } else if (lValue && GroovyPropertyUtils.isSimplePropertySetter(method, myName)) {
         myCandidates.clear();
         super.execute(element, state);
         return false;

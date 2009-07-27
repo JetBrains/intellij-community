@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
@@ -138,11 +139,13 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   public boolean isProperty() {
+    final String name = getName();
+    if (!GroovyPropertyUtils.canBePropertyName(name)) return false;
     final PsiClass clazz = getContainingClass();
     if (clazz == null) return false;
     if (clazz.isInterface()) return false;
     final GrModifierList modifierList = getModifierList();
-    return modifierList != null && !modifierList.hasExplicitVisibilityModifiers();
+    return modifierList == null || !modifierList.hasExplicitVisibilityModifiers();
   }
 
   public GrAccessorMethod getSetter() {

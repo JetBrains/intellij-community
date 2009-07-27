@@ -18,9 +18,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -208,7 +208,7 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
   }
 
   @NotNull
-  public GrField[] getAllFields() {
+  public PsiField[] getAllFields() {
     return GrClassImplUtil.getAllFields(this);
   }
 

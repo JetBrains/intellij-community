@@ -63,7 +63,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   private static final Key<CachedValue<GroovyDslExecutor>> CACHED_ENHANCED_KEY = Key.create("CACHED_ENHANCED_KEY");
 
   private PsiClass myScriptClass;
-  private boolean myScriptClassInitialized = false;
   private static final String SYNTHETIC_PARAMETER_NAME = "args";
   private GrParameter mySyntheticArgsParameter = null;
 
@@ -331,14 +330,13 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   public synchronized PsiClass getScriptClass() {
-    if (!myScriptClassInitialized) {
-      if (isScript()) {
-        myScriptClass = new GroovyScriptClass(this);
-      }
-
-      myScriptClassInitialized = true;
+    if (isScript()) {
+      if (myScriptClass == null) myScriptClass = new GroovyScriptClass(this);
+      return myScriptClass;
     }
-    return myScriptClass;
+    else {
+      return null;
+    }
   }
 
   public void setPackageName(String packageName) {

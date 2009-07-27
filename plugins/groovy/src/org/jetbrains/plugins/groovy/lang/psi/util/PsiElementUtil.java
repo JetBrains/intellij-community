@@ -15,12 +15,15 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
 /**
  * @author ilyas
@@ -55,14 +58,14 @@ public class PsiElementUtil {
 
     if (call instanceof GrApplicationStatement) {
       PsiElement element = refExpr.resolve();
-      if (!(element instanceof PsiMethod) || !PsiUtil.isSimplePropertySetter(((PsiMethod) element))) return false;
+      if (!(element instanceof PsiMethod) || !GroovyPropertyUtils.isSimplePropertySetter(((PsiMethod) element))) return false;
     } else {
       PsiMethod method = ((GrMethodCallExpression) call).resolveMethod();
-      if (!PsiUtil.isSimplePropertySetter(method)) return false;
+      if (!GroovyPropertyUtils.isSimplePropertySetter(method)) return false;
     }
 
     if (call instanceof GrMethodCallExpression) {
-      GrArgumentList args = ((GrMethodCallExpression) call).getArgumentList();
+      GrArgumentList args = call.getArgumentList();
       return args != null &&
           args.getExpressionArguments().length == 1 &&
           args.getNamedArguments().length == 0;
@@ -91,7 +94,7 @@ public class PsiElementUtil {
 
 
     PsiMethod method = methodCall.resolveMethod();
-    if (!PsiUtil.isSimplePropertyGetter(method)) return false;
+    if (!GroovyPropertyUtils.isSimplePropertyGetter(method)) return false;
 
     GrArgumentList args = methodCall.getArgumentList();
     return args != null && args.getExpressionArguments().length == 0;

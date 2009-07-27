@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
@@ -34,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
@@ -59,20 +59,19 @@ public class CompleteReferenceExpression {
         if (refPParent instanceof GrConstructorCall) {
           GrConstructorCall constructorCall = (GrConstructorCall)refPParent;
           results = ArrayUtil.mergeArrays(results, constructorCall.multiResolveConstructor(), GroovyResolveResult.class);
-        } else
-
-        //call expression (method or new expression)
-        if (refPParent instanceof GrCallExpression) {
-          GrCallExpression constructorCall = (GrCallExpression)refPParent;
-          results = ArrayUtil.mergeArrays(results, constructorCall.getMethodVariants(), GroovyResolveResult.class);
-        } else
-
-        if (refPParent instanceof GrApplicationStatementImpl) {
-          final GrExpression element = ((GrApplicationStatementImpl)refPParent).getFunExpression();
-          if (element instanceof GrReferenceElement) {
-            results = ArrayUtil.mergeArrays(results, ((GrReferenceElement) element).multiResolve(true), GroovyResolveResult.class);
-          }
         }
+        else
+          //call expression (method or new expression)
+          if (refPParent instanceof GrCallExpression) {
+            GrCallExpression constructorCall = (GrCallExpression)refPParent;
+            results = ArrayUtil.mergeArrays(results, constructorCall.getMethodVariants(), GroovyResolveResult.class);
+          }
+          else if (refPParent instanceof GrApplicationStatementImpl) {
+            final GrExpression element = ((GrApplicationStatementImpl)refPParent).getFunExpression();
+            if (element instanceof GrReferenceElement) {
+              results = ArrayUtil.mergeArrays(results, ((GrReferenceElement)element).multiResolve(true), GroovyResolveResult.class);
+            }
+          }
 
 
         for (GroovyResolveResult result : results) {
@@ -120,7 +119,7 @@ public class CompleteReferenceExpression {
 
         List<Object> variantList = new ArrayList<Object>();
         for (Object variant : propertyVariants) {
-          if (variant instanceof GrField && ((GrField)variant).isProperty()) continue;
+          if (variant instanceof GrField && GroovyPropertyUtils.isProperty((GrField)variant)) continue;
           variantList.add(variant);
         }
 
@@ -147,11 +146,9 @@ public class CompleteReferenceExpression {
     final PsiClass eventListener =
       JavaPsiFacade.getInstance(refExpr.getProject()).findClass("java.util.EventListener", refExpr.getResolveScope());
     for (PsiMethod method : clazz.getAllMethods()) {
-      if (PsiUtil.isSimplePropertySetter(method)) {
-        String prop = PropertyUtil.getPropertyName(method);
-        if (prop != null) {
-          props.add(factory.createLookupElement(prop).setIcon(GroovyIcons.PROPERTY));
-        }
+      if (GroovyPropertyUtils.isSimplePropertyAccessor(method)) {
+        String prop = GroovyPropertyUtils.getPropertyName(method);
+        props.add(factory.createLookupElement(prop).setIcon(GroovyIcons.PROPERTY));
       }
       else if (eventListener != null) {
         addListenerProperties(method, eventListener, props, factory);
@@ -274,14 +271,12 @@ public class CompleteReferenceExpression {
     for (PsiElement element : elements) {
       if (element instanceof PsiMethod && !(element instanceof GrAccessorMethod)) {
         PsiMethod method = (PsiMethod)element;
-        if (PsiUtil.isSimplePropertyAccessor(method)) {
-          String propName = PropertyUtil.getPropertyName(method);
-          if (propName != null) {
-            if (!PsiUtil.isValidReferenceName(propName)) {
-              propName = "'" + propName + "'";
-            }
-            result.add(factory.createLookupElement(propName).setIcon(GroovyIcons.PROPERTY));
+        if (GroovyPropertyUtils.isSimplePropertyAccessor(method)) {
+          String propName = GroovyPropertyUtils.getPropertyName(method);
+          if (!PsiUtil.isValidReferenceName(propName)) {
+            propName = "'" + propName + "'";
           }
+          result.add(factory.createLookupElement(propName).setIcon(GroovyIcons.PROPERTY));
         }
       }
     }

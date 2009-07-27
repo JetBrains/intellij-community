@@ -217,6 +217,16 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     assertTrue(ref.isReferenceTo(field));
   }
 
+  public void testPropertyWithoutField1() throws Exception {
+    PsiReference ref = configureByFile("propertyWithoutField1/PropertyWithoutField1.groovy");
+    assertInstanceOf(ref.resolve(), GrMethod.class);
+  }
+
+  public void testPropertyWithoutField2() throws Exception {
+    PsiReference ref = configureByFile("propertyWithoutField2/PropertyWithoutField2.groovy");
+    assertInstanceOf(ref.resolve(), GrMethod.class);
+  }
+
   private void doTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();

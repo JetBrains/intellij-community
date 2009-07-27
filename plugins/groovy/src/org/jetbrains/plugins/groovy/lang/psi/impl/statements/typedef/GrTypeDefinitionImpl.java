@@ -375,7 +375,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @NotNull
   public PsiField[] getAllFields() {
-    return PsiField.EMPTY_ARRAY;
+    return GrClassImplUtil.getAllFields(this);
   }
 
   @NotNull
