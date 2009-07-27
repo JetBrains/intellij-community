@@ -17,6 +17,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.apache.maven.artifact.Artifact;
@@ -152,12 +153,12 @@ public class MavenArtifact implements Serializable {
     result.append(myArtifactId);
     result.append('-');
     result.append(myVersion);
-    if (myClassifier != null) {
+    if (!StringUtil.isEmptyOrSpaces(myClassifier)) {
       result.append('-');
       result.append(myClassifier);
     }
 
-    if (extraClassifier != null) {
+    if (!StringUtil.isEmptyOrSpaces(extraClassifier)) {
       result.append('-');
       result.append(extraClassifier);
       result.append(".jar");
@@ -177,7 +178,7 @@ public class MavenArtifact implements Serializable {
   public String getUrlForClassifier(String extraClassifier) {
     String path = getPath();
 
-    if (extraClassifier != null) {
+    if (!StringUtil.isEmptyOrSpaces(extraClassifier)) {
       int dotPos = path.lastIndexOf(".");
       if (dotPos != -1) {// sometimes path doesn't contain '.'; but i can't find any reason.
         String withoutExtension = path.substring(0, dotPos);
@@ -218,7 +219,7 @@ public class MavenArtifact implements Serializable {
     append(builder, myGroupId);
     append(builder, myArtifactId);
     append(builder, myType);
-    if (myClassifier != null) append(builder, myClassifier);
+    if (!StringUtil.isEmptyOrSpaces(myClassifier)) append(builder, myClassifier);
     append(builder, myVersion);
 
     return builder.toString();
@@ -230,9 +231,9 @@ public class MavenArtifact implements Serializable {
     append(builder, myGroupId);
     append(builder, myArtifactId);
     append(builder, myType);
-    if (myClassifier != null) append(builder, myClassifier);
+    if (!StringUtil.isEmptyOrSpaces(myClassifier)) append(builder, myClassifier);
     append(builder, myVersion);
-    if (myScope != null) append(builder, myScope);
+    if (!StringUtil.isEmptyOrSpaces(myScope)) append(builder, myScope);
 
     return builder.toString();
   }
@@ -243,11 +244,11 @@ public class MavenArtifact implements Serializable {
     append(builder, myGroupId);
     append(builder, myArtifactId);
 
-    if (myType != null && !MavenConstants.TYPE_JAR.equals(myType)) append(builder, myType);
-    if (myClassifier != null) append(builder, myClassifier);
+    if (!StringUtil.isEmptyOrSpaces(myType) && !MavenConstants.TYPE_JAR.equals(myType)) append(builder, myType);
+    if (!StringUtil.isEmptyOrSpaces(myClassifier)) append(builder, myClassifier);
 
-    String version = myBaseVersion != null ? myBaseVersion : myVersion;
-    if (version != null) append(builder, version);
+    String version = !StringUtil.isEmptyOrSpaces(myBaseVersion) ? myBaseVersion : myVersion;
+    if (!StringUtil.isEmptyOrSpaces(version)) append(builder, version);
 
     return builder.toString();
   }

@@ -179,13 +179,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     assertUnorderedElementsAreEqual(lib.getUrls(type), paths.toArray(new String[paths.size()]));
   }
 
-  protected void assertModuleLibDepClassesValidity(String moduleName, String depName, boolean areValid) {
-    LibraryOrderEntry lib = getModuleLibDep(moduleName, depName);
-
-    String jarUrl = lib.getUrls(OrderRootType.CLASSES)[0];
-    assertEquals(areValid, lib.getLibrary().isValid(jarUrl, OrderRootType.CLASSES));
-  }
-
   private LibraryOrderEntry getModuleLibDep(String moduleName, String depName) {
     LibraryOrderEntry lib = null;
 
@@ -194,7 +187,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
         lib = (LibraryOrderEntry)e;
       }
     }
-    assertNotNull("library dependency not found: " + depName, lib);
+    assertNotNull("library dependency not found: " + depName
+                  + "\namong: " + collectModuleDepsNames(moduleName, LibraryOrderEntry.class),
+                  lib);
     return lib;
   }
 
@@ -227,6 +222,10 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   private void assertModuleDeps(String moduleName, Class clazz, String... expectedDeps) {
+    assertOrderedElementsAreEqual(collectModuleDepsNames(moduleName, clazz), expectedDeps);
+  }
+
+  private List<String> collectModuleDepsNames(String moduleName, Class clazz) {
     List<String> actual = new ArrayList<String>();
 
     for (OrderEntry e : getRootManager(moduleName).getOrderEntries()) {
@@ -234,8 +233,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
         actual.add(e.getPresentableName());
       }
     }
-
-    assertOrderedElementsAreEqual(actual, expectedDeps);
+    return actual;
   }
 
   public void assertProjectLibraries(String... expectedNames) {
