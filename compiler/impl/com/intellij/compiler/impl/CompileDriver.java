@@ -931,8 +931,8 @@ public class CompileDriver {
                   for (Trinity<File, String, Boolean> trinity : toDelete) {
                     context.getProgressIndicator().checkCanceled();
                     final File file = trinity.getFirst();
-                    final boolean deleted = deleteFile(file);
-                    if (isTestMode && deleted) {
+                    deleteFile(file);
+                    if (isTestMode) {
                       CompilerManagerImpl.addDeletedPath(file.getPath());
                     }
                   }

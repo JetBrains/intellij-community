@@ -72,6 +72,7 @@ public class BackendCompilerWrapper {
   private final ProjectFileIndex myProjectFileIndex;
   @NonNls private static final String PACKAGE_ANNOTATION_FILE_NAME = "package-info.java";
   private static final FileObject myStopThreadToken = new FileObject(null,null);
+  private long myCompilationDuration = 0L;
 
   public BackendCompilerWrapper(@NotNull final Project project,
                                 @NotNull List<VirtualFile> filesToCompile,
@@ -129,6 +130,7 @@ public class BackendCompilerWrapper {
       throw new CompilerException(e.getMessage(), e);
     }
     finally {
+      CompilerUtil.logDuration(myCompiler.getId() + " running", myCompilationDuration);
       for (final VirtualFile file : myModuleToTempDirMap.values()) {
         if (file != null) {
           final File ioFile = new File(file.getPath());
@@ -395,6 +397,7 @@ public class BackendCompilerWrapper {
               if (!compilerConfiguration.isExcludedFromCompilation(file)) {
                 dependentFiles.add(file);
                 if (ApplicationManager.getApplication().isUnitTestMode()) {
+                  LOG.assertTrue(file.isValid());
                   CompilerManagerImpl.addRecompiledPath(file.getPath());
                 }
               }
@@ -409,6 +412,7 @@ public class BackendCompilerWrapper {
             if (!compilerConfiguration.isExcludedFromCompilation(file)) {
               dependentFiles.add(file);
               if (ApplicationManager.getApplication().isUnitTestMode()) {
+                LOG.assertTrue(file.isValid());
                 CompilerManagerImpl.addRecompiledPath(file.getPath());
               }
             }
@@ -491,6 +495,7 @@ public class BackendCompilerWrapper {
     int exitValue = 0;
     try {
       Process process = myCompiler.launchProcess(chunk, outputDir, myCompileContext);
+      final long compilationStart = System.currentTimeMillis();
       final ClassParsingThread classParsingThread = new ClassParsingThread(chunk,isJdk6(chunk.getJdk()), outputDir);
       final Future<?> classParsingThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(classParsingThread);
 
@@ -522,6 +527,7 @@ public class BackendCompilerWrapper {
         exitValue = process.exitValue();
       }
       finally {
+        myCompilationDuration += (System.currentTimeMillis() - compilationStart);
         if (errorParsingThread != null) {
           errorParsingThread.setProcessTerminated(true);
         }
