@@ -35,6 +35,10 @@ public abstract class SimpleProjectComponent implements ProjectComponent {
     return !isUnitTestMode() && !isHeadless() && !isDefault();
   }
 
+  protected boolean isNoBackgroundMode() {
+    return MavenUtil.isNoBackgroundMode();
+  }
+
   protected boolean isUnitTestMode() {
     return ApplicationManager.getApplication().isUnitTestMode();
   }

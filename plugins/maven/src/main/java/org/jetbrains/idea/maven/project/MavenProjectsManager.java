@@ -240,7 +240,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     myWatcher = new MavenProjectsManagerWatcher(myProject, myProjectsTree, getGeneralSettings(), myReadingProcessor, myEmbeddersManager);
 
     myImportingQueue = new MavenMergingUpdateQueue(getComponentName() + ": Importing queue", IMPORT_DELAY, !isUnitTestMode(), myProject);
-    myImportingQueue.setPassThrough(false); // by default in unit-test mode it executes request right-away
+    myImportingQueue.setPassThrough(false);
 
     myImportingQueue.makeUserAware(myProject);
     myImportingQueue.makeDumbAware(myProject);
@@ -617,7 +617,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   private void runWhenFullyOpen(final Runnable runnable) {
-    if (isUnitTestMode()) {
+    if (isNoBackgroundMode()) {
       runnable.run();
       return;
     }
@@ -633,7 +633,6 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
           });
           return;
         }
-        //MavenUtil.runDumbAware(myProject, runnable);
         runnable.run();
       }
     });

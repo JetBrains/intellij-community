@@ -42,8 +42,7 @@ public class MavenUtil {
   }
 
   public static void invokeInDispatchThread(final Project p, final ModalityState state, final Runnable r) {
-    if (ApplicationManager.getApplication().isUnitTestMode()
-        || ApplicationManager.getApplication().isDispatchThread()) {
+    if (isNoBackgroundMode()) {
       r.run();
     }
     else {
@@ -57,8 +56,7 @@ public class MavenUtil {
   }
 
   public static void invokeAndWait(final Project p, final ModalityState state, final Runnable r) {
-    if (ApplicationManager.getApplication().isUnitTestMode()
-        || ApplicationManager.getApplication().isDispatchThread()) {
+    if (isNoBackgroundMode()) {
       r.run();
     }
     else {
@@ -86,7 +84,7 @@ public class MavenUtil {
   }
 
   public static void runWhenInitialized(final Project project, final Runnable r) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (isNoBackgroundMode()) {
       r.run();
       return;
     }
@@ -99,8 +97,13 @@ public class MavenUtil {
     runDumbAware(project, r);
   }
 
+  public static boolean isNoBackgroundMode() {
+    return ApplicationManager.getApplication().isUnitTestMode()
+           || ApplicationManager.getApplication().isHeadlessEnvironment();
+  }
+
   public static boolean isInModalContext() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return false;
+    if (isNoBackgroundMode()) return false;
     return LaterInvocator.isInModalContext();
   }
 
@@ -288,7 +291,7 @@ public class MavenUtil {
       }
     };
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (isNoBackgroundMode()) {
       runnable.run();
       return new MavenTaskHandler(indicator) {
         public void waitFor() {

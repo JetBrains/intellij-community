@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
@@ -37,7 +36,7 @@ public class MavenProjectsProcessor {
       }
     }, getClass().getSimpleName() + ": " + title);
 
-    if (isUnitTestMode()) return;
+    if (isImmediateMode()) return;
 
     isStopped = false;
     myThread.start(); // rework if make inheritance
@@ -61,7 +60,7 @@ public class MavenProjectsProcessor {
   public void waitForCompletion() {
     if (isEmpty()) return;
 
-    if (isUnitTestMode()) {
+    if (isImmediateMode()) {
       while (!isEmpty() && doRunCycle()) {/* do nothing */}
       return;
     }
@@ -94,7 +93,7 @@ public class MavenProjectsProcessor {
   }
 
   public void cancelAndStop() {
-    if (isUnitTestMode()) return;
+    if (isImmediateMode()) return;
 
     try {
       isStopped = true;
@@ -168,7 +167,7 @@ public class MavenProjectsProcessor {
     return !isStopped;
   }
 
-  private boolean isUnitTestMode() {
-    return ApplicationManager.getApplication().isUnitTestMode();
+  private boolean isImmediateMode() {
+    return MavenUtil.isNoBackgroundMode();
   }
 }
