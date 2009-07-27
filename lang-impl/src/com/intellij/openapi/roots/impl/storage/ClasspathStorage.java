@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.MessageBus;
@@ -42,6 +43,7 @@ import java.util.*;
  * Time: 1:42:06 PM
  */
 public class ClasspathStorage implements StateStorage {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.storage.ClasspathStorage");
 
   @NonNls public static final String DEFAULT_STORAGE = "default";
   @NonNls public static final String SPECIAL_STORAGE = "special";
@@ -212,8 +214,11 @@ public class ClasspathStorage implements StateStorage {
   }
 
   public void finishSave(final SaveSession saveSession) {
-    assert mySession == saveSession;
-    mySession = null;
+    try {
+      LOG.assertTrue(mySession == saveSession);
+    } finally {
+      mySession = null;
+    }
   }
 
   public void reload(final Set<String> changedComponents) throws StateStorageException {

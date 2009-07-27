@@ -188,8 +188,11 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   }
 
   public void finishSave(final SaveSession saveSession) {
-    assert mySession == saveSession;
-    mySession = null;
+    try {
+      LOG.assertTrue(mySession == saveSession);
+    } finally {
+      mySession = null;
+    }
   }
 
   public void reload(final Set<String> changedComponents) throws StateStorageException {

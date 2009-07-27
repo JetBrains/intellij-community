@@ -42,6 +42,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected final String myFileSpec;
   private final ComponentRoamingManager myComponentRoamingManager;
   protected final boolean myIsProjectSettings;
+  protected final boolean myDoNotReportUsedMacroses;
   protected boolean myBlockSavingTheContent = false;
   protected Integer myUpToDateHash;
   protected Integer myProviderUpToDateHash;
@@ -74,6 +75,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     myComponentRoamingManager = componentRoamingManager;
     Disposer.register(parentDisposable, this);
     myIsProjectSettings = "$PROJECT_FILE$".equals(myFileSpec) || myFileSpec.startsWith("$PROJECT_CONFIG_DIR$");
+    myDoNotReportUsedMacroses = "$WORKSPACE_FILE$".equals(myFileSpec);
 
     myLocalVersionProvider = localComponentVersionsProvider;
 
@@ -264,8 +266,11 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected abstract MySaveSession createSaveSession(final MyExternalizationSession externalizationSession);
 
   public void finishSave(final SaveSession saveSession) {
-    assert mySession == saveSession;
-    mySession = null;
+    try {
+      LOG.assertTrue(mySession == saveSession, "mySession=" + mySession + " saveSession=" + saveSession);
+    } finally {
+      mySession = null;
+    }
   }
 
   public void disableSaving() {
@@ -475,7 +480,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       assert mySession == this;
 
       if (myUsedMacros == null) {
-        if (myPathMacroSubstitutor != null) {
+        if (!myDoNotReportUsedMacroses && myPathMacroSubstitutor != null) {
           myPathMacroSubstitutor.reset();
           final Map<String, Element> states = myStorageData.myComponentStates;
 

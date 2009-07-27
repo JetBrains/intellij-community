@@ -48,10 +48,18 @@ public class CompoundSaveSession {
   }
 
   public void finishSave() {
+    RuntimeException re = null;
     for (StateStorage stateStorage : mySaveSessions.keySet()) {
       final StateStorage.SaveSession saveSession = mySaveSessions.get(stateStorage);
+      try {
+        stateStorage.finishSave(saveSession);
+      } catch(RuntimeException t) {
+        re = t;
+      }
+    }
 
-      stateStorage.finishSave(saveSession);
+    if (re != null) {
+      throw re;
     }
   }
 

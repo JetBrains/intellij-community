@@ -400,12 +400,10 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   public void finishSave(final SaveSession saveSession) {
     try {
       assert mySession == saveSession: "mySession=" + mySession + " saveSession=" + saveSession;
-
       ((MySaveSession)saveSession).finishSave();
-
-      mySession = null;
     }
     finally {
+      mySession = null;
       save();
     }
   }
@@ -490,8 +488,11 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     public void finishSave() {
-      assert mySession == this;
-      myCompoundSaveSession.finishSave();
+      try {
+        LOG.assertTrue(mySession == this);
+      } finally {
+        myCompoundSaveSession.finishSave();
+      }
     }
 
     //returns set of component which were changed, null if changes are much more than just component state.
