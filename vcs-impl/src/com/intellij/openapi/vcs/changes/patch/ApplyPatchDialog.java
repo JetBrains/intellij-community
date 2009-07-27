@@ -4,6 +4,9 @@
 
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,8 +43,8 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -156,6 +159,13 @@ public class ApplyPatchDialog extends DialogWrapper {
         }
       }
     });
+
+    new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        showDiff();
+      }
+    }.registerCustomShortcutSet(CommonShortcuts.getDiff(), myRootPanel, myDisposable);
   }
 
   private void showDiff() {
@@ -224,10 +234,8 @@ public class ApplyPatchDialog extends DialogWrapper {
         return;
       }
     }
-    if (changes.size() > 0) {
-      ShowDiffAction.showDiffForChange(changes.toArray(new Change[changes.size()]), 0, myProject,
-                                       ShowDiffAction.DiffExtendUIFactory.NONE, false);
-    }
+    ShowDiffAction.showDiffForChange(changes.toArray(new Change[changes.size()]), 0, myProject,
+                                     ShowDiffAction.DiffExtendUIFactory.NONE, false);
   }
 
   @Nullable
