@@ -249,6 +249,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       }
     }
     myDeletedProfiles.clear();
+    myPanels.clear();
   }
 
   protected void deleteProfile(String name) {
