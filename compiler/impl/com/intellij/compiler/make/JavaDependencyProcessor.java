@@ -18,6 +18,7 @@ import com.intellij.util.cls.ClsUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectIterator;
+import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -26,6 +27,8 @@ class JavaDependencyProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.JavaDependencyProcessor");
   private final DependencyCache myDependencyCache;
   private final int myQName;
+  private final Map<Dependency.MethodRef, MethodInfo> myRefToMethodMap = new HashMap<Dependency.MethodRef, MethodInfo>();
+  private final Map<Dependency.FieldRef, FieldInfo> myRefToFieldMap = new HashMap<Dependency.FieldRef, FieldInfo>();
   private final Set<MemberInfo> myAddedMembers = new HashSet<MemberInfo>();
   private final Set<MemberInfo> myRemovedMembers = new HashSet<MemberInfo>();
   private final Set<MemberInfo> myChangedMembers = new HashSet<MemberInfo>();
@@ -51,13 +54,23 @@ class JavaDependencyProcessor {
     final Cache cache = dependencyCache.getCache();
     final Cache newClassesCache = dependencyCache.getNewClassesCache();
 
-    final TIntObjectHashMap<FieldInfo> oldFields = getFieldInfos(cache, qName);
-    final Map<String, MethodInfoContainer> oldMethods = getMethodInfos(cache, qName);
-    final TIntObjectHashMap<FieldInfo> newFields = getFieldInfos(newClassesCache, qName);
-    final Map<String, MethodInfoContainer> newMethods = getMethodInfos(newClassesCache, qName);
-    addAddedMembers(oldFields, oldMethods, newFields, newMethods, myAddedMembers);
-    addRemovedMembers(oldFields, oldMethods, newFields, newMethods, myRemovedMembers);
-    addChangedMembers(oldFields, oldMethods, newFields, newMethods, myChangedMembers);
+    final MethodInfo[] oldMethods = cache.getMethods(qName);
+    for (MethodInfo method : oldMethods) {
+      myRefToMethodMap.put(new Dependency.MethodRef(method.getName(), method.getDescriptor()), method);
+    }
+    final TIntObjectHashMap<FieldInfo> oldFieldsMap = getFieldInfos(cache, qName);
+    oldFieldsMap.forEachEntry(new TIntObjectProcedure<FieldInfo>() {
+      public boolean execute(int fieldName, FieldInfo fieldInfo) {
+        myRefToFieldMap.put(new Dependency.FieldRef(fieldName), fieldInfo);
+        return true;
+      }
+    });
+    final Map<String, MethodInfoContainer> oldMethodsMap = getMethodInfos(oldMethods);
+    final Map<String, MethodInfoContainer> newMethodsMap = getMethodInfos(newClassesCache.getMethods(qName));
+    final TIntObjectHashMap<FieldInfo> newFieldsMap = getFieldInfos(newClassesCache, qName);
+    addAddedMembers(oldFieldsMap, oldMethodsMap, newFieldsMap, newMethodsMap, myAddedMembers);
+    addRemovedMembers(oldFieldsMap, oldMethodsMap, newFieldsMap, newMethodsMap, myRemovedMembers);
+    addChangedMembers(oldFieldsMap, oldMethodsMap, newFieldsMap, newMethodsMap, myChangedMembers);
 
     myMembersChanged = !myAddedMembers.isEmpty() || !myRemovedMembers.isEmpty() || !myChangedMembers.isEmpty();
     // track changes in super list
@@ -246,7 +259,7 @@ class JavaDependencyProcessor {
           }
           continue;
         }
-        MethodInfo[] usedMethods = backDependency.getUsedMethods();
+        Collection<Dependency.MethodRef> usedMethods = backDependency.getMethodRefs();
         if (isDependentOnEquivalentMethods(usedMethods, extractMethods(myRemovedMembers, true))) {
           if (myDependencyCache.markTargetClassInfo(backDependency)) {
             if (LOG.isDebugEnabled()) {
@@ -482,9 +495,12 @@ class JavaDependencyProcessor {
   }
 
   private boolean processClassBecameAbstract(Dependency dependency) throws CacheCorruptedException {
-    MemberInfo[] usedMembers = dependency.getUsedMembers();
-    for (MemberInfo usedMember : usedMembers) {
-      if (usedMember instanceof MethodInfo && ((MethodInfo)usedMember).isConstructor()) {
+    for (Dependency.MethodRef ref : dependency.getMethodRefs()) {
+      final MethodInfo usedMethod = myRefToMethodMap.get(ref);
+      if (usedMethod == null) {
+        continue;
+      }
+      if (usedMethod.isConstructor()) {
         if (myDependencyCache.markTargetClassInfo(dependency)) {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Mark dependent class " + myDependencyCache.resolve(dependency.getClassQualifiedName()) + "; reason: " +
@@ -498,9 +514,13 @@ class JavaDependencyProcessor {
   }
 
   private boolean isDependentOnRemovedMembers(Dependency dependency) {
-    MemberInfo[] usedMembers = dependency.getUsedMembers();
-    for (MemberInfo usedMember : usedMembers) {
-      if (myRemovedMembers.contains(usedMember)) {
+    for (Dependency.MethodRef ref : dependency.getMethodRefs()) {
+      if (myRemovedMembers.contains(myRefToMethodMap.get(ref))) {
+        return true;
+      }
+    }
+    for (Dependency.FieldRef ref : dependency.getFieldRefs()) {
+      if (myRemovedMembers.contains(myRefToFieldMap.get(ref))) {
         return true;
       }
     }
@@ -508,32 +528,37 @@ class JavaDependencyProcessor {
   }
 
   private boolean isDependentOnChangedMembers(Dependency dependency) {
-    final MemberInfo[] usedMembers = dependency.getUsedMembers();
-    for (final MemberInfo usedMember : usedMembers) {
-      if (myChangedMembers.contains(usedMember)) {
-        if (usedMember instanceof MethodInfo) {
-          final MethodChangeDescription changeDescription = (MethodChangeDescription)myChangeDescriptions.get(usedMember);
-          if (changeDescription.returnTypeDescriptorChanged ||
-              changeDescription.returnTypeGenericSignatureChanged ||
-              changeDescription.paramsGenericSignatureChanged ||
-              changeDescription.throwsListChanged ||
-              changeDescription.staticPropertyChanged ||
-              changeDescription.accessRestricted) {
-            return true;
-          }
-        }
-        else { // FieldInfo
+    for (Dependency.FieldRef ref : dependency.getFieldRefs()) {
+      final FieldInfo fieldInfo = myRefToFieldMap.get(ref);
+      if (myChangedMembers.contains(fieldInfo)) {
+        return true;
+      }
+    }
+
+    for (Dependency.MethodRef ref : dependency.getMethodRefs()) {
+      final MethodInfo methodInfo = myRefToMethodMap.get(ref);
+      if (myChangedMembers.contains(methodInfo)) {
+        final MethodChangeDescription changeDescription = (MethodChangeDescription)myChangeDescriptions.get(methodInfo);
+        if (changeDescription.returnTypeDescriptorChanged ||
+            changeDescription.returnTypeGenericSignatureChanged ||
+            changeDescription.paramsGenericSignatureChanged ||
+            changeDescription.throwsListChanged ||
+            changeDescription.staticPropertyChanged ||
+            changeDescription.accessRestricted) {
           return true;
         }
       }
     }
+
     return false;
   }
 
-  private boolean isDependentOnEquivalentMethods(MethodInfo[] checkedMembers, Set<MethodInfo> members) throws CacheCorruptedException {
+  private boolean isDependentOnEquivalentMethods(Collection<Dependency.MethodRef> checkedMembers, Set<MethodInfo> members) throws CacheCorruptedException {
     // check if 'members' contains method with the same name and the same numbers of parameters, but with different types
-    if (members.isEmpty()) return false; // optimization
-    for (MethodInfo checkedMethod : checkedMembers) {
+    if (checkedMembers.isEmpty() || members.isEmpty()) {
+      return false; // optimization
+    }
+    for (Dependency.MethodRef checkedMethod : checkedMembers) {
       if (hasEquivalentMethod(members, checkedMethod)) {
         return true;
       }
@@ -542,10 +567,10 @@ class JavaDependencyProcessor {
   }
 
   private void markUseDependenciesOnEquivalentMethods(final int checkedInfoQName, Set<MethodInfo> methodsToCheck, int methodsClassName) throws CacheCorruptedException {
-    final Dependency[] backDependencies = myDependencyCache.getCache().getBackDependencies(checkedInfoQName, Cache.DEPENDENCIES_ON_METHODS);
+    final Dependency[] backDependencies = myDependencyCache.getCache().getBackDependencies(checkedInfoQName);
     for (Dependency dependency : backDependencies) {
       if (myDependencyCache.isTargetClassInfoMarked(dependency)) continue;
-      if (isDependentOnEquivalentMethods(dependency.getUsedMethods(), methodsToCheck)) {
+      if (isDependentOnEquivalentMethods(dependency.getMethodRefs(), methodsToCheck)) {
         if (myDependencyCache.markTargetClassInfo(dependency)) {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Mark dependent class " + myDependencyCache.resolve(dependency.getClassQualifiedName()) +
@@ -559,11 +584,11 @@ class JavaDependencyProcessor {
 
   private void markUseDependenciesOnFields(final int classQName, TIntHashSet fieldNames) throws CacheCorruptedException {
     final Cache oldCache = myDependencyCache.getCache();
-    final Dependency[] backDependencies = oldCache.getBackDependencies(classQName, Cache.DEPENDENCIES_ON_FIELDS);
+    final Dependency[] backDependencies = oldCache.getBackDependencies(classQName);
     for (Dependency useDependency : backDependencies) {
       if (!myDependencyCache.isTargetClassInfoMarked(useDependency)) {
-        for (FieldInfo field : useDependency.getUsedFields()) {
-          if (fieldNames.contains(field.getName())) {
+        for (Dependency.FieldRef field : useDependency.getFieldRefs()) {
+          if (fieldNames.contains(field.name)) {
             if (myDependencyCache.markTargetClassInfo(useDependency)) {
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Mark dependent class " + myDependencyCache.resolve(useDependency.getClassQualifiedName()) +
@@ -1000,10 +1025,10 @@ class JavaDependencyProcessor {
   }
 
   /** @return a map [methodSignature->MethodInfo]*/
-  private Map<String, MethodInfoContainer> getMethodInfos(Cache cache, int qName) throws CacheCorruptedException {
+  private Map<String, MethodInfoContainer> getMethodInfos(final MethodInfo[] methods) throws CacheCorruptedException {
     final Map<String, MethodInfoContainer> map = new HashMap<String, MethodInfoContainer>();
     final SymbolTable symbolTable = myDependencyCache.getSymbolTable();
-    for (MethodInfo methodInfo : cache.getMethods(qName)) {
+    for (MethodInfo methodInfo : methods) {
       final String signature = methodInfo.getDescriptor(symbolTable);
       final MethodInfoContainer currentValue = map.get(signature);
       // covariant methods have the same signature, so there might be several MethodInfos for one key
@@ -1109,10 +1134,10 @@ class JavaDependencyProcessor {
     }
   }
 
-  private boolean hasEquivalentMethod(Collection<MethodInfo> members, MethodInfo modelMethod) throws CacheCorruptedException {
+  private boolean hasEquivalentMethod(Collection<MethodInfo> members, Dependency.MethodRef modelMethod) throws CacheCorruptedException {
     final String[] modelSignature = modelMethod.getParameterDescriptors(myDependencyCache.getSymbolTable());
     for (final MethodInfo method : members) {
-      if (modelMethod.getName() != method.getName()) {
+      if (modelMethod.name != method.getName()) {
         continue;
       }
       final String[] methodSignature = method.getParameterDescriptors(myDependencyCache.getSymbolTable());

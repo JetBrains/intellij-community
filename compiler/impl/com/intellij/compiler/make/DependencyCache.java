@@ -157,14 +157,6 @@ public class DependencyCache {
           continue;
         }
         cache.removeClassReferencer(referencedClassQName, qName);
-
-        for (FieldInfo fieldId : cache.getFields(referencedClassQName)) {
-          cache.removeFieldReferencer(referencedClassQName, fieldId.getName(), qName);
-        }
-
-        for (MethodInfo methodId : cache.getMethods(referencedClassQName)) {
-          cache.removeMethodReferencer(referencedClassQName, methodId.getName(), methodId.getDescriptor(), qName);
-        }
       }
       cache.clearReferencedClasses(qName);
       // process inheritance dependencies

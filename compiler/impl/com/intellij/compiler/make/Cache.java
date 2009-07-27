@@ -8,8 +8,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentHashMap;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,9 +27,8 @@ public class Cache {
   public static final int UNKNOWN = -1;
 
   private final PersistentHashMap<StorageClassId, ClassInfo> myQNameToClassInfoMap;
-  private final CompilerDependencyStorage<StorageClassId> myQNameToReferencersMap;
-  private final CompilerDependencyStorage<StorageFieldId> myQNameToFieldReferencersMap;
-  private final CompilerDependencyStorage<StorageMethodId> myQNameToMethodReferencersMap;
+
+  private final BackwardDependenciesStorage myDependencies;
   private final CompilerDependencyStorage<StorageClassId> myQNameToReferencedClassesMap;
   private final CompilerDependencyStorage<StorageClassId> myQNameToSubclassesMap;
   private final PersistentHashMap<StorageClassId, Boolean> myRemoteQNames;
@@ -47,11 +44,13 @@ public class Cache {
       public ClassInfo read(DataInput in) throws IOException {
         return new ClassInfo(in);
       }
-    }, cacheSize * 2);
+    }, cacheSize * 2) {
+      protected boolean isValueDirty(ClassInfo classInfo) {
+        return classInfo.isDirty();
+      }
+    };
 
-    myQNameToReferencersMap = new CompilerDependencyStorage<StorageClassId>(getOrCreateFile("bdeps"), ClassIdKeyDescriptor.INSTANCE, cacheSize);
-    myQNameToFieldReferencersMap = new CompilerDependencyStorage<StorageFieldId>(getOrCreateFile("bdeps_fields"), FieldIdKeyDescriptor.INSTANCE, cacheSize);
-    myQNameToMethodReferencersMap = new CompilerDependencyStorage<StorageMethodId>(getOrCreateFile("bdeps_methods"), MethodIdKeyDescriptor.INSTANCE, cacheSize);
+    myDependencies = new BackwardDependenciesStorage(getOrCreateFile("bdeps"), cacheSize);
     myQNameToReferencedClassesMap = new CompilerDependencyStorage<StorageClassId>(getOrCreateFile("fdeps"), ClassIdKeyDescriptor.INSTANCE, cacheSize);
     myQNameToSubclassesMap = new CompilerDependencyStorage<StorageClassId>(getOrCreateFile("subclasses"), ClassIdKeyDescriptor.INSTANCE, cacheSize);
 
@@ -92,9 +91,7 @@ public class Cache {
     }
 
     myQNameToReferencedClassesMap.dispose();
-    myQNameToReferencersMap.dispose();
-    myQNameToFieldReferencersMap.dispose();
-    myQNameToMethodReferencersMap.dispose();
+    myDependencies.dispose();
     myQNameToSubclassesMap.dispose();
 
     if (ex != null) {
@@ -421,9 +418,11 @@ public class Cache {
 
   public void addClassReferencer(int qName, int referencerQName) throws CacheCorruptedException {
     try {
-      final StorageClassId classId = new StorageClassId(qName);
-      if (myQNameToClassInfoMap.containsMapping(classId)) {
-        myQNameToReferencersMap.addValue(classId, referencerQName);
+      if (qName == referencerQName) {
+        return; // do not log self-dependencies
+      }
+      if (myQNameToClassInfoMap.containsMapping(new StorageClassId(qName))) {
+        myDependencies.addClassReferencer(qName, referencerQName);
         myQNameToReferencedClassesMap.addValue(new StorageClassId(referencerQName), qName);
       }
     }
@@ -432,9 +431,9 @@ public class Cache {
     }
   }
 
-  public void removeClassReferencer(int classDeclarationId, int referencerQName) throws CacheCorruptedException {
+  public void removeClassReferencer(int qName, int referencerQName) throws CacheCorruptedException {
     try {
-      myQNameToReferencersMap.removeValue(new StorageClassId(classDeclarationId), referencerQName);
+      myDependencies.removeReferencer(qName, referencerQName);
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
@@ -443,19 +442,10 @@ public class Cache {
 
   public void addFieldReferencer(int qName, int fieldName, int referencerQName) throws CacheCorruptedException {
     try {
-      if (myQNameToClassInfoMap.containsMapping(new StorageClassId(qName))) {
-        myQNameToFieldReferencersMap.addValue(new StorageFieldId(qName, fieldName), referencerQName);
+      if (qName != referencerQName && myQNameToClassInfoMap.containsMapping(new StorageClassId(qName))) {
+        myDependencies.addFieldReferencer(qName, referencerQName, fieldName);
         myQNameToReferencedClassesMap.addValue(new StorageClassId(referencerQName), qName);
       }
-    }
-    catch (Throwable e) {
-      throw new CacheCorruptedException(e);
-    }
-  }
-
-  public void removeFieldReferencer(int classQName, int fieldName, int referencerQName) throws CacheCorruptedException {
-    try {
-      myQNameToFieldReferencersMap.removeValue(new StorageFieldId(classQName, fieldName), referencerQName);
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
@@ -464,8 +454,8 @@ public class Cache {
 
   public void addMethodReferencer(int qName, int methodName, int methodDescriptor, int referencerQName) throws CacheCorruptedException {
     try {
-      if (myQNameToClassInfoMap.containsMapping(new StorageClassId(qName))) {
-        myQNameToMethodReferencersMap.addValue(new StorageMethodId(qName, methodName, methodDescriptor), referencerQName);
+      if (qName != referencerQName && myQNameToClassInfoMap.containsMapping(new StorageClassId(qName))) {
+        myDependencies.addMethodReferencer(qName, referencerQName, methodName, methodDescriptor);
         myQNameToReferencedClassesMap.addValue(new StorageClassId(referencerQName), qName);
       }
     }
@@ -474,114 +464,13 @@ public class Cache {
     }
   }
 
-  public void removeMethodReferencer(int classQName, int methodName, int methodDescriptor, int referencerQName) throws CacheCorruptedException {
-    try {
-      myQNameToMethodReferencersMap.removeValue(new StorageMethodId(classQName, methodName, methodDescriptor), referencerQName);
-    }
-    catch (Throwable e) {
-      throw new CacheCorruptedException(e);
-    }
-  }
-
   /** @NotNull */
   public Dependency[] getBackDependencies(final int classQName) throws CacheCorruptedException{
-    return getBackDependencies(classQName, ALL_DEPENDENCIES);
-  }
-
-  public static final byte DEPENDENCIES_ON_CLASSES = 0x1;
-  public static final byte DEPENDENCIES_ON_FIELDS = 0x2;
-  public static final byte DEPENDENCIES_ON_METHODS = 0x4;
-  public static final byte ALL_DEPENDENCIES = DEPENDENCIES_ON_CLASSES | DEPENDENCIES_ON_FIELDS | DEPENDENCIES_ON_METHODS;
-
-  /** @NotNull */
-  public Dependency[] getBackDependencies(int classQName, byte dependencyKindMask) throws CacheCorruptedException {
-    try {
-      final TIntObjectHashMap<Dependency> dependencies = new TIntObjectHashMap<Dependency>();
-      if ((dependencyKindMask & DEPENDENCIES_ON_CLASSES) != 0) {
-        for (final int referencer : getClassReferencers(classQName)) {
-          if (referencer != classQName) { // skip self-dependencies
-            addDependency(dependencies, referencer);
-          }
-        }
-      }
-
-      if ((dependencyKindMask & DEPENDENCIES_ON_FIELDS) != 0) {
-        for (final FieldInfo field : getFields(classQName)) {
-          for (int referencer : getFieldReferencers(classQName, field.getName())) {
-            if (referencer != classQName) { // skip self-dependencies
-              final Dependency dependency = addDependency(dependencies, referencer);
-              dependency.addMemberInfo(field);
-            }
-          }
-        }
-      }
-
-      if ((dependencyKindMask & DEPENDENCIES_ON_METHODS) != 0) {
-        for (final MethodInfo methodId : getMethods(classQName)) {
-          for (int referencer : getMethodReferencers(classQName, methodId.getName(), methodId.getDescriptor())) {
-            if (referencer != classQName) {
-              final Dependency dependency = addDependency(dependencies, referencer);
-              dependency.addMemberInfo(methodId);
-            }
-          }
-        }
-      }
-
-      final Dependency[] dependencyArray = new Dependency[dependencies.size()];
-      dependencies.forEachValue(new TObjectProcedure<Dependency>() {
-        private int index = 0;
-        public boolean execute(Dependency object) {
-          dependencyArray[index++] = object;
-          return true;
-        }
-      });
-      return dependencyArray;
-    }
-    catch (Throwable e) {
-      throw new CacheCorruptedException(e);
-    }
-  }
-
-  private static Dependency addDependency(TIntObjectHashMap<Dependency> container, int classQName) {
-    Dependency dependency = container.get(classQName);
-    if (dependency == null) {
-      dependency = new Dependency(classQName);
-      container.put(classQName, dependency);
-    }
-    return dependency;
-  }
-
-  public int[] getFieldReferencers(int classQName, int fieldName) throws CacheCorruptedException {
-    try {
-      return myQNameToFieldReferencersMap.getValues(new StorageFieldId(classQName, fieldName));
-    }
-    catch (Throwable e) {
-      throw new CacheCorruptedException(e);
-    }
-  }
-
-  public int[] getMethodReferencers(int classQName, int methodName, int methodDescriptor) throws CacheCorruptedException {
-    try {
-      return myQNameToMethodReferencersMap.getValues(new StorageMethodId(classQName, methodName, methodDescriptor));
-    }
-    catch (Throwable e) {
-      throw new CacheCorruptedException(e);
-    }
-  }
-
-  public int[] getClassReferencers(int qName) throws CacheCorruptedException {
-    try {
-      return myQNameToReferencersMap.getValues(new StorageClassId(qName));
-    }
-    catch (Throwable e) {
-      throw new CacheCorruptedException(e);
-    }
+    return myDependencies.getDependencies(classQName);
   }
 
   public void wipe() {
-    myQNameToReferencersMap.dispose();
-    myQNameToFieldReferencersMap.dispose();
-    myQNameToMethodReferencersMap.dispose();
+    myDependencies.dispose();
     myQNameToReferencedClassesMap.dispose();
     myQNameToSubclassesMap.dispose();
     try {
@@ -613,17 +502,7 @@ public class Cache {
       if (classInfo == null) {
         return;
       }
-
-      for (FieldInfo fieldInfo : classInfo.getFields()) {
-        myQNameToFieldReferencersMap.remove(new StorageFieldId(qName, fieldInfo.getName()));
-      }
-
-      for (MethodInfo methodInfo : classInfo.getMethods()) {
-        myQNameToMethodReferencersMap.remove(new StorageMethodId(qName, methodInfo.getName(), methodInfo.getDescriptor()));
-      }
-
-      myQNameToReferencersMap.remove(classId);
-      
+      myDependencies.remove(qName);
       myQNameToClassInfoMap.remove(classId);
       myQNameToReferencedClassesMap.remove(classId);
       myQNameToSubclassesMap.remove(classId);

@@ -145,12 +145,14 @@ public class BackendCompilerWrapper {
     }
 
     // do not update caches if cancelled because there is a chance that they will be incomplete
-    CompilerUtil.runInContext(myCompileContext, CompilerBundle.message("progress.updating.caches"), new ThrowableRunnable<CacheCorruptedException>(){
-      public void run() throws CacheCorruptedException {
-        ProgressIndicator indicator = myCompileContext.getProgressIndicator();
-        myCompileContext.getDependencyCache().update(indicator);
-      }
-    });
+    if (CompilerConfiguration.MAKE_ENABLED) {
+      CompilerUtil.runInContext(myCompileContext, CompilerBundle.message("progress.updating.caches"), new ThrowableRunnable<CacheCorruptedException>(){
+        public void run() throws CacheCorruptedException {
+          ProgressIndicator indicator = myCompileContext.getProgressIndicator();
+          myCompileContext.getDependencyCache().update(indicator);
+        }
+      });
+    }
 
     myFilesToRecompile.removeAll(mySuccesfullyCompiledJavaFiles);
     if (myCompileContext.getMessageCount(CompilerMessageCategory.ERROR) != 0) {
@@ -356,6 +358,9 @@ public class BackendCompilerWrapper {
   private final Set<VirtualFile> myProcessedFiles = new HashSet<VirtualFile>();
 
   private Collection<VirtualFile> findDependentFiles() throws CacheCorruptedException {
+    if (!CompilerConfiguration.MAKE_ENABLED) {
+      return Collections.emptyList();
+    }
     myCompileContext.getProgressIndicator().setText(CompilerBundle.message("progress.checking.dependencies"));
 
     final DependencyCache dependencyCache = myCompileContext.getDependencyCache();
@@ -486,7 +491,7 @@ public class BackendCompilerWrapper {
     int exitValue = 0;
     try {
       Process process = myCompiler.launchProcess(chunk, outputDir, myCompileContext);
-      final ClassParsingThread classParsingThread = new ClassParsingThread(chunk,isJdk6(chunk.getJdk()));
+      final ClassParsingThread classParsingThread = new ClassParsingThread(chunk,isJdk6(chunk.getJdk()), outputDir);
       final Future<?> classParsingThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(classParsingThread);
 
       OutputParser errorParser = myCompiler.createErrorParser(outputDir, process);
@@ -791,7 +796,9 @@ public class BackendCompilerWrapper {
           final String realOutputDir = realLocation.getFirst();
           final String relativeOutputPath = new String(realLocation.getSecond().substring(realLocation.first.length() + 1));
           myOutputItems.add(new OutputItemImpl(myTrie, realOutputDir, relativeOutputPath, srcFile));
-          newCache.setPath(cc.qName, realLocation.getSecond());
+          if (CompilerConfiguration.MAKE_ENABLED) {
+            newCache.setPath(cc.qName, realLocation.getSecond());
+          }
           try {
             myCompileContext.updateZippedOuput(realOutputDir, relativeOutputPath);
           }
@@ -921,10 +928,12 @@ public class BackendCompilerWrapper {
     private final boolean myAddNotNullAssertions;
     private final ModuleChunk myChunk;
     private final boolean myIsJdk16;
+    private final String myOutputDir;
 
-    private ClassParsingThread(ModuleChunk chunk, final boolean isJdk16) {
+    private ClassParsingThread(ModuleChunk chunk, final boolean isJdk16, String outputDir) {
       myChunk = chunk;
       myIsJdk16 = isJdk16;
+      myOutputDir = FileUtil.toSystemIndependentName(outputDir);
       myAddNotNullAssertions = CompilerWorkspaceConfiguration.getInstance(myProject).ASSERT_NOT_NULL;
     }
 
@@ -961,39 +970,50 @@ public class BackendCompilerWrapper {
 
     private void processPath(FileObject fileObject) throws CacheCorruptedException {
       File file = fileObject.getFile();
-      byte[] fileContent = fileObject.getContent();
-      String path = file.getPath();
+      final String path = file.getPath();
       try {
-        // the file is assumed to exist!
-        final DependencyCache dependencyCache = myCompileContext.getDependencyCache();
-        final int newClassQName = dependencyCache.reparseClassFile(file, fileContent);
-        final Cache newClassesCache = dependencyCache.getNewClassesCache();
-        final String sourceFileName = newClassesCache.getSourceFileName(newClassQName);
-        final String qName = dependencyCache.resolve(newClassQName);
-        String relativePathToSource = "/" + MakeUtil.createRelativePathToSource(qName, sourceFileName);
-        putName(myChunk, sourceFileName, newClassQName, relativePathToSource, path);
-        boolean haveToInstrument = myAddNotNullAssertions && hasNotNullAnnotations(newClassesCache, dependencyCache.getSymbolTable(), newClassQName);
+        if (CompilerConfiguration.MAKE_ENABLED) {
+          byte[] fileContent = fileObject.getContent();
+          // the file is assumed to exist!
+          final DependencyCache dependencyCache = myCompileContext.getDependencyCache();
+          final int newClassQName = dependencyCache.reparseClassFile(file, fileContent);
+          final Cache newClassesCache = dependencyCache.getNewClassesCache();
+          final String sourceFileName = newClassesCache.getSourceFileName(newClassQName);
+          final String qName = dependencyCache.resolve(newClassQName);
+          String relativePathToSource = "/" + MakeUtil.createRelativePathToSource(qName, sourceFileName);
+          putName(myChunk, sourceFileName, newClassQName, relativePathToSource, path);
+          boolean haveToInstrument = myAddNotNullAssertions && hasNotNullAnnotations(newClassesCache, dependencyCache.getSymbolTable(), newClassQName);
 
-        boolean fileContentChanged = false;
-        if (haveToInstrument) {
-          try {
-            ClassReader reader = new ClassReader(fileContent, 0, fileContent.length);
-            ClassWriter writer = new PsiClassWriter(myProject, myIsJdk16);
+          boolean fileContentChanged = false;
+          if (haveToInstrument) {
+            try {
+              ClassReader reader = new ClassReader(fileContent, 0, fileContent.length);
+              ClassWriter writer = new PsiClassWriter(myProject, myIsJdk16);
 
-            final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
-            reader.accept(instrumenter, 0);
-            if (instrumenter.isModification()) {
-              fileContent = writer.toByteArray();
-              fileContentChanged = true;
+              final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
+              reader.accept(instrumenter, 0);
+              if (instrumenter.isModification()) {
+                fileContent = writer.toByteArray();
+                fileContentChanged = true;
+              }
+            }
+            catch (Exception ignored) {
+              LOG.info(ignored);
             }
           }
-          catch (Exception ignored) {
-            LOG.info(ignored);
+
+          if (fileContentChanged || !fileObject.isSaved()) {
+            writeFile(file, fileContent);
           }
         }
-
-        if (fileContentChanged || !fileObject.isSaved()) {
-          writeFile(file, fileContent);
+        else {
+          final String _path = FileUtil.toSystemIndependentName(path);
+          final int dollarIndex = _path.indexOf('$');
+          final int tailIndex = dollarIndex >=0 ? dollarIndex : _path.length() - ".class".length();
+          final int slashIndex = _path.lastIndexOf('/');
+          final String sourceFileName = _path.substring(slashIndex + 1, tailIndex) + ".java";
+          String relativePathToSource = _path.substring(myOutputDir.length(), tailIndex) + ".java";
+          putName(myChunk, sourceFileName, 0 /*doesn't matter here*/ , relativePathToSource.startsWith("/")? relativePathToSource : "/" + relativePathToSource, path);
         }
       }
       catch (ClsFormatException e) {

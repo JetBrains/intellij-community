@@ -20,6 +20,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public abstract class CompilerConfiguration {
+  // need this flag for profiling purposes. In production code is always set to 'true'
+  public static final boolean MAKE_ENABLED = true;
+
   public static CompilerConfiguration getInstance(Project project) {
     return project.getComponent(CompilerConfiguration.class);
   }

@@ -151,6 +151,9 @@ public final class ClassInfo implements Cloneable {
     MemberInfoExternalizer.writeConstantValueArray1(out, myRuntimeInvisibleAnnotations);
   }
 
+  public boolean isDirty() {
+    return myIsDirty;
+  }
 
   public int getQualifiedName() throws IOException {
     return myQualifiedName;

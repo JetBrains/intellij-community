@@ -1,6 +1,6 @@
 package com.intellij.compiler.make;
 
-import com.intellij.reference.SoftReference;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
@@ -15,11 +15,27 @@ import java.io.IOException;
  *         Date: Dec 1, 2008
  */
 public class CachedPersistentHashMap<Key, Value> extends PersistentHashMap<Key, Value> {
-  protected final SLRUMap<Key, SoftReference<Value>> myCache;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.CachedPersistentHashMap");
+  protected final SLRUMap<Key, Value> myCache;
 
   public CachedPersistentHashMap(File file, KeyDescriptor<Key> keyDescriptor, DataExternalizer<Value> valDescriptor, final int cacheSize) throws IOException {
     super(file, keyDescriptor, valDescriptor);
-    myCache = new SLRUMap<Key,SoftReference<Value>>(cacheSize * 2, cacheSize);
+    myCache = new SLRUMap<Key,Value>(cacheSize * 2, cacheSize) {
+      protected void onDropFromCache(Key key, Value value) {
+        if (isValueDirty(value)) {
+          try {
+            CachedPersistentHashMap.super.put(key, value);
+          }
+          catch (IOException e) {
+            LOG.info(e);
+          }
+        }
+      }
+    };
+  }
+
+  protected boolean isValueDirty(Value value) {
+    return false;
   }
 
   public synchronized void put(Key key, Value value) throws IOException {
@@ -34,20 +50,19 @@ public class CachedPersistentHashMap<Key, Value> extends PersistentHashMap<Key, 
 
   @Nullable
   public synchronized Value get(Key key) throws IOException {
-    final SoftReference<Value> ref = myCache.get(key);
-    Value value = ref == null? null : ref.get();
+    Value value = myCache.get(key);
     if (value == null) {
       value = super.get(key);
       if (value != null) {
-        myCache.put(key, new SoftReference<Value>(value));
+        myCache.put(key, value);
       }
     }
     return value;
   }
 
   public synchronized boolean containsMapping(Key key) throws IOException {
-    final SoftReference<Value> ref = myCache.get(key);
-    return (ref != null && ref.get() != null) || super.containsMapping(key);
+    final Value value = myCache.get(key);
+    return value != null || super.containsMapping(key);
   }
 
   public synchronized void remove(Key key) throws IOException {
