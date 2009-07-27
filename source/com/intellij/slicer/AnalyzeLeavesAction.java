@@ -11,7 +11,7 @@ public class AnalyzeLeavesAction extends ToggleAction {
   private final SliceTreeBuilder myTreeBuilder;
 
   public AnalyzeLeavesAction(SliceTreeBuilder treeBuilder) {
-    super("Group by leaf expression", "sdfsdfsdfsdf", Icons.XML_TAG_ICON);
+    super("Group by leaf expression", "Show original expressions that might appear in this place", Icons.XML_TAG_ICON);
     myTreeBuilder = treeBuilder;
   }
 
