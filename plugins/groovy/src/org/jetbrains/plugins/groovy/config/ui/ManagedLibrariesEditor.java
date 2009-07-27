@@ -21,6 +21,8 @@ import com.intellij.facet.ui.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
@@ -407,7 +409,11 @@ public class ManagedLibrariesEditor {
           }
           else if (selectedValue instanceof LibraryManager) {
             final LibraryManager manager = (LibraryManager)selectedValue;
-            final Library library = manager.createLibrary(myEditorContext);
+            final Library library = new WriteAction<Library>() {
+              protected void run(Result<Library> result) throws Throwable {
+                result.setResult(manager.createLibrary(myEditorContext));
+              }
+            }.execute().getResultObject();
             if (library != null) {
               addLibraryCheckingExistings(manager, library);
             }
