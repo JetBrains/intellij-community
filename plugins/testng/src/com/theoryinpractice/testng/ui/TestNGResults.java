@@ -328,7 +328,10 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
           selectTest(rootNode.getFirstDefect());
         }
         else {
-          tree.getSelectionModel().setSelectionPath(new TreePath(treeBuilder.getNodeForElement(rootNode)));
+          final DefaultMutableTreeNode node = treeBuilder.getNodeForElement(rootNode);
+          if (node != null) {
+            tree.getSelectionModel().setSelectionPath(new TreePath(node));
+          }
         }
         tree.repaint();
       }
