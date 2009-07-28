@@ -2,6 +2,7 @@ package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.FileIconProvider;
 import com.intellij.openapi.fileTypes.NativeFileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DeferredIconImpl;
@@ -21,7 +22,7 @@ public class NativeFileIconProvider implements FileIconProvider {
   private final Map<String, Icon> myIconCache = new HashMap<String, Icon>();
 
   public Icon getIcon(VirtualFile file, int flags, @Nullable Project project) {
-    if (!(file.getFileType() instanceof NativeFileType)) {
+    if (!(file.getFileType() instanceof NativeFileType) && !(file.getFileType() instanceof UnknownFileType)) {
       return null;
     }
     final String ext = file.getExtension();
