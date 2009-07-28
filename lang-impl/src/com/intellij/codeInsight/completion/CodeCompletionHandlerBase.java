@@ -445,7 +445,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   public static final Key<SoftReference<PsiFile>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
 
   protected PsiFile createFileCopy(PsiFile file) {
-    if (file.isPhysical()) {
+    if (file.isPhysical()
+        // must not cache injected file copy, since it does not reflect changes in host document
+        && !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
       final SoftReference<PsiFile> reference = file.getUserData(FILE_COPY_KEY);
       if (reference != null) {
         final PsiFile copy = reference.get();
