@@ -18,11 +18,9 @@ package org.jetbrains.groovy.compiler.rt;
 import com.yourkit.api.Controller;
 import com.yourkit.api.ProfilingModes;
 import groovy.lang.GroovyClassLoader;
-import org.codehaus.groovy.control.CompilationFailedException;
-import org.codehaus.groovy.control.CompilationUnit;
-import org.codehaus.groovy.control.CompilerConfiguration;
-import org.codehaus.groovy.control.Phases;
+import org.codehaus.groovy.control.*;
 import org.codehaus.groovy.control.messages.WarningMessage;
+import org.codehaus.groovy.tools.javac.JavaStubCompilationUnit;
 
 import java.io.*;
 import java.net.URLClassLoader;
@@ -39,6 +37,7 @@ public class GroovycRunner {
 
   public static final String CLASSPATH = "classpath";
   public static final String IS_GRAILS = "is_grails";
+  public static final String FOR_STUBS = "for_stubs";
   public static final String ENCODING = "encoding";
   public static final String OUTPUTPATH = "outputpath";
   public static final String TEST_OUTPUTPATH = "test_outputpath";
@@ -93,6 +92,7 @@ public class GroovycRunner {
       String moduleOutputPath = null;
       String moduleTestOutputPath = null;
       boolean isGrails = false;
+      boolean forStubs = false;
       String encoding = null;
 
       if (args.length != 1) {
@@ -144,6 +144,11 @@ public class GroovycRunner {
             isGrails = "true".equals(s);
           }
 
+          if (line.startsWith(FOR_STUBS)) {
+            String s = reader.readLine();
+            forStubs = "true".equals(s);
+          }
+
           if (line.startsWith(ENCODING)) {
             encoding = reader.readLine();
           }
@@ -185,10 +190,10 @@ public class GroovycRunner {
       final List compiledFiles = new ArrayList();
 
       System.out.println(PRESENTABLE_MESSAGE + "Groovy compiler: loading sources...");
-      createCompilationUnits(srcFiles, class2File, moduleClasspath, moduleOutputPath, isGrails, encoding).compile(messageCollector, compiledFiles);
+      createCompilationUnits(srcFiles, class2File, moduleClasspath, moduleOutputPath, isGrails, encoding, forStubs).compile(messageCollector, compiledFiles);
 
       System.out.println(PRESENTABLE_MESSAGE + "Groovy compiler: loading test sources...");
-      createCompilationUnits(testFiles, class2File, moduleClasspath, moduleTestOutputPath, isGrails, encoding).compile(messageCollector, compiledFiles);
+      createCompilationUnits(testFiles, class2File, moduleClasspath, moduleTestOutputPath, isGrails, encoding, forStubs).compile(messageCollector, compiledFiles);
 
       System.out.println(CLEAR_PRESENTABLE);
 
@@ -236,11 +241,22 @@ public class GroovycRunner {
         System.out.println();
       }
 
+      int errorCount = 0;
       for (int i = 0; i < compilerMessages.length; i++) {
         CompilerMessage message = compilerMessages[i];
+
+        final String category = message.getCategory();
+        final boolean isError = category == MessageCollector.ERROR;
+        if (isError) {
+          if (errorCount > 100) {
+            continue;
+          }
+          errorCount++;
+        }
+
         System.out.print(MESSAGES_START);
 
-        System.out.print(message.getCategory());
+        System.out.print(category);
         System.out.print(SEPARATOR);
         System.out.print(message.getMessage());
         System.out.print(SEPARATOR);
@@ -274,8 +290,10 @@ public class GroovycRunner {
   private static MyCompilationUnits createCompilationUnits(List srcFilesToCompile, Map class2File, String classpath, 
                                                            String ordinaryOutputPath,
                                                            boolean isGrailsModule,
-                                                           final String encoding) {
-    MyCompilationUnits myCompilationUnits = new MyCompilationUnits(createCompilationUnit(class2File, classpath, ordinaryOutputPath, isGrailsModule, encoding));
+                                                           final String encoding,
+                                                           boolean forStubs) {
+    final CompilationUnit unit = createCompilationUnit(class2File, classpath, ordinaryOutputPath, isGrailsModule, encoding, forStubs);
+    MyCompilationUnits myCompilationUnits = new MyCompilationUnits(unit, forStubs);
 
     for (int i = 0; i < srcFilesToCompile.size(); i++) {
       myCompilationUnits.addSource((File) srcFilesToCompile.get(i));
@@ -285,7 +303,7 @@ public class GroovycRunner {
   }
 
   private static CompilationUnit createCompilationUnit(Map class2File, String classpath, String outputPath, boolean isGrailsModule,
-                                                       final String encoding) {
+                                                       final String encoding, boolean forStubs) {
     CompilerConfiguration compilerConfiguration = new CompilerConfiguration();
     compilerConfiguration.setOutput(new PrintWriter(System.err));
     compilerConfiguration.setWarningLevel(WarningMessage.PARANOIA);
@@ -295,15 +313,30 @@ public class GroovycRunner {
     compilerConfiguration.setClasspath(classpath);
     compilerConfiguration.setTargetDirectory(outputPath);
 
-    CompilationUnit compilationUnit = new CompilationUnit(compilerConfiguration, null, buildClassLoaderFor(compilerConfiguration)) {
+    final GroovyClassLoader classLoader = buildClassLoaderFor(compilerConfiguration);
 
-      public void gotoPhase(int phase) throws CompilationFailedException {
-        super.gotoPhase(phase);
-        if (phase <= Phases.ALL) {
-          System.out.println(PRESENTABLE_MESSAGE + "Groovy compiler: " + getPhaseDescription());
+    final CompilationUnit compilationUnit;
+    if (forStubs) {
+      compilationUnit = new JavaStubCompilationUnit(compilerConfiguration, classLoader, new File(outputPath)) {
+        public void gotoPhase(int phase) throws CompilationFailedException {
+          super.gotoPhase(phase);
+          if (phase <= Phases.ALL) {
+            System.out.println(PRESENTABLE_MESSAGE + "Groovy stub generator: " + getPhaseDescription());
+          }
         }
-      }
-    };
+      };
+    }
+    else {
+      compilationUnit = new CompilationUnit(compilerConfiguration, null, classLoader) {
+
+        public void gotoPhase(int phase) throws CompilationFailedException {
+          super.gotoPhase(phase);
+          if (phase <= Phases.ALL) {
+            System.out.println(PRESENTABLE_MESSAGE + "Groovy compiler: " + getPhaseDescription());
+          }
+        }
+      };
+    }
 
     /**
      * Adding here framework-specific Phase operations

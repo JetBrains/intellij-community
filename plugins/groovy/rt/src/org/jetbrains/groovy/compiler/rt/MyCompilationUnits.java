@@ -17,28 +17,41 @@ package org.jetbrains.groovy.compiler.rt;
 
 import groovy.lang.GroovyRuntimeException;
 import org.codehaus.groovy.ast.ASTNode;
+import org.codehaus.groovy.ast.AnnotatedNode;
 import org.codehaus.groovy.ast.ClassNode;
+import org.codehaus.groovy.ast.ModuleNode;
 import org.codehaus.groovy.control.*;
 import org.codehaus.groovy.control.messages.*;
 import org.codehaus.groovy.syntax.SyntaxException;
 import org.codehaus.groovy.tools.GroovyClass;
+import org.codehaus.groovy.tools.javac.JavaStubCompilationUnit;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 
 public class MyCompilationUnits {
 
   final CompilationUnit sourceCompilationUnit;
+  private final boolean myForStubs;
 
-  MyCompilationUnits(CompilationUnit sourceCompilationUnit) {
+  MyCompilationUnits(CompilationUnit sourceCompilationUnit, boolean forStubs) {
     this.sourceCompilationUnit = sourceCompilationUnit;
+    myForStubs = forStubs;
   }
                        
   public void addSource(final File file) {
+    if (myForStubs && file.getName().endsWith(".java")) {
+      ((JavaStubCompilationUnit)sourceCompilationUnit).addSourceFile(file); //add java source
+      return;
+    }
+
     sourceCompilationUnit.addSource(new SourceUnit(file, sourceCompilationUnit.getConfiguration(), sourceCompilationUnit.getClassLoader(),
-                                         sourceCompilationUnit.getErrorCollector()) {
+                                                   sourceCompilationUnit.getErrorCollector()) {
       public void parse() throws CompilationFailedException {
         System.out.println(GroovycRunner.PRESENTABLE_MESSAGE + "Parsing " + file.getName() + "...");
         super.parse();
@@ -49,7 +62,7 @@ public class MyCompilationUnits {
 
   public void compile(MessageCollector collector, List compiledFiles) {
     try {
-      sourceCompilationUnit.compile();
+      sourceCompilationUnit.compile(myForStubs ? Phases.CONVERSION : Phases.ALL);
       addCompiledFiles(sourceCompilationUnit, compiledFiles);
     } catch (CompilationFailedException e) {
       processCompilationException(e, collector);
@@ -60,7 +73,7 @@ public class MyCompilationUnits {
     }
   }
 
-  private static void addCompiledFiles(CompilationUnit compilationUnit, List compiledFiles) throws IOException {
+  private void addCompiledFiles(CompilationUnit compilationUnit, List compiledFiles) throws IOException {
     File targetDirectory = compilationUnit.getConfiguration().getTargetDirectory();
 
     String outputPath = targetDirectory.getCanonicalPath().replace(File.separatorChar, '/');
@@ -80,16 +93,20 @@ public class MyCompilationUnits {
 
       for (int i = 0; i < topLevelClasses.size(); i++) {
         final String topLevel = ((ClassNode)topLevelClasses.get(i)).getName();
-        final String nested = topLevel + "$";
-        final SortedSet tail = allClasses.tailSet(topLevel);
-        for (Iterator tailIter = tail.iterator(); tailIter.hasNext();) {
-          String className = (String)tailIter.next();
-          if (className.equals(topLevel) || className.startsWith(nested)) {
-            tailIter.remove();
-            //System.out.print("  " + className);
-            compiledFiles.add(new OutputItemImpl(outputPath, outputPath + "/" + className.replace('.', '/') + ".class", fileName));
-          } else {
-            break;
+        if (myForStubs) {
+          compiledFiles.add(new OutputItemImpl(outputPath, outputPath + "/" + topLevel.replace('.', '/') + ".java", fileName));
+        } else {
+          final String nested = topLevel + "$";
+          final SortedSet tail = allClasses.tailSet(topLevel);
+          for (Iterator tailIter = tail.iterator(); tailIter.hasNext();) {
+            String className = (String)tailIter.next();
+            if (className.equals(topLevel) || className.startsWith(nested)) {
+              tailIter.remove();
+              //System.out.print("  " + className);
+              compiledFiles.add(new OutputItemImpl(outputPath, outputPath + "/" + className.replace('.', '/') + ".class", fileName));
+            } else {
+              break;
+            }
           }
         }
       }
@@ -143,15 +160,32 @@ public class MyCompilationUnits {
   private void addErrorMessage(SyntaxException exception, MessageCollector collector) {
     String message = exception.getMessage();
     String justMessage = message.substring(0, message.lastIndexOf(LINE_AT));
-    collector.addMessage(MessageCollector.ERROR, justMessage, pathToUrl(exception.getSourceLocator()),
+    collector.addMessage(MessageCollector.ERROR, justMessage, exception.getSourceLocator(),
         exception.getLine(), exception.getStartColumn());
   }
 
   private static void addErrorMessage(GroovyRuntimeException exception, MessageCollector collector) {
     ASTNode astNode = exception.getNode();
+    ModuleNode module = exception.getModule();
+    if (module == null) {
+      module = findModule(astNode);
+    }
     collector.addMessage(MessageCollector.ERROR, exception.getMessageWithoutLocationText(),
-        exception.getModule().getDescription(),
+        module == null ? "<no module>" : module.getDescription(),
         astNode.getLineNumber(), astNode.getColumnNumber());
+  }
+
+  private static ModuleNode findModule(ASTNode node) {
+    if (node instanceof ModuleNode) {
+      return (ModuleNode)node;
+    }
+    if (node instanceof ClassNode) {
+      return ((ClassNode)node).getModule();
+    }
+    if (node instanceof AnnotatedNode) {
+      return ((AnnotatedNode)node).getDeclaringClass().getModule();
+    }
+    return null;
   }
 
   private static void addErrorMessage(SimpleMessage message, MessageCollector collector) {

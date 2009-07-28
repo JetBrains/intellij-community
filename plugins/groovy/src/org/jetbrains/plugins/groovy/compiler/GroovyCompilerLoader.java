@@ -32,6 +32,10 @@ public class GroovyCompilerLoader implements ProjectComponent{
     compilerManager.addCompiler(generator);
     compilerManager.addCompilationStatusListener(generator);
     compilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
+
+    /*compilerManager.addTranslatingCompiler(new NewGroovyToJavaGenerator(myProject),
+                                           new HashSet<FileType>(Arrays.asList(GroovyFileType.GROOVY_FILE_TYPE, StdFileTypes.JAVA)),
+                                           new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA)));*/
   }
 
   public void projectClosed() {
