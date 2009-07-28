@@ -8,7 +8,7 @@ import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
-import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -151,7 +151,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
 
     synchronized (LAZY_BUILT_LOCK) {
       if (myReturnType == null) {
-        String typeText = RecordUtil.createTypeText(getStub().getReturnTypeText());
+        String typeText = TypeInfo.createTypeText(getStub().getReturnTypeText(false));
         myReturnType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
       }
       return myReturnType;
@@ -361,5 +361,11 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   @NotNull
   public SearchScope getUseScope() {
     return PsiImplUtil.getMemberUseScope(this);
+  }
+  public PsiMethodReceiver getMethodReceiver() {
+    return null; //todo parse cls
+  }
+  public PsiType getReturnTypeNoResolve() {
+    return getReturnType();
   }
 }

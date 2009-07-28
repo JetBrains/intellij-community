@@ -22,6 +22,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.EmptyVisitor;
@@ -30,6 +31,7 @@ import java.io.IOException;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
@@ -301,6 +303,7 @@ public class ClsStubBuilder {
       return new AnnotationCollectingVisitor(stub, modlist);
     }
 
+    @NotNull
     private static TypeInfo fieldType(String desc, String signature) {
       if (signature != null) {
         try {
@@ -314,13 +317,14 @@ public class ClsStubBuilder {
       }
     }
 
+    @NotNull
     private static TypeInfo fieldTypeViaDescription(final String desc) {
       Type type = Type.getType(desc);
       final int dim = type.getSort() == Type.ARRAY ? type.getDimensions() : 0;
       if (dim > 0) {
         type = type.getElementType();
       }
-      return new TypeInfo(StringRef.fromString(getTypeText(type)), (byte)dim, false);
+      return new TypeInfo(StringRef.fromString(getTypeText(type)), (byte)dim, false, Collections.<PsiAnnotationStub>emptyList()); //todo read annos from .class file
     }
 
 
@@ -344,28 +348,34 @@ public class ClsStubBuilder {
       final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnnotationMethod, isVarargs, isDeprecated, false);
 
       String canonicalMethodName = isConstructor ? myResult.getName() : name;
-      PsiMethodStubImpl stub = new PsiMethodStubImpl(myResult, canonicalMethodName, null, flags, null);
-      PsiModifierListStub modlist = new PsiModifierListStubImpl(stub, packMethodFlags(access));
-
-      String returnType;
-      List<String> args = new ArrayList<String>();
-      List<String> throwables = exceptions != null ? new ArrayList<String>() : null;
-      boolean parsedViaGenericSignature = false;
-      if (signature == null) {
-        returnType = parseMethodViaDescription(desc, stub, args);
-      } else {
-        try {
-          returnType = parseMethodViaGenericSignature(signature, stub, args, throwables);
-          parsedViaGenericSignature = true;
+      final boolean[] parsedViaGenericSignature = new boolean[1];
+      final List<String> args = new ArrayList<String>();
+      final List<String> throwables = exceptions != null ? new ArrayList<String>() : null;
+      final PsiModifierListStub[] modlist = new PsiModifierListStub[1];
+      PsiMethodStubImpl stub = new PsiMethodStubImpl(myResult, StringRef.fromString(canonicalMethodName), flags, null){
+        @Override
+        protected TypeInfo createReturnType() {
+          modlist[0] = new PsiModifierListStubImpl(this, packMethodFlags(access));
+          String returnType;
+          parsedViaGenericSignature[0] = false;
+          if (signature == null) {
+            returnType = parseMethodViaDescription(desc, this, args);
+          }
+          else {
+            try {
+              returnType = parseMethodViaGenericSignature(signature, this, args, throwables);
+              parsedViaGenericSignature[0] = true;
+            }
+            catch (ClsFormatException e) {
+              returnType = parseMethodViaDescription(desc, this, args);
+            }
+          }
+          return (TypeInfo.fromString(returnType));
         }
-        catch (ClsFormatException e) {
-          returnType = parseMethodViaDescription(desc, stub, args);
-        }
-      }
-      stub.setReturnType(TypeInfo.fromString(returnType));
+      };
 
       boolean nonStaticInnerClassConstructor =
-        isConstructor && !parsedViaGenericSignature && !(myParent instanceof PsiFileStub) && (myModlist.getModifiersMask() & Opcodes.ACC_STATIC) == 0;
+        isConstructor && !parsedViaGenericSignature[0] && !(myParent instanceof PsiFileStub) && (myModlist.getModifiersMask() & Opcodes.ACC_STATIC) == 0;
 
       final PsiParameterListStubImpl parameterList = new PsiParameterListStubImpl(stub);
       final int paramCount = args.size();
@@ -380,10 +390,10 @@ public class ClsStubBuilder {
         new PsiModifierListStubImpl(parameterStub, 0);
       }
 
-      String[] thrownTypes = buildThrowsList(exceptions, throwables, parsedViaGenericSignature);
+      String[] thrownTypes = buildThrowsList(exceptions, throwables, parsedViaGenericSignature[0]);
       new PsiClassReferenceListStubImpl(JavaStubElementTypes.THROWS_LIST, stub, thrownTypes, PsiReferenceList.Role.THROWS_LIST);
 
-      return new AnnotationCollectingVisitor(stub, modlist);
+      return new AnnotationCollectingVisitor(stub, modlist[0]);
     }
 
     private static String[] buildThrowsList(String[] exceptions, List<String> throwables, boolean parsedViaGenericSignature) {

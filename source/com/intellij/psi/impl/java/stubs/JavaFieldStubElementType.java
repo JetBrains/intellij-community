@@ -21,7 +21,6 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +53,7 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
 
   public PsiFieldStub createStub(final PsiField psi, final StubElement parentStub) {
     final PsiExpression initializer = psi.getInitializer();
-    final TypeInfo type = TypeInfo.create(psi.getType(), psi.getTypeElement());
+    final TypeInfo type = TypeInfo.create(psi.getTypeNoResolve(), psi.getTypeElement());
     final byte flags = PsiFieldStubImpl.packFlags(psi instanceof PsiEnumConstant,
                                                   RecordUtil.isDeprecatedByDocComment(psi),
                                                   RecordUtil.isDeprecatedByAnnotation(psi));
@@ -64,7 +63,7 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
   public void serialize(final PsiFieldStub stub, final StubOutputStream dataStream)
       throws IOException {
     dataStream.writeName(stub.getName());
-    RecordUtil.writeTYPE(dataStream, stub.getType());
+    TypeInfo.writeTYPE(dataStream, stub.getType(false));
     dataStream.writeName(getInitializerText(stub));
     dataStream.writeByte(((PsiFieldStubImpl)stub).getFlags());
   }
@@ -81,7 +80,7 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
   public PsiFieldStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     StringRef name = dataStream.readName();
 
-    final TypeInfo type = RecordUtil.readTYPE(dataStream);
+    final TypeInfo type = TypeInfo.readTYPE(dataStream, parentStub);
 
     StringRef initializerText = dataStream.readName();
     byte flags = dataStream.readByte();

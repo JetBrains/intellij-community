@@ -25,9 +25,10 @@ public enum LanguageLevel {
   JDK_1_3 ("1.3 ", false, false),
   JDK_1_4 (PsiBundle.message("jdk.1.4.language.level.description"), true, false), // assert keyword
   JDK_1_5 (PsiBundle.message("jdk.1.5.language.level.description"), true, true), // enums etc.
-  JDK_1_6 (PsiBundle.message("jdk.1.6.language.level.description"), true, true); // changed rules for @Override
+  JDK_1_6 (PsiBundle.message("jdk.1.6.language.level.description"), true, true), // changed rules for @Override
+  JDK_1_7 (PsiBundle.message("jdk.1.7.language.level.description"), true, true); // annotations on types
 
-  public static final LanguageLevel HIGHEST = JDK_1_6;
+  public static final LanguageLevel HIGHEST = JDK_1_7;
   public static final Key<LanguageLevel> KEY = Key.create("LANGUGAGE_LEVEL");
   private final boolean myHasAssertKeyword;
   private final boolean myHasEnumKeywordAndAutoboxing;
@@ -54,5 +55,9 @@ public enum LanguageLevel {
 
   public String getPresentableText() {
     return myPresentableText;
+  }
+
+  public boolean isAtLeast(LanguageLevel level) {
+    return compareTo(level) >= 0;
   }
 }

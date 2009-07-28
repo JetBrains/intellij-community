@@ -30,6 +30,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
     myScope = scope;
   }
 
+  @NotNull
   public PsiElement getDeclarationScope() {
     return myScope;
   }
@@ -57,6 +58,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
     return myType;
   }
 
+  @NotNull
   public PsiTypeElement getTypeElement() {
     return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeElement(myType);
   }
@@ -99,5 +101,8 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
   public Icon getElementIcon(final int flags) {
     final RowIcon baseIcon = createLayeredIcon(Icons.VARIABLE_ICON, ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
+  }
+  public PsiType getTypeNoResolve() {
+    return getType();
   }
 }

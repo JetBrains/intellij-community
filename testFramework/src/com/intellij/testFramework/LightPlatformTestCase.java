@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -507,8 +508,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected static PsiFile createPseudoPhysicalFile(String fileName, String text) throws IncorrectOperationException {
-    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(
-      fileName), text, LocalTimeCounter.currentTime(), true);
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
+    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), true);
   }
 
   /**

@@ -64,6 +64,7 @@ public class AnnotationUtil {
   @NonNls private static final String[] SIMPLE_NAMES =
     {NOT_NULL_SIMPLE_NAME, NULLABLE_SIMPLE_NAME, NON_NLS_SIMPLE_NAME, PROPERTY_KEY_SIMPLE_NAME, TEST_ONLY_SIMPLE_NAME,
       "Language", "Identifier", "Pattern", "PrintFormat", "RegExp", "Subst"};
+  public static final String TARGET_ANNOTATION_FQ_NAME = "java.lang.annotation.Target";
 
   static {
     ALL_ANNOTATIONS = new HashSet<String>(2);
@@ -194,22 +195,10 @@ public class AnnotationUtil {
                                      @NonNls String annotationFQN,
                                      boolean checkHierarchy, final boolean skipExternal, Set<PsiMethod> processed) {
     if (!listOwner.isValid()) return false;
-    if (listOwner instanceof PsiParameter) {
-      // this is more efficient than getting the modifier list
-      PsiAnnotation[] paramAnnotations = ((PsiParameter)listOwner).getAnnotations();
-      for (PsiAnnotation annotation : paramAnnotations) {
-        if (annotationFQN.equals(annotation.getQualifiedName())) {
-          return true;
-        }
-      }
-    } else {
-      final PsiModifierList modifierList = listOwner.getModifierList();
-      if (modifierList == null) {
-        return false;
-      }
-      PsiAnnotation annotation = modifierList.findAnnotation(annotationFQN);
-      if (annotation != null) return true;
-    }
+    final PsiModifierList modifierList = listOwner.getModifierList();
+    if (modifierList == null) return false;
+    PsiAnnotation annotation = modifierList.findAnnotation(annotationFQN);
+    if (annotation != null) return true;
     if (!skipExternal && ExternalAnnotationsManager.getInstance(listOwner.getProject()).findExternalAnnotation(listOwner, annotationFQN) != null) {
       return true;
     }

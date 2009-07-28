@@ -8,13 +8,14 @@ import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
-import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -123,6 +124,12 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
     return PsiSuperMethodImplUtil.getHierarchicalMethodSignature(this);
   }
 
+  public PsiMethodReceiver getMethodReceiver() {
+    ASTNode node = getNode().findChildByType(JavaElementType.METHOD_RECEIVER);
+    if (node == null) return null;
+    return (PsiMethodReceiver)node.getPsi();
+  }
+
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException{
     PsiImplUtil.setName(getNameIdentifier(), name);
     return this;
@@ -145,16 +152,40 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
     return PsiImplUtil.getTypeParameters(this);
   }
 
+  public PsiType getReturnTypeNoResolve() {
+    if (isConstructor()) return null;
+
+    final PsiMethodStub stub = getStub();
+    if (stub != null) {
+      final String typeText = TypeInfo.createTypeText(stub.getReturnTypeText(false));
+      if (typeText == null) return null;
+
+      try {
+        return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(typeText, this);
+      }
+      catch(IncorrectOperationException e){
+        LOG.error(e);
+        return null;
+      }
+    }
+
+    PsiTypeElement typeElement = getReturnTypeElement();
+    if (typeElement == null) return null;
+    PsiParameterList parameterList = getParameterList();
+    return JavaSharedImplUtil.getTypeNoResolve(typeElement, parameterList, this);
+  }
+
   public PsiType getReturnType() {
     if (isConstructor()) return null;
 
     final PsiMethodStub stub = getStub();
     if (stub != null) {
-      final String typeText = RecordUtil.createTypeText(stub.getReturnTypeText());
+      final String typeText = TypeInfo.createTypeText(stub.getReturnTypeText(true));
       if (typeText == null) return null;
 
-      if (myCachedType != null) {
-        PsiType type = myCachedType.get();
+      PatchedSoftReference<PsiType> cachedType = myCachedType;
+      if (cachedType != null) {
+        PsiType type = cachedType.get();
         if (type != null) return type;
       }
 
@@ -284,5 +315,4 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   public SearchScope getUseScope() {
     return PsiImplUtil.getMemberUseScope(this);
   }
-
 }

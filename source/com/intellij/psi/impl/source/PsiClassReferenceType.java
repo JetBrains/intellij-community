@@ -5,6 +5,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +16,17 @@ public class PsiClassReferenceType extends PsiClassType {
   private final PsiJavaCodeReferenceElement myReference;
 
   public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel languageLevel) {
-    super(languageLevel);
+    super(languageLevel, extractAnnosFromReference(reference));
+    myReference = reference;
+  }
+
+  private static PsiAnnotation[] extractAnnosFromReference(PsiJavaCodeReferenceElement reference) {
+    PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(reference, PsiAnnotation.class);
+    return annotations == null ? PsiAnnotation.EMPTY_ARRAY : annotations;
+  }
+
+  public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel languageLevel, PsiAnnotation[] annotations) {
+    super(languageLevel,annotations);
     myReference = reference;
   }
 
@@ -40,8 +51,7 @@ public class PsiClassReferenceType extends PsiClassType {
 
   public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
     if (languageLevel.equals(myLanguageLevel)) return this;
-    final PsiClassReferenceType copy = new PsiClassReferenceType(myReference,languageLevel);
-    return copy;
+    return new PsiClassReferenceType(myReference,languageLevel,getAnnotations());
   }
 
   public PsiClass resolve() {
@@ -53,10 +63,6 @@ public class PsiClassReferenceType extends PsiClassType {
 
     private DelegatingClassResolveResult(JavaResolveResult delegate) {
       myDelegate = delegate;
-    }
-
-    public boolean hasCandidates() {
-      return myDelegate.getElement() != null;
     }
 
     public PsiSubstitutor getSubstitutor() {
@@ -80,8 +86,8 @@ public class PsiClassReferenceType extends PsiClassType {
     }
 
     public boolean isPackagePrefixPackageReference() {
-          return myDelegate.isPackagePrefixPackageReference();
-      }
+      return myDelegate.isPackagePrefixPackageReference();
+    }
 
     public PsiClass getElement() {
       final PsiElement element = myDelegate.getElement();
@@ -89,27 +95,26 @@ public class PsiClassReferenceType extends PsiClassType {
     }
   }
 
-  private static ClassResolveResult createClassResolveResult(JavaResolveResult result) {
-    return new DelegatingClassResolveResult(result);
-  }
-
   @NotNull
   public ClassResolveResult resolveGenerics() {
     final JavaResolveResult result = myReference.advancedResolve(false);
-    return createClassResolveResult(result);
+    return new DelegatingClassResolveResult(result);
   }
 
   @NotNull
   public PsiClassType rawType() {
     PsiElement resolved = myReference.resolve();
-    PsiManager manager = myReference.getManager();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     if (resolved instanceof PsiClass) {
-      final PsiSubstitutor rawSubstitutor = factory.createRawSubstitutor((PsiClass) resolved);
-      return factory.createType((PsiClass) resolved, rawSubstitutor, getLanguageLevel());
+      PsiClass aClass = (PsiClass)resolved;
+      if (!PsiUtil.typeParametersIterable(aClass).iterator().hasNext()) return this;
+      PsiManager manager = myReference.getManager();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+      final PsiSubstitutor rawSubstitutor = factory.createRawSubstitutor(aClass);
+      return factory.createType(aClass, rawSubstitutor, getLanguageLevel(), getAnnotations());
     }
     String qualifiedName = myReference.getQualifiedName();
-    return new PsiClassReferenceType(new LightClassReference(manager, myReference.getReferenceName(), qualifiedName, myReference.getResolveScope()), null);
+    LightClassReference reference = new LightClassReference(myReference.getManager(), myReference.getReferenceName(), qualifiedName, myReference.getResolveScope());
+    return new PsiClassReferenceType(reference, null,getAnnotations());
   }
 
   public String getClassName() {
@@ -128,7 +133,7 @@ public class PsiClassReferenceType extends PsiClassType {
   }
 
   public String getPresentableText() {
-    return PsiNameHelper.getPresentableText(myReference);
+    return getAnnotationsTextPrefix() + PsiNameHelper.getPresentableText(myReference);
   }
 
   public String getCanonicalText() {
@@ -136,7 +141,7 @@ public class PsiClassReferenceType extends PsiClassType {
   }
 
   public String getInternalCanonicalText() {
-    return getCanonicalText();
+    return getAnnotationsTextPrefix() + getCanonicalText();
   }
 
   public PsiJavaCodeReferenceElement getReference() {

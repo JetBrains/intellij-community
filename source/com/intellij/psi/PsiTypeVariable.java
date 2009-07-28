@@ -4,6 +4,10 @@ package com.intellij.psi;
  * Used in Generify refactoring
  */
 public abstract class PsiTypeVariable extends PsiType {
+  protected PsiTypeVariable() {
+    super(PsiAnnotation.EMPTY_ARRAY);
+  }
+
   public abstract int getIndex();
   public abstract boolean isValidInContext (PsiType type);
 

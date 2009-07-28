@@ -8,6 +8,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerPosition;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.CharTable;
@@ -47,7 +48,7 @@ public class FileTextParsing extends Parsing {
     while (true) {
       if (filterLexer.getTokenType() == null) break;
 
-      if (filterLexer.getTokenType() == ElementType.SEMICOLON){
+      if (filterLexer.getTokenType() == JavaTokenType.SEMICOLON){
         dummyRoot.rawAddChildren(ParseUtil.createTokenElement(filterLexer, dummyRoot.getCharTable()));
         filterLexer.advance();
         invalidElementsGroup = null;
@@ -74,9 +75,9 @@ public class FileTextParsing extends Parsing {
   }
 
   public static ASTNode parseImportList(Lexer lexer, final JavaParsingContext context) {
-    CompositeElement importList = ASTFactory.composite(IMPORT_LIST);
+    CompositeElement importList = ASTFactory.composite(JavaElementType.IMPORT_LIST);
 
-    if (lexer.getTokenType() == IMPORT_KEYWORD) {
+    if (lexer.getTokenType() == JavaTokenType.IMPORT_KEYWORD) {
       context.getImportsTextParsing().parseImportStatements(lexer, importList);
     }
 
@@ -86,12 +87,13 @@ public class FileTextParsing extends Parsing {
   @Nullable
   private ASTNode parsePackageStatement(Lexer lexer) {
     final LexerPosition startPos = lexer.getCurrentPosition();
-    CompositeElement packageStatement = ASTFactory.composite(PACKAGE_STATEMENT);
+    CompositeElement packageStatement = ASTFactory.composite(JavaElementType.PACKAGE_STATEMENT);
 
-    if (lexer.getTokenType() != PACKAGE_KEYWORD) {
+    if (lexer.getTokenType() != JavaTokenType.PACKAGE_KEYWORD) {
       FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-      packageStatement.rawAddChildren(myContext.getDeclarationParsing().parseAnnotationList(filterLexer));
-      if (lexer.getTokenType() != PACKAGE_KEYWORD) {
+      CompositeElement list = myContext.getDeclarationParsing().parseAnnotationList(filterLexer, ASTFactory.composite(JavaElementType.MODIFIER_LIST));
+      packageStatement.rawAddChildren(list);
+      if (lexer.getTokenType() != JavaTokenType.PACKAGE_KEYWORD) {
         lexer.restore(startPos);
         return null;
       }
@@ -99,13 +101,13 @@ public class FileTextParsing extends Parsing {
 
     packageStatement.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
-    TreeElement packageReference = parseJavaCodeReference(lexer, true, false);
+    TreeElement packageReference = parseJavaCodeReference(lexer, true, false, false);
     if (packageReference == null) {
       lexer.restore(startPos);
       return null;
     }
     packageStatement.rawAddChildren(packageReference);
-    if (lexer.getTokenType() == SEMICOLON) {
+    if (lexer.getTokenType() == JavaTokenType.SEMICOLON) {
       packageStatement.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
     } else {

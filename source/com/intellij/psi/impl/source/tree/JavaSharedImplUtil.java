@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaSharedImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.JavaSharedImplUtil");
@@ -23,14 +24,13 @@ public class JavaSharedImplUtil {
     return getType(typeElement, nameIdentifier, variable);
   }
 
-  //context == null means no detached type should be created
-  public static PsiType getType(PsiTypeElement typeElement, PsiElement anchor, PsiElement context) {
-    int arrayCount = 0;
+  public static PsiType getType(@NotNull PsiTypeElement typeElement, @NotNull PsiElement anchor, @NotNull PsiElement context) {
+    int cStyleArrayCount = 0;
     ASTNode name = SourceTreeToPsiMap.psiElementToTree(anchor);
     for (ASTNode child = name.getTreeNext(); child != null; child = child.getTreeNext()) {
       IElementType i = child.getElementType();
       if (i == JavaTokenType.LBRACKET) {
-        arrayCount++;
+        cStyleArrayCount++;
       }
       else if (i != JavaTokenType.RBRACKET && i != TokenType.WHITE_SPACE &&
                i != JavaTokenType.C_STYLE_COMMENT &&
@@ -41,14 +41,37 @@ public class JavaSharedImplUtil {
       }
     }
     PsiType type;
-    if (context != null && typeElement instanceof PsiTypeElementImpl) {
+    if (typeElement instanceof PsiTypeElementImpl) {
       type = ((PsiTypeElementImpl)typeElement).getDetachedType(context);
     }
     else {
       type = typeElement.getType();
     }
 
-    for (int i = 0; i < arrayCount; i++) {
+    for (int i = 0; i < cStyleArrayCount; i++) {
+      type = type.createArrayType();
+    }
+    return type;
+  }
+  public static PsiType getTypeNoResolve(@NotNull PsiTypeElement typeElement, @NotNull PsiElement anchor, @NotNull PsiElement context) {
+    int cStyleArrayCount = 0;
+    ASTNode name = SourceTreeToPsiMap.psiElementToTree(anchor);
+    for (ASTNode child = name.getTreeNext(); child != null; child = child.getTreeNext()) {
+      IElementType i = child.getElementType();
+      if (i == JavaTokenType.LBRACKET) {
+        cStyleArrayCount++;
+      }
+      else if (i != JavaTokenType.RBRACKET && i != TokenType.WHITE_SPACE &&
+               i != JavaTokenType.C_STYLE_COMMENT &&
+               i != JavaDocElementType.DOC_COMMENT &&
+               i != JavaTokenType.DOC_COMMENT &&
+               i != JavaTokenType.END_OF_LINE_COMMENT) {
+        break;
+      }
+    }
+    PsiType type = typeElement.getTypeNoResolve(context);
+
+    for (int i = 0; i < cStyleArrayCount; i++) {
       type = type.createArrayType();
     }
     return type;

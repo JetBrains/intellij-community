@@ -18,7 +18,7 @@ package com.intellij.psi;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,21 +31,24 @@ import java.util.Map;
  * Represents primitive types of Java language.
  */
 public class PsiPrimitiveType extends PsiType {
-  static final PsiPrimitiveType VOID = new PsiPrimitiveType("void");
-  static final PsiPrimitiveType BYTE = new PsiPrimitiveType("byte");
-  static final PsiPrimitiveType CHAR = new PsiPrimitiveType("char");
-  static final PsiPrimitiveType DOUBLE = new PsiPrimitiveType("double");
-  static final PsiPrimitiveType FLOAT = new PsiPrimitiveType("float");
-  static final PsiPrimitiveType LONG = new PsiPrimitiveType("long");
-  static final PsiPrimitiveType INT = new PsiPrimitiveType("int");
-  static final PsiPrimitiveType SHORT = new PsiPrimitiveType("short");
-  static final PsiPrimitiveType BOOLEAN = new PsiPrimitiveType("boolean");
-  static final PsiPrimitiveType NULL = new PsiPrimitiveType("null");
-
   private final String myName;
 
-  private PsiPrimitiveType(@NonNls String name) {
+  public PsiPrimitiveType(@NonNls @NotNull String name, PsiAnnotation[] annotations) {
+    super(annotations);
     myName = name;
+  }
+
+  @NonNls
+  private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new THashMap<String, PsiPrimitiveType>();
+  @NonNls
+  private static final Map<PsiPrimitiveType, String> ourUnboxedToQName = new THashMap<PsiPrimitiveType, String>();
+  //registering ctor
+  PsiPrimitiveType(@NonNls @NotNull String name, @NonNls String boxedName) {
+    this(name, PsiAnnotation.EMPTY_ARRAY);
+    if (boxedName != null) {
+      ourQNameToUnboxed.put(boxedName, this);
+      ourUnboxedToQName.put(this, boxedName);
+    }
   }
 
   public String getPresentableText() {
@@ -57,7 +60,7 @@ public class PsiPrimitiveType extends PsiType {
   }
 
   public String getInternalCanonicalText() {
-    return getCanonicalText();
+    return getAnnotationsTextPrefix() + getCanonicalText();
   }
 
   /**
@@ -96,7 +99,7 @@ public class PsiPrimitiveType extends PsiType {
     if (!((PsiClassType)type).getLanguageLevel().hasEnumKeywordAndAutoboxing()) return null;
     final PsiClass psiClass = ((PsiClassType)type).resolve();
     if (psiClass == null) return null;
-    return ourQNameToUnboxed.get(psiClass.getQualifiedName());
+    return (PsiPrimitiveType)ourQNameToUnboxed.get(psiClass.getQualifiedName());
   }
 
   public String getBoxedTypeName() {
@@ -137,33 +140,17 @@ public class PsiPrimitiveType extends PsiType {
     return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(aClass);
   }
 
-  @NonNls
-  private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new HashMap<String, PsiPrimitiveType>();
-
-  @NonNls
-  private static final Map<PsiPrimitiveType, String> ourUnboxedToQName = new HashMap<PsiPrimitiveType, String>();
-
-  static {
-    ourQNameToUnboxed.put("java.lang.Boolean", BOOLEAN);
-    ourUnboxedToQName.put(BOOLEAN, "java.lang.Boolean");
-    ourQNameToUnboxed.put("java.lang.Byte", BYTE);
-    ourUnboxedToQName.put(BYTE, "java.lang.Byte");
-    ourQNameToUnboxed.put("java.lang.Character", CHAR);
-    ourUnboxedToQName.put(CHAR, "java.lang.Character");
-    ourQNameToUnboxed.put("java.lang.Short", SHORT);
-    ourUnboxedToQName.put(SHORT, "java.lang.Short");
-    ourQNameToUnboxed.put("java.lang.Integer", INT);
-    ourUnboxedToQName.put(INT, "java.lang.Integer");
-    ourQNameToUnboxed.put("java.lang.Long", LONG);
-    ourUnboxedToQName.put(LONG, "java.lang.Long");
-    ourQNameToUnboxed.put("java.lang.Float", FLOAT);
-    ourUnboxedToQName.put(FLOAT, "java.lang.Float");
-    ourQNameToUnboxed.put("java.lang.Double", DOUBLE);
-    ourUnboxedToQName.put(DOUBLE, "java.lang.Double");
-  }
-
   public static Collection<String> getAllBoxedTypeNames() {
     return Collections.unmodifiableCollection(ourQNameToUnboxed.keySet());
   }
-  
+
+  @Override
+  public int hashCode() {
+    return myName.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof PsiPrimitiveType && myName.equals(((PsiPrimitiveType)obj).myName);
+  }
 }

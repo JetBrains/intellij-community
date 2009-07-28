@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author dsl
  */
-public interface PsiTypeParameter extends PsiClass {
+public interface PsiTypeParameter extends PsiClass, PsiAnnotationOwner {
   /**
    * The empty array of PSI type parameters which can be reused to avoid unnecessary allocations.
    */

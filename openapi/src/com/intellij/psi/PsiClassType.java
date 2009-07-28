@@ -35,6 +35,10 @@ public abstract class PsiClassType extends PsiType {
   protected final LanguageLevel myLanguageLevel;
 
   protected PsiClassType(LanguageLevel languageLevel) {
+    this(languageLevel, PsiAnnotation.EMPTY_ARRAY);
+  }
+  protected PsiClassType(LanguageLevel languageLevel, PsiAnnotation[] annotations) {
+    super(annotations);
     myLanguageLevel = languageLevel;
   }
 
@@ -61,11 +65,10 @@ public abstract class PsiClassType extends PsiType {
   @NotNull public abstract PsiType[] getParameters();
 
   public boolean equals(Object obj) {
+    if (this == obj) return true;
     if (!(obj instanceof PsiClassType)) return false;
     PsiClassType otherClassType = (PsiClassType) obj;
-    if (!isValid() || !otherClassType.isValid()) return false;
-
-    if (this == obj) return true;
+    //if (!isValid() || !otherClassType.isValid()) return false;
 
     String className = getClassName();
     String otherClassName = otherClassType.getClassName();
@@ -77,14 +80,11 @@ public abstract class PsiClassType extends PsiType {
 
     final PsiClass aClass = result.getElement();
     final PsiClass otherClass = otherResult.getElement();
-    if (!areClassesEqual(aClass, otherClass)) return false;
-    if (aClass == null) return true;
-    return PsiUtil.equalOnEquivalentClasses(result.getSubstitutor(), aClass, otherResult.getSubstitutor(), otherClass);
-  }
-
-  private static boolean areClassesEqual(final PsiClass aClass, final PsiClass otherClass) {
-    if (aClass == null || otherClass == null) return aClass == otherClass;
-    return aClass.getManager().areElementsEquivalent(aClass, otherClass);
+    if (aClass == null || otherClass == null) {
+      return aClass == otherClass;
+    }
+    return aClass.getManager().areElementsEquivalent(aClass, otherClass) &&
+           PsiUtil.equalOnEquivalentClasses(result.getSubstitutor(), aClass, otherResult.getSubstitutor(), otherClass);
   }
 
   /**

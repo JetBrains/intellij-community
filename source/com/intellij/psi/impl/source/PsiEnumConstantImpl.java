@@ -235,4 +235,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
   public boolean isEquivalentTo(final PsiElement another) {
     return PsiClassImplUtil.isFieldEquivalentTo(this, another);
   }
+  public PsiType getTypeNoResolve() {
+    return getType();
+  }
 }

@@ -230,83 +230,85 @@ public class GenericsUtil {
     return internalCanonicalText != null && internalCanonicalText.equals(type.getCanonicalText());
   }
 
-  public static PsiType getVariableTypeByExpressionType(PsiType type) {
-    type = type.accept(new PsiTypeVisitor<PsiType>() {
-        public PsiType visitArrayType(PsiArrayType arrayType) {
-            PsiType componentType = arrayType.getComponentType();
-            PsiType type = componentType.accept(this);
-            if (type == componentType) return arrayType;
-            return type.createArrayType();
-        }
+  public static PsiType getVariableTypeByExpressionType(final PsiType type) {
+    PsiType transformed = type.accept(new PsiTypeVisitor<PsiType>() {
+      public PsiType visitArrayType(PsiArrayType arrayType) {
+        PsiType componentType = arrayType.getComponentType();
+        PsiType type = componentType.accept(this);
+        if (type == componentType) return arrayType;
+        return type.createArrayType();
+      }
 
-        public PsiType visitType(PsiType type) {
-            return type;
-        }
+      public PsiType visitType(PsiType type) {
+        return type;
+      }
 
-        public PsiType visitWildcardType(final PsiWildcardType wildcardType) {
-          final PsiType bound = wildcardType.getBound();
-          PsiManager manager = wildcardType.getManager();
-          if (bound != null) {
-            final PsiType acceptedBound = bound.accept(this);
-            if (acceptedBound instanceof PsiWildcardType) {
-              if (((PsiWildcardType)acceptedBound).isExtends() != wildcardType.isExtends()) return PsiWildcardType.createUnbounded(manager);
-              return acceptedBound;
-            }
-            if (acceptedBound.equals(bound)) return wildcardType;
-            return wildcardType.isExtends() ? PsiWildcardType.createExtends(manager, acceptedBound) :
-                   PsiWildcardType.createSuper(manager, acceptedBound);
+      public PsiType visitWildcardType(final PsiWildcardType wildcardType) {
+        final PsiType bound = wildcardType.getBound();
+        PsiManager manager = wildcardType.getManager();
+        if (bound != null) {
+          final PsiType acceptedBound = bound.accept(this);
+          if (acceptedBound instanceof PsiWildcardType) {
+            if (((PsiWildcardType)acceptedBound).isExtends() != wildcardType.isExtends()) return PsiWildcardType.createUnbounded(manager);
+            return acceptedBound;
           }
-          return wildcardType;
+          if (acceptedBound.equals(bound)) return wildcardType;
+          return wildcardType.isExtends()
+                 ? PsiWildcardType.createExtends(manager, acceptedBound)
+                 : PsiWildcardType.createSuper(manager, acceptedBound);
         }
+        return wildcardType;
+      }
 
-        public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
-            return capturedWildcardType.getWildcard().accept(this);
-        }
+      public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+        return capturedWildcardType.getWildcard().accept(this);
+      }
 
-        public PsiType visitClassType(PsiClassType classType) {
-          PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
-          PsiClass aClass = resolveResult.getElement();
-          if (aClass == null) return classType;
-          boolean toExtend = false;
-          PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-          for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
-            PsiType typeArgument = resolveResult.getSubstitutor().substitute(typeParameter);
-            if (typeArgument instanceof PsiCapturedWildcardType) toExtend = true;
-            if (typeArgument instanceof PsiWildcardType && ((PsiWildcardType)typeArgument).getBound() instanceof PsiIntersectionType) {
-              toExtend = true;
-            }
-            PsiType toPut;
-            if (typeArgument == null) {
-              toPut = null;
+      public PsiType visitClassType(PsiClassType classType) {
+        PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+        PsiClass aClass = resolveResult.getElement();
+        if (aClass == null) return classType;
+        boolean toExtend = false;
+        PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+        for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
+          PsiType typeArgument = resolveResult.getSubstitutor().substitute(typeParameter);
+          if (typeArgument instanceof PsiCapturedWildcardType) toExtend = true;
+          if (typeArgument instanceof PsiWildcardType && ((PsiWildcardType)typeArgument).getBound() instanceof PsiIntersectionType) {
+            toExtend = true;
+          }
+          PsiType toPut;
+          if (typeArgument == null) {
+            toPut = null;
+          }
+          else {
+            final PsiType accepted = typeArgument.accept(this);
+            if (typeArgument instanceof PsiIntersectionType) {
+              toPut = PsiWildcardType.createExtends(typeParameter.getManager(), accepted);
             }
             else {
-              final PsiType accepted = typeArgument.accept(this);
-              if (typeArgument instanceof PsiIntersectionType) {
-                toPut = PsiWildcardType.createExtends(typeParameter.getManager(), accepted);
-              }
-              else {
-                toPut = accepted;
-              }
+              toPut = accepted;
             }
-            substitutor = substitutor.put(typeParameter, toPut);
           }
-
-          PsiManager manager = aClass.getManager();
-          PsiType result = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(aClass, substitutor);
-          if (toExtend) result = PsiWildcardType.createExtends(manager, result);
-          return result;
+          substitutor = substitutor.put(typeParameter, toPut);
         }
+
+        PsiManager manager = aClass.getManager();
+        PsiType result = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()
+          .createType(aClass, substitutor, PsiUtil.getLanguageLevel(aClass), classType.getApplicableAnnotations());
+        if (toExtend) result = PsiWildcardType.createExtends(manager, result);
+        return result;
+      }
     });
 
-    PsiType componentType = type.getDeepComponentType();
+    PsiType componentType = transformed.getDeepComponentType();
     if (componentType instanceof PsiWildcardType) {
       componentType = ((PsiWildcardType)componentType).getExtendsBound();
-      int dims = type.getArrayDimensions();
+      int dims = transformed.getArrayDimensions();
       for (int i = 0; i < dims; i++) componentType = componentType.createArrayType();
       return componentType;
     }
 
-    return type;
+    return transformed;
   }
 
   public static PsiSubstitutor substituteByParameterName(final PsiClass psiClass, final PsiSubstitutor parentSubstitutor) {

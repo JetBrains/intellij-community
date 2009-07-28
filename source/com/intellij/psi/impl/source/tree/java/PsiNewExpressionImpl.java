@@ -12,9 +12,13 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNewExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl");
@@ -25,23 +29,34 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
 
   public PsiType getType(){
     PsiType type = null;
+    List<PsiAnnotation> annotations = new SmartList<PsiAnnotation>();
     for(ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()){
       IElementType elementType = child.getElementType();
+      if (elementType == JavaElementType.ANNOTATION) {
+        annotations.add((PsiAnnotation)child.getPsi());
+        continue;
+      }
       if (elementType == JavaElementType.JAVA_CODE_REFERENCE){
         LOG.assertTrue(type == null);
         type = new PsiClassReferenceType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(child), null);
       }
       else if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(elementType)){
         LOG.assertTrue(type == null);
-        type = JavaPsiFacade.getInstance(getProject()).getElementFactory().createPrimitiveType(child.getText());
+        PsiAnnotation[] annos = annotations.toArray(new PsiAnnotation[annotations.size()]);
+        type = JavaPsiFacade.getInstance(getProject()).getElementFactory().createPrimitiveType(child.getText(), annos);
       }
       else if (elementType == JavaTokenType.LBRACKET){
         LOG.assertTrue(type != null);
-        type = type.createArrayType();
+        PsiAnnotation[] annos = annotations.toArray(new PsiAnnotation[annotations.size()]);
+
+        type = type.createArrayType(annos);
       }
       else if (elementType == JavaElementType.ANONYMOUS_CLASS){
+        PsiAnnotation[] annos = annotations.toArray(new PsiAnnotation[annotations.size()]);
         PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-        type = factory.createType((PsiClass) SourceTreeToPsiMap.treeElementToPsi(child));
+        PsiClass aClass = (PsiClass)SourceTreeToPsiMap.treeElementToPsi(child);
+        PsiSubstitutor substitutor = aClass instanceof PsiTypeParameter ? PsiSubstitutor.EMPTY : factory.createRawSubstitutor(aClass);
+        type = factory.createType(aClass, substitutor, PsiUtil.getLanguageLevel(aClass),annos);
       }
     }
     return type;

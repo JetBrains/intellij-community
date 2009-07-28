@@ -16,9 +16,8 @@
 package com.intellij.psi;
 
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents the list of modifiers and annotations on a Java element (class, method,
@@ -26,7 +25,7 @@ import org.jetbrains.annotations.NonNls;
  *
  * @see PsiModifierListOwner#getModifierList()
  */
-public interface PsiModifierList extends PsiElement {
+public interface PsiModifierList extends PsiElement, PsiAnnotationOwner {
   /**
    * Checks if the modifier list has the specified modifier set either by an explicit keyword
    * or implicitly (for example, interface methods are implicitly public).
@@ -66,26 +65,4 @@ public interface PsiModifierList extends PsiElement {
    */
   void checkSetModifierProperty(@Modifier @NotNull @NonNls String name, boolean value) throws IncorrectOperationException;
 
-  /**
-   * Returns the list of annotations contained in the modifier list.
-   *
-   * @return the list of annotations.
-   */
-  @NotNull PsiAnnotation[] getAnnotations();
-
-  /**
-   * Searches the modifier list for an annotation with the specified fully qualified name
-   * and returns one if it is found.
-   *
-   * @param qualifiedName the fully qualified name of the annotation to find.
-   * @return the annotation instance, or null if no such annotation is found.
-   */
-  @Nullable PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName);
-
-  /**
-   * Add a new annotation to this modifier list. The annotation class name will be shortened. No attribbutes will be defined.
-   * @param qualifiedName qualifiedName
-   * @return newly added annotation
-   */
-  @NotNull PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName);
 }

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * Represents the occurrence of a type in Java source code, for example, as a return
  * type of the method or the type of a method parameter.
  */
-public interface PsiTypeElement extends PsiElement {
+public interface PsiTypeElement extends PsiElement,PsiAnnotationOwner {
   /**
    * The empty array of PSI directories which can be reused to avoid unnecessary allocations.
    */
@@ -44,4 +44,8 @@ public interface PsiTypeElement extends PsiElement {
    */
   @Nullable
   PsiJavaCodeReferenceElement getInnermostComponentReferenceElement();
+
+  PsiAnnotationOwner getOwner(PsiAnnotation annotation);
+
+  PsiType getTypeNoResolve(@NotNull PsiElement context);
 }

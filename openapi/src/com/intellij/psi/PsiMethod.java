@@ -178,4 +178,8 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
   PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException;
 
   @NotNull HierarchicalMethodSignature getHierarchicalMethodSignature();
+
+  @Nullable PsiMethodReceiver getMethodReceiver();
+
+  PsiType getReturnTypeNoResolve();
 }

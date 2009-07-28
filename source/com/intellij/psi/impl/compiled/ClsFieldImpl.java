@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.InitializerTooLongException;
-import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -97,7 +97,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
   public PsiTypeElement getTypeElement() {
     synchronized (LAZY_BUILT_LOCK) {
       if (myType == null) {
-        String typeText = RecordUtil.createTypeText(getStub().getType());
+        String typeText = TypeInfo.createTypeText(getStub().getType(false));
         myType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
       }
       return myType;
@@ -241,5 +241,9 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
   @NotNull
   public SearchScope getUseScope() {
     return PsiImplUtil.getMemberUseScope(this);
+  }
+
+  public PsiType getTypeNoResolve() {
+    return getType(); //todo?
   }
 }

@@ -16,10 +16,9 @@ public class LanguageLevelCombo extends ComboBox {
   public static final String USE_PROJECT_LANGUAGE_LEVEL = ProjectBundle.message("project.language.level.combo.item");
 
   public LanguageLevelCombo() {
-    addItem(LanguageLevel.JDK_1_3);
-    addItem(LanguageLevel.JDK_1_4);
-    addItem(LanguageLevel.JDK_1_5);
-    addItem(LanguageLevel.JDK_1_6);
+    for (LanguageLevel level : LanguageLevel.values()) {
+      addItem(level);
+    }
     setRenderer(new MyDefaultListCellRenderer());
   }
 

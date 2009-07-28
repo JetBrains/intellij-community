@@ -4,7 +4,6 @@
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
@@ -13,11 +12,12 @@ import com.intellij.psi.impl.java.stubs.PsiParameterStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodStub {
-  private TypeInfo myReturnType;
+  private final TypeInfo myReturnType;
   private final byte myFlags;
   private final StringRef myName;
   private StringRef myDefaultValueText;
@@ -30,11 +30,19 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
 
 
   public PsiMethodStubImpl(final StubElement parent,
-                           final String name,
-                           final TypeInfo returnType,
+                           final StringRef name,
                            final byte flags,
-                           final String defaultValueText) {
-    this(parent, StringRef.fromString(name), returnType, flags, StringRef.fromString(defaultValueText));
+                           final StringRef defaultValueText) {
+    super(parent, isAnnotationMethod(flags) ? JavaStubElementTypes.ANNOTATION_METHOD : JavaStubElementTypes.METHOD);
+
+    myReturnType = createReturnType();
+    myFlags = flags;
+    myName = name;
+    myDefaultValueText = defaultValueText;
+  }
+
+  protected TypeInfo createReturnType() {
+    return myReturnType;
   }
 
   public PsiMethodStubImpl(final StubElement parent,
@@ -70,8 +78,10 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     return StringRef.toString(myDefaultValueText);
   }
 
-  public TypeInfo getReturnTypeText() {
-    return myReturnType;
+  @NotNull
+  public TypeInfo getReturnTypeText(boolean doResolve) {
+    if (!doResolve) return myReturnType;
+    return PsiFieldStubImpl.addApplicableTypeAnnotationsFromChildModifierList(this, myReturnType);
   }
 
   public boolean isDeprecated() {
@@ -111,10 +121,6 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     myDefaultValueText = StringRef.fromString(defaultValueText);
   }
 
-  public void setReturnType(final TypeInfo returnType) {
-    myReturnType = returnType;
-  }
-
   public static byte packFlags(boolean isConstructor, boolean isAnnotationMethod, boolean isVarargs, boolean isDeprecated, boolean hasDeprecatedAnnotation) {
     byte flags = 0;
     if (isConstructor) flags |= CONSTRUCTOR;
@@ -143,7 +149,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     }
 
     builder.append(getName()).
-        append(":").append(RecordUtil.createTypeText(getReturnTypeText()));
+        append(":").append(TypeInfo.createTypeText(getReturnTypeText(true)));
 
     if (getDefaultValueText() != null) {
       builder.append(" default=").append(getDefaultValueText());

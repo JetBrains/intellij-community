@@ -279,154 +279,148 @@ public class StatementParsing extends Parsing {
     if (tokenType == JavaTokenType.IF_KEYWORD) {
       return parseIfStatement(lexer);
     }
-    else if (tokenType == JavaTokenType.WHILE_KEYWORD) {
+    if (tokenType == JavaTokenType.WHILE_KEYWORD) {
       return parseWhileStatement(lexer);
     }
-    else if (tokenType == JavaTokenType.FOR_KEYWORD) {
+    if (tokenType == JavaTokenType.FOR_KEYWORD) {
       return parseForStatement(lexer);
     }
-    else if (tokenType == JavaTokenType.DO_KEYWORD) {
+    if (tokenType == JavaTokenType.DO_KEYWORD) {
       return parseDoWhileStatement(lexer);
     }
-    else if (tokenType == JavaTokenType.SWITCH_KEYWORD) {
+    if (tokenType == JavaTokenType.SWITCH_KEYWORD) {
       return parseSwitchStatement(lexer);
     }
-    else if (tokenType == JavaTokenType.CASE_KEYWORD || tokenType == JavaTokenType.DEFAULT_KEYWORD) {
+    if (tokenType == JavaTokenType.CASE_KEYWORD || tokenType == JavaTokenType.DEFAULT_KEYWORD) {
       return parseSwitchLabelStatement(lexer);
     }
-    else if (tokenType == JavaTokenType.BREAK_KEYWORD) {
+    if (tokenType == JavaTokenType.BREAK_KEYWORD) {
       return parseBreakStatement(lexer);
     }
-    else if (tokenType == JavaTokenType.CONTINUE_KEYWORD) {
+    if (tokenType == JavaTokenType.CONTINUE_KEYWORD) {
       return parseContinueStatement(lexer);
     }
-    else if (tokenType == JavaTokenType.RETURN_KEYWORD) {
+    if (tokenType == JavaTokenType.RETURN_KEYWORD) {
       return parseReturnStatement(lexer);
     }
-    else if (tokenType == JavaTokenType.THROW_KEYWORD) {
+    if (tokenType == JavaTokenType.THROW_KEYWORD) {
       return parseThrowStatement(lexer);
     }
-    else if (tokenType == JavaTokenType.SYNCHRONIZED_KEYWORD) {
+    if (tokenType == JavaTokenType.SYNCHRONIZED_KEYWORD) {
       return parseSynchronizedStatement(lexer);
     }
-    else if (tokenType == JavaTokenType.TRY_KEYWORD) {
+    if (tokenType == JavaTokenType.TRY_KEYWORD) {
       return parseTryStatement(lexer);
     }
-    else if (tokenType == JavaTokenType.ASSERT_KEYWORD) {
+    if (tokenType == JavaTokenType.ASSERT_KEYWORD) {
       return parseAssertStatement(lexer);
     }
-    else if (tokenType == JavaTokenType.LBRACE) {
+    if (tokenType == JavaTokenType.LBRACE) {
       return parseBlockStatement(lexer);
     }
-    else if (tokenType instanceof ILazyParseableElementType) {
-      TreeElement declaration =
-        ASTFactory.lazy((ILazyParseableElementType)tokenType, myContext.tokenText(lexer));
+    if (tokenType instanceof ILazyParseableElementType) {
+      TreeElement declaration = ASTFactory.lazy((ILazyParseableElementType)tokenType, myContext.tokenText(lexer));
       lexer.advance();
       return declaration;
     }
-    else if (tokenType == JavaTokenType.SEMICOLON) {
+    if (tokenType == JavaTokenType.SEMICOLON) {
       CompositeElement element = ASTFactory.composite(JavaElementType.EMPTY_STATEMENT);
       element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
       return element;
     }
-    else {
-      if (lexer.getTokenType() == JavaTokenType.IDENTIFIER) {
-        final LexerPosition refPos = lexer.getCurrentPosition();
-        skipQualifiedName(lexer);
-        final IElementType suspectedLT = lexer.getTokenType();
-        lexer.restore(refPos);
-        LOG.assertTrue(lexer.getTokenType() == JavaTokenType.IDENTIFIER);
-        if (suspectedLT == JavaTokenType.LT) {
-          final TreeElement decl = myContext.getDeclarationParsing().parseDeclaration(lexer,
-                                                                                      DeclarationParsing.Context.CODE_BLOCK_CONTEXT);
-          CompositeElement declStatement = ASTFactory.composite(JavaElementType.DECLARATION_STATEMENT);
-          if (decl != null) {
-            declStatement.rawAddChildren(decl);
-          }
-          else {
-            final CompositeElement type = parseType(lexer, false, false);
-            declStatement.rawAddChildren(type);
-            final CompositeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("expected.identifier"));
-            declStatement.rawAddChildren(errorElement);
-          }
-          return declStatement;
-        }
-      }
-
-      final LexerPosition pos = lexer.getCurrentPosition();
-      CompositeElement expr = myContext.getExpressionParsing().parseExpression(lexer);
-      final LexerPosition pos1 = lexer.getCurrentPosition();
-      if (expr != null) {
-        int count = 1;
-        CompositeElement element = null;
-        while (lexer.getTokenType() == JavaTokenType.COMMA) {
-          CompositeElement list = ASTFactory.composite(JavaElementType.EXPRESSION_LIST);
-          element = ASTFactory.composite(JavaElementType.EXPRESSION_LIST_STATEMENT);
-          element.rawAddChildren(list);
-          list.rawAddChildren(expr);
-          final LexerPosition commaPos = lexer.getCurrentPosition();
-          TreeElement comma = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
-          lexer.advance();
-          CompositeElement expr1 = myContext.getExpressionParsing().parseExpression(lexer);
-          if (expr1 == null) {
-            lexer.restore(commaPos);
-            break;
-          }
-          list.rawAddChildren(comma);
-          list.rawAddChildren(expr1);
-          count++;
-        }
-        if (count > 1) {
-          processClosingSemicolon(element, lexer);
-          return element;
-        }
-        if (expr.getElementType() != JavaElementType.REFERENCE_EXPRESSION) {
-          element = ASTFactory.composite(JavaElementType.EXPRESSION_STATEMENT);
-          element.rawAddChildren(expr);
-          processClosingSemicolon(element, lexer);
-          return element;
-        }
-        lexer.restore(pos);
-      }
-
-      TreeElement decl = myContext.getDeclarationParsing().parseDeclaration(lexer, DeclarationParsing.Context.CODE_BLOCK_CONTEXT);
-      if (decl != null) {
+    if (tokenType == JavaTokenType.IDENTIFIER || tokenType == JavaTokenType.AT) {
+      final LexerPosition refPos = lexer.getCurrentPosition();
+      parseAnnotationListTo(lexer, null); // @Ann ClassName.field++;
+      skipQualifiedName(lexer);
+      final IElementType suspectedLT = lexer.getTokenType();
+      lexer.restore(refPos);
+      LOG.assertTrue(lexer.getTokenType() == JavaTokenType.IDENTIFIER || lexer.getTokenType() == JavaTokenType.AT);
+      if (suspectedLT == JavaTokenType.LT) {
+        final TreeElement decl = myContext.getDeclarationParsing().parseDeclaration(lexer, DeclarationParsing.Context.CODE_BLOCK_CONTEXT);
         CompositeElement declStatement = ASTFactory.composite(JavaElementType.DECLARATION_STATEMENT);
-        declStatement.rawAddChildren(decl);
-        return declStatement;
-      }
-
-      if (lexer.getTokenType() == JavaTokenType.IDENTIFIER) {
-        TreeElement identifier = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
-        lexer.advance();
-        if (lexer.getTokenType() != JavaTokenType.COLON) {
-          lexer.restore(pos);
+        if (decl != null) {
+          declStatement.rawAddChildren(decl);
         }
         else {
-          CompositeElement element = ASTFactory.composite(JavaElementType.LABELED_STATEMENT);
-          element.rawAddChildren(identifier);
-          element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
-          lexer.advance();
-          TreeElement statement = parseStatement(lexer);
-          if (statement != null) {
-            element.rawAddChildren(statement);
-          }
-          return element;
+          final CompositeElement type = parseType(lexer, false, false);
+          if (type != null) declStatement.rawAddChildren(type);
+          final CompositeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("expected.identifier"));
+          declStatement.rawAddChildren(errorElement);
         }
+        return declStatement;
       }
+    }
 
-      if (expr != null) {
-        lexer.restore(pos1);
-        CompositeElement element = ASTFactory.composite(JavaElementType.EXPRESSION_STATEMENT);
+    final LexerPosition pos = lexer.getCurrentPosition();
+    CompositeElement expr = myContext.getExpressionParsing().parseExpression(lexer);
+    final LexerPosition pos1 = lexer.getCurrentPosition();
+    if (expr != null) {
+      int count = 1;
+      CompositeElement element = null;
+      while (lexer.getTokenType() == JavaTokenType.COMMA) {
+        CompositeElement list = ASTFactory.composite(JavaElementType.EXPRESSION_LIST);
+        element = ASTFactory.composite(JavaElementType.EXPRESSION_LIST_STATEMENT);
+        element.rawAddChildren(list);
+        list.rawAddChildren(expr);
+        final LexerPosition commaPos = lexer.getCurrentPosition();
+        TreeElement comma = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
+        lexer.advance();
+        CompositeElement expr1 = myContext.getExpressionParsing().parseExpression(lexer);
+        if (expr1 == null) {
+          lexer.restore(commaPos);
+          break;
+        }
+        list.rawAddChildren(comma);
+        list.rawAddChildren(expr1);
+        count++;
+      }
+      if (count > 1) {
+        processClosingSemicolon(element, lexer);
+        return element;
+      }
+      if (expr.getElementType() != JavaElementType.REFERENCE_EXPRESSION) {
+        element = ASTFactory.composite(JavaElementType.EXPRESSION_STATEMENT);
         element.rawAddChildren(expr);
         processClosingSemicolon(element, lexer);
         return element;
       }
-      else {
-        return null;
-      }
+      lexer.restore(pos);
     }
+
+    TreeElement decl = myContext.getDeclarationParsing().parseDeclaration(lexer, DeclarationParsing.Context.CODE_BLOCK_CONTEXT);
+    if (decl != null) {
+      CompositeElement declStatement = ASTFactory.composite(JavaElementType.DECLARATION_STATEMENT);
+      declStatement.rawAddChildren(decl);
+      return declStatement;
+    }
+
+    if (lexer.getTokenType() == JavaTokenType.IDENTIFIER) {
+      TreeElement identifier = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
+      lexer.advance();
+      if (lexer.getTokenType() == JavaTokenType.COLON) {
+        CompositeElement element = ASTFactory.composite(JavaElementType.LABELED_STATEMENT);
+        element.rawAddChildren(identifier);
+        element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+        lexer.advance();
+        TreeElement statement = parseStatement(lexer);
+        if (statement != null) {
+          element.rawAddChildren(statement);
+        }
+        return element;
+      }
+      lexer.restore(pos);
+    }
+
+    if (expr != null) {
+      lexer.restore(pos1);
+      CompositeElement element = ASTFactory.composite(JavaElementType.EXPRESSION_STATEMENT);
+      element.rawAddChildren(expr);
+      processClosingSemicolon(element, lexer);
+      return element;
+    }
+
+    return null;
   }
 
   private static void skipQualifiedName(Lexer lexer) {

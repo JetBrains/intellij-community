@@ -203,7 +203,7 @@ public class PsiImplUtil {
     return new PsiImmediateClassType(classClass, substitutor);
   }
 
-  public static PsiAnnotation findAnnotation(PsiModifierList modifierList, @NotNull String qualifiedName) {
+  public static PsiAnnotation findAnnotation(PsiAnnotationOwner modifierList, @NotNull String qualifiedName) {
     final String shortName = StringUtil.getShortName(qualifiedName);
     PsiAnnotation[] annotations = modifierList.getAnnotations();
     for (PsiAnnotation annotation : annotations) {

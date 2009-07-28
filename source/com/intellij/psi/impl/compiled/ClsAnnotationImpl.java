@@ -116,4 +116,7 @@ public class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotationStub
     }
   }
 
+  public PsiAnnotationOwner getOwner() {
+    return (PsiAnnotationOwner)getParent();//todo
+  }
 }

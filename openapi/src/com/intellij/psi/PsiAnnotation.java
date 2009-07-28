@@ -97,4 +97,8 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
    * @param value new value template element
    */
   <T extends PsiAnnotationMemberValue> T setDeclaredAttributeValue(@NonNls String attributeName, @Nullable T value);
+
+
+  // in case of type annotation the owner might be type element, not the parent 
+  PsiAnnotationOwner getOwner();
 }

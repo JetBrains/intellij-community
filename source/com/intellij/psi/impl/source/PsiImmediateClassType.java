@@ -58,7 +58,11 @@ public class PsiImmediateClassType extends PsiClassType {
   }
 
   public PsiImmediateClassType(final PsiClass aClass, final PsiSubstitutor substitutor, final LanguageLevel languageLevel) {
-    super(languageLevel);
+    this(aClass, substitutor,languageLevel, PsiAnnotation.EMPTY_ARRAY);
+  }
+
+  public PsiImmediateClassType(PsiClass aClass, PsiSubstitutor substitutor, LanguageLevel languageLevel, PsiAnnotation[] annotations) {
+    super(languageLevel,annotations);
     myClass = aClass;
     myManager = aClass.getManager();
     mySubstitutor = substitutor;
@@ -134,7 +138,7 @@ public class PsiImmediateClassType extends PsiClassType {
         parentClass = (PsiClass)parent;
       }
     }
-
+    buffer.append(getAnnotationsTextPrefix());
     if (parentClass != null) {
       buildText(parentClass, buffer, canonical, false);
       buffer.append('.');
@@ -196,7 +200,7 @@ public class PsiImmediateClassType extends PsiClassType {
     PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
     final PsiType patternType;
     try {
-      patternType = factory.createTypeFromText(text, null);
+      patternType = factory.createTypeFromText(text, myClass);
     }
     catch (IncorrectOperationException e) {
       return false;
@@ -218,6 +222,6 @@ public class PsiImmediateClassType extends PsiClassType {
 
   public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
     if (languageLevel.equals(myLanguageLevel)) return this;
-    return new PsiImmediateClassType(myClass, mySubstitutor, languageLevel);
+    return new PsiImmediateClassType(myClass, mySubstitutor, languageLevel,getAnnotations());
   }
 }

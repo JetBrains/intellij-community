@@ -7,7 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiParameterStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -82,7 +82,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
         if (type != null) return type;
       }
 
-      String typeText = RecordUtil.createTypeText(stub.getParameterType());
+      String typeText = TypeInfo.createTypeText(stub.getType(true));
       try {
         final PsiType type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
         myCachedType = new PatchedSoftReference<PsiType>(type);
@@ -98,11 +98,29 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     return JavaSharedImplUtil.getType(this);
   }
 
+  public PsiType getTypeNoResolve() {
+    final PsiParameterStub stub = getStub();
+    if (stub != null) {
+      String typeText = TypeInfo.createTypeText(stub.getType(false));
+      try {
+        return JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+        return null;
+      }
+    }
+    PsiTypeElement typeElement = getTypeElement();
+    PsiIdentifier nameIdentifier = getNameIdentifier();
+    return JavaSharedImplUtil.getTypeNoResolve(typeElement, nameIdentifier, this);
+  }
+
   @NotNull
   public PsiTypeElement getTypeElement() {
     return (PsiTypeElement)getNode().findChildByRoleAsPsiElement(ChildRole.TYPE);
   }
 
+  @NotNull
   public PsiModifierList getModifierList() {
     return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
   }

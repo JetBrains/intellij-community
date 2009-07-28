@@ -16,11 +16,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.light.LightTypeElement;
-import com.intellij.psi.impl.source.PsiClassReferenceType;
-import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.parsing.ExpressionParsing;
 import com.intellij.psi.impl.source.parsing.JavaParsingContext;
@@ -52,15 +51,11 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
 
   @Nullable
   public TreeElement generateTreeFor(PsiElement original, final CharTable table, final PsiManager manager) {
-    if (original instanceof PsiIdentifier) {
+    if (original instanceof PsiKeyword || original instanceof PsiIdentifier) {
       final String text = original.getText();
-      return createLeafFromText(text, table, manager, original, JavaTokenType.IDENTIFIER);
+      return createLeafFromText(text, table, manager, original, ((PsiJavaToken)original).getTokenType());
     }
-    else if (original instanceof PsiKeyword) {
-      final String text = original.getText();
-      return createLeafFromText(text, table, manager, original, ((PsiKeyword)original).getTokenType());
-    }
-    else if (original instanceof PsiModifierList) {
+    if (original instanceof PsiModifierList) {
       final String text = original.getText();
       assert text != null : "Text is null for " + original + "; " + original.getClass();
       LanguageLevel languageLevel = PsiUtil.getLanguageLevel(original);
@@ -70,7 +65,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
       if (CodeEditUtil.isNodeGenerated(original.getNode())) modifierListElement.acceptTree(new GeneratedMarkerVisitor());
       return modifierListElement;
     }
-    else if (original instanceof PsiReferenceExpression) {
+    if (original instanceof PsiReferenceExpression) {
       TreeElement element = createReferenceExpression(original.getManager(), original.getText(), table);
       PsiElement refElement = ((PsiJavaCodeReferenceElement)original).resolve();
       if (refElement instanceof PsiClass) {
@@ -78,7 +73,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
       }
       return element;
     }
-    else if (original instanceof PsiJavaCodeReferenceElement) {
+    if (original instanceof PsiJavaCodeReferenceElement) {
       PsiElement refElement = ((PsiJavaCodeReferenceElement)original).resolve();
       final boolean generated = refElement != null && CodeEditUtil.isNodeGenerated(refElement.getNode());
       if (refElement instanceof PsiClass) {
@@ -113,11 +108,9 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         element.putCopyableUserData(REFERENCED_CLASS_KEY, (PsiClass)refElement);
         return element;
       }
-      else {
-        return createReference(original.getManager(), original.getText(), table, generated);
-      }
+      return createReference(original.getManager(), original.getText(), table, generated);
     }
-    else if (original instanceof PsiCompiledElement) {
+    if (original instanceof PsiCompiledElement) {
       PsiElement sourceVersion = original.getNavigationElement();
       if (sourceVersion != original) {
         return ChangeUtil.generateTreeElement(sourceVersion, table,manager);
@@ -125,7 +118,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
       ASTNode mirror = SourceTreeToPsiMap.psiElementToTree(((PsiCompiledElement)original).getMirror());
       return ChangeUtil.generateTreeElement(SourceTreeToPsiMap.treeElementToPsi(mirror), table,manager);
     }
-    else if (original instanceof PsiTypeElement) {
+    if (original instanceof PsiTypeElement) {
       final boolean generated = CodeEditUtil.isNodeGenerated(original.getNode());
       PsiTypeElement typeElement = (PsiTypeElement)original;
       PsiType type = typeElement.getType();
@@ -141,7 +134,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         element.rawAddChildren(createLeafFromText("...", table, manager, original, JavaTokenType.ELLIPSIS));
         return element;
       }
-      else if (type instanceof PsiArrayType) {
+      if (type instanceof PsiArrayType) {
         TreeElement componentTypeCopy = ChangeUtil.generateTreeElement(
           new LightTypeElement(original.getManager(), ((PsiArrayType)type).getComponentType()),
           table,
@@ -154,7 +147,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         element.rawAddChildren(createLeafFromText("]", table, manager, original, JavaTokenType.RBRACKET));
         return element;
       }
-      else if (type instanceof PsiPrimitiveType) {
+      if (type instanceof PsiPrimitiveType) {
         @NonNls String text = typeElement.getText();
         if (text.equals("null")) return null;
         Lexer lexer = new JavaLexer(LanguageLevel.JDK_1_3);
@@ -166,41 +159,57 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         element.rawAddChildren(keyword);
         return element;
       }
-      else if (type instanceof PsiWildcardType) {
+      if (type instanceof PsiWildcardType) {
         String originalText = original.getText();
         final CompositeElement element = Parsing.parseTypeText(original.getManager(), originalText, 0, originalText.length(), table);
         if(generated) element.getTreeParent().acceptTree(new GeneratedMarkerVisitor());
         return element;
       }
-      else if (type instanceof PsiIntersectionType) {
+      if (type instanceof PsiIntersectionType) {
         PsiIntersectionType intersectionType = (PsiIntersectionType)type;
         LightTypeElement te = new LightTypeElement(original.getManager(), intersectionType.getConjuncts()[0]);
         return ChangeUtil.generateTreeElement(te, table, manager);
       }
-      else {
-        PsiClassType classType = (PsiClassType)type;
-        final PsiJavaCodeReferenceElement ref;
-        if (classType instanceof PsiClassReferenceType) {
-          ref = ((PsiClassReferenceType)type).getReference();
-        }
-        else {
-          final CompositeElement reference = createReference(original.getManager(), classType.getPresentableText(), table, generated);
-          final CompositeElement immediateTypeElement = ASTFactory.composite(JavaElementType.TYPE);
-          CodeEditUtil.setNodeGenerated(immediateTypeElement, generated);
-          immediateTypeElement.rawAddChildren(reference);
-          encodeInfoInTypeElement(immediateTypeElement, classType);
-          return immediateTypeElement;
-        }
+      PsiClassType classType = (PsiClassType)type;
 
-        CompositeElement element = ASTFactory.composite(JavaElementType.TYPE);
-        CodeEditUtil.setNodeGenerated(element, generated);
-        element.rawAddChildren(ChangeUtil.generateTreeElement(ref, table,manager));
-        return element;
+
+      if (true)
+      {
+        final FileElement holderElement = DummyHolderFactory.createHolder(manager, original).getTreeElement();
+        String text = classType.getPresentableText();
+        CompositeElement fromT = Parsing.parseTypeText(manager, text, 0, text.length(), holderElement.getCharTable());
+        holderElement.rawAddChildren(fromT);
+        PsiTypeElementImpl result = (PsiTypeElementImpl)SourceTreeToPsiMap.treeElementToPsi(fromT);
+
+        CodeEditUtil.setNodeGenerated(result, generated);
+        if(generated) {
+          PsiJavaCodeReferenceElement ref = result.getInnermostComponentReferenceElement();
+          if (ref != null) ((CompositeElement)ref.getNode()).acceptTree(new GeneratedMarkerVisitor());
+        }
+        encodeInfoInTypeElement(result, classType);
+        return result;
       }
+
+      //if (true)
+      //{
+      //  TreeElement copy;
+      //  if (classType instanceof PsiClassReferenceType) {
+      //    final PsiElement ref = ((PsiClassReferenceType)type).getReference();
+      //    copy = ChangeUtil.generateTreeElement(ref, table,manager);
+      //  }
+      //  else {
+      //    copy = createReference(original.getManager(), classType.getPresentableText(), table, generated);
+      //  }
+      //
+      //  CompositeElement element = ASTFactory.composite(JavaElementType.TYPE);
+      //  CodeEditUtil.setNodeGenerated(element, generated);
+      //  element.rawAddChildren(copy);
+      //  encodeInfoInTypeElement(element, classType);
+      //
+      //  return element;
+      //}
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   private static LeafElement createLeafFromText(final String text,
@@ -449,8 +458,10 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         encodeInfoInTypeElement(typeElement, ((PsiAnonymousClass)referencedClass).getBaseClassType());
       }
       else {
-        final ASTNode reference = typeElement.getFirstChildNode();
-        LOG.assertTrue(reference.getElementType() == JavaElementType.JAVA_CODE_REFERENCE);
+        final ASTNode reference = typeElement.findChildByType(JavaElementType.JAVA_CODE_REFERENCE);
+        if (reference == null) {
+          LOG.error(DebugUtil.treeToString(typeElement, false));
+        }
 
         encodeClassTypeInfoInReference((CompositeElement)reference, resolveResult.getElement(), resolveResult.getSubstitutor());
       }

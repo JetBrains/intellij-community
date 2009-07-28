@@ -37,6 +37,7 @@ public class PsiCapturedWildcardType extends PsiType {
   }
 
   private PsiCapturedWildcardType(PsiWildcardType existential, final PsiElement context) {
+    super(PsiAnnotation.EMPTY_ARRAY);//todo
     myExistential = existential;
     myContext = context;
   }

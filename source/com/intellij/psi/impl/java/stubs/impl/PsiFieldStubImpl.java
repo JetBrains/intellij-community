@@ -5,14 +5,18 @@ package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.psi.PsiField;
 import com.intellij.psi.impl.cache.InitializerTooLongException;
-import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
+import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
+import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub {
   private static final int INITIALIZER_LENGTH_LIMIT = 1000;
@@ -27,11 +31,11 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
   private static final int DEPRECATED = 0x02;
   private static final int DEPRECATED_ANNOTATION = 0x04;
 
-  public PsiFieldStubImpl(final StubElement parent, final String name, final TypeInfo type, final String initializer, final byte flags) {
+  public PsiFieldStubImpl(final StubElement parent, final String name, @NotNull TypeInfo type, final String initializer, final byte flags) {
     this(parent, StringRef.fromString(name), type, StringRef.fromString(initializer), flags);
   }
 
-  public PsiFieldStubImpl(final StubElement parent, final StringRef name, final TypeInfo type, final StringRef initializer, final byte flags) {
+  public PsiFieldStubImpl(final StubElement parent, final StringRef name, @NotNull TypeInfo type, final StringRef initializer, final byte flags) {
     super(parent, isEnumConst(flags) ? JavaStubElementTypes.ENUM_CONSTANT : JavaStubElementTypes.FIELD);
 
     if (initializer != null && initializer.length() > INITIALIZER_LENGTH_LIMIT) {
@@ -46,8 +50,26 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
     myFlags = flags;
   }
 
-  public TypeInfo getType() {
-    return myType;
+  @NotNull
+  public TypeInfo getType(boolean doResolve) {
+    if (!doResolve) return myType;
+
+    return addApplicableTypeAnnotationsFromChildModifierList(this, myType);
+  }
+
+  public static TypeInfo addApplicableTypeAnnotationsFromChildModifierList(StubBase<?> aThis, TypeInfo type) {
+    PsiModifierListStub modifierList = (PsiModifierListStub)aThis.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
+    if (modifierList == null) return type;
+    TypeInfo typeInfo = new TypeInfo(type);
+    for (StubElement child: modifierList.getChildrenStubs()){
+      if (!(child instanceof PsiAnnotationStub)) continue;
+      PsiAnnotationStub annotationStub = (PsiAnnotationStub)child;
+      PsiAnnotationImpl annotation = (PsiAnnotationImpl)annotationStub.getTreeElement().getPsi();
+      if (AnnotationsHighlightUtil.isAnnotationApplicableTo(annotation, true, "TYPE_USE")) {
+        typeInfo.addAnnotation(annotationStub);
+      }
+    }
+    return typeInfo;
   }
 
   public String getInitializerText() throws InitializerTooLongException {
@@ -100,7 +122,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
       builder.append("enumconst ");
     }
 
-    builder.append(getName()).append(':').append(RecordUtil.createTypeText(getType()));
+    builder.append(getName()).append(':').append(TypeInfo.createTypeText(getType(true)));
 
     if (myInitializer != null) {
       builder.append('=').append(myInitializer);

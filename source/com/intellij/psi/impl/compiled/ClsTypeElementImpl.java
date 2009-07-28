@@ -5,8 +5,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.PsiImplUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jmock.util.NotImplementedException;
 
 public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement {
   public static final ClsTypeElementImpl[] EMPTY_ARRAY = new ClsTypeElementImpl[0];
@@ -126,6 +128,14 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     return null;
   }
 
+  public PsiAnnotationOwner getOwner(PsiAnnotation annotation) {
+    return this; //todo
+  }
+
+  public PsiType getTypeNoResolve(@NotNull PsiElement context) {
+    return getType();
+  }
+
   private PsiType calculateType() {
     PsiType result = JavaPsiFacade.getInstance(getProject()).getElementFactory().createPrimitiveType(myTypeText);
     if (result != null) return result;
@@ -216,5 +226,24 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
 
   public String toString() {
     return "PsiTypeElement:" + getText();
+  }
+
+  @NotNull
+  public PsiAnnotation[] getAnnotations() {
+    throw new NotImplementedException(); //todo
+  }
+
+  public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
+    return PsiImplUtil.findAnnotation(this, qualifiedName);
+  }
+
+  @NotNull
+  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+    throw new NotImplementedException(); //todo
+  }
+
+  @NotNull
+  public PsiAnnotation[] getApplicableAnnotations() {
+    return getAnnotations();
   }
 }

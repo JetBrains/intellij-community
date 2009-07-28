@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,5 +111,32 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
 
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMetaBase(this);
+  }
+
+  public PsiAnnotationOwner getOwner() {
+    PsiElement parent = getParent();
+    if (parent instanceof PsiTypeElement) {
+      return ((PsiTypeElement)parent).getOwner(this);
+    }
+    if (parent instanceof PsiMethodReceiver || parent instanceof PsiTypeParameter) return (PsiAnnotationOwner)parent;
+    PsiElement member = parent.getParent();
+    String[] elementTypeFields = AnnotationsHighlightUtil.getApplicableElementTypeFields(member);
+    if (elementTypeFields == null) return null;
+    if (AnnotationsHighlightUtil.isAnnotationApplicableTo(this, true, elementTypeFields)) return (PsiAnnotationOwner)parent;
+
+    PsiAnnotationOwner typeElement;
+    if (member instanceof PsiVariable) {
+      typeElement = ((PsiVariable)member).getTypeElement();
+    }
+    else if (member instanceof PsiMethod) {
+      typeElement = ((PsiMethod)member).getReturnTypeElement();
+    }
+    else if (parent instanceof PsiAnnotationOwner) {
+      typeElement = (PsiAnnotationOwner)parent;
+    }
+    else {
+      typeElement = null;
+    }
+    return typeElement;
   }
 }

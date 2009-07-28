@@ -270,6 +270,9 @@ public class JavaASTFactory extends ASTFactory implements Constants {
     else if (type == ANNOTATION_PARAMETER_LIST) {
       return new PsiAnnotationParameterListImpl();
     }
+    else if (type == METHOD_RECEIVER) {
+      return new PsiMethodReceiverImpl();
+    }
 
     return new CompositePsiElement(type){};
   }

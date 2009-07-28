@@ -121,7 +121,6 @@ public class ExpressionParsing extends Parsing {
   private static final int PARSE_UNARY = 12;
   private static final int PARSE_POSTFIX = 13;
   private static final int PARSE_PRIMARY = 14;
-  private static final int PARSE_CLASS_OBJECT_ACCESS = 15;
   private static final int PARSE_ARGUMENT_LIST = 16;
   private static final int PARSE_ARRAY_INITIALIZER = 17;
   private static final int PARSE_TYPE = 18;
@@ -182,9 +181,6 @@ public class ExpressionParsing extends Parsing {
 
       case PARSE_PRIMARY:
         return parsePrimaryExpression(lexer);
-
-      case PARSE_CLASS_OBJECT_ACCESS:
-        return parseClassObjectAccessExpression(lexer);
 
       case PARSE_ARGUMENT_LIST:
         return parseArgumentList(lexer);
@@ -348,10 +344,13 @@ public class ExpressionParsing extends Parsing {
 
   private CompositeElement parseUnaryExpression(Lexer lexer) {
     IElementType tokenType = lexer.getTokenType();
-    if (tokenType == JavaTokenType.PLUS || tokenType == JavaTokenType.MINUS || tokenType == JavaTokenType.PLUSPLUS || tokenType ==
-                                                                                                                      JavaTokenType.MINUSMINUS || tokenType ==
-                                                                                                                                                  JavaTokenType.TILDE || tokenType ==
-                                                                                                                                                                         JavaTokenType.EXCL) {
+    boolean isPrefix = tokenType == JavaTokenType.PLUS ||
+                       tokenType == JavaTokenType.MINUS ||
+                       tokenType == JavaTokenType.PLUSPLUS ||
+                       tokenType == JavaTokenType.MINUSMINUS ||
+                       tokenType == JavaTokenType.TILDE ||
+                       tokenType == JavaTokenType.EXCL;
+    if (isPrefix) {
       CompositeElement element = ASTFactory.composite(JavaElementType.PREFIX_EXPRESSION);
       element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
@@ -401,7 +400,8 @@ public class ExpressionParsing extends Parsing {
       element.rawAddChildren(rparenth);
       if (expr != null) {
         element.rawAddChildren(expr);
-      } else {
+      }
+      else {
         element.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
       }
       return element;
@@ -457,7 +457,6 @@ public class ExpressionParsing extends Parsing {
           }
 
           element = element1;
-          //}
         }
         else if (tokenType == JavaTokenType.CLASS_KEYWORD && element.getElementType() == JavaElementType.REFERENCE_EXPRESSION) {
           final LexerPosition pos1 = lexer.getCurrentPosition();
@@ -479,7 +478,7 @@ public class ExpressionParsing extends Parsing {
                  && element.getElementType() == JavaElementType.REFERENCE_EXPRESSION) {
 
           lexer.restore(startPos);
-          CompositeElement element1 = parseJavaCodeReference(lexer, false, true); // don't eat the last dot before "this" or "super"!
+          CompositeElement element1 = parseJavaCodeReference(lexer, false, true, false); // don't eat the last dot before "this" or "super"!
           if (element1 == null || lexer.getTokenType() != JavaTokenType.DOT || lexer.getTokenStart() != pos.getOffset()) {
             lexer.restore(pos);
             return element;
@@ -604,6 +603,7 @@ public class ExpressionParsing extends Parsing {
 
   private CompositeElement parsePrimaryExpressionStart(Lexer lexer) {
     IElementType tokenType = lexer.getTokenType();
+
     if (tokenType == JavaTokenType.TRUE_KEYWORD ||
         tokenType == JavaTokenType.FALSE_KEYWORD ||
         tokenType == JavaTokenType.NULL_KEYWORD ||
@@ -612,13 +612,13 @@ public class ExpressionParsing extends Parsing {
         tokenType == JavaTokenType.FLOAT_LITERAL ||
         tokenType == JavaTokenType.DOUBLE_LITERAL ||
         tokenType == JavaTokenType.CHARACTER_LITERAL ||
-        tokenType == JavaTokenType.STRING_LITERAL) {
+        tokenType == JavaTokenType.STRING_LITERAL) {                            
       CompositeElement element = ASTFactory.composite(JavaElementType.LITERAL_EXPRESSION);
       element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
       return element;
     }
-    else if (tokenType == JavaTokenType.LPARENTH) {
+    if (tokenType == JavaTokenType.LPARENTH) {
       CompositeElement element = ASTFactory.composite(JavaElementType.PARENTH_EXPRESSION);
       //int pos = ParseUtil.savePosition(lexer);
       element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
@@ -644,17 +644,36 @@ public class ExpressionParsing extends Parsing {
 
       return element;
     }
-    else if (tokenType == JavaTokenType.LBRACE) {
+    if (tokenType == JavaTokenType.LBRACE) {
       return parseArrayInitializerExpression(lexer);
     }
-    else if (tokenType == JavaTokenType.IDENTIFIER) {
-      CompositeElement element = ASTFactory.composite(JavaElementType.REFERENCE_EXPRESSION);
-      element.rawAddChildren(ASTFactory.composite(JavaElementType.REFERENCE_PARAMETER_LIST));
-      element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
-      lexer.advance();
-      return element;
+
+    CompositeElement annotation = null;
+    LexerPosition beforeAnnotation = lexer.getCurrentPosition();
+    if (tokenType == JavaTokenType.AT) {
+      CompositeElement list = ASTFactory.composite(tokenType);
+      myContext.getDeclarationParsing().parseAnnotationListTo(lexer, list);
+      annotation = (CompositeElement)list.getFirstChildNode();
+      tokenType = lexer.getTokenType();
     }
-    else if (tokenType == JavaTokenType.THIS_KEYWORD) {
+
+    if (tokenType == JavaTokenType.IDENTIFIER) {
+      CompositeElement refExpr = ASTFactory.composite(JavaElementType.REFERENCE_EXPRESSION);
+      refExpr.rawAddChildren(ASTFactory.composite(JavaElementType.REFERENCE_PARAMETER_LIST));
+      if (annotation != null) {
+        refExpr.rawAddChildren(annotation);
+      }
+      refExpr.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+      lexer.advance();
+      return refExpr;
+    }
+
+    if (annotation != null) {
+      lexer.restore(beforeAnnotation);
+      tokenType = lexer.getTokenType();
+    }
+
+    if (tokenType == JavaTokenType.THIS_KEYWORD) {
       TreeElement thisKeyword = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
       lexer.advance();
 
@@ -671,7 +690,7 @@ public class ExpressionParsing extends Parsing {
 
       return element;
     }
-    else if (tokenType == JavaTokenType.SUPER_KEYWORD) {
+    if (tokenType == JavaTokenType.SUPER_KEYWORD) {
       TreeElement superKeyword = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
       lexer.advance();
 
@@ -687,20 +706,18 @@ public class ExpressionParsing extends Parsing {
       element.rawAddChildren(superKeyword);
       return element;
     }
-    else if (tokenType == JavaTokenType.NEW_KEYWORD) {//final TreeElement referenceParameterList = parseReferenceParameterList(lexer, false);
+    if (tokenType == JavaTokenType.NEW_KEYWORD) {//final TreeElement referenceParameterList = parseReferenceParameterList(lexer, false);
       return parseNewExpression(lexer, null, null/*, referenceParameterList*/);
     }
-    else {
-      if (tokenType != null && ElementType.PRIMITIVE_TYPE_BIT_SET.contains(tokenType)) {
-        return parseClassObjectAccessExpression(lexer);
-      }
-      return null;
+    if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(tokenType)) {
+      return parseClassObjectAccessExpression(lexer);
     }
+    return null;
   }
 
   private CompositeElement parseNewExpression(Lexer lexer,
                                               TreeElement qualifier,
-                                              TreeElement dot/*, TreeElement referenceParameterList*/) {
+                                              TreeElement dot) {
     LOG.assertTrue(lexer.getTokenType() == JavaTokenType.NEW_KEYWORD);
 
     CompositeElement element = ASTFactory.composite(JavaElementType.NEW_EXPRESSION);
@@ -710,15 +727,18 @@ public class ExpressionParsing extends Parsing {
       element.rawAddChildren(dot);
     }
 
-    element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+    TreeElement newKeyword = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
+    element.rawAddChildren(newKeyword);
     lexer.advance();
     element.rawAddChildren(parseReferenceParameterList(lexer, false));
 
     boolean isPrimitive;
     TreeElement refOrType;
-    if (lexer.getTokenType() == JavaTokenType.IDENTIFIER) {
+    boolean parseAnnotations = areTypeAnnotationsSupported() && lexer.getTokenType() == JavaTokenType.AT;
+
+    if (lexer.getTokenType() == JavaTokenType.IDENTIFIER || parseAnnotations) {
       isPrimitive = false;
-      refOrType = parseJavaCodeReference(lexer, true, true);
+      refOrType = parseJavaCodeReference(lexer, true, true, parseAnnotations);
     }
     else if (lexer.getTokenType() != null && ElementType.PRIMITIVE_TYPE_BIT_SET.contains(lexer.getTokenType())) {
       isPrimitive = true;

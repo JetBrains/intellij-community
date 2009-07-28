@@ -303,4 +303,23 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
   public SearchScope getUseScope() {
     return PsiClassImplUtil.getClassUseScope(this);
   }
+
+  //todo parse annotataions
+  @NotNull
+  public PsiAnnotation[] getAnnotations() {
+    return PsiAnnotation.EMPTY_ARRAY;
+  }
+
+  public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
+    return null;
+  }
+
+  @NotNull
+  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+    throw new IncorrectOperationException();
+  }
+  @NotNull
+  public PsiAnnotation[] getApplicableAnnotations() {
+    return getAnnotations();
+  }
 }

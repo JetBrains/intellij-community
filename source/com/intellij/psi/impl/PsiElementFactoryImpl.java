@@ -105,6 +105,14 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  public PsiClassType createType(@NotNull PsiClass resolve,
+                                 @NotNull PsiSubstitutor substitutor,
+                                 @NotNull LanguageLevel languageLevel,
+                                 @NotNull PsiAnnotation[] annotations) {
+    return new PsiImmediateClassType(resolve, substitutor, languageLevel, annotations);
+  }
+
+  @NotNull
   public PsiClass createClass(@NotNull String name) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(myManager, name);
     @NonNls String text = "public class " + name + "{ }";
@@ -159,7 +167,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   public PsiField createField(@NotNull String name, @NotNull PsiType type) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(myManager, name);
-    if (type == PsiType.NULL) {
+    if (PsiType.NULL.equals(type)) {
       throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
     }
     TreeElement typeCopy = ChangeUtil.copyToElement(createTypeElement(type));
@@ -176,7 +184,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   public PsiMethod createMethod(@NotNull String name, PsiType returnType) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(myManager, name);
-    if (returnType == PsiType.NULL) {
+    if (PsiType.NULL.equals(returnType)) {
       throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
     }
     @NonNls String text = "class _Dummy_ {\n public " + returnType.getCanonicalText() + " " + name + "(){}\n}";
@@ -214,7 +222,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   public PsiParameter createParameter(@NotNull String name, @NotNull PsiType type) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(myManager, name);
-    if (type == PsiType.NULL) {
+    if (PsiType.NULL.equals(type)) {
       throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
     }
     final FileElement treeHolder = DummyHolderFactory.createHolder(myManager, null).getTreeElement();
@@ -530,7 +538,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     if (!JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isIdentifier(name)) {
       throw new IncorrectOperationException("\"" + name + "\" is not an identifier.");
     }
-    if (type == PsiType.NULL) {
+    if (PsiType.NULL.equals(type)) {
       throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
     }
     @NonNls StringBuilder buffer = new StringBuilder();
@@ -675,7 +683,6 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   public PsiType createTypeFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
     return createTypeInner(text, context, true);
   }
-
 
   @NotNull
   public PsiTypeParameter createTypeParameterFromText(@NotNull final String text, final PsiElement context) throws

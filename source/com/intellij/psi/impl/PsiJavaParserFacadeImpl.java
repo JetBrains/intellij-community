@@ -291,4 +291,11 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     }
     psiCatchSection.getCatchBlock().replace(codeBlockFromText);
   }
+
+  public PsiType createPrimitiveType(@NotNull String text, @NotNull PsiAnnotation[] annotations) {
+    if (annotations.length == 0) {
+      return PsiElementFactoryImpl.getPrimitiveType(text);//todo
+    }
+    return new PsiPrimitiveType(text, annotations);
+  }
 }

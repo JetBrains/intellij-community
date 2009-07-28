@@ -10,10 +10,9 @@ import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterStubImpl;
 import com.intellij.psi.impl.source.tree.java.PsiTypeParameterImpl;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.util.io.StringRef;
 
 import java.io.IOException;
 
@@ -36,17 +35,18 @@ public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypePar
   }
 
   public PsiTypeParameterStub createStub(final PsiTypeParameter psi, final StubElement parentStub) {
-    return new PsiTypeParameterStubImpl(parentStub, psi.getName());
+    StringRef name = StringRef.fromString(psi.getName());
+    return new PsiTypeParameterStubImpl(parentStub, name);
   }
 
-  public void serialize(final PsiTypeParameterStub stub, final StubOutputStream dataStream)
-      throws IOException {
-    dataStream.writeName(stub.getName());
+  public void serialize(final PsiTypeParameterStub stub, final StubOutputStream dataStream) throws IOException {
+    String name = stub.getName();
+    dataStream.writeName(name);
   }
 
-  public PsiTypeParameterStub deserialize(final StubInputStream dataStream, final StubElement parentStub)
-      throws IOException {
-    return new PsiTypeParameterStubImpl(parentStub, dataStream.readName());
+  public PsiTypeParameterStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+    StringRef name = dataStream.readName();
+    return new PsiTypeParameterStubImpl(parentStub, name);
   }
 
   public void indexStub(final PsiTypeParameterStub stub, final IndexSink sink) {

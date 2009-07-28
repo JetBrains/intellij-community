@@ -1,6 +1,8 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -12,11 +14,13 @@ import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Map;
 
 public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub> implements PsiModifierList, Constants {
@@ -234,6 +238,18 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
   @NotNull
   public PsiAnnotation[] getAnnotations() {
     return getStubOrPsiChildren(JavaStubElementTypes.ANNOTATION, PsiAnnotation.ARRAY_FACTORY);
+  }
+
+  @NotNull
+  public PsiAnnotation[] getApplicableAnnotations() {
+    final String[] fields = AnnotationsHighlightUtil.getApplicableElementTypeFields(this);
+    List<PsiAnnotation> filtered = ContainerUtil.findAll(getAnnotations(), new Condition<PsiAnnotation>() {
+      public boolean value(PsiAnnotation annotation) {
+        return AnnotationsHighlightUtil.isAnnotationApplicableTo(annotation, true, fields);
+      }
+    });
+
+    return filtered.toArray(new PsiAnnotation[filtered.size()]);
   }
 
   public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {

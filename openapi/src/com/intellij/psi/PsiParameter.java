@@ -50,14 +50,11 @@ public interface PsiParameter extends PsiVariable {
   boolean isVarArgs();
 
   /**
-   * Returns the list of annotations for the parameter. Using this method is more
-   * efficient than calling <code>getModifierList().getAnnotations()</code> because
-   * it uses cached data and does not require parsing of the method body.
-   *
    * @return the list of annotations.
+   * @use getModifierList().getAnnotations()
    */
+  @Deprecated
   @NotNull PsiAnnotation[] getAnnotations();
-
 
   /**
    * {@inheritDoc}

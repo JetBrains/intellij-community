@@ -396,7 +396,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
     }
 
     ASTNode keyword = getNode().findChildByRole(ChildRole.CLASS_OR_INTERFACE_KEYWORD);
-    return keyword.getElementType() == JavaTokenType.INTERFACE_KEYWORD;
+    return keyword != null && keyword.getElementType() == JavaTokenType.INTERFACE_KEYWORD;
   }
 
   public boolean isAnnotationType() {

@@ -57,6 +57,9 @@ public class ClsAnnotationsUtil {
           PsiNameValuePair[] psiAttributes = psiAnnotation.getParameterList().getAttributes();
           return new ClsAnnotationParameterListImpl(this, psiAttributes);
         }
+        public PsiAnnotationOwner getOwner() {
+          return (PsiAnnotationOwner)getParent();
+        }
       };
     }
     else if (element instanceof PsiReferenceExpression) {

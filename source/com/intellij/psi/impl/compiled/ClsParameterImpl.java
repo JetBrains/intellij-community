@@ -7,7 +7,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiParameterStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -45,7 +45,7 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
       if (DumbService.getInstance(getProject()).isDumb()) {
         return null;
       }
-      
+
       ClsMethodImpl method = (ClsMethodImpl)getDeclarationScope();
       PsiMethod sourceMethod = (PsiMethod)method.getNavigationElement();
       if (sourceMethod == method) return null;
@@ -63,7 +63,7 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
   public PsiTypeElement getTypeElement() {
     synchronized (LAZY_BUILT_LOCK) {
       if (myType == null) {
-        myType = new ClsTypeElementImpl(this, RecordUtil.createTypeText(getStub().getParameterType()), ClsTypeElementImpl.VARIANCE_NONE);
+        myType = new ClsTypeElementImpl(this, TypeInfo.createTypeText(getStub().getType(false)), ClsTypeElementImpl.VARIANCE_NONE);
       }
       return myType;
     }
@@ -101,7 +101,7 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
   }
 
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
-    PsiAnnotation[] annotations = getAnnotations();
+    PsiAnnotation[] annotations = getModifierList().getAnnotations();
     for (PsiAnnotation annotation : annotations) {
       ((ClsAnnotationImpl)annotation).appendMirrorText(indentLevel, buffer);
       buffer.append(" ");
@@ -222,5 +222,9 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
   @NotNull
   public SearchScope getUseScope() {
     return new LocalSearchScope(getDeclarationScope());
+  }
+
+  public PsiType getTypeNoResolve() {
+    return getType();
   }
 }

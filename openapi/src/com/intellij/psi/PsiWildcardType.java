@@ -38,6 +38,7 @@ public class PsiWildcardType extends PsiType {
   @NonNls private static final String SUPER_PREFIX = "? super ";
 
   private PsiWildcardType(@NotNull PsiManager manager, boolean isExtending, PsiType bound) {
+    super(PsiAnnotation.EMPTY_ARRAY);//todo
     myManager = manager;
     myIsExtending = isExtending;
     myBound = bound;

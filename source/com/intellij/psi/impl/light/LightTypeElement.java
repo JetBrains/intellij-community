@@ -3,6 +3,8 @@ package com.intellij.psi.impl.light;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -47,7 +49,35 @@ public class LightTypeElement extends LightElement implements PsiTypeElement {
     return null;
   }
 
+  public PsiAnnotationOwner getOwner(PsiAnnotation annotation) {
+    return this;
+  }
+
+  public PsiType getTypeNoResolve(@NotNull PsiElement context) {
+    return getType();
+  }
+
   public boolean isValid() {
     return myType.isValid();
   }
+
+  @NotNull
+  public PsiAnnotation[] getAnnotations() {
+    return myType.getAnnotations();
+  }
+
+  public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
+    return myType.findAnnotation(qualifiedName);
+  }
+
+  @NotNull
+  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+    throw new IncorrectOperationException();
+  }
+  
+  @NotNull
+  public PsiAnnotation[] getApplicableAnnotations() {
+    return getAnnotations();
+  }
+
 }

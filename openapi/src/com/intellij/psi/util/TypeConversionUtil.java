@@ -72,6 +72,7 @@ public class TypeConversionUtil {
     TYPE_TO_RANK_MAP.put(PsiType.LONG, LONG_RANK);
     TYPE_TO_RANK_MAP.put(PsiType.FLOAT, FLOAT_RANK);
     TYPE_TO_RANK_MAP.put(PsiType.DOUBLE, DOUBLE_RANK);
+    TYPE_TO_RANK_MAP.put(PsiType.BOOLEAN, BOOL_RANK);
   }
 
 
@@ -349,27 +350,27 @@ public class TypeConversionUtil {
   }
 
   public static boolean isNullType(PsiType type) {
-    return PsiType.NULL == type;
+    return PsiType.NULL.equals(type);
   }
 
   public static boolean isDoubleType(PsiType type) {
-    return PsiType.DOUBLE == type || PsiPrimitiveType.getUnboxedType(type) == PsiType.DOUBLE;
+    return PsiType.DOUBLE.equals(type) || PsiType.DOUBLE.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 
   public static boolean isFloatType(PsiType type) {
-    return PsiType.FLOAT == type || PsiPrimitiveType.getUnboxedType(type) == PsiType.FLOAT;
+    return PsiType.FLOAT.equals(type) || PsiType.FLOAT.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 
   public static boolean isLongType(PsiType type) {
-    return PsiType.LONG == type || PsiPrimitiveType.getUnboxedType(type) == PsiType.LONG;
+    return PsiType.LONG.equals(type) || PsiType.LONG.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 
   public static boolean isVoidType(PsiType type) {
-    return PsiType.VOID == type;
+    return PsiType.VOID.equals(type);
   }
 
   public static boolean isBooleanType(PsiType type) {
-    return PsiType.BOOLEAN == type || PsiPrimitiveType.getUnboxedType(type) == PsiType.BOOLEAN;
+    return PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 
   public static boolean isNumericType(int typeRank) {
@@ -382,7 +383,8 @@ public class TypeConversionUtil {
   /**
    * @return 1..MAX_NUMERIC_TYPE if type is primitive numeric type,
    *         BOOL_TYPE for boolean,
-   *         STRING_TYPE for String, Integer.MAX_VALUE for other
+   *         STRING_TYPE for String,
+   *         Integer.MAX_VALUE for others
    */
   public static int getTypeRank(PsiType type) {
     PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(type);
@@ -392,7 +394,6 @@ public class TypeConversionUtil {
 
     int rank = TYPE_TO_RANK_MAP.get(type);
     if (rank != 0) return rank;
-    if (PsiType.BOOLEAN == type) return BOOL_RANK;
     if (type.equalsToText("java.lang.String")) return STRING_RANK;
     return Integer.MAX_VALUE;
   }
@@ -585,13 +586,13 @@ public class TypeConversionUtil {
         return false;
       }
 
-      if (PsiType.BYTE == lType) {
+      if (PsiType.BYTE.equals(lType)) {
         return -128 <= value && value <= 127;
       }
-      else if (PsiType.SHORT == lType) {
+      else if (PsiType.SHORT.equals(lType)) {
         return -32768 <= value && value <= 32767;
       }
-      else if (PsiType.CHAR == lType) {
+      else if (PsiType.CHAR.equals(lType)) {
         return 0 <= value && value <= 0xFFFF;
       }
     }
@@ -610,9 +611,8 @@ public class TypeConversionUtil {
     return isAssignable(left, right, true);
   }
 
-
   public static boolean isAssignable(@NotNull PsiType left, @NotNull PsiType right, boolean allowUncheckedConversion) {
-    if (left == right) return true;
+    if (left == right || left.equals(right)) return true;
     if (isNullType(right)) {
       return !(left instanceof PsiPrimitiveType) || isNullType(left);
     }
@@ -623,7 +623,8 @@ public class TypeConversionUtil {
         if (!isAssignable(conjunct, right, allowUncheckedConversion)) return false;
       }
       return true;
-    } else if (right instanceof PsiIntersectionType) {
+    }
+    if (right instanceof PsiIntersectionType) {
       PsiType[] conjuncts = ((PsiIntersectionType)right).getConjuncts();
       for (PsiType conjunct : conjuncts) {
         if (isAssignable(left, conjunct, allowUncheckedConversion)) return true;
@@ -633,14 +634,15 @@ public class TypeConversionUtil {
 
     if (left instanceof PsiCapturedWildcardType) {
       return left.equals(right) || isAssignable(((PsiCapturedWildcardType)left).getLowerBound(), right, allowUncheckedConversion);
-    } else if (right instanceof PsiCapturedWildcardType) {
+    }
+    if (right instanceof PsiCapturedWildcardType) {
       return isAssignable(left, ((PsiCapturedWildcardType)right).getUpperBound(), allowUncheckedConversion);
     }
 
     if (left instanceof PsiWildcardType) {
       return isAssignableToWildcard((PsiWildcardType)left, right);
     }
-    else if (right instanceof PsiWildcardType) {
+    if (right instanceof PsiWildcardType) {
       return isAssignableFromWildcard(left, (PsiWildcardType)right);
     }
     if (right instanceof PsiArrayType) {
@@ -659,50 +661,49 @@ public class TypeConversionUtil {
       PsiType lCompType = ((PsiArrayType)left).getComponentType();
       PsiType rCompType = ((PsiArrayType)right).getComponentType();
       if (lCompType instanceof PsiPrimitiveType) {
-        return lCompType == rCompType;
+        return lCompType.equals(rCompType);
       }
       else {
         return !(rCompType instanceof PsiPrimitiveType) && isAssignable(lCompType, rCompType, allowUncheckedConversion);
       }
     }
-    else {
-      if (left instanceof PsiArrayType) return false;
-      if (right instanceof PsiPrimitiveType) {
-        if (!(left instanceof PsiPrimitiveType)) {
-          return left instanceof PsiClassType && isBoxable((PsiClassType)left, (PsiPrimitiveType)right);
-        }
-        int leftTypeIndex = TYPE_TO_RANK_MAP.get(left) - 1;
-        if (leftTypeIndex < 0) return false;
-        int rightTypeIndex = TYPE_TO_RANK_MAP.get(right) - 1;
-        if (rightTypeIndex < 0) return false;
-        return IS_ASSIGNABLE_BIT_SET[rightTypeIndex][leftTypeIndex];
+
+    if (left instanceof PsiArrayType) return false;
+    if (right instanceof PsiPrimitiveType) {
+      if (!(left instanceof PsiPrimitiveType)) {
+        return left instanceof PsiClassType && isBoxable((PsiClassType)left, (PsiPrimitiveType)right);
       }
-      else {
-        if (!(right instanceof PsiClassType)) {
-          LOG.error(right.toString());
-        }
-        if (left instanceof PsiPrimitiveType) {
-          return isUnboxable((PsiPrimitiveType)left, (PsiClassType)right);
-        }
-        final PsiClassType.ClassResolveResult leftResult = PsiUtil.resolveGenericsClassInType(left);
-        final PsiClassType.ClassResolveResult rightResult = PsiUtil.resolveGenericsClassInType(right);
-        if (leftResult.getElement() == null || rightResult.getElement() == null) {
-          if (leftResult.getElement() != rightResult.getElement()) return false;
-          // let's suppose 2 unknown classes, which could be the same to be the same
-          String lText = left.getPresentableText();
-          String rText = right.getPresentableText();
-          if (lText.equals(rText)) return true;
-          if (lText.length() > rText.length() && lText.endsWith(rText) &&
-              lText.charAt(lText.length() - rText.length() - 1) == '.') {
-            return true;
-          }
-          return rText.length() > lText.length()
-                 && rText.endsWith(lText)
-                 && rText.charAt(rText.length() - lText.length() - 1) == '.';
-        }
-        return isClassAssignable(leftResult, rightResult, allowUncheckedConversion);
-      }
+      int leftTypeIndex = TYPE_TO_RANK_MAP.get(left) - 1;
+      int rightTypeIndex = TYPE_TO_RANK_MAP.get(right) - 1;
+      return leftTypeIndex >= 0 &&
+             rightTypeIndex >= 0 &&
+             rightTypeIndex < IS_ASSIGNABLE_BIT_SET.length &&
+             leftTypeIndex < IS_ASSIGNABLE_BIT_SET.length &&
+             IS_ASSIGNABLE_BIT_SET[rightTypeIndex][leftTypeIndex];
     }
+    if (!(right instanceof PsiClassType)) {
+      LOG.error(right.toString());
+    }
+    if (left instanceof PsiPrimitiveType) {
+      return isUnboxable((PsiPrimitiveType)left, (PsiClassType)right);
+    }
+    final PsiClassType.ClassResolveResult leftResult = PsiUtil.resolveGenericsClassInType(left);
+    final PsiClassType.ClassResolveResult rightResult = PsiUtil.resolveGenericsClassInType(right);
+    if (leftResult.getElement() == null || rightResult.getElement() == null) {
+      if (leftResult.getElement() != rightResult.getElement()) return false;
+      // let's suppose 2 unknown classes, which could be the same to be the same
+      String lText = left.getPresentableText();
+      String rText = right.getPresentableText();
+      if (lText.equals(rText)) return true;
+      if (lText.length() > rText.length() && lText.endsWith(rText) &&
+          lText.charAt(lText.length() - rText.length() - 1) == '.') {
+        return true;
+      }
+      return rText.length() > lText.length()
+             && rText.endsWith(lText)
+             && rText.charAt(rText.length() - lText.length() - 1) == '.';
+    }
+    return isClassAssignable(leftResult, rightResult, allowUncheckedConversion);
   }
 
   private static boolean isAssignableFromWildcard(PsiType left, PsiWildcardType rightWildcardType) {
@@ -1140,7 +1141,7 @@ public class TypeConversionUtil {
     if (operand instanceof String && castType.equalsToText("java.lang.String")) {
       value = operand;
     }
-    else if (operand instanceof Boolean && castType == PsiType.BOOLEAN) {
+    else if (operand instanceof Boolean && PsiType.BOOLEAN.equals(castType)) {
       value = operand;
     }
     else {
@@ -1162,9 +1163,9 @@ public class TypeConversionUtil {
     if (type1 instanceof PsiClassType) type1 = PsiPrimitiveType.getUnboxedType(type1);
     if (type2 instanceof PsiClassType) type2 = PsiPrimitiveType.getUnboxedType(type2);
 
-    if (type1 == PsiType.DOUBLE || type2 == PsiType.DOUBLE) return PsiType.DOUBLE;
-    if (type1 == PsiType.FLOAT || type2 == PsiType.FLOAT) return PsiType.FLOAT;
-    if (type1 == PsiType.LONG || type2 == PsiType.LONG) return PsiType.LONG;
+    if (PsiType.DOUBLE.equals(type1) || PsiType.DOUBLE.equals(type2)) return PsiType.DOUBLE;
+    if (PsiType.FLOAT.equals(type1) || PsiType.FLOAT.equals(type2)) return PsiType.FLOAT;
+    if (PsiType.LONG.equals(type1) || PsiType.LONG.equals(type2)) return PsiType.LONG;
     return PsiType.INT;
   }
 

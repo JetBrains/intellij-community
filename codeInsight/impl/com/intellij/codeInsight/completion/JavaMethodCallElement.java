@@ -18,7 +18,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> {
   public JavaMethodCallElement(PsiMethod method) {
     super(method, method.getName());
     PsiType type = method.getReturnType();
-    setTailType(type == PsiType.VOID ? TailType.SEMICOLON : TailType.NONE);
+    setTailType(PsiType.VOID.equals(type) ? TailType.SEMICOLON : TailType.NONE);
     setInsertHandler(new PsiMethodInsertHandler(method));
   }
 

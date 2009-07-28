@@ -10,7 +10,7 @@ class LinkedList <T> {
 class Test {
 
     void f (LinkedList x){
-        return x.t = "";
+        x.t = "";
     }
 
     void f() {

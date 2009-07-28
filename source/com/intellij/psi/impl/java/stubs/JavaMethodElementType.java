@@ -19,7 +19,6 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 
@@ -63,16 +62,15 @@ public class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, Ps
       }
     }
 
-    return new PsiMethodStubImpl(parentStub, psi.getName(),
-                                 TypeInfo.create(psi.getReturnType(), psi.getReturnTypeElement()),
+    return new PsiMethodStubImpl(parentStub, StringRef.fromString(psi.getName()),
+                                 TypeInfo.create(psi.getReturnTypeNoResolve(), psi.getReturnTypeElement()),
                                  flags,
-                                 defValueText);
+                                 StringRef.fromString(defValueText));
   }
 
-  public void serialize(final PsiMethodStub stub, final StubOutputStream dataStream)
-      throws IOException {
+  public void serialize(final PsiMethodStub stub, final StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
-    RecordUtil.writeTYPE(dataStream, stub.getReturnTypeText());
+    TypeInfo.writeTYPE(dataStream, stub.getReturnTypeText(false));
     dataStream.writeByte(((PsiMethodStubImpl)stub).getFlags());
     if (stub.isAnnotationMethod()) {
       dataStream.writeName(stub.getDefaultValueText());
@@ -81,13 +79,10 @@ public class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, Ps
 
   public PsiMethodStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     StringRef name = dataStream.readName();
-    final TypeInfo type = RecordUtil.readTYPE(dataStream);
+    final TypeInfo type = TypeInfo.readTYPE(dataStream, parentStub);
     byte flags = dataStream.readByte();
-    if (PsiMethodStubImpl.isAnnotationMethod(flags)) {
-      final StringRef defaultMethodValue = dataStream.readName();
-      return new PsiMethodStubImpl(parentStub, name, type, flags, defaultMethodValue);
-    }
-    return new PsiMethodStubImpl(parentStub, name, type, flags, null);
+    final StringRef defaultMethodValue = PsiMethodStubImpl.isAnnotationMethod(flags) ? dataStream.readName() : null;
+    return new PsiMethodStubImpl(parentStub, name, type, flags, defaultMethodValue);
   }
 
   public void indexStub(final PsiMethodStub stub, final IndexSink sink) {

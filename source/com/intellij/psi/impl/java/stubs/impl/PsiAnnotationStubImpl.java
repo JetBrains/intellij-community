@@ -20,7 +20,6 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
   private final String myText;
   private PatchedSoftReference<CompositeElement> myParsedFromRepository;
 
-
   public PsiAnnotationStubImpl(final StubElement parent, final String text) {
     super(parent, JavaStubElementTypes.ANNOTATION);
     myText = text;
@@ -31,22 +30,20 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
   }
 
   public CompositeElement getTreeElement() {
-    CompositeElement parsed;
-
     if (myParsedFromRepository != null) {
-      parsed = myParsedFromRepository.get();
+      CompositeElement parsed = myParsedFromRepository.get();
       if (parsed != null) return parsed;
     }
 
     final String text = getText();
     try {
-      parsed = (CompositeElement)JavaPsiFacade.getInstance(getProject()).getParserFacade().createAnnotationFromText(text, getPsi()).getNode();
+      CompositeElement parsed = (CompositeElement)JavaPsiFacade.getInstance(getProject()).getParserFacade().createAnnotationFromText(text, getPsi()).getNode();
       myParsedFromRepository = new PatchedSoftReference<CompositeElement>(parsed);
       assert parsed != null;
       return parsed;
     }
     catch (IncorrectOperationException e) {
-      LOG.error("Bad annotation in repository!");
+      LOG.error("Bad annotation in repository!",e);
       return null;
     }
   }

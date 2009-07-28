@@ -200,4 +200,6 @@ public interface PsiJavaParserFacade extends PsiParserFacade {
    */
   @NotNull PsiCatchSection createCatchSection(@NotNull PsiClassType exceptionType, @NotNull String exceptionName, PsiElement context)
     throws IncorrectOperationException;
+
+  PsiType createPrimitiveType(@NotNull String text, @NotNull PsiAnnotation[] annotations);
 }

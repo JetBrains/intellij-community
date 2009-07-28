@@ -33,6 +33,7 @@ public class PsiIntersectionType extends PsiType {
   private final PsiType[] myConjuncts;
 
   private PsiIntersectionType(@NotNull PsiType[] conjuncts) {
+    super(PsiAnnotation.EMPTY_ARRAY);//todo
     LOG.assertTrue(conjuncts.length != 0);
     LOG.assertTrue(conjuncts.length > 1);
     myConjuncts = conjuncts;

@@ -157,17 +157,18 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override public void visitAnnotation(PsiAnnotation annotation) {
     super.visitAnnotation(annotation);
-    if (PsiUtil.isLanguageLevel5OrHigher(annotation)) {
-      myHolder.add(AnnotationsHighlightUtil.checkApplicability(annotation));
-      if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkAnnotationType(annotation));
-      if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkMissingAttributes(annotation));
-      if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkTargetAnnotationDuplicates(annotation));
-    }
-    else {
+    if (!PsiUtil.isLanguageLevel5OrHigher(annotation)) {
       HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, annotation, JavaErrorMessages.message("annotations.prior.15"));
       QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
       myHolder.add(info);
+      return;
     }
+
+    myHolder.add(AnnotationsHighlightUtil.checkApplicability(annotation));
+    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkAnnotationType(annotation));
+    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkMissingAttributes(annotation));
+    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkTargetAnnotationDuplicates(annotation));
+    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkDuplicatedAnnotations(annotation));
   }
 
   @Override public void visitAnnotationArrayInitializer(PsiArrayInitializerMemberValue initializer) {
@@ -588,13 +589,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     else if (parent instanceof PsiEnumConstant) {
       if (!myHolder.hasErrorResults()) myHolder.addAll(GenericsHighlightUtil.checkEnumConstantModifierList(list));
-    }
-
-    if (!myHolder.hasErrorResults()) {
-      Collection<HighlightInfo> duplicateResults = AnnotationsHighlightUtil.checkDuplicatedAnnotations(list);
-      for (HighlightInfo duplicateResult : duplicateResults) {
-        myHolder.add(duplicateResult);
-      }
     }
   }
 

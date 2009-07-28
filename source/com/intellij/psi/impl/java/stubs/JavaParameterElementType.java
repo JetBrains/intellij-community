@@ -5,7 +5,6 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiParameter;
-import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.compiled.ClsParameterImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiParameterStubImpl;
@@ -16,7 +15,6 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.StringRef;
 
 import java.io.IOException;
@@ -40,21 +38,21 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
   }
 
   public PsiParameterStub createStub(final PsiParameter psi, final StubElement parentStub) {
-    final TypeInfo type = TypeInfo.create(psi.getType(), psi.getTypeElement());
+    final TypeInfo type = TypeInfo.create(psi.getTypeNoResolve(), psi.getTypeElement());
     return new PsiParameterStubImpl(parentStub, psi.getName(), type, psi.isVarArgs());
   }
 
   public void serialize(final PsiParameterStub stub, final StubOutputStream dataStream)
       throws IOException {
     dataStream.writeName(stub.getName());
-    RecordUtil.writeTYPE(dataStream, stub.getParameterType());
+    TypeInfo.writeTYPE(dataStream, stub.getType(false));
     dataStream.writeBoolean(stub.isParameterTypeEllipsis());
   }
 
   public PsiParameterStub deserialize(final StubInputStream dataStream, final StubElement parentStub)
       throws IOException {
     StringRef name = dataStream.readName();
-    TypeInfo type = RecordUtil.readTYPE(dataStream);
+    TypeInfo type = TypeInfo.readTYPE(dataStream, parentStub);
     boolean isEll = dataStream.readBoolean();
     return new PsiParameterStubImpl(parentStub, name, type, isEll);
   }

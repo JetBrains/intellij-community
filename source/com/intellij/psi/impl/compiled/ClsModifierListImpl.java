@@ -48,6 +48,11 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
     return getStub().getChildrenByType(JavaStubElementTypes.ANNOTATION, PsiAnnotation.ARRAY_FACTORY);
   }
 
+  @NotNull
+  public PsiAnnotation[] getApplicableAnnotations() {
+    return getAnnotations();
+  }
+
   public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
     return PsiImplUtil.findAnnotation(this, qualifiedName);
   }

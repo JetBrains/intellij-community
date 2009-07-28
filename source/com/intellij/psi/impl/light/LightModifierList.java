@@ -32,6 +32,11 @@ public class LightModifierList extends LightElement implements PsiModifierList{
     return PsiAnnotation.EMPTY_ARRAY;
   }
 
+  @NotNull
+  public PsiAnnotation[] getApplicableAnnotations() {
+    return getAnnotations();
+  }
+
   public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
     return null;
   }

@@ -17,13 +17,12 @@ package com.intellij.psi.util;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.util.InstanceofCheckerGenerator;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,6 +171,16 @@ public class PsiTreeUtil {
       if (instanceOf(aClass, child)) return (T)child;
     }
     return null;
+  }
+  @Nullable public static <T extends PsiElement> T[] getChildrenOfType(@NotNull PsiElement element, @NotNull Class<T> aClass) {
+    List<T> result = null;
+    for(PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()){
+      if (instanceOf(aClass, child)) {
+        if (result == null) result = new SmartList<T>();
+        result.add((T)child);
+      }
+    }
+    return result == null ? null : ArrayUtil.toObjectArray(result, aClass);
   }
 
 

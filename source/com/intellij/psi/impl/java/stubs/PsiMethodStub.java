@@ -6,6 +6,7 @@ package com.intellij.psi.impl.java.stubs;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.stubs.NamedStub;
+import org.jetbrains.annotations.NotNull;
 
 public interface PsiMethodStub extends NamedStub<PsiMethod> {
   boolean isConstructor();
@@ -13,7 +14,7 @@ public interface PsiMethodStub extends NamedStub<PsiMethod> {
   boolean isAnnotationMethod();
 
   String getDefaultValueText();
-  TypeInfo getReturnTypeText();
+  @NotNull TypeInfo getReturnTypeText(boolean doResolve);
 
   boolean isDeprecated();
   boolean hasDeprecatedAnnotation();

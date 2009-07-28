@@ -84,4 +84,6 @@ public interface PsiVariable extends PsiModifierListOwner, PsiNameIdentifierOwne
   @Nullable PsiIdentifier getNameIdentifier();
 
   PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException;
+
+  PsiType getTypeNoResolve();
 }

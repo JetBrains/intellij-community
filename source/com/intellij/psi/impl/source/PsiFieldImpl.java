@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.InitializerTooLongException;
-import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -96,6 +96,26 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return this;
   }
 
+  public PsiType getTypeNoResolve() {
+    final PsiFieldStub stub = getStub();
+    if (stub != null) {
+      String typeText = TypeInfo.createTypeText(stub.getType(false));
+      try {
+        final PsiType type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
+        myCachedType = new PatchedSoftReference<PsiType>(type);
+        return type;
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+        return null;
+      }
+    }
+
+    PsiTypeElement typeElement = getTypeElement();
+    PsiIdentifier nameIdentifier = getNameIdentifier();
+    return JavaSharedImplUtil.getTypeNoResolve(typeElement, nameIdentifier, this);
+  }
+
   @NotNull
   public PsiType getType(){
     final PsiFieldStub stub = getStub();
@@ -106,7 +126,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
         if (type != null) return type;
       }
 
-      String typeText = RecordUtil.createTypeText(stub.getType());
+      String typeText = TypeInfo.createTypeText(stub.getType(true));
       try {
         final PsiType type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
         myCachedType = new PatchedSoftReference<PsiType>(type);

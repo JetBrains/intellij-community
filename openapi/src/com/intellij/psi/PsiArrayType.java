@@ -33,6 +33,11 @@ public class PsiArrayType extends PsiType {
    * @param componentType the type of the array component.
    */
   public PsiArrayType(@NotNull PsiType componentType) {
+    this(componentType, PsiAnnotation.EMPTY_ARRAY);
+  }
+
+  public PsiArrayType(@NotNull PsiType componentType, PsiAnnotation[] annotations) {
+    super(annotations);
     myComponentType = componentType;
   }
 

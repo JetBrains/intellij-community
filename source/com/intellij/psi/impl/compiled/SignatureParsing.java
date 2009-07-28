@@ -13,11 +13,13 @@ import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterStubImpl;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.ClsFormatException;
+import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.CharacterIterator;
 import java.util.ArrayList;
+import java.util.Collections;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class SignatureParsing {
@@ -49,18 +51,20 @@ public class SignatureParsing {
       throw new ClsFormatException();
     }
 
-    PsiTypeParameterStub parameterStub = new PsiTypeParameterStubImpl(parent, name.toString());
+    //todo parse annotations on type param
+    PsiTypeParameterStub parameterStub = new PsiTypeParameterStubImpl(parent, StringRef.fromString(name.toString()));
 
-    ArrayList<String> bounds = new ArrayList<String>();
+    ArrayList<String> bounds = null;
     while (singatureIterator.current() == ':') {
       singatureIterator.next();
       String bound = parseToplevelClassRefSignature(singatureIterator);
       if (bound != null && !bound.equals("java.lang.Object")) {
+        if (bounds == null) bounds = new ArrayList<String>();
         bounds.add(bound);
       }
     }
 
-    String[] sbounds = ArrayUtil.toStringArray(bounds);
+    String[] sbounds = ArrayUtil.toStringArray(bounds == null ? Collections.<String>emptyList() : bounds);
     new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_BOUND_LIST, parameterStub, sbounds, PsiReferenceList.Role.EXTENDS_BOUNDS_LIST);
 
     return parameterStub;

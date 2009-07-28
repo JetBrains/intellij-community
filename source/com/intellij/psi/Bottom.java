@@ -7,10 +7,10 @@ import org.jetbrains.annotations.NotNull;
  * Used in Generify refactoring
  */
 public class Bottom extends PsiType {
-  public final static Bottom BOTTOM = new Bottom();
+  public static final Bottom BOTTOM = new Bottom();
 
   private Bottom() {
-
+    super(PsiAnnotation.EMPTY_ARRAY);
   }
 
   public String getPresentableText() {
