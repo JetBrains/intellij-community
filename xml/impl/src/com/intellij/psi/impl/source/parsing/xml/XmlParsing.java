@@ -85,7 +85,7 @@ public class XmlParsing {
     return error;
   }
 
-  protected void parseDoctype() {
+  private void parseDoctype() {
     assert token() == XML_DOCTYPE_START : "Doctype start expected";
     final PsiBuilder.Marker doctype = mark();
     advance();
@@ -389,7 +389,7 @@ public class XmlParsing {
     attValue.done(XML_ATTRIBUTE_VALUE);
   }
 
-  protected void parseProlog() {
+  private void parseProlog() {
     final PsiBuilder.Marker prolog = mark();
     while (true) {
       final IElementType tt = token();
@@ -412,7 +412,7 @@ public class XmlParsing {
     prolog.done(XML_PROLOG);
   }
 
-  protected void parseProcessingInstruction() {
+  private void parseProcessingInstruction() {
     assert token() == XML_PI_START;
     final PsiBuilder.Marker pi = mark();
     advance();
