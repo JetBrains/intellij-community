@@ -28,7 +28,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableToolTipHandler;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.BaseTableView;
@@ -45,7 +44,7 @@ class StatisticsPanel extends JPanel implements DataProvider{
   private TestProxy myCurrentTest = null;
   private StatisticsTable myChildInfo = null;
 
-  private final JScrollPane mySuiteInfo;
+
 //  private TestCaseStatistics myTestCaseInfo = new TestCaseStatistics(TestColumnInfo.COLUMN_NAMES);
   private JUnitRunningModel myModel;
   private final TableView myTable;
@@ -63,13 +62,12 @@ class StatisticsPanel extends JPanel implements DataProvider{
     PopupHandler.installPopupHandler(myTable,
                         IdeActions.GROUP_TESTSTATISTICS_POPUP,
                         ActionPlaces.TESTSTATISTICS_VIEW_POPUP);
-    mySuiteInfo = ScrollPaneFactory.createScrollPane(myTable);
 //    add(myTestCaseInfo, BorderLayout.NORTH);
-    add(mySuiteInfo, BorderLayout.CENTER);
+    add(myTable, BorderLayout.CENTER);
   }
 
   private void updateStatistics() {
-    mySuiteInfo.setVisible(true);
+    myTable.setVisible(true);
 //    myTestCaseInfo.setVisible(false);
     if (myCurrentTest.isLeaf() && myCurrentTest.getParent() != null) {
       myChildInfo.onSelectionChanged(myCurrentTest.getParent());
@@ -104,7 +102,7 @@ class StatisticsPanel extends JPanel implements DataProvider{
         if (myCurrentTest == event.getSource())
           updateStatistics();
       } else if (event instanceof NewChildEvent) {
-        if (event.getSource() == myCurrentTest && !mySuiteInfo.isVisible())
+        if (event.getSource() == myCurrentTest && !myTable.isVisible())
           updateStatistics();
       }
     }
@@ -113,7 +111,7 @@ class StatisticsPanel extends JPanel implements DataProvider{
       if (myCurrentTest == test)
         return;
       if (test == null) {
-        mySuiteInfo.setVisible(false);
+        myTable.setVisible(false);
         return;
       }
       myCurrentTest = test;

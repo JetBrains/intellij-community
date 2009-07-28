@@ -35,10 +35,12 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.NumberFormat;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -130,7 +132,9 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   }
 
   protected JComponent createStatisticsPanel() {
-    return resultsTable;
+    final JPanel panel = new JPanel(new BorderLayout()); //do not remove wrapper panel 
+    panel.add(resultsTable, BorderLayout.CENTER);
+    return panel;
   }
 
   private void updateStatusLine() {
