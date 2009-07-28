@@ -2,3 +2,10 @@
 function  test<TYPO descr="Word 'Fuunction' is misspelled">Fuunction</TYPO>(){
   var <TYPO descr="Word 'upddate' is misspelled">upddate</TYPO> = "test variable";
 }
+
+var obj = {
+
+};
+obj.<TYPO descr="Word 'ttest' is misspelled">ttest</TYPO> = function(){
+
+};
