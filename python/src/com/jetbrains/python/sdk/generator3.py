@@ -787,6 +787,8 @@ if __name__ == "__main__":
   if '-b' in opts:
     doing_builtins = True
     names.extend(sys.builtin_module_names)
+    if not '__builtin__' in names:
+      names.append('__builtin__')
     if '__main__' in names:
       names.remove('__main__') # we don't want ourselves processed
   # go on
@@ -812,7 +814,7 @@ if __name__ == "__main__":
         mod = __import__(name)
       except ImportError:
         sys.stderr.write("Name " + name + " failed to import\n")
-        sys.exit(0)
+        continue
       # we can't really import a.b.c, only a, so follow the path
       for q in quals[1:]:
         action = "getting submodule " + q
