@@ -35,6 +35,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -284,9 +285,9 @@ public final class Configuration implements PersistentStateComponent<Element> {
    */
   public int importFrom(final Configuration cfg) {
     int n = 0;
-    for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
-      final List<BaseInjection> mineInjections = myInjections.get(support.getId());
-      for (BaseInjection other : cfg.getInjections(support.getId())) {
+    for (String supportId : getActiveInjectorIds()) {
+      final List<BaseInjection> mineInjections = myInjections.get(supportId);
+      for (BaseInjection other : cfg.getInjections(supportId)) {
         final BaseInjection existing = findExistingInjection(other);
         if (existing == null) {
           n ++;
@@ -337,8 +338,8 @@ public final class Configuration implements PersistentStateComponent<Element> {
   public boolean setHostInjectionEnabled(final PsiLanguageInjectionHost host, final Collection<String> languages, final boolean enabled) {
     final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>();
     final ArrayList<BaseInjection> newInjections = new ArrayList<BaseInjection>();
-    for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
-      for (BaseInjection injection : getInjections(support.getId())) {
+    for (String supportId : getAllInjectorIds()) {
+      for (BaseInjection injection : getInjections(supportId)) {
         if (!languages.contains(injection.getInjectedLanguageId())) continue;
         boolean replace = false;
         final ArrayList<InjectionPlace> newPlaces = new ArrayList<InjectionPlace>();
@@ -385,6 +386,15 @@ public final class Configuration implements PersistentStateComponent<Element> {
 
   public Set<String> getAllInjectorIds() {
     return Collections.unmodifiableSet(new THashSet<String>(myInjections.keySet()));
+  }
+
+  public Set<String> getActiveInjectorIds() {
+    return ContainerUtil.map2Set(Extensions.getExtensions(LanguageInjectionSupport.EP_NAME), new NotNullFunction<LanguageInjectionSupport, String>() {
+      @NotNull
+      public String fun(final LanguageInjectionSupport support) {
+        return support.getId();
+      }
+    });
   }
 
   public void replaceInjectionsWithUndo(final Project project,

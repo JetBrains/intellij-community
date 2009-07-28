@@ -73,7 +73,7 @@ public class InjectionsSettingsUI implements Configurable {
     myConfiguration = configuration;
 
     myOriginalInjections = ContainerUtil
-      .concat(myConfiguration.getAllInjectorIds(), new Function<String, Collection<? extends BaseInjection>>() {
+      .concat(myConfiguration.getActiveInjectorIds(), new Function<String, Collection<? extends BaseInjection>>() {
         public Collection<? extends BaseInjection> fun(final String s) {
           return myConfiguration.getInjections(s);
         }
