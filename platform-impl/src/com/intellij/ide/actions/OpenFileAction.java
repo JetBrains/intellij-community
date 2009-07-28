@@ -15,6 +15,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.NativeFileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -22,8 +24,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.util.io.FileTypeFilter;
 import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.util.io.FileTypeFilter;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -57,6 +59,9 @@ public class OpenFileAction extends AnAction implements DumbAware {
       public Icon getIcon(File f) {
         if (f.isDirectory()) return super.getIcon(f);
         FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(f.getName());
+        if (fileType == UnknownFileType.INSTANCE || fileType == NativeFileType.INSTANCE) {
+          return super.getIcon(f);
+        }
         return fileType.getIcon();
       }
     };
