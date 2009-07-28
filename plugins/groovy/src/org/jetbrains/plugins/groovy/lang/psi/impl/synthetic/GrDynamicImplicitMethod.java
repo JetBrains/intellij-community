@@ -347,4 +347,10 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
   public GrMethod getMethod() {
     return myMethod;
   }
+  public PsiMethodReceiver getMethodReceiver() {
+    return null;
+  }
+  public PsiType getReturnTypeNoResolve() {
+    return getReturnType();
+  }
 }

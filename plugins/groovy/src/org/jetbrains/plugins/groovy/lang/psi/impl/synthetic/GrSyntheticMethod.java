@@ -179,4 +179,10 @@ public abstract class GrSyntheticMethod extends LightElement implements PsiMetho
   public PsiMethod[] findSuperMethods() {
     return new PsiMethod[0];
   }
+  public PsiMethodReceiver getMethodReceiver() {
+    return null;
+  }
+  public PsiType getReturnTypeNoResolve() {
+    return getReturnType();
+  }
 }

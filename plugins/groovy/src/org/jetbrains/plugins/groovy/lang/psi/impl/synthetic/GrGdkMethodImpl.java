@@ -150,4 +150,7 @@ public class GrGdkMethodImpl extends LightMethod implements GrGdkMethod {
   public void navigate(boolean requestFocus) {
     myMethod.navigate(requestFocus);
   }
+  public PsiMethodReceiver getMethodReceiver() {
+    return null;
+  }
 }

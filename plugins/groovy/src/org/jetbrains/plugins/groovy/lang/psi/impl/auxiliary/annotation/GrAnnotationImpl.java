@@ -93,4 +93,9 @@ public class GrAnnotationImpl extends GroovyPsiElementImpl implements GrAnnotati
     //Annotation is an identifier always
     return getClassReference().getText();
   }
+
+  public PsiAnnotationOwner getOwner() {
+    return (PsiAnnotationOwner)getParent();
+  }
+
 }

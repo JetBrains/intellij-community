@@ -285,5 +285,8 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
     return GroovyIcons.VARIABLE;
   }
 
+  public PsiType getTypeNoResolve() {
+    return getType();
+  }
 
 }

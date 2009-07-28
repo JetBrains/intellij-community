@@ -503,4 +503,12 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     }
     return namedParameters.toArray(new HashSet[0]);
   }
+
+  public PsiMethodReceiver getMethodReceiver() {
+    return null;
+  }
+  public PsiType getReturnTypeNoResolve() {
+    return getReturnType();
+  }
+
 }

@@ -358,4 +358,22 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
     return GrClassImplUtil.processDeclarations(this, processor, state, lastParent, place);
   }
 
+  @NotNull
+  public PsiAnnotation[] getAnnotations() {
+    return PsiAnnotation.EMPTY_ARRAY;
+  }
+
+  public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
+    return null;
+  }
+
+  @NotNull
+  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+    throw new IncorrectOperationException();
+  }
+  @NotNull
+  public PsiAnnotation[] getApplicableAnnotations() {
+    return getAnnotations();
+  }
+  
 }

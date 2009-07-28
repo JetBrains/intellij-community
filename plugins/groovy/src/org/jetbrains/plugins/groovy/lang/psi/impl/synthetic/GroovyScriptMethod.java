@@ -195,4 +195,10 @@ public class GroovyScriptMethod extends LightElement implements PsiMethod {
   public PsiTypeParameter[] getTypeParameters() {
     return PsiTypeParameter.EMPTY_ARRAY;
   }
+  public PsiMethodReceiver getMethodReceiver() {
+    return null;
+  }
+  public PsiType getReturnTypeNoResolve() {
+    return getReturnType();
+  }
 }
