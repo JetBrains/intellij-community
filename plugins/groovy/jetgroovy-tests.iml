@@ -2,9 +2,8 @@
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/resources" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+    <content url="file://$MODULE_DIR$/test">
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -21,6 +20,7 @@
     <orderEntry type="module" module-name="css-api" />
     <orderEntry type="module" module-name="CSS" />
     <orderEntry type="module" module-name="debugger-impl" />
+    <orderEntry type="module" module-name="codeInsight-tests" />
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="library" name="JUnit4" level="project" />
@@ -33,6 +33,7 @@
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="spring-web" />
     <orderEntry type="module" module-name="groovy-dsl" />
+    <orderEntry type="module" module-name="jetgroovy" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
