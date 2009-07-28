@@ -21,6 +21,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -140,6 +141,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   long testHighlighting(@NonNls String... filePaths) throws Throwable;
 
   long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, VirtualFile file) throws Throwable;
+
+  void testInspection(String testDir, InspectionTool tool) throws Exception;
+
   /**
    * Finds the reference in position marked by {@link #CARET_MARKER}.
    *

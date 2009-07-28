@@ -111,7 +111,7 @@ expected:
     return Comparing.equal(reportedFile.getName(), expectedProblem.getChildText("file"));
   }
 
-  static void compareToolResults(InspectionTool tool, boolean checkRange, String testDir) throws Exception {
+  public static void compareToolResults(InspectionTool tool, boolean checkRange, String testDir) throws Exception {
     final Element root = new Element("problems");
     final Document doc = new Document(root);
     tool.updateContent();  //e.g. dead code need check for reachables
@@ -123,7 +123,7 @@ expected:
     compareWithExpected(expectedDocument, doc, checkRange);
   }
 
-  static void runTool(InspectionTool tool, AnalysisScope scope, GlobalInspectionContextImpl globalContext, InspectionManagerEx inspectionManager) {
+  public static void runTool(InspectionTool tool, AnalysisScope scope, GlobalInspectionContextImpl globalContext, InspectionManagerEx inspectionManager) {
     final String shortName = tool.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null){

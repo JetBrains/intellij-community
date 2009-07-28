@@ -4,6 +4,7 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -18,14 +19,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ModifiableModel;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionTool;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.ToolsImpl;
+import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
@@ -81,6 +76,7 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.testFramework.ExpectedHighlightingData;
+import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.*;
@@ -335,6 +331,19 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
     }.execute().throwException();
     return duration.get().longValue();
+  }
+
+  public void testInspection(String testDir, InspectionTool tool) throws Exception {
+    VirtualFile sourceDir = copyDirectoryToProject(new File(testDir, "src").getPath(), "src");
+    AnalysisScope scope = new AnalysisScope(getPsiManager().findDirectory(sourceDir));
+
+    InspectionManagerEx inspectionManager = (InspectionManagerEx) InspectionManager.getInstance(getProject());
+    final GlobalInspectionContextImpl globalContext = inspectionManager.createNewGlobalContext(!(myProjectFixture instanceof LightIdeaTestFixture));
+    globalContext.setCurrentScope(scope);
+    scope.invalidate();
+
+    InspectionTestUtil.runTool(tool, scope, globalContext, inspectionManager);
+    InspectionTestUtil.compareToolResults(tool, false, new File(getTestDataPath(), testDir).getPath());
   }
 
   @Nullable
