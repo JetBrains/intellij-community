@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project relativePaths="false" version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/samples/A/A.iml" filepath="$PROJECT_DIR$/samples/A/A.iml" />
+      <module fileurl="file://$PROJECT_DIR$/samples/B/B.iml" filepath="$PROJECT_DIR$/samples/B/B.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jps.iml" filepath="$PROJECT_DIR$/jps.iml" />
+    </modules>
+  </component>
+</project>
+
