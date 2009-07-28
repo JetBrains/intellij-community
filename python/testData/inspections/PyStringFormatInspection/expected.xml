@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>string-format.py</file>
+    <line>2</line>
+    <description>Too few arguments for format string</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>3</line>
+    <description>Too many arguments for format string</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>6</line>
+    <description>There are no format specifier character</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>8</line>
+    <description>Can't use '*' in formats when using a mapping</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>10</line>
+    <description>Too few arguments for format string</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>11</line>
+    <description>Too many arguments for format string</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>12</line>
+    <description>There are no format specifier character</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>13</line>
+    <description>Too few mapping keys</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>14</line>
+    <description>Too few mapping keys</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>16</line>
+    <description>Format requires a mapping</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>17</line>
+    <description>Format requires a mapping</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>18</line>
+    <description>Format doesn't require a mapping</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>26</line>
+    <description>One of keys has no following argument</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>28</line>
+    <description>Unexpected type</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>29</line>
+    <description>Unexpected type</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>30</line>
+    <description>Unexpected type</description>
+  </problem>
+</problems>

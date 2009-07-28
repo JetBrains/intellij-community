@@ -16,6 +16,9 @@
 
 package com.jetbrains.python.psi;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Created by IntelliJ IDEA.
  * User: yole
@@ -24,4 +27,11 @@ package com.jetbrains.python.psi;
  * To change this template use File | Settings | File Templates.
  */
 public interface PyKeyValueExpression extends PyExpression {
+  PyKeyValueExpression[] EMPTY_ARRAY = new PyKeyValueExpression[0]; 
+
+  @NotNull
+  PyExpression getKey();
+
+  @Nullable
+  PyExpression getValue();
 }

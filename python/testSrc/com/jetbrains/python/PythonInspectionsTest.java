@@ -46,6 +46,11 @@ public class PythonInspectionsTest extends InspectionTestCase {
     doTest(getTestName(false), inspection);
   }
 
+  public void testPyStringFormatInspection() throws Exception {
+    LocalInspectionTool inspection = new PyStringFormatInspection();
+    doTest(getTestName(false), inspection);
+  }
+
   protected String getTestDataPath() {
     return PathManager.getHomePath() + "/plugins/python/testData/inspections/";
   }

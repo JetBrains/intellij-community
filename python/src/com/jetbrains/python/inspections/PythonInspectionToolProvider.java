@@ -7,7 +7,7 @@ import com.intellij.codeInspection.InspectionToolProvider;
  * User: dcheryasov
  * Date: Nov 14, 2008
  */
-public class PythonInspectionToolProvider implements InspectionToolProvider{
+public class PythonInspectionToolProvider implements InspectionToolProvider {
   public Class[] getInspectionClasses() {
     return new Class[] {
       PyArgumentListInspection.class,
@@ -15,7 +15,8 @@ public class PythonInspectionToolProvider implements InspectionToolProvider{
       PyUnresolvedReferencesInspection.class,
       PyMethodParametersInspection.class,
       PyUnreachableCodeInspection.class,
-      PyMethodFirstArgAssignmentInspection.class
+      PyMethodFirstArgAssignmentInspection.class,
+      PyStringFormatInspection.class
     };
   }
 }
