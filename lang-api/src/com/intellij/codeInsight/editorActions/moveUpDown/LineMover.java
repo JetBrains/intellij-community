@@ -7,7 +7,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-class LineMover extends StatementUpDownMover {
+public class LineMover extends StatementUpDownMover {
 
   public boolean checkAvailable(@NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final MoveInfo info, final boolean down) {
     LineRange range = StatementUpDownMover.getLineRangeFromSelection(editor);

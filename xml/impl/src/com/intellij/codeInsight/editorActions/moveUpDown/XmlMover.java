@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
@@ -46,6 +47,15 @@ class XmlMover extends LineMover {
            ((PsiLanguageInjectionHost)text2).getInjectedPsi() != null
          )
        ) {
+      return false;
+    }
+
+    XmlTag nearestTag = PsiTreeUtil.getParentOfType(movedStartElement, XmlTag.class);
+    if (nearestTag != null &&
+        ( "script".equals(nearestTag.getLocalName()) ||
+          (nearestTag instanceof HtmlTag && "script".equalsIgnoreCase(nearestTag.getLocalName()))
+        )
+      ) {
       return false;
     }
 
