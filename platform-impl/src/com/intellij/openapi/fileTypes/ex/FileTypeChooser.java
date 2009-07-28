@@ -1,10 +1,8 @@
 package com.intellij.openapi.fileTypes.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.FileTypesBundle;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
@@ -26,11 +24,15 @@ public class FileTypeChooser extends DialogWrapper{
   private JLabel myTitleLabel;
   private JTextField myPattern;
   private JPanel myPanel;
+  private JRadioButton myOpenInIdea;
+  private JRadioButton myOpenAsNative;
   private final String myFileName;
 
   private FileTypeChooser(String pattern, String fileName) {
     super(true);
     myFileName = fileName;
+
+    myOpenInIdea.setText("Open matching files in " + ApplicationNamesInfo.getInstance().getProductName() + ":");
 
     FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     Arrays.sort(fileTypes, new Comparator<FileType>() {
@@ -46,7 +48,7 @@ public class FileTypeChooser extends DialogWrapper{
     });
 
     for (FileType type : fileTypes) {
-      if (!type.isReadOnly() && type != FileTypes.UNKNOWN) {
+      if (!type.isReadOnly() && type != FileTypes.UNKNOWN && !(type instanceof NativeFileType)) {
         myModel.addElement(type);
       }
     }
@@ -92,7 +94,7 @@ public class FileTypeChooser extends DialogWrapper{
   }
 
   private void updateButtonsState() {
-    setOKActionEnabled(myList.getSelectedIndex() != -1);
+    setOKActionEnabled(myList.getSelectedIndex() != -1 || myOpenAsNative.isSelected());
   }
 
   protected String getDimensionServiceKey(){
@@ -100,7 +102,7 @@ public class FileTypeChooser extends DialogWrapper{
   }
 
   public FileType getSelectedType() {
-    return (FileType)myList.getSelectedValue();
+    return myOpenAsNative.isSelected() ? NativeFileType.INSTANCE : (FileType) myList.getSelectedValue();
   }
 
   /**
@@ -115,6 +117,7 @@ public class FileTypeChooser extends DialogWrapper{
       type = getKnownFileTypeOrAssociate(file.getName());
     return type;
   }
+
   public static FileType getKnownFileTypeOrAssociate(String fileName) {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     FileType type = fileTypeManager.getFileTypeByFileName(fileName);

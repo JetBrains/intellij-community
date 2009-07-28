@@ -87,6 +87,7 @@
   <extensionPoint name="progressFunComponentProvider" interface="com.intellij.openapi.progress.ProgressFunComponentProvider"/>
   <extensionPoint name="productivityFeaturesProvider" interface="com.intellij.featureStatistics.ProductivityFeaturesProvider"/>
 
+  <extensionPoint name="fileIconProvider" interface="com.intellij.ide.FileIconProvider"/>
   <extensionPoint name="fileIconPatcher" interface="com.intellij.ide.FileIconPatcher"/>
 
   <extensionPoint name="generalOptionsProvider" interface="com.intellij.openapi.options.SearchableConfigurable"/>

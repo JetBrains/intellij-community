@@ -83,10 +83,20 @@ public class IconDeferrerImpl extends IconDeferrer {
     }
   };
 
-  public static void evaluateDeferred(final Runnable runnable) {
+  public static void evaluateDeferredInReadAction(final Runnable runnable) {
     try {
       myEvaluationIsInProgress.set(Boolean.TRUE);
       ApplicationManager.getApplication().runReadAction(runnable);
+    }
+    finally {
+      myEvaluationIsInProgress.set(Boolean.FALSE);
+    }
+  }
+
+  public static void evaluateDeferred(final Runnable runnable) {
+    try {
+      myEvaluationIsInProgress.set(Boolean.TRUE);
+      runnable.run();
     }
     finally {
       myEvaluationIsInProgress.set(Boolean.FALSE);

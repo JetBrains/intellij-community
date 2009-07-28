@@ -17,7 +17,6 @@ package com.intellij.util;
 
 import com.intellij.ide.FileIconPatcher;
 import com.intellij.ide.FileIconProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -128,7 +127,7 @@ public class IconUtil {
   }
 
   private static class FileIconProviderHolder {
-    private static final FileIconProvider[] ourProviders = ApplicationManager.getApplication().getComponents(FileIconProvider.class);
+    private static final FileIconProvider[] ourProviders = Extensions.getExtensions(FileIconProvider.EP_NAME);
   }
 
   private static FileIconProvider[] getProviders() {

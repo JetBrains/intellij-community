@@ -21,11 +21,17 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   private final T myParam;
   private WeakReference<Component> myLastTarget = null;
   private static final EmptyIcon EMPTY_ICON = new EmptyIcon(16, 16);
+  private boolean myNeedReadAction;
 
   public DeferredIconImpl(Icon baseIcon, T param, Function<T, Icon> evaluator) {
+    this(baseIcon, param, true, evaluator);
+  }
+
+  public DeferredIconImpl(Icon baseIcon, T param, final boolean needReadAction, Function<T, Icon> evaluator) {
     myParam = param;
     myDelegateIcon = nonNull(baseIcon);
     myEvaluator = evaluator;
+    myNeedReadAction = needReadAction;
   }
 
   private static Icon nonNull(final Icon icon) {
@@ -87,7 +93,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
 
   public Icon evaluate() {
     final Icon[] evaluated = new Icon[1];
-    IconDeferrerImpl.evaluateDeferred(new Runnable() {
+    final Runnable runnable = new Runnable() {
       public void run() {
         try {
           evaluated[0] = nonNull(myEvaluator.fun(myParam));
@@ -99,7 +105,13 @@ public class DeferredIconImpl<T> implements DeferredIcon {
           evaluated[0] = EMPTY_ICON;
         }
       }
-    });
+    };
+    if (myNeedReadAction) {
+      IconDeferrerImpl.evaluateDeferredInReadAction(runnable);
+    }
+    else {
+      IconDeferrerImpl.evaluateDeferred(runnable);
+    }
 
     checkDoesntReferenceThis(evaluated[0]);
 

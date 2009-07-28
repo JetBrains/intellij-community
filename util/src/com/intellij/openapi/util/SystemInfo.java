@@ -39,6 +39,9 @@ public class SystemInfo {
   public static final boolean isLinux = OS_NAME.startsWith("linux");
   public static final boolean isUnix = !isWindows && !isOS2;
 
+  public static final boolean isKDE = System.getProperty("sun.desktop").toLowerCase().indexOf("kde") >= 0;
+  public static final boolean isGnome = System.getProperty("sun.desktop").toLowerCase().indexOf("gnome") >= 0;
+
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
   public static final boolean isFileSystemCaseSensitive = !isWindows && !isOS2 && !isMac;
