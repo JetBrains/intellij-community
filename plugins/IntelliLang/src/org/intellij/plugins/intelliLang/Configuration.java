@@ -101,16 +101,18 @@ public final class Configuration implements PersistentStateComponent<Element> {
   private Pair<String, ? extends Set<String>> mySubstAnnotationPair;
 
   private volatile long myModificationCount;
-  private boolean myMergeWithDefault;
 
   public Configuration() {
-    myMergeWithDefault = true;
     setLanguageAnnotation("org.intellij.lang.annotations.Language");
     setPatternAnnotation("org.intellij.lang.annotations.Pattern");
     setSubstAnnotation("org.intellij.lang.annotations.Subst");
   }
 
   public void loadState(final Element element) {
+    loadState(element, true);
+  }
+
+  public void loadState(final Element element, final boolean mergeWithOriginalAndCompile) {
     final THashMap<String, LanguageInjectionSupport> supports = new THashMap<String, LanguageInjectionSupport>();
     for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
       supports.put(support.getId(), support);
@@ -143,9 +145,15 @@ public final class Configuration implements PersistentStateComponent<Element> {
     setSubstAnnotation(JDOMExternalizerUtil.readField(element, SUBST_ANNOTATION_NAME));
     final String resolveReferences = JDOMExternalizerUtil.readField(element, RESOLVE_REFERENCES);
     setResolveReferences(resolveReferences == null || Boolean.parseBoolean(resolveReferences));
-    if (myMergeWithDefault) {
+    
+    if (mergeWithOriginalAndCompile) {
       mergeWithDefaultConfiguration();
-      // todo init places here in order not to run twice??
+
+      for (String supportId : getActiveInjectorIds()) {
+        for (BaseInjection injection : getInjections(supportId)) {
+          injection.initializePlaces(true);
+        }
+      }
     }
   }
 
@@ -269,8 +277,7 @@ public final class Configuration implements PersistentStateComponent<Element> {
       });
       if (element != null) {
         final Configuration cfg = new Configuration();
-        cfg.setMergeWithDefault(false);
-        cfg.loadState(element);
+        cfg.loadState(element, false);
         return cfg;
       }
       return null;
@@ -367,10 +374,6 @@ public final class Configuration implements PersistentStateComponent<Element> {
     return false;
   }
 
-  public void setMergeWithDefault(final boolean mergeWithDefault) {
-    myMergeWithDefault = mergeWithDefault;
-  }
-
   public enum InstrumentationType {
     NONE, ASSERT, EXCEPTION
   }
@@ -457,7 +460,7 @@ public final class Configuration implements PersistentStateComponent<Element> {
       myInjections.get(injection.getSupportId()).remove(injection);
     }
     for (BaseInjection injection : newInjections) {
-      injection.initializePlaces();
+      injection.initializePlaces(true);
       myInjections.get(injection.getSupportId()).add(injection);
     }
     configurationModified();

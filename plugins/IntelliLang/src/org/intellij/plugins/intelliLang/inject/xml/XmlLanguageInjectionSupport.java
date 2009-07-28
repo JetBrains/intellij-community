@@ -135,7 +135,7 @@ public class XmlLanguageInjectionSupport implements LanguageInjectionSupport {
       }
     });
     if (builder.show() == DialogWrapper.OK_EXIT_CODE) {
-      xmlInjection.initializePlaces();
+      xmlInjection.initializePlaces(false);
       final AbstractTagInjection newInjection = new AbstractTagInjection().copyFrom(xmlInjection);
       newInjection.mergeOriginalPlacesFrom(originalInjection, true);
       Configuration.getInstance().replaceInjectionsWithUndo(
@@ -247,7 +247,7 @@ public class XmlLanguageInjectionSupport implements LanguageInjectionSupport {
 
   private static void doEditInjection(final Project project, final XmlAttributeInjection template) {
     final Configuration configuration = Configuration.getInstance();
-    template.initializePlaces();
+    template.initializePlaces(false);
     final BaseInjection originalInjection = configuration.findExistingInjection(template);
     final BaseInjection newInjection = originalInjection == null ? template : originalInjection.copy();
     if (InjectLanguageAction.doEditConfigurable(project, new XmlAttributeInjectionConfigurable((XmlAttributeInjection)newInjection, null, project))) {

@@ -130,8 +130,8 @@ public class JavaLanguageInjectionSupport implements LanguageInjectionSupport {
       }
     });
     if (builder.show() == DialogWrapper.OK_EXIT_CODE) {
-      methodParameterInjection.initializePlaces();
-      savedCopy.initializePlaces();
+      methodParameterInjection.initializePlaces(false);
+      savedCopy.initializePlaces(false);
       methodParameterInjection.mergeOriginalPlacesFrom(savedCopy, false);
       final BaseInjection newInjection = new BaseInjection(methodParameterInjection.getSupportId()).copyFrom(methodParameterInjection);
       newInjection.mergeOriginalPlacesFrom(originalInjection, true);
@@ -287,10 +287,10 @@ public class JavaLanguageInjectionSupport implements LanguageInjectionSupport {
 
   private static void doEditInjection(final Project project, final MethodParameterInjection template, final PsiMethod contextMethod) {
     final Configuration configuration = Configuration.getInstance();
-    template.initializePlaces();
+    template.initializePlaces(false);
     final BaseInjection baseTemplate = new BaseInjection(template.getSupportId()).copyFrom(template);
     final MethodParameterInjection allMethodParameterInjection = createMethodParameterInjection(baseTemplate, contextMethod, true);
-    allMethodParameterInjection.initializePlaces();
+    allMethodParameterInjection.initializePlaces(false);
     // find existing injection for this class.
     final BaseInjection originalInjection = configuration.findExistingInjection(allMethodParameterInjection);
     final MethodParameterInjection methodParameterInjection;
@@ -305,7 +305,7 @@ public class JavaLanguageInjectionSupport implements LanguageInjectionSupport {
       methodParameterInjection = createMethodParameterInjection(originalCopy, contextMethod, false);
     }
     if (InjectLanguageAction.doEditConfigurable(project, new MethodParameterInjectionConfigurable(methodParameterInjection, null, project))) {
-      methodParameterInjection.initializePlaces();
+      methodParameterInjection.initializePlaces(false);
       final BaseInjection newInjection = new BaseInjection(methodParameterInjection.getSupportId()).copyFrom(methodParameterInjection);
       newInjection.mergeOriginalPlacesFrom(originalInjection, true);
       Configuration.getInstance().replaceInjectionsWithUndo(

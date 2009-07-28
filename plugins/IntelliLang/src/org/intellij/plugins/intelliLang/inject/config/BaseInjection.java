@@ -223,7 +223,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
       setValuePattern(JDOMExternalizer.readString(e, "VALUE_PATTERN"));
       mySingleFile = JDOMExternalizer.readBoolean(e, "SINGLE_FILE");
       readExternalImpl(e);
-      initializePlaces();
+      initializePlaces(false);
     }
     else {
       myDisplayName = StringUtil.notNullize(element.getChildText("display-name"));
@@ -241,22 +241,27 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     }
   }
 
-  public void initializePlaces() {
+  public void initializePlaces(final boolean compile) {
     if (myPlaces.isEmpty()) {
       for (String text : generatePlaces()) {
-        myPlaces.add(new InjectionPlace(text, PatternBasedInjectionHelper.createElementPattern(text, getDisplayName()), true));
+        myPlaces.add(new InjectionPlace(text, compile? PatternBasedInjectionHelper.createElementPattern(text, getDisplayName()) : null, true));
       }
     }
-    else {
-      final ArrayList<InjectionPlace> copy = new ArrayList<InjectionPlace>(myPlaces);
-      myPlaces.clear();
-      for (InjectionPlace place : copy) {
+    else if (compile) {
+      boolean replace = false;
+      final ArrayList<InjectionPlace> newPlaces = new ArrayList<InjectionPlace>();
+      for (InjectionPlace place : myPlaces) {
         if (StringUtil.isNotEmpty(place.getText()) && place.getElementPattern() == null) {
-          myPlaces.add(new InjectionPlace(place.getText(), PatternBasedInjectionHelper.createElementPattern(place.getText(), getDisplayName()), place.isEnabled()));
+          replace = true;
+          newPlaces.add(new InjectionPlace(place.getText(), PatternBasedInjectionHelper.createElementPattern(place.getText(), getDisplayName()), place.isEnabled()));
         }
         else {
-          myPlaces.add(place);
+          newPlaces.add(place);
         }
+      }
+      if (replace) {
+        myPlaces.clear();
+        myPlaces.addAll(newPlaces);
       }
     }
   }
