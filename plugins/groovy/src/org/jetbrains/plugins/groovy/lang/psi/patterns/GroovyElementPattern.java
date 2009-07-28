@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 
 public class GroovyElementPattern<T extends PsiElement,Self extends GroovyElementPattern<T,Self>> extends PsiJavaElementPattern<T,Self> {
   public GroovyElementPattern(final Class<T> aClass) {
@@ -48,7 +49,9 @@ public class GroovyElementPattern<T extends PsiElement,Self extends GroovyElemen
 
           final PsiElement element = psiExpressionList.getParent();
           if (element instanceof GrMethodCallExpression) {
-            final GroovyResolveResult[] results = ((GrMethodCallExpression)element).getMethodVariants();
+            final GrExpression expression = ((GrMethodCallExpression)element).getInvokedExpression();
+            final GroovyResolveResult[] results =
+              expression instanceof GrReferenceElement? ((GrReferenceElement)expression).multiResolve(true) : GroovyResolveResult.EMPTY_ARRAY;
             for (GroovyResolveResult result : results) {
               final PsiElement psiElement = result.getElement();
               if (methodPattern.getCondition().accepts(psiElement, context)) {
