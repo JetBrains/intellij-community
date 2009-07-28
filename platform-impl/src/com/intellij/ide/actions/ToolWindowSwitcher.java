@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -62,6 +63,7 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
     final Map<ToolWindow, String> ids = new HashMap<ToolWindow, String>();
     final JList toolwindows;
     final JList files;
+    final JPanel separator;
     final ToolWindowManager twManager;
     final JLabel pathLabel = new JLabel(" ");
     final JPanel descriptions;
@@ -122,15 +124,21 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
         }
       });
 
-      final JPanel separator = new JPanel() {
+      separator = new JPanel() {
         @Override
         protected void paintComponent(Graphics g) {
           super.paintComponent(g);
           g.setColor(SEPARATOR_COLOR);
           g.drawLine(0, 0, 0, getHeight());
         }
+
+        @Override
+        public Dimension getMaximumSize() {
+          final Dimension max = super.getMaximumSize();
+          return new Dimension(5, max.height);
+        }
       };
-      separator.setBackground(Color.WHITE);
+      separator.setBackground(Color.WHITE);      
 
       final FileEditorManager editorManager = FileEditorManager.getInstance(project);
       final VirtualFile[] openFiles = editorManager.getOpenFiles();
@@ -161,10 +169,11 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
 
       this.add(toolwindows, BorderLayout.WEST);
       if (filesModel.size() > 0) {
+        files.setAlignmentY(1f);
         this.add(files, BorderLayout.EAST);
+        this.add(separator, BorderLayout.CENTER);
       }
       this.add(descriptions, BorderLayout.SOUTH);
-      this.add(separator, BorderLayout.CENTER);
 
       files.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
         private String getTitle2Text(String fullText) {
@@ -255,6 +264,9 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
         case KeyEvent.VK_ESCAPE:
           cancel();
           break;
+        case KeyEvent.VK_DELETE:
+          closeTabOrToolWindow();
+          break;
       }
       if (e.getKeyCode() == ALT_KEY) {
         if (isFilesSelected()) {
@@ -265,10 +277,47 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
       }
     }
 
+    private void closeTabOrToolWindow() {
+      final Object value = getSelectedList().getSelectedValue();
+      if (value instanceof VirtualFile) {
+        final VirtualFile virtualFile = (VirtualFile)value;
+        final FileEditorManager editorManager = FileEditorManager.getInstance(project);
+        if (editorManager instanceof FileEditorManagerImpl) {
+          final JList jList = getSelectedList();
+          ((FileEditorManagerImpl)editorManager).closeFile(virtualFile, false);
+          final int selectedIndex = jList.getSelectedIndex();
+          if (jList.getModel().getSize() == 1) {
+            goLeft();
+            ((DefaultListModel)jList.getModel()).removeElementAt(selectedIndex);
+            this.remove(jList);
+            this.remove(separator);
+          } else {
+            goForward();
+            ((DefaultListModel)jList.getModel()).removeElementAt(selectedIndex);
+            jList.setSize(jList.getPreferredSize());
+          }
+          pack();
+        }
+      } else if (value instanceof ToolWindow) {
+        ToolWindow toolWindow = (ToolWindow)value;
+        toolWindow.hide(null);
+      }
+    }
+
+    private void pack() {
+      this.setSize(this.getPreferredSize());
+      final JRootPane rootPane = SwingUtilities.getRootPane(this);
+      Container container = this;
+      do {
+        container = container.getParent();
+        container.setSize(container.getPreferredSize());
+      } while (container != rootPane);
+      container.getParent().setSize(container.getPreferredSize());
+    }
 
     public void keyReleased(KeyEvent e) {
       if (e.getKeyCode() == CTRL_KEY || e.getKeyCode() == KeyEvent.VK_ENTER) {
-          navigate();
+        navigate();
       }
     }
 
@@ -285,7 +334,7 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
     }
 
     private void goRight() {
-      if (isFilesSelected()) {
+      if (isFilesSelected() || !isFilesVisible()) {
         cancel();
       }
       else {

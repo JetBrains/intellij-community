@@ -375,7 +375,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   //============================= EditorManager methods ================================
+
   public void closeFile(@NotNull final VirtualFile file) {
+    closeFile(file, true);
+  }
+  
+  public void closeFile(@NotNull final VirtualFile file, final boolean moveFocus) {
     assertDispatchThread();
 
     final LocalFileSystem.WatchRequest request = file.getUserData(WATCH_REQUEST_KEY);
@@ -385,7 +390,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
-        closeFileImpl(file);
+        closeFileImpl(file, moveFocus);
       }
     }, "", null);
   }
@@ -404,7 +409,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return null;
   }
 
-  private void closeFileImpl(@NotNull final VirtualFile file) {
+  private void closeFileImpl(@NotNull final VirtualFile file, final boolean moveFocus) {
     assertDispatchThread();
     getSplitters().runChange(new Runnable() {
       public void run() {
@@ -413,10 +418,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           final VirtualFile nextFile = findNextFile(file);
           for (final EditorWindow window : windows) {
             LOG.assertTrue(window.getSelectedEditor() != null);
-            window.closeFile(file, false);
+            window.closeFile(file, false, moveFocus);
             if (window.getTabCount() == 0 && nextFile != null) {
               EditorWithProviderComposite newComposite = newEditorComposite(nextFile);
-              window.setEditor(newComposite, true); // newComposite can be null
+              window.setEditor(newComposite, moveFocus); // newComposite can be null
             }
           }
           // cleanup windows with no tabs
