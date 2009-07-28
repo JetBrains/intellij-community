@@ -93,9 +93,13 @@ public class SliceLeafValueRootNode extends AbstractTreeNode<Usage> implements N
     renderer.append("Value: ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
     if (usage instanceof UsageInfo2UsageAdapter) {
-
-      //renderer.customizeTreeCellRenderer((UsageInfo2UsageAdapter)usage);
-      renderer.append(((UsageInfo2UsageAdapter)usage).getElement().getText(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      PsiElement element = ((UsageInfo2UsageAdapter)usage).getElement();
+      if (element == null) {
+        renderer.append("Invalid", SimpleTextAttributes.ERROR_ATTRIBUTES);
+      }
+      else {
+        renderer.append(element.getText(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      }
     }
     else {
       renderer.append("Other", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
