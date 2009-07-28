@@ -19,8 +19,6 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.testframework.Filter;
-import com.intellij.execution.testframework.JavaAwareFilter;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -58,6 +56,7 @@ import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.util.PathUtil;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.ui.TestNGConsoleView;
+import com.theoryinpractice.testng.ui.TestNGResults;
 import com.theoryinpractice.testng.ui.actions.RerunFailedTestsAction;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
@@ -67,6 +66,7 @@ import org.testng.IDEACoverageListener;
 import org.testng.TestNG;
 import org.testng.TestNGCommandLineArgs;
 import org.testng.annotations.AfterClass;
+import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.xml.LaunchSuite;
 import org.testng.xml.Parser;
 import org.testng.xml.SuiteGenerator;
@@ -133,11 +133,12 @@ public class TestNGRunnableState extends JavaCommandLineState {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             final TestFrameworkRunningModel model = console.getModel();
-            final int failed = model != null ? Filter.DEFECTIVE_LEAF.and(JavaAwareFilter.METHOD(config.getProject())).select(model.getRoot().getAllTests()).size() : -1;
+            final TestNGResults resultsView = console.getResultsView();
             ToolWindowManager.getInstance(config.getProject()).notifyByBalloon(
               console.getProperties().isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN,
-              failed == -1 ? MessageType.WARNING : (failed > 0 ? MessageType.ERROR : MessageType.INFO),
-              failed == -1 ? "Tests were not started" : (failed > 0 ? failed + " Tests failed" :  "Tests passed") , null, null);
+              model == null || resultsView.getStatus() == MessageHelper.SKIPPED_TEST
+              ? MessageType.WARNING : (resultsView.getStatus() == MessageHelper.FAILED_TEST ? MessageType.ERROR : MessageType.INFO),
+              model == null ? "Tests were not started" : resultsView.getStatusLine() , null, null);
           }
         });
       }

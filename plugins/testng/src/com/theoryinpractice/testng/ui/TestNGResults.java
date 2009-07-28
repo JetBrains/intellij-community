@@ -68,6 +68,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   private static final String NO_PACKAGE = "No Package";
   private TestNGResults.OpenSourceSelectionListener openSourceListener;
   private final TestNGConsoleView myConsole;
+  private int myStatus = MessageHelper.PASSED_TEST;
 
   public TestNGResults(final JComponent component,
                        final TestNGConfiguration configuration,
@@ -138,6 +139,14 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   }
 
   private void updateStatusLine() {
+    myStatusLine.setText(getStatusLine());
+  }
+
+  public int getStatus() {
+    return myStatus;
+  }
+
+  public String getStatusLine() {
     StringBuffer sb = new StringBuffer();
     if (end == 0) {
       sb.append("Running: ");
@@ -151,7 +160,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
       final long time = end - start;
       sb.append(" (").append(time == 0 ? "0.0 s" : NumberFormat.getInstance().format((double)time / 1000.0) + " s").append(")  ");
     }
-    myStatusLine.setText(sb.toString());
+    return sb.toString();
   }
 
   public TestProxy testStarted(TestResultMessage result) {
@@ -226,6 +235,9 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
     if (result.getResult() == MessageHelper.FAILED_TEST) {
       myStatusLine.setStatusColor(ColorProgressBar.RED);
+      myStatus = MessageHelper.FAILED_TEST;
+    } else if (result.getResult() == MessageHelper.SKIPPED_TEST && myStatus == MessageHelper.PASSED_TEST) {
+      myStatus = MessageHelper.SKIPPED_TEST;
     }
     myStatusLine.setFraction((double)count / total);
     updateStatusLine();
