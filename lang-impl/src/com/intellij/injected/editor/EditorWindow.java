@@ -412,7 +412,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     if (offsetInLine > end- lineStartOffset) offsetInLine = end - lineStartOffset;
 
     CharSequence text = myDocumentWindow.getCharsSequence();
-    return EditorUtil.calcColumnNumber(this, text, lineStartOffset, lineStartOffset +offsetInLine, myDelegate.getTabSize());
+    return EditorUtil.calcColumnNumber(this, text, lineStartOffset, lineStartOffset +offsetInLine, EditorUtil.getTabSize(myDelegate));
   }
   private int calcOffset(int col, int lineNumber, int lineStartOffset) {
     if (myDocumentWindow.getTextLength() == 0) return 0;
@@ -420,7 +420,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     int end = myDocumentWindow.getLineEndOffset(lineNumber);
 
     CharSequence text = myDocumentWindow.getCharsSequence();
-    return EditorUtil.calcOffset(this, text, lineStartOffset, end, col, myDelegate.getTabSize());
+    return EditorUtil.calcOffset(this, text, lineStartOffset, end, col, EditorUtil.getTabSize(myDelegate));
   }
 
   public void setLastColumnNumber(final int val) {

@@ -708,11 +708,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return y / getLineHeight();
   }
 
-  public int getSpaceWidth(int fontType) {
-    int width = charWidth(' ', fontType);
-    return width > 0 ? width : 1;
-  }
-
   @NotNull
   public VisualPosition xyToVisualPosition(@NotNull Point p) {
     int line = yPositionToVisibleLineNumber(p.y);
@@ -729,7 +724,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     IterationState state = new IterationState(this, offset, false);
 
     int fontType = state.getMergedAttributes().getFontType();
-    int spaceSize = getSpaceWidth(fontType);
+    int spaceSize = EditorUtil.getSpaceWidth(fontType, this);
 
     int x = 0;
     outer:
@@ -746,7 +741,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         char[] placeholder = region.getPlaceholderText().toCharArray();
         for (char aPlaceholder : placeholder) {
           c = aPlaceholder;
-          x += charWidth(c, fontType);
+          x += EditorUtil.charWidth(c, fontType, this);
           if (x >= p.x) break outer;
           column++;
         }
@@ -759,10 +754,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           break;
         }
         if (c == '\t') {
-          x = nextTabStop(x);
+          x = EditorUtil.nextTabStop(x, this);
         }
         else {
-          x += charWidth(c, fontType);
+          x += EditorUtil.charWidth(c, fontType, this);
         }
 
         if (x >= p.x) break;
@@ -778,7 +773,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    int charWidth = charWidth(c, fontType);
+    int charWidth = EditorUtil.charWidth(c, fontType, this);
 
     if (x >= p.x && c == '\t') {
       if (mySettings.isCaretInsideTabs()) {
@@ -796,7 +791,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if ((x - p.x) * 2 < charWidth) column++;
       }
       else {
-        column += (p.x - x) / getSpaceWidth(fontType);
+        column += (p.x - x) / EditorUtil.getSpaceWidth(fontType, this);
       }
     }
 
@@ -888,7 +883,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int textLength = myDocument.getTextLength();
     IterationState state = new IterationState(this, offset, false);
     int fontType = state.getMergedAttributes().getFontType();
-    int spaceSize = getSpaceWidth(fontType);
+    int spaceSize = EditorUtil.getSpaceWidth(fontType, this);
 
     int column = 0;
     outer:
@@ -905,7 +900,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (region != null) {
         char[] placeholder = region.getPlaceholderText().toCharArray();
         for (char aPlaceholder : placeholder) {
-          x += charWidth(aPlaceholder, fontType);
+          x += EditorUtil.charWidth(aPlaceholder, fontType, this);
           column++;
           if (column >= pos.column) break outer;
         }
@@ -918,11 +913,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         if (c == '\t') {
           int prevX = x;
-          x = nextTabStop(x);
+          x = EditorUtil.nextTabStop(x, this);
           column += (x - prevX) / spaceSize;
         }
         else {
-          x += charWidth(c, fontType);
+          x += EditorUtil.charWidth(c, fontType, this);
           column++;
         }
         offset++;
@@ -930,22 +925,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (column != pos.column) {
-      x += getSpaceWidth(fontType) * (pos.column - column);
+      x += EditorUtil.getSpaceWidth(fontType, this) * (pos.column - column);
     }
 
     return x;
-  }
-
-  public int nextTabStop(int x) {
-    int tabSize = getTabSize();
-    if (tabSize <= 0) {
-      tabSize = 1;
-    }
-
-    tabSize *= getSpaceWidth(Font.PLAIN);
-
-    int nTabs = x / tabSize;
-    return (nTabs + 1) * tabSize;
   }
 
   public int visibleLineNumberToYPosition(int lineNum) {
@@ -1237,7 +1220,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!mySettings.isRightMarginShown() || rightMargin == null) {
       return;
     }
-    int x = mySettings.getRightMargin(myProject) * getSpaceWidth(Font.PLAIN);
+    int x = mySettings.getRightMargin(myProject) * EditorUtil.getSpaceWidth(Font.PLAIN, this);
     if (x >= clip.x && x < clip.x + clip.width) {
       g.setColor(rightMargin);
       UIUtil.drawLine(g, x, clip.y, x, clip.y + clip.height);
@@ -1277,7 +1260,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           int logStartLine = offsetToLogicalPosition(startOffset).line;
           LogicalPosition logPosition = offsetToLogicalPosition(myDocument.getLineEndOffset(logStartLine));
           Point end = logicalPositionToXY(logPosition);
-          int charWidth = getSpaceWidth(Font.PLAIN);
+          int charWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this);
           int lineHeight = getLineHeight();
           TextAttributes attributes = segmentHighlighter.getTextAttributes();
           if (attributes != null && getBackgroundColor(attributes) != null) {
@@ -1492,10 +1475,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void paintText(Graphics g, Rectangle clip) {
     myLastCache = null;
-    final int plainSpaceWidth = getSpaceWidth(Font.PLAIN);
-    final int boldSpaceWidth = getSpaceWidth(Font.BOLD);
-    final int italicSpaceWidth = getSpaceWidth(Font.ITALIC);
-    final int boldItalicSpaceWidth = getSpaceWidth(Font.BOLD | Font.ITALIC);
+    final int plainSpaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this);
+    final int boldSpaceWidth = EditorUtil.getSpaceWidth(Font.BOLD, this);
+    final int italicSpaceWidth = EditorUtil.getSpaceWidth(Font.ITALIC, this);
+    final int boldItalicSpaceWidth = EditorUtil.getSpaceWidth(Font.BOLD | Font.ITALIC, this);
     mySpacesHaveSameWidth =
       plainSpaceWidth == boldSpaceWidth && plainSpaceWidth == italicSpaceWidth && plainSpaceWidth == boldItalicSpaceWidth;
 
@@ -1709,7 +1692,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       g.setColor(separatorColor);
 
       if (mySettings.isRightMarginShown() && myScheme.getColor(EditorColors.RIGHT_MARGIN_COLOR) != null) {
-        endShift = Math.min(endShift, mySettings.getRightMargin(myProject) * getSpaceWidth(Font.PLAIN));
+        endShift = Math.min(endShift, mySettings.getRightMargin(myProject) * EditorUtil.getSpaceWidth(Font.PLAIN, this));
       }
 
       UIUtil.drawLine(g, 0, y - 1, endShift, y - 1);
@@ -1773,7 +1756,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       x = drawTablessString(text, start, i, g, x, y, fontType, fontColor, clip);
 
-      int x1 = nextTabStop(x);
+      int x1 = EditorUtil.nextTabStop(x, this);
       drawTabPlacer(g, y, x, x1);
       x = x1;
       start = i + 1;
@@ -1835,10 +1818,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                 final Rectangle clip) {
     int endX = x;
     if (start < end) {
-      FontInfo font = fontForChar(text[start], fontType);
+      FontInfo font = EditorUtil.fontForChar(text[start], fontType, this);
       for (int j = start; j < end; j++) {
         final char c = text[j];
-        FontInfo newFont = fontForChar(c, fontType);
+        FontInfo newFont = EditorUtil.fontForChar(c, fontType, this);
         if (font != newFont || endX > clip.x + clip.width) {
           if (!(x < clip.x && endX < clip.x || x > clip.x + clip.width && endX > clip.x + clip.width)) {
             drawCharsCached(g, text, start, j, x, y, fontType, fontColor);
@@ -1866,14 +1849,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return endX;
   }
 
-  private FontInfo fontForChar(final char c, int style) {
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, myScheme.getEditorFontSize(), style, myScheme.getEditorFontName());
-  }
-
-  public final int charWidth(char c, int fontType) {
-    return fontForChar(c, fontType).charWidth(c, myEditorComponent);
-  }
-
   private void drawTabPlacer(Graphics g, int y, int start, int stop) {
     if (mySettings.isWhitespacesShown()) {
       stop -= g.getFontMetrics().charWidth(' ') / 2;
@@ -1895,7 +1870,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myLastCache.addContent(g, data, start, end, x, y, null);
     }
     else {
-      FontInfo fnt = fontForChar(data[start], fontType);
+      FontInfo fnt = EditorUtil.fontForChar(data[start], fontType, this);
       CachedFontContent cache = null;
       for (CachedFontContent fontCache : myFontCache) {
         if (fontCache.myFontType == fnt) {
@@ -1963,10 +1938,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     final int textLength = text.length();
     for (int i = 0; i < textLength && xStart < clip.x + clip.width; i++) {
       if (text.charAt(i) == '\t') {
-        x = nextTabStop(x);
+        x = EditorUtil.nextTabStop(x, this);
       }
       else {
-        x += charWidth(text.charAt(i), fontType);
+        x += EditorUtil.charWidth(text.charAt(i), fontType, this);
       }
       if (x > clip.x + clip.width) {
         break;
@@ -2035,7 +2010,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     final Dimension draft = getSizeWithoutCaret();
-    final int additionalSpace = mySettings.getAdditionalColumnsCount() * getSpaceWidth(Font.PLAIN);
+    final int additionalSpace = mySettings.getAdditionalColumnsCount() * EditorUtil.getSpaceWidth(Font.PLAIN, this);
 
     if (!myDocument.isInBulkUpdate()) {
       int caretX = visualPositionToXY(getCaretModel().getVisualPosition()).x;
@@ -2084,7 +2059,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     CharSequence text = myDocument.getCharsNoThreadCheck();
 
     if (pos.column == 0) return start;
-    return EditorUtil.calcOffset(this, text, start, end, pos.column, getTabSize());
+    return EditorUtil.calcOffset(this, text, start, end, pos.column, EditorUtil.getTabSize(this));
   }
 
   public void setLastColumnNumber(int val) {
@@ -2263,12 +2238,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     CharSequence text = myDocument.getCharsSequence();
     int start = myDocument.getLineStartOffset(lineIndex);
     if (start == offset) return 0;
-    return EditorUtil.calcColumnNumber(this, text, start, offset, getTabSize());
-  }
-
-  public int getTabSize() {
-    Project project = myProject;
-    return project != null && project.isDisposed() ? 0 : mySettings.getTabSize(project);
+    return EditorUtil.calcColumnNumber(this, text, start, offset, EditorUtil.getTabSize(this));
   }
 
   private void moveCaretToScreenPos(int x, int y) {
@@ -3684,7 +3654,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void mouseReleased(MouseEvent e) {
       runMouseReleasedCommand(e);
       if (!e.isConsumed() && myMousePressedEvent != null && !myMousePressedEvent.isConsumed() &&
-          Math.abs(e.getX() - myMousePressedEvent.getX()) < getSpaceWidth(Font.PLAIN) &&
+          Math.abs(e.getX() - myMousePressedEvent.getX()) < EditorUtil.getSpaceWidth(Font.PLAIN, EditorImpl.this) &&
           Math.abs(e.getY() - myMousePressedEvent.getY()) < getLineHeight()) {
         runMouseClickedCommand(e);
       }
@@ -3914,7 +3884,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public boolean importData(final JComponent comp, final Transferable t) {
       final EditorImpl editor = (EditorImpl)getEditor(comp);
 
-      final EditorDropHandler dropHandler = ((EditorImpl)editor).getDropHandler();
+      final EditorDropHandler dropHandler = editor.getDropHandler();
       if (dropHandler != null && dropHandler.canHandleDrop(t.getTransferDataFlavors())) {
         dropHandler.handleDrop(t, editor);
         return true;
@@ -4176,13 +4146,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             if (collapsed != null) {
               String placeholder = collapsed.getPlaceholderText();
               for (int i = 0; i < placeholder.length(); i++) {
-                x += charWidth(placeholder.charAt(i), fontType);
+                x += EditorUtil.charWidth(placeholder.charAt(i), fontType, EditorImpl.this);
               }
               offset = collapsed.getEndOffset();
             }
             else {
               if (c == '\t') {
-                x = nextTabStop(x);
+                x = EditorUtil.nextTabStop(x, EditorImpl.this);
                 offset++;
               }
               else {
@@ -4235,7 +4205,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int fontType = state.getMergedAttributes().getFontType();
     int column = 0;
     int x = 0;
-    int spaceSize = getSpaceWidth(fontType);
+    int spaceSize = EditorUtil.getSpaceWidth(fontType, this);
     for (int i = start; i < offset; i++) {
       if (i >= state.getEndOffset()) {
         state.advance();
@@ -4245,12 +4215,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       char c = text.charAt(i);
       if (c == '\t') {
         int prevX = x;
-        x = nextTabStop(x);
+        x = EditorUtil.nextTabStop(x, this);
         column += (x - prevX) / spaceSize;
         //column += Math.max(1, (x - prevX) / spaceSize);
       }
       else {
-        x += charWidth(c, fontType);
+        x += EditorUtil.charWidth(c, fontType, this);
         column++;
       }
     }

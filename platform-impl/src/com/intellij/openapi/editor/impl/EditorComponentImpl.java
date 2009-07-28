@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.ui.TestableUi;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -116,7 +117,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
       return myEditor.getLineHeight();
     }
     else { // if orientation == SwingConstants.HORIZONTAL
-      return myEditor.getSpaceWidth(Font.PLAIN);
+      return EditorUtil.getSpaceWidth(Font.PLAIN, myEditor);
     }
   }
 

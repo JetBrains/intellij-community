@@ -1,14 +1,17 @@
 package com.intellij.openapi.editor.ex.util;
 
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
+import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.IterationState;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.Result;
+import com.intellij.openapi.project.Project;
 
 import java.awt.*;
 
@@ -106,13 +109,13 @@ public class EditorUtil {
       return offset;
     }
 
-    EditorImpl editorImpl = (EditorImpl) editor;
+    EditorEx editorImpl = (EditorEx)editor;
     int offset = start;
     IterationState state = new IterationState(editorImpl, offset, false);
     int fontType = state.getMergedAttributes().getFontType();
     int column = 0;
     int x = 0;
-    int spaceSize = editorImpl.getSpaceWidth(fontType);
+    int spaceSize = getSpaceWidth(fontType, editorImpl);
     while (column < columnNumber) {
       if (offset >= state.getEndOffset()) {
         state.advance();
@@ -123,15 +126,15 @@ public class EditorUtil {
       char c = offset < end ? text.charAt(offset++) : ' ';
       if (c == '\t') {
         int prevX = x;
-        x = editorImpl.nextTabStop(x);
+        x = nextTabStop(x, editorImpl);
         column += (x - prevX) / spaceSize;
       }
       else {
-        x += editorImpl.charWidth(c, fontType);
+        x += charWidth(c, fontType, editorImpl);
         column++;
       }
     }
-    if (column == columnNumber && offset < end && text.charAt(offset) == '\t' && (editorImpl.nextTabStop(x) - x) / spaceSize == 0) {
+    if (column == columnNumber && offset < end && text.charAt(offset) == '\t' && (nextTabStop(x, editorImpl) - x) / spaceSize == 0) {
       offset++;
     }
     if (column > columnNumber) offset--;
@@ -183,6 +186,37 @@ public class EditorUtil {
     if (view.getContentComponent().getCursor() != c) {
       view.getContentComponent().setCursor(c);
     }
+  }
+
+  public static FontInfo fontForChar(final char c, int style, Editor editor) {
+    EditorColorsScheme colorsScheme = editor.getColorsScheme();
+    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, colorsScheme.getEditorFontSize(), style, colorsScheme.getEditorFontName());
+  }
+
+  public static int charWidth(char c, int fontType, Editor editor) {
+    return fontForChar(c, fontType, editor).charWidth(c, editor.getContentComponent());
+  }
+
+  public static int getSpaceWidth(int fontType, Editor editor) {
+    int width = charWidth(' ', fontType, editor);
+    return width > 0 ? width : 1;
+  }
+
+  public static int getTabSize(Editor editor) {
+    Project project = editor.getProject();
+    return project != null && project.isDisposed() ? 0 : editor.getSettings().getTabSize(project);
+  }
+
+  public static int nextTabStop(int x, Editor editor) {
+    int tabSize = getTabSize(editor);
+    if (tabSize <= 0) {
+      tabSize = 1;
+    }
+
+    tabSize *= getSpaceWidth(Font.PLAIN, editor);
+
+    int nTabs = x / tabSize;
+    return (nTabs + 1) * tabSize;
   }
 }
 
