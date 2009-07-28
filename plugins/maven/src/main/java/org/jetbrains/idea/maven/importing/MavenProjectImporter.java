@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -64,9 +65,8 @@ public class MavenProjectImporter {
     myModelsProvider = modelsProvider;
     myImportingSettings = importingSettings;
 
-    myProjectsToImport = collectProjectsToImport(projectsToImport);
-
     myModuleModel = modelsProvider.getModuleModel();
+    myProjectsToImport = collectProjectsToImport(projectsToImport);
   }
 
   private Set<MavenProject> collectProjectsToImport(Set<MavenProject> projectsToImport) {
@@ -77,13 +77,76 @@ public class MavenProjectImporter {
 
   private Set<MavenProject> collectNewlyCreatedProjects() {
     Set<MavenProject> result = new THashSet<MavenProject>();
+
+    final Map<MavenProject, Module> projectsWithInconsistentModuleType = new HashMap<MavenProject, Module>();
+
     for (MavenProject each : myProjectsTree.getProjects()) {
       Module module = myFileToModuleMapping.get(each.getFile());
       if (module == null) {
         result.add(each);
+      } else {
+        if (shouldCreateModuleFor(each) && !(module.getModuleType() instanceof JavaModuleType)) {
+          projectsWithInconsistentModuleType.put(each, module);
+        }
       }
     }
+
+    removeModulesOrIgnoreMavenProjects(projectsWithInconsistentModuleType);
+    for (final MavenProject mavenProject : projectsWithInconsistentModuleType.keySet()) {
+      if (!myProjectsTree.isIgnored(mavenProject)) {
+        result.add(mavenProject);
+      }
+    }
+
     return result;
+  }
+
+  private void removeModulesOrIgnoreMavenProjects(final Map<MavenProject, Module> projectsWithInconsistentModuleType) {
+    if (projectsWithInconsistentModuleType.isEmpty()) {
+      return;
+    }
+
+    final int[] result = new int[1];
+    MavenUtil.invokeAndWait(myProject, ModalityState.NON_MODAL, new Runnable() {
+      public void run() {
+        result[0] = Messages.showDialog(myProject, ProjectBundle.message("maven.import.message.remove.modules",
+                                                                         formatModules(projectsWithInconsistentModuleType.values()),
+                                                                         ProjectBundle.message("maven.continue.button"),
+                                                                         ProjectBundle.message("maven.skip.button"),
+                                                                         formatProjects(projectsWithInconsistentModuleType.keySet())),
+                                        ProjectBundle.message("maven.tab.importing"),
+                                        new String[]{ProjectBundle.message("maven.continue.button"),
+                                          ProjectBundle.message("maven.skip.button")}, 0, Messages.getQuestionIcon());
+      }
+    });
+    if (result[0] == 0) {
+      for (Map.Entry<MavenProject, Module> entry : projectsWithInconsistentModuleType.entrySet()) {
+        myFileToModuleMapping.remove(entry.getKey().getFile());
+        final Module module = entry.getValue();
+        if (!module.isDisposed()) {
+          myModuleModel.disposeModule(module);
+        }
+      }
+    }
+    else {
+      myProjectsTree.setIgnoredStateDoNotFireEvent(projectsWithInconsistentModuleType.keySet(), true);
+    }
+  }
+
+  private static String formatModules(final Collection<Module> modules) {
+    return StringUtil.join(modules, new Function<Module, String>() {
+      public String fun(final Module m) {
+        return "'" + m.getName() + "'";
+      }
+    }, "\n");
+  }
+
+  private static String formatProjects(final Collection<MavenProject> projects) {
+    return StringUtil.join(projects, new Function<MavenProject, String>() {
+      public String fun(final MavenProject project) {
+        return "'" + project.getName() + "'";
+      }
+    }, "\n");
   }
 
   private Set<MavenProject> selectProjectsToImport(Collection<MavenProject> originalProjects) {
@@ -217,22 +280,16 @@ public class MavenProjectImporter {
   }
 
   private void deleteObsoleteModules() {
-    List<Module> obsolete = collectObsoleteModules();
+    final List<Module> obsolete = collectObsoleteModules();
     if (obsolete.isEmpty()) return;
 
     MavenProjectsManager.getInstance(myProject).setMavenizedModules(obsolete, false);
-
-    final String formatted = StringUtil.join(obsolete, new Function<Module, String>() {
-      public String fun(Module m) {
-        return "'" + m.getName() + "'";
-      }
-    }, "\n");
 
     final int[] result = new int[1];
     MavenUtil.invokeAndWait(myProject, ModalityState.NON_MODAL, new Runnable() {
       public void run() {
         result[0] = Messages.showYesNoDialog(myProject,
-                                             ProjectBundle.message("maven.import.message.delete.obsolete", formatted),
+                                             ProjectBundle.message("maven.import.message.delete.obsolete", formatModules(obsolete)),
                                              ProjectBundle.message("maven.tab.importing"),
                                              Messages.getQuestionIcon());
       }

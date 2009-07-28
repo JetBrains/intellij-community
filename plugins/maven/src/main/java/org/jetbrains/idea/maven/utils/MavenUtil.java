@@ -142,7 +142,7 @@ public class MavenUtil {
     });
   }
 
-  public static List<VirtualFile> collectFiles(List<MavenProject> projects) {
+  public static List<VirtualFile> collectFiles(Collection<MavenProject> projects) {
     return ContainerUtil.map(projects, new Function<MavenProject, VirtualFile>() {
       public VirtualFile fun(MavenProject project) {
         return project.getFile();
