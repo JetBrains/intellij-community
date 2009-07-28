@@ -16,11 +16,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
@@ -31,11 +33,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.List;
 
 /**
  * @author ilyas
  */
-public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral {
+public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral, PsiLanguageInjectionHost {
 
   public GrLiteralImpl(@NotNull ASTNode node) {
     super(node);
@@ -101,19 +104,39 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral {
       return StringUtil.unescapeStringCharacters(text);
     } else if (elemType == mGSTRING_LITERAL) {
       if (!text.startsWith("\"")) return null;
-      text = text.substring(1);
-      if (text.endsWith("\"")) {
-        text = text.substring(0, text.length() - 1);
+      if (text.startsWith("\"\"\"")) {
+        text = StringUtil.trimEnd(text.substring(3), "\"\"\"");
+      } else {
+        text = StringUtil.trimEnd(text.substring(1), "\"");
       }
       return StringUtil.unescapeStringCharacters(text);
     }
-
-
     return null; //todo
   }
 
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, GrLiteral.class);
+  }
+
+  public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
+    if (!(getValue() instanceof String)) return null;
+    return InjectedLanguageUtil.getInjectedPsiFiles(this);
+  }
+
+  public void processInjectedPsi(@NotNull final InjectedPsiVisitor visitor) {
+    InjectedLanguageUtil.enumerate(this, visitor);
+  }
+
+  public PsiLanguageInjectionHost updateText(@NotNull final String text) {
+    final ASTNode valueNode = getNode().getFirstChildNode();
+    assert valueNode instanceof LeafElement;
+    ((LeafElement)valueNode).replaceWithText(text);
+    return this;
+  }
+
+  @NotNull
+  public LiteralTextEscaper<GrLiteralImpl> createLiteralTextEscaper() {
+    return new GrLiteralEscaper(this);
   }
 }
