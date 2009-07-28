@@ -44,8 +44,6 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
   public Boolean CONVERT_PARAM_SPECIFY_MAP_TYPE = null;
   public Boolean CONVERT_PARAM_CREATE_NEW_PARAM = null;
 
-  public Boolean DOWNLOAD_PLUGIN_INFO_ONLINE = null;
-
   // Groovy & Grails configuration settings
   public String DEFAULT_GROOVY_LIB_NAME = null;
   public String DEFAULT_GRAILS_LIB_NAME = null;
