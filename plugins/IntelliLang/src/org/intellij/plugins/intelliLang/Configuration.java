@@ -103,6 +103,7 @@ public final class Configuration implements PersistentStateComponent<Element> {
   private volatile long myModificationCount;
 
   public Configuration() {
+    setResolveReferences(true);
     setLanguageAnnotation("org.intellij.lang.annotations.Language");
     setPatternAnnotation("org.intellij.lang.annotations.Pattern");
     setSubstAnnotation("org.intellij.lang.annotations.Subst");
