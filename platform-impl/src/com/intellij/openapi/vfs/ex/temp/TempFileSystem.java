@@ -57,7 +57,14 @@ public class TempFileSystem extends NewVirtualFileSystem {
     assert fsItem != null && fsItem.isDirectory();
 
     final FSDir fsDir = (FSDir)fsItem;
-    fsDir.addChild(new FSDir(fsDir, dir));
+    final FSItem existingDir = fsDir.findChild(dir);
+    if (existingDir == null) {
+      fsDir.addChild(new FSDir(fsDir, dir));
+    }
+    else if (!existingDir.isDirectory()) {
+      throw new IOException("Directory already contains a file named " + dir);
+    }
+
 
     return new FakeVirtualFile(parent, dir);
   }
