@@ -1,52 +1,51 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.InspectionTestCase;
+import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.inspections.*;
 
 /**
  * @author yole
  */
-public class PythonInspectionsTest extends InspectionTestCase {
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return PythonMockSdk.findOrCreate();
-  }
-
-  public void testReturnValueFromInit() throws Exception {
+public class PythonInspectionsTest extends PyLightFixtureTestCase {
+  public void testReturnValueFromInit() throws Throwable {
     final JythonManager manager = JythonManager.getInstance();
     manager.execScriptFromResource("inspections/inspections.py"); // could be moved to setUp() if more jython-based inspections existed
     doTest(getTestName(true), PythonPyInspectionToolProvider.getInstance().createLocalInspectionTool("ReturnValueFromInitInspection"));
   }
 
-  public void testPyMethodFirstArgAssignmentInspection() throws Exception {
+  private void doTest(String testName, LocalInspectionTool localInspectionTool) throws Throwable {
+    myFixture.testInspection(testName, new LocalInspectionToolWrapper(localInspectionTool));
+  }
+
+  public void testPyMethodFirstArgAssignmentInspection() throws Throwable {
     LocalInspectionTool inspection = new PyMethodFirstArgAssignmentInspection();
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyUnreachableCodeInspection() throws Exception {
+  public void testPyUnreachableCodeInspection() throws Throwable {
     LocalInspectionTool inspection = new PyUnreachableCodeInspection();
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyUnresolvedReferencesInspection() throws Exception {
+  public void testPyUnresolvedReferencesInspection() throws Throwable {
     LocalInspectionTool inspection = new PyUnresolvedReferencesInspection();
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyArgumentListInspection() throws Exception {
+  public void testPyArgumentListInspection() throws Throwable {
     LocalInspectionTool inspection = new PyArgumentListInspection();
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyRedeclarationInspection() throws Exception {
+  public void testPyRedeclarationInspection() throws Throwable {
     LocalInspectionTool inspection = new PyRedeclarationInspection();
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyStringFormatInspection() throws Exception {
+  public void testPyStringFormatInspection() throws Throwable {
     LocalInspectionTool inspection = new PyStringFormatInspection();
     doTest(getTestName(false), inspection);
   }
