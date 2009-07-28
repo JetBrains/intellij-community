@@ -139,15 +139,20 @@ public class NotificationModel<T extends Notification> {
 
   public void clear(@NotNull NotNullFunction<T, Boolean> filter) {
     final LinkedList<T> result = filterNotifications(filter);
-    if (!result.isEmpty()) {
-      for (final T notification : result) {
-        myNotifications.remove(notification);
-      }
+    for (final T notification : result) {
+      myNotifications.remove(notification);
+    }
 
-      final T[] removed = result.toArray((T[])Array.newInstance(result.get(0).getClass(), result.size()));
-      for (NotificationModelListener<T> listener : myListeners) {
-        listener.notificationsRemoved(removed);
-      }
+    final Collection<T> archive = getArchive(filter);
+    for (final T notification : archive) {
+      myArchive.remove(notification);
+    }
+
+    result.addAll(archive);
+
+    final T[] removed = result.toArray((T[])Array.newInstance(result.get(0).getClass(), result.size()));
+    for (NotificationModelListener<T> listener : myListeners) {
+      listener.notificationsRemoved(removed);
     }
   }
 
