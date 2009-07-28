@@ -81,7 +81,7 @@ public class InjectLanguageAction implements IntentionAction {
         if (defaultFunctionalityWorked(host, languageId)) return false;
         final Language language = InjectedLanguage.findLanguageById(languageId);
         try {
-          for (LanguageInjectorSupport support : Extensions.getExtensions(LanguageInjectorSupport.EP_NAME)) {
+          for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
             if (support.addInjectionInPlace(language, host)) return false;
           }
           TemporaryPlacesRegistry.getInstance(project).addHostWithUndo(host, InjectedLanguage.create(languageId));

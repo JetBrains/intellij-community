@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.intellij.plugins.intelliLang.inject;
+package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.Result;
@@ -41,6 +41,9 @@ import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel;
 import org.intellij.plugins.intelliLang.inject.config.ui.MethodParameterPanel;
 import org.intellij.plugins.intelliLang.inject.config.ui.configurables.MethodParameterInjectionConfigurable;
+import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
+import org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction;
+import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jdom.Element;
@@ -52,7 +55,7 @@ import java.util.*;
 /**
  * @author Gregory.Shrago
  */
-public class JavaLanguageInjectorSupport implements LanguageInjectorSupport {
+public class JavaLanguageInjectionSupport implements LanguageInjectionSupport {
 
   private static boolean isMine(final PsiLanguageInjectionHost psiElement) {
     return PsiUtilEx.isStringOrCharacterLiteral(psiElement);

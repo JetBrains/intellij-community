@@ -29,6 +29,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="module" module-name="jetgroovy" />
   </component>
   <component name="copyright">
     <Base>

@@ -39,7 +39,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.intellij.plugins.intelliLang.inject.LanguageInjectorSupport;
+import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.*;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -110,28 +110,28 @@ public final class Configuration implements PersistentStateComponent<Element> {
   }
 
   public void loadState(final Element element) {
-    final THashMap<String, LanguageInjectorSupport> supports = new THashMap<String, LanguageInjectorSupport>();
-    for (LanguageInjectorSupport support : Extensions.getExtensions(LanguageInjectorSupport.EP_NAME)) {
+    final THashMap<String, LanguageInjectionSupport> supports = new THashMap<String, LanguageInjectionSupport>();
+    for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
       supports.put(support.getId(), support);
     }
-    myInjections.get(LanguageInjectorSupport.XML_SUPPORT_ID).addAll(readExternal(element.getChild(TAG_INJECTION_NAME), new Factory<XmlTagInjection>() {
+    myInjections.get(LanguageInjectionSupport.XML_SUPPORT_ID).addAll(readExternal(element.getChild(TAG_INJECTION_NAME), new Factory<XmlTagInjection>() {
       public XmlTagInjection create() {
         return new XmlTagInjection();
       }
     }));
-    myInjections.get(LanguageInjectorSupport.XML_SUPPORT_ID).addAll(readExternal(element.getChild(ATTRIBUTE_INJECTION_NAME), new Factory<XmlAttributeInjection>() {
+    myInjections.get(LanguageInjectionSupport.XML_SUPPORT_ID).addAll(readExternal(element.getChild(ATTRIBUTE_INJECTION_NAME), new Factory<XmlAttributeInjection>() {
       public XmlAttributeInjection create() {
         return new XmlAttributeInjection();
       }
     }));
-    myInjections.get(LanguageInjectorSupport.JAVA_SUPPORT_ID).addAll(readExternal(element.getChild(PARAMETER_INJECTION_NAME), new Factory<MethodParameterInjection>() {
+    myInjections.get(LanguageInjectionSupport.JAVA_SUPPORT_ID).addAll(readExternal(element.getChild(PARAMETER_INJECTION_NAME), new Factory<MethodParameterInjection>() {
       public MethodParameterInjection create() {
         return new MethodParameterInjection();
       }
     }));
     for (Element child : (List<Element>)element.getChildren("injection")){
       final String key = child.getAttributeValue("injector-id");
-      final LanguageInjectorSupport support = supports.get(key);
+      final LanguageInjectionSupport support = supports.get(key);
       final BaseInjection injection = support == null ? new BaseInjection(key) : support.createInjection(child);
       injection.loadState(child);
       myInjections.get(key).add(injection);
@@ -284,7 +284,7 @@ public final class Configuration implements PersistentStateComponent<Element> {
    */
   public int importFrom(final Configuration cfg) {
     int n = 0;
-    for (LanguageInjectorSupport support : Extensions.getExtensions(LanguageInjectorSupport.EP_NAME)) {
+    for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
       final List<BaseInjection> mineInjections = myInjections.get(support.getId());
       for (BaseInjection other : cfg.getInjections(support.getId())) {
         final BaseInjection existing = findExistingInjection(other);
@@ -337,7 +337,7 @@ public final class Configuration implements PersistentStateComponent<Element> {
   public boolean setHostInjectionEnabled(final PsiLanguageInjectionHost host, final Collection<String> languages, final boolean enabled) {
     final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>();
     final ArrayList<BaseInjection> newInjections = new ArrayList<BaseInjection>();
-    for (LanguageInjectorSupport support : Extensions.getExtensions(LanguageInjectorSupport.EP_NAME)) {
+    for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
       for (BaseInjection injection : getInjections(support.getId())) {
         if (!languages.contains(injection.getInjectedLanguageId())) continue;
         boolean replace = false;

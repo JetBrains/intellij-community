@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.intellij.plugins.intelliLang.inject;
+package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;

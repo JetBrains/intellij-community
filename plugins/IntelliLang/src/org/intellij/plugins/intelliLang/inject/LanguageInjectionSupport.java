@@ -15,8 +15,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Gregory.Shrago
  */
-public interface LanguageInjectorSupport {
-  ExtensionPointName<LanguageInjectorSupport> EP_NAME = ExtensionPointName.create("org.intellij.intelliLang.languageSupport");
+public interface LanguageInjectionSupport {
+  ExtensionPointName<LanguageInjectionSupport> EP_NAME = ExtensionPointName.create("org.intellij.intelliLang.languageSupport");
 
   Key<Boolean> HAS_UNPARSABLE_FRAGMENTS = Key.create("HAS_UNPARSABLE_FRAGMENTS");
 

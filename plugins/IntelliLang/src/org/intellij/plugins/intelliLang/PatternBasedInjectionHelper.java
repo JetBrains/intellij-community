@@ -25,7 +25,7 @@ import com.intellij.psi.PsiElement;
 import groovy.lang.*;
 import org.codehaus.groovy.reflection.CachedMethod;
 import org.codehaus.groovy.reflection.ReflectionCache;
-import org.intellij.plugins.intelliLang.inject.LanguageInjectorSupport;
+import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
@@ -164,7 +164,7 @@ public class PatternBasedInjectionHelper {
     final ArrayList<Class> patternClasses = new ArrayList<Class>();
     patternClasses.add(StandardPatterns.class);
     patternClasses.add(PlatformPatterns.class);
-    for (LanguageInjectorSupport support : Extensions.getExtensions(LanguageInjectorSupport.EP_NAME)) {
+    for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
       patternClasses.addAll(Arrays.asList(support.getPatternClasses()));
     }
     final ArrayList<MetaMethod> metaMethods = new ArrayList<MetaMethod>();

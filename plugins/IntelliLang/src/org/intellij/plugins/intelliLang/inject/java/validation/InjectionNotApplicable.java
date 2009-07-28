@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.intellij.plugins.intelliLang.inject.validation;
+package org.intellij.plugins.intelliLang.inject.java.validation;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.AnnotationUtil;

@@ -18,16 +18,20 @@ package org.jetbrains.plugins.groovy.lang.psi.patterns;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.InitialPatternCondition;
 import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
 public class GroovyPatterns extends PsiJavaPatterns {
 
+  public static GroovyElementPattern groovyElement() {
+    return new GroovyElementPattern.Capture<PsiElement>(PsiElement.class);
+  }
+
   public static GroovyBinaryExpressionPattern groovyBinaryExpression() {
     return new GroovyBinaryExpressionPattern();
   }
-
 
   public static GroovyElementPattern.Capture<GrLiteral> groovyLiteralExpression() {
     return groovyLiteralExpression(null);

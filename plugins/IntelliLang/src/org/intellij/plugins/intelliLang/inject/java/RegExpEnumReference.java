@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.intellij.plugins.intelliLang.inject;
+package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.psi.PsiElement;

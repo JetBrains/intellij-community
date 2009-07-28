@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.intellij.plugins.intelliLang.inject.validation;
+package org.intellij.plugins.intelliLang.inject.java.validation;
 
 import com.intellij.codeInspection.InspectionToolProvider;
 

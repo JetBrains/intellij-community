@@ -15,10 +15,18 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.patterns;
 
+import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.InitialPatternCondition;
+import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
 public class GroovyElementPattern<T extends PsiElement,Self extends GroovyElementPattern<T,Self>> extends PsiJavaElementPattern<T,Self> {
   public GroovyElementPattern(final Class<T> aClass) {
@@ -27,6 +35,31 @@ public class GroovyElementPattern<T extends PsiElement,Self extends GroovyElemen
 
   public GroovyElementPattern(@NotNull final InitialPatternCondition<T> condition) {
     super(condition);
+  }
+
+  public Self methodCallParameter(final int index, final ElementPattern<? extends PsiMethod> methodPattern) {
+    return with(new PatternCondition<T>("methodCallParameter") {
+      public boolean accepts(@NotNull final T literal, final ProcessingContext context) {
+        final PsiElement parent = literal.getParent();
+        if (parent instanceof GrArgumentList) {
+          final GrArgumentList psiExpressionList = (GrArgumentList)parent;
+          final GrExpression[] psiExpressions = psiExpressionList.getExpressionArguments();
+          if (!(psiExpressions.length > index && psiExpressions[index] == literal)) return false;
+
+          final PsiElement element = psiExpressionList.getParent();
+          if (element instanceof GrMethodCallExpression) {
+            final GroovyResolveResult[] results = ((GrMethodCallExpression)element).getMethodVariants();
+            for (GroovyResolveResult result : results) {
+              final PsiElement psiElement = result.getElement();
+              if (methodPattern.getCondition().accepts(psiElement, context)) {
+                return true;
+              }
+            }
+          }
+        }
+        return false;
+      }
+    });
   }
 
   public static class Capture<T extends PsiElement> extends GroovyElementPattern<T, Capture<T>> {

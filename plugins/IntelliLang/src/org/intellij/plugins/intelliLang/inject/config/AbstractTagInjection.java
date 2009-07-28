@@ -22,7 +22,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.PsiElement;
 import org.intellij.plugins.intelliLang.util.StringMatcher;
-import org.intellij.plugins.intelliLang.inject.LanguageInjectorSupport;
+import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.jaxen.JaxenException;
 import org.jaxen.XPath;
 import org.jdom.Element;
@@ -57,7 +57,7 @@ public class AbstractTagInjection extends BaseInjection {
   private boolean myApplyToSubTagTexts;
 
   public AbstractTagInjection() {
-    super(LanguageInjectorSupport.XML_SUPPORT_ID);
+    super(LanguageInjectionSupport.XML_SUPPORT_ID);
   }
 
   @NotNull

@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.intellij.plugins.intelliLang.inject;
+package org.intellij.plugins.intelliLang.inject.xml;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
@@ -37,6 +37,9 @@ import org.intellij.plugins.intelliLang.inject.config.ui.XmlAttributePanel;
 import org.intellij.plugins.intelliLang.inject.config.ui.XmlTagPanel;
 import org.intellij.plugins.intelliLang.inject.config.ui.configurables.XmlAttributeInjectionConfigurable;
 import org.intellij.plugins.intelliLang.inject.config.ui.configurables.XmlTagInjectionConfigurable;
+import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
+import org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction;
+import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +52,7 @@ import java.util.regex.Matcher;
 /**
  * @author Gregory.Shrago
  */
-public class XmlLanguageInjectorSupport implements LanguageInjectorSupport {
+public class XmlLanguageInjectionSupport implements LanguageInjectionSupport {
 
   private static boolean isMine(final PsiLanguageInjectionHost host) {
     if (host instanceof XmlAttributeValue) {

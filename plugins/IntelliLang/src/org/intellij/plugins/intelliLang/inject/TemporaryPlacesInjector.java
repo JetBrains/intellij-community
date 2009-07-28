@@ -43,7 +43,7 @@ public class TemporaryPlacesInjector implements MultiHostInjector {
     final PsiLanguageInjectionHost originalHost = PsiUtilBase.getOriginalElement(host, host.getClass());
     final List<TemporaryPlacesRegistry.TemporaryPlace> list = TemporaryPlacesRegistry.getInstance(context.getProject()).getTempInjectionsSafe(originalHost);
     for (final TemporaryPlacesRegistry.TemporaryPlace pair : list) {
-      XmlLanguageInjector.registerInjection(pair.language.getLanguage(), Collections.singletonList(
+      InjectorUtils.registerInjection(pair.language.getLanguage(), Collections.singletonList(
         Trinity.create(host, pair.language, ElementManipulators.getManipulator(host).getRangeInElement(host))), context.getContainingFile(),
                                             registrar);
     }

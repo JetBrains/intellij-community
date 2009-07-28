@@ -48,7 +48,7 @@ public class UnInjectLanguageAction implements IntentionAction {
     final PsiLanguageInjectionHost host = findInjectionHost(editor, file);
     try {
       if (defaultFunctionalityWorked(host)) return;
-      for (LanguageInjectorSupport support : Extensions.getExtensions(LanguageInjectorSupport.EP_NAME)) {
+      for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
         if (support.removeInjectionInPlace(host)) return;
       }
       TemporaryPlacesRegistry.getInstance(project).removeHostWithUndo(project, host);

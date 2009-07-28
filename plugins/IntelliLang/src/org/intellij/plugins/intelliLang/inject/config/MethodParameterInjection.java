@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.intellij.plugins.intelliLang.PatternBasedInjectionHelper;
-import org.intellij.plugins.intelliLang.inject.LanguageInjectorSupport;
+import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 
 import java.util.*;
 
@@ -41,7 +41,7 @@ public class MethodParameterInjection extends BaseInjection {
   private boolean myApplyInHierarchy = true;
 
   public MethodParameterInjection() {
-    super(LanguageInjectorSupport.JAVA_SUPPORT_ID);
+    super(LanguageInjectionSupport.JAVA_SUPPORT_ID);
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-package org.intellij.plugins.intelliLang.inject;
+package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
@@ -20,6 +20,9 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
+import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
+import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
+import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +46,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     final PsiFile containingFile = operands[0].getContainingFile();
     processLiteralExpressionInjections(new PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>>() {
       public boolean process(final Language language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list) {
-        XmlLanguageInjector.registerInjection(language, list, containingFile, registrar);
+        InjectorUtils.registerInjection(language, list, containingFile, registrar);
         return true;
       }
     }, operands);
@@ -57,7 +60,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       final String id = AnnotationUtilEx.calcAnnotationValue(annotations, "value");
       final String prefix = AnnotationUtilEx.calcAnnotationValue(annotations, "prefix");
       final String suffix = AnnotationUtilEx.calcAnnotationValue(annotations, "suffix");
-      final BaseInjection injection = new BaseInjection(LanguageInjectorSupport.JAVA_SUPPORT_ID);
+      final BaseInjection injection = new BaseInjection(LanguageInjectionSupport.JAVA_SUPPORT_ID);
       if (prefix != null) injection.setPrefix(prefix);
       if (suffix != null) injection.setSuffix(suffix);
       if (id != null) injection.setInjectedLanguageId(id);
@@ -157,7 +160,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         injections = Collections.emptyList();
       }
       else {
-        injections = ContainerUtil.findAll(configuration.getInjections(LanguageInjectorSupport.JAVA_SUPPORT_ID), new Condition<BaseInjection>() {
+        injections = ContainerUtil.findAll(configuration.getInjections(LanguageInjectionSupport.JAVA_SUPPORT_ID), new Condition<BaseInjection>() {
           public boolean value(final BaseInjection injection) {
             return injection.acceptsPsiElement(owner);
           }
@@ -224,7 +227,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       }
       else {
         for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : result) {
-          trinity.first.putUserData(LanguageInjectorSupport.HAS_UNPARSABLE_FRAGMENTS, unparsableRef.get());
+          trinity.first.putUserData(LanguageInjectionSupport.HAS_UNPARSABLE_FRAGMENTS, unparsableRef.get());
         }
         processor.process(language, result);
       }

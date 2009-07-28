@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.intellij.plugins.intelliLang.inject;
+package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
@@ -26,6 +26,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.intellij.plugins.intelliLang.util.StringLiteralReference;
+import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.jetbrains.annotations.Nullable;
 
 /**

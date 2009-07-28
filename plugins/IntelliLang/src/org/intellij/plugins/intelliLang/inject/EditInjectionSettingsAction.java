@@ -61,7 +61,7 @@ public class EditInjectionSettingsAction implements IntentionAction {
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiLanguageInjectionHost host = findInjectionHost(editor, file);
     try {
-      for (LanguageInjectorSupport support : Extensions.getExtensions(LanguageInjectorSupport.EP_NAME)) {
+      for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
         if (support.editInjectionInPlace(host)) return;
       }
     }
