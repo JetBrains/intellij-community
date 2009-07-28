@@ -392,7 +392,8 @@ public class BackendCompilerWrapper {
           final Cache cache = dependencyCache.getCache();
           for (final int infoQName : depQNames) {
             final String qualifiedName = dependencyCache.resolve(infoQName);
-            final VirtualFile file = sourceFileFinder.findSourceFile(qualifiedName, cache.getSourceFileName(infoQName));
+            final String sourceFileName = cache.getSourceFileName(infoQName);
+            final VirtualFile file = sourceFileFinder.findSourceFile(qualifiedName, sourceFileName);
             if (file != null) {
               if (!compilerConfiguration.isExcludedFromCompilation(file)) {
                 dependentFiles.add(file);
@@ -403,9 +404,7 @@ public class BackendCompilerWrapper {
               }
             }
             else {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("No source file for " + dependencyCache.resolve(infoQName) + " found");
-              }
+              LOG.info("No source file for " + dependencyCache.resolve(infoQName) + " found; source file name=" + sourceFileName);
             }
           }
           for (final VirtualFile file : depFiles) {
