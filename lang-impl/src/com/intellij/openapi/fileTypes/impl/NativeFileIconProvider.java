@@ -9,7 +9,6 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileSystemView;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +17,7 @@ import java.util.Map;
  * @author yole
  */
 public class NativeFileIconProvider implements FileIconProvider {
-  private FileSystemView myFileSystemView = FileSystemView.getFileSystemView();
+  private JFileChooser myFileChooser = new JFileChooser();
   private final Map<String, Icon> myIconCache = new HashMap<String, Icon>();
 
   public Icon getIcon(VirtualFile file, int flags, @Nullable Project project) {
@@ -35,7 +34,7 @@ public class NativeFileIconProvider implements FileIconProvider {
     }
     return new DeferredIconImpl<VirtualFile>(file.getFileType().getIcon(), file, false, new Function<VirtualFile, Icon>() {
       public Icon fun(VirtualFile virtualFile) {
-        Icon icon = myFileSystemView.getSystemIcon(new File(virtualFile.getPath()));
+        Icon icon = myFileChooser.getIcon(new File(virtualFile.getPath()));
         if (ext != null) {
           synchronized (myIconCache) {
             myIconCache.put(ext, icon);
