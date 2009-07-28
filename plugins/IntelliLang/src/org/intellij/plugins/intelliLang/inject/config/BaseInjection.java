@@ -236,7 +236,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
       for (Element placeElement : (List<Element>)element.getChildren("place")) {
         final boolean enabled = !Boolean.TRUE.equals(placeElement.getAttributeValue("disabled"));
         final String text = placeElement.getText();
-        myPlaces.add(new InjectionPlace(text, PatternBasedInjectionHelper.createElementPattern(text, getDisplayName()), enabled));
+        myPlaces.add(new InjectionPlace(text, null, enabled));
       }
     }
   }
@@ -244,7 +244,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   public void initializePlaces(final boolean compile) {
     if (myPlaces.isEmpty()) {
       for (String text : generatePlaces()) {
-        myPlaces.add(new InjectionPlace(text, compile? PatternBasedInjectionHelper.createElementPattern(text, getDisplayName()) : null, true));
+        myPlaces.add(new InjectionPlace(text, compile? PatternBasedInjectionHelper.createElementPattern(text, getDisplayName(), getSupportId()) : null, true));
       }
     }
     else if (compile) {
@@ -253,7 +253,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
       for (InjectionPlace place : myPlaces) {
         if (StringUtil.isNotEmpty(place.getText()) && place.getElementPattern() == null) {
           replace = true;
-          newPlaces.add(new InjectionPlace(place.getText(), PatternBasedInjectionHelper.createElementPattern(place.getText(), getDisplayName()), place.isEnabled()));
+          newPlaces.add(new InjectionPlace(place.getText(), PatternBasedInjectionHelper.createElementPattern(place.getText(), getDisplayName(), getSupportId()), place.isEnabled()));
         }
         else {
           newPlaces.add(place);

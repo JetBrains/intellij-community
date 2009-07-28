@@ -17,31 +17,33 @@
 package org.intellij.plugins.intelliLang;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PlatformPatterns;
-import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
-import groovy.lang.*;
-import org.codehaus.groovy.reflection.CachedMethod;
-import org.codehaus.groovy.reflection.ReflectionCache;
+import com.intellij.util.Function;
+import com.intellij.util.ReflectionCache;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
+import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * @author Gregory.Shrago
  */
 public class PatternBasedInjectionHelper {
+
   private PatternBasedInjectionHelper() {
   }
 
@@ -159,35 +161,235 @@ public class PatternBasedInjectionHelper {
   }
 
   @Nullable
-  public static ElementPattern<PsiElement> createElementPattern(final String text, final String displayName) {
-    final Binding binding = new Binding();
+  public static ElementPattern<PsiElement> createElementPattern(final String text, final String displayName, final String supportId) {
+    return createElementPatternNoGroovy(text, displayName, supportId);
+  }
+
+  //@Nullable
+  //public static ElementPattern<PsiElement> createElementPatternGroovy(final String text, final String displayName, final String supportId) {
+  //  final Binding binding = new Binding();
+  //  final ArrayList<MetaMethod> metaMethods = new ArrayList<MetaMethod>();
+  //  for (Class aClass : getPatternClasses(supportId)) {
+  //    // walk super classes as well?
+  //    for (CachedMethod method : ReflectionCache.getCachedClass(aClass).getMethods()) {
+  //      if (!Modifier.isStatic(method.getModifiers()) || !Modifier.isPublic(method.getModifiers()) || Modifier.isAbstract(method.getModifiers())) continue;
+  //      metaMethods.add(method);
+  //    }
+  //  }
+  //
+  //  final ExpandoMetaClass metaClass = new ExpandoMetaClass(Object.class, false, metaMethods.toArray(new MetaMethod[metaMethods.size()]));
+  //  final GroovyShell shell = new GroovyShell(binding);
+  //  try {
+  //    final Script script = shell.parse("return " + text);
+  //    metaClass.initialize();
+  //    script.setMetaClass(metaClass);
+  //    final Object value = script.run();
+  //    return value instanceof ElementPattern ? (ElementPattern<PsiElement>)value : null;
+  //  }
+  //  catch (GroovyRuntimeException ex) {
+  //    Configuration.LOG.warn("error processing place: "+displayName+" ["+text+"]", ex);
+  //  }
+  //  return null;
+  //}
+
+  private static Class[] getPatternClasses(final String supportId) {
     final ArrayList<Class> patternClasses = new ArrayList<Class>();
-    patternClasses.add(StandardPatterns.class);
-    patternClasses.add(PlatformPatterns.class);
     for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
-      patternClasses.addAll(Arrays.asList(support.getPatternClasses()));
-    }
-    final ArrayList<MetaMethod> metaMethods = new ArrayList<MetaMethod>();
-    for (Class aClass : patternClasses) {
-      // walk super classes as well?
-      for (CachedMethod method : ReflectionCache.getCachedClass(aClass).getMethods()) {
-        if (!Modifier.isStatic(method.getModifiers()) || !Modifier.isPublic(method.getModifiers()) || Modifier.isAbstract(method.getModifiers())) continue;
-        metaMethods.add(method);
+      if (supportId == null || supportId.equals(support.getId())) {
+        patternClasses.addAll(Arrays.asList(support.getPatternClasses()));
       }
     }
+    return patternClasses.toArray(new Class[patternClasses.size()]);
+  }
 
-    final ExpandoMetaClass metaClass = new ExpandoMetaClass(Object.class, false, metaMethods.toArray(new MetaMethod[metaMethods.size()]));
-    final GroovyShell shell = new GroovyShell(binding);
+  // without Groovy
+  @Nullable
+  public static ElementPattern<PsiElement> createElementPatternNoGroovy(final String text, final String displayName, final String supportId) {
+    final Class[] patternClasses = getPatternClasses(supportId);
+    final Set<Method> staticMethods = new THashSet<Method>(ContainerUtil.concat(patternClasses, new Function<Class, Collection<? extends Method>>() {
+      public Collection<Method> fun(final Class aClass) {
+        return ContainerUtil.findAll(ReflectionCache.getMethods(aClass), new Condition<Method>() {
+          public boolean value(final Method method) {
+            return Modifier.isStatic(method.getModifiers())
+                   && Modifier.isPublic(method.getModifiers())
+                   && !Modifier.isAbstract(method.getModifiers())
+                   && ElementPattern.class.isAssignableFrom(method.getReturnType());
+          }
+        });
+      }
+    }));
     try {
-      final Script script = shell.parse("return " + text);
-      metaClass.initialize();
-      script.setMetaClass(metaClass);
-      final Object value = script.run();
-      return value instanceof ElementPattern ? (ElementPattern<PsiElement>)value : null;
+      return createElementPatternNoGroovy(text, new Function<Frame, Object>() {
+        public Object fun(final Frame frame) {
+          try {
+            return invokeMethod(frame.target, frame.methodName, frame.params.toArray(), staticMethods);
+          }
+          catch (Throwable throwable) {
+            throw new RuntimeException(throwable);
+          }
+        }
+      });
     }
-    catch (GroovyRuntimeException ex) {
-      Configuration.LOG.warn("error processing place: "+displayName+" ["+text+"]", ex);
+    catch (Exception ex) {
+      final Throwable cause = ex.getCause() != null? ex.getCause() : ex;
+      Configuration.LOG.warn("error processing place: " + displayName + " [" + text + "]", cause);
+      return null;
+    }
+  }
+
+  private static enum State {
+    init, name, param, literal, invoke
+  }
+
+  private static class Frame {
+    State state = State.init;
+    Object target;
+    String methodName;
+    ArrayList<Object> params = new ArrayList<Object>();
+  }
+
+  public static ElementPattern<PsiElement> createElementPatternNoGroovy(final String text, final Function<Frame, Object> executor) {
+
+    final Stack<Frame> stack = new Stack<Frame>();
+    int curPos = 0;
+    Frame curFrame = new Frame();
+    final StringBuilder curString = new StringBuilder();
+    while (true) {
+      if (curPos > text.length()) break;
+      final char ch = curPos++ < text.length()? text.charAt(curPos-1) : 0;
+      switch (curFrame.state) {
+        case init:
+          if (Character.isJavaIdentifierStart(ch)) {
+            curString.append(ch);
+            curFrame.state = State.name;
+          }
+          break;
+        case name:
+          if (Character.isJavaIdentifierPart(ch)) {
+            curString.append(ch);
+          }
+          else if (ch == '(') {
+            curFrame.methodName = curString.toString();
+            curString.setLength(0);
+            curFrame.state = State.param;
+          }
+          break;
+        case param:
+          if (Character.isWhitespace(ch)) {
+          }
+          else if (Character.isDigit(ch) || ch == '\"') {
+            curFrame.state = State.literal;
+            curString.append(ch);
+          }
+          else if (ch == ')') {
+            curFrame.state = State.invoke;
+          }
+          else if (Character.isJavaIdentifierStart(ch)) {
+            curString.append(ch);
+            stack.push(curFrame);
+            curFrame = new Frame();
+            curFrame.state = State.name;
+          }
+          break;
+        case literal:
+          if (curString.charAt(0) == '\"') {
+            curString.append(ch);
+            if (ch == '\"') {
+              curFrame.params.add(makeParam(curString.toString()));
+              curString.setLength(0);
+              curFrame.state = State.param;
+            }
+          }
+          else if (Character.isWhitespace(ch) || ch == ',' || ch == ')') {
+            curFrame.params.add(makeParam(curString.toString()));
+            curString.setLength(0);
+            curFrame.state = ch == ')'? State.invoke : State.param;
+          }
+          else {
+            curString.append(ch);
+          }
+          break;
+        case invoke:
+          final Object result = executor.fun(curFrame);
+          if (ch == '.') {
+            curFrame = new Frame();
+            curFrame.target = result;
+            curFrame.state = State.init;
+          }
+          else if (stack.isEmpty()) {
+            return (ElementPattern<PsiElement>)result;
+          }
+          else {
+            curFrame = stack.pop();
+            curFrame.params.add(result);
+            curFrame.state = ch == ')' ? State.invoke : State.param;
+          }
+          break;
+      }
     }
     return null;
   }
+
+  private static Object makeParam(final String s) {
+    if (s.length() > 2 && s.startsWith("\"") && s.endsWith("\"")) return s.substring(1, s.length()-1);
+    try {
+      return Integer.valueOf(s);
+    }
+    catch (NumberFormatException e) {}
+    return s;
+  }
+
+  public static Class<?> getNonPrimitiveType(final Class<?> type) {
+    if (!type.isPrimitive()) return type;
+    if (type == boolean.class) return Boolean.class;
+    if (type == byte.class) return Byte.class;
+    if (type == short.class) return Short.class;
+    if (type == int.class) return Integer.class;
+    if (type == long.class) return Long.class;
+    if (type == float.class) return Float.class;
+    if (type == double.class) return Double.class;
+    if (type == char.class) return Character.class;
+    return type;
+  }
+
+  private static Object invokeMethod(@Nullable final Object target, final String methodName, final Object[] arguments, final Collection<Method> staticMethods) throws Throwable {
+    main: for (Method method : target == null? staticMethods : Arrays.asList(target.getClass().getMethods())) {
+      if (!methodName.equals(method.getName())) continue;
+      final Class<?>[] parameterTypes = method.getParameterTypes();
+      if (!method.isVarArgs() && parameterTypes.length != arguments.length) continue;
+      boolean performArgConversion = false;
+      for (int i = 0, parameterTypesLength = parameterTypes.length; i < arguments.length; i++) {
+        final Class<?> type = getNonPrimitiveType(i < parameterTypesLength ? parameterTypes[i] : parameterTypes[parameterTypesLength - 1]);
+        final Object argument = arguments[i];
+        final Class<?> componentType =
+          method.isVarArgs() && i < parameterTypesLength - 1 ? null : parameterTypes[parameterTypesLength - 1].getComponentType();
+        if (argument != null) {
+          if (!type.isInstance(argument)) {
+            if ((componentType == null || !componentType.isInstance(argument))) continue main;
+            else performArgConversion = true;
+          }
+        }
+      }
+      if (parameterTypes.length > arguments.length) {
+        performArgConversion = true;
+      }
+      try {
+        final Object[] newArgs;
+        if (!performArgConversion) newArgs = arguments;
+        else {
+          newArgs = new Object[parameterTypes.length];
+          System.arraycopy(arguments, 0, newArgs, 0, parameterTypes.length - 1);
+          final Object[] varArgs = (Object[])Array.newInstance(parameterTypes[parameterTypes.length - 1].getComponentType(), arguments.length - parameterTypes.length + 1);
+          System.arraycopy(arguments, parameterTypes.length - 1, varArgs, 0, varArgs.length);
+          newArgs[parameterTypes.length - 1] = varArgs;
+        }
+        return method.invoke(target, newArgs);
+      }
+      catch (InvocationTargetException e) {
+        throw e.getTargetException();
+      }
+    }
+    throw new NoSuchMethodException(methodName + ":" + Arrays.asList(arguments));
+  }
+
 }
