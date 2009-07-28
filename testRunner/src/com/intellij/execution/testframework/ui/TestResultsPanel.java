@@ -66,7 +66,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
         splitter.dispose();
       }
     });
-    add(splitter);
+    add(splitter, BorderLayout.CENTER);
     final JPanel leftPanel = new JPanel(new BorderLayout());
     leftPanel.add(myLeftPane, BorderLayout.CENTER);
     leftPanel.add(myToolbarPanel, BorderLayout.NORTH);
@@ -85,13 +85,14 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
       }
     };
     mySplitter.setFirstComponent(createOutputTab(myConsole, myConsoleActions));
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myStatisticsComponent);
     if (TestConsoleProperties.SHOW_STATISTICS.value(myProperties)) {
-      mySplitter.setSecondComponent(myStatisticsComponent);
+      mySplitter.setSecondComponent(scrollPane);
     }
     myProperties.addListener(TestConsoleProperties.SHOW_STATISTICS, new TestFrameworkPropertyListener<Boolean>() {
       public void onChanged(Boolean value) {
         if (value.booleanValue()) {
-          mySplitter.setSecondComponent(myStatisticsComponent);
+          mySplitter.setSecondComponent(scrollPane);
         }
         else {
           mySplitter.setSecondComponent(null);
