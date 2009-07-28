@@ -150,9 +150,11 @@ public class NotificationModel<T extends Notification> {
 
     result.addAll(archive);
 
-    final T[] removed = result.toArray((T[])Array.newInstance(result.get(0).getClass(), result.size()));
-    for (NotificationModelListener<T> listener : myListeners) {
-      listener.notificationsRemoved(removed);
+    if (!result.isEmpty()) {
+      final T[] removed = result.toArray((T[])Array.newInstance(result.get(0).getClass(), result.size()));
+      for (NotificationModelListener<T> listener : myListeners) {
+        listener.notificationsRemoved(removed);
+      }
     }
   }
 
