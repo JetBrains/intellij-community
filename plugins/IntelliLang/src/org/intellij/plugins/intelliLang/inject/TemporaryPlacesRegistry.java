@@ -44,11 +44,14 @@ public class TemporaryPlacesRegistry {
   }
 
   public List<TemporaryPlace> getTempInjectionsSafe() {
-    myTempPlaces.removeAll(ContainerUtil.findAll(myTempPlaces, new Condition<TemporaryPlace>() {
+    final List<TemporaryPlace> placesToRemove = ContainerUtil.findAll(myTempPlaces, new Condition<TemporaryPlace>() {
       public boolean value(final TemporaryPlace place) {
         return place.elementPointer.getElement() == null;
       }
-    }));
+    });
+    if (!placesToRemove.isEmpty()) {
+      myTempPlaces.removeAll(placesToRemove);
+    }
     return myTempPlaces;
   }
 
