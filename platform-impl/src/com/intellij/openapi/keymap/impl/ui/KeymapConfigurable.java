@@ -26,6 +26,7 @@ public class KeymapConfigurable extends SearchableConfigurable.Parent.Abstract {
   protected Configurable[] buildConfigurables() {
     KeymapPanel keymap = new KeymapPanel();
     QuickListsPanel quickLists = new QuickListsPanel(keymap);
+    quickLists.reset();
     keymap.setQuickListsPanel(quickLists);
     return new Configurable[]{keymap, quickLists};
   }
