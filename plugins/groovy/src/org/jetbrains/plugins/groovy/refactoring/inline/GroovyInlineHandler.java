@@ -57,7 +57,7 @@ public class GroovyInlineHandler implements InlineHandler {
       //dummy, todo implement
       return new Settings() {
         public boolean isOnlyOneReferenceToInline() {
-          return false;
+          return true;
         }
       };
     }
