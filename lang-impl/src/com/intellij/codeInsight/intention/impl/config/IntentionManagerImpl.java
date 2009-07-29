@@ -18,12 +18,14 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -32,8 +34,10 @@ import java.util.List;
 public class IntentionManagerImpl extends IntentionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl");
 
-  private final List<IntentionAction> myActions = new ArrayList<IntentionAction>();
+  private final List<IntentionAction> myActions = Collections.synchronizedList(new ArrayList<IntentionAction>());
   private final IntentionManagerSettings mySettings;
+
+  private final Alarm myInitActionsAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   public IntentionManagerImpl(IntentionManagerSettings intentionManagerSettings) {
     mySettings = intentionManagerSettings;
@@ -53,21 +57,25 @@ public class IntentionManagerImpl extends IntentionManager {
   }
 
   private void registerIntentionFromBean(final IntentionActionBean extension) {
-    final String descriptionDirectoryName = extension.getDescriptionDirectoryName();
-    final String[] categories = extension.getCategories();
-    final IntentionAction instance = createIntentionActionWrapper(extension, categories);
-    if (categories == null) {
-      addAction(instance);
-    }
-    else {
-      if (descriptionDirectoryName != null) {
-        addAction(instance);
-        mySettings.registerIntentionMetaData(instance, categories, descriptionDirectoryName, extension.getMetadataClassLoader());
+    myInitActionsAlarm.addRequest(new Runnable(){
+      public void run() {
+        final String descriptionDirectoryName = extension.getDescriptionDirectoryName();
+        final String[] categories = extension.getCategories();
+        final IntentionAction instance = createIntentionActionWrapper(extension, categories);
+        if (categories == null) {
+          addAction(instance);
+        }
+        else {
+          if (descriptionDirectoryName != null) {
+            addAction(instance);
+            mySettings.registerIntentionMetaData(instance, categories, descriptionDirectoryName, extension.getMetadataClassLoader());
+          }
+          else {
+            registerIntentionAndMetaData(instance, categories);
+          }
+        }
       }
-      else {
-        registerIntentionAndMetaData(instance, categories);
-      }
-    }
+    }, 300);
   }
 
   private static IntentionAction createIntentionActionWrapper(final IntentionActionBean intentionActionBean, final String[] categories) {

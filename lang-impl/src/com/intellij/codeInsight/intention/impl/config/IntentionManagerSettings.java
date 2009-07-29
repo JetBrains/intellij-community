@@ -82,7 +82,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
     return ServiceManager.getService(IntentionManagerSettings.class);
   }
 
-  public synchronized void registerIntentionMetaData(@NotNull IntentionAction intentionAction, @NotNull String[] category, @NotNull String descriptionDirectoryName) {
+  public void registerIntentionMetaData(@NotNull IntentionAction intentionAction, @NotNull String[] category, @NotNull String descriptionDirectoryName) {
     registerMetaData(new IntentionActionMetaData(intentionAction, getClassLoader(intentionAction), category, descriptionDirectoryName));
   }
 
@@ -164,7 +164,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
     }
   }
 
-  public void registerMetaData(IntentionActionMetaData metaData) {
+  public synchronized void registerMetaData(IntentionActionMetaData metaData) {
     MetaDataKey key = new MetaDataKey(metaData.myCategory, metaData.getFamily());
     //LOG.assertTrue(!myMetaData.containsKey(metaData.myFamily), "Action '"+metaData.myFamily+"' already registered");
     if (!myMetaData.containsKey(key)){
@@ -200,7 +200,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
     }
   }
 
-  public void unregisterMetaData(IntentionAction intentionAction) {
+  public synchronized void unregisterMetaData(IntentionAction intentionAction) {
     for (Map.Entry<MetaDataKey, IntentionActionMetaData> entry : myMetaData.entrySet()) {
       if (entry.getValue().getAction() == intentionAction) {
         myMetaData.remove(entry.getKey());
