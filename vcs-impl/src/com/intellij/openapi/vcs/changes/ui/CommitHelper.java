@@ -321,6 +321,10 @@ public class CommitHelper {
     }
 
     public void customRefresh() {
+      final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      if (indicator != null) {
+        indicator.setText(VcsBundle.message("commit.dialog.refresh.files"));
+      }
       RefreshVFsSynchronously.updateChanges(myIncludedChanges);
     }
 
