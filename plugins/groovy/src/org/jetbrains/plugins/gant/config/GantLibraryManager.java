@@ -21,11 +21,13 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gant.GantIcons;
 import org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.config.GroovyLibraryConfigurer;
 import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 
 import javax.swing.*;
@@ -50,7 +52,25 @@ public class GantLibraryManager extends AbstractGroovyLibraryManager {
   }
 
   public Library createLibrary(@NotNull ProjectSettingsContext context) {
-    return createLibrary(context, GantConfigUtils.getInstance(), GantIcons.GANT_ICON_16x16);
+    return createLibrary(context, new GroovyLibraryConfigurer() {
+      @NotNull
+      public String getSDKLibPrefix() {
+        return "gant-";
+      }
+
+      public boolean isSDKHome(VirtualFile file) {
+        return GantConfigUtils.isGantSdkHome(file);
+      }
+
+      @NotNull
+      public String getSDKVersion(String path) {
+        return GantConfigUtils.getGantVersion(path);
+      }
+
+      public Library createSDKLibrary(String path, String name, Project project, boolean inModuleSettings, boolean inProject) {
+        return GantConfigUtils.getInstance().createSDKLibImmediately(path, name, project, inModuleSettings, inProject);
+      }
+    }, GantIcons.GANT_ICON_16x16);
   }
 
   @Nls

@@ -78,7 +78,7 @@ public abstract class AbstractConfigUtils implements GroovyLibraryConfigurer{
    * @return value of Implementation-Version attribute, null if not found
    */
   @Nullable
-  public String getSDKJarVersion(String jarPath, final String jarRegex, String manifestPath) {
+  public static String getSDKJarVersion(String jarPath, final String jarRegex, String manifestPath) {
     try {
       File[] jars = GroovyUtils.getFilesInDirectoryByPattern(jarPath, jarRegex);
       if (jars.length != 1) {

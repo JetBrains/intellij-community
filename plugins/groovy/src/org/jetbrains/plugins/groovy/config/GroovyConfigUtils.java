@@ -180,7 +180,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
     }
   }
 
-  public boolean isSDKConfigured(Module module) {
+  public static boolean isSDKConfigured(Module module) {
     return module != null && FacetManager.getInstance(module).getFacetByType(GroovyFacet.ID) != null ||
            GrailsConfigUtils.getInstance().isSDKConfigured(module);
   }

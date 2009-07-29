@@ -227,8 +227,6 @@
     <configurationType implementation="org.jetbrains.plugins.gant.runner.GantScriptRunConfigurationType"/>
     <configurationProducer implementation="org.jetbrains.plugins.gant.runner.GantScriptRunConfigurationProducer"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.gant.GantFileTypeLoader"/>
-    <applicationService serviceInterface="org.jetbrains.plugins.gant.settings.GantApplicationSettings"
-                        serviceImplementation="org.jetbrains.plugins.gant.settings.GantApplicationSettings"/>
 
     <psi.referenceContributor implementation="org.jetbrains.plugins.gant.reference.GantReferenceContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.providers.GroovyReferenceContributor"/>
