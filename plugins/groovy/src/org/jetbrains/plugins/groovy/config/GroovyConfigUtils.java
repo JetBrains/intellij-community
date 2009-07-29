@@ -37,16 +37,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.config.util.LibrarySDK;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
@@ -118,21 +113,6 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
     return name.matches(GROOVY_ALL_JAR_PATTERN) || name.matches(GROOVY_JAR_PATTERN);
   }
 
-  public LibrarySDK[] getSDKs(final Module module) {
-    final GroovySDK[] projectSdks =
-      ContainerUtil.map2Array(getProjectSDKLibraries(module.getProject()), GroovySDK.class, new Function<Library, GroovySDK>() {
-        public GroovySDK fun(final Library library) {
-          return new GroovySDK(library, module, true);
-        }
-      });
-    final GroovySDK[] globals = ContainerUtil.map2Array(getGlobalSDKLibraries(), GroovySDK.class, new Function<Library, GroovySDK>() {
-      public GroovySDK fun(final Library library) {
-        return new GroovySDK(library, module, false);
-      }
-    });
-    return ArrayUtil.mergeArrays(globals, projectSdks, GroovySDK.class);
-  }
-
   protected Library createSDKLibImmediately(String path, String name, Project project, boolean inModuleSettings, final boolean inProject) {
     String version = getSDKVersion(path);
     String libName = name != null ? name : generateNewSDKLibName(version, project);
@@ -198,12 +178,6 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
     if (!UNDEFINED_VERSION.equals(name)) {
       settings.DEFAULT_GROOVY_LIB_NAME = name;
     }
-  }
-
-  @Nullable
-  public String getSDKDefaultLibName() {
-    GroovyApplicationSettings settings = GroovyApplicationSettings.getInstance();
-    return settings.DEFAULT_GROOVY_LIB_NAME;
   }
 
   public boolean isSDKConfigured(Module module) {
