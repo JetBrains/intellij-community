@@ -2,13 +2,12 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.PsiImplUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jmock.util.NotImplementedException;
 
 public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement {
   public static final ClsTypeElementImpl[] EMPTY_ARRAY = new ClsTypeElementImpl[0];
@@ -230,7 +229,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
 
   @NotNull
   public PsiAnnotation[] getAnnotations() {
-    throw new NotImplementedException(); //todo
+    throw new UnsupportedOperationException();//todo
   }
 
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
@@ -239,7 +238,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
 
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
-    throw new NotImplementedException(); //todo
+    throw new UnsupportedOperationException();//todo
   }
 
   @NotNull
