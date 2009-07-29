@@ -16,16 +16,13 @@
 
 package com.intellij.testFramework;
 
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -48,7 +45,6 @@ import org.junit.Assert;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
 import java.util.*;
 
 /**
@@ -60,7 +56,7 @@ public class AbstractVcsTestCase {
   protected File myClientBinaryPath;
   protected IdeaProjectTestFixture myProjectFixture;
 
-  protected RunResult runClient(String exeName, @Nullable String stdin, @Nullable final File workingDir, String[] commandLine) throws IOException {
+  protected ProcessOutput runClient(String exeName, @Nullable String stdin, @Nullable final File workingDir, String[] commandLine) throws IOException {
     final List<String> arguments = new ArrayList<String>();
     arguments.add(new File(myClientBinaryPath, exeName).toString());
     Collections.addAll(arguments, commandLine);
@@ -69,8 +65,6 @@ public class AbstractVcsTestCase {
       builder.directory(workingDir);
     }
     Process clientProcess = builder.start();
-
-    final RunResult result = new RunResult();
 
     if (stdin != null) {
       OutputStream outputStream = clientProcess.getOutputStream();
@@ -83,60 +77,26 @@ public class AbstractVcsTestCase {
       }
     }
 
-    OSProcessHandler handler = new OSProcessHandler(clientProcess, "") {
-      public Charset getCharset() {
-        return CharsetToolkit.getDefaultSystemCharset();
-      }
-    };
-    handler.addProcessListener(new ProcessAdapter() {
-      public void onTextAvailable(final ProcessEvent event, final Key outputType) {
-        if (outputType == ProcessOutputTypes.STDOUT) {
-          result.stdOut += event.getText();
-        }
-        else if (outputType == ProcessOutputTypes.STDERR) {
-          result.stdErr += event.getText();
-        }
-      }
-    });
-    handler.startNotify();
-    if (!handler.waitFor(60*1000)) {
-      clientProcess.destroy();
-      throw new RuntimeException("Timeout waiting for VCS client to finish execution");     
+    CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset());
+    ProcessOutput result = handler.runProcess(60*1000);
+    if (result.isTimeout()) {
+      throw new RuntimeException("Timeout waiting for VCS client to finish execution");
     }
-    result.exitCode = clientProcess.exitValue();
     return result;
   }
 
-  protected RunResult runArbitrary(final String command, final String[] args) throws IOException {
+  protected ProcessOutput runArbitrary(final String command, final String[] args) throws IOException {
     final List<String> arguments = new ArrayList<String>();
     arguments.add(command);
     Collections.addAll(arguments, args);
     final ProcessBuilder builder = new ProcessBuilder().command(arguments);
     Process clientProcess = builder.start();
 
-    final RunResult result = new RunResult();
-
-    OSProcessHandler handler = new OSProcessHandler(clientProcess, "") {
-      public Charset getCharset() {
-        return CharsetToolkit.getDefaultSystemCharset();
-      }
-    };
-    handler.addProcessListener(new ProcessAdapter() {
-      public void onTextAvailable(final ProcessEvent event, final Key outputType) {
-        if (outputType == ProcessOutputTypes.STDOUT) {
-          result.stdOut += event.getText();
-        }
-        else if (outputType == ProcessOutputTypes.STDERR) {
-          result.stdErr += event.getText();
-        }
-      }
-    });
-    handler.startNotify();
-    if (!handler.waitFor(60*1000)) {
-      clientProcess.destroy();
+    CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset());
+    ProcessOutput result = handler.runProcess(60*1000);
+    if (result.isTimeout()) {
       throw new RuntimeException("Timeout waiting for VCS client to finish execution");
     }
-    result.exitCode = clientProcess.exitValue();
     return result;
   }
 
@@ -227,25 +187,25 @@ public class AbstractVcsTestCase {
     option.setValue(value);
   }
 
-  protected static void verify(final RunResult runResult) {
-    Assert.assertEquals(runResult.stdErr, 0, runResult.exitCode);
+  protected static void verify(final ProcessOutput runResult) {
+    Assert.assertEquals(runResult.getStderr(), 0, runResult.getExitCode());
   }
 
-  protected static void verify(final RunResult runResult, final String... stdoutLines) {
+  protected static void verify(final ProcessOutput runResult, final String... stdoutLines) {
     verify(runResult, false, stdoutLines);
   }
 
-  protected static void verifySorted(final RunResult runResult, final String... stdoutLines) {
+  protected static void verifySorted(final ProcessOutput runResult, final String... stdoutLines) {
     verify(runResult, true, stdoutLines);
   }
 
-  private static void verify(final RunResult runResult, final boolean sorted, final String... stdoutLines) {
+  private static void verify(final ProcessOutput runResult, final boolean sorted, final String... stdoutLines) {
     verify(runResult);
-    final String[] lines = new LineTokenizer(runResult.stdOut).execute();
+    final String[] lines = new LineTokenizer(runResult.getStdout()).execute();
     if (sorted) {
       Arrays.sort(lines);
     }
-    Assert.assertEquals(runResult.stdOut, stdoutLines.length, lines.length); 
+    Assert.assertEquals(runResult.getStdout(), stdoutLines.length, lines.length); 
     for(int i=0; i<stdoutLines.length; i++) {
       Assert.assertEquals(stdoutLines [i], compressWhitespace(lines [i]));
     }
@@ -395,11 +355,5 @@ public class AbstractVcsTestCase {
         return p1.compareTo(p2);
       }
     });
-  }
-
-  protected static class RunResult {
-    public int exitCode = -1;
-    public String stdOut = "";
-    public String stdErr = "";
   }
 }
