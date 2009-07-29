@@ -15,21 +15,18 @@
 
 package org.jetbrains.plugins.groovy.util;
 
-import com.intellij.facet.FacetManager;
-import com.intellij.facet.FacetTypeId;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +40,9 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public abstract class LibrariesUtil {
+public class LibrariesUtil {
+  private LibrariesUtil() {
+  }
 
   public static Library[] getLibrariesByCondition(final Module module, final Condition<Library> condition) {
     if (module == null) return new Library[0];
@@ -72,22 +71,19 @@ public abstract class LibrariesUtil {
     return libs.toArray(new Library[libs.size()]);
   }
 
-  public static String[] getLibNames(Library[] libraries) {
-    return ContainerUtil.map2Array(libraries, String.class, new Function<Library, String>() {
-      public String fun(Library library) {
-        return library.getName();
-      }
-    });
-  }
-
   @NotNull
   public static String getGroovyOrGrailsLibraryHome(Library library) {
     final VirtualFile[] classRoots = library.getFiles(OrderRootType.CLASSES);
     return getGroovyOrGrailsLibraryHome(classRoots);
   }
 
+  @Nullable
+  public static String getGroovyHomePath(Module module) {
+    final String home = getGroovyOrGrailsLibraryHome(ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES));
+    return StringUtil.isEmpty(home) ? null : home;
+  }
+
   public static String getGroovyOrGrailsLibraryHome(VirtualFile[] classRoots) {
-    String path = "";
     for (VirtualFile file : classRoots) {
       if (GroovyConfigUtils.isGroovyAllJar(file.getName())) {
         String jarPath = file.getPresentableUrl();
@@ -96,19 +92,19 @@ public abstract class LibrariesUtil {
           File parentFile = realFile.getParentFile();
           if (parentFile != null) {
             if (parentFile.isDirectory() && !("lib".equals(parentFile.getName()) || "embeddable".equals(parentFile.getName())) /*for non-traditional distributions*/) {
-              path = parentFile.getPath();
+              return parentFile.getPath();
             }
             else {
               File libHome = parentFile.getParentFile();
               if (libHome != null) {
-                path = libHome.getPath();
+                return libHome.getPath();
               }
             }
           }
         }
       }
     }
-    return path;
+    return "";
   }
 
   @NotNull
@@ -121,44 +117,6 @@ public abstract class LibrariesUtil {
       }
     }
     return libFile;
-  }
-
-  public static void addLibrary(Library library, Module module) {
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    if (!libraryReferenced(rootManager, library)) {
-      final ModifiableRootModel moduleModel = rootManager.getModifiableModel();
-      final LibraryOrderEntry addedEntry = moduleModel.addLibraryEntry(library);
-      final OrderEntry[] order = moduleModel.getOrderEntries();
-
-      //place library before jdk
-      assert order[order.length - 1] == addedEntry;
-      int insertionPoint = -1;
-      for (int i = 0; i < order.length - 1; i++) {
-        if (order[i] instanceof JdkOrderEntry) {
-          insertionPoint = i;
-          break;
-        }
-      }
-      if (insertionPoint >= 0) {
-        for (int i = order.length - 1; i > insertionPoint; i--) {
-          order[i] = order[i - 1];
-        }
-        order[insertionPoint] = addedEntry;
-
-        moduleModel.rearrangeOrderEntries(order);
-      }
-      moduleModel.commit();
-    }
-  }
-
-  public static void addLibraryToReferringModules(FacetTypeId<?> facetID, Library library) {
-    for (Project prj : ProjectManager.getInstance().getOpenProjects()) {
-      for (Module module : ModuleManager.getInstance(prj).getModules()) {
-        if (FacetManager.getInstance(module).getFacetByType(facetID) != null) {
-          addLibrary(library, module);
-        }
-      }
-    }
   }
 
   public static String generateNewLibraryName(String version, String prefix, final Project project) {
@@ -175,13 +133,6 @@ public abstract class LibrariesUtil {
       index++;
     }
     return newName;
-  }
-
-  @Nullable
-  public static Library getLibraryByName(String name) {
-    if (name == null) return null;
-    LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable();
-    return table.getLibraryByName(name);
   }
 
   public static void placeEntryToCorrectPlace(ModifiableRootModel model, LibraryOrderEntry addedEntry) {
@@ -204,11 +155,4 @@ public abstract class LibrariesUtil {
     }
   }
 
-  public static boolean libraryReferenced(ModuleRootManager rootManager, Library library) {
-    final OrderEntry[] entries = rootManager.getOrderEntries();
-    for (OrderEntry entry : entries) {
-      if (entry instanceof LibraryOrderEntry && library.equals(((LibraryOrderEntry)entry).getLibrary())) return true;
-    }
-    return false;
-  }
 }

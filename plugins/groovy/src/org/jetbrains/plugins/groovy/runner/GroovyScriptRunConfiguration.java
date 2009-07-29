@@ -74,9 +74,9 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   @NonNls public static final String GROOVY_STARTER_CONF = "/conf/groovy-starter.conf";
 
   // JVM parameters
-  @NonNls private static final String DGROOVY_STARTER_CONF = "-Dgroovy.starter.conf=";
-  @NonNls private static final String DTOOLS_JAR = "-Dtools.jar=";
-  @NonNls private static final String DGROOVY_HOME = "-Dgroovy.home=";
+  @NonNls public static final String DGROOVY_STARTER_CONF = "-Dgroovy.starter.conf=";
+  @NonNls public static final String DTOOLS_JAR = "-Dtools.jar=";
+  @NonNls public static final String DGROOVY_HOME = "-Dgroovy.home=";
 
   public GroovyScriptRunConfiguration(GroovyScriptConfigurationFactory factory, Project project, String name) {
     super(name, new RunConfigurationModule(project), factory);
@@ -190,14 +190,14 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     return groovyHome;
   }
 
-  private String getConfPath(String groovyHome) {
+  public static String getConfPath(String groovyHome) {
     String confpath = groovyHome + GROOVY_STARTER_CONF;
     if (new File(confpath).exists()) {
       return confpath;
     }
 
     try {
-      final String jarPath = PathUtil.getJarPathForClass(getClass());
+      final String jarPath = PathUtil.getJarPathForClass(GroovyScriptRunConfiguration.class);
       if (new File(jarPath).isFile()) { //jar; distribution mode
         return new File(jarPath, "../groovy-starter.conf").getCanonicalPath();
       }
