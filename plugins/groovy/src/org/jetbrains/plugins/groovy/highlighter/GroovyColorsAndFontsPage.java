@@ -62,7 +62,6 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
       new AttributesDescriptor(DefaultHighlighter.OPERATION_SIGN_ID, DefaultHighlighter.OPERATION_SIGN),
       new AttributesDescriptor(DefaultHighlighter.BAD_CHARACTER_ID, DefaultHighlighter.BAD_CHARACTER),
       new AttributesDescriptor(DefaultHighlighter.WRONG_STRING_ID, DefaultHighlighter.WRONG_STRING),
-      new AttributesDescriptor(DefaultHighlighter.UNTYPED_ACCESS_ID, DefaultHighlighter.UNTYPED_ACCESS),
       new AttributesDescriptor(DefaultHighlighter.UNRESOLVED_ACCESS_ID, DefaultHighlighter.UNRESOLVED_ACCESS),
       new AttributesDescriptor(DefaultHighlighter.ANNOTATION_ID, DefaultHighlighter.ANNOTATION),
       new AttributesDescriptor(DefaultHighlighter.STATIC_FIELD_ID, DefaultHighlighter.STATIC_FIELD),
@@ -101,8 +100,6 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
            "Demo.<statfield>panel</statfield>.size = " +
            "Demo.<statmet>foo</statmet>(\"123${456}789\".toInteger()) \n" +
            "'JetBrains'.matches(/Jw+Bw+/) \n" +
-           "def untyped\n" +
-           "<untyped>untyped</untyped>.<unresolved>doSomething</unresolved>()\n" +
            "def x=1 + <unresolved>unresolved</unresolved>"      
       ;
   }
@@ -114,7 +111,6 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
     map.put("statmet", DefaultHighlighter.STATIC_METHOD_ACCESS);
     map.put("statfield", DefaultHighlighter.STATIC_FIELD);
     map.put("instfield", DefaultHighlighter.INSTANCE_FIELD);
-    map.put("untyped", DefaultHighlighter.UNTYPED_ACCESS);
     map.put("gdoc", DefaultHighlighter.DOC_COMMENT_CONTENT);
     map.put("doctag", DefaultHighlighter.DOC_COMMENT_TAG);
     map.put("unresolved", DefaultHighlighter.UNRESOLVED_ACCESS);

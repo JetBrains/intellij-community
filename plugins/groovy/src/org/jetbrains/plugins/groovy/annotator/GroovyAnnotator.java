@@ -683,12 +683,6 @@ public class GroovyAnnotator implements Annotator {
         registerReferenceFixes(refExpr, annotation);
         annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
       }
-      else {
-        annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
-      }
-    }
-    else if (refExprType instanceof PsiClassType && ((PsiClassType)refExprType).resolve() == null) {
-      annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
     }
   }
 
