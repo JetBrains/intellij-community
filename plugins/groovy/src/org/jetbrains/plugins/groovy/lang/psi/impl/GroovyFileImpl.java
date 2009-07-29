@@ -31,6 +31,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.indexing.AdditionalIndexedRootsScope;
+import org.codehaus.groovy.control.CompilationFailedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -177,33 +178,42 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       if (cachedEnhanced == null) {
         file.putUserData(CACHED_ENHANCED_KEY, cachedEnhanced = file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<GroovyDslExecutor>() {
           public Result<GroovyDslExecutor> compute() {
-            return Result.create(new GroovyDslExecutor(file.getText(), vfile.getName()), file);
+            try {
+              return Result.create(new GroovyDslExecutor(file.getText(), vfile.getName()), file);
+            }
+            catch (CompilationFailedException e) {
+              LOG.error(e);
+              return Result.create(null, file);
+            }
           }
         }, false));
       }
 
       final StringBuilder classText = new StringBuilder();
 
-      cachedEnhanced.getValue().processScriptVariants(new ScriptWrapper() {
-        public String getExtension() {
-          return placeVFfile.getExtension();
-        }
-      }, new GroovyEnhancerConsumer() {
-        public void property(String name, String type) {
-          classText.append("def ").append(type).append(" ").append(name).append("\n");
-        }
+      final GroovyDslExecutor value = cachedEnhanced.getValue();
+      if (value != null) {
+        value.processScriptVariants(new ScriptWrapper() {
+          public String getExtension() {
+            return placeVFfile.getExtension();
+          }
+        }, new GroovyEnhancerConsumer() {
+          public void property(String name, String type) {
+            classText.append("def ").append(type).append(" ").append(name).append("\n");
+          }
 
-        public void method(String name, String type, final LinkedHashMap<String, String> parameters) {
-          classText.append("def ").append(type).append(" ").append(name).append("(");
-          classText.append(StringUtil.join(parameters.keySet(), new Function<String, String>() {
-            public String fun(String s) {
-              return parameters.get(s) + " " + s;
-            }
-          }, ", "));
+          public void method(String name, String type, final LinkedHashMap<String, String> parameters) {
+            classText.append("def ").append(type).append(" ").append(name).append("(");
+            classText.append(StringUtil.join(parameters.keySet(), new Function<String, String>() {
+              public String fun(String s) {
+                return parameters.get(s) + " " + s;
+              }
+            }, ", "));
 
-          classText.append(") {}\n");
-        }
-      });
+            classText.append(") {}\n");
+          }
+        });
+      }
       if (classText.length() > 0) {
         final PsiClass psiClass =
           GroovyPsiElementFactory.getInstance(project).createGroovyFile("class GroovyEnhanced {\n" + classText + "}", false, place)
