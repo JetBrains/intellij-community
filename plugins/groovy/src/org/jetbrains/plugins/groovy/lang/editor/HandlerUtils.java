@@ -24,9 +24,9 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.grails.fileType.GspFileType;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
@@ -38,10 +38,14 @@ public class HandlerUtils {
 
   public static boolean isEnabled(@NotNull final Editor editor, @NotNull final DataContext dataContext,
                                   @Nullable final EditorActionHandler originalHandler) {
-    if (getLanguage(dataContext) == GroovyFileType.GROOVY_FILE_TYPE.getLanguage() ||
-        getLanguage(dataContext) == GspFileType.GSP_FILE_TYPE.getLanguage()) {
-      return true;
+    final Project project = getProject(dataContext);
+    if (project != null) {
+      final Language language = PsiUtilBase.getLanguageInEditor(editor, project);
+      if (language == GroovyFileType.GROOVY_LANGUAGE) {
+        return true;
+      }
     }
+
     return originalHandler == null || originalHandler.isEnabled(editor, dataContext);
   }
 
