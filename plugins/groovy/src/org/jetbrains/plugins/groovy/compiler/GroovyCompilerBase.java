@@ -317,6 +317,10 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     for (final Chunk<Module> chunk : chunks) {
       for (final Module module : chunk.getNodes()) {
         final List<VirtualFile> moduleFiles = mapModulesToVirtualFiles.get(module);
+        if (moduleFiles == null) {
+          continue;
+        }
+
         if (!toRecompileCollector.isEmpty()) {
           toRecompileCollector.addAll(moduleFiles);
           continue;
