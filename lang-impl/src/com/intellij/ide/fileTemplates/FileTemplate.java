@@ -24,6 +24,7 @@ public interface FileTemplate{
 
   @NonNls String ourEncoding = CharsetToolkit.UTF8;
   @NonNls String ATTRIBUTE_CLASS_NAME = "CLASS_NAME";
+  @NonNls String ATTRIBUTE_SIMPLE_CLASS_NAME = "SIMPLE_CLASS_NAME";
   @NonNls String ATTRIBUTE_METHOD_NAME = "METHOD_NAME";
   @NonNls String ATTRIBUTE_PACKAGE_NAME = "PACKAGE_NAME";
   @NonNls String ATTRIBUTE_NAME = "NAME";

@@ -30,6 +30,10 @@ public class JavaTemplateUtil {
     if (className == null) className = "";
     properties.setProperty(FileTemplate.ATTRIBUTE_CLASS_NAME, className);
 
+    String classSimpleName = aClass.getName();
+    if (classSimpleName == null) classSimpleName = "";
+    properties.setProperty(FileTemplate.ATTRIBUTE_SIMPLE_CLASS_NAME, classSimpleName);
+
     String methodName = method.getName();
     properties.setProperty(FileTemplate.ATTRIBUTE_METHOD_NAME, methodName);
   }
