@@ -25,6 +25,13 @@ public class CommonCheckinProjectAction extends AbstractCommonCheckinAction {
     return virtualFiles.toArray(new FilePath[virtualFiles.size()]);
   }
 
+  @Override
+  protected boolean approximatelyHasRoots(VcsContext dataContext) {
+    Project project = dataContext.getProject();
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    return vcsManager.hasAnyMappings();
+  }
+
   protected void update(VcsContext vcsContext, Presentation presentation) {
     Project project = vcsContext.getProject();
     if (project == null) {

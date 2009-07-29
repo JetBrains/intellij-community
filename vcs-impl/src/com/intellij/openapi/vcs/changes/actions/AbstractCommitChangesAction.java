@@ -4,15 +4,17 @@
 
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.openapi.vcs.actions.AbstractCommonCheckinAction;
-import com.intellij.openapi.vcs.actions.VcsContext;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.actions.AbstractCommonCheckinAction;
+import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 
 /**
  * @author yole
@@ -20,6 +22,13 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 public abstract class AbstractCommitChangesAction extends AbstractCommonCheckinAction {
   protected FilePath[] getRoots(VcsContext context) {
     return getAllContentRoots(context);
+  }
+
+  @Override
+  protected boolean approximatelyHasRoots(VcsContext dataContext) {
+    final Project project = dataContext.getProject();
+    final ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
+    return manager.hasAnyMappings();
   }
 
   protected boolean filterRootsBeforeAction() {

@@ -124,6 +124,11 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
     }
   }
 
+  @Override
+  protected boolean approximatelyHasRoots(VcsContext dataContext) {
+    return dataContext.getSelectedFilePaths().length > 0;
+  }
+
   protected FilePath[] getRoots(VcsContext context) {
     return context.getSelectedFilePaths();
   }

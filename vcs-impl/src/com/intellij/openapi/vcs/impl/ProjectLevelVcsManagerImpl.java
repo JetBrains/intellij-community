@@ -293,6 +293,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return myMappings.getActiveVcses();
   }
 
+  public boolean hasAnyMappings() {
+    return ! myMappings.isEmpty();
+  }
+
   public void addMessageToConsoleWindow(final String message, final TextAttributes attributes) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {

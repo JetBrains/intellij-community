@@ -130,6 +130,8 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
   protected abstract FilePath[] getRoots(VcsContext dataContext);
 
+  protected abstract boolean approximatelyHasRoots(final VcsContext dataContext);
+
   protected void update(VcsContext vcsContext, Presentation presentation) {
     Project project = vcsContext.getProject();
     if (project == null) {
@@ -144,13 +146,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       return;
     }
 
-    FilePath[] roots = filterRoots(getRoots(vcsContext), project);
-    if (roots == null || roots.length == 0) {
-      presentation.setEnabled(false);
-      return;
-    }
-
-    if (roots.length == 0) {
+    if (! approximatelyHasRoots(vcsContext)) {
       presentation.setEnabled(false);
       return;
     }

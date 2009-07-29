@@ -275,6 +275,12 @@ public class NewMappings {
     }
   }
 
+  public boolean isEmpty() {
+    synchronized (myLock) {
+      return mySortedMappings.length == 0;
+    }
+  }
+
   @Modification
   public void removeDirectoryMapping(final VcsDirectoryMapping mapping) {
     LOG.debug("remove mapping: " + mapping.getDirectory());
