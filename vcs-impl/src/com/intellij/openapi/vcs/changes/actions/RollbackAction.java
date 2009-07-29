@@ -64,10 +64,8 @@ public class RollbackAction extends AnAction implements DumbAware {
     if (project == null || project.isDisposed()) {
       return false;
     }
-    Change[] changes = getChanges(project, e);
-    if (changes != null && changes.length > 0) {
-      return true;
-    }
+    if (hasChanges(project, e)) return true;
+
     List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
     if (missingFiles != null && !missingFiles.isEmpty()) {
       return true;
@@ -77,6 +75,16 @@ public class RollbackAction extends AnAction implements DumbAware {
       return true;
     }
     return false;
+  }
+
+  private static boolean hasChanges(final Project project, final AnActionEvent e) {
+    final ChangesCheckHelper helper = new ChangesCheckHelper(project, e);
+    if (helper.isChangesSet()) {
+      final Change[] changes = helper.getChanges();
+      return (changes != null) && (changes.length > 0);
+    }
+
+    return SelectedFilesHelper.hasChangedSelectedFiles(project, e);
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -103,15 +111,34 @@ public class RollbackAction extends AnAction implements DumbAware {
     }
   }
 
+  private static class ChangesCheckHelper {
+    private Change[] myChanges;
+    private boolean myChangesSet;
+
+    public ChangesCheckHelper(final Project project, final AnActionEvent e) {
+      final Change[] changes = e.getData(VcsDataKeys.CHANGES);
+      myChangesSet = changes != null && changes.length > 0;
+      if (myChangesSet) {
+        if (ChangesUtil.allChangesInOneList(project, changes)) {
+          myChanges = changes;
+        }
+      }
+    }
+
+    public boolean isChangesSet() {
+      return myChangesSet;
+    }
+
+    public Change[] getChanges() {
+      return myChanges;
+    }
+  }
+
   @Nullable
   private static Change[] getChanges(final Project project, final AnActionEvent e) {
-    final Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    if (changes != null && changes.length > 0) {
-      if (! ChangesUtil.allChangesInOneList(project, changes)) {
-        return null;
-      }
-      return changes;
-    }
+    final ChangesCheckHelper helper = new ChangesCheckHelper(project, e);
+    if (helper.isChangesSet()) return helper.getChanges();
+
     final VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (virtualFiles != null && virtualFiles.length > 0) {
       List<Change> result = new ArrayList<Change>();

@@ -35,23 +35,23 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   }
 
   public void update(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    List<VirtualFile> unversionedFiles = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
-
-    if (project != null && changes == null && unversionedFiles == null) {
-      unversionedFiles = new ArrayList<VirtualFile>();
-      changes = getChangesForSelectedFiles(project, changes, unversionedFiles, null, e);
-    }
-
-    final boolean isEnabled = project != null &&
-                              (changes != null && changes.length > 0) || (unversionedFiles != null && unversionedFiles.size() > 0);
+    final boolean isEnabled = isEnabled(e);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       e.getPresentation().setVisible(isEnabled);
     }
     else {
       e.getPresentation().setEnabled(isEnabled);
     }
+  }
+  
+  private static boolean isEnabled(final AnActionEvent e) {
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null) return false;
+
+    final List<VirtualFile> unversionedFiles = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
+    if (unversionedFiles != null && (! unversionedFiles.isEmpty())) return true;
+
+    return SelectedFilesHelper.hasChangedOrUnversionedFiles(project, e);
   }
 
   @Nullable

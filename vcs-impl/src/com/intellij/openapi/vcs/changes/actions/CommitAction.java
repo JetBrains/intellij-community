@@ -40,6 +40,7 @@ public class CommitAction extends AnAction implements DumbAware {
           final AbstractVcs vcs = ChangesUtil.getVcsForChange(c, project);
           if (vcs != null && vcs.getCheckinEnvironment() != null) {
             enabled = true;
+            break;
           }
         }
       }
