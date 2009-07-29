@@ -35,6 +35,7 @@ import com.intellij.history.Label;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -343,22 +344,28 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
   }
 
   public void setChangeLists(final List<CommittedChangeList> receivedChanges) {
-    if (myLoadingChangeListsLabel != null) {
-      remove(myLoadingChangeListsLabel);
-      myLoadingChangeListsLabel = null;
-    }
-    myCommittedChangeLists = receivedChanges;
-    myTreeBrowser.setItems(myCommittedChangeLists, false, CommittedChangesBrowserUseCase.UPDATE);
-    myTreeBrowser.clearEmptyText();
-    if (CommittedChangesCache.getInstance(myProject).hasEmptyCaches()) {
-      myTreeBrowser.appendEmptyText("Click ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      myTreeBrowser.appendEmptyText("Refresh", SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
-          RefreshIncomingChangesAction.doRefresh(myProject);
+    final boolean hasEmptyCaches = CommittedChangesCache.getInstance(myProject).hasEmptyCaches();
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (myLoadingChangeListsLabel != null) {
+          remove(myLoadingChangeListsLabel);
+          myLoadingChangeListsLabel = null;
         }
-      });
-      myTreeBrowser.appendEmptyText(" to initialize repository changes cache", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    }
+        myCommittedChangeLists = receivedChanges;
+        myTreeBrowser.setItems(myCommittedChangeLists, false, CommittedChangesBrowserUseCase.UPDATE);
+        myTreeBrowser.clearEmptyText();
+        if (hasEmptyCaches) {
+          myTreeBrowser.appendEmptyText("Click ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          myTreeBrowser.appendEmptyText("Refresh", SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
+            public void actionPerformed(final ActionEvent e) {
+              RefreshIncomingChangesAction.doRefresh(myProject);
+            }
+          });
+          myTreeBrowser.appendEmptyText(" to initialize repository changes cache", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+      }
+    }, myProject.getDisposed());
   }
 
   private class MyGroupByPackagesAction extends ToggleAction implements DumbAware {
