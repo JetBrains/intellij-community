@@ -1,4 +1,9 @@
-package org.jetbrains.jps
+package org.jetbrains.jps.builders
+
+import org.jetbrains.jps.ModuleBuilder
+import org.jetbrains.jps.Module
+import org.jetbrains.jps.ModuleBuildState
+import org.jetbrains.jps.Project
 
 /**
  * @author max
@@ -24,8 +29,12 @@ class JavacBuilder implements ModuleBuilder {
         src(path: it)
       }
 
-      module.excludes.each {
-        exclude(name: "$it/**")
+      module.excludes.each { String root ->
+        state.sourceRoots.each {String src ->
+          if (root.startsWith("${src}/")) {
+            exclude(name: "${root.substring(src.length() + 1)}/**")
+          }
+        }
       }
 
       classpath {

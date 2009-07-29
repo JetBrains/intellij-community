@@ -6,6 +6,10 @@ import org.jetbrains.jps.resolvers.LibraryResolver
 import org.jetbrains.jps.resolvers.ModuleResolver
 import org.jetbrains.jps.resolvers.PathEntry
 import org.jetbrains.jps.resolvers.Resolver
+import org.jetbrains.jps.builders.GroovyStubGenerator
+import org.jetbrains.jps.builders.JavacBuilder
+import org.jetbrains.jps.builders.GroovycBuilder
+import org.jetbrains.jps.builders.ResourceCopier
 
 /**
  * @author max
@@ -102,7 +106,11 @@ class Project {
   }
 
   def warning(String message) {
-    binding.ant.project.log(message)
+    binding.ant.project.log(message, org.apache.tools.ant.Project.MSG_WARN)
+  }
+
+  def info(String message) {
+    binding.ant.project.log(message, org.apache.tools.ant.Project.MSG_INFO)
   }
 
   def makeAll() {

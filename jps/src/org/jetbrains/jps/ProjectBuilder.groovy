@@ -22,6 +22,7 @@ class ProjectBuilder {
     String currentOutput = outputs[module]
     if (currentOutput != null) return currentOutput
 
+    project.info("Making module ${module.name}")
     def dst = folderForModuleOutput(module, classesDir(binding.project))
     outputs[module] = dst
     compile(module, dst, false)
@@ -33,6 +34,7 @@ class ProjectBuilder {
     String currentOutput = testOutputs[module]
     if (currentOutput != null) return currentOutput
 
+    project.info("Making tests for ${module.name}")
     def dst = folderForModuleOutput(module, testClassesDir(binding.project))
     testOutputs[module] = dst
     compile(module, dst, true)

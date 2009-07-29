@@ -27,7 +27,7 @@ public class IdeaProjectLoader {
       }
 
       if (directoryBased != null) {
-        loadFromDirectoryBased(project, directoryBased)
+        loadFromDirectoryBased(project, directoryBased.getCanonicalFile())
         return
       }
     }
@@ -137,19 +137,19 @@ public class IdeaProjectLoader {
           }
 
           componentTag.content.sourceFolder.each {Node folderTag ->
-            String url = attr(folderTag, "url")
-            if (url.startsWith("file://")) {
-              String path = expandMacro(pathFromUrl(url), projectBasePath, moduleBasePath)
-              if (folderTag.attribute("isTestSource") == "true") {
-                testSrc path
-              }
-              else {
-                src path
-              }
+            String path = expandMacro(pathFromUrl(attr(folderTag, "url")), projectBasePath, moduleBasePath)
+
+            if (folderTag.attribute("isTestSource") == "true") {
+              testSrc path
             }
             else {
-              project.warning("Cannot convert url '$url' to file path")
+              src path
             }
+          }
+
+          componentTag.content.excludeFolder.each {Node exTag ->
+            String path = expandMacro(pathFromUrl(attr(exTag, "url")), projectBasePath, moduleBasePath)
+            exclude path
           }
         }
       }
