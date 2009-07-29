@@ -18,8 +18,8 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel;
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.Statement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel.packaging.PackageDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -38,12 +38,12 @@ public class CompilationUnit implements GroovyElementTypes {
     if (builder.getTokenType() == kPACKAGE) {
       PackageDefinition.parse(builder);
     } else {
-      Statement.parseWithImports(builder);
+      GroovyParser.parseStatementWithImports(builder);
     }
     cleanAfterError(builder);
 
     while (Separators.parse(builder)) {
-      Statement.parseWithImports(builder);
+      GroovyParser.parseStatementWithImports(builder);
       cleanAfterError(builder);
     }
   }

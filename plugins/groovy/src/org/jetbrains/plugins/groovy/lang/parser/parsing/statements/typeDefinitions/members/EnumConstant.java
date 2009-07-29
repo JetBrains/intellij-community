@@ -43,7 +43,7 @@ public class EnumConstant implements GroovyElementTypes {
     if (mLPAREN.equals(builder.getTokenType())) {
       PsiBuilder.Marker marker = builder.mark();
       ParserUtils.getToken(builder, mLPAREN);
-      ArgumentList.parse(builder, mRPAREN);
+      ArgumentList.parseArgumentList(builder, mRPAREN);
 
       ParserUtils.getToken(builder, mNLS);
       ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"));

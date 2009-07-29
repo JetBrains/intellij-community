@@ -18,12 +18,9 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
-import org.jetbrains.plugins.grails.lang.gsp.parsing.groovy.GspTemplateStmtParsing;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -103,7 +100,7 @@ public class SwitchStatement implements GroovyElementTypes {
           ParserUtils.lookAhead(builder, mNLS, mRCURLY)) {
         builder.error(GroovyBundle.message("expression.expected"));
       } else {
-        parseCaseList(builder);
+        GroovyParser.parseSwitchCaseList(builder);
       }
       sectionMarker.done(CASE_SECTION);
     }
@@ -122,13 +119,6 @@ public class SwitchStatement implements GroovyElementTypes {
 
     if (kCASE.equals(elem)) {
       AssignmentExpression.parse(builder);
-/*
-      if (WRONGWAY.equals(AssignmentExpression.parse(builder))) {
-        label.done(CASE_LABEL);
-        builder.error(GroovyBundle.message("expression.expected"));
-        return;
-      }
-*/
     }
     ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
     label.done(CASE_LABEL);
@@ -137,68 +127,6 @@ public class SwitchStatement implements GroovyElementTypes {
         builder.getTokenType() == kDEFAULT) {
       parseCaseLabel(builder);
     }
-  }
-
-  /**
-   * Parses list of statements after case label(s)
-   *
-   * @param builder
-   */
-  private static void parseCaseList(PsiBuilder builder) {
-
-    if (kCASE.equals(builder.getTokenType()) ||
-        kDEFAULT.equals(builder.getTokenType()) ||
-        mRCURLY.equals(builder.getTokenType())) {
-      return;
-    }
-
-    if (!Statement.parse(builder, false) && !GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
-      builder.error(GroovyBundle.message("wrong.statement"));
-      return;
-    }
-
-    while (GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
-      if (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) {
-        Separators.parse(builder);
-      }
-    }
-    if (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) {
-      Separators.parse(builder);
-    }
-
-    if (kCASE.equals(builder.getTokenType()) ||
-        kDEFAULT.equals(builder.getTokenType()) ||
-        mRCURLY.equals(builder.getTokenType())) {
-      return;
-    }
-    boolean result = Statement.parse(builder, false);
-    while (result && (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) ||
-        GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
-
-      if (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) {
-        Separators.parse(builder);
-      }
-      while (GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
-        if (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) {
-          Separators.parse(builder);
-        }
-      }
-      if (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) {
-        Separators.parse(builder);
-      }
-
-      if (kCASE.equals(builder.getTokenType()) ||
-          kDEFAULT.equals(builder.getTokenType()) ||
-          mRCURLY.equals(builder.getTokenType())) {
-        break;
-      }
-
-      result = Statement.parse(builder, false);
-      if (!GspTokenTypesEx.GSP_GROOVY_SEPARATORS.contains(builder.getTokenType())) {
-        OpenOrClosableBlock.cleanAfterError(builder);
-      }
-    }
-    Separators.parse(builder);
   }
 
 }

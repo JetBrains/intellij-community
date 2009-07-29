@@ -186,7 +186,7 @@ public class PathExpression implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, mLBRACK);
     ParserUtils.getToken(builder, mNLS);
-    ArgumentList.parse(builder, mRBRACK);
+    ArgumentList.parseArgumentList(builder, mRBRACK);
     ParserUtils.getToken(builder, mNLS);
     ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
     marker.done(ARGUMENTS);

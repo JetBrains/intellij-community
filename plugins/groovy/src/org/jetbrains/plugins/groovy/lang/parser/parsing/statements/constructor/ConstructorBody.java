@@ -17,10 +17,9 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.constructor;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -50,7 +49,7 @@ public class ConstructorBody implements GroovyElementTypes {
 
     //explicit constructor invocation
     Separators.parse(builder);
-    OpenOrClosableBlock.parseBlockBody(builder);
+    GroovyParser.parseBlockBody(builder);
 
     if (builder.getTokenType() != mRCURLY) {
       builder.error(GroovyBundle.message("rcurly.expected"));
@@ -69,7 +68,7 @@ public class ConstructorBody implements GroovyElementTypes {
     if ((ParserUtils.getToken(builder, kTHIS) || ParserUtils.getToken(builder, kSUPER)) && ParserUtils.lookAhead(builder, mLPAREN)) {
       PsiBuilder.Marker marker = builder.mark();
       ParserUtils.getToken(builder, mLPAREN);
-      ArgumentList.parse(builder, mRPAREN);
+      ArgumentList.parseArgumentList(builder, mRPAREN);
       ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"));
       marker.done(ARGUMENTS);
       return true;

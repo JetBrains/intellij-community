@@ -16,14 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks;
 
 import com.intellij.lang.PsiBuilder;
-import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
-import org.jetbrains.plugins.grails.lang.gsp.parsing.groovy.GspTemplateStmtParsing;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterList;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.Statement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -67,7 +63,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
       return false;
     }
     ParserUtils.getToken(builder, mNLS);
-    parseBlockBody(builder);
+    GroovyParser.parseBlockBody(builder);
     while (!builder.eof() &&
         !mRCURLY.equals(builder.getTokenType())) {
       builder.error(GroovyBundle.message("expression.expected"));
@@ -98,7 +94,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
     }
     ParserUtils.getToken(builder, mNLS);
     closableBlockParamsOpt(builder);
-    parseBlockBody(builder);
+    GroovyParser.parseBlockBody(builder);
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
     marker.done(CLOSABLE_BLOCK);
     return true;
@@ -109,64 +105,6 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
     ParameterList.parse(builder, mCLOSABLE_BLOCK_OP);
     ParserUtils.getToken(builder, mNLS);
     ParserUtils.getToken(builder, mCLOSABLE_BLOCK_OP);
-  }
-
-  public static void parseBlockBody(PsiBuilder builder) {
-
-
-    GspTemplateStmtParsing.parseGspTemplateStmt(builder);
-    if (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) {
-      Separators.parse(builder);
-    }
-    while (GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
-      Separators.parse(builder);
-    }
-
-    boolean result = Statement.parse(builder, false);
-
-    while (result &&
-        (mSEMI.equals(builder.getTokenType()) ||
-            mNLS.equals(builder.getTokenType()) ||
-            GspTemplateStmtParsing.parseGspTemplateStmt(builder))) {
-      Separators.parse(builder);
-      while (GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
-        Separators.parse(builder);
-      }
-      result = Statement.parse(builder, false);
-      if (!GspTokenTypesEx.GSP_GROOVY_SEPARATORS.contains(builder.getTokenType())) {
-        cleanAfterError(builder);
-      }
-    }
-    cleanAfterError(builder);
-    Separators.parse(builder);
-    while (GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
-      Separators.parse(builder);
-    }
-
-  }
-
-  /**
-   * Rolls marker forward after possible errors
-   *
-   * @param builder
-   */
-  public static void cleanAfterError(PsiBuilder builder) {
-    int i = 0;
-    PsiBuilder.Marker em = builder.mark();
-    while (!builder.eof() &&
-        !(mNLS.equals(builder.getTokenType()) ||
-            mRCURLY.equals(builder.getTokenType()) ||
-            mSEMI.equals(builder.getTokenType())) &&
-        !GspTokenTypesEx.GSP_GROOVY_SEPARATORS.contains(builder.getTokenType())
-        ) {
-      builder.advanceLexer();
-      i++;
-    }
-    if (i > 0) {
-      em.error(GroovyBundle.message("separator.or.rcurly.expected"));
-    } else {
-      em.drop();
-    }
   }
 
 }

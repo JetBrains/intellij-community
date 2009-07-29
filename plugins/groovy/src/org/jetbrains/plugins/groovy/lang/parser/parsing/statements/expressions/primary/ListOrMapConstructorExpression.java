@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -39,7 +38,7 @@ public class ListOrMapConstructorExpression implements GroovyElementTypes {
     } else if (ParserUtils.getToken(builder, mCOLON)) {
       ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
     } else {
-      ArgumentList.parse(builder, mRBRACK);
+      ArgumentList.parseArgumentList(builder, mRBRACK);
       ParserUtils.getToken(builder, mNLS);
       ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
     }

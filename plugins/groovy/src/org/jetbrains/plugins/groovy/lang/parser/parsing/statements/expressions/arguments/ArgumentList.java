@@ -21,9 +21,8 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.PrimaryExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.ListOrMapConstructorExpression;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.Statement;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.PrimaryExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -31,21 +30,15 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class ArgumentList implements GroovyElementTypes {
 
-  public static void parse(PsiBuilder builder, IElementType closingBrace) {
-    boolean hasntFirstArg = false;
-    if (hasntFirstArg = !argumentParse(builder, closingBrace)) {
+  public static void parseArgumentList(PsiBuilder builder, IElementType closingBrace) {
+    boolean hasFirstArg = argumentParse(builder, closingBrace);
+    if (!hasFirstArg) {
       if (!closingBrace.equals(builder.getTokenType())) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
       if (mRCURLY.equals(builder.getTokenType())) return;
 
-      PsiBuilder.Marker statementMarker = builder.mark();
-      if (Statement.parse(builder, true)) {
-        statementMarker.rollbackTo();
-        return;
-      } else {
-        statementMarker.rollbackTo();
-      }
+      if (isStatementStart(builder)) return;
 
       if (!mCOMMA.equals(builder.getTokenType()) &&
               !closingBrace.equals(builder.getTokenType())) {
@@ -55,7 +48,7 @@ public class ArgumentList implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
     while (!builder.eof() && !closingBrace.equals(builder.getTokenType())) {
-      if (hasntFirstArg) {
+      if (!hasFirstArg) {
         ParserUtils.getToken(builder, mCOMMA);
       } else {
         ParserUtils.getToken(builder, mCOMMA, GroovyBundle.message("comma.expected"));
@@ -67,13 +60,7 @@ public class ArgumentList implements GroovyElementTypes {
         }
         if (mRCURLY.equals(builder.getTokenType())) return;
 
-        PsiBuilder.Marker statementMarker = builder.mark();
-        if (Statement.parse(builder, true)) {
-          statementMarker.rollbackTo();
-          return;
-        } else {
-          statementMarker.rollbackTo();
-        }
+        if (isStatementStart(builder)) return;
 
         if (!mCOMMA.equals(builder.getTokenType()) &&
                 !closingBrace.equals(builder.getTokenType())) {
@@ -84,6 +71,17 @@ public class ArgumentList implements GroovyElementTypes {
     }
 
     ParserUtils.getToken(builder, mNLS);
+  }
+
+  private static boolean isStatementStart(PsiBuilder builder) {
+    /*PsiBuilder.Marker statementMarker = builder.mark();
+    if (GroovyParser.parseStatement(builder, true)) {
+      statementMarker.rollbackTo();
+      return true;
+    } else {
+      statementMarker.rollbackTo();
+    }*/
+    return false;
   }
 
   /**

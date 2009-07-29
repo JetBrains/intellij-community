@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements;
 
 import com.intellij.lang.PsiBuilder;
-import org.jetbrains.plugins.grails.lang.gsp.parsing.groovy.GspTemplateStmtParsing;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
@@ -32,54 +31,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class ForStatement implements GroovyElementTypes {
 
-  public static boolean parse(PsiBuilder builder) {
-    PsiBuilder.Marker marker = builder.mark();
-
-    ParserUtils.getToken(builder, kFOR);
-    if (!ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
-      marker.done(FOR_STATEMENT);
-      return true;
-    }
-    if (!forClauseParse(builder)) {
-      builder.error(GroovyBundle.message("for.clause.expected"));
-      marker.done(FOR_STATEMENT);
-      return true;
-    }
-
-    ParserUtils.getToken(builder, mNLS);
-    
-    if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
-      while (!builder.eof() && mNLS.equals(builder.getTokenType())){
-        builder.advanceLexer();
-      }
-      marker.done(FOR_STATEMENT);
-      return true;
-    }
-
-    PsiBuilder.Marker warn = builder.mark();
-    if (builder.getTokenType() == mNLS) {
-      ParserUtils.getToken(builder, mNLS);
-    }
-
-    if (GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
-      warn.rollbackTo();
-      marker.done(FOR_STATEMENT);
-      return true;
-    }
-
-    if (!Statement.parse(builder, true)) {
-      warn.rollbackTo();
-      builder.error(GroovyBundle.message("expression.expected"));
-      marker.done(FOR_STATEMENT);
-      return true;
-    } else {
-      warn.drop();
-      marker.done(FOR_STATEMENT);
-      return true;
-    }
-  }
-
-  private static boolean forClauseParse(PsiBuilder builder) {
+  public static boolean forClauseParse(PsiBuilder builder) {
     ParserUtils.getToken(builder, mNLS);
     return forInClauseParse(builder) || tradForClauseParse(builder);
   }
