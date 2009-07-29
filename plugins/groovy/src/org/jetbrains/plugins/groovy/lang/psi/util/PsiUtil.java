@@ -28,11 +28,11 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.grails.fileType.GspFileType;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
@@ -73,6 +73,9 @@ import java.util.*;
  */
 public class PsiUtil {
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil");
+
+  private PsiUtil() {
+  }
 
   @Nullable
   public static String getQualifiedReferenceText(GrCodeReferenceElement referenceElement) {
@@ -232,11 +235,12 @@ public class PsiUtil {
       if (namedArgs.length > 0) {
         result.add(createMapType(place.getManager(), place.getResolveScope()));
       }
-      for (int i = 0; i < args.length; i++) {
-        PsiType argType = getArgumentType(args[i]);
+      for (GrExpression arg : args) {
+        PsiType argType = getArgumentType(arg);
         if (argType == null) {
           result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject((GroovyPsiElement)parent));
-        } else {
+        }
+        else {
           result.add(argType);
         }
       }
@@ -266,13 +270,14 @@ public class PsiUtil {
     return null;
   }
 
+  @Nullable
   private static PsiType getArgumentType(GrExpression expression) {
     if (expression instanceof GrReferenceExpression) {
       final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
       if (resolved instanceof PsiClass) {
         //this argument is passed as java.lang.Class
         return JavaPsiFacade.getInstance(resolved.getProject()).getElementFactory()
-          .createTypeByFQClassName("java.lang.Class", expression.getResolveScope());
+          .createTypeByFQClassName(CommonClassNames.JAVA_LANG_CLASS, expression.getResolveScope());
       }
     }
 
@@ -285,15 +290,16 @@ public class PsiUtil {
         final SearchScope originalScope = originalScopeComputation.compute();
         if (originalScope instanceof GlobalSearchScope) {
           return GlobalSearchScope
-            .getScopeRestrictedByFileTypes((GlobalSearchScope)originalScope, GroovyFileType.GROOVY_FILE_TYPE, GspFileType.GSP_FILE_TYPE);
+            .getScopeRestrictedByFileTypes((GlobalSearchScope)originalScope, GroovyFileTypeLoader.getGroovyEnabledFileTypes());
         }
         return originalScope;
       }
     });
   }
 
+  @Nullable
   public static PsiClass getJavaLangClass(PsiElement resolved, GlobalSearchScope scope) {
-    return JavaPsiFacade.getInstance(resolved.getProject()).findClass("java.lang.Class", scope);
+    return JavaPsiFacade.getInstance(resolved.getProject()).findClass(CommonClassNames.JAVA_LANG_CLASS, scope);
   }
 
   public static boolean isValidReferenceName(String text) {
@@ -443,7 +449,7 @@ public class PsiUtil {
           Stack<PsiClassType[]> superTypesStack = new Stack<PsiClassType[]>();
           PsiClass current;
           boolean nextObtained;
-          Set<PsiClass> visited = new com.intellij.util.containers.HashSet<PsiClass>();
+          Set<PsiClass> visited = new HashSet<PsiClass>();
 
           {
             if (includeSelf) {
@@ -510,11 +516,14 @@ public class PsiUtil {
     };
   }
 
+  @Nullable
   public static PsiClass getContextClass(PsiElement context) {
     GroovyPsiElement parent = PsiTreeUtil.getParentOfType(context, GrTypeDefinition.class, GroovyFileBase.class);
     if (parent instanceof GrTypeDefinition) {
       return (PsiClass)parent;
-    } else if (parent instanceof GroovyFileBase) return ((GroovyFileBase)parent).getScriptClass();
+    } else if (parent instanceof GroovyFileBase) {
+      return ((GroovyFileBase)parent).getScriptClass();
+    }
     return null;
   }
 
@@ -660,6 +669,7 @@ public class PsiUtil {
     return node.getElementType() == GroovyTokenTypes.mNLS;
   }
 
+  @Nullable
   public static PsiElement getPrevNonSpace(final PsiElement elem) {
     PsiElement prevSibling = elem.getPrevSibling();
     while (prevSibling instanceof PsiWhiteSpace) {
@@ -668,6 +678,7 @@ public class PsiUtil {
     return prevSibling;
   }
 
+  @Nullable
   public static PsiElement getNextNonSpace(final PsiElement elem) {
     PsiElement nextSibling = elem.getNextSibling();
     while (nextSibling instanceof PsiWhiteSpace) {

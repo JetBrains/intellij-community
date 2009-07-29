@@ -15,15 +15,26 @@
 
 package org.jetbrains.plugins.groovy;
 
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author ilyas
  */
 public class GroovyFileTypeLoader extends FileTypeFactory{
+  public static final List<FileType> GROOVY_FILE_TYPES = new ArrayList<FileType>();
+
+  public static FileType[] getGroovyEnabledFileTypes() {
+    return GROOVY_FILE_TYPES.toArray(new FileType[GROOVY_FILE_TYPES.size()]);
+  }
+
   public void createFileTypes(@NotNull FileTypeConsumer consumer) {
     consumer.consume(GroovyFileType.GROOVY_FILE_TYPE, GroovyFileType.DEFAULT_EXTENSION + ";gdsl");
+    GROOVY_FILE_TYPES.add(GroovyFileType.GROOVY_FILE_TYPE);
   }
 }
