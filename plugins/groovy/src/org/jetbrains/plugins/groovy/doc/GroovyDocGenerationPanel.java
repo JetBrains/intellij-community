@@ -73,7 +73,7 @@ public final class GroovyDocGenerationPanel extends JPanel {
   }
 
   private void initActions() {
-    myAddPackageAction = new GroovyDocAddPackageAction(myPackagesList, myDataModel);
+    myAddPackageAction = new GroovyDocAddPackageAction(myDataModel);
     myReducePackageAction = new GroovyDocReducePackageAction(myPackagesList, myDataModel);
   }
 

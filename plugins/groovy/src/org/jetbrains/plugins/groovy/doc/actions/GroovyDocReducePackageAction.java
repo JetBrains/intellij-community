@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.doc.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
@@ -11,7 +12,7 @@ import javax.swing.*;
  * User: Dmitry.Krasilschikov
  * Date: 14.10.2008
  */
-public class GroovyDocReducePackageAction extends AnAction {
+public class GroovyDocReducePackageAction extends AnAction implements DumbAware {
   private final JList myPackagesList;
   private final DefaultListModel myDataModel;
 

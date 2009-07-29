@@ -209,8 +209,6 @@
                     serviceImplementation="org.jetbrains.plugins.grails.lang.gsp.psi.GspPsiElementFactoryImpl"/>
     <projectService serviceInterface="org.jetbrains.plugins.grails.references.domain.DomainClassMembersProvider"
                     serviceImplementation="org.jetbrains.plugins.grails.references.domain.DomainClassMembersProvider"/>
-    <projectService serviceInterface="org.jetbrains.plugins.groovy.doc.GroovyDocGenerationManager"
-                    serviceImplementation="org.jetbrains.plugins.groovy.doc.GroovyDocGenerationManager"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.mvc.MvcConsole"
                     serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcConsole"/>
 
