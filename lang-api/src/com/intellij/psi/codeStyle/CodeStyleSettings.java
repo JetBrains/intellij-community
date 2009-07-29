@@ -21,12 +21,15 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -1124,8 +1127,11 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
           final Element additionalIndentElement = (Element)o;
           final String fileTypeId = additionalIndentElement.getAttributeValue(FILETYPE);
 
-          if (fileTypeId != null) {
+          if (fileTypeId != null && fileTypeId.length() > 0) {
             FileType target = FileTypeManager.getInstance().getFileTypeByExtension(fileTypeId);
+            if (FileTypes.UNKNOWN == target) {
+              target = new TempFileType(fileTypeId);
+            }
 
             final IndentOptions options = new IndentOptions();
             options.readExternal(additionalIndentElement);
@@ -1701,5 +1707,44 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     readExternal(element);
     myAdditionalIndentOptions.clear(); //hack
     myLoadedAdditionalIndentOptions = false;
+  }
+
+  private static class TempFileType implements FileType {
+    private String myExtension;
+
+    private TempFileType(@NotNull final String extension) {
+      myExtension = extension;
+    }
+
+    @NotNull
+    public String getName() {
+      return "TempFileType";
+    }
+
+    @NotNull
+    public String getDescription() {
+      return "TempFileType";
+    }
+
+    @NotNull
+    public String getDefaultExtension() {
+      return myExtension;
+    }
+
+    public Icon getIcon() {
+      return null;
+    }
+
+    public boolean isBinary() {
+      return false;
+    }
+
+    public boolean isReadOnly() {
+      return false;
+    }
+
+    public String getCharset(@NotNull VirtualFile file, byte[] content) {
+      return null;
+    }
   }
 }
