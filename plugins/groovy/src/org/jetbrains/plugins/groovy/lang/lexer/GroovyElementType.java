@@ -16,7 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.ASTNode;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Main classdef for Groovy element types, such as lexems or AST nodes
@@ -34,5 +37,13 @@ public class GroovyElementType extends IElementType {
 
   public String toString() {
     return debugName;
+  }
+
+  public static abstract class PsiCreator extends GroovyElementType {
+    protected PsiCreator(String debugName) {
+      super(debugName);
+    }
+
+    public abstract GroovyPsiElement createPsi(@NotNull ASTNode node);
   }
 }

@@ -19,12 +19,9 @@ import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.plugins.grails.lang.gsp.parsing.GspGroovyElementTypes;
-import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.impl.GrGspClassImpl;
-import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.impl.GrGspRunBlockImpl;
-import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.impl.GrGspRunMethodImpl;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.IGroovyDocElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.GroovyDocPsiCreator;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowsClauseImpl;
@@ -83,7 +80,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.types.*;
  *
  * @author ilyas, Dmitry.Krasilschikov
  */
-public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyElementTypes {
+public class GroovyPsiCreator implements GroovyElementTypes {
 
   /**
    * Creates Groovy PSI element by given AST node
@@ -93,6 +90,10 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
    */
   public static PsiElement createElement(ASTNode node) {
     IElementType elem = node.getElementType();
+
+    if (elem instanceof GroovyElementType.PsiCreator) {
+      return ((GroovyElementType.PsiCreator)elem).createPsi(node);
+    }
 
     if (elem instanceof IGroovyDocElementType) {
       return GroovyDocPsiCreator.createElement(node);
@@ -251,12 +252,6 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     if (elem.equals(ARGUMENT_LABEL)) return new GrArgumentLabelImpl(node);
 
     if (elem.equals(BALANCED_BRACKETS)) return new GrBalancedBracketsImpl(node);
-
-    // GSP-specific Element types
-
-    if (GSP_CLASS.equals(elem)) return new GrGspClassImpl(node);
-    if (GSP_RUN_METHOD.equals(elem)) return new GrGspRunMethodImpl(node);
-    if (GSP_RUN_BLOCK.equals(elem)) return new GrGspRunBlockImpl(node);
 
     return new ASTWrapperPsiElement(node);
   }
