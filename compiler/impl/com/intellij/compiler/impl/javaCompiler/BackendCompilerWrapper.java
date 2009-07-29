@@ -38,7 +38,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Chunk;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.cls.ClsFormatException;
-import com.intellij.util.containers.ByteTrie;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
@@ -62,7 +61,6 @@ public class BackendCompilerWrapper {
   private final BackendCompiler myCompiler;
   private final Set<VirtualFile> mySuccesfullyCompiledJavaFiles; // VirtualFile
   private final List<TranslatingCompiler.OutputItem> myOutputItems;
-  private final ByteTrie myTrie = new ByteTrie(); // to store OutputItems' paths more compactly
 
   private final CompileContextEx myCompileContext;
   private final List<VirtualFile> myFilesToCompile;
@@ -800,7 +798,7 @@ public class BackendCompilerWrapper {
         if (realLocation != null) {
           final String realOutputDir = realLocation.getFirst();
           final String relativeOutputPath = new String(realLocation.getSecond().substring(realLocation.first.length() + 1));
-          myOutputItems.add(new OutputItemImpl(myTrie, realOutputDir, relativeOutputPath, srcFile));
+          myOutputItems.add(new OutputItemImpl(realOutputDir, relativeOutputPath, srcFile));
           if (CompilerConfiguration.MAKE_ENABLED) {
             newCache.setPath(cc.qName, realLocation.getSecond());
           }
