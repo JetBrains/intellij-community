@@ -248,8 +248,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
         myPanels.get(name).apply();
       }
     }
-    myDeletedProfiles.clear();
-    myPanels.clear();
   }
 
   protected void deleteProfile(String name) {
@@ -266,6 +264,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   }
 
   public void reset() {
+    myDeletedProfiles.clear();
+    myPanels.clear();
     final DefaultComboBoxModel model = new DefaultComboBoxModel();
     myProfiles.setModel(model);
     for (Profile profile : getProfiles()) {
