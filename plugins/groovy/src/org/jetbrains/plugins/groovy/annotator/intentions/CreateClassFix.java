@@ -24,7 +24,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.grails.lang.gsp.psi.gsp.api.GspFile;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ChooseTypeExpression;
@@ -51,8 +50,8 @@ public abstract class CreateClassFix {
       GrNewExpression myNewExpression = expression;
 
       public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-        if (!(file instanceof GroovyFileBase || file instanceof GspFile)) return;
-        GroovyFileBase groovyFile = file instanceof GspFile ? ((GspFile) file).getGroovyLanguageRoot() : (GroovyFileBase) file;
+        if (!(file instanceof GroovyFileBase)) return;
+        GroovyFileBase groovyFile = (GroovyFileBase) file;
         final String qualifier = groovyFile instanceof GroovyFile ? groovyFile.getPackageName() : "";
         final PsiManager manager = myRefElement.getManager();
         final String name = myRefElement.getReferenceName();
@@ -100,8 +99,8 @@ public abstract class CreateClassFix {
     return new CreateClassActionBase(refElement) {
 
       public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-        if (!(file instanceof GroovyFileBase || file instanceof GspFile)) return;
-        GroovyFileBase groovyFile = file instanceof GspFile ? ((GspFile) file).getGroovyLanguageRoot() : (GroovyFileBase) file;
+        if (!(file instanceof GroovyFileBase)) return;
+        GroovyFileBase groovyFile = (GroovyFileBase) file;
         final String qualifier = groovyFile instanceof GroovyFile ? groovyFile.getPackageName() : "";
         final PsiManager manager = PsiManager.getInstance(project);
         final String name = myRefElement.getReferenceName();
