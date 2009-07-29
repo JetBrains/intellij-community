@@ -4,14 +4,16 @@
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,13 +26,15 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
@@ -52,6 +56,10 @@ import java.util.Map;
  */
 public class VariableInplaceRenamer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenamer");
+  private static final LanguageExtension<ResolveSnapshotProvider> INSTANCE = new LanguageExtension<ResolveSnapshotProvider>(
+    "com.intellij.rename.inplace.resolveSnapshotProvider"
+  );
+
   private final PsiNameIdentifierOwner myElementToRename;
   @NonNls private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
   @NonNls private static final String OTHER_VARIABLE_NAME = "OtherVariable";
@@ -98,19 +106,15 @@ public class VariableInplaceRenamer {
 
     final HighlightManager highlightManager = HighlightManager.getInstance(myProject);
 
-    PsiElement scope = myElementToRename instanceof PsiParameter
-                             ? ((PsiParameter)myElementToRename).getDeclarationScope()
-                             : PsiTreeUtil.getParentOfType(myElementToRename, PsiCodeBlock.class);
+    PsiElement scope = null;
+    final SearchScope searchScope = myElementToRename.getUseScope();
+    if (searchScope instanceof LocalSearchScope) {
+      final PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
+      scope = PsiTreeUtil.findCommonParent(elements);
+    }
+
     if (scope == null) {
-      final SearchScope searchScope = myElementToRename.getUseScope();
-      if (searchScope instanceof LocalSearchScope) {
-        final PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
-        scope = PsiTreeUtil.findCommonParent(elements);
-      }
-      
-      if (scope == null) {
-        return false; // Should have valid local search scope for inplace rename
-      }
+      return false; // Should have valid local search scope for inplace rename
     }
 
     final PsiElement context = scope.getContainingFile().getContext();
@@ -128,7 +132,9 @@ public class VariableInplaceRenamer {
       return false;
     }
 
-    final ResolveSnapshot snapshot = ResolveSnapshot.createSnapshot(scope);
+    ResolveSnapshotProvider resolveSnapshotProvider = INSTANCE.forLanguage(scope.getLanguage());
+    final ResolveSnapshotProvider.ResolveSnapshot snapshot = resolveSnapshotProvider != null ?
+      resolveSnapshotProvider.createSnapshot(scope):null;
     final TemplateBuilderImpl builder = new TemplateBuilderImpl(scope);
 
     final PsiElement nameIdentifier = myElementToRename.getNameIdentifier();
@@ -162,7 +168,7 @@ public class VariableInplaceRenamer {
                   TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
                   if (value != null) {
                     final String newName = value.toString();
-                    if (JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(newName)) {
+                    if (LanguageNamesValidation.INSTANCE.forLanguage(scope1.getLanguage()).isIdentifier(newName, myProject)) {
                       ApplicationManager.getApplication().runWriteAction(new Runnable() {
                         public void run() {
                           snapshot.apply(newName);
@@ -227,8 +233,15 @@ public class VariableInplaceRenamer {
     
     for (PsiReference ref : refs) {
       final PsiElement element = ref.getElement();
-      TextRange range = ref.getRangeInElement().shiftRight(element.getTextRange().getStartOffset() + PsiUtilBase.findInjectedElementOffsetInRealDocument(element));
-      boolean isForWrite = element instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)element);
+      TextRange range = ref.getRangeInElement().shiftRight(
+        element.getTextRange().getStartOffset() +
+          PsiUtilBase.findInjectedElementOffsetInRealDocument(element)
+      );
+
+      ReadWriteAccessDetector writeAccessDetector = ReadWriteAccessDetector.findDetector(element);
+      // TODO: read / write usages
+      boolean isForWrite = writeAccessDetector != null &&
+        ReadWriteAccessDetector.Access.Write == writeAccessDetector.getExpressionAccess(element);
       TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(isForWrite ?
                                                                                 EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES :
                                                                                 EditorColors.SEARCH_RESULT_ATTRIBUTES);
@@ -289,18 +302,6 @@ public class VariableInplaceRenamer {
     }
   }
 
-  public static boolean mayRenameInplace(PsiElement elementToRename, final PsiElement nameSuggestionContext) {
-    if (!(elementToRename instanceof PsiVariable)) return false;
-    if (nameSuggestionContext != null && nameSuggestionContext.getContainingFile() != elementToRename.getContainingFile()) return false;
-    if (!(elementToRename instanceof PsiLocalVariable) && !(elementToRename instanceof PsiParameter)) return false;
-    SearchScope useScope = elementToRename.getUseScope();
-    if (!(useScope instanceof LocalSearchScope)) return false;
-    PsiElement[] scopeElements = ((LocalSearchScope) useScope).getScope();
-    if (scopeElements.length > 1) return false; //assume there are no elements with use scopes with holes in'em
-    PsiFile containingFile = elementToRename.getContainingFile();
-    return PsiTreeUtil.isAncestor(containingFile, scopeElements[0], false);
-  }
-
   private class MyExpression extends Expression {
     private final String myName;
     private final LookupItem[] myLookupItems;
@@ -313,7 +314,8 @@ public class VariableInplaceRenamer {
       }
       myLookupItems = new LookupItem[names.size()];
       for (int i = 0; i < myLookupItems.length; i++) {
-        myLookupItems[i] = LookupItemUtil.objectToLookupItem(names.get(i));
+        String suggestedName = names.get(i);
+        myLookupItems[i] = new LookupItem(suggestedName, suggestedName);
       }
     }
 

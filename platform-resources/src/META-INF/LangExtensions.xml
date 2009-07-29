@@ -503,4 +503,5 @@
 
   <fileIconProvider implementation="com.intellij.openapi.fileTypes.impl.NativeFileIconProvider"/>
   <fileIconProvider implementation="com.intellij.ide.FileIconPatcherImpl"/>
+  <renameHandler implementation="com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler"/>
 </extensions>

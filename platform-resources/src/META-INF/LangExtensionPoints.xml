@@ -278,6 +278,8 @@
   <extensionPoint name="automaticRenamerFactory" interface="com.intellij.refactoring.rename.naming.AutomaticRenamerFactory"/>
   <extensionPoint name="nameSuggestionProvider" interface="com.intellij.refactoring.rename.NameSuggestionProvider"/>
   <extensionPoint name="vetoRenameCondition" interface="com.intellij.openapi.util.Condition"/>
+  <extensionPoint name="rename.inplace.resolveSnapshotProvider"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint" />
 
   <extensionPoint name="findUsagesHandlerFactory" interface="com.intellij.find.findUsages.FindUsagesHandlerFactory" area="IDEA_PROJECT"/>
 

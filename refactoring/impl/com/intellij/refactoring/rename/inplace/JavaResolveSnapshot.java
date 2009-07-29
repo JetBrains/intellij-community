@@ -14,18 +14,14 @@ import java.util.Map;
 /**
  * @author ven
  */
-public class ResolveSnapshot {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.ResolveSnapshot");
+class JavaResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapshot {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.JavaResolveSnapshot");
 
   private final Map<SmartPsiElementPointer, SmartPsiElementPointer> myReferencesMap = new HashMap<SmartPsiElementPointer, SmartPsiElementPointer>();
   private final Project myProject;
   private final Document myDocument;
 
-  public static ResolveSnapshot createSnapshot(PsiElement scope) {
-    return new ResolveSnapshot(scope);
-  }
-
-  private ResolveSnapshot(final PsiElement scope) {
+  JavaResolveSnapshot(final PsiElement scope) {
     myProject = scope.getProject();
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(scope.getContainingFile());
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(myProject);

@@ -5,9 +5,9 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.jsp.JspContextManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
@@ -19,9 +19,8 @@ import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.CharTable;
@@ -289,13 +288,12 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
       }
     }
 
-    final GlobalSearchScope maximalUseScope = getManager().getFileManager().getUseScope(this);
     PsiElement parentElement = getParent();
     if (parentElement instanceof PsiDeclarationStatement) {
       return new LocalSearchScope(parentElement.getParent());
     }
     else {
-      return maximalUseScope;
+      return getManager().getFileManager().getUseScope(this);
     }
   }
 
