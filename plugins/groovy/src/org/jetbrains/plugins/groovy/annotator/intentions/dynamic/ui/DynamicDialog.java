@@ -31,7 +31,6 @@ import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspClass;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
@@ -151,7 +150,7 @@ public abstract class DynamicDialog extends DialogWrapper {
   private void setUpContainingClassComboBox() {
     PsiClass targetClass = QuickfixUtil.findTargetClass(myReferenceExpression);
 
-    if (targetClass == null || targetClass instanceof GrGspClass) {
+    if (targetClass == null || targetClass instanceof SyntheticElement) {
       try {
         final GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(myProject).createTypeElement("java.lang.Object");
         if (typeElement == null) return;
