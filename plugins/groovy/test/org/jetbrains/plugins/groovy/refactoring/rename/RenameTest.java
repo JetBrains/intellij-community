@@ -1,13 +1,13 @@
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * @author ven
  */
-public class RenameTest extends CodeInsightFixtureTestCase {
+public class RenameTest extends JavaCodeInsightFixtureTestCase {
 
   public void testClosureIt() throws Throwable { doTest(); }
   public void testProperties$to_getter() throws Throwable { doTest(); }
