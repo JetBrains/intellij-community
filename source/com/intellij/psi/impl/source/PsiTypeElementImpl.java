@@ -16,7 +16,6 @@ import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jmock.util.NotImplementedException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -247,7 +246,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
-    throw new NotImplementedException(); //todo
+    throw new UnsupportedOperationException();
   }
 }
 
