@@ -22,21 +22,22 @@ import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GspOuterGroovyElement;
-import org.jetbrains.plugins.grails.lang.gsp.psi.gsp.api.GspFile;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -219,11 +220,13 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
 
   private static ASTNode[] getGroovyChildren() {
     PsiElement psi = myNode.getPsi();
-    if (psi instanceof GspOuterGroovyElement) {
+    if (psi instanceof OuterLanguageElement) {
       TextRange range = myNode.getTextRange();
       ArrayList<ASTNode> childList = new ArrayList<ASTNode>();
-      GroovyFileBase groovyFile = ((GspFile) psi.getContainingFile()).getGroovyLanguageRoot();
-      addChildNodes(groovyFile, childList, range);
+      PsiFile groovyFile = psi.getContainingFile().getViewProvider().getPsi(GroovyFileType.GROOVY_LANGUAGE);
+      if (groovyFile instanceof GroovyFileBase) {
+        addChildNodes(groovyFile, childList, range);
+      }
       return childList.toArray(new ASTNode[childList.size()]);
     }
     return myNode.getChildren(null);
