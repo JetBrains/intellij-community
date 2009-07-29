@@ -1,5 +1,7 @@
 package org.jetbrains.idea.svn;
 
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -17,7 +19,6 @@ import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
-import com.intellij.lifecycle.AtomicSectionsAware;
 import org.junit.After;
 import org.junit.Before;
 
@@ -92,11 +93,11 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
     }
   }
 
-  protected RunResult runSvnAdmin(String... commandLine) throws IOException {
+  protected ProcessOutput runSvnAdmin(String... commandLine) throws IOException {
     return runClient("svnadmin", null, null, commandLine);
   }
 
-  protected RunResult runSvn(String... commandLine) throws IOException {
+  protected ProcessOutput runSvn(String... commandLine) throws IOException {
     return runClient("svn", null, myWcRoot, commandLine);
   }
 

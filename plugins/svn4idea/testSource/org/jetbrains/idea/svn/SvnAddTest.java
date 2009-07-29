@@ -1,5 +1,6 @@
 package org.jetbrains.idea.svn;
 
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
@@ -41,7 +42,7 @@ public class SvnAddTest extends SvnTestCase {
       }
     }.execute();
     
-    final RunResult result = runSvn("status");
+    final ProcessOutput result = runSvn("status");
     verify(result, "A child", "A child\\a.txt");
   }
 

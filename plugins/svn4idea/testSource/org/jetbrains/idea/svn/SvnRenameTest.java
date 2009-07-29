@@ -1,13 +1,14 @@
 package org.jetbrains.idea.svn;
 
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -47,7 +48,7 @@ public class SvnRenameTest extends SvnTestCase {
 
     renameFileInCommand(a, "aOld.txt");
     renameFileInCommand(aNew, "a.txt");
-    final RunResult result = runSvn("status");
+    final ProcessOutput result = runSvn("status");
     verifySorted(result, "A + aOld.txt", "D aNew.txt", "R + a.txt");
   }
 
@@ -79,7 +80,7 @@ public class SvnRenameTest extends SvnTestCase {
     final VirtualFile child = prepareDirectoriesForRename();
 
     renameFileInCommand(child, "childnew");
-    final RunResult result = runSvn("status");
+    final ProcessOutput result = runSvn("status");
     verify(result, "D child", "D child\\grandChild", "D child\\grandChild\\b.txt", "D child\\a.txt", "A + childnew");
 
     LocalFileSystem.getInstance().refresh(false);   // wait for end of refresh operations initiated from SvnFileSystemListener
@@ -115,9 +116,9 @@ public class SvnRenameTest extends SvnTestCase {
     renameFileInCommand(child, "newchild");
     checkin();
 
-    final RunResult runResult = runSvn("log", "-q", "newchild/a.txt");
+    final ProcessOutput runResult = runSvn("log", "-q", "newchild/a.txt");
     verify(runResult);
-    final List<String> lines = StringUtil.split(runResult.stdOut, LOG_SEPARATOR);
+    final List<String> lines = StringUtil.split(runResult.getStdout(), LOG_SEPARATOR);
     Assert.assertEquals(2, lines.size());
     Assert.assertTrue(lines.get(0).startsWith("r2 |"));
     Assert.assertTrue(lines.get(1).startsWith("r1 |"));
