@@ -183,6 +183,15 @@ public class Alarm implements Disposable {
     }
   }
 
+  protected boolean isEdt() {
+    return isEventDispatchThread();
+  }
+
+  public static boolean isEventDispatchThread() {
+    final Application app = ApplicationManager.getApplication();
+    return (app != null && app.isDispatchThread()) || EventQueue.isDispatchThread();
+  }
+
   private class Request implements Runnable {
     private Runnable myTask;
     private final ModalityState myModalityState;
@@ -213,7 +222,7 @@ public class Alarm implements Disposable {
                 myRequests.remove(Request.this);
               }
 
-              if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
+              if (myThreadToUse == ThreadToUse.SWING_THREAD && !Alarm.this.isEdt()) {
                 try {
                   SwingUtilities.invokeAndWait(task);
                 } catch (Exception e) {
@@ -241,11 +250,6 @@ public class Alarm implements Disposable {
       catch (Throwable e) {
         LOG.error(e);
       }
-    }
-
-    private boolean isEdt() {
-      final Application app = ApplicationManager.getApplication();
-      return (app != null && app.isDispatchThread()) || EventQueue.isDispatchThread();
     }
 
     private Runnable getTask() {

@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.TimerTask;
 
 public class ActionCallback implements Disposable {
   private final ExecutionCallback myDone;
@@ -143,7 +142,8 @@ public class ActionCallback implements Disposable {
 
   @Override
   public String toString() {
-    return myName != null ? myName : super.toString();
+    final String name = myName != null ? myName : super.toString();
+    return name + " done=[" + myDone + "] rejected=[" + myRejected + "]";
   }
 
   public static class Chunk {
@@ -177,7 +177,7 @@ public class ActionCallback implements Disposable {
 
     private Throwable myAllocation;
     private String myMessage;
-    private TimerTask myTask;
+    private SimpleTimerTask myTask;
 
     public TimedOut(long timeOut, String message, Throwable allocation, boolean isEdt) {
       sheduleCheck(timeOut, message, allocation, isEdt);

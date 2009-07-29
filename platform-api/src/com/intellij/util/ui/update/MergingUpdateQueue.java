@@ -44,7 +44,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   private String myName;
   private int myMergingTimeSpan;
-  private final JComponent myModalityStateComponent;
+  private JComponent myModalityStateComponent;
   private boolean myExecuteInDispatchThread;
   private boolean myPassThrough;
   private boolean myDisposed;
@@ -87,8 +87,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     myExecuteInDispatchThread = executeInDispatchThread;
 
     myWaiterForMerge = myExecuteInDispatchThread
-                       ? new Alarm(Alarm.ThreadToUse.SWING_THREAD)
-                       : new Alarm(Alarm.ThreadToUse.OWN_THREAD, this);
+                       ? createAlarm(Alarm.ThreadToUse.SWING_THREAD, null)
+                       : createAlarm(Alarm.ThreadToUse.OWN_THREAD, this);
 
     if (isActive) {
       showNotify();
@@ -101,6 +101,11 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     if (activationComponent != null) {
       setActivationComponent(activationComponent);
     }
+  }
+
+
+  protected Alarm createAlarm(Alarm.ThreadToUse thread, Disposable parent) {
+    return new Alarm(thread, parent);
   }
 
   public void setMergingTimeSpan(int timeSpan) {
@@ -123,6 +128,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   public final void setPassThrough(boolean passThrough) {
     myPassThrough = passThrough;
   }
+
+
 
   public void activate() {
     showNotify();
@@ -161,15 +168,19 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   public void restartTimer() {
+    _restart(myMergingTimeSpan);
+  }
+
+  private void _restart(final int mergingTimeSpan) {
     if (!myActive) return;
 
     clearWaiter();
 
     if (myExecuteInDispatchThread) {
-      myWaiterForMerge.addRequest(this, myMergingTimeSpan, getMergerModailityState());
+      myWaiterForMerge.addRequest(this, mergingTimeSpan, getMergerModailityState());
     }
     else {
-      myWaiterForMerge.addRequest(this, myMergingTimeSpan);
+      myWaiterForMerge.addRequest(this, mergingTimeSpan);
     }
   }
 
@@ -222,6 +233,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     else {
       toRun.run();
     }
+  }
+
+  public void setModalityStateComponent(JComponent modalityStateComponent) {
+    myModalityStateComponent = modalityStateComponent;
   }
 
   protected boolean isModalityStateCorrect() {
@@ -338,7 +353,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    return "Merger: " + myName + " active=" + myActive + " sheduled=" + mySheduledUpdates;
+    return myName + " active=" + myActive + " sheduled=" + mySheduledUpdates;
   }
 
   private ModalityState getMergerModailityState() {
@@ -365,5 +380,15 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   public MergingUpdateQueue setRestartTimerOnAdd(final boolean restart) {
     myRestartOnAdd = restart;
     return this;
+  }
+
+  public boolean isEmpty() {
+    synchronized (mySheduledUpdates) {
+      return mySheduledUpdates.size() == 0;
+    }
+  }
+
+  public void sendFlush() {
+    _restart(0);
   }
 }

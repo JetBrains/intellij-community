@@ -59,6 +59,11 @@ public class ExecutionCallback {
     }
   }
 
+  @Override
+  public String toString() {
+    return myExecuted.toString();
+  }
+
   private static class Executed {
     int myCurrentCount;
     int myCountToExecution;
@@ -73,6 +78,11 @@ public class ExecutionCallback {
 
     boolean isExecuted() {
       return myCurrentCount >= myCountToExecution;
+    }
+
+    @Override
+    public String toString() {
+      return "current=" + myCurrentCount + " countToExecution=" + myCountToExecution;
     }
   }
 

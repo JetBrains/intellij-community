@@ -32,8 +32,9 @@ public class TreeUpdatePass {
     return myNode;
   }
 
-  public void setSheduleStamp(final long updateCount) {
+  public TreeUpdatePass setUpdateStamp(final long updateCount) {
     myUpdateStamp = updateCount;
+    return this;
   }
 
   public long getUpdateStamp() {
@@ -58,6 +59,6 @@ public class TreeUpdatePass {
 
   @Override
   public String toString() {
-    return "TreUpdatePass node=" + myNode + " stamp=" + myUpdateStamp + " expired=" + myExpired;
+    return "TreUpdatePass node=" + myNode + " stamp=" + myUpdateStamp + " expired=" + myExpired + " currentNode=" + myCurrentNode;
   }
 }
