@@ -34,7 +34,8 @@ class Project {
     resolvers << new ModuleResolver(project: this)
     resolvers << new LibraryResolver(project: this)
 
-    List exts = "properties,xml,gif,png,jpeg,jpg,jtml,dtd,tld,ftl".split(",")
+    def defaultResourceExtensions = "properties,xml,gif,png,jpeg,jpg,jtml,dtd,tld,ftl"
+    List exts = defaultResourceExtensions.split(",")
     
     binding.ant.patternset(id : "default.compiler.resources") {
       exts.each {ext -> include (name : "**/?*.${ext}")}
@@ -98,6 +99,10 @@ class Project {
 
   def error(String message) {
     throw new BuildException(message)
+  }
+
+  def warning(String message) {
+    binding.ant.project.log(message)
   }
 
   def makeAll() {
