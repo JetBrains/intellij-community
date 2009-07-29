@@ -246,7 +246,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException();//todo
   }
 }
 
