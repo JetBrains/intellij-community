@@ -338,16 +338,13 @@ public class MavenProjectImporter {
       importer.config(projectsWithNewlyCreatedModules.contains(each));
     }
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        for (MavenProject each : projects) {
-          moduleImporters.get(myMavenProjectToModule.get(each)).preConfigFacets();
-        }
-        for (MavenProject each : projects) {
-          moduleImporters.get(myMavenProjectToModule.get(each)).configFacets(postTasks);
-        }
-      }
-    });
+    for (MavenProject each : projects) {
+      moduleImporters.get(myMavenProjectToModule.get(each)).preConfigFacets();
+    }
+    for (MavenProject each : projects) {
+      moduleImporters.get(myMavenProjectToModule.get(each)).configFacets(postTasks);
+    }
+
     ArrayList<Module> modules = new ArrayList<Module>(moduleImporters.keySet());
     MavenProjectsManager.getInstance(myProject).setMavenizedModules(modules, true);
   }
