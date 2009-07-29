@@ -3,12 +3,13 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -40,6 +41,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   private boolean myHideOnEmptyContent = false;
   private boolean myPlaceholderMode;
+  private ToolWindowFactory myContentFactory;
 
   private ActionCallback myActivation = new ActionCallback.Done();
 
@@ -310,5 +312,17 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
     myActivation = activation;
     return myActivation;
+  }
+
+  public void setContentFactory(ToolWindowFactory contentFactory) {
+    myContentFactory = contentFactory;
+  }
+
+  public void ensureContentInitialized() {
+    if (myContentFactory != null) {
+      getContentManager().removeAllContents(false);
+      myContentFactory.createToolWindowContent(myToolWindowManager.getProject(), this);
+      myContentFactory = null;
+    }
   }
 }

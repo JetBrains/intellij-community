@@ -2,10 +2,9 @@ package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
+import org.jetbrains.annotations.NonNls;
 
 import java.beans.PropertyChangeListener;
-
-import org.jetbrains.annotations.NonNls;
 
 public interface ToolWindowEx extends ToolWindow {
   @NonNls String PROP_AVAILABLE = "available";
@@ -25,4 +24,6 @@ public interface ToolWindowEx extends ToolWindow {
    *          if tool window isn't installed.
    */
   ToolWindowType getInternalType();
+
+  void ensureContentInitialized();
 }

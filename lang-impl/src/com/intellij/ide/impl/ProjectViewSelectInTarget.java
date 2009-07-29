@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -34,6 +35,8 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
   protected final void select(final Object selector, final VirtualFile virtualFile, final boolean requestFocus) {
     final ProjectView projectView = ProjectView.getInstance(myProject);
     ToolWindowManager windowManager=ToolWindowManager.getInstance(myProject);
+    final ToolWindowEx projectViewToolWindow = (ToolWindowEx) windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
+    projectViewToolWindow.ensureContentInitialized();
     final Runnable runnable = new Runnable() {
       public void run() {
         if (requestFocus) {
@@ -43,7 +46,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
       }
     };
     if (requestFocus) {
-      windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW).activate(runnable, false);
+      projectViewToolWindow.activate(runnable, false);
     }
     else {
       runnable.run();

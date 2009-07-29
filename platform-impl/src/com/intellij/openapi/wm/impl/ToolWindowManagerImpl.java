@@ -288,6 +288,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       label.setForeground(new Color(treeFg.getRed(), treeFg.getGreen(), treeFg.getBlue(), 180));
       final ToolWindowFactory factory = bean.getToolWindowFactory();
       final ToolWindowImpl toolWindow = (ToolWindowImpl)registerToolWindow(bean.id, label, toolWindowAnchor, myProject, factory instanceof DumbAware);
+      toolWindow.setContentFactory(factory);
       if (bean.icon != null) {
         Icon icon = IconLoader.findIcon(bean.icon, factory.getClass());
         if (icon == null) {
@@ -305,8 +306,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         public void run() {
           ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
             public void run() {
-              toolWindow.getContentManager().removeAllContents(false);
-              factory.createToolWindowContent(myProject, toolWindow);
+              toolWindow.ensureContentInitialized();
               activation.setDone();
             }
           });
