@@ -79,6 +79,10 @@ public class XmlLanguageInjectionSupport implements LanguageInjectionSupport {
     return new Class[] {XmlPatterns.class};
   }
 
+  public boolean useDefaultInjector(final PsiElement host) {
+    return false;
+  }
+
   public boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement) {
     if (!isMine(psiElement)) return false;
     if (psiElement instanceof XmlAttributeValue) {

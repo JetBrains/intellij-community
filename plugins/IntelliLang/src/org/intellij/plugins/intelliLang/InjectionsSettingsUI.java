@@ -42,6 +42,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
+import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.Nls;
 
@@ -73,7 +74,7 @@ public class InjectionsSettingsUI implements Configurable {
     myConfiguration = configuration;
 
     myOriginalInjections = ContainerUtil
-      .concat(myConfiguration.getActiveInjectorIds(), new Function<String, Collection<? extends BaseInjection>>() {
+      .concat(InjectorUtils.getActiveInjectionSupportIds(), new Function<String, Collection<? extends BaseInjection>>() {
         public Collection<? extends BaseInjection> fun(final String s) {
           return myConfiguration.getInjections(s);
         }

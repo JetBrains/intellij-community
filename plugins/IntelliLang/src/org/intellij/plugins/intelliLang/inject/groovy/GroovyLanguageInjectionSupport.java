@@ -20,6 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiElement;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
@@ -27,6 +28,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author Gregory.Shrago
@@ -42,6 +44,10 @@ public class GroovyLanguageInjectionSupport implements LanguageInjectionSupport 
   @NotNull
   public Class[] getPatternClasses() {
     return new Class[] {GroovyPatterns.class};
+  }
+
+  public boolean useDefaultInjector(final PsiElement host) {
+    return host instanceof GroovyPsiElement;
   }
 
   public boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement) {

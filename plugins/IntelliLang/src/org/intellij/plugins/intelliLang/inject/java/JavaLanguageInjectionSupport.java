@@ -71,6 +71,10 @@ public class JavaLanguageInjectionSupport implements LanguageInjectionSupport {
     return new Class[] { PsiJavaPatterns.class };
   }
 
+  public boolean useDefaultInjector(final PsiElement host) {
+    return false;
+  }
+
   public Configurable[] createSettings(final Project project, final Configuration configuration) {
     return new Configurable[]{new AdvancedSettingsUI(project, configuration)};
   }

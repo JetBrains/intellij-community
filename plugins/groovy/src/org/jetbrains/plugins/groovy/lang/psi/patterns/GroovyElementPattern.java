@@ -23,13 +23,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 
-public class GroovyElementPattern<T extends PsiElement,Self extends GroovyElementPattern<T,Self>> extends PsiJavaElementPattern<T,Self> {
+public class GroovyElementPattern<T extends GroovyPsiElement,Self extends GroovyElementPattern<T,Self>> extends PsiJavaElementPattern<T,Self> {
   public GroovyElementPattern(final Class<T> aClass) {
     super(aClass);
   }
@@ -65,7 +66,7 @@ public class GroovyElementPattern<T extends PsiElement,Self extends GroovyElemen
     });
   }
 
-  public static class Capture<T extends PsiElement> extends GroovyElementPattern<T, Capture<T>> {
+  public static class Capture<T extends GroovyPsiElement> extends GroovyElementPattern<T, Capture<T>> {
     public Capture(final Class<T> aClass) {
       super(aClass);
     }

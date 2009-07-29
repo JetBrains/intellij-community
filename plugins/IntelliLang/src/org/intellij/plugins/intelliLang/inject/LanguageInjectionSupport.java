@@ -6,6 +6,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiElement;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jdom.Element;
@@ -30,6 +31,8 @@ public interface LanguageInjectionSupport {
   @NotNull
   Class[] getPatternClasses();
 
+  boolean useDefaultInjector(final PsiElement host);
+
   boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement);
 
   boolean removeInjectionInPlace(final PsiLanguageInjectionHost psiElement);
@@ -38,8 +41,7 @@ public interface LanguageInjectionSupport {
 
   BaseInjection createInjection(final Element element);
 
-  //?
-  //void setupPresentation(final Injection injection, final Presentation presentation);
+  //void setupPresentation(final Injection injection, final SimpleColoredText presentation);
 
   Configurable[] createSettings(final Project project, final Configuration configuration);
 }

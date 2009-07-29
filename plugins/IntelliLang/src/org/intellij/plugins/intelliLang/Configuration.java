@@ -15,8 +15,8 @@
  */
 package org.intellij.plugins.intelliLang;
 
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
@@ -35,11 +35,10 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairProcessor;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
+import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.*;
 import org.jdom.Document;
@@ -150,7 +149,7 @@ public final class Configuration implements PersistentStateComponent<Element> {
     if (mergeWithOriginalAndCompile) {
       mergeWithDefaultConfiguration();
 
-      for (String supportId : getActiveInjectorIds()) {
+      for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
         for (BaseInjection injection : getInjections(supportId)) {
           injection.initializePlaces(true);
         }
@@ -293,7 +292,7 @@ public final class Configuration implements PersistentStateComponent<Element> {
    */
   public int importFrom(final Configuration cfg) {
     int n = 0;
-    for (String supportId : getActiveInjectorIds()) {
+    for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
       final List<BaseInjection> mineInjections = myInjections.get(supportId);
       for (BaseInjection other : cfg.getInjections(supportId)) {
         final BaseInjection existing = findExistingInjection(other);
@@ -389,16 +388,7 @@ public final class Configuration implements PersistentStateComponent<Element> {
   }
 
   public Set<String> getAllInjectorIds() {
-    return Collections.unmodifiableSet(new THashSet<String>(myInjections.keySet()));
-  }
-
-  public Set<String> getActiveInjectorIds() {
-    return ContainerUtil.map2Set(Extensions.getExtensions(LanguageInjectionSupport.EP_NAME), new NotNullFunction<LanguageInjectionSupport, String>() {
-      @NotNull
-      public String fun(final LanguageInjectionSupport support) {
-        return support.getId();
-      }
-    });
+    return Collections.unmodifiableSet(myInjections.keySet());
   }
 
   public void replaceInjectionsWithUndo(final Project project,

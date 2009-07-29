@@ -16,20 +16,27 @@
 
 package org.intellij.plugins.intelliLang.inject;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.lang.Language;
-import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Gregory.Shrago
@@ -138,5 +145,24 @@ public class InjectorUtils {
     if (injectionStarted) {
       registrar.doneInjecting();
     }
+  }
+
+  @NotNull
+  public static Set<String> getActiveInjectionSupportIds() {
+    return ContainerUtil.map2Set(Extensions.getExtensions(LanguageInjectionSupport.EP_NAME), new NotNullFunction<LanguageInjectionSupport, String>() {
+      @NotNull
+      public String fun(final LanguageInjectionSupport support) {
+        return support.getId();
+      }
+    });
+  }
+
+  @Nullable
+  public static LanguageInjectionSupport findInjectionSupport(final String id) {
+    return ContainerUtil.find(Extensions.getExtensions(LanguageInjectionSupport.EP_NAME), new Condition<LanguageInjectionSupport>() {
+      public boolean value(final LanguageInjectionSupport support) {
+        return support.getId().equals(id);
+      }
+    });
   }
 }

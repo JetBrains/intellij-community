@@ -19,10 +19,14 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public final class DefaultLanguageInjector implements MultiHostInjector {
 
@@ -44,14 +49,14 @@ public final class DefaultLanguageInjector implements MultiHostInjector {
     return Collections.singletonList(PsiLanguageInjectionHost.class);
   }
 
-  public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull PsiElement host) {
-    //final Set<String> supports = ContainerUtil.map2Set(Extensions.getExtensions(LanguageInjectionSupport.EP_NAME), new Function<LanguageInjectionSupport, String>() {
-    //  public String fun(final LanguageInjectionSupport support) {
-    //    return support.getId();
-    //  }
-    //});
+  public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement host) {
+    final Set<String> supports = new THashSet<String>(ContainerUtil.mapNotNull(Extensions.getExtensions(LanguageInjectionSupport.EP_NAME), new NullableFunction<LanguageInjectionSupport, String>() {
+      public String fun(final LanguageInjectionSupport support) {
+        return support.useDefaultInjector(host)? null : support.getId();
+      }
+    }));
     for (String supportId : myInjectionConfiguration.getAllInjectorIds()) {
-      //if (supports.contains(supportId)) continue;
+      if (supports.contains(supportId)) continue;
       for (BaseInjection injection : myInjectionConfiguration.getInjections(supportId)) {
         if (injection.acceptsPsiElement(host)) {
           final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
