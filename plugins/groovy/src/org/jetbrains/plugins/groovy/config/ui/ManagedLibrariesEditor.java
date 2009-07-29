@@ -314,6 +314,13 @@ public class ManagedLibrariesEditor {
   @Nullable
   private LibraryManager findManagerFor(@NotNull Library library) {
     for (final LibraryManager manager : myManagers) {
+      final String name = library.getName();
+      if (name != null && name.startsWith(manager.getLibraryPrefix())) {
+        return manager;
+      }
+    }
+
+    for (final LibraryManager manager : myManagers) {
       if (manager.managesLibrary(library, myLibrariesContainer)) {
         return manager;
       }

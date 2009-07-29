@@ -42,13 +42,13 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
   public static final ExtensionPointName<LibraryManager> EP_NAME = ExtensionPointName.create("org.intellij.groovy.libraryManager");
 
   @NotNull
-  protected static String generatePointerName(ProjectSettingsContext context, String version, GroovyLibraryConfigurer configUtils) {
+  protected static String generatePointerName(ProjectSettingsContext context, String version, final String libPrefix) {
     final Set<String> usedLibraryNames = CollectionFactory.newTroveSet();
     for (Library library : getAllDefinedLibraries(((ProjectConfigurableContext)context).getContainer())) {
       usedLibraryNames.add(library.getName());
     }
 
-    String originalName = configUtils.getSDKLibPrefix() + version;
+    String originalName = libPrefix + version;
     String newName = originalName;
     int index = 1;
     while (usedLibraryNames.contains(newName)) {
@@ -95,7 +95,7 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
                                                        "Duplicate library version", bigIcon) == 0;
 
       if (addVersion && !AbstractConfigUtils.UNDEFINED_VERSION.equals(newVersion)) {
-        final String name = generatePointerName(context, newVersion, configUtils);
+        final String name = generatePointerName(context, newVersion, getLibraryPrefix());
         final CreateLibraryDialog dialog = new CreateLibraryDialog(project, "Create " + libraryKind + " library",
                                                                    "Create Project " + libraryKind + " library '" + name + "'",
                                                                    "Create Global " + libraryKind + " library '" + name + "'");

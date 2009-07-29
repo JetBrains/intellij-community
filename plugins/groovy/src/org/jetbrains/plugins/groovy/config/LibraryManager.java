@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.config;
 import com.intellij.facet.ui.ProjectSettingsContext;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,5 +46,11 @@ public abstract class LibraryManager {
   public abstract Library createLibrary(@NotNull ProjectSettingsContext context);
 
   @NotNull @Nls public abstract String getLibraryCategoryName();
+
+  @NotNull
+  @Nls
+  public String getLibraryPrefix() {
+    return StringUtil.toLowerCase(getLibraryCategoryName()) + "-";
+  }
 
 }

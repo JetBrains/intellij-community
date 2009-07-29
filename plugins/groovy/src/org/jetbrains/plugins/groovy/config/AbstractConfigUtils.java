@@ -64,10 +64,6 @@ public abstract class AbstractConfigUtils implements GroovyLibraryConfigurer{
   @NotNull
   public abstract String getSDKVersion(@NotNull String path);
 
-  public String getSDKLibPrefix() {
-    return SDK_LIB_PREFIX;
-  }
-
   /**
    * Return value of Implementation-Version attribute in jar manifest
    * <p/>
