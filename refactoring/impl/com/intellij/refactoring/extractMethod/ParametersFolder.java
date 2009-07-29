@@ -27,6 +27,7 @@ public class ParametersFolder {
   private final Set<String> myUsedNames = new HashSet<String>();
 
   private final Set<PsiVariable> myDeleted = new HashSet<PsiVariable>();
+  private boolean myFoldingSelectedByDefault = false;
 
 
   public void clear() {
@@ -90,13 +91,18 @@ public class ParametersFolder {
     final List<PsiExpression> mentionedInExpressions = getMentionedExpressions(data.variable, scope);
     if (mentionedInExpressions == null) return false;
 
-    int currenRank = 0;
+    int currentRank = 0;
     PsiExpression mostRanked = null;
     for (int i = mentionedInExpressions.size() - 1; i >= 0; i--) {
       PsiExpression expression = mentionedInExpressions.get(i);
+      if (expression instanceof PsiArrayAccessExpression) {
+        mostRanked = expression;
+        myFoldingSelectedByDefault = true;
+        break;
+      }
       final int r = findUsedVariables(data, inputVariables, expression).size();
-      if (currenRank < r) {
-        currenRank = r;
+      if (currentRank < r) {
+        currentRank = r;
         mostRanked = expression;
       }
     }
@@ -210,5 +216,9 @@ public class ParametersFolder {
 
   public boolean wasExcluded(PsiVariable variable) {
     return myDeleted.contains(variable) || (myMentionedInExpressions.containsKey(variable) && myExpressions.get(variable) == null);
+  }
+
+  public boolean isFoldingSelectedByDefault() {
+    return myFoldingSelectedByDefault;
   }
 }

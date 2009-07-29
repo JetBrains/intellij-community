@@ -211,4 +211,8 @@ public class InputVariables {
       }
     }
   }
+
+  public boolean isFoldingSelectedByDefault() {
+    return myFolding.isFoldingSelectedByDefault();
+  }
 }

@@ -197,8 +197,9 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
       myCbMakeStatic.setEnabled(false);
     }
 
-    myFoldCb.setSelected(true);
+    myFoldCb.setSelected(myVariableData.isFoldingSelectedByDefault());
     myFoldCb.setVisible(myVariableData.isFoldable());
+    myVariableData.setFoldingAvailable(myFoldCb.isSelected());
     myFoldCb.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myVariableData.setFoldingAvailable(myFoldCb.isSelected());
