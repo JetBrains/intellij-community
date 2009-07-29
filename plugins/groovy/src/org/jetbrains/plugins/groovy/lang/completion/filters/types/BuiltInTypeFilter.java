@@ -49,11 +49,6 @@ public class BuiltInTypeFilter implements ElementFilter {
         GroovyCompletionUtil.asVariableInBlock(context)) {
       return true;
     }
-    if (context.getParent() instanceof PsiErrorElement &&
-        context.getParent().getParent() instanceof GrGspDeclarationHolder &&
-        GroovyCompletionUtil.isNewStatement(context, false)) {
-      return true;
-    }
     if ((context.getParent() instanceof GrParameter &&
         ((GrParameter) context.getParent()).getTypeElementGroovy() == null) ||
         context.getParent() instanceof GrReferenceElement &&

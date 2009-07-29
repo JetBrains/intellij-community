@@ -15,25 +15,22 @@
 
 package org.jetbrains.plugins.groovy.lang.completion.filters.modifiers;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
-import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 /**
  * @author ilyas
@@ -64,14 +61,7 @@ public class ModifiersFilter implements ElementFilter {
         GroovyCompletionUtil.isNewStatement(context, false)) {
       return true;
     }
-    if (context.getParent() instanceof PsiErrorElement &&
-        context.getParent().getParent() instanceof GrGspDeclarationHolder &&
-        GroovyCompletionUtil.isNewStatement(context, false)) {
-      return true;
-    }
-    ASTNode astNode = context.getNode();
-    if (context.getTextRange().getStartOffset() == 0 && astNode != null &&
-        !(GspTokenTypesEx.GSP_TEMPLATE_DATA == astNode.getElementType())) {
+    if (context.getTextRange().getStartOffset() == 0 && !(context instanceof OuterLanguageElement)) {
       return true;
     }
     final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);

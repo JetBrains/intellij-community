@@ -15,12 +15,11 @@
 
 package org.jetbrains.plugins.groovy.lang.completion.filters.toplevel;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
@@ -42,10 +41,7 @@ public class ImportFilter implements ElementFilter {
         return GroovyCompletionUtil.isNewStatement(context, false);
       }
     }
-    ASTNode astNode = context.getNode();
-    return context.getTextRange().getStartOffset() == 0 && astNode != null &&
-        !(GspTokenTypesEx.GSP_TEMPLATE_DATA == astNode.getElementType());
-
+    return context.getTextRange().getStartOffset() == 0 && !(context instanceof OuterLanguageElement);
   }
 
   public boolean isClassAcceptable(Class hintClass) {

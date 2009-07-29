@@ -62,7 +62,8 @@ import java.util.Set;
  */
 public class GroovyCompletionData extends CompletionData {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData");
-  public final String[] BUILT_IN_TYPES = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "void"};
+  public static final String[] BUILT_IN_TYPES = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "void"};
+  public static final String[] MODIFIERS = new String[]{"private", "public", "protected", "transient", "abstract", "native", "volatile", "strictfp"};
 
   public GroovyCompletionData() {
     registerAllCompletions();
@@ -181,8 +182,7 @@ public class GroovyCompletionData extends CompletionData {
   }
 
   private void registerModifierCompletion() {
-    String[] modifiers = new String[]{"private", "public", "protected", "transient", "abstract", "native", "volatile", "strictfp"};
-    registerStandardCompletion(new ModifiersFilter(), modifiers);
+    registerStandardCompletion(new ModifiersFilter(), MODIFIERS);
     registerStandardCompletion(new LeftNeighbour(new PreviousModifierFilter()), "private", "public", "protected", "transient", "abstract",
                                "native", "volatile", "strictfp", "synchronized", "static");
     registerStandardCompletion(new StaticFilter(), "static");
