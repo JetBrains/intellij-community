@@ -65,6 +65,7 @@
     <syntaxHighlighter key="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.grails.perspectives.DomainClassesRelationsEditorProvider"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GroovyAnnotator"/>
+    <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.grails.annotator.DomainClassAnnotator"/>
     <lang.psiStructureViewFactory language="Groovy"
                                   implementationClass="org.jetbrains.plugins.groovy.structure.GroovyStructureViewFactory"/>
     <lang.parserDefinition language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition"/>

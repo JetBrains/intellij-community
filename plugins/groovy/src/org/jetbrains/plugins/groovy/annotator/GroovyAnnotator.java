@@ -34,8 +34,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.grails.annotator.DomainClassAnnotator;
-import org.jetbrains.plugins.grails.util.DomainClassUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
@@ -155,9 +153,6 @@ public class GroovyAnnotator implements Annotator {
       if (file.isScript()) {
         checkScriptDuplicateMethod(file.getTopLevelDefinitions(), holder);
       }
-      if (DomainClassUtils.isDomainClassFile(element.getContainingFile().getVirtualFile(), element.getProject())) {
-        checkDomainClass((GroovyFile)element, holder);
-      }
     }
     else {
       final ASTNode node = element.getNode();
@@ -268,11 +263,6 @@ public class GroovyAnnotator implements Annotator {
     if (grMethod.getParent() instanceof GrOpenBlock) {
       holder.createErrorAnnotation(grMethod, GroovyBundle.message("Inner.methods.are.not.supported"));
     }
-  }
-
-  private static void checkDomainClass(GroovyFile file, AnnotationHolder holder) {
-    DomainClassAnnotator domainClassAnnotator = new DomainClassAnnotator();
-    domainClassAnnotator.annotate(file, holder);
   }
 
   private static void checkMap(GrNamedArgument[] namedArguments, AnnotationHolder holder) {
@@ -938,7 +928,7 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private static void highlightMember(AnnotationHolder holder, GrMember member) {
-    if (member instanceof PsiField) {
+    if (member instanceof GrField) {
       GrField field = (GrField)member;
       PsiElement identifier = field.getNameIdentifierGroovy();
       final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
