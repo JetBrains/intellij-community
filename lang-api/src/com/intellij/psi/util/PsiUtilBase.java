@@ -391,7 +391,7 @@ public class PsiUtilBase {
   }
 
   @Nullable
-  public static Language getLanguageInEditor(final Editor editor, final Project project) {
+  public static Language getLanguageInEditor(@NotNull final Editor editor, @NotNull final Project project) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) return null;
 
