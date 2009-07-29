@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetManager;
@@ -307,7 +308,7 @@ public class PythonSdkType extends SdkType {
           out.close();
         }
 
-        return SdkUtil.getProcessOutput(sdk_path, new String[] {bin_path, scriptFile.getPath()}).getStdout();
+        return SdkUtil.getProcessOutput(sdk_path, new String[] {bin_path, scriptFile.getPath()}).getStdoutLines();
       }
       finally {
         FileUtil.delete(scriptFile);
@@ -333,7 +334,7 @@ public class PythonSdkType extends SdkType {
       version_opt = "-V";
     }
     Pattern pattern = Pattern.compile(version_regexp);
-    String version = SdkUtil.getFirstMatch(SdkUtil.getProcessOutput(sdkHome, new String[] {binaryPath, version_opt}).getStderr(), pattern);
+    String version = SdkUtil.getFirstMatch(SdkUtil.getProcessOutput(sdkHome, new String[] {binaryPath, version_opt}).getStderrLines(), pattern);
     return version;
   }
 
@@ -409,10 +410,10 @@ public class PythonSdkType extends SdkType {
       out.close();
 
       try {
-        final SdkUtil.ProcessCallInfo run_result = SdkUtil.getProcessOutput(sdkPath, new String[] {bin_path, find_bin_file.getPath()});
+        final ProcessOutput run_result = SdkUtil.getProcessOutput(sdkPath, new String[] {bin_path, find_bin_file.getPath()});
 
-        if (run_result.getExitValue() == 0) {
-          for (String line : run_result.getStdout()) {
+        if (run_result.getExitCode() == 0) {
+          for (String line : run_result.getStdoutLines()) {
             // line = "mod_name path"
             int cutpos = line.indexOf(' ');
             String modname = line.substring(0, cutpos);
@@ -428,13 +429,13 @@ public class PythonSdkType extends SdkType {
                 indicator.setText2(modname);
               }
               LOG.info("Skeleton for " + modname);
-              final SdkUtil.ProcessCallInfo gen_result = SdkUtil.getProcessOutput(sdkPath,
+              final ProcessOutput gen_result = SdkUtil.getProcessOutput(sdkPath,
                 new String[] {bin_path, gen3_file.getPath(), "-d", stubsRoot, modname}, RUN_TIMEOUT
               );
-              if (gen_result.getExitValue() != 0) {
+              if (gen_result.getExitCode() != 0) {
                 StringBuffer sb = new StringBuffer("Skeleton for ");
                 sb.append(modname).append(" failed. stderr: --");
-                for (String err_line : gen_result.getStderr()) sb.append(err_line).append("\n");
+                for (String err_line : gen_result.getStderrLines()) sb.append(err_line).append("\n");
                 sb.append("--");
                 LOG.warn(sb.toString());
               }
@@ -443,8 +444,8 @@ public class PythonSdkType extends SdkType {
         }
         else {
           StringBuffer sb = new StringBuffer();
-          for (String err_line : run_result.getStderr()) sb.append(err_line).append("\n");
-          LOG.error("failed to run find_binaries, exit code " + run_result.getExitValue() + ", stderr '" + sb.toString() + "'");
+          for (String err_line : run_result.getStderrLines()) sb.append(err_line).append("\n");
+          LOG.error("failed to run find_binaries, exit code " + run_result.getExitCode() + ", stderr '" + sb.toString() + "'");
         }
       }
       finally {
