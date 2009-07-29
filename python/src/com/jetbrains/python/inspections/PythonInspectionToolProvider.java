@@ -16,7 +16,8 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyMethodParametersInspection.class,
       PyUnreachableCodeInspection.class,
       PyMethodFirstArgAssignmentInspection.class,
-      PyStringFormatInspection.class
+      PyStringFormatInspection.class,
+      PyMethodOverridingInspection.class
     };
   }
 }

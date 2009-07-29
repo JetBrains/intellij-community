@@ -50,6 +50,11 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doTest(getTestName(false), inspection);
   }
 
+  public void testPyMethodOverridingInspection() throws Throwable {
+    LocalInspectionTool inspection = new PyMethodOverridingInspection();
+    doTest(getTestName(false), inspection);
+  }
+
   protected String getTestDataPath() {
     return PathManager.getHomePath() + "/plugins/python/testData/inspections/";
   }

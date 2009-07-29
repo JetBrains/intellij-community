@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>method-overriding.py</file>
+    <line>6</line>
+    <description>Method signature does not match signature of base method</description>
+  </problem>
+  <problem>
+    <file>method-overriding.py</file>
+    <line>10</line>
+    <description>Number of parameters does not match parameters of base method</description>
+  </problem>
+  <problem>
+    <file>method-overriding.py</file>
+    <line>14</line>
+    <description>Method signature does not match signature of base method</description>
+  </problem>
+</problems>
