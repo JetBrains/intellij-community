@@ -12,7 +12,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.plugins.grails.lang.gsp.resolve.taglib.GspTagLibUtil;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -87,9 +86,6 @@ public class CompleteReferenceExpression {
     }
 
     final GrExpression qualifier = refExpr.getQualifierExpression();
-    if (isGspNamespaceQualifier(qualifier)) {
-      return new Object[0];
-    }
     Object[] propertyVariants = getVariantsImpl(refExpr, CompletionProcessor.createPropertyCompletionProcessor(refExpr));
     PsiType type = null;
     if (qualifier == null) {
@@ -220,15 +216,6 @@ public class CompleteReferenceExpression {
     Object[] variants = GroovyCompletionUtil.getCompletionVariants(candidates);
     variants = ArrayUtil.mergeArrays(variants, propertyLookupElements, Object.class);
     return ArrayUtil.mergeArrays(variants, sameQualifier, Object.class);
-  }
-
-  private static boolean isGspNamespaceQualifier(final GrExpression qualifier) {
-    if (qualifier == null) return false;
-    PsiReference reference = qualifier.getReference();
-    if (reference == null) return false;
-    PsiElement element = reference.resolve();
-    if (!(element instanceof GrAccessorMethod)) return false;
-    return GspTagLibUtil.isNamespaceField(((GrAccessorMethod)element));
   }
 
   private static GroovyResolveResult[] filterStaticsOK(GroovyResolveResult[] candidates) {
