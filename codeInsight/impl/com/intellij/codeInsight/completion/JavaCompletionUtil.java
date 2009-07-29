@@ -3,9 +3,10 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
-import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
+import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -16,8 +17,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.infos.CandidateInfo;
@@ -894,5 +895,30 @@ public class JavaCompletionUtil {
     }
 
     set.add(ret);
+  }
+
+  public static final Key<TailType> COMPLETION_TAIL_TYPE = Key.create("COMPLETION_TAIL_TYPE");
+
+  /**
+   * Use this method to set avoid unwanted tail symbols while using completion inside
+   * light-editors like EditorComboBox or EditorTextField.  
+   *
+   * @author Konstantin Bulenkov
+   *
+   * @param file document holder
+   * @param type new TailType
+   *
+   * @see com.intellij.codeInsight.TailType
+   * @see com.intellij.codeInsight.completion.JavaCompletionContributor#setTailTypeByFile(com.intellij.codeInsight.lookup.LookupElement, com.intellij.psi.PsiFile)
+   */
+  public static void setDefaultTailTypeForFile(PsiFile file, TailType type) {
+    if (file != null && type != null) {
+      file.putUserData(COMPLETION_TAIL_TYPE, type);
+    }
+  }
+
+  @Nullable
+  public static TailType getDefaultTailTypeForFile(PsiFile file) {
+    return file == null ? null : file.getUserData(COMPLETION_TAIL_TYPE);
   }
 }

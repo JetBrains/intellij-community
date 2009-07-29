@@ -1,8 +1,12 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.help.HelpManager;
@@ -28,10 +32,9 @@ import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.Language;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -165,12 +168,15 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private ReferenceEditorComboWithBrowseButton createPackageChooser() {
     final ReferenceEditorComboWithBrowseButton packageChooser =
       new PackageNameReferenceEditorCombo("", myProject, RECENTS_KEY, RefactoringBundle.message("choose.destination.package"));
-    packageChooser.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
+    final Document document = packageChooser.getChildComponent().getDocument();
+    final PsiFile file = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+    JavaCompletionUtil.setDefaultTailTypeForFile(file, TailType.NONE);
+    document.addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         validateButtons();
       }
     });
-
+    
     return packageChooser;
   }
 
