@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   private final Project myProject;
+  private final DumbService myDumbService;
   private final AtomicReference<MultiHostInjector> myPsiManagerRegisteredInjectorsAdapter = new AtomicReference<MultiHostInjector>();
   private final ExtensionPointListener<LanguageInjector> myListener;
 
@@ -42,8 +43,9 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     return (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(project);
   }
 
-  public InjectedLanguageManagerImpl(Project project) {
+  public InjectedLanguageManagerImpl(Project project, DumbService dumbService) {
     myProject = project;
+    myDumbService = dumbService;
 
     final ExtensionPoint<MultiHostInjector> multiPoint = Extensions.getArea(project).getExtensionPoint(MULTIHOST_INJECTOR_EP_NAME);
     multiPoint.addExtensionPointListener(new ExtensionPointListener<MultiHostInjector>() {
@@ -252,7 +254,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     boolean process(PsiElement element, MultiHostInjector injector);
   }
   public void processInPlaceInjectorsFor(@NotNull PsiElement element, @NotNull InjProcessor processor) {
-    final boolean dumb = DumbService.getInstance(myProject).isDumb();
+    final boolean dumb = myDumbService.isDumb();
     MultiHostInjector[] infos = cachedInjectors.get(element.getClass());
     if (infos != null) {
       for (MultiHostInjector injector : infos) {

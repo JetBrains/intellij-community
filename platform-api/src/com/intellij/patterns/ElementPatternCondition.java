@@ -23,8 +23,9 @@ public class ElementPatternCondition<T> {
 
   public boolean accepts(@Nullable Object o, final ProcessingContext context) {
     if (!myInitialCondition.accepts(o, context)) return false;
-    for (final PatternCondition<? super T> condition : myConditions) {
-      if (!condition.accepts((T)o, context)) return false;
+    final int listSize = myConditions.size();
+    for (int i=0; i<listSize; i++) {
+      if (!myConditions.get(i).accepts((T)o, context)) return false;
     }
     return true;
   }

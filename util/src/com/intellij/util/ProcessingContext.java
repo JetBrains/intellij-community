@@ -4,7 +4,6 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.util.SharedProcessingContext;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +14,7 @@ import java.util.Map;
  * @author peter
  */
 public class ProcessingContext {
-  private final Map<Object, Object> myMap = new THashMap<Object, Object>();
+  private Map<Object, Object> myMap;
   private SharedProcessingContext mySharedContext;
 
   public ProcessingContext() {
@@ -33,19 +32,28 @@ public class ProcessingContext {
     return mySharedContext;
   }
 
+  @SuppressWarnings({"ConstantConditions"})
   public Object get(@NotNull @NonNls final String key) {
-    return myMap.get(key);
+    return myMap == null? null : myMap.get(key);
   }
 
   public void put(@NotNull @NonNls final String key, @NotNull final Object value) {
+    checkMapInitialized();
     myMap.put(key, value);
   }
 
   public <T> void put(Key<T> key, T value) {
+    checkMapInitialized();
     myMap.put(key, value);
   }
 
+  @SuppressWarnings({"ConstantConditions"})
   public <T> T get(Key<T> key) {
-    return (T)myMap.get(key);
+    return myMap == null ? null : (T)myMap.get(key);
   }
+
+  private void checkMapInitialized() {
+    if (myMap == null) myMap = new THashMap<Object, Object>(1);
+  }
+
 }
