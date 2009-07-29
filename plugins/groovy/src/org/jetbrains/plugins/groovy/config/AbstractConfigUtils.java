@@ -4,12 +4,9 @@ import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -20,7 +17,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.config.util.LibrarySDK;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
@@ -137,54 +133,11 @@ public abstract class AbstractConfigUtils implements GroovyLibraryConfigurer{
     return LibrariesUtil.getGlobalLibraries(LIB_SEARCH_CONDITION);
   }
 
-  public String[] getSDKLibNames() {
-    return LibrariesUtil.getLibNames(getGlobalSDKLibraries());
-  }
-
   public abstract boolean isSDKLibrary(Library library);
-
-  public boolean isSDKJar(JarFile jarFile) {
-    if (jarFile.getJarEntry(MANIFEST_PATH) == null) return false;
-    for (String s : KEY_CLASSES) {
-      if (jarFile.getJarEntry(s) == null) return false;
-    }
-    return true;
-  }
 
   @NotNull
   public String getSDKLibVersion(Library library) {
     return getSDKVersion(LibrariesUtil.getGroovyOrGrailsLibraryHome(library));
-  }
-
-  public abstract LibrarySDK[] getSDKs(final Module module);
-
-  public void updateSDKLibInModule(@NotNull Module module, @Nullable LibrarySDK sdk) {
-    ModuleRootManager manager = ModuleRootManager.getInstance(module);
-    ModifiableRootModel model = manager.getModifiableModel();
-    removeSDKLibrariesFromModule(model);
-    if (sdk == null || sdk.getLibrary() == null) {
-      model.commit();
-      return;
-    }
-
-    saveSDKDefaultLibName(sdk.getLibraryName());
-    Library newLib = sdk.getLibrary();
-    LibraryOrderEntry addedEntry = model.addLibraryEntry(newLib);
-    LibrariesUtil.placeEntryToCorrectPlace(model, addedEntry);
-    model.commit();
-  }
-
-  public void removeSDKLibrariesFromModule(ModifiableRootModel model) {
-    OrderEntry[] entries = model.getOrderEntries();
-    for (OrderEntry entry : entries) {
-      if (entry instanceof LibraryOrderEntry) {
-        LibraryOrderEntry libEntry = (LibraryOrderEntry)entry;
-        Library library = libEntry.getLibrary();
-        if (isSDKLibrary(library)) {
-          model.removeOrderEntry(entry);
-        }
-      }
-    }
   }
 
   public Library[] getSDKLibrariesByModule(final Module module) {
@@ -234,26 +187,6 @@ public abstract class AbstractConfigUtils implements GroovyLibraryConfigurer{
   }
 
   public abstract void saveSDKDefaultLibName(String name);
-
-  @Nullable
-  public abstract String getSDKDefaultLibName();
-
-  public static Library createLibFirstTime(String baseName) {
-    LibraryTable libTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
-    Library library = libTable.getLibraryByName(baseName);
-    if (library == null) {
-      library = LibraryUtil.createLibrary(libTable, baseName);
-    }
-    return library;
-  }
-
-  public static void removeOldRoots(Library.ModifiableModel model) {
-    for (OrderRootType type : OrderRootType.getAllTypes()) {
-      for (String url : model.getUrls(type)) {
-        model.removeRoot(url, type);
-      }
-    }
-  }
 
   public Collection<String> getSDKVersions(final Project project) {
     return ContainerUtil.map2List(getAllSDKLibraries(project), new Function<Library, String>() {
