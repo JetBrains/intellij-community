@@ -19,12 +19,9 @@ import com.intellij.facet.ui.ProjectSettingsContext;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.griffon.GriffonLibraryManager;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import javax.swing.*;
@@ -34,8 +31,7 @@ import javax.swing.*;
  */
 public class GroovyLibraryManager extends AbstractGroovyLibraryManager {
   public boolean managesLibrary(@NotNull Library library, LibrariesContainer container) {
-    final VirtualFile[] files = container.getLibraryFiles(library, OrderRootType.CLASSES);
-    return GroovyConfigUtils.isGroovyLibrary(files) && !GrailsConfigUtils.containsGrailsJar(files) && !GriffonLibraryManager.isGriffonSdk(files);
+    return GroovyConfigUtils.isGroovyLibrary(container.getLibraryFiles(library, OrderRootType.CLASSES));
   }
 
   @Nls

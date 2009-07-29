@@ -1,23 +1,25 @@
 package org.jetbrains.plugins.groovy.doc;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.ScrollPaneFactory;
-import org.jetbrains.plugins.grails.GrailsBundle;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.doc.actions.GroovyDocAddPackageAction;
 import org.jetbrains.plugins.groovy.doc.actions.GroovyDocReducePackageAction;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
-import java.io.File;
 
 public final class GroovyDocGenerationPanel extends JPanel {
   JPanel myPanel;
@@ -51,7 +53,7 @@ public final class GroovyDocGenerationPanel extends JPanel {
 
     JScrollPane packagesScrollPane = ScrollPaneFactory.createScrollPane(myPackagesList);
     myPackagesPanel.setLayout(new BorderLayout());
-    myPackagesPanel.setBorder(IdeBorderFactory.createTitledBorder(GrailsBundle.message("groovydoc.packages.title")));
+    myPackagesPanel.setBorder(IdeBorderFactory.createTitledBorder("Source packages"));
 
     myActionToolbar = ActionManager.getInstance().createActionToolbar("GroovyDoc", getActionGroup(), true);
     myPackagesPanel.add(myActionToolbar.getComponent(), BorderLayout.NORTH);

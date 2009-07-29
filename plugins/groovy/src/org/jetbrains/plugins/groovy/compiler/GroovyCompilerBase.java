@@ -26,8 +26,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.compiler.TranslatingCompiler;
 import com.intellij.openapi.compiler.CompilerPaths;
+import com.intellij.openapi.compiler.TranslatingCompiler;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -59,13 +59,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.groovy.compiler.rt.MessageCollector;
-import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 import org.jetbrains.plugins.grails.config.GrailsModuleStructureUtil;
 import org.jetbrains.plugins.grails.util.GrailsUtils;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -97,13 +96,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     classPathBuilder.append(rtJarPath);
     classPathBuilder.append(File.pathSeparator);
 
-    String groovyPath = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
-    String grailsPath = GrailsConfigUtils.getInstance().getSDKInstallPath(module);
-
-    String libPath =
-      (grailsPath.length() > 0 || groovyPath.length() == 0 ? grailsPath : groovyPath) + "/lib";
-
-    libPath = libPath.replace(File.separatorChar, '/');
+    final String libPath = FileUtil.toSystemIndependentName(LibrariesUtil.getGroovyHomePath(module) + "/lib");
     VirtualFile lib = LocalFileSystem.getInstance().findFileByPath(libPath);
     if (lib != null) {
       for (VirtualFile file : lib.getChildren()) {

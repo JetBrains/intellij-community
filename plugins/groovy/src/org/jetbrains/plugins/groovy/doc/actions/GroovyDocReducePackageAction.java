@@ -4,7 +4,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.IconLoader;
-import org.jetbrains.plugins.grails.GrailsBundle;
 
 import javax.swing.*;
 
@@ -17,8 +16,7 @@ public class GroovyDocReducePackageAction extends AnAction {
   private final DefaultListModel myDataModel;
 
   public GroovyDocReducePackageAction(final JList packagesList, final DefaultListModel dataModel) {
-    super(GrailsBundle.message("groovydoc.remove.package"), GrailsBundle.message("groovydoc.remove.package"),
-          IconLoader.getIcon("/general/remove.png"));
+    super("Remove package from list", "Remove package from list", IconLoader.getIcon("/general/remove.png"));
     myPackagesList = packagesList;
     myDataModel = dataModel;
   }

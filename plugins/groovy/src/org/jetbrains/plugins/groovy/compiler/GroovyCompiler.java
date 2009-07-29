@@ -31,11 +31,11 @@ import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
+import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -100,9 +100,8 @@ public class GroovyCompiler extends GroovyCompilerBase {
         continue;
       }
 
-      final String groovyInstallPath = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
-      final String grailsInstallPath = GrailsConfigUtils.getInstance().getSDKInstallPath(module);
-      if (groovyInstallPath.length() == 0 && grailsInstallPath.length() == 0) {
+      final String groovyInstallPath = LibrariesUtil.getGroovyHomePath(module);
+      if (groovyInstallPath == null) {
         if (!GroovyConfigUtils.getInstance().tryToSetUpGroovyFacetOntheFly(module)) {
           Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.facet", module.getName()),
                                    GroovyBundle.message("cannot.compile"));

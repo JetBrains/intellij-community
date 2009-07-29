@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiPackage;
-import org.jetbrains.plugins.grails.GrailsBundle;
 import org.jetbrains.plugins.groovy.doc.GroovyDocConfiguration;
 
 import javax.swing.*;
@@ -22,8 +21,7 @@ public class GroovyDocAddPackageAction extends AnAction {
   private final DefaultListModel myDataModel;
 
   public GroovyDocAddPackageAction(final JList packagesList, final DefaultListModel dataModel) {
-    super(GrailsBundle.message("groovydoc.add.package"), GrailsBundle.message("groovydoc.add.package"),
-          IconLoader.getIcon("/general/add.png"));
+    super("Add package", "Add package", IconLoader.getIcon("/general/add.png"));
     myPackagesList = packagesList;
     myDataModel = dataModel;
   }
@@ -31,7 +29,7 @@ public class GroovyDocAddPackageAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final Project project = DataKeys.PROJECT.getData(e.getDataContext());
 
-    PackageChooserDialog chooser = new PackageChooserDialog(GrailsBundle.message("groovydoc.package.title"), project);
+    PackageChooserDialog chooser = new PackageChooserDialog("Choose packages", project);
     chooser.show();
 
     final List<PsiPackage> packages = chooser.getSelectedPackages();

@@ -39,7 +39,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
@@ -181,8 +180,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   public static boolean isSDKConfigured(Module module) {
-    return module != null && FacetManager.getInstance(module).getFacetByType(GroovyFacet.ID) != null ||
-           GrailsConfigUtils.getInstance().isSDKConfigured(module);
+    return module != null && GroovyFacet.getInstance(module) != null;
   }
 
   @NotNull

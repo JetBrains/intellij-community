@@ -29,7 +29,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.grails.lang.gsp.psi.gsp.api.GspFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -67,14 +66,13 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
   private boolean invoke(final Project project, final Editor editor, PsiFile file, int startOffset, int endOffset) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    if (!(file instanceof GroovyFileBase || file instanceof GspFile)) {
+    if (!(file instanceof GroovyFileBase)) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("only.in.groovy.files"));
       showErrorMessage(project, editor, message);
       return false;
     }
     // Expression or block to be introduced as a variable
-    GroovyFileBase fileBase = file instanceof GspFile ? ((GspFile) file).getGroovyLanguageRoot() : ((GroovyFileBase) file);
-    GrExpression tempExpr = GroovyRefactoringUtil.findElementInRange(fileBase, startOffset, endOffset, GrExpression.class);
+    GrExpression tempExpr = GroovyRefactoringUtil.findElementInRange((GroovyFileBase) file, startOffset, endOffset, GrExpression.class);
 // removed according to GRVY-1231
 /*
     if (tempExpr != null) {

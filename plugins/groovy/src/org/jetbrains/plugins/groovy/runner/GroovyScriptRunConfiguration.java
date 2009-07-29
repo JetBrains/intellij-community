@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -50,9 +51,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
+import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -183,11 +184,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   }
 
   private static String getGroovyHome(Module module) {
-    String groovyHome = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
-    if (groovyHome.length() == 0) {
-      groovyHome = GrailsConfigUtils.getInstance().getSDKInstallPath(module);
-    }
-    return groovyHome;
+    return StringUtil.notNullize(LibrariesUtil.getGroovyHomePath(module));
   }
 
   public static String getConfPath(String groovyHome) {

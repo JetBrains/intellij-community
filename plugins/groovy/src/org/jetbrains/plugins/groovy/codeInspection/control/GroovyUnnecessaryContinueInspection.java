@@ -18,11 +18,11 @@ package org.jetbrains.plugins.groovy.codeInspection.control;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.grails.lang.gsp.psi.gsp.api.GspFile;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -86,7 +86,7 @@ public class GroovyUnnecessaryContinueInspection extends BaseInspection {
 
     public void visitContinueStatement(GrContinueStatement continueStatement) {
       super.visitContinueStatement(continueStatement);
-      if (continueStatement.getContainingFile() instanceof GspFile) {
+      if (continueStatement.getContainingFile().getViewProvider() instanceof TemplateLanguageFileViewProvider) {
         return;
       }
       final GrStatement continuedStatement = continueStatement.findTarget();
