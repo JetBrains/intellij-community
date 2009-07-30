@@ -37,11 +37,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ModuleFileIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -52,15 +51,19 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Chunk;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PathsList;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
-import org.jetbrains.groovy.compiler.rt.MessageCollector;
+import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
+import org.jetbrains.plugins.grails.config.GrailsFramework;
 import org.jetbrains.plugins.grails.config.GrailsModuleStructureUtil;
 import org.jetbrains.plugins.grails.util.GrailsUtils;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.*;
@@ -88,32 +91,35 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     assert sdkType instanceof JavaSdkType;
     commandLine.setExePath(((JavaSdkType)sdkType).getVMExecutablePath(sdk));
 
-    String rtJarPath = PathUtil.getJarPathForClass(GroovycRunner.class);
-    final StringBuilder classPathBuilder = new StringBuilder();
-    classPathBuilder.append(rtJarPath);
-    classPathBuilder.append(File.pathSeparator);
+    final boolean shouldInjectGrails = GrailsUtils.hasGrailsSupport(module) ||
+                                         GrailsModuleStructureUtil.isCommonPluginsModule(module) ||
+                                         GrailsModuleStructureUtil.isCustomPluginModule(module);
 
-    final String libPath = FileUtil.toSystemIndependentName(LibrariesUtil.getGroovyHomePath(module) + "/lib");
-    VirtualFile lib = LocalFileSystem.getInstance().findFileByPath(libPath);
-    if (lib != null) {
-      for (VirtualFile file : lib.getChildren()) {
-        if (required(file.getName())) {
-          classPathBuilder.append(file.getPath());
-          classPathBuilder.append(File.pathSeparator);
-        }
+    final PathsList classPathBuilder = new PathsList();
+
+    classPathBuilder.add(PathUtil.getJarPathForClass(GroovycRunner.class));
+    classPathBuilder.addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(LibrariesUtil.getGroovyHomePath(module) + "/lib", ".*(groovy|asm|antlr|junit|jline|ant|commons).*\\.jar"));
+
+    if (shouldInjectGrails) {
+      final VirtualFile grailsHome = GrailsFramework.INSTANCE.getSdkRoot(module);
+      if (grailsHome != null) {
+        final String dist = grailsHome.getPath() + "/dist";
+        classPathBuilder.addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(dist, GrailsFramework.GRAILS_BOOTSTRAP_JAR));
+        classPathBuilder.addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(dist, GrailsConfigUtils.GRAILS_CORE_JAR_PATTERN));
+
+        classPathBuilder.addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(grailsHome.getPath() + "/lib", ".*.jar"));
       }
     }
 
-    classPathBuilder.append(getModuleSpecificClassPath(module));
     if ("true".equals(System.getProperty("profile.groovy.compiler"))) {
       commandLine.addParameter("-Djava.library.path=" + PathManager.getBinPath());
       commandLine.addParameter("-Dprofile.groovy.compiler=true");
       commandLine.addParameter("-agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=GroovyCompiler");
-      classPathBuilder.append(PathManager.getLibPath()).append("/yjp-controller-api-redist.jar").append(File.pathSeparator);
+      classPathBuilder.add(PathManager.getLibPath() + File.separator + "yjp-controller-api-redist.jar");
     }
 
     commandLine.addParameter("-cp");
-    commandLine.addParameter(classPathBuilder.toString());
+    commandLine.addParameter(classPathBuilder.getPathsString());
 
     commandLine.addParameter("-Xmx" + System.getProperty("groovy.compiler.Xmx", "400m"));
     commandLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
@@ -130,8 +136,9 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     try {
       File fileWithParameters = File.createTempFile("toCompile", "");
-      fillFileWithGroovycParameters(module, toCompile, fileWithParameters, forStubs, compileContext, outputDir);
+      fillFileWithGroovycParameters(module, toCompile, fileWithParameters, forStubs, compileContext, outputDir, shouldInjectGrails);
 
+      commandLine.addParameter(forStubs ? "stubs" : "groovyc");
       commandLine.addParameter(fileWithParameters.getPath());
     }
     catch (IOException e) {
@@ -173,28 +180,6 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     }
   }
 
-  private static String getModuleSpecificClassPath(final Module module) {
-    final StringBuffer buffer = new StringBuffer();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        ModuleRootManager manager = ModuleRootManager.getInstance(module);
-        for (OrderEntry entry : manager.getOrderEntries()) {
-          if (entry instanceof LibraryOrderEntry) {
-            Library library = ((LibraryOrderEntry)entry).getLibrary();
-            if (library == null) continue;
-            for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
-              String path = file.getPath();
-              if (path != null && path.endsWith(".jar!/")) {
-                buffer.append(StringUtil.trimEnd(path, "!/")).append(File.pathSeparator);
-              }
-            }
-          }
-        }
-      }
-    });
-    return buffer.toString();
-  }
-
   private static boolean required(String name) {
     name = name.toLowerCase();
     if (!name.endsWith(".jar")) return false;
@@ -216,15 +201,16 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     String category;
     category = compilerMessage.getCategory();
 
-    if (MessageCollector.ERROR.equals(category)) return CompilerMessageCategory.ERROR;
-    if (MessageCollector.INFORMATION.equals(category)) return CompilerMessageCategory.INFORMATION;
-    if (MessageCollector.STATISTICS.equals(category)) return CompilerMessageCategory.STATISTICS;
-    if (MessageCollector.WARNING.equals(category)) return CompilerMessageCategory.WARNING;
+    if (CompilerMessage.ERROR.equals(category)) return CompilerMessageCategory.ERROR;
+    if (CompilerMessage.INFORMATION.equals(category)) return CompilerMessageCategory.INFORMATION;
+    if (CompilerMessage.STATISTICS.equals(category)) return CompilerMessageCategory.STATISTICS;
+    if (CompilerMessage.WARNING.equals(category)) return CompilerMessageCategory.WARNING;
 
     return CompilerMessageCategory.ERROR;
   }
 
-  private void fillFileWithGroovycParameters(Module module, List<VirtualFile> virtualFiles, File f, boolean forStubs, CompileContext context, VirtualFile outputDir) {
+  private void fillFileWithGroovycParameters(Module module, List<VirtualFile> virtualFiles, File f, boolean forStubs, CompileContext context,
+                                             VirtualFile outputDir, final boolean shouldInjectGrails) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Running groovyc on: " + virtualFiles.toString());
     }
@@ -240,14 +226,6 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     final PrintStream printer = new PrintStream(stream);
 
-/*    filename1
-*    filname2
-*    filname3
-*    ...
-*    filenameN
-*/
-
-    //files
     for (final VirtualFile item : virtualFiles) {
       printer.println(GroovycRunner.SRC_FILE);
       printer.println(item.getPath());
@@ -264,18 +242,24 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       printer.println(GroovycRunner.END);
     }
 
-    //classpath
     printer.println(GroovycRunner.CLASSPATH);
-    final ModuleChunk chunk =
-      new ModuleChunk((CompileContextEx)context, new Chunk<Module>(module), Collections.<Module, List<VirtualFile>>emptyMap());
+    final ModuleChunk chunk = new ModuleChunk((CompileContextEx)context, new Chunk<Module>(module), Collections.<Module, List<VirtualFile>>emptyMap());
     printer.println(chunk.getCompilationClasspath() + File.pathSeparator + CompilerPaths.getModuleOutputPath(module, false) + File.pathSeparator + CompilerPaths.getModuleOutputPath(module, true));
 
-    //Grails injections  support
-    printer.println(GroovycRunner.IS_GRAILS);
-    printer.println(GrailsUtils.hasGrailsSupport(module) || GrailsModuleStructureUtil.isCommonPluginsModule(module) || GrailsModuleStructureUtil.isCustomPluginModule(module));
-
-    printer.println(GroovycRunner.FOR_STUBS);
-    printer.println(forStubs);
+    List<String> patchers = new SmartList<String>();
+    if (shouldInjectGrails) {
+      final VirtualFile grailsHome = GrailsFramework.INSTANCE.getSdkRoot(module);
+      if (grailsHome != null) {
+        patchers.add("org.jetbrains.groovy.compiler.rt.GrailsInjectingPatcher");
+      }
+    }
+    if (!patchers.isEmpty()) {
+      printer.println(GroovycRunner.PATCHERS);
+      for (final String patcher : patchers) {
+        printer.println(patcher);
+      }
+      printer.println(GroovycRunner.END);
+    }
 
     final Charset ideCharset = EncodingProjectManager.getInstance(myProject).getDefaultCharset();
     if (!Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), ideCharset)) {

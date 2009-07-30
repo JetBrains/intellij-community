@@ -37,8 +37,7 @@ import java.util.*;
 public class GroovycRunner {
 
   public static final String CLASSPATH = "classpath";
-  public static final String IS_GRAILS = "is_grails";
-  public static final String FOR_STUBS = "for_stubs";
+  public static final String PATCHERS = "patchers";
   public static final String ENCODING = "encoding";
   public static final String OUTPUTPATH = "outputpath";
   public static final String END = "end";
@@ -53,7 +52,7 @@ public class GroovycRunner {
   public static final String MESSAGES_START = "%%m";
 
   public static final String MESSAGES_END = "/%m";
-  public static final String SEPARATOR = "#";
+  public static final String SEPARATOR = "#%%#%%%#%%%%%%%%%#";
 
   public static final Controller ourController = initController();
   public static final String PRESENTABLE_MESSAGE = "@#$%@# Presentable:";
@@ -86,175 +85,62 @@ public class GroovycRunner {
         e.printStackTrace();
       }
     }
+
+    if (args.length != 2) {
+      System.err.println("There is no arguments for groovy compiler");
+      return;
+    }
+
+    final boolean forStubs = "stubs".equals(args[0]);
+    final File argsFile = new File(args[1]);
+
+    if (!argsFile.exists()) {
+      System.err.println("Arguments file for groovy compiler not found");
+      return;
+    }
+
     try {
-      String moduleClasspath = null;
-      String moduleOutputPath = null;
-      boolean isGrails = false;
-      boolean forStubs = false;
-      String encoding = null;
+      final CompilerConfiguration compilerConfiguration = new CompilerConfiguration();
+      compilerConfiguration.setOutput(new PrintWriter(System.err));
+      compilerConfiguration.setWarningLevel(WarningMessage.PARANOIA);
 
-      if (args.length != 1) {
-        System.err.println("There is no arguments for groovy compiler");
-        return;
-      }
+      final List compilerMessages = new ArrayList();
+      final List patchers = new ArrayList();
+      final List srcFiles = new ArrayList();
+      final Map class2File = new HashMap();
 
-      File argsFile = new File(args[0]);
-
-      if (!argsFile.exists()) {
-        System.err.println("Arguments file for groovy compiler not found");
-        return;
-      }
-
-      List srcFiles = new ArrayList();
-      Map class2File = new HashMap();
-
-      BufferedReader reader = null;
-      FileInputStream stream;
-
-      try {
-        stream = new FileInputStream(argsFile);
-        reader = new BufferedReader(new InputStreamReader(stream));
-
-        String line;
-
-        while ((line = reader.readLine()) != null && !line.equals(CLASSPATH)) {
-          if (SRC_FILE.equals(line)) {
-            final File file = new File(reader.readLine());
-            srcFiles.add(file);
-            String s;
-            while (!END.equals(s = reader.readLine())) {
-              class2File.put(s, file);
-            }
-          }
-        }
-
-        while (line != null) {
-          if (line.startsWith(CLASSPATH)) {
-            moduleClasspath = reader.readLine();
-          }
-
-          if (line.startsWith(IS_GRAILS)) {
-            String s = reader.readLine();
-            isGrails = "true".equals(s);
-          }
-
-          if (line.startsWith(FOR_STUBS)) {
-            String s = reader.readLine();
-            forStubs = "true".equals(s);
-          }
-
-          if (line.startsWith(ENCODING)) {
-            encoding = reader.readLine();
-          }
-
-          if (line.startsWith(OUTPUTPATH)) {
-            moduleOutputPath = reader.readLine();
-          }
-
-          line = reader.readLine();
-        }
-
-      }
-      catch (FileNotFoundException e) {
-        e.printStackTrace();
-      }
-      catch (IOException e) {
-        e.printStackTrace();
-      }
-      finally {
-        try {
-          reader.close();
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
-        finally {
-          argsFile.delete();
-        }
-      }
-
-
+      final String moduleClasspath = fillFromArgsFile(argsFile, compilerConfiguration, patchers, compilerMessages, srcFiles, class2File);
       if (srcFiles.isEmpty()) return;
 
-      MessageCollector messageCollector = new MessageCollector();
-      final List compiledFiles = new ArrayList();
-
       System.out.println(PRESENTABLE_MESSAGE + "Groovy compiler: loading sources...");
-      createCompilationUnits(srcFiles, class2File, moduleClasspath, moduleOutputPath, isGrails, encoding, forStubs).compile(messageCollector, compiledFiles);
+      final CompilationUnit unit = createCompilationUnit(moduleClasspath, forStubs, compilerConfiguration);
+      addSources(forStubs, srcFiles, unit);
+      runPatchers(patchers, compilerMessages, class2File, unit);
 
+      System.out.println(PRESENTABLE_MESSAGE + "Groovyc: compiling...");
+      final List compiledFiles = GroovyCompilerWrapper.compile(compilerMessages, forStubs, unit);
       System.out.println(CLEAR_PRESENTABLE);
 
-      Set allCompiling = new HashSet();
-      allCompiling.addAll(srcFiles);
-
-      File[] toRecompilesFiles =
-        !compiledFiles.isEmpty() ? new File[0] : (File[])allCompiling.toArray(new File[allCompiling.size()]);
-
-      CompilerMessage[] compilerMessages = messageCollector.getAllMessage();
-
-      /*
-      * output path
-        * source file
-        * output root directory
-        */
+      System.out.println();
+      reportCompiledItems(compiledFiles);
 
       System.out.println();
-      for (int i = 0; i < compiledFiles.size(); i++) {
-        MyCompilationUnits.OutputItem compiledOutputItem = (MyCompilationUnits.OutputItem)compiledFiles.get(i);
-        System.out.print(COMPILED_START);
-        System.out.print(compiledOutputItem.getOutputPath());
-        System.out.print(SEPARATOR);
-        System.out.print(compiledOutputItem.getSourceFile());
-        System.out.print(SEPARATOR);
-        System.out.print(compiledOutputItem.getOutputRootDirectory());
-        System.out.print(COMPILED_END);
-        System.out.println();
-      }
-
-      System.out.println();
-      for (int i = 0; i < toRecompilesFiles.length; i++) {
-        File toRecompileFile = toRecompilesFiles[i];
-        System.out.print(TO_RECOMPILE_START);
-
-        try {
-          System.out.print(toRecompileFile.getCanonicalPath());
-        }
-        catch (IOException e) {
-          toRecompileFile.getPath();
-        }
-
-        System.out.print(TO_RECOMPILE_END);
-        System.out.println();
+      if (compiledFiles.isEmpty()) {
+        reportNotCompiledItems(srcFiles);
       }
 
       int errorCount = 0;
-      for (int i = 0; i < compilerMessages.length; i++) {
-        CompilerMessage message = compilerMessages[i];
+      for (int i = 0; i < compilerMessages.size(); i++) {
+        CompilerMessage message = (CompilerMessage)compilerMessages.get(i);
 
-        final String category = message.getCategory();
-        final boolean isError = category == MessageCollector.ERROR;
-        if (isError) {
+        if (message.getCategory() == CompilerMessage.ERROR) {
           if (errorCount > 100) {
             continue;
           }
           errorCount++;
         }
 
-        System.out.print(MESSAGES_START);
-
-        System.out.print(category);
-        System.out.print(SEPARATOR);
-        System.out.print(message.getMessage());
-        System.out.print(SEPARATOR);
-        System.out.print(message.getUrl());
-        System.out.print(SEPARATOR);
-        System.out.print(message.getLineNum());
-        System.out.print(SEPARATOR);
-        System.out.print(message.getColumnNum());
-        System.out.print(SEPARATOR);
-
-        System.out.print(MESSAGES_END);
-        System.out.println();
+        printMessage(message);
       }
     }
     catch (Throwable e) {
@@ -272,38 +158,179 @@ public class GroovycRunner {
       }
     }
   }
-                                  
-  private static MyCompilationUnits createCompilationUnits(List srcFilesToCompile, Map class2File, String classpath, 
-                                                           String ordinaryOutputPath,
-                                                           boolean isGrailsModule,
-                                                           final String encoding,
-                                                           boolean forStubs) {
-    final CompilationUnit unit = createCompilationUnit(class2File, classpath, ordinaryOutputPath, isGrailsModule, encoding, forStubs);
-    MyCompilationUnits myCompilationUnits = new MyCompilationUnits(unit, forStubs);
 
-    for (int i = 0; i < srcFilesToCompile.size(); i++) {
-      myCompilationUnits.addSource((File) srcFilesToCompile.get(i));
+  private static String fillFromArgsFile(File argsFile, CompilerConfiguration compilerConfiguration, List patchers, List compilerMessages,
+                                         List srcFiles, Map class2File) {
+    String moduleClasspath = null;
+
+    BufferedReader reader = null;
+    FileInputStream stream;
+
+    try {
+      stream = new FileInputStream(argsFile);
+      reader = new BufferedReader(new InputStreamReader(stream));
+
+      String line;
+
+      while ((line = reader.readLine()) != null && !line.equals(CLASSPATH)) {
+        if (SRC_FILE.equals(line)) {
+          final File file = new File(reader.readLine());
+          srcFiles.add(file);
+          String s;
+          while (!END.equals(s = reader.readLine())) {
+            class2File.put(s, file);
+          }
+        }
+      }
+
+      while (line != null) {
+        if (line.startsWith(CLASSPATH)) {
+          moduleClasspath = reader.readLine();
+        }
+
+        if (line.startsWith(PATCHERS)) {
+          String s;
+          while (!END.equals(s = reader.readLine())) {
+            try {
+              final CompilationUnitPatcher patcher = (CompilationUnitPatcher)Class.forName(s).newInstance();
+              patchers.add(patcher);
+            }
+            catch (InstantiationException e) {
+              addExceptionInfo(compilerMessages, e, "Couldn't instantiate " + s);
+            }
+            catch (IllegalAccessException e) {
+              addExceptionInfo(compilerMessages, e, "Couldn't instantiate " + s);
+            }
+            catch (ClassNotFoundException e) {
+              addExceptionInfo(compilerMessages, e, "Couldn't instantiate " + s);
+            }
+          }
+        }
+
+        if (line.startsWith(ENCODING)) {
+          compilerConfiguration.setSourceEncoding(reader.readLine());
+        }
+
+        if (line.startsWith(OUTPUTPATH)) {
+          compilerConfiguration.setTargetDirectory(reader.readLine());
+        }
+
+        line = reader.readLine();
+      }
+
     }
-
-    return myCompilationUnits;
+    catch (FileNotFoundException e) {
+      e.printStackTrace();
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
+    finally {
+      try {
+        reader.close();
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+      }
+      finally {
+        argsFile.delete();
+      }
+    }
+    return moduleClasspath;
   }
 
-  private static CompilationUnit createCompilationUnit(Map class2File, String classpath, String outputPath, boolean isGrailsModule,
-                                                       final String encoding, boolean forStubs) {
-    CompilerConfiguration compilerConfiguration = new CompilerConfiguration();
-    compilerConfiguration.setOutput(new PrintWriter(System.err));
-    compilerConfiguration.setWarningLevel(WarningMessage.PARANOIA);
-    if (encoding != null){
-      compilerConfiguration.setSourceEncoding(encoding);
+  private static void addSources(boolean forStubs, List srcFiles, final CompilationUnit unit) {
+    for (int i = 0; i < srcFiles.size(); i++) {
+      final File file = (File)srcFiles.get(i);
+      if (forStubs && file.getName().endsWith(".java")) {
+        ((JavaStubCompilationUnit)unit).addSourceFile(file); //add java source
+        continue;
+      }
+
+      unit.addSource(new SourceUnit(file, unit.getConfiguration(), unit.getClassLoader(), unit.getErrorCollector()) {
+        public void parse() throws CompilationFailedException {
+          System.out.println(PRESENTABLE_MESSAGE + "Parsing " + file.getName() + "...");
+          super.parse();
+          System.out.println(CLEAR_PRESENTABLE);
+        }
+      });
     }
+  }
+
+  private static void runPatchers(List patchers, List compilerMessages, Map class2File, CompilationUnit unit) {
+    if (!patchers.isEmpty()) {
+      final PsiAwareResourceLoader loader = new PsiAwareResourceLoader(class2File);
+      for (int i = 0; i < patchers.size(); i++) {
+        final CompilationUnitPatcher patcher = (CompilationUnitPatcher)patchers.get(i);
+        try {
+          patcher.patchCompilationUnit(unit, loader);
+        }
+        catch (LinkageError e) {
+          addExceptionInfo(compilerMessages, e, "Couldn't run " + patcher.getClass().getName());
+        }
+      }
+    }
+  }
+
+  private static void reportNotCompiledItems(Collection toRecompile) {
+    for (Iterator iterator = toRecompile.iterator(); iterator.hasNext();) {
+      File file = (File)iterator.next();
+      System.out.print(TO_RECOMPILE_START);
+      System.out.print(file.getAbsolutePath());
+      System.out.print(TO_RECOMPILE_END);
+      System.out.println();
+    }
+  }
+
+  private static void reportCompiledItems(List compiledFiles) {
+    for (int i = 0; i < compiledFiles.size(); i++) {
+      /*
+      * output path
+      * source file
+      * output root directory
+      */
+      GroovyCompilerWrapper.OutputItem compiledOutputItem = (GroovyCompilerWrapper.OutputItem)compiledFiles.get(i);
+      System.out.print(COMPILED_START);
+      System.out.print(compiledOutputItem.getOutputPath());
+      System.out.print(SEPARATOR);
+      System.out.print(compiledOutputItem.getSourceFile());
+      System.out.print(SEPARATOR);
+      System.out.print(compiledOutputItem.getOutputRootDirectory());
+      System.out.print(COMPILED_END);
+      System.out.println();
+    }
+  }
+
+  private static void printMessage(CompilerMessage message) {
+    System.out.print(MESSAGES_START);
+    System.out.print(message.getCategory());
+    System.out.print(SEPARATOR);
+    System.out.print(message.getMessage());
+    System.out.print(SEPARATOR);
+    System.out.print(message.getUrl());
+    System.out.print(SEPARATOR);
+    System.out.print(message.getLineNum());
+    System.out.print(SEPARATOR);
+    System.out.print(message.getColumnNum());
+    System.out.print(SEPARATOR);
+    System.out.print(MESSAGES_END);
+    System.out.println();
+  }
+
+  private static void addExceptionInfo(List compilerMessages, Throwable e, String message) {
+    final StringWriter writer = new StringWriter();
+    e.printStackTrace(new PrintWriter(writer));
+    compilerMessages.add(new CompilerMessage(CompilerMessage.WARNING, message + ":\n" + writer, "<exception>", -1, -1));
+  }
+
+  private static CompilationUnit createCompilationUnit(String classpath, boolean forStubs,
+                                                       final CompilerConfiguration compilerConfiguration) {
     compilerConfiguration.setClasspath(classpath);
-    compilerConfiguration.setTargetDirectory(outputPath);
 
     final GroovyClassLoader classLoader = buildClassLoaderFor(compilerConfiguration);
 
-    final CompilationUnit compilationUnit;
     if (forStubs) {
-      compilationUnit = new JavaStubCompilationUnit(compilerConfiguration, classLoader, new File(outputPath)) {
+      return new JavaStubCompilationUnit(compilerConfiguration, classLoader, compilerConfiguration.getTargetDirectory()) {
         public void gotoPhase(int phase) throws CompilationFailedException {
           super.gotoPhase(phase);
           if (phase <= Phases.ALL) {
@@ -312,26 +339,15 @@ public class GroovycRunner {
         }
       };
     }
-    else {
-      compilationUnit = new CompilationUnit(compilerConfiguration, null, classLoader) {
+    return new CompilationUnit(compilerConfiguration, null, classLoader) {
 
-        public void gotoPhase(int phase) throws CompilationFailedException {
-          super.gotoPhase(phase);
-          if (phase <= Phases.ALL) {
-            System.out.println(PRESENTABLE_MESSAGE + "Groovy compiler: " + getPhaseDescription());
-          }
+      public void gotoPhase(int phase) throws CompilationFailedException {
+        super.gotoPhase(phase);
+        if (phase <= Phases.ALL) {
+          System.out.println(PRESENTABLE_MESSAGE + "Groovy compiler: " + getPhaseDescription());
         }
-      };
-    }
-
-    /**
-     * Adding here framework-specific Phase operations
-     * @see org.codehaus.groovy.control.CompilationUnit#addPhaseOperation(org.codehaus.groovy.control.CompilationUnit.PrimaryClassNodeOperation, int)
-     */
-    if (isGrailsModule) {
-      PhaseOperationUtil.addGrailsAwareInjectionOperation(class2File, compilationUnit, compilerConfiguration);
-    }
-    return compilationUnit;
+      }
+    };
   }
 
   static GroovyClassLoader buildClassLoaderFor(final CompilerConfiguration compilerConfiguration) {

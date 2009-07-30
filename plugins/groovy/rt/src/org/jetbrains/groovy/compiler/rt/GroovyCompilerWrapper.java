@@ -24,56 +24,32 @@ import org.codehaus.groovy.control.*;
 import org.codehaus.groovy.control.messages.*;
 import org.codehaus.groovy.syntax.SyntaxException;
 import org.codehaus.groovy.tools.GroovyClass;
-import org.codehaus.groovy.tools.javac.JavaStubCompilationUnit;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 
-public class MyCompilationUnits {
-
-  final CompilationUnit sourceCompilationUnit;
-  private final boolean myForStubs;
-
-  MyCompilationUnits(CompilationUnit sourceCompilationUnit, boolean forStubs) {
-    this.sourceCompilationUnit = sourceCompilationUnit;
-    myForStubs = forStubs;
-  }
-                       
-  public void addSource(final File file) {
-    if (myForStubs && file.getName().endsWith(".java")) {
-      ((JavaStubCompilationUnit)sourceCompilationUnit).addSourceFile(file); //add java source
-      return;
-    }
-
-    sourceCompilationUnit.addSource(new SourceUnit(file, sourceCompilationUnit.getConfiguration(), sourceCompilationUnit.getClassLoader(),
-                                                   sourceCompilationUnit.getErrorCollector()) {
-      public void parse() throws CompilationFailedException {
-        System.out.println(GroovycRunner.PRESENTABLE_MESSAGE + "Parsing " + file.getName() + "...");
-        super.parse();
-        System.out.println(GroovycRunner.CLEAR_PRESENTABLE);
-      }
-    });
+public class GroovyCompilerWrapper {
+  private GroovyCompilerWrapper() {
   }
 
-  public void compile(MessageCollector collector, List compiledFiles) {
+  public static List compile(List collector, boolean forStubs, final CompilationUnit unit) {
+    List compiledFiles = new ArrayList();
     try {
-      sourceCompilationUnit.compile(myForStubs ? Phases.CONVERSION : Phases.ALL);
-      addCompiledFiles(sourceCompilationUnit, compiledFiles);
+      unit.compile(forStubs ? Phases.CONVERSION : Phases.ALL);
+      addCompiledFiles(unit, compiledFiles, forStubs);
     } catch (CompilationFailedException e) {
       processCompilationException(e, collector);
     } catch (IOException e) {
       processException(e, collector);
     } finally {
-      addWarnings(sourceCompilationUnit.getErrorCollector(), collector);
+      addWarnings(unit.getErrorCollector(), collector);
     }
+    return compiledFiles;
   }
 
-  private void addCompiledFiles(CompilationUnit compilationUnit, List compiledFiles) throws IOException {
+  private static void addCompiledFiles(CompilationUnit compilationUnit, List compiledFiles, boolean forStubs) throws IOException {
     File targetDirectory = compilationUnit.getConfiguration().getTargetDirectory();
 
     String outputPath = targetDirectory.getCanonicalPath().replace(File.separatorChar, '/');
@@ -93,7 +69,7 @@ public class MyCompilationUnits {
 
       for (int i = 0; i < topLevelClasses.size(); i++) {
         final String topLevel = ((ClassNode)topLevelClasses.get(i)).getName();
-        if (myForStubs) {
+        if (forStubs) {
           compiledFiles.add(new OutputItemImpl(outputPath, outputPath + "/" + topLevel.replace('.', '/') + ".java", fileName));
         } else {
           final String nested = topLevel + "$";
@@ -102,7 +78,6 @@ public class MyCompilationUnits {
             String className = (String)tailIter.next();
             if (className.equals(topLevel) || className.startsWith(nested)) {
               tailIter.remove();
-              //System.out.print("  " + className);
               compiledFiles.add(new OutputItemImpl(outputPath, outputPath + "/" + className.replace('.', '/') + ".class", fileName));
             } else {
               break;
@@ -110,18 +85,17 @@ public class MyCompilationUnits {
           }
         }
       }
-      //System.out.println("");
     }
   }
 
-  private static void addWarnings(ErrorCollector errorCollector, MessageCollector collector) {
+  private static void addWarnings(ErrorCollector errorCollector, List collector) {
     for (int i = 0; i < errorCollector.getWarningCount(); i++) {
       WarningMessage warning = errorCollector.getWarning(i);
-      collector.addMessage(MessageCollector.WARNING, warning.getMessage(), null, -1, -1);
+      collector.add(new CompilerMessage(CompilerMessage.WARNING, warning.getMessage(), null, -1, -1));
     }
   }
 
-  private void processCompilationException(Exception exception, MessageCollector collector) {
+  private static void processCompilationException(Exception exception, List collector) {
     if (exception instanceof MultipleCompilationErrorsException) {
       MultipleCompilationErrorsException multipleCompilationErrorsException = (MultipleCompilationErrorsException) exception;
       ErrorCollector errorCollector = multipleCompilationErrorsException.getErrorCollector();
@@ -133,7 +107,8 @@ public class MyCompilationUnits {
     }
   }
 
-  private void processException(Message message, MessageCollector collector) {
+  /** @noinspection ThrowableResultOfMethodCallIgnored*/
+  private static void processException(Message message, List collector) {
     if (message instanceof SyntaxErrorMessage) {
       SyntaxErrorMessage syntaxErrorMessage = (SyntaxErrorMessage) message;
       addErrorMessage(syntaxErrorMessage.getCause(), collector);
@@ -143,36 +118,36 @@ public class MyCompilationUnits {
     } else if (message instanceof SimpleMessage) {
       addErrorMessage((SimpleMessage) message, collector);
     } else {
-      collector.addMessage(MessageCollector.ERROR, "An unknown error occurred.", null, -1, -1);
+      collector.add(new CompilerMessage(CompilerMessage.ERROR, "An unknown error occurred.", null, -1, -1));
     }
   }
 
-  private void processException(Exception exception, MessageCollector collector) {
+  private static void processException(Exception exception, List collector) {
     if (exception instanceof GroovyRuntimeException) {
       addErrorMessage((GroovyRuntimeException) exception, collector);
     } else {
-      collector.addMessage(MessageCollector.ERROR, exception.getMessage(), null, -1, -1);
+      collector.add(new CompilerMessage(CompilerMessage.ERROR, exception.getMessage(), null, -1, -1));
     }
   }
 
   private static final String LINE_AT = " @ line ";
 
-  private void addErrorMessage(SyntaxException exception, MessageCollector collector) {
+  private static void addErrorMessage(SyntaxException exception, List collector) {
     String message = exception.getMessage();
     String justMessage = message.substring(0, message.lastIndexOf(LINE_AT));
-    collector.addMessage(MessageCollector.ERROR, justMessage, exception.getSourceLocator(),
-        exception.getLine(), exception.getStartColumn());
+    collector.add(new CompilerMessage(CompilerMessage.ERROR, justMessage, exception.getSourceLocator(),
+        exception.getLine(), exception.getStartColumn()));
   }
 
-  private static void addErrorMessage(GroovyRuntimeException exception, MessageCollector collector) {
+  private static void addErrorMessage(GroovyRuntimeException exception, List collector) {
     ASTNode astNode = exception.getNode();
     ModuleNode module = exception.getModule();
     if (module == null) {
       module = findModule(astNode);
     }
-    collector.addMessage(MessageCollector.ERROR, exception.getMessageWithoutLocationText(),
+    collector.add(new CompilerMessage(CompilerMessage.ERROR, exception.getMessageWithoutLocationText(),
         module == null ? "<no module>" : module.getDescription(),
-        astNode.getLineNumber(), astNode.getColumnNumber());
+        astNode.getLineNumber(), astNode.getColumnNumber()));
   }
 
   private static ModuleNode findModule(ASTNode node) {
@@ -188,12 +163,8 @@ public class MyCompilationUnits {
     return null;
   }
 
-  private static void addErrorMessage(SimpleMessage message, MessageCollector collector) {
-    collector.addMessage(MessageCollector.ERROR, message.getMessage(), null, -1, -1);
-  }
-
-  private static String pathToUrl(String path) {
-    return "file" + "://" + path;
+  private static void addErrorMessage(SimpleMessage message, List collector) {
+    collector.add(new CompilerMessage(CompilerMessage.ERROR, message.getMessage(), null, -1, -1));
   }
 
   public interface OutputItem {
