@@ -10,6 +10,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.openapi.module.Module;
 
 /**
@@ -43,5 +44,13 @@ public class DomJavaUtil {
       assert aClass.isValid() : name;
     }
     return aClass;
+  }
+
+  public static PsiClass findClass(String name, @NotNull DomElement element) {
+    XmlElement xmlElement = element.getXmlElement();
+    if (xmlElement != null) {
+      return findClass(name, (XmlFile)xmlElement.getContainingFile(), element.getModule(), element.getResolveScope());
+    }
+    return null;
   }
 }
