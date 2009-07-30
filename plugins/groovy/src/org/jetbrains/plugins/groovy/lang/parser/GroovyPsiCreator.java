@@ -22,7 +22,6 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.IGroovyDocElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.GroovyDocPsiCreator;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrIdentifier;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowsClauseImpl;
@@ -103,7 +102,7 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     //Identifiers & literal
     if (elem.equals(LITERAL)) return new GrLiteralImpl(node);
     if (elem.equals(LABEL)) return new GrLabelImpl(node);
-    if (elem.equals(IDENTIFIER)) return new GrIdentifier(node);
+//    if (elem.equals(IDENTIFIER)) return new GrIdentifierImpl(node);
     //Lists, maps etc...
     if (elem.equals(LIST_OR_MAP)) return new GrListOrMapImpl(node);
 
