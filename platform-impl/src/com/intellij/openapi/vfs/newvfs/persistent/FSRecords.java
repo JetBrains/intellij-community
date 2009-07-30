@@ -269,9 +269,11 @@ public class FSRecords implements Disposable, Forceable {
         catch (IOException e) {
           // Ignore
         }
-        myNames.force();
-        myAttributes.force();
-        myRecords.force();
+        if (myNames != null) {
+          myNames.force();
+          myAttributes.force();
+          myRecords.force();
+        }
       }
     }
 
