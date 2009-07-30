@@ -16,6 +16,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
@@ -57,7 +58,7 @@ public class IntentionManagerImpl extends IntentionManager {
   }
 
   private void registerIntentionFromBean(final IntentionActionBean extension) {
-    myInitActionsAlarm.addRequest(new Runnable(){
+    final Runnable runnable = new Runnable() {
       public void run() {
         final String descriptionDirectoryName = extension.getDescriptionDirectoryName();
         final String[] categories = extension.getCategories();
@@ -75,7 +76,16 @@ public class IntentionManagerImpl extends IntentionManager {
           }
         }
       }
-    }, 300);
+    };
+    //todo temporary hack, need smarter logic:
+    // * on the first request, wait until all the initialization is finished  
+    // * ensure this request doesn't come on EDT
+    // * while waiting, check for ProcessCanceledException
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      runnable.run();
+    } else {
+      myInitActionsAlarm.addRequest(runnable, 300);
+    }
   }
 
   private static IntentionAction createIntentionActionWrapper(final IntentionActionBean intentionActionBean, final String[] categories) {
