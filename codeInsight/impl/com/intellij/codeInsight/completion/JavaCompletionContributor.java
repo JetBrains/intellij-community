@@ -188,11 +188,16 @@ public class JavaCompletionContributor extends CompletionContributor {
                                                                                        new ElementExtractorFilter(filter),
                                                                                        checkAccess,
                                                                                        result.getPrefixMatcher())) {
-                    JavaCompletionUtil.highlightMemberOfContainer(element.as(LookupItem.class));
+                    final LookupItem item = element.as(LookupItem.class);
+                    JavaCompletionUtil.highlightMemberOfContainer(item);
                     if (isSwitchLabel) {
                       result.addElement(TailTypeDecorator.createDecorator(element, TailType.createSimpleTailType(';')));
                     } else {
-                      setTailTypeByFile(element, file);
+                      if (file instanceof PsiJavaCodeReferenceCodeFragment &&
+                          !((PsiJavaCodeReferenceCodeFragment)file).isClassesAccepted() && item != null) {
+                        item.setTailType(TailType.NONE);
+                      }
+
                       result.addElement(element);
                     }
                   }
@@ -244,17 +249,6 @@ public class JavaCompletionContributor extends CompletionContributor {
       result.stopHere();
     }
   }
-
-  private static void setTailTypeByFile(LookupElement element, PsiFile file) {
-    final TailType tailType = JavaCompletionUtil.getDefaultTailTypeForFile(file);
-    if (tailType != null) {
-      final LookupItem lookupItem = element.as(LookupItem.class);
-      if (lookupItem != null) {
-        lookupItem.setTailType(tailType);
-      }
-    }
-  }
-
 
   private static void completeAnnotationAttributeName(CompletionResultSet result, PsiFile file, PsiElement insertedElement,
                                                       JavaAwareCompletionData completionData, boolean checkAccess) {

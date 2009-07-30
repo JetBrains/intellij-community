@@ -1,7 +1,5 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
-import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -169,8 +167,6 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     final ReferenceEditorComboWithBrowseButton packageChooser =
       new PackageNameReferenceEditorCombo("", myProject, RECENTS_KEY, RefactoringBundle.message("choose.destination.package"));
     final Document document = packageChooser.getChildComponent().getDocument();
-    final PsiFile file = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-    JavaCompletionUtil.setDefaultTailTypeForFile(file, TailType.NONE);
     document.addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         validateButtons();

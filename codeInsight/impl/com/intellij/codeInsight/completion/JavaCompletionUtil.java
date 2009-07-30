@@ -896,29 +896,4 @@ public class JavaCompletionUtil {
 
     set.add(ret);
   }
-
-  public static final Key<TailType> COMPLETION_TAIL_TYPE = Key.create("COMPLETION_TAIL_TYPE");
-
-  /**
-   * Use this method to set avoid unwanted tail symbols while using completion inside
-   * light-editors like EditorComboBox or EditorTextField.  
-   *
-   * @author Konstantin Bulenkov
-   *
-   * @param file document holder
-   * @param type new TailType
-   *
-   * @see com.intellij.codeInsight.TailType
-   * @see com.intellij.codeInsight.completion.JavaCompletionContributor#setTailTypeByFile(com.intellij.codeInsight.lookup.LookupElement, com.intellij.psi.PsiFile)
-   */
-  public static void setDefaultTailTypeForFile(PsiFile file, TailType type) {
-    if (file != null && type != null) {
-      file.putUserData(COMPLETION_TAIL_TYPE, type);
-    }
-  }
-
-  @Nullable
-  public static TailType getDefaultTailTypeForFile(PsiFile file) {
-    return file == null ? null : file.getUserData(COMPLETION_TAIL_TYPE);
-  }
 }
