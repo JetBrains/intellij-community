@@ -1,38 +1,26 @@
-# Copyright (C) 2001,2002 Python Software Foundation
-# Author: barry@zope.com (Barry Warsaw)
+# Copyright (C) 2001-2006 Python Software Foundation
+# Author: Barry Warsaw
+# Contact: email-sig@python.org
 
-"""Module containing encoding functions for Image.Image and Text.Text.
-"""
+"""Encodings and related functions."""
+
+__all__ = [
+    'encode_7or8bit',
+    'encode_base64',
+    'encode_noop',
+    'encode_quopri',
+    ]
 
 import base64
 
+from quopri import encodestring as _encodestring
+
 
 
-# Helpers
-try:
-    from quopri import encodestring as _encodestring
-
-    def _qencode(s):
-        enc = _encodestring(s, quotetabs=1)
-        # Must encode spaces, which quopri.encodestring() doesn't do
-        return enc.replace(' ', '=20')
-except ImportError:
-    # Python 2.1 doesn't have quopri.encodestring()
-    from cStringIO import StringIO
-    import quopri as _quopri
-
-    def _qencode(s):
-        if not s:
-            return s
-        hasnewline = (s[-1] == '\n')
-        infp = StringIO(s)
-        outfp = StringIO()
-        _quopri.encode(infp, outfp, quotetabs=1)
-        # Python 2.x's encode() doesn't encode spaces even when quotetabs==1
-        value = outfp.getvalue().replace(' ', '=20')
-        if not hasnewline and value[-1] == '\n':
-            return value[:-1]
-        return value
+def _qencode(s):
+    enc = _encodestring(s, quotetabs=True)
+    # Must encode spaces, which quopri.encodestring() doesn't do
+    return enc.replace(' ', '=20')
 
 
 def _bencode(s):
@@ -84,7 +72,13 @@ def encode_7or8bit(msg):
     try:
         orig.encode('ascii')
     except UnicodeError:
-        msg['Content-Transfer-Encoding'] = '8bit'
+        # iso-2022-* is non-ASCII but still 7-bit
+        charset = msg.get_charset()
+        output_cset = charset and charset.output_charset
+        if output_cset and output_cset.lower().startswith('iso-2202-'):
+            msg['Content-Transfer-Encoding'] = '7bit'
+        else:
+            msg['Content-Transfer-Encoding'] = '8bit'
     else:
         msg['Content-Transfer-Encoding'] = '7bit'
 

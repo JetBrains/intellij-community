@@ -6,7 +6,8 @@ import types
 
 __all__ = ["BdbQuit","Bdb","Breakpoint"]
 
-BdbQuit = 'bdb.BdbQuit' # Exception to give up completely
+class BdbQuit(Exception):
+    """Exception to give up completely"""
 
 
 class Bdb:
@@ -51,7 +52,13 @@ class Bdb:
             return self.dispatch_return(frame, arg)
         if event == 'exception':
             return self.dispatch_exception(frame, arg)
-        print 'bdb.Bdb.dispatch: unknown debugging event:', `event`
+        if event == 'c_call':
+            return self.trace_dispatch
+        if event == 'c_exception':
+            return self.trace_dispatch
+        if event == 'c_return':
+            return self.trace_dispatch
+        print 'bdb.Bdb.dispatch: unknown debugging event:', repr(event)
         return self.trace_dispatch
 
     def dispatch_line(self, frame):
@@ -93,29 +100,34 @@ class Bdb:
         # (CT) stopframe may now also be None, see dispatch_call.
         # (CT) the former test for None is therefore removed from here.
         if frame is self.stopframe:
-            return 1
+            return True
         while frame is not None and frame is not self.stopframe:
             if frame is self.botframe:
-                return 1
+                return True
             frame = frame.f_back
-        return 0
+        return False
 
     def break_here(self, frame):
         filename = self.canonic(frame.f_code.co_filename)
-        if not self.breaks.has_key(filename):
-            return 0
+        if not filename in self.breaks:
+            return False
         lineno = frame.f_lineno
         if not lineno in self.breaks[filename]:
-            return 0
+            # The line itself has no breakpoint, but maybe the line is the
+            # first line of a function with breakpoint set by function name.
+            lineno = frame.f_code.co_firstlineno
+            if not lineno in self.breaks[filename]:
+                return False
+
         # flag says ok to delete temp. bp
         (bp, flag) = effective(filename, lineno, frame)
         if bp:
             self.currentbp = bp.number
             if (flag and bp.temporary):
                 self.do_clear(str(bp.number))
-            return 1
+            return True
         else:
-            return 0
+            return False
 
     def do_clear(self, arg):
         raise NotImplementedError, "subclass of bdb must implement do_clear()"
@@ -166,9 +178,13 @@ class Bdb:
         self.returnframe = frame
         self.quitting = 0
 
-    def set_trace(self):
-        """Start debugging from here."""
-        frame = sys._getframe().f_back
+    def set_trace(self, frame=None):
+        """Start debugging from `frame`.
+
+        If frame is not specified, debugging starts from caller's frame.
+        """
+        if frame is None:
+            frame = sys._getframe().f_back
         self.reset()
         while frame:
             frame.f_trace = self.trace_dispatch
@@ -203,23 +219,24 @@ class Bdb:
     # Call self.get_*break*() to see the breakpoints or better
     # for bp in Breakpoint.bpbynumber: if bp: bp.bpprint().
 
-    def set_break(self, filename, lineno, temporary=0, cond = None):
+    def set_break(self, filename, lineno, temporary=0, cond = None,
+                  funcname=None):
         filename = self.canonic(filename)
         import linecache # Import as late as possible
         line = linecache.getline(filename, lineno)
         if not line:
             return 'Line %s:%d does not exist' % (filename,
                                    lineno)
-        if not self.breaks.has_key(filename):
+        if not filename in self.breaks:
             self.breaks[filename] = []
         list = self.breaks[filename]
         if not lineno in list:
             list.append(lineno)
-        bp = Breakpoint(filename, lineno, temporary, cond)
+        bp = Breakpoint(filename, lineno, temporary, cond, funcname)
 
     def clear_break(self, filename, lineno):
         filename = self.canonic(filename)
-        if not self.breaks.has_key(filename):
+        if not filename in self.breaks:
             return 'There are no breakpoints in %s' % filename
         if lineno not in self.breaks[filename]:
             return 'There is no breakpoint at %s:%d' % (filename,
@@ -248,7 +265,7 @@ class Bdb:
 
     def clear_all_file_breaks(self, filename):
         filename = self.canonic(filename)
-        if not self.breaks.has_key(filename):
+        if not filename in self.breaks:
             return 'There are no breakpoints in %s' % filename
         for line in self.breaks[filename]:
             blist = Breakpoint.bplist[filename, line]
@@ -266,18 +283,18 @@ class Bdb:
 
     def get_break(self, filename, lineno):
         filename = self.canonic(filename)
-        return self.breaks.has_key(filename) and \
+        return filename in self.breaks and \
             lineno in self.breaks[filename]
 
     def get_breaks(self, filename, lineno):
         filename = self.canonic(filename)
-        return self.breaks.has_key(filename) and \
+        return filename in self.breaks and \
             lineno in self.breaks[filename] and \
             Breakpoint.bplist[filename, lineno] or []
 
     def get_file_breaks(self, filename):
         filename = self.canonic(filename)
-        if self.breaks.has_key(filename):
+        if filename in self.breaks:
             return self.breaks[filename]
         else:
             return []
@@ -310,12 +327,12 @@ class Bdb:
         import linecache, repr
         frame, lineno = frame_lineno
         filename = self.canonic(frame.f_code.co_filename)
-        s = filename + '(' + `lineno` + ')'
+        s = '%s(%r)' % (filename, lineno)
         if frame.f_code.co_name:
             s = s + frame.f_code.co_name
         else:
             s = s + "<lambda>"
-        if frame.f_locals.has_key('__args__'):
+        if '__args__' in frame.f_locals:
             args = frame.f_locals['__args__']
         else:
             args = None
@@ -323,7 +340,7 @@ class Bdb:
             s = s + repr.repr(args)
         else:
             s = s + '()'
-        if frame.f_locals.has_key('__return__'):
+        if '__return__' in frame.f_locals:
             rv = frame.f_locals['__return__']
             s = s + '->'
             s = s + repr.repr(rv)
@@ -378,13 +395,13 @@ class Bdb:
 
     # This method is more useful to debug a single function call.
 
-    def runcall(self, func, *args):
+    def runcall(self, func, *args, **kwds):
         self.reset()
         sys.settrace(self.trace_dispatch)
         res = None
         try:
             try:
-                res = apply(func, args)
+                res = func(*args, **kwds)
             except BdbQuit:
                 pass
         finally:
@@ -421,7 +438,10 @@ class Breakpoint:
                 # index 0 is unused, except for marking an
                 # effective break .... see effective()
 
-    def __init__(self, file, line, temporary=0, cond = None):
+    def __init__(self, file, line, temporary=0, cond=None, funcname=None):
+        self.funcname = funcname
+        # Needed if funcname is not None.
+        self.func_first_executable_line = None
         self.file = file    # This better be in canonical form!
         self.line = line
         self.temporary = temporary
@@ -453,28 +473,56 @@ class Breakpoint:
     def disable(self):
         self.enabled = 0
 
-    def bpprint(self):
+    def bpprint(self, out=None):
+        if out is None:
+            out = sys.stdout
         if self.temporary:
             disp = 'del  '
         else:
             disp = 'keep '
         if self.enabled:
-            disp = disp + 'yes'
+            disp = disp + 'yes  '
         else:
-            disp = disp + 'no '
-        print '%-4dbreakpoint    %s at %s:%d' % (self.number, disp,
-                             self.file, self.line)
+            disp = disp + 'no   '
+        print >>out, '%-4dbreakpoint   %s at %s:%d' % (self.number, disp,
+                                                       self.file, self.line)
         if self.cond:
-            print '\tstop only if %s' % (self.cond,)
+            print >>out, '\tstop only if %s' % (self.cond,)
         if self.ignore:
-            print '\tignore next %d hits' % (self.ignore)
+            print >>out, '\tignore next %d hits' % (self.ignore)
         if (self.hits):
             if (self.hits > 1): ss = 's'
             else: ss = ''
-            print ('\tbreakpoint already hit %d time%s' %
-                   (self.hits, ss))
+            print >>out, ('\tbreakpoint already hit %d time%s' %
+                          (self.hits, ss))
 
 # -----------end of Breakpoint class----------
+
+def checkfuncname(b, frame):
+    """Check whether we should break here because of `b.funcname`."""
+    if not b.funcname:
+        # Breakpoint was set via line number.
+        if b.line != frame.f_lineno:
+            # Breakpoint was set at a line with a def statement and the function
+            # defined is called: don't break.
+            return False
+        return True
+
+    # Breakpoint set via function name.
+
+    if frame.f_code.co_name != b.funcname:
+        # It's not a function call, but rather execution of def statement.
+        return False
+
+    # We are in the right frame.
+    if not b.func_first_executable_line:
+        # The function is entered for the 1st time.
+        b.func_first_executable_line = frame.f_lineno
+
+    if  b.func_first_executable_line != frame.f_lineno:
+        # But we are not at the first line number: don't break.
+        return False
+    return True
 
 # Determines if there is an effective (active) breakpoint at this
 # line of code.  Returns breakpoint number or 0 if none
@@ -490,6 +538,8 @@ def effective(file, line, frame):
     for i in range(0, len(possibles)):
         b = possibles[i]
         if b.enabled == 0:
+            continue
+        if not checkfuncname(b, frame):
             continue
         # Count every hit when bp is enabled
         b.hits = b.hits + 1

@@ -5,14 +5,13 @@
 Note: string objects have grown methods in Python 1.6
 This module requires Python 1.6 or later.
 """
-from types import StringType, UnicodeType
 import sys
 
 __all__ = ["UserString","MutableString"]
 
 class UserString:
     def __init__(self, seq):
-        if isinstance(seq, StringType) or isinstance(seq, UnicodeType):
+        if isinstance(seq, basestring):
             self.data = seq
         elif isinstance(seq, UserString):
             self.data = seq.data[:]
@@ -43,33 +42,25 @@ class UserString:
     def __add__(self, other):
         if isinstance(other, UserString):
             return self.__class__(self.data + other.data)
-        elif isinstance(other, StringType) or isinstance(other, UnicodeType):
+        elif isinstance(other, basestring):
             return self.__class__(self.data + other)
         else:
             return self.__class__(self.data + str(other))
     def __radd__(self, other):
-        if isinstance(other, StringType) or isinstance(other, UnicodeType):
+        if isinstance(other, basestring):
             return self.__class__(other + self.data)
         else:
             return self.__class__(str(other) + self.data)
-    def __iadd__(self, other):
-        if isinstance(other, UserString):
-            self.data += other.data
-        elif isinstance(other, StringType) or isinstance(other, UnicodeType):
-            self.data += other
-        else:
-            self.data += str(other)
-        return self
     def __mul__(self, n):
         return self.__class__(self.data*n)
     __rmul__ = __mul__
-    def __imul__(self, n):
-        self.data *= n
-        return self
+    def __mod__(self, args):
+        return self.__class__(self.data % args)
 
     # the following methods are defined in alphabetical order:
     def capitalize(self): return self.__class__(self.data.capitalize())
-    def center(self, width): return self.__class__(self.data.center(width))
+    def center(self, width, *args):
+        return self.__class__(self.data.center(width, *args))
     def count(self, sub, start=0, end=sys.maxint):
         return self.data.count(sub, start, end)
     def decode(self, encoding=None, errors=None): # XXX improve this?
@@ -106,19 +97,27 @@ class UserString:
     def istitle(self): return self.data.istitle()
     def isupper(self): return self.data.isupper()
     def join(self, seq): return self.data.join(seq)
-    def ljust(self, width): return self.__class__(self.data.ljust(width))
+    def ljust(self, width, *args):
+        return self.__class__(self.data.ljust(width, *args))
     def lower(self): return self.__class__(self.data.lower())
     def lstrip(self, chars=None): return self.__class__(self.data.lstrip(chars))
+    def partition(self, sep):
+        return self.data.partition(sep)
     def replace(self, old, new, maxsplit=-1):
         return self.__class__(self.data.replace(old, new, maxsplit))
     def rfind(self, sub, start=0, end=sys.maxint):
         return self.data.rfind(sub, start, end)
     def rindex(self, sub, start=0, end=sys.maxint):
         return self.data.rindex(sub, start, end)
-    def rjust(self, width): return self.__class__(self.data.rjust(width))
+    def rjust(self, width, *args):
+        return self.__class__(self.data.rjust(width, *args))
+    def rpartition(self, sep):
+        return self.data.rpartition(sep)
     def rstrip(self, chars=None): return self.__class__(self.data.rstrip(chars))
     def split(self, sep=None, maxsplit=-1):
         return self.data.split(sep, maxsplit)
+    def rsplit(self, sep=None, maxsplit=-1):
+        return self.data.rsplit(sep, maxsplit)
     def splitlines(self, keepends=0): return self.data.splitlines(keepends)
     def startswith(self, prefix, start=0, end=sys.maxint):
         return self.data.startswith(prefix, start, end)
@@ -141,7 +140,7 @@ class MutableString(UserString):
     But the purpose of this class is an educational one: to prevent
     people from inventing their own mutable string class derived
     from UserString and than forget thereby to remove (override) the
-    __hash__ method inherited from ^UserString.  This would lead to
+    __hash__ method inherited from UserString.  This would lead to
     errors that would be very hard to track down.
 
     A faster and better solution is to rewrite your program using lists."""
@@ -150,16 +149,20 @@ class MutableString(UserString):
     def __hash__(self):
         raise TypeError, "unhashable type (it is mutable)"
     def __setitem__(self, index, sub):
+        if index < 0:
+            index += len(self.data)
         if index < 0 or index >= len(self.data): raise IndexError
         self.data = self.data[:index] + sub + self.data[index+1:]
     def __delitem__(self, index):
+        if index < 0:
+            index += len(self.data)
         if index < 0 or index >= len(self.data): raise IndexError
         self.data = self.data[:index] + self.data[index+1:]
     def __setslice__(self, start, end, sub):
         start = max(start, 0); end = max(end, 0)
         if isinstance(sub, UserString):
             self.data = self.data[:start]+sub.data+self.data[end:]
-        elif isinstance(sub, StringType) or isinstance(sub, UnicodeType):
+        elif isinstance(sub, basestring):
             self.data = self.data[:start]+sub+self.data[end:]
         else:
             self.data =  self.data[:start]+str(sub)+self.data[end:]
@@ -168,15 +171,24 @@ class MutableString(UserString):
         self.data = self.data[:start] + self.data[end:]
     def immutable(self):
         return UserString(self.data)
+    def __iadd__(self, other):
+        if isinstance(other, UserString):
+            self.data += other.data
+        elif isinstance(other, basestring):
+            self.data += other
+        else:
+            self.data += str(other)
+        return self
+    def __imul__(self, n):
+        self.data *= n
+        return self
 
 if __name__ == "__main__":
     # execute the regression test to stdout, if called as a script:
     import os
     called_in_dir, called_as = os.path.split(sys.argv[0])
-    called_in_dir = os.path.abspath(called_in_dir)
     called_as, py = os.path.splitext(called_as)
-    sys.path.append(os.path.join(called_in_dir, 'test'))
     if '-q' in sys.argv:
-        import test_support
+        from test import test_support
         test_support.verbose = 0
-    __import__('test_' + called_as.lower())
+    __import__('test.test_' + called_as.lower())

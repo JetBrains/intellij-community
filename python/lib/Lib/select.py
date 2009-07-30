@@ -7,9 +7,10 @@ import java.nio.channels.SelectionKey
 import java.nio.channels.Selector
 from java.nio.channels.SelectionKey import OP_ACCEPT, OP_CONNECT, OP_WRITE, OP_READ
 
-import socket
-
 import errno
+import os
+import Queue
+import socket
 
 class error(Exception): pass
 
@@ -43,15 +44,19 @@ POLLHUP  = 16
 POLLNVAL = 32
 
 def _getselectable(selectable_object):
-    for method in ['getchannel', 'fileno']:
+    try:
+        channel = selectable_object.getchannel()
+    except:
         try:
-            channel = getattr(selectable_object, method)()
-            if channel and not isinstance(channel, java.nio.channels.SelectableChannel):
-                raise TypeError("Object '%s' is not watchable" % selectable_object, errno.ENOTSOCK)
-            return channel
+            channel = selectable_object.fileno().getChannel()
         except:
-            pass
-    raise TypeError("Object '%s' is not watchable" % selectable_object, errno.ENOTSOCK)
+            raise TypeError("Object '%s' is not watchable" % selectable_object,
+                            errno.ENOTSOCK)
+    
+    if channel and not isinstance(channel, java.nio.channels.SelectableChannel):
+        raise TypeError("Object '%s' is not watchable" % selectable_object,
+                        errno.ENOTSOCK)
+    return channel
 
 class poll:
 
@@ -69,7 +74,8 @@ class poll:
             else:
                 jmask = OP_READ
         if mask & POLLOUT:
-            jmask |= OP_WRITE
+            if channel.validOps() & OP_WRITE:
+                jmask |= OP_WRITE
             if channel.validOps() & OP_CONNECT:
                 jmask |= OP_CONNECT
         selectionkey = channel.register(self.selector, jmask)
@@ -139,10 +145,18 @@ class poll:
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
-    def close(self):
+    def _deregister_all(self):
         try:
             for k in self.selector.keys():
                 k.cancel()
+            # Keys are not actually removed from the selector until the next select operation.
+            self.selector.selectNow()
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
+
+    def close(self):
+        try:
+            self._deregister_all()
             self.selector.close()
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
@@ -160,10 +174,48 @@ def _calcselecttimeoutvalue(value):
         return 0
     return int(floatvalue * 1000) # Convert to milliseconds
 
+# This cache for poll objects is required because of a bug in java on MS Windows
+# http://bugs.jython.org/issue1291
+
+class poll_object_cache:
+
+    def __init__(self):
+        self.is_windows = os.get_os_type() == 'nt'
+        if self.is_windows:
+            self.poll_object_queue = Queue.Queue()
+        import atexit
+        atexit.register(self.finalize)
+
+    def get_poll_object(self):
+        if not self.is_windows:
+            return poll()
+        try:
+            return self.poll_object_queue.get(False)
+        except Queue.Empty:
+            return poll()
+
+    def release_poll_object(self, pobj):
+        if self.is_windows:
+            pobj._deregister_all()
+            self.poll_object_queue.put(pobj)
+        else:
+            pobj.close()
+
+    def finalize(self):
+        if self.is_windows:
+            while True:
+                try:
+                    p = self.poll_object_queue.get(False)
+                    p.close()
+                except Queue.Empty:
+                    return
+
+_poll_object_cache = poll_object_cache()
+
 def native_select(read_fd_list, write_fd_list, outofband_fd_list, timeout=None):
     timeout = _calcselecttimeoutvalue(timeout)
     # First create a poll object to do the actual watching.
-    pobj = poll()
+    pobj = _poll_object_cache.get_poll_object()
     try:
         registered_for_read = {}
         # Check the read list
@@ -173,7 +225,7 @@ def native_select(read_fd_list, write_fd_list, outofband_fd_list, timeout=None):
         # And now the write list
         for fd in write_fd_list:
             if registered_for_read.has_key(fd):
-            	# registering a second time overwrites the first
+                # registering a second time overwrites the first
                 pobj.register(fd, POLLIN|POLLOUT)
             else:
                 pobj.register(fd, POLLOUT)
@@ -187,10 +239,7 @@ def native_select(read_fd_list, write_fd_list, outofband_fd_list, timeout=None):
                 write_ready_list.append(fd)
         return read_ready_list, write_ready_list, oob_ready_list
     finally:
-        # Need to close the poll object no matter what happened
-        # If it is left open, it may still have references to sockets
-        # That were registered before any exceptions occurred
-        pobj.close()
+        _poll_object_cache.release_poll_object(pobj)
 
 select = native_select
 

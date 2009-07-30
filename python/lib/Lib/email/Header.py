@@ -1,42 +1,31 @@
-# Copyright (C) 2002 Python Software Foundation
-# Author: che@debian.org (Ben Gertzfield), barry@zope.com (Barry Warsaw)
+# Copyright (C) 2002-2006 Python Software Foundation
+# Author: Ben Gertzfield, Barry Warsaw
+# Contact: email-sig@python.org
 
 """Header encoding and decoding functionality."""
 
+__all__ = [
+    'Header',
+    'decode_header',
+    'make_header',
+    ]
+
 import re
 import binascii
-from types import StringType, UnicodeType
 
-import email.quopriMIME
-import email.base64MIME
-from email.Errors import HeaderParseError
-from email.Charset import Charset
+import email.quoprimime
+import email.base64mime
 
-try:
-    from email._compat22 import _floordiv
-except SyntaxError:
-    # Python 2.1 spells integer division differently
-    from email._compat21 import _floordiv
+from email.errors import HeaderParseError
+from email.charset import Charset
 
-try:
-    True, False
-except NameError:
-    True = 1
-    False = 0
-
-CRLFSPACE = '\r\n '
-CRLF = '\r\n'
 NL = '\n'
 SPACE = ' '
 USPACE = u' '
 SPACE8 = ' ' * 8
-EMPTYSTRING = ''
 UEMPTYSTRING = u''
 
 MAXLINELEN = 76
-
-ENCODE = 1
-DECODE = 2
 
 USASCII = Charset('us-ascii')
 UTF8 = Charset('utf-8')
@@ -50,9 +39,8 @@ ecre = re.compile(r'''
   \?                    # literal ?
   (?P<encoded>.*?)      # non-greedy up to the next ?= is the encoded string
   \?=                   # literal ?=
-  ''', re.VERBOSE | re.IGNORECASE)
-
-pcre = re.compile('([,;])')
+  (?=[ \t]|$)           # whitespace or the end of the string
+  ''', re.VERBOSE | re.IGNORECASE | re.MULTILINE)
 
 # Field name regexp, including trailing colon, but not separating whitespace,
 # according to RFC 2822.  Character range is from tilde to exclamation mark.
@@ -62,7 +50,7 @@ fcre = re.compile(r'[\041-\176]+:$')
 
 
 # Helpers
-_max_append = email.quopriMIME._max_append
+_max_append = email.quoprimime._max_append
 
 
 
@@ -102,10 +90,10 @@ def decode_header(header):
                 encoded = parts[2]
                 dec = None
                 if encoding == 'q':
-                    dec = email.quopriMIME.header_decode(encoded)
+                    dec = email.quoprimime.header_decode(encoded)
                 elif encoding == 'b':
                     try:
-                        dec = email.base64MIME.decode(encoded)
+                        dec = email.base64mime.decode(encoded)
                     except binascii.Error:
                         # Turn this into a higher level exception.  BAW: Right
                         # now we throw the lower level exception away but
@@ -244,8 +232,8 @@ class Header:
         constructor is used.
 
         s may be a byte string or a Unicode string.  If it is a byte string
-        (i.e. isinstance(s, StringType) is true), then charset is the encoding
-        of that byte string, and a UnicodeError will be raised if the string
+        (i.e. isinstance(s, str) is true), then charset is the encoding of
+        that byte string, and a UnicodeError will be raised if the string
         cannot be decoded with that charset.  If s is a Unicode string, then
         charset is a hint specifying the character set of the characters in
         the string.  In this case, when producing an RFC 2822 compliant header
@@ -265,7 +253,7 @@ class Header:
             # We need to test that the string can be converted to unicode and
             # back to a byte string, given the input and output codecs of the
             # charset.
-            if isinstance(s, StringType):
+            if isinstance(s, str):
                 # Possibly raise UnicodeError if the byte string can't be
                 # converted to a unicode with the input codec of the charset.
                 incodec = charset.input_codec or 'us-ascii'
@@ -275,7 +263,7 @@ class Header:
                 # than the iput coded.  Still, use the original byte string.
                 outcodec = charset.output_codec or 'us-ascii'
                 ustr.encode(outcodec, errors)
-            elif isinstance(s, UnicodeType):
+            elif isinstance(s, unicode):
                 # Now we have to be sure the unicode string can be converted
                 # to a byte string with a reasonable output codec.  We want to
                 # use the byte string in the chunk.
@@ -432,7 +420,7 @@ def _split_ascii(s, firstlen, restlen, continuation_ws, splitchars):
         # syntax; we just try to break on semi-colons, then commas, then
         # whitespace.
         for ch in splitchars:
-            if line.find(ch) >= 0:
+            if ch in line:
                 break
         else:
             # There's nothing useful to split the line on, not even spaces, so

@@ -1,20 +1,23 @@
-"""Parse a Python file and retrieve classes and methods.
+"""Parse a Python module and describe its classes and methods.
 
-Parse enough of a Python file to recognize class and method
-definitions and to find out the superclasses of a class.
+Parse enough of a Python file to recognize imports and class and
+method definitions, and to find out the superclasses of a class.
 
 The interface consists of a single function:
-        readmodule(module, path)
-module is the name of a Python module, path is an optional list of
-directories where the module is to be searched.  If present, path is
-prepended to the system search path sys.path.
-The return value is a dictionary.  The keys of the dictionary are
-the names of the classes defined in the module (including classes
-that are defined via the from XXX import YYY construct).  The values
-are class instances of the class Class defined here.
+        readmodule_ex(module [, path])
+where module is the name of a Python module, and path is an optional
+list of directories where the module is to be searched.  If present,
+path is prepended to the system search path sys.path.  The return
+value is a dictionary.  The keys of the dictionary are the names of
+the classes defined in the module (including classes that are defined
+via the from XXX import YYY construct).  The values are class
+instances of the class Class defined here.  One special key/value pair
+is present for packages: the key '__path__' has a list as its value
+which contains the package search path.
 
 A class is described by the class Class in this module.  Instances
 of this class have the following instance variables:
+        module -- the module name
         name -- the name of the class
         super -- a list of super classes (Class instances)
         methods -- a dictionary of methods
@@ -28,92 +31,21 @@ string giving the name of the super class.  Since import statements
 are recognized and imported modules are scanned as well, this
 shouldn't happen often.
 
-BUGS
-- Continuation lines are not dealt with at all, except inside strings.
-- Nested classes and functions can confuse it.
-- Code that doesn't pass tabnanny or python -t will confuse it, unless
-  you set the module TABWIDTH vrbl (default 8) to the correct tab width
-  for the file.
-
-PACKAGE RELATED BUGS
-- If you have a package and a module inside that or another package
-  with the same name, module caching doesn't work properly since the
-  key is the base name of the module/package.
-- The only entry that is returned when you readmodule a package is a
-  __path__ whose value is a list which confuses certain class browsers.
-- When code does:
-  from package import subpackage
-  class MyClass(subpackage.SuperClass):
-    ...
-  It can't locate the parent.  It probably needs to have the same
-  hairy logic that the import locator already does.  (This logic
-  exists coded in Python in the freeze package.)
+A function is described by the class Function in this module.
+Instances of this class have the following instance variables:
+        module -- the module name
+        name -- the name of the class
+        file -- the file in which the class was defined
+        lineno -- the line in the file on which the class statement occurred
 """
 
 import sys
 import imp
-import re
-import string
+import tokenize # Python tokenizer
+from token import NAME, DEDENT, NEWLINE, OP
+from operator import itemgetter
 
-__all__ = ["readmodule"]
-
-TABWIDTH = 8
-
-_getnext = re.compile(r"""
-    (?P<String>
-       \""" [^"\\]* (?:
-                        (?: \\. | "(?!"") )
-                        [^"\\]*
-                    )*
-       \"""
-
-    |   ''' [^'\\]* (?:
-                        (?: \\. | '(?!'') )
-                        [^'\\]*
-                    )*
-        '''
-
-    |   " [^"\\\n]* (?: \\. [^"\\\n]*)* "
-
-    |   ' [^'\\\n]* (?: \\. [^'\\\n]*)* '
-    )
-
-|   (?P<Method>
-        ^
-        (?P<MethodIndent> [ \t]* )
-        def [ \t]+
-        (?P<MethodName> [a-zA-Z_] \w* )
-        [ \t]* \(
-    )
-
-|   (?P<Class>
-        ^
-        (?P<ClassIndent> [ \t]* )
-        class [ \t]+
-        (?P<ClassName> [a-zA-Z_] \w* )
-        [ \t]*
-        (?P<ClassSupers> \( [^)\n]* \) )?
-        [ \t]* :
-    )
-
-|   (?P<Import>
-        ^ import [ \t]+
-        (?P<ImportList> [^#;\n]+ )
-    )
-
-|   (?P<ImportFrom>
-        ^ from [ \t]+
-        (?P<ImportFromPath>
-            [a-zA-Z_] \w*
-            (?:
-                [ \t]* \. [ \t]* [a-zA-Z_] \w*
-            )*
-        )
-        [ \t]+
-        import [ \t]+
-        (?P<ImportFromList> [^#;\n]+ )
-    )
-""", re.VERBOSE | re.DOTALL | re.MULTILINE).search
+__all__ = ["readmodule", "readmodule_ex", "Class", "Function"]
 
 _modules = {}                           # cache of modules we've seen
 
@@ -133,205 +65,276 @@ class Class:
     def _addmethod(self, name, lineno):
         self.methods[name] = lineno
 
-class Function(Class):
+class Function:
     '''Class to represent a top-level Python function'''
     def __init__(self, module, name, file, lineno):
-        Class.__init__(self, module, name, None, file, lineno)
-    def _addmethod(self, name, lineno):
-        assert 0, "Function._addmethod() shouldn't be called"
+        self.module = module
+        self.name = name
+        self.file = file
+        self.lineno = lineno
 
-def readmodule(module, path=[], inpackage=0):
+def readmodule(module, path=[]):
     '''Backwards compatible interface.
 
-    Like readmodule_ex() but strips Function objects from the
+    Call readmodule_ex() and then only keep Class objects from the
     resulting dictionary.'''
 
-    dict = readmodule_ex(module, path, inpackage)
+    dict = _readmodule(module, path)
     res = {}
     for key, value in dict.items():
-        if not isinstance(value, Function):
+        if isinstance(value, Class):
             res[key] = value
     return res
 
-def readmodule_ex(module, path=[], inpackage=0):
+def readmodule_ex(module, path=[]):
     '''Read a module file and return a dictionary of classes.
 
     Search for MODULE in PATH and sys.path, read and parse the
     module and return a dictionary with one entry for each class
-    found in the module.'''
+    found in the module.
 
+    If INPACKAGE is true, it must be the dotted name of the package in
+    which we are searching for a submodule, and then PATH must be the
+    package search path; otherwise, we are searching for a top-level
+    module, and PATH is combined with sys.path.
+    '''
+    return _readmodule(module, path)
+
+def _readmodule(module, path, inpackage=None):
+    '''Do the hard work for readmodule[_ex].'''
+    # Compute the full module name (prepending inpackage if set)
+    if inpackage:
+        fullmodule = "%s.%s" % (inpackage, module)
+    else:
+        fullmodule = module
+
+    # Check in the cache
+    if fullmodule in _modules:
+        return _modules[fullmodule]
+
+    # Initialize the dict for this module's contents
     dict = {}
 
-    i = module.rfind('.')
-    if i >= 0:
-        # Dotted module name
-        package = module[:i].strip()
-        submodule = module[i+1:].strip()
-        parent = readmodule_ex(package, path, inpackage)
-        child = readmodule_ex(submodule, parent['__path__'], 1)
-        return child
-
-    if _modules.has_key(module):
-        # we've seen this module before...
-        return _modules[module]
-    if module in sys.builtin_module_names:
-        # this is a built-in module
+    # Check if it is a built-in module; we don't do much for these
+    if module in sys.builtin_module_names and not inpackage:
         _modules[module] = dict
         return dict
 
-    # search the path for the module
+    # Check for a dotted module name
+    i = module.rfind('.')
+    if i >= 0:
+        package = module[:i]
+        submodule = module[i+1:]
+        parent = _readmodule(package, path, inpackage)
+        if inpackage:
+            package = "%s.%s" % (inpackage, package)
+        return _readmodule(submodule, parent['__path__'], package)
+
+    # Search the path for the module
     f = None
     if inpackage:
-        try:
-            f, file, (suff, mode, type) = \
-                    imp.find_module(module, path)
-        except ImportError:
-            f = None
-    if f is None:
-        fullpath = list(path) + sys.path
-        f, file, (suff, mode, type) = imp.find_module(module, fullpath)
+        f, file, (suff, mode, type) = imp.find_module(module, path)
+    else:
+        f, file, (suff, mode, type) = imp.find_module(module, path + sys.path)
     if type == imp.PKG_DIRECTORY:
         dict['__path__'] = [file]
-        _modules[module] = dict
         path = [file] + path
-        f, file, (suff, mode, type) = \
-                        imp.find_module('__init__', [file])
+        f, file, (suff, mode, type) = imp.find_module('__init__', [file])
+    _modules[fullmodule] = dict
     if type != imp.PY_SOURCE:
         # not Python source, can't do anything with this module
         f.close()
-        _modules[module] = dict
         return dict
 
-    _modules[module] = dict
-    classstack = [] # stack of (class, indent) pairs
-    src = f.read()
-    f.close()
+    stack = [] # stack of (class, indent) pairs
 
-    # To avoid having to stop the regexp at each newline, instead
-    # when we need a line number we simply string.count the number of
-    # newlines in the string since the last time we did this; i.e.,
-    #    lineno = lineno + \
-    #             string.count(src, '\n', last_lineno_pos, here)
-    #    last_lineno_pos = here
-    countnl = string.count
-    lineno, last_lineno_pos = 1, 0
-    i = 0
-    while 1:
-        m = _getnext(src, i)
-        if not m:
-            break
-        start, i = m.span()
-
-        if m.start("Method") >= 0:
-            # found a method definition or function
-            thisindent = _indent(m.group("MethodIndent"))
-            meth_name = m.group("MethodName")
-            lineno = lineno + \
-                     countnl(src, '\n',
-                             last_lineno_pos, start)
-            last_lineno_pos = start
-            # close all classes indented at least as much
-            while classstack and \
-                  classstack[-1][1] >= thisindent:
-                del classstack[-1]
-            if classstack:
-                # it's a class method
-                cur_class = classstack[-1][0]
-                cur_class._addmethod(meth_name, lineno)
-            else:
-                # it's a function
-                f = Function(module, meth_name,
-                             file, lineno)
-                dict[meth_name] = f
-
-        elif m.start("String") >= 0:
-            pass
-
-        elif m.start("Class") >= 0:
-            # we found a class definition
-            thisindent = _indent(m.group("ClassIndent"))
-            # close all classes indented at least as much
-            while classstack and \
-                  classstack[-1][1] >= thisindent:
-                del classstack[-1]
-            lineno = lineno + \
-                     countnl(src, '\n', last_lineno_pos, start)
-            last_lineno_pos = start
-            class_name = m.group("ClassName")
-            inherit = m.group("ClassSupers")
-            if inherit:
-                # the class inherits from other classes
-                inherit = inherit[1:-1].strip()
-                names = []
-                for n in inherit.split(','):
-                    n = n.strip()
-                    if dict.has_key(n):
-                        # we know this super class
-                        n = dict[n]
-                    else:
-                        c = n.split('.')
-                        if len(c) > 1:
-                            # super class
-                            # is of the
-                            # form module.class:
-                            # look in
-                            # module for class
-                            m = c[-2]
-                            c = c[-1]
-                            if _modules.has_key(m):
-                                d = _modules[m]
-                                if d.has_key(c):
-                                    n = d[c]
-                    names.append(n)
-                inherit = names
-            # remember this class
-            cur_class = Class(module, class_name, inherit,
-                              file, lineno)
-            dict[class_name] = cur_class
-            classstack.append((cur_class, thisindent))
-
-        elif m.start("Import") >= 0:
-            # import module
-            for n in m.group("ImportList").split(','):
-                n = n.strip()
+    g = tokenize.generate_tokens(f.readline)
+    try:
+        for tokentype, token, start, end, line in g:
+            if tokentype == DEDENT:
+                lineno, thisindent = start
+                # close nested classes and defs
+                while stack and stack[-1][1] >= thisindent:
+                    del stack[-1]
+            elif token == 'def':
+                lineno, thisindent = start
+                # close previous nested classes and defs
+                while stack and stack[-1][1] >= thisindent:
+                    del stack[-1]
+                tokentype, meth_name, start, end, line = g.next()
+                if tokentype != NAME:
+                    continue # Syntax error
+                if stack:
+                    cur_class = stack[-1][0]
+                    if isinstance(cur_class, Class):
+                        # it's a method
+                        cur_class._addmethod(meth_name, lineno)
+                    # else it's a nested def
+                else:
+                    # it's a function
+                    dict[meth_name] = Function(fullmodule, meth_name, file, lineno)
+                stack.append((None, thisindent)) # Marker for nested fns
+            elif token == 'class':
+                lineno, thisindent = start
+                # close previous nested classes and defs
+                while stack and stack[-1][1] >= thisindent:
+                    del stack[-1]
+                tokentype, class_name, start, end, line = g.next()
+                if tokentype != NAME:
+                    continue # Syntax error
+                # parse what follows the class name
+                tokentype, token, start, end, line = g.next()
+                inherit = None
+                if token == '(':
+                    names = [] # List of superclasses
+                    # there's a list of superclasses
+                    level = 1
+                    super = [] # Tokens making up current superclass
+                    while True:
+                        tokentype, token, start, end, line = g.next()
+                        if token in (')', ',') and level == 1:
+                            n = "".join(super)
+                            if n in dict:
+                                # we know this super class
+                                n = dict[n]
+                            else:
+                                c = n.split('.')
+                                if len(c) > 1:
+                                    # super class is of the form
+                                    # module.class: look in module for
+                                    # class
+                                    m = c[-2]
+                                    c = c[-1]
+                                    if m in _modules:
+                                        d = _modules[m]
+                                        if c in d:
+                                            n = d[c]
+                            names.append(n)
+                            super = []
+                        if token == '(':
+                            level += 1
+                        elif token == ')':
+                            level -= 1
+                            if level == 0:
+                                break
+                        elif token == ',' and level == 1:
+                            pass
+                        # only use NAME and OP (== dot) tokens for type name
+                        elif tokentype in (NAME, OP) and level == 1:
+                            super.append(token)
+                        # expressions in the base list are not supported
+                    inherit = names
+                cur_class = Class(fullmodule, class_name, inherit, file, lineno)
+                if not stack:
+                    dict[class_name] = cur_class
+                stack.append((cur_class, thisindent))
+            elif token == 'import' and start[1] == 0:
+                modules = _getnamelist(g)
+                for mod, mod2 in modules:
+                    try:
+                        # Recursively read the imported module
+                        if not inpackage:
+                            _readmodule(mod, path)
+                        else:
+                            try:
+                                _readmodule(mod, path, inpackage)
+                            except ImportError:
+                                _readmodule(mod, [])
+                    except:
+                        # If we can't find or parse the imported module,
+                        # too bad -- don't die here.
+                        pass
+            elif token == 'from' and start[1] == 0:
+                mod, token = _getname(g)
+                if not mod or token != "import":
+                    continue
+                names = _getnamelist(g)
                 try:
-                    # recursively read the imported module
-                    d = readmodule_ex(n, path, inpackage)
+                    # Recursively read the imported module
+                    d = _readmodule(mod, path, inpackage)
                 except:
-                    ##print 'module', n, 'not found'
-                    pass
+                    # If we can't find or parse the imported module,
+                    # too bad -- don't die here.
+                    continue
+                # add any classes that were defined in the imported module
+                # to our name space if they were mentioned in the list
+                for n, n2 in names:
+                    if n in d:
+                        dict[n2 or n] = d[n]
+                    elif n == '*':
+                        # don't add names that start with _
+                        for n in d:
+                            if n[0] != '_':
+                                dict[n] = d[n]
+    except StopIteration:
+        pass
 
-        elif m.start("ImportFrom") >= 0:
-            # from module import stuff
-            mod = m.group("ImportFromPath")
-            names = m.group("ImportFromList").split(',')
-            try:
-                # recursively read the imported module
-                d = readmodule_ex(mod, path, inpackage)
-            except:
-                ##print 'module', mod, 'not found'
-                continue
-            # add any classes that were defined in the
-            # imported module to our name space if they
-            # were mentioned in the list
-            for n in names:
-                n = n.strip()
-                if d.has_key(n):
-                    dict[n] = d[n]
-                elif n == '*':
-                    # only add a name if not
-                    # already there (to mimic what
-                    # Python does internally)
-                    # also don't add names that
-                    # start with _
-                    for n in d.keys():
-                        if n[0] != '_' and \
-                           not dict.has_key(n):
-                            dict[n] = d[n]
-        else:
-            assert 0, "regexp _getnext found something unexpected"
-
+    f.close()
     return dict
 
-def _indent(ws, _expandtabs=string.expandtabs):
-    return len(_expandtabs(ws, TABWIDTH))
+def _getnamelist(g):
+    # Helper to get a comma-separated list of dotted names plus 'as'
+    # clauses.  Return a list of pairs (name, name2) where name2 is
+    # the 'as' name, or None if there is no 'as' clause.
+    names = []
+    while True:
+        name, token = _getname(g)
+        if not name:
+            break
+        if token == 'as':
+            name2, token = _getname(g)
+        else:
+            name2 = None
+        names.append((name, name2))
+        while token != "," and "\n" not in token:
+            tokentype, token, start, end, line = g.next()
+        if token != ",":
+            break
+    return names
+
+def _getname(g):
+    # Helper to get a dotted name, return a pair (name, token) where
+    # name is the dotted name, or None if there was no dotted name,
+    # and token is the next input token.
+    parts = []
+    tokentype, token, start, end, line = g.next()
+    if tokentype != NAME and token != '*':
+        return (None, token)
+    parts.append(token)
+    while True:
+        tokentype, token, start, end, line = g.next()
+        if token != '.':
+            break
+        tokentype, token, start, end, line = g.next()
+        if tokentype != NAME:
+            break
+        parts.append(token)
+    return (".".join(parts), token)
+
+def _main():
+    # Main program for testing.
+    import os
+    mod = sys.argv[1]
+    if os.path.exists(mod):
+        path = [os.path.dirname(mod)]
+        mod = os.path.basename(mod)
+        if mod.lower().endswith(".py"):
+            mod = mod[:-3]
+    else:
+        path = []
+    dict = readmodule_ex(mod, path)
+    objs = dict.values()
+    objs.sort(lambda a, b: cmp(getattr(a, 'lineno', 0),
+                               getattr(b, 'lineno', 0)))
+    for obj in objs:
+        if isinstance(obj, Class):
+            print "class", obj.name, obj.super, obj.lineno
+            methods = sorted(obj.methods.iteritems(), key=itemgetter(1))
+            for name, lineno in methods:
+                if name != "__path__":
+                    print "  def", name, lineno
+        elif isinstance(obj, Function):
+            print "def", obj.name, obj.lineno
+
+if __name__ == "__main__":
+    _main()

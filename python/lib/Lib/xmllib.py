@@ -5,6 +5,9 @@
 import re
 import string
 
+import warnings
+warnings.warn("The xmllib module is obsolete.  Use xml.sax instead.", DeprecationWarning)
+del warnings
 
 version = '0.3'
 
@@ -98,15 +101,15 @@ class XMLParser:
     # Interface -- initialize and reset this instance
     def __init__(self, **kw):
         self.__fixed = 0
-        if kw.has_key('accept_unquoted_attributes'):
+        if 'accept_unquoted_attributes' in kw:
             self.__accept_unquoted_attributes = kw['accept_unquoted_attributes']
-        if kw.has_key('accept_missing_endtag_name'):
+        if 'accept_missing_endtag_name' in kw:
             self.__accept_missing_endtag_name = kw['accept_missing_endtag_name']
-        if kw.has_key('map_case'):
+        if 'map_case' in kw:
             self.__map_case = kw['map_case']
-        if kw.has_key('accept_utf8'):
+        if 'accept_utf8' in kw:
             self.__accept_utf8 = kw['accept_utf8']
-        if kw.has_key('translate_attribute_references'):
+        if 'translate_attribute_references' in kw:
             self.__translate_attribute_references = kw['translate_attribute_references']
         self.reset()
 
@@ -202,7 +205,7 @@ class XMLParser:
                     self.syntax_error("`;' missing after char reference")
                     i = i-1
             elif all:
-                if self.entitydefs.has_key(str):
+                if str in self.entitydefs:
                     str = self.entitydefs[str]
                     rescan = 1
                 elif data[i - 1] != ';':
@@ -371,7 +374,7 @@ class XMLParser:
                     name = res.group('name')
                     if self.__map_case:
                         name = name.lower()
-                    if self.entitydefs.has_key(name):
+                    if name in self.entitydefs:
                         self.rawdata = rawdata = rawdata[:res.start(0)] + self.entitydefs[name] + rawdata[i:]
                         n = len(rawdata)
                         i = res.start(0)
@@ -529,15 +532,15 @@ class XMLParser:
             if namespace:
                 self.syntax_error('namespace declaration inside namespace declaration')
             for attrname in attrdict.keys():
-                if not self.__xml_namespace_attributes.has_key(attrname):
+                if not attrname in self.__xml_namespace_attributes:
                     self.syntax_error("unknown attribute `%s' in xml:namespace tag" % attrname)
-            if not attrdict.has_key('ns') or not attrdict.has_key('prefix'):
+            if not 'ns' in attrdict or not 'prefix' in attrdict:
                 self.syntax_error('xml:namespace without required attributes')
             prefix = attrdict.get('prefix')
             if ncname.match(prefix) is None:
                 self.syntax_error('xml:namespace illegal prefix value')
                 return end.end(0)
-            if self.__namespaces.has_key(prefix):
+            if prefix in self.__namespaces:
                 self.syntax_error('xml:namespace prefix not unique')
             self.__namespaces[prefix] = attrdict['ns']
         else:
@@ -577,7 +580,7 @@ class XMLParser:
                 continue
             if '<' in attrvalue:
                 self.syntax_error("`<' illegal in attribute value")
-            if attrdict.has_key(attrname):
+            if attrname in attrdict:
                 self.syntax_error("attribute `%s' specified twice" % attrname)
             attrvalue = attrvalue.translate(attrtrans)
             attrdict[attrname] = self.translate_references(attrvalue)
@@ -615,7 +618,7 @@ class XMLParser:
                 prefix = ''
             ns = None
             for t, d, nst in self.stack:
-                if d.has_key(prefix):
+                if prefix in d:
                     ns = d[prefix]
             if ns is None and prefix != '':
                 ns = self.__namespaces.get(prefix)
@@ -640,7 +643,7 @@ class XMLParser:
                     if aprefix is not None:
                         ans = None
                         for t, d, nst in self.stack:
-                            if d.has_key(aprefix):
+                            if aprefix in d:
                                 ans = d[aprefix]
                         if ans is None:
                             ans = self.__namespaces.get(aprefix)
@@ -654,10 +657,10 @@ class XMLParser:
         attributes = self.attributes.get(nstag)
         if attributes is not None:
             for key in attrdict.keys():
-                if not attributes.has_key(key):
+                if not key in attributes:
                     self.syntax_error("unknown attribute `%s' in tag `%s'" % (attrnamemap[key], tagname))
             for key, val in attributes.items():
-                if val is not None and not attrdict.has_key(key):
+                if val is not None and not key in attrdict:
                     attrdict[key] = val
         method = self.elements.get(nstag, (None, None))[0]
         self.finish_starttag(nstag, attrdict, method)
@@ -802,7 +805,7 @@ class TestXMLParser(XMLParser):
 
     def __init__(self, **kw):
         self.testdata = ""
-        apply(XMLParser.__init__, (self,), kw)
+        XMLParser.__init__(self, **kw)
 
     def handle_xml(self, encoding, standalone):
         self.flush()
@@ -810,30 +813,30 @@ class TestXMLParser(XMLParser):
 
     def handle_doctype(self, tag, pubid, syslit, data):
         self.flush()
-        print 'DOCTYPE:',tag, `data`
+        print 'DOCTYPE:',tag, repr(data)
 
     def handle_data(self, data):
         self.testdata = self.testdata + data
-        if len(`self.testdata`) >= 70:
+        if len(repr(self.testdata)) >= 70:
             self.flush()
 
     def flush(self):
         data = self.testdata
         if data:
             self.testdata = ""
-            print 'data:', `data`
+            print 'data:', repr(data)
 
     def handle_cdata(self, data):
         self.flush()
-        print 'cdata:', `data`
+        print 'cdata:', repr(data)
 
     def handle_proc(self, name, data):
         self.flush()
-        print 'processing:',name,`data`
+        print 'processing:',name,repr(data)
 
     def handle_comment(self, data):
         self.flush()
-        r = `data`
+        r = repr(data)
         if len(r) > 68:
             r = r[:32] + '...' + r[-32:]
         print 'comment:', r

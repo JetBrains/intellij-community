@@ -51,6 +51,8 @@ all_feature_names = [
     "nested_scopes",
     "generators",
     "division",
+    "absolute_import",
+    "with_statement",
 ]
 
 __all__ = ["all_feature_names"] + all_feature_names
@@ -60,8 +62,10 @@ __all__ = ["all_feature_names"] + all_feature_names
 # they're not exported in __all__, because they don't really belong to
 # this module.
 CO_NESTED            = 0x0010   # nested_scopes
-CO_GENERATOR_ALLOWED = 0x1000   # generators
+CO_GENERATOR_ALLOWED = 0        # generators (obsolete, was 0x1000)
 CO_FUTURE_DIVISION   = 0x2000   # division
+CO_FUTURE_ABSOLUTE_IMPORT = 0x4000 # perform absolute imports by default
+CO_FUTURE_WITH_STATEMENT  = 0x8000   # with statement
 
 class _Feature:
     def __init__(self, optionalRelease, mandatoryRelease, compiler_flag):
@@ -102,3 +106,11 @@ generators = _Feature((2, 2, 0, "alpha", 1),
 division = _Feature((2, 2, 0, "alpha", 2),
                     (3, 0, 0, "alpha", 0),
                     CO_FUTURE_DIVISION)
+
+absolute_import = _Feature((2, 5, 0, "alpha", 1),
+                           (2, 7, 0, "alpha", 0),
+                           CO_FUTURE_ABSOLUTE_IMPORT)
+
+with_statement = _Feature((2, 5, 0, "alpha", 1),
+                          (2, 6, 0, "alpha", 0),
+                          CO_FUTURE_WITH_STATEMENT)

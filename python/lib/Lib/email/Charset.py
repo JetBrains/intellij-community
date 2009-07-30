@@ -1,27 +1,26 @@
-# Copyright (C) 2001,2002 Python Software Foundation
-# Author: che@debian.org (Ben Gertzfield), barry@zope.com (Barry Warsaw)
+# Copyright (C) 2001-2006 Python Software Foundation
+# Author: Ben Gertzfield, Barry Warsaw
+# Contact: email-sig@python.org
 
-from types import UnicodeType
-from email.Encoders import encode_7or8bit
-import email.base64MIME
-import email.quopriMIME
+__all__ = [
+    'Charset',
+    'add_alias',
+    'add_charset',
+    'add_codec',
+    ]
 
-def _isunicode(s):
-    return isinstance(s, UnicodeType)
+import email.base64mime
+import email.quoprimime
 
-# Python 2.2.1 and beyond has these symbols
-try:
-    True, False
-except NameError:
-    True = 1
-    False = 0
+from email import errors
+from email.encoders import encode_7or8bit
 
 
 
 # Flags for types of header encodings
-QP     = 1   # Quoted-Printable
-BASE64 = 2   # Base64
-SHORTEST = 3 # the shorter of QP and base64, but only for headers
+QP          = 1 # Quoted-Printable
+BASE64      = 2 # Base64
+SHORTEST    = 3 # the shorter of QP and base64, but only for headers
 
 # In "=?charset?q?hello_world?=", the =?, ?q?, and ?= add up to 7
 MISC_LEN = 7
@@ -88,27 +87,11 @@ ALIASES = {
     'ascii':   'us-ascii',
     }
 
-# Map charsets to their Unicode codec strings.  Note that Python doesn't come
-# with any Asian codecs by default.  Here's where to get them:
-#
-# Japanese -- http://www.asahi-net.or.jp/~rd6t-kjym/python
-# Korean   -- http://sf.net/projects/koco
-# Chinese  -- http://sf.net/projects/python-codecs
-#
-# Note that these codecs have their own lifecycle and may be in varying states
-# of stability and useability.
 
+# Map charsets to their Unicode codec strings.
 CODEC_MAP = {
-    'euc-jp':      'japanese.euc-jp',
-    'iso-2022-jp': 'japanese.iso-2022-jp',
-    'shift_jis':   'japanese.shift_jis',
-    'euc-kr':      'korean.euc-kr',
-    'ks_c_5601-1987': 'korean.cp949',
-    'iso-2022-kr': 'korean.iso-2022-kr',
-    'johab':       'korean.johab',
-    'gb2132':      'eucgb2312_cn',
+    'gb2312':      'eucgb2312_cn',
     'big5':        'big5_tw',
-    'utf-8':       'utf-8',
     # Hack: We don't want *any* conversion for stuff marked us-ascii, as all
     # sorts of garbage might be sent to us in the guise of 7-bit us-ascii.
     # Let that stuff pass through without conversion to/from Unicode.
@@ -142,7 +125,7 @@ def add_charset(charset, header_enc=None, body_enc=None, output_charset=None):
     documentation for more information.
     """
     if body_enc == SHORTEST:
-        raise ValueError, 'SHORTEST not allowed for body_enc'
+        raise ValueError('SHORTEST not allowed for body_enc')
     CHARSETS[charset] = (header_enc, body_enc, output_charset)
 
 
@@ -211,7 +194,17 @@ class Charset:
                   this attribute will have the same value as the input_codec.
     """
     def __init__(self, input_charset=DEFAULT_CHARSET):
-        # RFC 2046, $4.1.2 says charsets are not case sensitive
+        # RFC 2046, $4.1.2 says charsets are not case sensitive.  We coerce to
+        # unicode because its .lower() is locale insensitive.  If the argument
+        # is already a unicode, we leave it at that, but ensure that the
+        # charset is ASCII, as the standard (RFC XXX) requires.
+        try:
+            if isinstance(input_charset, unicode):
+                input_charset.encode('ascii')
+            else:
+                input_charset = unicode(input_charset, 'ascii')
+        except UnicodeError:
+            raise errors.CharsetError(input_charset)
         input_charset = input_charset.lower()
         # Set the input charset after filtering through the aliases
         self.input_charset = ALIASES.get(input_charset, input_charset)
@@ -220,6 +213,8 @@ class Charset:
         # it.
         henc, benc, conv = CHARSETS.get(self.input_charset,
                                         (SHORTEST, BASE64, None))
+        if not conv:
+            conv = self.input_charset
         # Set the attributes, allowing the arguments to override the default.
         self.header_encoding = henc
         self.body_encoding = benc
@@ -229,7 +224,7 @@ class Charset:
         self.input_codec = CODEC_MAP.get(self.input_charset,
                                          self.input_charset)
         self.output_codec = CODEC_MAP.get(self.output_charset,
-                                            self.input_codec)
+                                          self.output_charset)
 
     def __str__(self):
         return self.input_charset.lower()
@@ -283,7 +278,7 @@ class Charset:
         Characters that could not be converted to Unicode will be replaced
         with the Unicode replacement character U+FFFD.
         """
-        if _isunicode(s) or self.input_codec is None:
+        if isinstance(s, unicode) or self.input_codec is None:
             return s
         try:
             return unicode(s, self.input_codec, 'replace')
@@ -309,7 +304,7 @@ class Charset:
             codec = self.output_codec
         else:
             codec = self.input_codec
-        if not _isunicode(ustr) or codec is None:
+        if not isinstance(ustr, unicode) or codec is None:
             return ustr
         try:
             return ustr.encode(codec, 'replace')
@@ -330,12 +325,12 @@ class Charset:
         cset = self.get_output_charset()
         # The len(s) of a 7bit encoding is len(s)
         if self.header_encoding == BASE64:
-            return email.base64MIME.base64_len(s) + len(cset) + MISC_LEN
+            return email.base64mime.base64_len(s) + len(cset) + MISC_LEN
         elif self.header_encoding == QP:
-            return email.quopriMIME.header_quopri_len(s) + len(cset) + MISC_LEN
+            return email.quoprimime.header_quopri_len(s) + len(cset) + MISC_LEN
         elif self.header_encoding == SHORTEST:
-            lenb64 = email.base64MIME.base64_len(s)
-            lenqp = email.quopriMIME.header_quopri_len(s)
+            lenb64 = email.base64mime.base64_len(s)
+            lenqp = email.quoprimime.header_quopri_len(s)
             return min(lenb64, lenqp) + len(cset) + MISC_LEN
         else:
             return len(s)
@@ -358,16 +353,16 @@ class Charset:
             s = self.convert(s)
         # 7bit/8bit encodings return the string unchanged (modulo conversions)
         if self.header_encoding == BASE64:
-            return email.base64MIME.header_encode(s, cset)
+            return email.base64mime.header_encode(s, cset)
         elif self.header_encoding == QP:
-            return email.quopriMIME.header_encode(s, cset, maxlinelen=None)
+            return email.quoprimime.header_encode(s, cset, maxlinelen=None)
         elif self.header_encoding == SHORTEST:
-            lenb64 = email.base64MIME.base64_len(s)
-            lenqp = email.quopriMIME.header_quopri_len(s)
+            lenb64 = email.base64mime.base64_len(s)
+            lenqp = email.quoprimime.header_quopri_len(s)
             if lenb64 < lenqp:
-                return email.base64MIME.header_encode(s, cset)
+                return email.base64mime.header_encode(s, cset)
             else:
-                return email.quopriMIME.header_encode(s, cset, maxlinelen=None)
+                return email.quoprimime.header_encode(s, cset, maxlinelen=None)
         else:
             return s
 
@@ -386,8 +381,8 @@ class Charset:
             s = self.convert(s)
         # 7bit/8bit encodings return the string unchanged (module conversions)
         if self.body_encoding is BASE64:
-            return email.base64MIME.body_encode(s)
+            return email.base64mime.body_encode(s)
         elif self.body_encoding is QP:
-            return email.quopriMIME.body_encode(s)
+            return email.quoprimime.body_encode(s)
         else:
             return s

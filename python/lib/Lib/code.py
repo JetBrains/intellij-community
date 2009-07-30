@@ -66,7 +66,7 @@ class InteractiveInterpreter:
         object.  The code is executed by calling self.runcode() (which
         also handles run-time exceptions, except for SystemExit).
 
-        The return value is 1 in case 2, 0 in the other cases (unless
+        The return value is True in case 2, False in the other cases (unless
         an exception is raised).  The return value can be used to
         decide whether to use sys.ps1 or sys.ps2 to prompt the next
         line.
@@ -77,15 +77,15 @@ class InteractiveInterpreter:
         except (OverflowError, SyntaxError, ValueError):
             # Case 1
             self.showsyntaxerror(filename)
-            return 0
+            return False
 
         if code is None:
             # Case 2
-            return 1
+            return True
 
         # Case 3
         self.runcode(code)
-        return 0
+        return False
 
     def runcode(self, code):
         """Execute a code object.
@@ -133,12 +133,7 @@ class InteractiveInterpreter:
                 pass
             else:
                 # Stuff in the right filename
-                try:
-                    # Assume SyntaxError is a class exception
-                    value = SyntaxError(msg, (filename, lineno, offset, line))
-                except:
-                    # If that failed, assume SyntaxError is a string
-                    value = msg, (filename, lineno, offset, line)
+                value = SyntaxError(msg, (filename, lineno, offset, line))
                 sys.last_value = value
         list = traceback.format_exception_only(type, value)
         map(self.write, list)
@@ -221,7 +216,7 @@ class InteractiveConsole(InteractiveInterpreter):
             sys.ps2
         except AttributeError:
             sys.ps2 = "... "
-        cprt = 'Type "copyright", "credits" or "license" for more information.'
+        cprt = 'Type "help", "copyright", "credits" or "license" for more information.'
         if banner is None:
             self.write("Python %s on %s\n%s\n(%s)\n" %
                        (sys.version, sys.platform, cprt,
@@ -302,10 +297,11 @@ def interact(banner=None, readfunc=None, local=None):
     else:
         try:
             import readline
-        except:
+        except ImportError:
             pass
     console.interact(banner)
 
 
 if __name__ == '__main__':
-    interact()
+    import pdb
+    pdb.run("interact()\n")

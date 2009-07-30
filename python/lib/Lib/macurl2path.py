@@ -8,7 +8,8 @@ import os
 __all__ = ["url2pathname","pathname2url"]
 
 def url2pathname(pathname):
-    "Convert /-delimited pathname to mac pathname"
+    """OS-specific conversion from a relative URL of the 'file' scheme
+    to a file system path; not recommended for general use."""
     #
     # XXXX The .. handling should be fixed...
     #
@@ -49,7 +50,8 @@ def url2pathname(pathname):
     return urllib.unquote(rv)
 
 def pathname2url(pathname):
-    "convert mac pathname to /-delimited pathname"
+    """OS-specific conversion from a file system path to a relative URL
+    of the 'file' scheme; not recommended for general use."""
     if '/' in pathname:
         raise RuntimeError, "Cannot convert pathname containing slashes"
     components = pathname.split(':')
@@ -80,7 +82,7 @@ def test():
                 "/foo/bar/index.html",
                 "/foo/bar/",
                 "/"]:
-        print `url`, '->', `url2pathname(url)`
+        print '%r -> %r' % (url, url2pathname(url))
     for path in ["drive:",
                  "drive:dir:",
                  "drive:dir:file",
@@ -89,7 +91,7 @@ def test():
                  ":file",
                  ":dir:",
                  ":dir:file"]:
-        print `path`, '->', `pathname2url(path)`
+        print '%r -> %r' % (path, pathname2url(path))
 
 if __name__ == '__main__':
     test()

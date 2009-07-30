@@ -18,9 +18,7 @@ available mechanisms for setting the properties which formatter objects
 manage and inserting data into the output.
 """
 
-import string
 import sys
-from types import StringType
 
 
 AS_IS = None
@@ -38,7 +36,7 @@ class NullFormatter:
     """
 
     def __init__(self, writer=None):
-        if not writer:
+        if writer is None:
             writer = NullWriter()
         self.writer = writer
     def end_paragraph(self, blankline): pass
@@ -110,7 +108,7 @@ class AbstractFormatter:
     def add_hor_rule(self, *args, **kw):
         if not self.hard_break:
             self.writer.send_line_break()
-        apply(self.writer.send_hor_rule, args, kw)
+        self.writer.send_hor_rule(*args, **kw)
         self.hard_break = self.nospace = 1
         self.have_label = self.para_end = self.softspace = self.parskip = 0
 
@@ -119,7 +117,7 @@ class AbstractFormatter:
             self.writer.send_line_break()
         if not self.para_end:
             self.writer.send_paragraph((blankline and 1) or 0)
-        if type(format) is StringType:
+        if isinstance(format, str):
             self.writer.send_label_data(self.format_counter(format, counter))
         else:
             self.writer.send_label_data(format)
@@ -176,16 +174,11 @@ class AbstractFormatter:
             return label.upper()
         return label
 
-    def add_flowing_data(self, data,
-                         # These are only here to load them into locals:
-                         whitespace = string.whitespace,
-                         join = string.join, split = string.split):
+    def add_flowing_data(self, data):
         if not data: return
-        # The following looks a bit convoluted but is a great improvement over
-        # data = regsub.gsub('[' + string.whitespace + ']+', ' ', data)
-        prespace = data[:1] in whitespace
-        postspace = data[-1:] in whitespace
-        data = join(split(data))
+        prespace = data[:1].isspace()
+        postspace = data[-1:].isspace()
+        data = " ".join(data.split())
         if self.nospace and not data:
             return
         elif prespace or self.softspace:
@@ -330,22 +323,22 @@ class AbstractWriter(NullWriter):
     """
 
     def new_alignment(self, align):
-        print "new_alignment(%s)" % `align`
+        print "new_alignment(%r)" % (align,)
 
     def new_font(self, font):
-        print "new_font(%s)" % `font`
+        print "new_font(%r)" % (font,)
 
     def new_margin(self, margin, level):
-        print "new_margin(%s, %d)" % (`margin`, level)
+        print "new_margin(%r, %d)" % (margin, level)
 
     def new_spacing(self, spacing):
-        print "new_spacing(%s)" % `spacing`
+        print "new_spacing(%r)" % (spacing,)
 
     def new_styles(self, styles):
-        print "new_styles(%s)" % `styles`
+        print "new_styles(%r)" % (styles,)
 
     def send_paragraph(self, blankline):
-        print "send_paragraph(%s)" % `blankline`
+        print "send_paragraph(%r)" % (blankline,)
 
     def send_line_break(self):
         print "send_line_break()"
@@ -354,13 +347,13 @@ class AbstractWriter(NullWriter):
         print "send_hor_rule()"
 
     def send_label_data(self, data):
-        print "send_label_data(%s)" % `data`
+        print "send_label_data(%r)" % (data,)
 
     def send_flowing_data(self, data):
-        print "send_flowing_data(%s)" % `data`
+        print "send_flowing_data(%r)" % (data,)
 
     def send_literal_data(self, data):
-        print "send_literal_data(%s)" % `data`
+        print "send_literal_data(%r)" % (data,)
 
 
 class DumbWriter(NullWriter):
@@ -411,7 +404,7 @@ class DumbWriter(NullWriter):
 
     def send_flowing_data(self, data):
         if not data: return
-        atbreak = self.atbreak or data[0] in string.whitespace
+        atbreak = self.atbreak or data[0].isspace()
         col = self.col
         maxcol = self.maxcol
         write = self.file.write
@@ -427,13 +420,13 @@ class DumbWriter(NullWriter):
             col = col + len(word)
             atbreak = 1
         self.col = col
-        self.atbreak = data[-1] in string.whitespace
+        self.atbreak = data[-1].isspace()
 
 
 def test(file = None):
     w = DumbWriter()
     f = AbstractFormatter(w)
-    if file:
+    if file is not None:
         fp = open(file)
     elif sys.argv[1:]:
         fp = open(sys.argv[1])

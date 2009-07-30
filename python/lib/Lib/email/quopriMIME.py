@@ -1,5 +1,6 @@
-# Copyright (C) 2001,2002 Python Software Foundation
-# Author: che@debian.org (Ben Gertzfield)
+# Copyright (C) 2001-2006 Python Software Foundation
+# Author: Ben Gertzfield
+# Contact: email-sig@python.org
 
 """Quoted-printable content transfer encoding per RFCs 2045-2047.
 
@@ -25,9 +26,27 @@ does dumb encoding and decoding.  To deal with the various line
 wrapping issues, use the email.Header module.
 """
 
+__all__ = [
+    'body_decode',
+    'body_encode',
+    'body_quopri_check',
+    'body_quopri_len',
+    'decode',
+    'decodestring',
+    'encode',
+    'encodestring',
+    'header_decode',
+    'header_encode',
+    'header_quopri_check',
+    'header_quopri_len',
+    'quote',
+    'unquote',
+    ]
+
 import re
+
 from string import hexdigits
-from email.Utils import fix_eols
+from email.utils import fix_eols
 
 CRLF = '\r\n'
 NL = '\n'
@@ -38,23 +57,17 @@ MISC_LEN = 7
 hqre = re.compile(r'[^-a-zA-Z0-9!*+/ ]')
 bqre = re.compile(r'[^ !-<>-~\t]')
 
-try:
-    True, False
-except NameError:
-    True = 1
-    False = 0
-
 
 
 # Helpers
 def header_quopri_check(c):
     """Return True if the character should be escaped with header quopri."""
-    return hqre.match(c) and True
+    return bool(hqre.match(c))
 
 
 def body_quopri_check(c):
     """Return True if the character should be escaped with body quopri."""
-    return bqre.match(c) and True
+    return bool(bqre.match(c))
 
 
 def header_quopri_len(s):

@@ -74,7 +74,6 @@ FOLDER_PROTECT = 0700
 
 import os
 import sys
-from stat import ST_NLINK
 import re
 import mimetools
 import multifile
@@ -98,9 +97,9 @@ class MH:
 
     def __init__(self, path = None, profile = None):
         """Constructor."""
-        if not profile: profile = MH_PROFILE
+        if profile is None: profile = MH_PROFILE
         self.profile = os.path.expanduser(profile)
-        if not path: path = self.getprofile('Path')
+        if path is None: path = self.getprofile('Path')
         if not path: path = PATH
         if not os.path.isabs(path) and path[0] != '~':
             path = os.path.join('~', path)
@@ -110,7 +109,7 @@ class MH:
 
     def __repr__(self):
         """String representation."""
-        return 'MH(%s, %s)' % (`self.path`, `self.profile`)
+        return 'MH(%r, %r)' % (self.path, self.profile)
 
     def error(self, msg, *args):
         """Routine to print an error.  May be overridden by a derived class."""
@@ -155,8 +154,7 @@ class MH:
         fullname = os.path.join(self.path, name)
         # Get the link count so we can avoid listing folders
         # that have no subfolders.
-        st = os.stat(fullname)
-        nlinks = st[ST_NLINK]
+        nlinks = os.stat(fullname).st_nlink
         if nlinks <= 2:
             return []
         subfolders = []
@@ -183,8 +181,7 @@ class MH:
         fullname = os.path.join(self.path, name)
         # Get the link count so we can avoid listing folders
         # that have no subfolders.
-        st = os.stat(fullname)
-        nlinks = st[ST_NLINK]
+        nlinks = os.stat(fullname).st_nlink
         if nlinks <= 2:
             return []
         subfolders = []
@@ -250,11 +247,11 @@ class Folder:
 
     def __repr__(self):
         """String representation."""
-        return 'Folder(%s, %s)' % (`self.mh`, `self.name`)
+        return 'Folder(%r, %r)' % (self.mh, self.name)
 
     def error(self, *args):
         """Error message handler."""
-        apply(self.mh.error, args)
+        self.mh.error(*args)
 
     def getfullname(self):
         """Return the full pathname of the folder."""
@@ -317,9 +314,9 @@ class Folder:
         """Write the set of sequences back to the folder."""
         fullname = self.getsequencesfilename()
         f = None
-        for key in sequences.keys():
+        for key, seq in sequences.iteritems():
             s = IntSet('', ' ')
-            s.fromlist(sequences[key])
+            s.fromlist(seq)
             if not f: f = open(fullname, 'w')
             f.write('%s: %s\n' % (key, s.tostring()))
         if not f:
@@ -375,7 +372,7 @@ class Folder:
                 anchor = self._parseindex(head, all)
             except Error, msg:
                 seqs = self.getsequences()
-                if not seqs.has_key(head):
+                if not head in seqs:
                     if not msg:
                         msg = "bad message list %s" % seq
                     raise Error, msg, sys.exc_info()[2]
@@ -412,7 +409,7 @@ class Folder:
             n = self._parseindex(seq, all)
         except Error, msg:
             seqs = self.getsequences()
-            if not seqs.has_key(seq):
+            if not seq in seqs:
                 if not msg:
                     msg = "bad message list %s" % seq
                 raise Error, msg
@@ -665,7 +662,7 @@ class Message(mimetools.Message):
         """Constructor."""
         self.folder = f
         self.number = n
-        if not fp:
+        if fp is None:
             path = f.getmessagefilename(n)
             fp = open(path, 'r')
         mimetools.Message.__init__(self, fp)
@@ -679,7 +676,7 @@ class Message(mimetools.Message):
         argument is specified, it is used as a filter predicate to
         decide which headers to return (its argument is the header
         name converted to lower case)."""
-        if not pred:
+        if pred is None:
             return ''.join(self.headers)
         headers = []
         hit = 0
@@ -700,7 +697,10 @@ class Message(mimetools.Message):
         encoding = self.getencoding()
         if not decode or encoding in ('', '7bit', '8bit', 'binary'):
             return self.fp.read()
-        from StringIO import StringIO
+        try:
+            from cStringIO import StringIO
+        except ImportError:
+            from StringIO import StringIO
         output = StringIO()
         mimetools.decode(self.fp, output, encoding)
         return output.getvalue()
@@ -719,7 +719,7 @@ class Message(mimetools.Message):
         mf.push(bdry)
         parts = []
         while mf.next():
-            n = str(self.number) + '.' + `1 + len(parts)`
+            n = "%s.%r" % (self.number, 1 + len(parts))
             part = SubMessage(self.folder, n, mf)
             parts.append(part)
         mf.pop()
@@ -803,8 +803,7 @@ class IntSet:
         return hash(self.pairs)
 
     def __repr__(self):
-        return 'IntSet(%s, %s, %s)' % (`self.tostring()`,
-                  `self.sep`, `self.rng`)
+        return 'IntSet(%r, %r, %r)' % (self.tostring(), self.sep, self.rng)
 
     def normalize(self):
         self.pairs.sort()
@@ -820,8 +819,8 @@ class IntSet:
     def tostring(self):
         s = ''
         for lo, hi in self.pairs:
-            if lo == hi: t = `lo`
-            else: t = `lo` + self.rng + `hi`
+            if lo == hi: t = repr(lo)
+            else: t = repr(lo) + self.rng + repr(hi)
             if s: s = s + (self.sep + t)
             else: s = t
         return s
@@ -850,8 +849,8 @@ class IntSet:
 
     def contains(self, x):
         for lo, hi in self.pairs:
-            if lo <= x <= hi: return 1
-        return 0
+            if lo <= x <= hi: return True
+        return False
 
     def append(self, x):
         for i in range(len(self.pairs)):
@@ -966,7 +965,7 @@ def test():
     testfolders = ['@test', '@test/test1', '@test/test2',
                    '@test/test1/test11', '@test/test1/test12',
                    '@test/test1/test11/test111']
-    for t in testfolders: do('mh.makefolder(%s)' % `t`)
+    for t in testfolders: do('mh.makefolder(%r)' % (t,))
     do('mh.listsubfolders(\'@test\')')
     do('mh.listallsubfolders(\'@test\')')
     f = mh.openfolder('@test')
@@ -978,22 +977,21 @@ def test():
     print seqs
     f.putsequences(seqs)
     do('f.getsequences()')
-    testfolders.reverse()
-    for t in testfolders: do('mh.deletefolder(%s)' % `t`)
+    for t in reversed(testfolders): do('mh.deletefolder(%r)' % (t,))
     do('mh.getcontext()')
     context = mh.getcontext()
     f = mh.openfolder(context)
     do('f.getcurrent()')
-    for seq in ['first', 'last', 'cur', '.', 'prev', 'next',
+    for seq in ('first', 'last', 'cur', '.', 'prev', 'next',
                 'first:3', 'last:3', 'cur:3', 'cur:-3',
                 'prev:3', 'next:3',
                 '1:3', '1:-3', '100:3', '100:-3', '10000:3', '10000:-3',
-                'all']:
+                'all'):
         try:
-            do('f.parsesequence(%s)' % `seq`)
+            do('f.parsesequence(%r)' % (seq,))
         except Error, msg:
             print "Error:", msg
-        stuff = os.popen("pick %s 2>/dev/null" % `seq`).read()
+        stuff = os.popen("pick %r 2>/dev/null" % (seq,)).read()
         list = map(int, stuff.split())
         print list, "<-- pick"
     do('f.listmessages()')

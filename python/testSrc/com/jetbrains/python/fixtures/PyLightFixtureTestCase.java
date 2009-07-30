@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class PyLightFixtureTestCase extends UsefulTestCase {
+public abstract class PyLightFixtureTestCase extends UsefulTestCase {
   private static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor();
 
   protected CodeInsightTestFixture myFixture;

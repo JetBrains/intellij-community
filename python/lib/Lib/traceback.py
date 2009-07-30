@@ -6,8 +6,8 @@ import types
 
 __all__ = ['extract_stack', 'extract_tb', 'format_exception',
            'format_exception_only', 'format_list', 'format_stack',
-           'format_tb', 'print_exc', 'print_exception', 'print_last',
-           'print_stack', 'print_tb', 'tb_lineno']
+           'format_tb', 'print_exc', 'format_exc', 'print_exception',
+           'print_last', 'print_stack', 'print_tb', 'tb_lineno']
 
 def _print(file, str='', terminator='\n'):
     file.write(str+terminator)
@@ -16,7 +16,7 @@ def _print(file, str='', terminator='\n'):
 def print_list(extracted_list, file=None):
     """Print the list of tuples as returned by extract_tb() or
     extract_stack() as a formatted stack trace to the given file."""
-    if not file:
+    if file is None:
         file = sys.stderr
     for filename, lineno, name, line in extracted_list:
         _print(file,
@@ -51,7 +51,7 @@ def print_tb(tb, limit=None, file=None):
     'file' should be an open file or file-like object with a write()
     method.
     """
-    if not file:
+    if file is None:
         file = sys.stderr
     if limit is None:
         if hasattr(sys, 'tracebacklimit'):
@@ -59,13 +59,14 @@ def print_tb(tb, limit=None, file=None):
     n = 0
     while tb is not None and (limit is None or n < limit):
         f = tb.tb_frame
-        lineno = tb_lineno(tb)
+        lineno = tb.tb_lineno
         co = f.f_code
         filename = co.co_filename
         name = co.co_name
         _print(file,
                '  File "%s", line %d, in %s' % (filename,lineno,name))
-        line = linecache.getline(filename, lineno)
+        linecache.checkcache(filename)
+        line = linecache.getline(filename, lineno, f.f_globals)
         if line: _print(file, '    ' + line.strip())
         tb = tb.tb_next
         n = n+1
@@ -92,11 +93,12 @@ def extract_tb(tb, limit = None):
     n = 0
     while tb is not None and (limit is None or n < limit):
         f = tb.tb_frame
-        lineno = tb_lineno(tb)
+        lineno = tb.tb_lineno
         co = f.f_code
         filename = co.co_filename
         name = co.co_name
-        line = linecache.getline(filename, lineno)
+        linecache.checkcache(filename)
+        line = linecache.getline(filename, lineno, f.f_globals)
         if line: line = line.strip()
         else: line = None
         list.append((filename, lineno, name, line))
@@ -116,7 +118,7 @@ def print_exception(etype, value, tb, limit=None, file=None):
     occurred with a caret on the next line indicating the approximate
     position of the error.
     """
-    if not file:
+    if file is None:
         file = sys.stderr
     if tb:
         _print(file, 'Traceback (most recent call last):')
@@ -148,49 +150,64 @@ def format_exception_only(etype, value):
 
     The arguments are the exception type and value such as given by
     sys.last_type and sys.last_value. The return value is a list of
-    strings, each ending in a newline.  Normally, the list contains a
-    single string; however, for SyntaxError exceptions, it contains
-    several lines that (when printed) display detailed information
-    about where the syntax error occurred.  The message indicating
-    which exception occurred is the always last string in the list.
+    strings, each ending in a newline.
+
+    Normally, the list contains a single string; however, for
+    SyntaxError exceptions, it contains several lines that (when
+    printed) display detailed information about where the syntax
+    error occurred.
+
+    The message indicating which exception occurred is always the last
+    string in the list.
+
     """
-    list = []
-    if type(etype) == types.ClassType:
-        stype = etype.__name__
+
+    # An instance should not have a meaningful value parameter, but
+    # sometimes does, particularly for string exceptions, such as
+    # >>> raise string1, string2  # deprecated
+    #
+    # Clear these out first because issubtype(string1, SyntaxError)
+    # would throw another exception and mask the original problem.
+    if (isinstance(etype, BaseException) or
+        isinstance(etype, types.InstanceType) or
+        etype is None or type(etype) is str):
+        return [_format_final_exc_line(etype, value)]
+
+    stype = etype.__name__
+
+    if not issubclass(etype, SyntaxError):
+        return [_format_final_exc_line(stype, value)]
+
+    # It was a syntax error; show exactly where the problem was found.
+    lines = []
+    try:
+        msg, (filename, lineno, offset, badline) = value
+    except Exception:
+        pass
     else:
-        stype = etype
-    if value is None:
-        list.append(str(stype) + '\n')
+        filename = filename or "<string>"
+        lines.append('  File "%s", line %d\n' % (filename, lineno))
+        if badline is not None:
+            lines.append('    %s\n' % badline.strip())
+            if offset is not None:
+                caretspace = badline[:offset].lstrip()
+                # non-space whitespace (likes tabs) must be kept for alignment
+                caretspace = ((c.isspace() and c or ' ') for c in caretspace)
+                # only three spaces to account for offset1 == pos 0
+                lines.append('   %s^\n' % ''.join(caretspace))
+            value = msg
+
+    lines.append(_format_final_exc_line(stype, value))
+    return lines
+
+def _format_final_exc_line(etype, value):
+    """Return a list of a single line -- normal case for format_exception_only"""
+    valuestr = _some_str(value)
+    if value is None or not valuestr:
+        line = "%s\n" % etype
     else:
-        if etype is SyntaxError:
-            try:
-                msg, (filename, lineno, offset, line) = value
-            except:
-                pass
-            else:
-                if not filename: filename = "<string>"
-                list.append('  File "%s", line %d\n' %
-                            (filename, lineno))
-                if line is not None:
-                    i = 0
-                    while i < len(line) and line[i].isspace():
-                        i = i+1
-                    list.append('    %s\n' % line.strip())
-                    if offset is not None:
-                        s = '    '
-                        for c in line[i:offset-1]:
-                            if c.isspace():
-                                s = s + c
-                            else:
-                                s = s + ' '
-                        list.append('%s^\n' % s)
-                    value = msg
-        s = _some_str(value)
-        if s:
-            list.append('%s: %s\n' % (str(stype), s))
-        else:
-            list.append('%s\n' % str(stype))
-    return list
+        line = "%s: %s\n" % (etype, valuestr)
+    return line
 
 def _some_str(value):
     try:
@@ -203,7 +220,7 @@ def print_exc(limit=None, file=None):
     """Shorthand for 'print_exception(sys.exc_type, sys.exc_value, sys.exc_traceback, limit, file)'.
     (In fact, it uses sys.exc_info() to retrieve the same information
     in a thread-safe way.)"""
-    if not file:
+    if file is None:
         file = sys.stderr
     try:
         etype, value, tb = sys.exc_info()
@@ -211,10 +228,20 @@ def print_exc(limit=None, file=None):
     finally:
         etype = value = tb = None
 
+
+def format_exc(limit=None):
+    """Like print_exc() but return a string."""
+    try:
+        etype, value, tb = sys.exc_info()
+        return ''.join(format_exception(etype, value, tb, limit))
+    finally:
+        etype = value = tb = None
+
+
 def print_last(limit=None, file=None):
     """This is a shorthand for 'print_exception(sys.last_type,
     sys.last_value, sys.last_traceback, limit, file)'."""
-    if not file:
+    if file is None:
         file = sys.stderr
     print_exception(sys.last_type, sys.last_value, sys.last_traceback,
                     limit, file)
@@ -263,11 +290,12 @@ def extract_stack(f=None, limit = None):
     list = []
     n = 0
     while f is not None and (limit is None or n < limit):
-        lineno = f.f_lineno     # XXX Too bad if -O is used
+        lineno = f.f_lineno
         co = f.f_code
         filename = co.co_filename
         name = co.co_name
-        line = linecache.getline(filename, lineno)
+        linecache.checkcache(filename)
+        line = linecache.getline(filename, lineno, f.f_globals)
         if line: line = line.strip()
         else: line = None
         list.append((filename, lineno, name, line))
@@ -279,23 +307,6 @@ def extract_stack(f=None, limit = None):
 def tb_lineno(tb):
     """Calculate correct line number of traceback given in tb.
 
-    Even works with -O on.
+    Obsolete in 2.3.
     """
-    # Coded by Marc-Andre Lemburg from the example of PyCode_Addr2Line()
-    # in compile.c.
-    # Revised version by Jim Hugunin to work with JPython too.
-
-    c = tb.tb_frame.f_code
-    if not hasattr(c, 'co_lnotab'):
-        return tb.tb_lineno
-
-    tab = c.co_lnotab
-    line = c.co_firstlineno
-    stopat = tb.tb_lasti
-    addr = 0
-    for i in range(0, len(tab), 2):
-        addr = addr + ord(tab[i])
-        if addr > stopat:
-            break
-        line = line + ord(tab[i+1])
-    return line
+    return tb.tb_lineno

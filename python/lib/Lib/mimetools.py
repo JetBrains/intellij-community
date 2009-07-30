@@ -95,37 +95,52 @@ class Message(rfc822.Message):
 # Utility functions
 # -----------------
 
+try:
+    import thread
+except ImportError:
+    import dummy_thread as thread
+_counter_lock = thread.allocate_lock()
+del thread
+
+_counter = 0
+def _get_next_counter():
+    global _counter
+    _counter_lock.acquire()
+    _counter += 1
+    result = _counter
+    _counter_lock.release()
+    return result
 
 _prefix = None
 
 def choose_boundary():
-    """Return a random string usable as a multipart boundary.
-    The method used is so that it is *very* unlikely that the same
-    string of characters will every occur again in the Universe,
-    so the caller needn't check the data it is packing for the
-    occurrence of the boundary.
+    """Return a string usable as a multipart boundary.
+
+    The string chosen is unique within a single program run, and
+    incorporates the user id (if available), process id (if available),
+    and current time.  So it's very unlikely the returned string appears
+    in message text, but there's no guarantee.
 
     The boundary contains dots so you have to quote it in the header."""
 
     global _prefix
     import time
-    import random
     if _prefix is None:
         import socket
-        import os
-        hostid = socket.gethostbyname(socket.gethostname())
         try:
-            uid = `os.getuid()`
-        except:
+            hostid = socket.gethostbyname(socket.gethostname())
+        except socket.gaierror:
+            hostid = '127.0.0.1'
+        try:
+            uid = repr(os.getuid())
+        except AttributeError:
             uid = '1'
         try:
-            pid = `os.getpid()`
-        except:
+            pid = repr(os.getpid())
+        except AttributeError:
             pid = '1'
         _prefix = hostid + '.' + uid + '.' + pid
-    timestamp = '%.3f' % time.time()
-    seed = `random.randint(0, 32767)`
-    return _prefix + '.' + timestamp + '.' + seed
+    return "%s.%.3f.%d" % (_prefix, time.time(), _get_next_counter())
 
 
 # Subroutines for decoding some common content-transfer-types
@@ -143,7 +158,7 @@ def decode(input, output, encoding):
         return uu.decode(input, output)
     if encoding in ('7bit', '8bit'):
         return output.write(input.read())
-    if decodetab.has_key(encoding):
+    if encoding in decodetab:
         pipethrough(input, decodetab[encoding], output)
     else:
         raise ValueError, \
@@ -162,7 +177,7 @@ def encode(input, output, encoding):
         return uu.encode(input, output)
     if encoding in ('7bit', '8bit'):
         return output.write(input.read())
-    if encodetab.has_key(encoding):
+    if encoding in encodetab:
         pipethrough(input, encodetab[encoding], output)
     else:
         raise ValueError, \
@@ -203,8 +218,8 @@ def pipeto(input, command):
     pipe.close()
 
 def pipethrough(input, command, output):
-    tempname = tempfile.mktemp()
-    temp = open(tempname, 'w')
+    (fd, tempname) = tempfile.mkstemp()
+    temp = os.fdopen(fd, 'w')
     copyliteral(input, temp)
     temp.close()
     pipe = os.popen(command + ' <' + tempname, 'r')

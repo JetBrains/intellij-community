@@ -88,7 +88,7 @@ class PullDOM(xml.sax.ContentHandler):
                 else:
                     qname = 'xmlns:' + aname
                 attr = self.document.createAttributeNS(xmlns_uri, qname)
-		attr.value = value
+                attr.value = value
                 node.setAttributeNodeNS(attr)
             self._xmlns_attrs = []
         for aname,value in attrs.items():
@@ -280,6 +280,8 @@ class DOMEventStream:
         """ Fallback replacement for getEvent() that emits
             the events that _slurp() read previously.
         """
+        if self.pulldom.firstEvent[1] is None:
+            return None
         rc = self.pulldom.firstEvent[1][0]
         self.pulldom.firstEvent[1] = self.pulldom.firstEvent[1][1]
         return rc

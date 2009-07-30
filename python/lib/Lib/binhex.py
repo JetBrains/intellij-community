@@ -44,22 +44,14 @@ RUNCHAR=chr(0x90)   # run-length introducer
 
 #
 # Workarounds for non-mac machines.
-if os.name == 'mac':
-    import macfs
-    import MacOS
-    try:
-        openrf = MacOS.openrf
-    except AttributeError:
-        # Backward compatibility
-        openrf = open
-
-    def FInfo():
-        return macfs.FInfo()
+try:
+    from Carbon.File import FSSpec, FInfo
+    from MacOS import openrf
 
     def getfileinfo(name):
-        finfo = macfs.FSSpec(name).GetFInfo()
+        finfo = FSSpec(name).FSpGetFInfo()
         dir, file = os.path.split(name)
-        # XXXX Get resource/data sizes
+        # XXX Get resource/data sizes
         fp = open(name, 'rb')
         fp.seek(0, 2)
         dlen = fp.tell()
@@ -75,7 +67,7 @@ if os.name == 'mac':
             mode = '*' + mode[0]
         return openrf(name, mode)
 
-else:
+except ImportError:
     #
     # Glue code for non-macintosh usage
     #
@@ -183,7 +175,7 @@ class BinHex:
             ofname = ofp
             ofp = open(ofname, 'w')
             if os.name == 'mac':
-                fss = macfs.FSSpec(ofname)
+                fss = FSSpec(ofname)
                 fss.SetCreatorType('BnHq', 'TEXT')
         ofp.write('(This file must be converted with BinHex 4.0)\n\n:')
         hqxer = _Hqxcoderengine(ofp)
@@ -197,7 +189,6 @@ class BinHex:
         self.state = _DID_HEADER
 
     def _writeinfo(self, name, finfo):
-        name = name
         nl = len(name)
         if nl > 63:
             raise Error, 'Filename too long'
@@ -218,7 +209,11 @@ class BinHex:
     def _writecrc(self):
         # XXXX Should this be here??
         # self.crc = binascii.crc_hqx('\0\0', self.crc)
-        self.ofp.write(struct.pack('>h', self.crc))
+        if self.crc < 0:
+            fmt = '>h'
+        else:
+            fmt = '>H'
+        self.ofp.write(struct.pack(fmt, self.crc))
         self.crc = 0
 
     def write(self, data):
@@ -229,7 +224,7 @@ class BinHex:
 
     def close_data(self):
         if self.dlen != 0:
-            raise Error, 'Incorrect data size, diff='+`self.rlen`
+            raise Error, 'Incorrect data size, diff=%r' % (self.rlen,)
         self._writecrc()
         self.state = _DID_DATA
 
@@ -248,7 +243,7 @@ class BinHex:
             raise Error, 'Close at the wrong time'
         if self.rlen != 0:
             raise Error, \
-                  "Incorrect resource-datasize, diff="+`self.rlen`
+                  "Incorrect resource-datasize, diff=%r" % (self.rlen,)
         self._writecrc()
         self.ofp.close()
         self.state = None
@@ -483,7 +478,7 @@ def hexbin(inp, out):
     if not out:
         out = ifp.FName
     if os.name == 'mac':
-        ofss = macfs.FSSpec(out)
+        ofss = FSSpec(out)
         out = ofss.as_pathname()
 
     ofp = open(out, 'wb')
@@ -516,6 +511,7 @@ def hexbin(inp, out):
 
 def _test():
     if os.name == 'mac':
+        import macfs
         fss, ok = macfs.PromptGetFile('File to convert:')
         if not ok:
             sys.exit(0)

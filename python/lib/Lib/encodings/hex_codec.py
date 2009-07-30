@@ -49,14 +49,31 @@ class Codec(codecs.Codec):
     def decode(self, input,errors='strict'):
         return hex_decode(input,errors)
 
+class IncrementalEncoder(codecs.IncrementalEncoder):
+    def encode(self, input, final=False):
+        assert self.errors == 'strict'
+        return binascii.b2a_hex(input)
+
+class IncrementalDecoder(codecs.IncrementalDecoder):
+    def decode(self, input, final=False):
+        assert self.errors == 'strict'
+        return binascii.a2b_hex(input)
+
 class StreamWriter(Codec,codecs.StreamWriter):
     pass
-        
+
 class StreamReader(Codec,codecs.StreamReader):
     pass
 
 ### encodings module API
 
 def getregentry():
-
-    return (hex_encode,hex_decode,StreamReader,StreamWriter)
+    return codecs.CodecInfo(
+        name='hex',
+        encode=hex_encode,
+        decode=hex_decode,
+        incrementalencoder=IncrementalEncoder,
+        incrementaldecoder=IncrementalDecoder,
+        streamwriter=StreamWriter,
+        streamreader=StreamReader,
+    )

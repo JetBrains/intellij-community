@@ -1,12 +1,13 @@
-# Copyright (C) 2001,2002 Python Software Foundation
-# Author: barry@zope.com (Barry Warsaw)
+# Copyright (C) 2001-2006 Python Software Foundation
+# Author: Barry Warsaw
+# Contact: email-sig@python.org
 
-"""A package for parsing, handling, and generating email messages.
-"""
+"""A package for parsing, handling, and generating email messages."""
 
-__version__ = '2.5.4'
+__version__ = '4.0.2'
 
 __all__ = [
+    # Old names
     'base64MIME',
     'Charset',
     'Encoders',
@@ -27,46 +28,96 @@ __all__ = [
     'Utils',
     'message_from_string',
     'message_from_file',
+    # new names
+    'base64mime',
+    'charset',
+    'encoders',
+    'errors',
+    'generator',
+    'header',
+    'iterators',
+    'message',
+    'mime',
+    'parser',
+    'quoprimime',
+    'utils',
     ]
-
-try:
-    True, False
-except NameError:
-    True = 1
-    False = 0
 
 
 
 # Some convenience routines.  Don't import Parser and Message as side-effects
 # of importing email since those cascadingly import most of the rest of the
 # email package.
-def message_from_string(s, _class=None, strict=False):
+def message_from_string(s, *args, **kws):
     """Parse a string into a Message object model.
 
     Optional _class and strict are passed to the Parser constructor.
     """
-    from email.Parser import Parser
-    if _class is None:
-        from email.Message import Message
-        _class = Message
-    return Parser(_class, strict=strict).parsestr(s)
+    from email.parser import Parser
+    return Parser(*args, **kws).parsestr(s)
 
-def message_from_file(fp, _class=None, strict=False):
+
+def message_from_file(fp, *args, **kws):
     """Read a file and parse its contents into a Message object model.
 
     Optional _class and strict are passed to the Parser constructor.
     """
-    from email.Parser import Parser
-    if _class is None:
-        from email.Message import Message
-        _class = Message
-    return Parser(_class, strict=strict).parse(fp)
+    from email.parser import Parser
+    return Parser(*args, **kws).parse(fp)
 
 
 
-# Patch encodings.aliases to recognize 'ansi_x3.4_1968' which isn't a standard
-# alias in Python 2.1.3, but is used by the email package test suite.
-from encodings.aliases import aliases # The aliases dictionary
-if not aliases.has_key('ansi_x3.4_1968'):
-    aliases['ansi_x3.4_1968'] = 'ascii'
-del aliases # Not needed any more
+# Lazy loading to provide name mapping from new-style names (PEP 8 compatible
+# email 4.0 module names), to old-style names (email 3.0 module names).
+import sys
+
+class LazyImporter(object):
+    def __init__(self, module_name):
+        self.__name__ = 'email.' + module_name
+
+    def __getattr__(self, name):
+        __import__(self.__name__)
+        mod = sys.modules[self.__name__]
+        self.__dict__.update(mod.__dict__)
+        return getattr(mod, name)
+
+
+_LOWERNAMES = [
+    # email.<old name> -> email.<new name is lowercased old name>
+    'Charset',
+    'Encoders',
+    'Errors',
+    'FeedParser',
+    'Generator',
+    'Header',
+    'Iterators',
+    'Message',
+    'Parser',
+    'Utils',
+    'base64MIME',
+    'quopriMIME',
+    ]
+
+_MIMENAMES = [
+    # email.MIME<old name> -> email.mime.<new name is lowercased old name>
+    'Audio',
+    'Base',
+    'Image',
+    'Message',
+    'Multipart',
+    'NonMultipart',
+    'Text',
+    ]
+
+for _name in _LOWERNAMES:
+    importer = LazyImporter(_name.lower())
+    sys.modules['email.' + _name] = importer
+    setattr(sys.modules['email'], _name, importer)
+
+
+import email.mime
+for _name in _MIMENAMES:
+    importer = LazyImporter('mime.' + _name.lower())
+    sys.modules['email.MIME' + _name] = importer
+    setattr(sys.modules['email'], 'MIME' + _name, importer)
+    setattr(sys.modules['email.mime'], _name, importer)

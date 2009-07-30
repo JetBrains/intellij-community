@@ -26,7 +26,7 @@ commentclose = re.compile(r'--\s*>')
 tagfind = re.compile('[a-zA-Z][-.a-zA-Z0-9:_]*')
 attrfind = re.compile(
     r'\s*([a-zA-Z_][-.:a-zA-Z_0-9]*)(\s*=\s*'
-    r'(\'[^\']*\'|"[^"]*"|[-a-zA-Z0-9./:;+*%?!&$\(\)_#=~]*))?')
+    r'(\'[^\']*\'|"[^"]*"|[-a-zA-Z0-9./,:;+*%?!&$\(\)_#=~@]*))?')
 
 locatestarttagend = re.compile(r"""
   <[a-zA-Z][-.a-zA-Z0-9:_]*          # tag name
@@ -148,8 +148,6 @@ class HTMLParser(markupbase.ParserBase):
                     k = self.parse_starttag(i)
                 elif startswith("</", i):
                     k = self.parse_endtag(i)
-                    if k >= 0:
-                        self.clear_cdata_mode()
                 elif startswith("<!--", i):
                     k = self.parse_comment(i)
                 elif startswith("<?", i):
@@ -210,19 +208,6 @@ class HTMLParser(markupbase.ParserBase):
             i = self.updatepos(i, n)
         self.rawdata = rawdata[i:]
 
-    # Internal -- parse comment, return end or -1 if not terminated
-    def parse_comment(self, i, report=1):
-        rawdata = self.rawdata
-        assert rawdata[i:i+4] == '<!--', 'unexpected call to parse_comment()'
-        match = commentclose.search(rawdata, i+4)
-        if not match:
-            return -1
-        if report:
-            j = match.start()
-            self.handle_comment(rawdata[i+4: j])
-        j = match.end()
-        return j
-
     # Internal -- parse processing instr, return end or -1 if not terminated
     def parse_pi(self, i):
         rawdata = self.rawdata
@@ -274,8 +259,8 @@ class HTMLParser(markupbase.ParserBase):
                          - self.__starttag_text.rfind("\n")
             else:
                 offset = offset + len(self.__starttag_text)
-            self.error("junk characters in start tag: %s"
-                       % `rawdata[k:endpos][:20]`)
+            self.error("junk characters in start tag: %r"
+                       % (rawdata[k:endpos][:20],))
         if end.endswith('/>'):
             # XHTML-style empty tag: <span attr="value" />
             self.handle_startendtag(tag, attrs)
@@ -326,9 +311,10 @@ class HTMLParser(markupbase.ParserBase):
         j = match.end()
         match = endtagfind.match(rawdata, i) # </ + tag + >
         if not match:
-            self.error("bad end tag: %s" % `rawdata[i:j]`)
+            self.error("bad end tag: %r" % (rawdata[i:j],))
         tag = match.group(1)
         self.handle_endtag(tag.lower())
+        self.clear_cdata_mode()
         return j
 
     # Overridable -- finish processing of start+end tag: <tag.../>
@@ -369,7 +355,7 @@ class HTMLParser(markupbase.ParserBase):
         pass
 
     def unknown_decl(self, data):
-        self.error("unknown declaration: " + `data`)
+        self.error("unknown declaration: %r" % (data,))
 
     # Internal -- helper to remove special character quoting
     def unescape(self, s):

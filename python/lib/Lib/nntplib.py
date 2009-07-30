@@ -31,7 +31,6 @@ are strings, not numbers, since they are rarely used for calculations.
 # Imports
 import re
 import socket
-import types
 
 __all__ = ["NNTP","NNTPReplyError","NNTPTemporaryError",
            "NNTPPermanentError","NNTPProtocolError","NNTPDataError",
@@ -42,7 +41,7 @@ __all__ = ["NNTP","NNTPReplyError","NNTPTemporaryError",
 class NNTPError(Exception):
     """Base class for all nntplib exceptions"""
     def __init__(self, *args):
-        apply(Exception.__init__, (self,)+args)
+        Exception.__init__(self, *args)
         try:
             self.response = args[0]
         except IndexError:
@@ -93,7 +92,7 @@ CRLF = '\r\n'
 # The class itself
 class NNTP:
     def __init__(self, host, port=NNTP_PORT, user=None, password=None,
-                 readermode=None):
+                 readermode=None, usenetrc=True):
         """Initialize an instance.  Arguments:
         - host: hostname to connect to
         - port: port to connect to (default the standard NNTP port)
@@ -134,6 +133,19 @@ class NNTP:
                     readermode_afterauth = 1
                 else:
                     raise
+        # If no login/password was specified, try to get them from ~/.netrc
+        # Presume that if .netc has an entry, NNRP authentication is required.
+        try:
+            if usenetrc and not user:
+                import netrc
+                credentials = netrc.netrc()
+                auth = credentials.authenticators(host)
+                if auth:
+                    user = auth[0]
+                    password = auth[2]
+        except IOError:
+            pass
+        # Perform NNRP authentication if needed.
         if user:
             resp = self.shortcmd('authinfo user '+user)
             if resp[:3] == '381':
@@ -163,7 +175,7 @@ class NNTP:
         If the response code is 200, posting is allowed;
         if it 201, posting is not allowed."""
 
-        if self.debugging: print '*welcome*', `self.welcome`
+        if self.debugging: print '*welcome*', repr(self.welcome)
         return self.welcome
 
     def set_debuglevel(self, level):
@@ -178,12 +190,12 @@ class NNTP:
     def putline(self, line):
         """Internal: send one line to the server, appending CRLF."""
         line = line + CRLF
-        if self.debugging > 1: print '*put*', `line`
+        if self.debugging > 1: print '*put*', repr(line)
         self.sock.sendall(line)
 
     def putcmd(self, line):
         """Internal: send one command to the server (through putline())."""
-        if self.debugging: print '*cmd*', `line`
+        if self.debugging: print '*cmd*', repr(line)
         self.putline(line)
 
     def getline(self):
@@ -191,7 +203,7 @@ class NNTP:
         Raise EOFError if the connection is closed."""
         line = self.file.readline()
         if self.debugging > 1:
-            print '*get*', `line`
+            print '*get*', repr(line)
         if not line: raise EOFError
         if line[-2:] == CRLF: line = line[:-2]
         elif line[-1:] in CRLF: line = line[:-1]
@@ -201,7 +213,7 @@ class NNTP:
         """Internal: get a response from the server.
         Raise various errors if the response indicates an error."""
         resp = self.getline()
-        if self.debugging: print '*resp*', `resp`
+        if self.debugging: print '*resp*', repr(resp)
         c = resp[:1]
         if c == '4':
             raise NNTPTemporaryError(resp)
@@ -218,7 +230,7 @@ class NNTP:
         openedFile = None
         try:
             # If a string was passed then open a file with that name
-            if isinstance(file, types.StringType):
+            if isinstance(file, str):
                 openedFile = file = open(file, "w")
 
             resp = self.getresp()
@@ -252,7 +264,7 @@ class NNTP:
         self.putcmd(line)
         return self.getlongresp(file)
 
-    def newgroups(self, date, time):
+    def newgroups(self, date, time, file=None):
         """Process a NEWGROUPS command.  Arguments:
         - date: string 'yymmdd' indicating the date
         - time: string 'hhmmss' indicating the time
@@ -260,30 +272,66 @@ class NNTP:
         - resp: server response if successful
         - list: list of newsgroup names"""
 
-        return self.longcmd('NEWGROUPS ' + date + ' ' + time)
+        return self.longcmd('NEWGROUPS ' + date + ' ' + time, file)
 
-    def newnews(self, group, date, time):
+    def newnews(self, group, date, time, file=None):
         """Process a NEWNEWS command.  Arguments:
         - group: group name or '*'
         - date: string 'yymmdd' indicating the date
         - time: string 'hhmmss' indicating the time
         Return:
         - resp: server response if successful
-        - list: list of article ids"""
+        - list: list of message ids"""
 
         cmd = 'NEWNEWS ' + group + ' ' + date + ' ' + time
-        return self.longcmd(cmd)
+        return self.longcmd(cmd, file)
 
-    def list(self):
+    def list(self, file=None):
         """Process a LIST command.  Return:
         - resp: server response if successful
         - list: list of (group, last, first, flag) (strings)"""
 
-        resp, list = self.longcmd('LIST')
+        resp, list = self.longcmd('LIST', file)
         for i in range(len(list)):
             # Parse lines into "group last first flag"
             list[i] = tuple(list[i].split())
         return resp, list
+
+    def description(self, group):
+
+        """Get a description for a single group.  If more than one
+        group matches ('group' is a pattern), return the first.  If no
+        group matches, return an empty string.
+
+        This elides the response code from the server, since it can
+        only be '215' or '285' (for xgtitle) anyway.  If the response
+        code is needed, use the 'descriptions' method.
+
+        NOTE: This neither checks for a wildcard in 'group' nor does
+        it check whether the group actually exists."""
+
+        resp, lines = self.descriptions(group)
+        if len(lines) == 0:
+            return ""
+        else:
+            return lines[0][1]
+
+    def descriptions(self, group_pattern):
+        """Get descriptions for a range of groups."""
+        line_pat = re.compile("^(?P<group>[^ \t]+)[ \t]+(.*)$")
+        # Try the more std (acc. to RFC2980) LIST NEWSGROUPS first
+        resp, raw_lines = self.longcmd('LIST NEWSGROUPS ' + group_pattern)
+        if resp[:3] != "215":
+            # Now the deprecated XGTITLE.  This either raises an error
+            # or succeeds with the same output structure as LIST
+            # NEWSGROUPS.
+            resp, raw_lines = self.longcmd('XGTITLE ' + group_pattern)
+        lines = []
+        for raw_line in raw_lines:
+            match = line_pat.search(raw_line.strip())
+            if match:
+                lines.append(match.group(1, 2))
+        return resp, lines
 
     def group(self, name):
         """Process a GROUP command.  Argument:
@@ -311,12 +359,12 @@ class NNTP:
                         name = words[4].lower()
         return resp, count, first, last, name
 
-    def help(self):
+    def help(self, file=None):
         """Process a HELP command.  Returns:
         - resp: server response if successful
         - list: list of strings"""
 
-        return self.longcmd('HELP')
+        return self.longcmd('HELP',file)
 
     def statparse(self, resp):
         """Internal: parse the response of a STAT, NEXT or LAST command."""
@@ -343,7 +391,7 @@ class NNTP:
         Returns:
         - resp: server response if successful
         - nr:   the article number
-        - id:   the article id"""
+        - id:   the message id"""
 
         return self.statcmd('STAT ' + id)
 
@@ -402,7 +450,7 @@ class NNTP:
 
         return self.shortcmd('SLAVE')
 
-    def xhdr(self, hdr, str):
+    def xhdr(self, hdr, str, file=None):
         """Process an XHDR command (optional server extension).  Arguments:
         - hdr: the header type (e.g. 'subject')
         - str: an article nr, a message id, or a range nr1-nr2
@@ -411,7 +459,7 @@ class NNTP:
         - list: list of (nr, value) strings"""
 
         pat = re.compile('^([0-9]+) ?(.*)\n?')
-        resp, lines = self.longcmd('XHDR ' + hdr + ' ' + str)
+        resp, lines = self.longcmd('XHDR ' + hdr + ' ' + str, file)
         for i in range(len(lines)):
             line = lines[i]
             m = pat.match(line)
@@ -419,7 +467,7 @@ class NNTP:
                 lines[i] = m.group(1, 2)
         return resp, lines
 
-    def xover(self,start,end):
+    def xover(self, start, end, file=None):
         """Process an XOVER command (optional server extension) Arguments:
         - start: start of range
         - end: end of range
@@ -428,7 +476,7 @@ class NNTP:
         - list: list of (art-nr, subject, poster, date,
                          id, references, size, lines)"""
 
-        resp, lines = self.longcmd('XOVER ' + start + '-' + end)
+        resp, lines = self.longcmd('XOVER ' + start + '-' + end, file)
         xover_lines = []
         for line in lines:
             elem = line.split("\t")
@@ -445,7 +493,7 @@ class NNTP:
                 raise NNTPDataError(line)
         return resp,xover_lines
 
-    def xgtitle(self, group):
+    def xgtitle(self, group, file=None):
         """Process an XGTITLE command (optional server extension) Arguments:
         - group: group name wildcard (i.e. news.*)
         Returns:
@@ -453,7 +501,7 @@ class NNTP:
         - list: list of (name,title) strings"""
 
         line_pat = re.compile("^([^ \t]+)[ \t]+(.*)$")
-        resp, raw_lines = self.longcmd('XGTITLE ' + group)
+        resp, raw_lines = self.longcmd('XGTITLE ' + group, file)
         lines = []
         for raw_line in raw_lines:
             match = line_pat.search(raw_line.strip())
@@ -556,9 +604,19 @@ class NNTP:
         return resp
 
 
-def _test():
-    """Minimal test function."""
-    s = NNTP('news', readermode='reader')
+# Test retrieval when run as a script.
+# Assumption: if there's a local news server, it's called 'news'.
+# Assumption: if user queries a remote news server, it's named
+# in the environment variable NNTPSERVER (used by slrn and kin)
+# and we want readermode off.
+if __name__ == '__main__':
+    import os
+    newshost = 'news' and os.environ["NNTPSERVER"]
+    if newshost.find('.') == -1:
+        mode = 'readermode'
+    else:
+        mode = None
+    s = NNTP(newshost, readermode=mode)
     resp, count, first, last, name = s.group('comp.lang.python')
     print resp
     print 'Group', name, 'has', count, 'articles, range', first, 'to', last
@@ -568,8 +626,3 @@ def _test():
         print "%7s %s" % item
     resp = s.quit()
     print resp
-
-
-# Run the test when run as a script
-if __name__ == '__main__':
-    _test()

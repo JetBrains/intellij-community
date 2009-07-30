@@ -57,7 +57,8 @@ Compile():
 """
 
 # import internals, not guaranteed interface
-from org.python.core import Py,CompilerFlags
+from org.python.core import Py,CompilerFlags,CompileMode
+from org.python.core.CompilerFlags import PyCF_DONT_IMPLY_DEDENT
 
 # public interface
 
@@ -83,6 +84,7 @@ def compile_command(source, filename="<input>", symbol="single"):
     """
     if symbol not in ['single','eval']:
         raise ValueError,"symbol arg must be either single or eval"
+    symbol = CompileMode.getMode(symbol)
     return Py.compile_command_flags(source,filename,symbol,Py.getCompilerFlags(),0)
 
 class Compile:
@@ -94,6 +96,7 @@ class Compile:
         self._cflags = CompilerFlags()
 
     def __call__(self, source, filename, symbol):
+        symbol = CompileMode.getMode(symbol)
         return Py.compile_flags(source, filename, symbol, self._cflags)
 
 class CommandCompiler:
@@ -127,5 +130,6 @@ class CommandCompiler:
         """
         if symbol not in ['single','eval']:
             raise ValueError,"symbol arg must be either single or eval"
+        symbol = CompileMode.getMode(symbol)
         return Py.compile_command_flags(source,filename,symbol,self._cflags,0)
 

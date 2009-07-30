@@ -6,7 +6,6 @@ module as os.path.
 """
 
 # Incompletely implemented:
-# islink -- How?
 # ismount -- How?
 # normcase -- How?
 
@@ -14,34 +13,47 @@ module as os.path.
 # sameopenfile -- Java doesn't have fstat nor file descriptors?
 # samestat -- How?
 
+import stat
+import sys
 from java.io import File
 import java.io.IOException
 from java.lang import System
 import os
 
+from org.python.core.Py import newString as asPyString
+
 
 def _tostr(s, method):
     if isinstance(s, basestring):
         return s
-    import org
     raise TypeError, "%s() argument must be a str or unicode object, not %s" % (
-                method, org.python.core.Py.safeRepr(s))
+                method, _type_name(s))
+
+def _type_name(obj):
+    TPFLAGS_HEAPTYPE = 1 << 9
+    type_name = ''
+    obj_type = type(obj)
+    is_heap = obj_type.__flags__ & TPFLAGS_HEAPTYPE == TPFLAGS_HEAPTYPE
+    if not is_heap and obj_type.__module__ != '__builtin__':
+        type_name = '%s.' % obj_type.__module__
+    type_name += obj_type.__name__
+    return type_name
         
 def dirname(path):
     """Return the directory component of a pathname"""
     path = _tostr(path, "dirname")
-    result = File(path).getParent()
+    result = asPyString(File(path).getParent())
     if not result:
-	if isabs(path):
-	    result = path # Must be root
-	else:
-	    result = ""
+        if isabs(path):
+            result = path # Must be root
+        else:
+            result = ""
     return result
 
 def basename(path):
     """Return the final component of a pathname"""
     path = _tostr(path, "basename")
-    return File(path).getName()
+    return asPyString(File(path).getName())
 
 def split(path):
     """Split a pathname.
@@ -88,7 +100,7 @@ def exists(path):
 
     """
     path = _tostr(path, "exists")
-    return File(path).exists()
+    return File(sys.getPath(path)).exists()
 
 def isabs(path):
     """Test whether a path is absolute"""
@@ -98,12 +110,12 @@ def isabs(path):
 def isfile(path):
     """Test whether a path is a regular file"""
     path = _tostr(path, "isfile")
-    return File(path).isFile()
+    return File(sys.getPath(path)).isFile()
 
 def isdir(path):
     """Test whether a path is a directory"""
     path = _tostr(path, "isdir")
-    return File(path).isDirectory()
+    return File(sys.getPath(path)).isDirectory()
 
 def join(path, *args):
     """Join two or more pathname components, inserting os.sep as needed"""
@@ -111,12 +123,14 @@ def join(path, *args):
     f = File(path)
     for a in args:
         a = _tostr(a, "join")
-	g = File(a)
-	if g.isAbsolute() or len(f.getPath()) == 0:
-	    f = g
-	else:
-	    f = File(f, a)
-    return f.getPath()
+        g = File(a)
+        if g.isAbsolute() or len(f.getPath()) == 0:
+            f = g
+        else:
+            if a == "":
+                a = os.sep
+            f = File(f, a)
+    return asPyString(f.getPath())
 
 def normcase(path):
     """Normalize case of pathname.
@@ -125,7 +139,7 @@ def normcase(path):
 
     """
     path = _tostr(path, "normcase")
-    return File(path).getPath()
+    return asPyString(File(path).getPath())
 
 def commonprefix(m):
     "Given a list of pathnames, return the longest common leading component"
@@ -140,12 +154,12 @@ def commonprefix(m):
     return prefix
 
 def islink(path):
-    """Test whether a path is a symbolic link.
-
-    XXX This incorrectly always returns false under JDK.
-
-    """
-    return 0
+    """Test whether a path is a symbolic link"""
+    try:
+        st = os.lstat(path)
+    except (os.error, AttributeError):
+        return False
+    return stat.S_ISLNK(st.st_mode)
 
 def samefile(path, path2):
     """Test whether two pathnames reference the same actual file"""
@@ -175,17 +189,17 @@ def walk(top, func, arg):
         return
     func(arg, top, names)
     for name in names:
-	name = join(top, name)
-	if isdir(name) and not islink(name):
-	    walk(name, func, arg)
+        name = join(top, name)
+        if isdir(name) and not islink(name):
+            walk(name, func, arg)
 
 def expanduser(path):
     if path[:1] == "~":
-	c = path[1:2]
-	if not c:
-	    return gethome()
-	if c == os.sep:
-	    return File(gethome(), path[2:]).getPath()
+        c = path[1:2]
+        if not c:
+            return gethome()
+        if c == os.sep:
+            return asPyString(File(gethome(), path[2:]).getPath())
     return path
 
 def getuser():
@@ -240,7 +254,7 @@ def abspath(path):
 def _abspath(path):
     # Must use normpath separately because getAbsolutePath doesn't normalize
     # and getCanonicalPath would eliminate symlinks.
-    return normpath(File(path).getAbsolutePath())
+    return normpath(asPyString(File(sys.getPath(path)).getAbsolutePath()))
 
 def realpath(path):
     """Return an absolute path normalized and symbolic links eliminated"""
@@ -249,13 +263,13 @@ def realpath(path):
     
 def _realpath(path):
     try:
-        return File(path).getCanonicalPath()
+        return asPyString(File(sys.getPath(path)).getCanonicalPath())
     except java.io.IOException:
         return _abspath(path)
 
 def getsize(path):
     path = _tostr(path, "getsize")
-    f = File(path)
+    f = File(sys.getPath(path))
     size = f.length()
     # Sadly, if the returned length is zero, we don't really know if the file
     # is zero sized or does not exist.
@@ -265,7 +279,7 @@ def getsize(path):
 
 def getmtime(path):
     path = _tostr(path, "getmtime")
-    f = File(path)
+    f = File(sys.getPath(path))
     if not f.exists():
         raise OSError(0, 'No such file or directory', path)
     return f.lastModified() / 1000.0
@@ -274,7 +288,7 @@ def getatime(path):
     # We can't detect access time so we return modification time. This
     # matches the behaviour in os.stat().
     path = _tostr(path, "getatime")
-    f = File(path)
+    f = File(sys.getPath(path))
     if not f.exists():
         raise OSError(0, 'No such file or directory', path)
     return f.lastModified() / 1000.0

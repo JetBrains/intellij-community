@@ -60,9 +60,10 @@ RIGHTSHIFTEQUAL = 46
 DOUBLESTAREQUAL = 47
 DOUBLESLASH = 48
 DOUBLESLASHEQUAL = 49
-OP = 50
-ERRORTOKEN = 51
-N_TOKENS = 52
+AT = 50
+OP = 51
+ERRORTOKEN = 52
+N_TOKENS = 53
 NT_OFFSET = 256
 #--end constants--
 
@@ -98,7 +99,7 @@ def main():
     lines = fp.read().split("\n")
     fp.close()
     prog = re.compile(
-        "#define[ \t][ \t]*([A-Z][A-Z_]*)[ \t][ \t]*([0-9][0-9]*)",
+        "#define[ \t][ \t]*([A-Z0-9][A-Z0-9_]*)[ \t][ \t]*([0-9][0-9]*)",
         re.IGNORECASE)
     tokens = {}
     for line in lines:

@@ -10,14 +10,29 @@ Some of this can actually be useful on non-Posix systems too, e.g.
 for manipulation of the pathname component of URLs.
 """
 
+import java.io.File
+import java.io.IOException
 import os
 import stat
+from org.python.core.Py import newString
 
 __all__ = ["normcase","isabs","join","splitdrive","split","splitext",
            "basename","dirname","commonprefix","getsize","getmtime",
-           "getatime","islink","exists","isdir","isfile","ismount",
+           "getatime","getctime","islink","exists","lexists","isdir","isfile",
            "walk","expanduser","expandvars","normpath","abspath",
-           "samefile","sameopenfile","samestat","realpath"]
+           "samefile",
+           "curdir","pardir","sep","pathsep","defpath","altsep","extsep",
+           "devnull","realpath","supports_unicode_filenames"]
+
+# strings representing various path-related bits and pieces
+curdir = '.'
+pardir = '..'
+extsep = '.'
+sep = '/'
+pathsep = ':'
+defpath = ':/bin:/usr/bin'
+altsep = None
+devnull = '/dev/null'
 
 # Normalize the case of a pathname.  Trivial in Posix, string.lower on Mac.
 # On MS-DOS this may also turn slashes into backslashes; however, other
@@ -34,7 +49,7 @@ def normcase(s):
 
 def isabs(s):
     """Test whether a path is absolute"""
-    return s[:1] == '/'
+    return s.startswith('/')
 
 
 # Join pathnames.
@@ -45,12 +60,12 @@ def join(a, *p):
     """Join two or more pathname components, inserting '/' as needed"""
     path = a
     for b in p:
-        if b[:1] == '/':
+        if b.startswith('/'):
             path = b
-        elif path == '' or path[-1:] == '/':
-            path = path + b
+        elif path == '' or path.endswith('/'):
+            path +=  b
         else:
-            path = path + '/' + b
+            path += '/' + b
     return path
 
 
@@ -65,8 +80,7 @@ def split(p):
     i = p.rfind('/') + 1
     head, tail = p[:i], p[i:]
     if head and head != '/'*len(head):
-        while head[-1] == '/':
-            head = head[:-1]
+        head = head.rstrip('/')
     return head, tail
 
 
@@ -78,20 +92,11 @@ def split(p):
 def splitext(p):
     """Split the extension from a pathname.  Extension is everything from the
     last dot to the end.  Returns "(root, ext)", either part may be empty."""
-    root, ext = '', ''
-    for c in p:
-        if c == '/':
-            root, ext = root + ext + c, ''
-        elif c == '.':
-            if ext:
-                root, ext = root + ext, c
-            else:
-                ext = c
-        elif ext:
-            ext = ext + c
-        else:
-            root = root + c
-    return root, ext
+    i = p.rfind('.')
+    if i<=p.rfind('/'):
+        return p, ''
+    else:
+        return p[:i], p[i:]
 
 
 # Split a pathname into a drive specification and the rest of the
@@ -122,33 +127,31 @@ def dirname(p):
 def commonprefix(m):
     "Given a list of pathnames, returns the longest common leading component"
     if not m: return ''
-    prefix = m[0]
-    for item in m:
-        for i in range(len(prefix)):
-            if prefix[:i+1] != item[:i+1]:
-                prefix = prefix[:i]
-                if i == 0: return ''
-                break
-    return prefix
-
+    s1 = min(m)
+    s2 = max(m)
+    n = min(len(s1), len(s2))
+    for i in xrange(n):
+        if s1[i] != s2[i]:
+            return s1[:i]
+    return s1[:n]
 
 # Get size, mtime, atime of files.
 
 def getsize(filename):
     """Return the size of a file, reported by os.stat()."""
-    st = os.stat(filename)
-    return st[stat.ST_SIZE]
+    return os.stat(filename).st_size
 
 def getmtime(filename):
     """Return the last modification time of a file, reported by os.stat()."""
-    st = os.stat(filename)
-    return st[stat.ST_MTIME]
+    return os.stat(filename).st_mtime
 
 def getatime(filename):
     """Return the last access time of a file, reported by os.stat()."""
-    st = os.stat(filename)
-    return st[stat.ST_ATIME]
+    return os.stat(filename).st_atime
 
+def getctime(filename):
+    """Return the metadata change time of a file, reported by os.stat()."""
+    return os.stat(filename).st_ctime
 
 # Is a path a symbolic link?
 # This will always return false on systems where os.lstat doesn't exist.
@@ -158,20 +161,31 @@ def islink(path):
     try:
         st = os.lstat(path)
     except (os.error, AttributeError):
-        return 0
-    return stat.S_ISLNK(st[stat.ST_MODE])
+        return False
+    return stat.S_ISLNK(st.st_mode)
 
 
 # Does a path exist?
 # This is false for dangling symbolic links.
 
 def exists(path):
-    """Test whether a path exists.  Returns false for broken symbolic links"""
+    """Test whether a path exists.  Returns False for broken symbolic links"""
     try:
         st = os.stat(path)
     except os.error:
-        return 0
-    return 1
+        return False
+    return True
+
+
+# Being true for dangling symbolic links is also useful.
+
+def lexists(path):
+    """Test whether a path exists.  Returns True for broken symbolic links"""
+    try:
+        st = os.lstat(path)
+    except os.error:
+        return False
+    return True
 
 
 # Is a path a directory?
@@ -183,8 +197,8 @@ def isdir(path):
     try:
         st = os.stat(path)
     except os.error:
-        return 0
-    return stat.S_ISDIR(st[stat.ST_MODE])
+        return False
+    return stat.S_ISDIR(st.st_mode)
 
 
 # Is a path a regular file?
@@ -196,57 +210,72 @@ def isfile(path):
     try:
         st = os.stat(path)
     except os.error:
-        return 0
-    return stat.S_ISREG(st[stat.ST_MODE])
+        return False
+    return stat.S_ISREG(st.st_mode)
 
 
 # Are two filenames really pointing to the same file?
 
-def samefile(f1, f2):
-    """Test whether two pathnames reference the same actual file"""
-    s1 = os.stat(f1)
-    s2 = os.stat(f2)
-    return samestat(s1, s2)
+if not os._native_posix:
+    def samefile(f1, f2):
+        """Test whether two pathnames reference the same actual file"""
+        canon1 = newString(java.io.File(_ensure_str(f1)).getCanonicalPath())
+        canon2 = newString(java.io.File(_ensure_str(f2)).getCanonicalPath())
+        return canon1 == canon2
+else:
+    def samefile(f1, f2):
+        """Test whether two pathnames reference the same actual file"""
+        s1 = os.stat(f1)
+        s2 = os.stat(f2)
+        return samestat(s1, s2)    
 
 
-# Are two open files really referencing the same file?
-# (Not necessarily the same file descriptor!)
+# XXX: Jython currently lacks fstat
+if hasattr(os, 'fstat'):
+    # Are two open files really referencing the same file?
+    # (Not necessarily the same file descriptor!)
 
-def sameopenfile(fp1, fp2):
-    """Test whether two open file objects reference the same file"""
-    s1 = os.fstat(fp1)
-    s2 = os.fstat(fp2)
-    return samestat(s1, s2)
+    def sameopenfile(fp1, fp2):
+        """Test whether two open file objects reference the same file"""
+        s1 = os.fstat(fp1)
+        s2 = os.fstat(fp2)
+        return samestat(s1, s2)
 
-
-# Are two stat buffers (obtained from stat, fstat or lstat)
-# describing the same file?
-
-def samestat(s1, s2):
-    """Test whether two stat buffers reference the same file"""
-    return s1[stat.ST_INO] == s2[stat.ST_INO] and \
-           s1[stat.ST_DEV] == s2[stat.ST_DEV]
+    __all__.append("sameopenfile")
 
 
-# Is a path a mount point?
-# (Does this work for all UNIXes?  Is it even guaranteed to work by Posix?)
+# XXX: Pure Java stat lacks st_ino/st_dev    
+if os._native_posix:
+    # Are two stat buffers (obtained from stat, fstat or lstat)
+    # describing the same file?
 
-def ismount(path):
-    """Test whether a path is a mount point"""
-    try:
-        s1 = os.stat(path)
-        s2 = os.stat(join(path, '..'))
-    except os.error:
-        return 0 # It doesn't exist -- so not a mount point :-)
-    dev1 = s1[stat.ST_DEV]
-    dev2 = s2[stat.ST_DEV]
-    if dev1 != dev2:
-        return 1        # path/.. on a different device as path
-    ino1 = s1[stat.ST_INO]
-    ino2 = s2[stat.ST_INO]
-    if ino1 == ino2:
-        return 1        # path/.. is the same i-node as path
-    return 0
+    def samestat(s1, s2):
+        """Test whether two stat buffers reference the same file"""
+        return s1.st_ino == s2.st_ino and \
+               s1.st_dev == s2.st_dev
+
+
+    # Is a path a mount point?
+    # (Does this work for all UNIXes?  Is it even guaranteed to work by Posix?)
+
+    def ismount(path):
+        """Test whether a path is a mount point"""
+        try:
+            s1 = os.lstat(path)
+            s2 = os.lstat(join(path, '..'))
+        except os.error:
+            return False # It doesn't exist -- so not a mount point :-)
+        dev1 = s1.st_dev
+        dev2 = s2.st_dev
+        if dev1 != dev2:
+            return True     # path/.. on a different device as path
+        ino1 = s1.st_ino
+        ino2 = s2.st_ino
+        if ino1 == ino2:
+            return True     # path/.. is the same i-node as path
+        return False
+
+    __all__.extend(["samestat", "ismount"])
 
 
 # Directory tree walk.
@@ -283,7 +312,7 @@ def walk(top, func, arg):
             st = os.lstat(name)
         except os.error:
             continue
-        if stat.S_ISDIR(st[stat.ST_MODE]):
+        if stat.S_ISDIR(st.st_mode):
             walk(name, func, arg)
 
 
@@ -299,25 +328,20 @@ def walk(top, func, arg):
 def expanduser(path):
     """Expand ~ and ~user constructions.  If user or $HOME is unknown,
     do nothing."""
-    if path[:1] != '~':
+    if not path.startswith('~'):
         return path
-    i, n = 1, len(path)
-    while i < n and path[i] != '/':
-        i = i + 1
+    i = path.find('/', 1)
+    if i < 0:
+        i = len(path)
     if i == 1:
-        if not os.environ.has_key('HOME'):
-            import pwd
-            userhome = pwd.getpwuid(os.getuid())[5]
+        if 'HOME' not in os.environ:
+            return path
         else:
             userhome = os.environ['HOME']
     else:
-        import pwd
-        try:
-            pwent = pwd.getpwnam(path[1:i])
-        except KeyError:
-            return path
-        userhome = pwent[5]
-    if userhome[-1:] == '/': i = i + 1
+        # XXX: Jython lacks the pwd module: '~user' isn't supported
+        return path
+    userhome = userhome.rstrip('/')
     return userhome + path[i:]
 
 
@@ -337,19 +361,19 @@ def expandvars(path):
         import re
         _varprog = re.compile(r'\$(\w+|\{[^}]*\})')
     i = 0
-    while 1:
+    while True:
         m = _varprog.search(path, i)
         if not m:
             break
         i, j = m.span(0)
         name = m.group(1)
-        if name[:1] == '{' and name[-1:] == '}':
+        if name.startswith('{') and name.endswith('}'):
             name = name[1:-1]
-        if os.environ.has_key(name):
+        if name in os.environ:
             tail = path[j:]
             path = path[:i] + os.environ[name]
             i = len(path)
-            path = path + tail
+            path += tail
         else:
             i = j
     return path
@@ -399,16 +423,75 @@ def abspath(path):
 def realpath(filename):
     """Return the canonical path of the specified filename, eliminating any
 symbolic links encountered in the path."""
-    filename = abspath(filename)
+    if isabs(filename):
+        bits = ['/'] + filename.split('/')[1:]
+    else:
+        bits = [''] + filename.split('/')
 
-    bits = ['/'] + filename.split('/')[1:]
     for i in range(2, len(bits)+1):
         component = join(*bits[0:i])
+        # Resolve symbolic links.
         if islink(component):
-            resolved = os.readlink(component)
-            (dir, file) = split(component)
-            resolved = normpath(join(dir, resolved))
-            newpath = join(*([resolved] + bits[i:]))
-            return realpath(newpath)
+            resolved = _resolve_link(component)
+            if resolved is None:
+                # Infinite loop -- return original component + rest of the path
+                return abspath(join(*([component] + bits[i:])))
+            else:
+                newpath = join(*([resolved] + bits[i:]))
+                return realpath(newpath)
 
-    return filename
+    return abspath(filename)
+
+
+if not os._native_posix:
+    def _resolve_link(path):
+        """Internal helper function.  Takes a path and follows symlinks
+        until we either arrive at something that isn't a symlink, or
+        encounter a path we've seen before (meaning that there's a loop).
+        """
+        try:
+            return newString(java.io.File(abspath(path)).getCanonicalPath())
+        except java.io.IOException:
+            return None
+else:
+    def _resolve_link(path):
+        """Internal helper function.  Takes a path and follows symlinks
+        until we either arrive at something that isn't a symlink, or
+        encounter a path we've seen before (meaning that there's a loop).
+        """
+        paths_seen = []
+        while islink(path):
+            if path in paths_seen:
+                # Already seen this path, so we must have a symlink loop
+                return None
+            paths_seen.append(path)
+            # Resolve where the link points to
+            resolved = os.readlink(path)
+            if not isabs(resolved):
+                dir = dirname(path)
+                path = normpath(join(dir, resolved))
+            else:
+                path = normpath(resolved)
+        return path
+
+
+def _ensure_str(obj):
+    """Ensure obj is a string, otherwise raise a TypeError"""
+    if isinstance(obj, basestring):
+        return obj
+    raise TypeError('coercing to Unicode: need string or buffer, %s found' % \
+                        _type_name(obj))
+
+
+def _type_name(obj):
+    """Determine the appropriate type name of obj for display"""
+    TPFLAGS_HEAPTYPE = 1 << 9
+    type_name = ''
+    obj_type = type(obj)
+    is_heap = obj_type.__flags__ & TPFLAGS_HEAPTYPE == TPFLAGS_HEAPTYPE
+    if not is_heap and obj_type.__module__ != '__builtin__':
+        type_name = '%s.' % obj_type.__module__
+    type_name += obj_type.__name__
+    return type_name
+
+supports_unicode_filenames = False

@@ -36,7 +36,6 @@ python ftplib.py -d localhost -l -p -l
 
 import os
 import sys
-import string
 
 # Import SOCKS module if it exists, else standard socket module socket
 try:
@@ -162,7 +161,7 @@ class FTP:
             while i > 5 and s[i-1] in '\r\n':
                 i = i-1
             s = s[:5] + '*'*(i-5) + s[i:]
-        return `s`
+        return repr(s)
 
     # Internal: send one line to the server, appending CRLF
     def putline(self, line):
@@ -209,13 +208,13 @@ class FTP:
         if self.debugging: print '*resp*', self.sanitize(resp)
         self.lastresp = resp[:3]
         c = resp[:1]
+        if c in ('1', '2', '3'):
+            return resp
         if c == '4':
             raise error_temp, resp
         if c == '5':
             raise error_perm, resp
-        if c not in '123':
-            raise error_proto, resp
-        return resp
+        raise error_proto, resp
 
     def voidresp(self):
         """Expect a response beginning with '2'."""
@@ -251,7 +250,7 @@ class FTP:
         port number.
         '''
         hbytes = host.split('.')
-        pbytes = [`port/256`, `port%256`]
+        pbytes = [repr(port/256), repr(port%256)]
         bytes = hbytes + pbytes
         cmd = 'PORT ' + ','.join(bytes)
         return self.voidcmd(cmd)
@@ -265,8 +264,8 @@ class FTP:
             af = 2
         if af == 0:
             raise error_proto, 'unsupported address family'
-        fields = ['', `af`, host, `port`, '']
-        cmd = 'EPRT ' + string.joinfields(fields, '|')
+        fields = ['', repr(af), host, repr(port), '']
+        cmd = 'EPRT ' + '|'.join(fields)
         return self.voidcmd(cmd)
 
     def makeport(self):
@@ -326,6 +325,14 @@ class FTP:
             if rest is not None:
                 self.sendcmd("REST %s" % rest)
             resp = self.sendcmd(cmd)
+            # Some servers apparently send a 200 reply to
+            # a LIST or STOR command, before the 150 reply
+            # (and way before the 226 reply). This seems to
+            # be in violation of the protocol (which only allows
+            # 1xx or error messages for LIST), so we just discard
+            # this response.
+            if resp[0] == '2':
+                resp = self.getresp()
             if resp[0] != '1':
                 raise error_reply, resp
         else:
@@ -333,6 +340,9 @@ class FTP:
             if rest is not None:
                 self.sendcmd("REST %s" % rest)
             resp = self.sendcmd(cmd)
+            # See above.
+            if resp[0] == '2':
+                resp = self.getresp()
             if resp[0] != '1':
                 raise error_reply, resp
             conn, sockaddr = sock.accept()
@@ -351,13 +361,13 @@ class FTP:
         if not passwd: passwd = ''
         if not acct: acct = ''
         if user == 'anonymous' and passwd in ('', '-'):
-	    # If there is no anonymous ftp password specified
-	    # then we'll just use anonymous@
-	    # We don't send any other thing because:
-	    # - We want to remain anonymous
-	    # - We want to stop SPAM
-	    # - We don't want to let ftp sites to discriminate by the user,
-	    #   host or country.
+            # If there is no anonymous ftp password specified
+            # then we'll just use anonymous@
+            # We don't send any other thing because:
+            # - We want to remain anonymous
+            # - We want to stop SPAM
+            # - We don't want to let ftp sites to discriminate by the user,
+            #   host or country.
             passwd = passwd + 'anonymous@'
         resp = self.sendcmd('USER ' + user)
         if resp[0] == '3': resp = self.sendcmd('PASS ' + passwd)
@@ -392,13 +402,13 @@ class FTP:
         The callback function (2nd argument) is called for each line,
         with trailing CRLF stripped.  This creates a new port for you.
         print_line() is the default callback.'''
-        if not callback: callback = print_line
+        if callback is None: callback = print_line
         resp = self.sendcmd('TYPE A')
         conn = self.transfercmd(cmd)
         fp = conn.makefile('rb')
         while 1:
             line = fp.readline()
-            if self.debugging > 2: print '*retr*', `line`
+            if self.debugging > 2: print '*retr*', repr(line)
             if not line:
                 break
             if line[-2:] == CRLF:
@@ -583,20 +593,20 @@ def parse229(resp, peer):
     Raises error_proto if it does not contain '(|||port|)'
     Return ('host.addr.as.numbers', port#) tuple.'''
 
-    if resp[:3] <> '229':
+    if resp[:3] != '229':
         raise error_reply, resp
-    left = string.find(resp, '(')
+    left = resp.find('(')
     if left < 0: raise error_proto, resp
-    right = string.find(resp, ')', left + 1)
+    right = resp.find(')', left + 1)
     if right < 0:
         raise error_proto, resp # should contain '(|||port|)'
-    if resp[left + 1] <> resp[right - 1]:
+    if resp[left + 1] != resp[right - 1]:
         raise error_proto, resp
-    parts = string.split(resp[left + 1:right], resp[left+1])
-    if len(parts) <> 5:
+    parts = resp[left + 1:right].split(resp[left+1])
+    if len(parts) != 5:
         raise error_proto, resp
     host = peer[0]
-    port = string.atoi(parts[3])
+    port = int(parts[3])
     return host, port
 
 
@@ -660,8 +670,8 @@ class Netrc:
     __defacct = None
 
     def __init__(self, filename=None):
-        if not filename:
-            if os.environ.has_key("HOME"):
+        if filename is None:
+            if "HOME" in os.environ:
                 filename = os.path.join(os.environ["HOME"],
                                         ".netrc")
             else:
@@ -715,7 +725,7 @@ class Netrc:
                 self.__defpasswd = passwd or self.__defpasswd
                 self.__defacct = acct or self.__defacct
             if host:
-                if self.__hosts.has_key(host):
+                if host in self.__hosts:
                     ouser, opasswd, oacct = \
                            self.__hosts[host]
                     user = user or ouser
@@ -737,7 +747,7 @@ class Netrc:
         """
         host = host.lower()
         user = passwd = acct = None
-        if self.__hosts.has_key(host):
+        if host in self.__hosts:
             user, passwd, acct = self.__hosts[host]
         user = user or self.__defuser
         passwd = passwd or self.__defpasswd
@@ -756,7 +766,16 @@ class Netrc:
 
 def test():
     '''Test program.
-    Usage: ftp [-d] [-r[file]] host [-l[dir]] [-d[dir]] [-p] [file] ...'''
+    Usage: ftp [-d] [-r[file]] host [-l[dir]] [-d[dir]] [-p] [file] ...
+
+    -d dir
+    -l list
+    -p password
+    '''
+
+    if len(sys.argv) < 2:
+        print test.__doc__
+        sys.exit(0)
 
     debugging = 0
     rcfile = None

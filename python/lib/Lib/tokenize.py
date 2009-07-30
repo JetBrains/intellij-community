@@ -22,8 +22,6 @@ are the same, except instead of generating tokens, tokeneater is a callback
 function to which the 5 fields described above are passed as 5 arguments,
 each time a new token is found."""
 
-from __future__ import generators
-
 __author__ = 'Ka-Ping Yee <ping@lfw.org>'
 __credits__ = \
     'GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro'
@@ -33,7 +31,8 @@ from token import *
 
 import token
 __all__ = [x for x in dir(token) if x[0] != '_'] + ["COMMENT", "tokenize",
-           "generate_tokens", "NL"]
+           "generate_tokens", "NL", "untokenize"]
+del x
 del token
 
 COMMENT = N_TOKENS
@@ -43,8 +42,8 @@ tok_name[NL] = 'NL'
 N_TOKENS += 2
 
 def group(*choices): return '(' + '|'.join(choices) + ')'
-def any(*choices): return apply(group, choices) + '*'
-def maybe(*choices): return apply(group, choices) + '?'
+def any(*choices): return group(*choices) + '*'
+def maybe(*choices): return group(*choices) + '?'
 
 Whitespace = r'[ \f\t]*'
 Comment = r'#[^\r\n]*'
@@ -84,7 +83,7 @@ Operator = group(r"\*\*=?", r">>=?", r"<<=?", r"<>", r"!=",
                  r"~")
 
 Bracket = '[][(){}]'
-Special = group(r'\r?\n', r'[:;.,`]')
+Special = group(r'\r?\n', r'[:;.,`@]')
 Funny = group(Operator, Bracket, Special)
 
 PlainToken = group(Number, Funny, String, Name)
@@ -111,6 +110,21 @@ endprogs = {"'": re.compile(Single), '"': re.compile(Double),
             "Ur'''": single3prog, 'Ur"""': double3prog,
             "UR'''": single3prog, 'UR"""': double3prog,
             'r': None, 'R': None, 'u': None, 'U': None}
+
+triple_quoted = {}
+for t in ("'''", '"""',
+          "r'''", 'r"""', "R'''", 'R"""',
+          "u'''", 'u"""', "U'''", 'U"""',
+          "ur'''", 'ur"""', "Ur'''", 'Ur"""',
+          "uR'''", 'uR"""', "UR'''", 'UR"""'):
+    triple_quoted[t] = t
+single_quoted = {}
+for t in ("'", '"',
+          "r'", 'r"', "R'", 'R"',
+          "u'", 'u"', "U'", 'U"',
+          "ur'", 'ur"', "Ur'", 'Ur"',
+          "uR'", 'uR"', "UR'", 'UR"' ):
+    single_quoted[t] = t
 
 tabsize = 8
 
@@ -143,14 +157,66 @@ def tokenize(readline, tokeneater=printtoken):
 # backwards compatible interface
 def tokenize_loop(readline, tokeneater):
     for token_info in generate_tokens(readline):
-        apply(tokeneater, token_info)
+        tokeneater(*token_info)
+
+
+def untokenize(iterable):
+    """Transform tokens back into Python source code.
+
+    Each element returned by the iterable must be a token sequence
+    with at least two elements, a token number and token value.
+
+    Round-trip invariant:
+        # Output text will tokenize the back to the input
+        t1 = [tok[:2] for tok in generate_tokens(f.readline)]
+        newcode = untokenize(t1)
+        readline = iter(newcode.splitlines(1)).next
+        t2 = [tok[:2] for tok in generate_tokens(readline)]
+        assert t1 == t2
+    """
+
+    startline = False
+    prevstring = False
+    indents = []
+    toks = []
+    toks_append = toks.append
+    for tok in iterable:
+        toknum, tokval = tok[:2]
+
+        if toknum in (NAME, NUMBER):
+            tokval += ' '
+
+        # Insert a space between two consecutive strings
+        if toknum == STRING:
+            if prevstring:
+                tokval = ' ' + tokval
+            prevstring = True
+        else:
+            prevstring = False
+
+        if toknum == INDENT:
+            indents.append(tokval)
+            continue
+        elif toknum == DEDENT:
+            indents.pop()
+            continue
+        elif toknum in (NEWLINE, COMMENT, NL):
+            startline = True
+        elif startline and indents:
+            toks_append(indents[-1])
+            startline = False
+        toks_append(tokval)
+    return ''.join(toks)
+
 
 def generate_tokens(readline):
     """
     The generate_tokens() generator requires one argment, readline, which
     must be a callable object which provides the same interface as the
     readline() method of built-in file objects. Each call to the function
-    should return one line of input as a string.
+    should return one line of input as a string.  Alternately, readline
+    can be a callable function terminating with StopIteration:
+        readline = open(myfile).next    # Example of alternate readline
 
     The generator produces 5-tuples with these members: the token type; the
     token string; a 2-tuple (srow, scol) of ints specifying the row and
@@ -166,7 +232,10 @@ def generate_tokens(readline):
     indents = [0]
 
     while 1:                                   # loop over lines in stream
-        line = readline()
+        try:
+            line = readline()
+        except StopIteration:
+            line = ''
         lnum = lnum + 1
         pos, max = 0, len(line)
 
@@ -211,6 +280,10 @@ def generate_tokens(readline):
                 indents.append(column)
                 yield (INDENT, line[:pos], (lnum, 0), (lnum, pos), line)
             while column < indents[-1]:
+                if column not in indents:
+                    raise IndentationError(
+                        "unindent does not match any outer indentation level",
+                        ("<tokenize>", lnum, pos, line))
                 indents = indents[:-1]
                 yield (DEDENT, '', (lnum, pos), (lnum, pos), line)
 
@@ -234,11 +307,7 @@ def generate_tokens(readline):
                                token, spos, epos, line)
                 elif initial == '#':
                     yield (COMMENT, token, spos, epos, line)
-                elif token in ("'''", '"""',               # triple-quoted
-                               "r'''", 'r"""', "R'''", 'R"""',
-                               "u'''", 'u"""', "U'''", 'U"""',
-                               "ur'''", 'ur"""', "Ur'''", 'Ur"""',
-                               "uR'''", 'uR"""', "UR'''", 'UR"""'):
+                elif token in triple_quoted:
                     endprog = endprogs[token]
                     endmatch = endprog.match(line, pos)
                     if endmatch:                           # all on one line
@@ -250,11 +319,9 @@ def generate_tokens(readline):
                         contstr = line[start:]
                         contline = line
                         break
-                elif initial in ("'", '"') or \
-                    token[:2] in ("r'", 'r"', "R'", 'R"',
-                                  "u'", 'u"', "U'", 'U"') or \
-                    token[:3] in ("ur'", 'ur"', "Ur'", 'Ur"',
-                                  "uR'", 'uR"', "UR'", 'UR"' ):
+                elif initial in single_quoted or \
+                    token[:2] in single_quoted or \
+                    token[:3] in single_quoted:
                     if token[-1] == '\n':                  # continued string
                         strstart = (lnum, start)
                         endprog = (endprogs[initial] or endprogs[token[1]] or

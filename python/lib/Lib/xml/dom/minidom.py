@@ -1915,10 +1915,10 @@ def parse(file, parser=None, bufsize=None):
     import sys
     if parser is None and bufsize is None and sys.platform[:4] != "java":
         try:
-	    from xml.dom import expatbuilder
+            from xml.dom import expatbuilder
             return expatbuilder.parse(file)
-	except ImportError:
-	    pass
+        except ImportError:
+            pass
     from xml.dom import pulldom
     return _do_pulldom_parse(pulldom.parse, (file,), 
             {'parser': parser, 'bufsize': bufsize})

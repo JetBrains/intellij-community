@@ -50,13 +50,14 @@ stream server is the address family, which is simply repeated in both
 unix server classes.
 
 Forking and threading versions of each type of server can be created
-using the ForkingServer and ThreadingServer mix-in classes.  For
+using the ForkingMixIn and ThreadingMixIn mix-in classes.  For
 instance, a threading UDP server class is created as follows:
 
         class ThreadingUDPServer(ThreadingMixIn, UDPServer): pass
 
 The Mix-in class must come first, since it overrides a method defined
-in UDPServer!
+in UDPServer! Setting the various member variables also changes
+the behavior of the underlying server mechanism.
 
 To implement a service, you must derive a class from
 BaseRequestHandler and redefine its handle() method.  You can then run
@@ -64,8 +65,8 @@ various versions of the service by combining one of the server classes
 with your request handler class.
 
 The request handler class must be different for datagram or stream
-services.  This can be hidden by using the mix-in request handler
-classes StreamRequestHandler or DatagramRequestHandler.
+services.  This can be hidden by using the request handler
+subclasses StreamRequestHandler or DatagramRequestHandler.
 
 Of course, you still have to use your head!
 
@@ -172,7 +173,7 @@ class BaseServer:
 
     - address_family
     - socket_type
-    - reuse_address
+    - allow_reuse_address
 
     Instance variables:
 
@@ -226,10 +227,10 @@ class BaseServer:
     def verify_request(self, request, client_address):
         """Verify the request.  May be overridden.
 
-        Return true if we should proceed with this request.
+        Return True if we should proceed with this request.
 
         """
-        return 1
+        return True
 
     def process_request(self, request, client_address):
         """Call finish_request.
@@ -303,7 +304,7 @@ class TCPServer(BaseServer):
     - address_family
     - socket_type
     - request_queue_size (only for stream sockets)
-    - reuse_address
+    - allow_reuse_address
 
     Instance variables:
 
@@ -319,7 +320,7 @@ class TCPServer(BaseServer):
 
     request_queue_size = 5
 
-    allow_reuse_address = 0
+    allow_reuse_address = False
 
     def __init__(self, server_address, RequestHandlerClass):
         """Constructor.  May be extended, do not override."""
@@ -338,6 +339,7 @@ class TCPServer(BaseServer):
         if self.allow_reuse_address:
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind(self.server_address)
+        self.server_address = self.socket.getsockname()
 
     def server_activate(self):
         """Called by constructor to activate the server.
@@ -380,7 +382,7 @@ class UDPServer(TCPServer):
 
     """UDP server class."""
 
-    allow_reuse_address = 0
+    allow_reuse_address = False
 
     socket_type = socket.SOCK_DGRAM
 
@@ -448,6 +450,10 @@ class ForkingMixIn:
 class ThreadingMixIn:
     """Mix-in class to handle each request in a new thread."""
 
+    # Decides how threads will act upon termination of the
+    # main process
+    daemon_threads = False
+
     def process_request_thread(self, request, client_address):
         """Same as in BaseServer but as a thread.
 
@@ -466,6 +472,8 @@ class ThreadingMixIn:
         import threading
         t = threading.Thread(target = self.process_request_thread,
                              args = (request, client_address))
+        if self.daemon_threads:
+            t.setDaemon (1)
         t.start()
 
 
@@ -554,7 +562,8 @@ class StreamRequestHandler(BaseRequestHandler):
         self.wfile = self.connection.makefile('wb', self.wbufsize)
 
     def finish(self):
-        self.wfile.flush()
+        if not self.wfile.closed:
+            self.wfile.flush()
         self.wfile.close()
         self.rfile.close()
 
@@ -567,10 +576,13 @@ class DatagramRequestHandler(BaseRequestHandler):
     """Define self.rfile and self.wfile for datagram sockets."""
 
     def setup(self):
-        import StringIO
+        try:
+            from cStringIO import StringIO
+        except ImportError:
+            from StringIO import StringIO
         self.packet, self.socket = self.request
-        self.rfile = StringIO.StringIO(self.packet)
-        self.wfile = StringIO.StringIO()
+        self.rfile = StringIO(self.packet)
+        self.wfile = StringIO()
 
     def finish(self):
         self.socket.sendto(self.wfile.getvalue(), self.client_address)
