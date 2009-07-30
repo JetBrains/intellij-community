@@ -29,6 +29,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.ui.CreateLibraryDialog;
 
 import javax.swing.*;
@@ -39,7 +40,7 @@ import java.util.Set;
  * @author peter
  */
 public abstract class AbstractGroovyLibraryManager extends LibraryManager {
-  public static final ExtensionPointName<LibraryManager> EP_NAME = ExtensionPointName.create("org.intellij.groovy.libraryManager");
+  public static final ExtensionPointName<AbstractGroovyLibraryManager> EP_NAME = ExtensionPointName.create("org.intellij.groovy.libraryManager");
 
   @NotNull
   protected static String generatePointerName(ProjectSettingsContext context, String version, final String libPrefix) {
@@ -67,13 +68,25 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
     return "Create new " + getLibraryCategoryName() + " library...";
   }
 
-  protected Library createLibrary(ProjectSettingsContext context, final GroovyLibraryConfigurer configUtils, Icon bigIcon) {
+  public Icon getDialogIcon() {
+    return getIcon();
+  }
+
+  @Nullable
+  public abstract Library createSDKLibrary(final String path,
+                                  final String name,
+                                  final Project project,
+                                  final boolean inModuleSettings,
+                                  final boolean inProject);
+
+  @Override
+  public Library createLibrary(@NotNull ProjectSettingsContext context) {
     final String libraryKind = getLibraryCategoryName();
     final Module module = context.getModule();
     final Project project = module.getProject();
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       public boolean isFileSelectable(VirtualFile file) {
-        return super.isFileSelectable(file) && configUtils.isSDKHome(file);
+        return super.isFileSelectable(file) && isSDKHome(file);
       }
     };
     final VirtualFile[] files = FileChooserFactory.getInstance().createFileChooser(descriptor, project).choose(null, project);
@@ -88,11 +101,11 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
         }
       }
 
-      String newVersion = configUtils.getSDKVersion(path);
+      String newVersion = getSDKVersion(path);
 
       boolean addVersion = !versions.contains(newVersion) ||
                            Messages.showOkCancelDialog("Add one more " + libraryKind + " library of version " + newVersion + "?",
-                                                       "Duplicate library version", bigIcon) == 0;
+                                                       "Duplicate library version", getDialogIcon()) == 0;
 
       if (addVersion && !AbstractConfigUtils.UNDEFINED_VERSION.equals(newVersion)) {
         final String name = generatePointerName(context, newVersion, getLibraryPrefix());
@@ -101,7 +114,7 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
                                                                    "Create Global " + libraryKind + " library '" + name + "'");
         dialog.show();
         if (dialog.isOK()) {
-          return configUtils.createSDKLibrary(path, name, project, true, dialog.isInProject());
+          return createSDKLibrary(path, name, project, true, dialog.isInProject());
         }
       }
     }

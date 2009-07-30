@@ -28,7 +28,7 @@
   <depends>com.intellij.properties</depends>
 
   <extensionPoints>
-    <extensionPoint name="libraryManager" interface="org.jetbrains.plugins.groovy.config.LibraryManager"/>
+    <extensionPoint name="libraryManager" interface="org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager"/>
 
     <extensionPoint name="nonCodeProcessor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor"/>
     <extensionPoint name="propertyEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.PropertyEnhancer"/>

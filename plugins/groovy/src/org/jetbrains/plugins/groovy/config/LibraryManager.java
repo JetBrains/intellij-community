@@ -19,6 +19,7 @@ import com.intellij.facet.ui.ProjectSettingsContext;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,10 @@ public abstract class LibraryManager {
 
   @NotNull
   public abstract String getAddActionText();
+
+  public abstract boolean isSDKHome(@NotNull VirtualFile file);
+
+  public abstract @NotNull String getSDKVersion(String path);
 
   @Nullable
   public abstract Library createLibrary(@NotNull ProjectSettingsContext context);

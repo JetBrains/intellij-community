@@ -19,6 +19,8 @@ import com.intellij.facet.ui.ProjectSettingsContext;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyIcons;
@@ -50,8 +52,25 @@ public class GroovyLibraryManager extends AbstractGroovyLibraryManager {
     return "Create new Groovy SDK...";
   }
 
-  public Library createLibrary(@NotNull ProjectSettingsContext context) {
-    return createLibrary(context, GroovyConfigUtils.getInstance(), GroovyIcons.GROOVY_ICON_32x32);
+  @Override
+  public Library createSDKLibrary(String path, String name, Project project, boolean inModuleSettings, boolean inProject) {
+    return GroovyConfigUtils.getInstance().createSDKLibImmediately(path, name, project, inModuleSettings, inProject);
+  }
+
+  @Override
+  public boolean isSDKHome(@NotNull VirtualFile file) {
+    return GroovyConfigUtils.getInstance().isSDKHome(file);
+  }
+
+  @NotNull
+  @Override
+  public String getSDKVersion(String path) {
+    return GroovyConfigUtils.getInstance().getSDKVersion(path);
+  }
+
+  @Override
+  public Icon getDialogIcon() {
+    return GroovyIcons.GROOVY_ICON_32x32;
   }
 
   @Nls

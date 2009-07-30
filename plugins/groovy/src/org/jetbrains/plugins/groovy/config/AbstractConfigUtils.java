@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 /**
  * @author ilyas
  */
-public abstract class AbstractConfigUtils implements GroovyLibraryConfigurer{
+public abstract class AbstractConfigUtils {
 
   // SDK-dependent entities
   @NonNls protected String STARTER_SCRIPT_FILE_NAME;

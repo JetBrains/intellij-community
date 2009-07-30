@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.gant.config;
 
-import com.intellij.facet.ui.ProjectSettingsContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gant.GantIcons;
 import org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager;
-import org.jetbrains.plugins.groovy.config.GroovyLibraryConfigurer;
 
 import javax.swing.*;
 
@@ -48,22 +46,20 @@ public class GantLibraryManager extends AbstractGroovyLibraryManager {
     return GantIcons.GANT_SDK_ICON;
   }
 
-  public Library createLibrary(@NotNull ProjectSettingsContext context) {
-    return createLibrary(context, new GroovyLibraryConfigurer() {
+  @Override
+  public boolean isSDKHome(@NotNull VirtualFile file) {
+    return GantConfigUtils.isGantSdkHome(file);
+  }
 
-      public boolean isSDKHome(VirtualFile file) {
-        return GantConfigUtils.isGantSdkHome(file);
-      }
+  @NotNull
+  @Override
+  public String getSDKVersion(String path) {
+    return GantConfigUtils.getGantVersion(path);
+  }
 
-      @NotNull
-      public String getSDKVersion(String path) {
-        return GantConfigUtils.getGantVersion(path);
-      }
-
-      public Library createSDKLibrary(String path, String name, Project project, boolean inModuleSettings, boolean inProject) {
-        return GantConfigUtils.getInstance().createSDKLibImmediately(path, name, project, inModuleSettings, inProject);
-      }
-    }, GantIcons.GANT_ICON_16x16);
+  @Override
+  public Icon getDialogIcon() {
+    return GantIcons.GANT_ICON_16x16;
   }
 
   @Nls
@@ -73,4 +69,8 @@ public class GantLibraryManager extends AbstractGroovyLibraryManager {
     return "Gant";
   }
 
+  @Override
+  public Library createSDKLibrary(String path, String name, Project project, boolean inModuleSettings, boolean inProject) {
+    return GantConfigUtils.getInstance().createSDKLibImmediately(path, name, project, inModuleSettings, inProject);
+  }
 }
