@@ -407,7 +407,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       finally {
         if (myMergedCallHasRootChange) {
           LOG.assertTrue(myRootsChangesDepth == 1, "myMergedCallDepth = " + myRootsChangesDepth);
-
           getBatchSession(false).rootsChanged(true);
         }
         myMergedCallStarted = false;
@@ -446,8 +445,12 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return filetypes ? myFileTypesChanged : myRootsChanged;
   }
 
+  private boolean isFiringEvent = false;
+
   private boolean fireBeforeRootsChanged(boolean filetypes) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
+
+    LOG.assertTrue(!isFiringEvent, "Do not use API that changes roots from roots events. Try using invoke later or something else.");
 
     if (myMergedCallStarted) {
       LOG.assertTrue(!filetypes, "Filetypes change is not supported inside merged call");
@@ -458,9 +461,15 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
         myMergedCallHasRootChange = true;
         myRootsChangesDepth++; // blocks all firing until finishRootsChangedOnDemand
       }
-      myProject.getMessageBus()
-        .syncPublisher(ProjectTopics.PROJECT_ROOTS)
-        .beforeRootsChange(new ModuleRootEventImpl(myProject, filetypes));
+      isFiringEvent = true;
+      try {
+        myProject.getMessageBus()
+          .syncPublisher(ProjectTopics.PROJECT_ROOTS)
+          .beforeRootsChange(new ModuleRootEventImpl(myProject, filetypes));
+      }
+      finally {
+        isFiringEvent= false;
+      }
       return true;
     }
 
@@ -471,6 +480,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     if (myProject.isDisposed()) return false;
 
     ApplicationManager.getApplication().assertWriteAccessAllowed();
+
+    LOG.assertTrue(!isFiringEvent, "Do not use API that changes roots from roots events. Try using invoke later or something else.");
 
     if (myMergedCallStarted) {
       LOG.assertTrue(!filetypes, "Filetypes change is not supported inside merged call");
@@ -483,9 +494,15 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     myModificationCount++;
 
-    myProject.getMessageBus()
-      .syncPublisher(ProjectTopics.PROJECT_ROOTS)
-      .rootsChanged(new ModuleRootEventImpl(myProject, filetypes));
+    isFiringEvent = true;
+    try {
+      myProject.getMessageBus()
+        .syncPublisher(ProjectTopics.PROJECT_ROOTS)
+        .rootsChanged(new ModuleRootEventImpl(myProject, filetypes));
+    }
+    finally {
+      isFiringEvent = false;
+    }
 
     doSynchronize();
 
