@@ -22,11 +22,12 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
 
 /**
  * @author ilyas
  */
-public interface GrCodeBlock extends GrControlFlowOwner, GrVariableDeclarationOwner, GrStatementOwner {
+public interface GrCodeBlock extends GrControlFlowOwner, GrVariableDeclarationOwner, GrStatementOwner, GrDeclarationHolder {
   @NotNull
   GrStatement[] getStatements();
 

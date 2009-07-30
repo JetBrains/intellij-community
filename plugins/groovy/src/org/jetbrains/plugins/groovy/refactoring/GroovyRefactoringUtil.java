@@ -40,7 +40,6 @@ import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -61,6 +60,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
@@ -80,13 +80,11 @@ public abstract class GroovyRefactoringUtil {
 
   private static final String[] finalModifiers = new String[]{PsiModifier.FINAL};
 
+  @Nullable
   public static PsiElement getEnclosingContainer(PsiElement place) {
     PsiElement parent = place.getParent();
     while (parent != null &&
-        !(parent instanceof GrCodeBlock) &&
-        !(parent instanceof GrCaseSection) &&
-        !(parent instanceof GroovyFileBase) &&
-        !(parent instanceof GrGspDeclarationHolder) &&
+        !(parent instanceof GrDeclarationHolder) &&
         !isLoopOrForkStatement(parent)) {
       parent = parent.getParent();
     }
@@ -99,6 +97,7 @@ public abstract class GroovyRefactoringUtil {
         elem instanceof GrIfStatement;
   }
 
+  @Nullable
   public static <T extends PsiElement> T findElementInRange(final GroovyFileBase file,
                                                             int startOffset,
                                                             int endOffset,
@@ -115,6 +114,7 @@ public abstract class GroovyRefactoringUtil {
     }
     if (element2 == null || element1 == null) return null;
     final PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
+    assert commonParent != null;
     final T element = ReflectionCache.isAssignable(klass, commonParent.getClass())
         ? (T) commonParent : PsiTreeUtil.getParentOfType(commonParent, klass);
     if (element == null || element.getTextRange().getStartOffset() != startOffset) {
@@ -151,7 +151,7 @@ public abstract class GroovyRefactoringUtil {
     } else {
       collectOccurrences(expr, scope, occurrences, comparator);
     }
-    return occurrences.toArray(PsiElement.EMPTY_ARRAY);
+    return occurrences.toArray(new PsiElement[occurrences.size()]);
   }
 
 
@@ -170,30 +170,6 @@ public abstract class GroovyRefactoringUtil {
         }
       }
     }
-  }
-
-  /**
-   * Indicates that the given expression is result expression of some all or method
-   * and cannot be replace by variable definition
-   *
-   * @param expr
-   * @return
-   */
-  public static boolean isResultExpression(@NotNull GrExpression expr) {
-    if (expr.getType() != null && expr.getType().equals(PsiType.VOID)) {
-      return false;
-    }
-    if (expr.getParent() instanceof GrClosableBlock ||
-        expr.getParent() instanceof GrOpenBlock &&
-            expr.getParent().getParent() != null &&
-            expr.getParent().getParent() instanceof GrMethod) {
-      GrCodeBlock parent = ((GrCodeBlock) expr.getParent());
-      GrStatement[] statements = parent.getStatements();
-      if (statements.length > 0 && expr.equals(statements[statements.length - 1])) {
-        return true;
-      }
-    }
-    return false;
   }
 
 
@@ -622,6 +598,7 @@ public abstract class GroovyRefactoringUtil {
 
   }
 
+  @Nullable
   public static GrCall getCallExpressionByMethodReference(PsiElement ref) {
     if (ref instanceof GrEnumConstant) return (GrEnumConstant)ref;
     if (ref instanceof GrConstructorInvocation) return (GrCall)ref;
@@ -682,6 +659,7 @@ public abstract class GroovyRefactoringUtil {
     return id;
   }
 
+  @Nullable
   public static PsiElement getParentStatement(GroovyPsiElement place, boolean skipScopingStatements) {
     PsiElement parent = place;
     while (!(parent instanceof GrStatement)) {
