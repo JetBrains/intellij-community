@@ -3,6 +3,7 @@ package com.intellij.openapi.keymap.impl.keyGestures;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
+import com.intellij.openapi.util.registry.Registry;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -50,6 +51,8 @@ public class KeyboardGestureProcessor {
   }
 
   public boolean processInitState() {
+    if (!Registry.is("actionSystem.keyGestures.enabled")) return false;
+
     myContext.focusOwner = myDispatcher.getContext().getFocusOwner();
     return process();
   }

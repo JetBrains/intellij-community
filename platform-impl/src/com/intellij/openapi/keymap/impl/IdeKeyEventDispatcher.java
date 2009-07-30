@@ -333,7 +333,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     KeyStroke originalKeyStroke=KeyStroke.getKeyStrokeForEvent(e);
     KeyStroke keyStroke=getKeyStrokeWithoutMouseModifiers(originalKeyStroke);
 
-  //  if (myKeyGestureProcessor.processInitState()) return true;
+    if (myKeyGestureProcessor.processInitState()) return true;
 
     if (SystemInfo.isMac) {
       if (e.getModifiersEx() == InputEvent.ALT_DOWN_MASK &&
