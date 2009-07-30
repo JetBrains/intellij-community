@@ -106,7 +106,7 @@ public class ManagedLibrariesEditor {
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         //noinspection unchecked
-        performAddAction(myAddButton, Condition.TRUE);
+        performAddAction(myAddButton);
       }
     });
     myRemoveButton.addActionListener(new ActionListener() {
@@ -121,12 +121,12 @@ public class ManagedLibrariesEditor {
     });
   }
 
-  public void shouldHaveLibrary(final Condition<LibraryManager> filter, final String errorMessage) {
+  public void shouldHaveLibrary(final Condition<Library> filter, final String errorMessage) {
     myValidatorsManager.registerValidator(new FacetEditorValidator() {
       @Override
       public ValidationResult check() {
         for (ManagedLibrary library : getUsedLibraries()) {
-          if (filter.value(library.manager)) {
+          if (filter.value(library.library)) {
             return ValidationResult.OK;
           }
         }
@@ -134,7 +134,7 @@ public class ManagedLibrariesEditor {
         return new ValidationResult(errorMessage, new FacetConfigurationQuickFix() {
           @Override
           public void run(JComponent place) {
-            performAddAction(place, filter);
+            performAddAction(place);
           }
         });
       }
@@ -150,7 +150,7 @@ public class ManagedLibrariesEditor {
     return myComponent;
   }
 
-  private void performAddAction(final JComponent component, Condition<LibraryManager> filter) {
+  private void performAddAction(final JComponent component) {
     final Set<ManagedLibrary> managed = getUsedLibraries();
     final Set<Library> usedLibraries = ContainerUtil.map2Set(managed, new Function<ManagedLibrary, Library>() {
       public Library fun(ManagedLibrary managedLibrary) {
@@ -173,10 +173,6 @@ public class ManagedLibrariesEditor {
     }
 
     for (LibraryManager manager : myManagers) {
-      if (!filter.value(manager)) {
-        continue;
-      }
-
       boolean separatorSet = false;
       for (ManagedLibrary library : libs.get(manager)) {
         if (!separatorSet) {

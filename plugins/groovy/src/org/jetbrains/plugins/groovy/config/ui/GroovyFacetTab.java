@@ -23,7 +23,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,9 +35,8 @@ import org.jetbrains.plugins.grails.config.GrailsLibraryManager;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager;
 import org.jetbrains.plugins.groovy.config.GroovyFacetConfiguration;
-import org.jetbrains.plugins.groovy.config.GroovyLibraryManager;
-import org.jetbrains.plugins.groovy.config.LibraryManager;
 import org.jetbrains.plugins.groovy.griffon.GriffonLibraryManager;
+import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import javax.swing.*;
 
@@ -67,11 +70,12 @@ public class GroovyFacetTab extends FacetEditorTab {
       public void facetModelChanged(@NotNull Module module) {
       }
     });
-    myManagedLibrariesEditor.shouldHaveLibrary(new Condition<LibraryManager>() {
-      public boolean value(LibraryManager libraryManager) {
-        return libraryManager instanceof GrailsLibraryManager || libraryManager instanceof GriffonLibraryManager || libraryManager instanceof GroovyLibraryManager;
+    myManagedLibrariesEditor.shouldHaveLibrary(new Condition<Library>() {
+      public boolean value(Library libraryManager) {
+        final VirtualFile[] files = editorContext.getLibraryFiles(libraryManager, OrderRootType.CLASSES);
+        return StringUtil.isNotEmpty(LibrariesUtil.getGroovyOrGrailsLibraryHome(files));
       }
-    }, "Groovy/Grails is not configured yet");
+    }, "No Groovy-containing library is not configured yet");
   }
 
   private void updateMvcCheckbox() {
