@@ -17,23 +17,23 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.grails.util.GrailsUtils;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.PropertyEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
@@ -60,6 +60,8 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   private boolean mySetterInitialized = false;
   private boolean myGettersInitialized = false;
+
+  private volatile CachedValue<PsiType> myEnhancedType;
 
   public GrFieldImpl(@NotNull ASTNode node) {
     super(node);
@@ -90,34 +92,28 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   @Override
   public PsiType getTypeGroovy() {
-    String name = getName();
-    if (getDeclaredType() == null && getInitializer() == null && name.endsWith("Service")) {
-      VirtualFile grailsApp = GrailsUtils.findModuleGrailsAppDir(ModuleUtil.findModuleForPsiElement(this));
-      VirtualFile vFile = getVirtualFile(this);
-      if (vFile != null && grailsApp != null && VfsUtil.isAncestor(grailsApp, vFile, true)) {
-        VirtualFile servicesDir = grailsApp.findChild("services");
-        if (servicesDir != null) {
-          JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-          for (PsiClass candidate : facade.getShortNamesCache().getClassesByName(StringUtil.capitalize(name), getResolveScope())) {
-            VirtualFile candidateFile = getVirtualFile(candidate);
-            if (candidateFile != null && VfsUtil.isAncestor(servicesDir, candidateFile, true)) {
-              return facade.getElementFactory().createType(candidate);
+    if (isProperty() && getDeclaredType() == null && getInitializer() == null) {
+      CachedValue<PsiType> enhancedType = myEnhancedType;
+      if (enhancedType == null) {
+        myEnhancedType = enhancedType = getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<PsiType>() {
+          public Result<PsiType> compute() {
+            for (PropertyEnhancer enhancer : PropertyEnhancer.EP_NAME.getExtensions()) {
+              final PsiType type = enhancer.getPropertyType(GrFieldImpl.this);
+              if (type != null) {
+                return Result.create(type, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+              }
             }
+
+            return Result.create(null, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
           }
-        }
+        }, false);
+      }
+      final PsiType type = enhancedType.getValue();
+      if (type != null) {
+        return type;
       }
     }
     return super.getTypeGroovy();
-  }
-
-  @Nullable
-  private static VirtualFile getVirtualFile(PsiElement candidate) {
-    PsiFile file = candidate.getContainingFile();
-    PsiFile original = file.getOriginalFile();
-    if (original != null) {
-      return original.getVirtualFile();
-    }
-    return file.getVirtualFile();
   }
 
   public PsiClass getContainingClass() {
@@ -154,14 +150,11 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     mySetter = null;
 
     if (isProperty() && !hasModifierProperty(PsiModifier.FINAL)) {
-      String name = getName();
-      if (name != null) {
-        name = "set" + StringUtil.capitalize(name);
-        final GrAccessorMethod setter = new GrAccessorMethodImpl(this, true, name);
-        final PsiClass clazz = getContainingClass();
-        if (!hasContradictingMethods(setter, clazz)) {
-          mySetter = setter;
-        }
+      String name = "set" + StringUtil.capitalize(getName());
+      final GrAccessorMethod setter = new GrAccessorMethodImpl(this, true, name);
+      final PsiClass clazz = getContainingClass();
+      if (!hasContradictingMethods(setter, clazz)) {
+        mySetter = setter;
       }
 
     }
@@ -172,6 +165,9 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   public void clearCaches() {
     mySetterInitialized = myGettersInitialized = false;
+    mySetter = null;
+    myGetters = GrAccessorMethod.EMPTY_ARRAY;
+    myEnhancedType = null;
   }
 
   @NotNull
@@ -182,28 +178,26 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
     if (isProperty()) {
       String name = getName();
-      if (name != null) {
-        final PsiClass clazz = getContainingClass();
-        name = StringUtil.capitalize(name);
-        GrAccessorMethod getter1 = new GrAccessorMethodImpl(this, false, "get" + name);
-        if (hasContradictingMethods(getter1, clazz)) getter1 = null;
+      final PsiClass clazz = getContainingClass();
+      name = StringUtil.capitalize(name);
+      GrAccessorMethod getter1 = new GrAccessorMethodImpl(this, false, "get" + name);
+      if (hasContradictingMethods(getter1, clazz)) getter1 = null;
 
-        GrAccessorMethod getter2 = null;
-        if (PsiType.BOOLEAN.equals(getDeclaredType())) {
-          getter2 = new GrAccessorMethodImpl(this, false, "is" + name);
-          if (hasContradictingMethods(getter2, clazz)) getter2 = null;
+      GrAccessorMethod getter2 = null;
+      if (PsiType.BOOLEAN.equals(getDeclaredType())) {
+        getter2 = new GrAccessorMethodImpl(this, false, "is" + name);
+        if (hasContradictingMethods(getter2, clazz)) getter2 = null;
+      }
+
+      if (getter1 != null || getter2 != null) {
+        if (getter1 != null && getter2 != null) {
+          myGetters = new GrAccessorMethod[]{getter1, getter2};
         }
-
-        if (getter1 != null || getter2 != null) {
-          if (getter1 != null && getter2 != null) {
-            myGetters = new GrAccessorMethod[]{getter1, getter2};
-          }
-          else if (getter1 != null) {
-            myGetters = new GrAccessorMethod[]{getter1};
-          }
-          else {
-            myGetters = new GrAccessorMethod[]{getter2};
-          }
+        else if (getter1 != null) {
+          myGetters = new GrAccessorMethod[]{getter1};
+        }
+        else {
+          myGetters = new GrAccessorMethod[]{getter2};
         }
       }
 
@@ -238,7 +232,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     if (isProperty()) {
       return getManager().getFileManager().getUseScope(this); //maximal scope
     }
-    return com.intellij.psi.impl.PsiImplUtil.getMemberUseScope(this);
+    return PsiImplUtil.getMemberUseScope(this);
   }
 
   @Override
@@ -259,7 +253,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
       @Nullable
       public Icon getIcon(boolean open) {
-        return GrFieldImpl.this.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
+        return GrFieldImpl.this.getIcon(ICON_FLAG_VISIBILITY | ICON_FLAG_READ_STATUS);
       }
 
       @Nullable
