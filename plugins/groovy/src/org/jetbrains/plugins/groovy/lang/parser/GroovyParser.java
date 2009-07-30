@@ -20,21 +20,19 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.*;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.imports.ImportStatement;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel.CompilationUnit;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.*;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.imports.ImportStatement;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ConditionalExpression;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.grails.lang.gsp.parsing.groovy.GspTemplateStmtParsing;
-import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
 
 /**
  * Parser for Groovy script files
@@ -82,7 +80,7 @@ public class GroovyParser implements PsiParser {
       ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     }
 
-    if (GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
+    if (parseExtendedStatement(builder)) {
       warn.rollbackTo();
       marker.done(GroovyElementTypes.FOR_STATEMENT);
       return true;
@@ -139,7 +137,7 @@ public class GroovyParser implements PsiParser {
       ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     }
 
-    if (!parseStatement(builder, true) && !GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
+    if (!parseStatement(builder, true) && !parseExtendedStatement(builder)) {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("expression.expected"));
       ifStmtMarker.done(GroovyElementTypes.IF_STATEMENT);
@@ -160,7 +158,7 @@ public class GroovyParser implements PsiParser {
         ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
       }
 
-      if (!parseStatement(builder, true) && !GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
+      if (!parseStatement(builder, true) && !parseExtendedStatement(builder)) {
         warn.rollbackTo();
         builder.error(GroovyBundle.message("expression.expected"));
         ifStmtMarker.done(GroovyElementTypes.IF_STATEMENT);
@@ -192,12 +190,12 @@ public class GroovyParser implements PsiParser {
       return;
     }
 
-    if (!parseStatement(builder, false) && !GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
+    if (!parseStatement(builder, false) && !parseExtendedStatement(builder)) {
       builder.error(GroovyBundle.message("wrong.statement"));
       return;
     }
 
-    while (GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
+    while (parseExtendedStatement(builder)) {
       if (GroovyTokenTypes.mSEMI.equals(builder.getTokenType()) || GroovyTokenTypes.mNLS.equals(builder.getTokenType())) {
         Separators.parse(builder);
       }
@@ -213,12 +211,12 @@ public class GroovyParser implements PsiParser {
     }
     boolean result = parseStatement(builder, false);
     while (result && (GroovyTokenTypes.mSEMI.equals(builder.getTokenType()) || GroovyTokenTypes.mNLS.equals(builder.getTokenType())) ||
-        GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
+           parseExtendedStatement(builder)) {
 
       if (GroovyTokenTypes.mSEMI.equals(builder.getTokenType()) || GroovyTokenTypes.mNLS.equals(builder.getTokenType())) {
         Separators.parse(builder);
       }
-      while (GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
+      while (parseExtendedStatement(builder)) {
         if (GroovyTokenTypes.mSEMI.equals(builder.getTokenType()) || GroovyTokenTypes.mNLS.equals(builder.getTokenType())) {
           Separators.parse(builder);
         }
@@ -234,11 +232,21 @@ public class GroovyParser implements PsiParser {
       }
 
       result = parseStatement(builder, false);
-      if (!GspTokenTypesEx.GSP_GROOVY_SEPARATORS.contains(builder.getTokenType())) {
+      if (!isExtendedSeparator(builder.getTokenType())) {
         cleanAfterError(builder);
       }
     }
     Separators.parse(builder);
+  }
+
+  //gsp directives, scriptlets and such
+  protected boolean isExtendedSeparator(final IElementType tokenType) {
+    return false;
+  }
+
+  //gsp template statement, for example
+  protected boolean parseExtendedStatement(PsiBuilder builder) {
+    return false;
   }
 
   public boolean parseWhileStatement(PsiBuilder builder) {
@@ -272,7 +280,7 @@ public class GroovyParser implements PsiParser {
     PsiBuilder.Marker warn = builder.mark();
     ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
-    if (!parseStatement(builder, true) && !GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
+    if (!parseStatement(builder, true) && !parseExtendedStatement(builder)) {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("expression.expected"));
       marker.done(GroovyElementTypes.WHILE_STATEMENT);
@@ -296,7 +304,7 @@ public class GroovyParser implements PsiParser {
         !(GroovyTokenTypes.mNLS.equals(builder.getTokenType()) ||
             GroovyTokenTypes.mRCURLY.equals(builder.getTokenType()) ||
             GroovyTokenTypes.mSEMI.equals(builder.getTokenType())) &&
-        !GspTokenTypesEx.GSP_GROOVY_SEPARATORS.contains(builder.getTokenType())
+        !isExtendedSeparator(builder.getTokenType())
         ) {
       builder.advanceLexer();
       i++;
@@ -311,11 +319,11 @@ public class GroovyParser implements PsiParser {
   public void parseBlockBody(PsiBuilder builder) {
 
 
-    GspTemplateStmtParsing.parseGspTemplateStmt(builder);
+    parseExtendedStatement(builder);
     if (GroovyTokenTypes.mSEMI.equals(builder.getTokenType()) || GroovyTokenTypes.mNLS.equals(builder.getTokenType())) {
       Separators.parse(builder);
     }
-    while (GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
+    while (parseExtendedStatement(builder)) {
       Separators.parse(builder);
     }
 
@@ -323,20 +331,19 @@ public class GroovyParser implements PsiParser {
 
     while (result &&
         (GroovyTokenTypes.mSEMI.equals(builder.getTokenType()) ||
-            GroovyTokenTypes.mNLS.equals(builder.getTokenType()) ||
-            GspTemplateStmtParsing.parseGspTemplateStmt(builder))) {
+            GroovyTokenTypes.mNLS.equals(builder.getTokenType()) || parseExtendedStatement(builder))) {
       Separators.parse(builder);
-      while (GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
+      while (parseExtendedStatement(builder)) {
         Separators.parse(builder);
       }
       result = parseStatement(builder, false);
-      if (!GspTokenTypesEx.GSP_GROOVY_SEPARATORS.contains(builder.getTokenType())) {
+      if (!isExtendedSeparator(builder.getTokenType())) {
         cleanAfterError(builder);
       }
     }
     cleanAfterError(builder);
     Separators.parse(builder);
-    while (GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
+    while (parseExtendedStatement(builder)) {
       Separators.parse(builder);
     }
 
