@@ -16,6 +16,7 @@
 
 package org.jetbrains.idea.maven.project;
 
+import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -34,6 +35,7 @@ public class MavenPlugin implements Serializable {
 
   private Element myConfiguration;
   private List<Execution> myExecutions = new ArrayList<Execution>();
+  private List<MavenId> myDependencies = new ArrayList<MavenId>();
 
   protected MavenPlugin() {
   }
@@ -48,6 +50,10 @@ public class MavenPlugin implements Serializable {
 
     for (PluginExecution each : (Iterable<PluginExecution>)plugin.getExecutions()) {
       myExecutions.add(new Execution(each));
+    }
+
+    for (Dependency dependency : (Iterable<Dependency>)plugin.getDependencies()) {
+      myDependencies.add(new MavenId(dependency.getGroupId(), dependency.getArtifactId(), dependency.getVersion()));
     }
   }
 
@@ -88,6 +94,10 @@ public class MavenPlugin implements Serializable {
 
   public List<Execution> getExecutions() {
     return myExecutions;
+  }
+
+  public List<MavenId> getDependencies() {
+    return myDependencies;
   }
 
   public String getDisplayString() {
