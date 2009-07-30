@@ -40,8 +40,8 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class NewGroovyToJavaGenerator extends GroovyCompilerBase implements IntermediateOutputCompiler {
-  public NewGroovyToJavaGenerator(Project project) {
+public class GroovycStubGenerator extends GroovyCompilerBase implements IntermediateOutputCompiler {
+  public GroovycStubGenerator(Project project) {
     super(project);
   }
 
@@ -80,12 +80,12 @@ public class NewGroovyToJavaGenerator extends GroovyCompilerBase implements Inte
                               Set<OutputItem> successfullyCompiled,
                               Set<VirtualFile> toRecompileCollector,
                               Module module,
-                              List<VirtualFile> toCompile) {
+                              List<VirtualFile> toCompile, VirtualFile outputDir) {
     if (!isMixedProject(toCompile)) {
       return;
     }
 
-    runGroovycCompiler(compileContext, successfullyCompiled, toRecompileCollector, module, toCompile, true);
+    runGroovycCompiler(compileContext, successfullyCompiled, toRecompileCollector, module, toCompile, true, outputDir);
   }
 
   private static boolean isMixedProject(List<VirtualFile> toCompile) {

@@ -69,8 +69,8 @@ public class GroovyCompiler extends GroovyCompilerBase {
 
   @Override
   protected void compileFiles(CompileContext compileContext, Set<OutputItem> successfullyCompiled, Set<VirtualFile> toRecompileCollector,
-                            Module module, List<VirtualFile> toCompile) {
-    runGroovycCompiler(compileContext, successfullyCompiled, toRecompileCollector, module, toCompile, false);
+                              Module module, List<VirtualFile> toCompile, VirtualFile outputDir) {
+    runGroovycCompiler(compileContext, successfullyCompiled, toRecompileCollector, module, toCompile, false, outputDir);
   }
 
   public boolean validateConfiguration(CompileScope compileScope) {

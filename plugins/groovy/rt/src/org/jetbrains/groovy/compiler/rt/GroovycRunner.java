@@ -31,6 +31,7 @@ import java.util.*;
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 16.04.2007
+ * @noinspection UseOfSystemOutOrSystemErr,CallToPrintStackTrace
  */
 
 public class GroovycRunner {
@@ -40,8 +41,6 @@ public class GroovycRunner {
   public static final String FOR_STUBS = "for_stubs";
   public static final String ENCODING = "encoding";
   public static final String OUTPUTPATH = "outputpath";
-  public static final String TEST_OUTPUTPATH = "test_outputpath";
-  public static final String TEST_FILE = "test_file";
   public static final String END = "end";
 
   public static final String SRC_FILE = "src_file";
@@ -90,7 +89,6 @@ public class GroovycRunner {
     try {
       String moduleClasspath = null;
       String moduleOutputPath = null;
-      String moduleTestOutputPath = null;
       boolean isGrails = false;
       boolean forStubs = false;
       String encoding = null;
@@ -108,7 +106,6 @@ public class GroovycRunner {
       }
 
       List srcFiles = new ArrayList();
-      List testFiles = new ArrayList();
       Map class2File = new HashMap();
 
       BufferedReader reader = null;
@@ -121,10 +118,7 @@ public class GroovycRunner {
         String line;
 
         while ((line = reader.readLine()) != null && !line.equals(CLASSPATH)) {
-          if (TEST_FILE.equals(line)) {
-            testFiles.add(new File(reader.readLine()));
-          }
-          else if (SRC_FILE.equals(line)) {
+          if (SRC_FILE.equals(line)) {
             final File file = new File(reader.readLine());
             srcFiles.add(file);
             String s;
@@ -157,10 +151,6 @@ public class GroovycRunner {
             moduleOutputPath = reader.readLine();
           }
 
-          if (line.startsWith(TEST_OUTPUTPATH)) {
-            moduleTestOutputPath = reader.readLine();
-          }
-
           line = reader.readLine();
         }
 
@@ -184,7 +174,7 @@ public class GroovycRunner {
       }
 
 
-      if (srcFiles.isEmpty() && testFiles.isEmpty()) return;
+      if (srcFiles.isEmpty()) return;
 
       MessageCollector messageCollector = new MessageCollector();
       final List compiledFiles = new ArrayList();
@@ -192,14 +182,10 @@ public class GroovycRunner {
       System.out.println(PRESENTABLE_MESSAGE + "Groovy compiler: loading sources...");
       createCompilationUnits(srcFiles, class2File, moduleClasspath, moduleOutputPath, isGrails, encoding, forStubs).compile(messageCollector, compiledFiles);
 
-      System.out.println(PRESENTABLE_MESSAGE + "Groovy compiler: loading test sources...");
-      createCompilationUnits(testFiles, class2File, moduleClasspath, moduleTestOutputPath, isGrails, encoding, forStubs).compile(messageCollector, compiledFiles);
-
       System.out.println(CLEAR_PRESENTABLE);
 
       Set allCompiling = new HashSet();
       allCompiling.addAll(srcFiles);
-      allCompiling.addAll(testFiles);
 
       File[] toRecompilesFiles =
         !compiledFiles.isEmpty() ? new File[0] : (File[])allCompiling.toArray(new File[allCompiling.size()]);
