@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations;
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -32,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 
 public class AnnotationArguments implements GroovyElementTypes {
-  public static void parse(PsiBuilder builder) {
+  public static void parse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker annArgs = builder.mark();
     if (!ParserUtils.getToken(builder, mLPAREN)) {
@@ -41,13 +42,13 @@ public class AnnotationArguments implements GroovyElementTypes {
     }
 
     if (ParserUtils.lookAhead(builder, mIDENT, mASSIGN)) {
-      if (!parseAnnotationMemberValuePairs(builder)) {
+      if (!parseAnnotationMemberValuePairs(builder, parser)) {
         annArgs.rollbackTo();
         return;
       }
     } else {
       PsiBuilder.Marker pairMarker = builder.mark();
-      if (!parseAnnotationMemberValueInitializer(builder)) {
+      if (!parseAnnotationMemberValueInitializer(builder, parser)) {
         pairMarker.drop();
       } else {
         pairMarker.done(ANNOTATION_MEMBER_VALUE_PAIR);
@@ -66,13 +67,13 @@ public class AnnotationArguments implements GroovyElementTypes {
   * annotationMemberValueInitializer ::=  conditionalExpression |	annotation
   */
 
-  public static boolean parseAnnotationMemberValueInitializer(PsiBuilder builder) {
+  public static boolean parseAnnotationMemberValueInitializer(PsiBuilder builder, GroovyParser parser) {
     if (builder.getTokenType() == mAT) {
-      return Annotation.parse(builder);
+      return Annotation.parse(builder, parser);
     } else if(builder.getTokenType() == mLBRACK) {
       PsiBuilder.Marker marker = builder.mark();
       ParserUtils.getToken(builder, mLBRACK);
-      while (parseAnnotationMemberValueInitializer(builder)){
+      while (parseAnnotationMemberValueInitializer(builder, parser)){
         if (builder.eof() || builder.getTokenType() == mRBRACK) break;
         ParserUtils.getToken(builder, mCOMMA, GroovyBundle.message("comma.expected"));
       }
@@ -83,17 +84,17 @@ public class AnnotationArguments implements GroovyElementTypes {
     }
 
     //check
-    return ConditionalExpression.parse(builder) && !ParserUtils.getToken(builder, mASSIGN);
+    return ConditionalExpression.parse(builder, parser) && !ParserUtils.getToken(builder, mASSIGN);
   }
 
   /*
    * anntotationMemberValuePairs ::= annotationMemberValuePair ( COMMA nls annotationMemberValuePair )*
    */
 
-  private static boolean parseAnnotationMemberValuePairs(PsiBuilder builder) {
+  private static boolean parseAnnotationMemberValuePairs(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker annmvps = builder.mark();
 
-    if (!parseAnnotationMemberValueSinglePair(builder)) {
+    if (!parseAnnotationMemberValueSinglePair(builder, parser)) {
       annmvps.rollbackTo();
       return false;
     }
@@ -101,7 +102,7 @@ public class AnnotationArguments implements GroovyElementTypes {
     while (ParserUtils.getToken(builder, mCOMMA)) {
       ParserUtils.getToken(builder, mNLS);
 
-      if (!parseAnnotationMemberValueSinglePair(builder)) {
+      if (!parseAnnotationMemberValueSinglePair(builder, parser)) {
         annmvps.rollbackTo();
         return false;
       }
@@ -115,7 +116,7 @@ public class AnnotationArguments implements GroovyElementTypes {
    * annotationMemberValuePair ::= IDENT ASSIGN nls annotationMemberValueInitializer
    */
 
-  private static boolean parseAnnotationMemberValueSinglePair(PsiBuilder builder) {
+  private static boolean parseAnnotationMemberValueSinglePair(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker annmvp = builder.mark();
 
     if (!ParserUtils.getToken(builder, mIDENT)) {
@@ -130,7 +131,7 @@ public class AnnotationArguments implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (!parseAnnotationMemberValueInitializer(builder)) {
+    if (!parseAnnotationMemberValueInitializer(builder, parser)) {
       builder.error(GroovyBundle.message("annotation.member.value.initializer.expected"));
     }
 

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -25,20 +26,20 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class PowerExpressionNotPlusMinus implements GroovyElementTypes {
 
-  public static boolean parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker marker = builder.mark();
 
-    if (UnaryExpressionNotPlusMinus.parse(builder)) {
+    if (UnaryExpressionNotPlusMinus.parse(builder, parser)) {
       if (ParserUtils.getToken(builder, mSTAR_STAR)) {
         ParserUtils.getToken(builder, mNLS);
-        if (!UnaryExpression.parse(builder)) {
+        if (!UnaryExpression.parse(builder, parser)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
         PsiBuilder.Marker newMarker = marker.precede();
         marker.done(POWER_EXPRESSION_SIMPLE);
         if (mSTAR_STAR.equals(builder.getTokenType())) {
-          subParse(builder, newMarker);
+          subParse(builder, newMarker, parser);
         } else {
           newMarker.drop();
         }
@@ -52,16 +53,16 @@ public class PowerExpressionNotPlusMinus implements GroovyElementTypes {
     }
   }
 
-  private static void subParse(PsiBuilder builder, PsiBuilder.Marker marker) {
+  private static void subParse(PsiBuilder builder, PsiBuilder.Marker marker, GroovyParser parser) {
     ParserUtils.getToken(builder, mSTAR_STAR);
     ParserUtils.getToken(builder, mNLS);
-    if (!UnaryExpression.parse(builder)) {
+    if (!UnaryExpression.parse(builder, parser)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
     PsiBuilder.Marker newMarker = marker.precede();
     marker.done(POWER_EXPRESSION_SIMPLE);
     if (mSTAR_STAR.equals(builder.getTokenType())) {
-      subParse(builder, newMarker);
+      subParse(builder, newMarker, parser);
     } else {
       newMarker.drop();
     }

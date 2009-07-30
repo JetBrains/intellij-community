@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -31,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 
 public class Annotation implements GroovyElementTypes {
-  public static boolean parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
     if (builder.getTokenType() != mAT) {
       return false;
     }
@@ -50,17 +51,17 @@ public class Annotation implements GroovyElementTypes {
       return false;
     }
 
-    AnnotationArguments.parse(builder);
+    AnnotationArguments.parse(builder, parser);
 
     annMarker.done(ANNOTATION);
     return true;
   }
 
-  public static void parseAnnotationOptional(PsiBuilder builder) {
+  public static void parseAnnotationOptional(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker annOptMarker = builder.mark();
 
     boolean hasAnnotations = false;
-    while (Annotation.parse(builder)) {
+    while (parse(builder, parser)) {
       ParserUtils.getToken(builder, mNLS);
       hasAnnotations = true;
     }

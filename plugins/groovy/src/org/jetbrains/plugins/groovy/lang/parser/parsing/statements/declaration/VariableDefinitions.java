@@ -19,6 +19,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.ThrowClause;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.AnnotationArguments;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterList;
@@ -43,12 +44,12 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class VariableDefinitions implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder, boolean isInClass, boolean hasModifiers) {
-    return parseDefinitions(builder, isInClass, false, false, false, hasModifiers, true);
+  public static IElementType parse(PsiBuilder builder, boolean isInClass, boolean hasModifiers, GroovyParser parser) {
+    return parseDefinitions(builder, isInClass, false, false, false, hasModifiers, true, parser);
   }
 
-  public static IElementType parse(PsiBuilder builder, boolean isInClass, boolean hasModifiers, boolean canBeTuple) {
-    return parseDefinitions(builder, isInClass, false, false, false, hasModifiers, canBeTuple);
+  public static IElementType parse(PsiBuilder builder, boolean isInClass, boolean hasModifiers, boolean canBeTuple, GroovyParser parser) {
+    return parseDefinitions(builder, isInClass, false, false, false, hasModifiers, canBeTuple, parser);
   }
 
   public static IElementType parseDefinitions(PsiBuilder builder,
@@ -57,7 +58,7 @@ public class VariableDefinitions implements GroovyElementTypes {
                                               boolean isAnnotationMember,
                                               boolean mustBeMethod,
                                               boolean hasModifiers,
-                                              boolean canBeTuple) {
+                                              boolean canBeTuple, GroovyParser parser) {
     boolean isLParen = builder.getTokenType() == mLPAREN;
 
     boolean isStringName = builder.getTokenType() == mSTRING_LITERAL || builder.getTokenType() == mGSTRING_LITERAL;
@@ -101,7 +102,7 @@ public class VariableDefinitions implements GroovyElementTypes {
 
         builder.advanceLexer();
 
-        ParameterList.parse(builder, mRPAREN);
+        ParameterList.parse(builder, mRPAREN, parser);
 
         if (isEnumConstantMember && !isStringName) {
           builder.error(GroovyBundle.message("string.name.unexpected"));
@@ -119,7 +120,7 @@ public class VariableDefinitions implements GroovyElementTypes {
           ParserUtils.getToken(builder, kDEFAULT);
           ParserUtils.getToken(builder, mNLS);
 
-          if (!AnnotationArguments.parseAnnotationMemberValueInitializer(builder)) {
+          if (!AnnotationArguments.parseAnnotationMemberValueInitializer(builder, parser)) {
             builder.error(GroovyBundle.message("annotation.initializer.expected"));
           }
 
@@ -134,7 +135,7 @@ public class VariableDefinitions implements GroovyElementTypes {
 
         if (builder.getTokenType() == mLCURLY || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {
           ParserUtils.getToken(builder, mNLS);
-          OpenOrClosableBlock.parseOpenBlock(builder);
+          OpenOrClosableBlock.parseOpenBlock(builder, parser);
         }
 
   //      if (isAnnotationMember && !NONE.equals(paramDeclList) && OPEN_BLOCK.equals(openBlock)) {
@@ -148,10 +149,10 @@ public class VariableDefinitions implements GroovyElementTypes {
     // a = b, c = d
     PsiBuilder.Marker varAssMarker = builder.mark();
 
-    final IElementType declarator = parseDeclarator(builder, isInClass, isLParen, hasModifiers);
+    final IElementType declarator = parseDeclarator(builder, isLParen, hasModifiers);
 
     if (declarator != WRONGWAY) {
-      final boolean wasAssingment = parseAssignment(builder);
+      final boolean wasAssingment = parseAssignment(builder, parser);
 
       if (declarator == TUPLE_DECLARATION || declarator == TUPLE_ERROR) {
         varAssMarker.drop();
@@ -170,7 +171,7 @@ public class VariableDefinitions implements GroovyElementTypes {
       while (ParserUtils.getToken(builder, mCOMMA)) {
         ParserUtils.getToken(builder, mNLS);
 
-        if (WRONGWAY.equals(parseVariableOrField(builder, isInClass)) && declarator == mIDENT) {
+        if (WRONGWAY.equals(parseVariableOrField(builder, isInClass, parser)) && declarator == mIDENT) {
           return VARIABLE_DEFINITION_ERROR; //parse b = d
         }
       }
@@ -188,10 +189,10 @@ public class VariableDefinitions implements GroovyElementTypes {
 
   //a, a = b
 
-  private static IElementType parseVariableOrField(PsiBuilder builder, boolean isInClass) {
+  private static IElementType parseVariableOrField(PsiBuilder builder, boolean isInClass, GroovyParser parser) {
     PsiBuilder.Marker varAssMarker = builder.mark();
     if (ParserUtils.getToken(builder, mIDENT)) {
-      parseAssignment(builder);
+      parseAssignment(builder, parser);
       if (isInClass) {
         varAssMarker.done(FIELD);
         return FIELD;
@@ -205,7 +206,7 @@ public class VariableDefinitions implements GroovyElementTypes {
     }
   }
 
-  private static IElementType parseDeclarator(PsiBuilder builder, boolean inClass, boolean isTuple, boolean hasModifiers) {
+  private static IElementType parseDeclarator(PsiBuilder builder, boolean isTuple, boolean hasModifiers) {
     if (!isTuple) {
       if (builder.getTokenType() == mIDENT) {
         ParserUtils.getToken(builder, mIDENT);
@@ -220,12 +221,12 @@ public class VariableDefinitions implements GroovyElementTypes {
   }
 
 
-  private static boolean parseAssignment(PsiBuilder builder) {
+  private static boolean parseAssignment(PsiBuilder builder, GroovyParser parser) {
     if (ParserUtils.getToken(builder, mASSIGN)) {
       PsiBuilder.Marker marker = builder.mark();
       ParserUtils.getToken(builder, mNLS);
 
-      if (!AssignmentExpression.parse(builder)) {
+      if (!AssignmentExpression.parse(builder, parser)) {
         marker.rollbackTo();
         builder.error(GroovyBundle.message("expression.expected"));
         return false;

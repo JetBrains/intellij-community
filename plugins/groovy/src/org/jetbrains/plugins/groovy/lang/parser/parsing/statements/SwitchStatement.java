@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class SwitchStatement implements GroovyElementTypes {
 
-  public static boolean parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, kSWITCH);
 
@@ -38,7 +38,7 @@ public class SwitchStatement implements GroovyElementTypes {
       marker.done(SWITCH_STATEMENT);
       return true;
     }
-    if (!StrictContextExpression.parse(builder)) {
+    if (!StrictContextExpression.parse(builder, parser)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
     ParserUtils.getToken(builder, mNLS);
@@ -63,7 +63,7 @@ public class SwitchStatement implements GroovyElementTypes {
       return true;
     }
     warn.drop();
-    parseCaseBlock(builder);
+    parseCaseBlock(builder, parser);
     marker.done(SWITCH_STATEMENT);
     return true;
 
@@ -74,7 +74,7 @@ public class SwitchStatement implements GroovyElementTypes {
    *
    * @param builder
    */
-  private static void parseCaseBlock(PsiBuilder builder) {
+  private static void parseCaseBlock(PsiBuilder builder, GroovyParser parser) {
     ParserUtils.getToken(builder, mLCURLY);
     ParserUtils.getToken(builder, mNLS);
     if (ParserUtils.getToken(builder, mRCURLY)) {
@@ -95,12 +95,12 @@ public class SwitchStatement implements GroovyElementTypes {
     while (kCASE.equals(builder.getTokenType()) ||
         kDEFAULT.equals(builder.getTokenType())) {
       PsiBuilder.Marker sectionMarker = builder.mark();
-      parseCaseLabel(builder);
+      parseCaseLabel(builder, parser);
       if (builder.getTokenType() == mRCURLY ||
           ParserUtils.lookAhead(builder, mNLS, mRCURLY)) {
         builder.error(GroovyBundle.message("expression.expected"));
       } else {
-        GroovyParser.parseSwitchCaseList(builder);
+        parser.parseSwitchCaseList(builder);
       }
       sectionMarker.done(CASE_SECTION);
     }
@@ -112,20 +112,20 @@ public class SwitchStatement implements GroovyElementTypes {
    *
    * @param builder
    */
-  public static void parseCaseLabel(PsiBuilder builder) {
+  public static void parseCaseLabel(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker label = builder.mark();
     IElementType elem = builder.getTokenType();
     ParserUtils.getToken(builder, TokenSet.create(kCASE, kDEFAULT));
 
     if (kCASE.equals(elem)) {
-      AssignmentExpression.parse(builder);
+      AssignmentExpression.parse(builder, parser);
     }
     ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
     label.done(CASE_LABEL);
     ParserUtils.getToken(builder, mNLS);
     if (builder.getTokenType() == kCASE ||
         builder.getTokenType() == kDEFAULT) {
-      parseCaseLabel(builder);
+      parseCaseLabel(builder, parser);
     }
   }
 

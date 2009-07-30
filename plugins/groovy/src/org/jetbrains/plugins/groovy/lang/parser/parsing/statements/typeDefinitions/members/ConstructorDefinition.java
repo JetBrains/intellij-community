@@ -17,8 +17,8 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefiniti
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.ThrowClause;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifier;
@@ -32,10 +32,10 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class ConstructorDefinition implements GroovyElementTypes {
-  public static boolean parse(PsiBuilder builder, String className) {
+  public static boolean parse(PsiBuilder builder, String className, GroovyParser parser) {
     if (className == null) return false;
     PsiBuilder.Marker constructorMarker = builder.mark();
-    if (!parseModifiers(builder)) {
+    if (!parseModifiers(builder, parser)) {
       constructorMarker.rollbackTo();
       return false;
     }
@@ -52,7 +52,7 @@ public class ConstructorDefinition implements GroovyElementTypes {
       builder.error(GroovyBundle.message("lparen.expected"));
     }
 
-    ParameterList.parse(builder, mRPAREN);
+    ParameterList.parse(builder, mRPAREN, parser);
 
     ParserUtils.getToken(builder, mNLS);
     if (!ParserUtils.getToken(builder, mRPAREN)) {
@@ -68,7 +68,7 @@ public class ConstructorDefinition implements GroovyElementTypes {
 
     if (builder.getTokenType() == mLCURLY || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {
       ParserUtils.getToken(builder, mNLS);
-      if (ConstructorBody.parse(builder)) {
+      if (ConstructorBody.parse(builder, parser)) {
         constructorMarker.done(CONSTRUCTOR_DEFINITION);
         return true;
       }
@@ -78,7 +78,7 @@ public class ConstructorDefinition implements GroovyElementTypes {
     return false;
   }
 
-  private static boolean parseModifiers(PsiBuilder builder) {
+  private static boolean parseModifiers(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker modifiersMarker = builder.mark();
 
     do {
@@ -87,7 +87,7 @@ public class ConstructorDefinition implements GroovyElementTypes {
         return false;
       }
       ParserUtils.getToken(builder, mNLS);
-    } while(Annotation.parse(builder) || Modifier.parse(builder) || ParserUtils.getToken(builder, kDEF));
+    } while(Annotation.parse(builder, parser) || Modifier.parse(builder) || ParserUtils.getToken(builder, kDEF));
 
     modifiersMarker.done(MODIFIERS);
     return true;

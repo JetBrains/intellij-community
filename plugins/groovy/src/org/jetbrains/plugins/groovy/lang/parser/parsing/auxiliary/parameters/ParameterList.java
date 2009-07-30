@@ -19,6 +19,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -31,7 +32,7 @@ public class ParameterList implements GroovyElementTypes {
    * @param builder Given builder
    * @param ending  ending:  -> or ) in various cases
    */
-  public static void parse(PsiBuilder builder, IElementType ending) {
+  public static void parse(PsiBuilder builder, IElementType ending, GroovyParser parser) {
     if (builder.getTokenType() == mRPAREN && mRPAREN.equals(ending)) {
       PsiBuilder.Marker marker = builder.mark();
       marker.done(PARAMETERS_LIST);
@@ -41,7 +42,7 @@ public class ParameterList implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
 
 
-    if (!ParameterDeclaration.parse(builder, ending)) {
+    if (!ParameterDeclaration.parse(builder, parser)) {
       marker.rollbackTo();
       marker = builder.mark();
       marker.done(PARAMETERS_LIST);
@@ -52,7 +53,7 @@ public class ParameterList implements GroovyElementTypes {
             mCOMMA.equals(builder.getTokenType())) {
       ParserUtils.getToken(builder, mCOMMA);
       ParserUtils.getToken(builder, mNLS);
-      if (!ParameterDeclaration.parse(builder, ending)) {
+      if (!ParameterDeclaration.parse(builder, parser)) {
         builder.error(GroovyBundle.message("param.expected"));
       }
     }

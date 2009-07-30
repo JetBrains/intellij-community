@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -26,14 +27,14 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class CommandArguments implements GroovyElementTypes {
 
-  public static boolean parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker marker = builder.mark();
-    if (commandArgParse(builder)) {
+    if (commandArgParse(builder, parser)) {
       while (builder.getTokenType() == mCOMMA) {
         ParserUtils.getToken(builder, mCOMMA);
         ParserUtils.getToken(builder, mNLS);
-        if (!commandArgParse(builder)) {
+        if (!commandArgParse(builder, parser)) {
           builder.error(GroovyBundle.message("expression.expected"));
           break;
         }
@@ -47,11 +48,11 @@ public class CommandArguments implements GroovyElementTypes {
     }
   }
 
-  private static boolean commandArgParse(PsiBuilder builder) {
+  private static boolean commandArgParse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker commandMarker = builder.mark();
-    if (ArgumentList.argumentLabelStartCheck(builder)) {
+    if (ArgumentList.argumentLabelStartCheck(builder, parser)) {
       ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
-      if (!ExpressionStatement.argParse(builder)) {
+      if (!ExpressionStatement.argParse(builder, parser)) {
         commandMarker.error(GroovyBundle.message("expression.expected"));
       }
       else {
@@ -61,7 +62,7 @@ public class CommandArguments implements GroovyElementTypes {
     }
     else {
       commandMarker.drop();
-      return ExpressionStatement.argParse(builder);
+      return ExpressionStatement.argParse(builder, parser);
     }
   }
 }

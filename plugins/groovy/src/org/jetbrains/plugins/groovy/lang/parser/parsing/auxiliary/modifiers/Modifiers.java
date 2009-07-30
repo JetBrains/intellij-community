@@ -16,8 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -33,11 +33,11 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class Modifiers implements GroovyElementTypes {
-  public static boolean parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
     boolean endsWithNewLine;
     PsiBuilder.Marker modifiersMarker = builder.mark();
 
-    if (!Annotation.parse(builder) && !Modifier.parse(builder) && !ParserUtils.getToken(builder, kDEF)) {
+    if (!Annotation.parse(builder, parser) && !Modifier.parse(builder) && !ParserUtils.getToken(builder, kDEF)) {
       modifiersMarker.done(MODIFIERS);
       return false;
     }
@@ -48,7 +48,7 @@ public class Modifiers implements GroovyElementTypes {
       newLineMarker = builder.mark();
       endsWithNewLine = ParserUtils.getToken(builder, mNLS);
 
-      if (!Annotation.parse(builder) && !Modifier.parse(builder) && !ParserUtils.getToken(builder, kDEF)) break;
+      if (!Annotation.parse(builder, parser) && !Modifier.parse(builder) && !ParserUtils.getToken(builder, kDEF)) break;
     }
 
     // Do not include last newline

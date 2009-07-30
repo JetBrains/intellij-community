@@ -20,7 +20,9 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.BinaryExpression;
 
 /**
  * @author ilyas
@@ -32,17 +34,17 @@ public class ShiftExpression implements GroovyElementTypes {
           mRANGE_INCLUSIVE
   );
 
-  public static boolean parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
 
 
     PsiBuilder.Marker marker = builder.mark();
-    if (AdditiveExpression.parse(builder)) {
+    if (BinaryExpression.ADDITIVE.parseBinary(builder, parser)) {
       GroovyElementType shiftOrRange = isRangeOrShift(builder);
       if (!shiftOrRange.equals(WRONGWAY)) {
         if (ParserUtils.getToken(builder, RANGES) ||
                 getCompositeSign(builder)) {
           ParserUtils.getToken(builder, mNLS);
-          if (!AdditiveExpression.parse(builder)) {
+          if (!BinaryExpression.ADDITIVE.parseBinary(builder, parser)) {
             builder.error(GroovyBundle.message("expression.expected"));
           }
           PsiBuilder.Marker newMarker = marker.precede();
@@ -50,7 +52,7 @@ public class ShiftExpression implements GroovyElementTypes {
           shiftOrRange = isRangeOrShift(builder);
           if (RANGES.contains(builder.getTokenType()) ||
                   getCompositeSign(builder)) {
-            subParse(builder, newMarker, shiftOrRange);
+            subParse(builder, newMarker, shiftOrRange, parser);
           } else {
             newMarker.drop();
           }
@@ -105,10 +107,10 @@ public class ShiftExpression implements GroovyElementTypes {
     return WRONGWAY;
   }
 
-  private static void subParse(PsiBuilder builder, PsiBuilder.Marker marker, GroovyElementType shiftOrRange) {
+  private static void subParse(PsiBuilder builder, PsiBuilder.Marker marker, GroovyElementType shiftOrRange, GroovyParser parser) {
     ParserUtils.getToken(builder, RANGES);
     ParserUtils.getToken(builder, mNLS);
-    if (!AdditiveExpression.parse(builder)) {
+    if (!BinaryExpression.ADDITIVE.parseBinary(builder, parser)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
     PsiBuilder.Marker newMarker = marker.precede();
@@ -116,7 +118,7 @@ public class ShiftExpression implements GroovyElementTypes {
     GroovyElementType newShiftOrRange = isRangeOrShift(builder);
     if (RANGES.contains(builder.getTokenType()) ||
             getCompositeSign(builder)) {
-      subParse(builder, newMarker, newShiftOrRange);
+      subParse(builder, newMarker, newShiftOrRange, parser);
     } else {
       newMarker.drop();
     }

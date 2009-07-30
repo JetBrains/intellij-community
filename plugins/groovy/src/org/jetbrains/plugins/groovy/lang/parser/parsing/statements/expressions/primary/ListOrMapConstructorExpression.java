@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -26,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class ListOrMapConstructorExpression implements GroovyElementTypes {
 
-  public static boolean parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     if (!ParserUtils.getToken(builder, mLBRACK, GroovyBundle.message("lbrack.expected"))) {
       marker.drop();
@@ -38,7 +39,7 @@ public class ListOrMapConstructorExpression implements GroovyElementTypes {
     } else if (ParserUtils.getToken(builder, mCOLON)) {
       ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
     } else {
-      ArgumentList.parseArgumentList(builder, mRBRACK);
+      ArgumentList.parseArgumentList(builder, mRBRACK, parser);
       ParserUtils.getToken(builder, mNLS);
       ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
     }

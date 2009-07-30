@@ -1,24 +1,25 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -28,11 +29,11 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class RegexConstructorExpression implements GroovyElementTypes {
 
-  public static boolean parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker sMarker = builder.mark();
     if (ParserUtils.getToken(builder, mREGEX_BEGIN)) {
-      if (!regexConstructorValuePart(builder)) {
+      if (!regexConstructorValuePart(builder, parser)) {
         if (!ParserUtils.getToken(builder, mREGEX_END)) {
           builder.error(GroovyBundle.message("identifier.or.block.expected"));
         }
@@ -40,7 +41,7 @@ public class RegexConstructorExpression implements GroovyElementTypes {
         return true;
       } else {
         while (ParserUtils.getToken(builder, mREGEX_CONTENT)) {
-          if (!regexConstructorValuePart(builder)) break;
+          if (!regexConstructorValuePart(builder, parser)) break;
         }
         if (!ParserUtils.getToken(builder, mREGEX_END)) {
           builder.error(GroovyBundle.message("identifier.or.block.expected"));
@@ -60,13 +61,13 @@ public class RegexConstructorExpression implements GroovyElementTypes {
    * @param builder given builder
    * @return nothing
    */
-  private static boolean regexConstructorValuePart(PsiBuilder builder) {
+  private static boolean regexConstructorValuePart(PsiBuilder builder, GroovyParser parser) {
     //ParserUtils.getToken(builder, mSTAR);
     if (mIDENT.equals(builder.getTokenType())) {
-      PathExpression.parse(builder);
+      PathExpression.parse(builder, parser);
       return true;
     } else if (mLCURLY.equals(builder.getTokenType())) {
-      OpenOrClosableBlock.parseClosableBlock(builder);
+      OpenOrClosableBlock.parseClosableBlock(builder, parser);
       return true;
     }
     return false;

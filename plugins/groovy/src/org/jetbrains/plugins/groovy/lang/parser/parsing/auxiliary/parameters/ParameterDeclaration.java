@@ -18,8 +18,8 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.VariableInitializer;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
@@ -33,16 +33,11 @@ import java.util.Set;
  */
 public class ParameterDeclaration implements GroovyElementTypes {
 
-  /**
-   * @param builder
-   * @param ending  Given ending: -> or )
-   * @return
-   */
-  public static boolean parse(PsiBuilder builder, IElementType ending) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker pdMarker = builder.mark();
 
     // Parse optional modifier(s)
-    parseOptionalModifier(builder);
+    parseOptionalModifier(builder, parser);
 
     PsiBuilder.Marker rb = builder.mark();
     TypeSpec.parseStrict(builder);
@@ -57,7 +52,7 @@ public class ParameterDeclaration implements GroovyElementTypes {
 
     if (ParserUtils.getToken(builder, mIDENT)) {
       if (mASSIGN.equals(builder.getTokenType())) {
-        VariableInitializer.parse(builder);
+        VariableInitializer.parse(builder, parser);
       }
       pdMarker.done(PARAMETER);
       return true;
@@ -78,7 +73,7 @@ public class ParameterDeclaration implements GroovyElementTypes {
    *
    * @param builder Given builder
    */
-  private static void parseOptionalModifier(PsiBuilder builder) {
+  private static void parseOptionalModifier(PsiBuilder builder, GroovyParser parser) {
 
     Set<IElementType> modSet = new HashSet<IElementType>();
 
@@ -104,7 +99,7 @@ public class ParameterDeclaration implements GroovyElementTypes {
           modSet.add(kDEF);
         }
         ParserUtils.getToken(builder, mNLS);
-      } else if (Annotation.parse(builder)) {
+      } else if (Annotation.parse(builder, parser)) {
         ParserUtils.getToken(builder, mNLS);
       }
     }

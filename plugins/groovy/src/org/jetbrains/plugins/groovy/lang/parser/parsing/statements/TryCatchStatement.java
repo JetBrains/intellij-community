@@ -1,24 +1,25 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterDeclaration;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -30,12 +31,12 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 public class TryCatchStatement implements GroovyElementTypes {
 
 
-  public static boolean parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, kTRY);
     PsiBuilder.Marker warn = builder.mark();
     ParserUtils.getToken(builder, mNLS);
-    if (!mLCURLY.equals(builder.getTokenType()) || !OpenOrClosableBlock.parseOpenBlock(builder)) {
+    if (!mLCURLY.equals(builder.getTokenType()) || !OpenOrClosableBlock.parseOpenBlock(builder, parser)) {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("expression.expected"));
       marker.done(TRY_BLOCK_STATEMENT);
@@ -52,7 +53,7 @@ public class TryCatchStatement implements GroovyElementTypes {
     }
 
     if (kCATCH.equals(builder.getTokenType())) {
-      parseHandlers(builder);
+      parseHandlers(builder, parser);
     }
 
     if (kFINALLY.equals(builder.getTokenType()) |
@@ -63,7 +64,7 @@ public class TryCatchStatement implements GroovyElementTypes {
       ParserUtils.getToken(builder, kFINALLY);
       ParserUtils.getToken(builder, mNLS);
 
-      if (!mLCURLY.equals(builder.getTokenType()) || !OpenOrClosableBlock.parseOpenBlock(builder)) {
+      if (!mLCURLY.equals(builder.getTokenType()) || !OpenOrClosableBlock.parseOpenBlock(builder, parser)) {
         finallyMarker.drop();
         warn.rollbackTo();
         builder.error(GroovyBundle.message("expression.expected"));
@@ -81,7 +82,7 @@ public class TryCatchStatement implements GroovyElementTypes {
    *
    * @param builder
    */
-  private static void parseHandlers(PsiBuilder builder) {
+  private static void parseHandlers(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker catchMarker = builder.mark();
     ParserUtils.getToken(builder, kCATCH);
     if (!ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
@@ -89,7 +90,7 @@ public class TryCatchStatement implements GroovyElementTypes {
       return;
     }
 
-    if (!ParameterDeclaration.parse(builder, mRPAREN)) {
+    if (!ParameterDeclaration.parse(builder, parser)) {
       builder.error(GroovyBundle.message("param.expected"));
 //      catchMarker.drop();
 //      return;
@@ -104,7 +105,7 @@ public class TryCatchStatement implements GroovyElementTypes {
 
     PsiBuilder.Marker warn = builder.mark();
     ParserUtils.getToken(builder, mNLS);
-    if (!mLCURLY.equals(builder.getTokenType()) || !OpenOrClosableBlock.parseOpenBlock(builder)) {
+    if (!mLCURLY.equals(builder.getTokenType()) || !OpenOrClosableBlock.parseOpenBlock(builder, parser)) {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("expression.expected"));
     } else {
@@ -116,7 +117,7 @@ public class TryCatchStatement implements GroovyElementTypes {
     if (builder.getTokenType() == kCATCH ||
         ParserUtils.lookAhead(builder, mNLS, kCATCH)) {
       ParserUtils.getToken(builder, mNLS);
-      parseHandlers(builder);
+      parseHandlers(builder, parser);
     }
   }
 

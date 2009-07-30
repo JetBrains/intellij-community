@@ -17,8 +17,8 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -32,10 +32,10 @@ public class PostfixExpression implements GroovyElementTypes {
           mDEC
   );
 
-  public static boolean parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker marker = builder.mark();
-    if (PathExpression.parse(builder)) {
+    if (PathExpression.parse(builder, parser)) {
       subParse(builder, marker);
       return true;
     } else {

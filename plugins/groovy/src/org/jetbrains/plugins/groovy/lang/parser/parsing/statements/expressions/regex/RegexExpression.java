@@ -20,7 +20,8 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.relational.EqualityExpression;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.BinaryExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -33,20 +34,20 @@ public class RegexExpression implements GroovyElementTypes {
       mREGEX_MATCH
   );
 
-  public static boolean parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker marker = builder.mark();
-    if (EqualityExpression.parse(builder)) {
+    if (BinaryExpression.EQUALITY.parseBinary(builder, parser)) {
       IElementType type = builder.getTokenType();
       if (ParserUtils.getToken(builder, REGEX_DO)) {
         ParserUtils.getToken(builder, mNLS);
-        if (!EqualityExpression.parse(builder)) {
+        if (!BinaryExpression.EQUALITY.parseBinary(builder, parser)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
         PsiBuilder.Marker newMarker = marker.precede();
         marker.done(type == mREGEX_FIND ? REGEX_FIND_EXPRESSION : REGEX_MATCH_EXPRESSION);
         if (REGEX_DO.contains(builder.getTokenType())) {
-          subParse(builder, newMarker);
+          subParse(builder, newMarker, parser);
         } else {
           newMarker.drop();
         }
@@ -60,17 +61,17 @@ public class RegexExpression implements GroovyElementTypes {
     }
   }
 
-  private static void subParse(PsiBuilder builder, PsiBuilder.Marker marker) {
+  private static void subParse(PsiBuilder builder, PsiBuilder.Marker marker, GroovyParser parser) {
     IElementType type = builder.getTokenType();
     ParserUtils.getToken(builder, REGEX_DO);
     ParserUtils.getToken(builder, mNLS);
-    if (!EqualityExpression.parse(builder)) {
+    if (!BinaryExpression.EQUALITY.parseBinary(builder, parser)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
     PsiBuilder.Marker newMarker = marker.precede();
     marker.done(type == mREGEX_FIND ? REGEX_FIND_EXPRESSION : REGEX_MATCH_EXPRESSION);
     if (REGEX_DO.contains(builder.getTokenType())) {
-      subParse(builder, newMarker);
+      subParse(builder, newMarker, parser);
     } else {
       newMarker.drop();
     }

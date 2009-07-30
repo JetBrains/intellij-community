@@ -34,8 +34,8 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  public static boolean parseOpenBlock(PsiBuilder builder) {
-    return parseOpenBlockInDifferentContext(builder, false);
+  public static boolean parseOpenBlock(PsiBuilder builder, GroovyParser parser) {
+    return parseOpenBlockInDifferentContext(builder, false, parser);
   }
 
   /**
@@ -44,8 +44,8 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  public static boolean parseBlockStatement(PsiBuilder builder) {
-    return parseOpenBlockInDifferentContext(builder, true);
+  public static boolean parseBlockStatement(PsiBuilder builder, GroovyParser parser) {
+    return parseOpenBlockInDifferentContext(builder, true, parser);
   }
 
   /**
@@ -54,7 +54,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  public static boolean parseOpenBlockInDifferentContext(PsiBuilder builder, boolean isBlockStatement) {
+  public static boolean parseOpenBlockInDifferentContext(PsiBuilder builder, boolean isBlockStatement, GroovyParser parser) {
     PsiBuilder.Marker blockStatementMarker = builder.mark();
     PsiBuilder.Marker marker = builder.mark();
     if (!ParserUtils.getToken(builder, mLCURLY)) {
@@ -63,7 +63,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
       return false;
     }
     ParserUtils.getToken(builder, mNLS);
-    GroovyParser.parseBlockBody(builder);
+    parser.parseBlockBody(builder);
     while (!builder.eof() &&
         !mRCURLY.equals(builder.getTokenType())) {
       builder.error(GroovyBundle.message("expression.expected"));
@@ -86,23 +86,23 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  public static boolean parseClosableBlock(PsiBuilder builder) {
+  public static boolean parseClosableBlock(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     if (!ParserUtils.getToken(builder, mLCURLY)) {
       marker.drop();
       return false;
     }
     ParserUtils.getToken(builder, mNLS);
-    closableBlockParamsOpt(builder);
-    GroovyParser.parseBlockBody(builder);
+    closableBlockParamsOpt(builder, parser);
+    parser.parseBlockBody(builder);
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
     marker.done(CLOSABLE_BLOCK);
     return true;
   }
 
 
-  private static void closableBlockParamsOpt(PsiBuilder builder) {
-    ParameterList.parse(builder, mCLOSABLE_BLOCK_OP);
+  private static void closableBlockParamsOpt(PsiBuilder builder, GroovyParser parser) {
+    ParameterList.parse(builder, mCLOSABLE_BLOCK_OP, parser);
     ParserUtils.getToken(builder, mNLS);
     ParserUtils.getToken(builder, mCLOSABLE_BLOCK_OP);
   }

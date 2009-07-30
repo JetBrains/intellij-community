@@ -18,8 +18,8 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -36,17 +36,17 @@ public class UnaryExpression implements GroovyElementTypes {
           mLNOT
   );
 
-  public static boolean parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker marker = builder.mark();
     if (ParserUtils.getToken(builder, PREFIXES)) {
       ParserUtils.getToken(builder, mNLS);
-      parse(builder);
+      parse(builder, parser);
       marker.done(UNARY_EXPRESSION);
       return true;
     } else {
       marker.drop();
-      if (!UnaryExpressionNotPlusMinus.parse(builder)) {
+      if (!UnaryExpressionNotPlusMinus.parse(builder, parser)) {
         builder.error(GroovyBundle.message("expression.expected"));
         return false;
       }

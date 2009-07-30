@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.types;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -25,8 +26,8 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 20.03.2007
  */
 public class TypeDeclarationStart implements GroovyElementTypes {
-  public static boolean parse(PsiBuilder builder) {
-    Modifiers.parse(builder);
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
+    Modifiers.parse(builder, parser);
 
     if (!ParserUtils.getToken(builder, kCLASS))
       if (!ParserUtils.getToken(builder, kINTERFACE))

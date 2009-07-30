@@ -19,7 +19,9 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.BinaryExpression;
 
 /**
  * @author ilyas
@@ -41,20 +43,19 @@ public class MultiplicativeExpression implements GroovyElementTypes {
           mBNOT
   );
 
-  public static boolean parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker marker = builder.mark();
-    if ((PREFIXES.contains(builder.getTokenType())) ?
-            PowerExpression.parse(builder) : PowerExpressionNotPlusMinus.parse(builder)) {
+    if ((PREFIXES.contains(builder.getTokenType())) ? BinaryExpression.POWER.parseBinary(builder, parser) : PowerExpressionNotPlusMinus.parse(builder, parser)) {
       if (ParserUtils.getToken(builder, MULT_DIV)) {
         ParserUtils.getToken(builder, mNLS);
-        if (!PowerExpression.parse(builder)) {
+        if (!BinaryExpression.POWER.parseBinary(builder, parser)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
         PsiBuilder.Marker newMarker = marker.precede();
         marker.done(MULTIPLICATIVE_EXPRESSION);
         if (MULT_DIV.contains(builder.getTokenType())) {
-          subParse(builder, newMarker);
+          subParse(builder, newMarker, parser);
         } else {
           newMarker.drop();
         }
@@ -68,16 +69,16 @@ public class MultiplicativeExpression implements GroovyElementTypes {
     }
   }
 
-  private static void subParse(PsiBuilder builder, PsiBuilder.Marker marker) {
+  private static void subParse(PsiBuilder builder, PsiBuilder.Marker marker, GroovyParser parser) {
     ParserUtils.getToken(builder, MULT_DIV);
     ParserUtils.getToken(builder, mNLS);
-    if (!PowerExpression.parse(builder)) {
+    if (!BinaryExpression.POWER.parseBinary(builder, parser)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
     PsiBuilder.Marker newMarker = marker.precede();
     marker.done(MULTIPLICATIVE_EXPRESSION);
     if (MULT_DIV.contains(builder.getTokenType())) {
-      subParse(builder, newMarker);
+      subParse(builder, newMarker, parser);
     } else {
       newMarker.drop();
     }

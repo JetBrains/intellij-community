@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements;
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.DeclarationStart;
@@ -31,34 +32,34 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class ForStatement implements GroovyElementTypes {
 
-  public static boolean forClauseParse(PsiBuilder builder) {
+  public static boolean forClauseParse(PsiBuilder builder, GroovyParser parser) {
     ParserUtils.getToken(builder, mNLS);
-    return forInClauseParse(builder) || tradForClauseParse(builder);
+    return forInClauseParse(builder, parser) || tradForClauseParse(builder, parser);
   }
 
-  private static boolean tradForClauseParse(PsiBuilder builder) {
+  private static boolean tradForClauseParse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker marker = builder.mark();
 
     if (ParserUtils.getToken(builder, mSEMI) ||
-            (Declaration.parse(builder, false) &&
+            (Declaration.parse(builder, false, parser) &&
                     ParserUtils.getToken(builder, mSEMI))) {
-      StrictContextExpression.parse(builder);
+      StrictContextExpression.parse(builder, parser);
       ParserUtils.getToken(builder, mSEMI, GroovyBundle.message("semi.expected"));
       ParserUtils.getToken(builder, mNLS);
       if (!mRPAREN.equals(builder.getTokenType())) {
-        controlExpressionListParse(builder);
+        controlExpressionListParse(builder, parser);
       }
     } else {
       marker.rollbackTo();
       marker = builder.mark();
-      controlExpressionListParse(builder);
+      controlExpressionListParse(builder, parser);
       ParserUtils.getToken(builder, mSEMI, GroovyBundle.message("semi.expected"));
-      StrictContextExpression.parse(builder);
+      StrictContextExpression.parse(builder, parser);
       ParserUtils.getToken(builder, mSEMI, GroovyBundle.message("semi.expected"));
       ParserUtils.getToken(builder, mNLS);
       if (!mRPAREN.equals(builder.getTokenType())) {
-        controlExpressionListParse(builder);
+        controlExpressionListParse(builder, parser);
       }
     }
 
@@ -69,9 +70,9 @@ public class ForStatement implements GroovyElementTypes {
   /*
    * Parses list of control expression in for condition
    */
-  private static void controlExpressionListParse(PsiBuilder builder) {
+  private static void controlExpressionListParse(PsiBuilder builder, GroovyParser parser) {
 
-    if (!StrictContextExpression.parse(builder)) return;
+    if (!StrictContextExpression.parse(builder, parser)) return;
 
     while (mCOMMA.equals(builder.getTokenType())) {
 
@@ -83,7 +84,7 @@ public class ForStatement implements GroovyElementTypes {
         ParserUtils.getToken(builder, mCOMMA);
       }
       ParserUtils.getToken(builder, mNLS);
-      if (!StrictContextExpression.parse(builder)) {
+      if (!StrictContextExpression.parse(builder, parser)) {
         ParserUtils.getToken(builder, mNLS);
         if (!mRPAREN.equals(builder.getTokenType()) &&
                 !mSEMI.equals(builder.getTokenType())) {
@@ -102,7 +103,7 @@ public class ForStatement implements GroovyElementTypes {
   /*
    * Parses Groovy-style 'in' clause
    */
-  private static boolean forInClauseParse(PsiBuilder builder) {
+  private static boolean forInClauseParse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker marker = builder.mark();
 
@@ -112,22 +113,22 @@ public class ForStatement implements GroovyElementTypes {
       ParserUtils.eatElement(builder, PARAMETER);
       declMarker.drop();
       ParserUtils.getToken(builder, kIN);
-      if (!ShiftExpression.parse(builder)) {
+      if (!ShiftExpression.parse(builder, parser)) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
       marker.done(FOR_IN_CLAUSE);
       return true;
     }
 
-    if (DeclarationStart.parse(builder)) {
-      if (Modifiers.parse(builder)) {
+    if (DeclarationStart.parse(builder, parser)) {
+      if (Modifiers.parse(builder, parser)) {
         TypeSpec.parse(builder);
-        return singleDeclNoInitParse(builder, marker, declMarker);
+        return singleDeclNoInitParse(builder, marker, declMarker, parser);
       }
     }
 
     if (TypeSpec.parse(builder)) {
-      return singleDeclNoInitParse(builder, marker, declMarker);
+      return singleDeclNoInitParse(builder, marker, declMarker, parser);
     }
 
     declMarker.drop();
@@ -137,12 +138,12 @@ public class ForStatement implements GroovyElementTypes {
 
   private static boolean singleDeclNoInitParse(PsiBuilder builder,
                                                          PsiBuilder.Marker marker,
-                                                         PsiBuilder.Marker declMarker) {
+                                                         PsiBuilder.Marker declMarker, GroovyParser parser) {
     if (ParserUtils.getToken(builder, mIDENT)) {
       if (kIN.equals(builder.getTokenType()) || mCOLON.equals(builder.getTokenType())) {
         declMarker.done(PARAMETER);
         builder.advanceLexer();
-        if (!ShiftExpression.parse(builder)) {
+        if (!ShiftExpression.parse(builder, parser)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
         marker.done(FOR_IN_CLAUSE);

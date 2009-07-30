@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 26.03.2007
  */
 public class ConstructorBody implements GroovyElementTypes {
-  public static boolean parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker cbMarker = builder.mark();
 
     if (!ParserUtils.getToken(builder, mLCURLY)) {
@@ -41,7 +41,7 @@ public class ConstructorBody implements GroovyElementTypes {
     ParserUtils.getToken(builder, mNLS);
 
     PsiBuilder.Marker constructorInvokationMarker = builder.mark();
-    if (parseExplicitConstructor(builder)) {
+    if (parseExplicitConstructor(builder, parser)) {
       constructorInvokationMarker.done(EXPLICIT_CONSTRUCTOR);
     } else {
       constructorInvokationMarker.rollbackTo();
@@ -49,7 +49,7 @@ public class ConstructorBody implements GroovyElementTypes {
 
     //explicit constructor invocation
     Separators.parse(builder);
-    GroovyParser.parseBlockBody(builder);
+    parser.parseBlockBody(builder);
 
     if (builder.getTokenType() != mRCURLY) {
       builder.error(GroovyBundle.message("rcurly.expected"));
@@ -62,13 +62,13 @@ public class ConstructorBody implements GroovyElementTypes {
 
   }
 
-  private static boolean parseExplicitConstructor(PsiBuilder builder) {
+  private static boolean parseExplicitConstructor(PsiBuilder builder, GroovyParser parser) {
     TypeArguments.parse(builder);
 
     if ((ParserUtils.getToken(builder, kTHIS) || ParserUtils.getToken(builder, kSUPER)) && ParserUtils.lookAhead(builder, mLPAREN)) {
       PsiBuilder.Marker marker = builder.mark();
       ParserUtils.getToken(builder, mLPAREN);
-      ArgumentList.parseArgumentList(builder, mRPAREN);
+      ArgumentList.parseArgumentList(builder, mRPAREN, parser);
       ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"));
       marker.done(ARGUMENTS);
       return true;

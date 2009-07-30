@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class CompilationUnit implements GroovyElementTypes {
 
-  public static void parse(PsiBuilder builder) {
+  public static void parse(PsiBuilder builder, GroovyParser parser) {
 
     ParserUtils.getToken(builder, mSH_COMMENT);
     ParserUtils.getToken(builder, mNLS);
@@ -38,12 +38,12 @@ public class CompilationUnit implements GroovyElementTypes {
     if (builder.getTokenType() == kPACKAGE) {
       PackageDefinition.parse(builder);
     } else {
-      GroovyParser.parseStatementWithImports(builder);
+      parser.parseStatementWithImports(builder);
     }
     cleanAfterError(builder);
 
     while (Separators.parse(builder)) {
-      GroovyParser.parseStatementWithImports(builder);
+      parser.parseStatementWithImports(builder);
       cleanAfterError(builder);
     }
   }

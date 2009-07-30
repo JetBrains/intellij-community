@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions;
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.CommandArguments;
 
 /**
@@ -27,13 +28,13 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.a
  */
 public class ExpressionStatement implements GroovyElementTypes {
 
-  public static boolean parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker marker = builder.mark();
 
-    if (AssignmentExpression.parse(builder)) {
+    if (AssignmentExpression.parse(builder, parser)) {
       if (!TokenSets.SEPARATORS.contains(builder.getTokenType())) {
-        if (CommandArguments.parse(builder)) {
+        if (CommandArguments.parse(builder, parser)) {
           marker.done(CALL_EXPRESSION);
         } else {
           marker.drop();
@@ -55,30 +56,9 @@ public class ExpressionStatement implements GroovyElementTypes {
    * @param builder - Given builder
    * @return type of parsing result
    */
-  public static boolean argParse(PsiBuilder builder) {
-    return AssignmentExpression.parse(builder);
+  public static boolean argParse(PsiBuilder builder, GroovyParser parser) {
+    return AssignmentExpression.parse(builder, parser);
   }
 
-
-  /**
-   * Checks whether first token of current statement is valid
-   *
-   * @param builder given Builder
-   * @return true begin symbols are valid
-   */
-  public static boolean suspiciousExpressionStatementStart(PsiBuilder builder) {
-    return TokenSets.SUSPICIOUS_EXPRESSION_STATEMENT_START_TOKEN_SET.contains(builder.getTokenType());
-  }
-
-  /**
-   * Continues expressioin first checking
-   *
-   * @param builder given builder
-   * @return true if it is expression really
-   */
-  public static boolean checkSuspiciousExpressionStatement(PsiBuilder builder) {
-    // TODO realize me!
-    return true;
-  }
 
 }

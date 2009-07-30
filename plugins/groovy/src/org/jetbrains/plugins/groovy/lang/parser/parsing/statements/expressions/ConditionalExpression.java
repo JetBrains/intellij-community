@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions;
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.logical.LogicalOrExpression;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -26,23 +26,23 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class ConditionalExpression implements GroovyElementTypes {
 
-  public static boolean parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker marker = builder.mark();
-    if (LogicalOrExpression.parse(builder)) {
+    if (BinaryExpression.parseLogicalExpression(builder, parser)) {
       if (ParserUtils.getToken(builder, mQUESTION)) {
         ParserUtils.getToken(builder, mNLS);
-        if (!AssignmentExpression.parse(builder)) {
+        if (!AssignmentExpression.parse(builder, parser)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
         if (ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"))) {
           ParserUtils.getToken(builder, mNLS);
-          parse(builder);
+          parse(builder, parser);
         }
         marker.done(CONDITIONAL_EXPRESSION);
       } else if (ParserUtils.getToken(builder, mELVIS)) {
         ParserUtils.getToken(builder, mNLS);
-        if (!parse(builder)) {
+        if (!parse(builder, parser)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
         marker.done(ELVIS_EXPRESSION);

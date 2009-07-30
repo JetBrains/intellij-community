@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions;
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.VariableInitializer;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
@@ -30,25 +31,25 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @autor: Dmitry.Krasilschikov, ilyas
  */
 public class StrictContextExpression implements GroovyElementTypes {
-  public static boolean parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
 
     if (BranchStatement.BRANCH_KEYWORDS.contains(builder.getTokenType())) {
-      return BranchStatement.parse(builder);
+      return BranchStatement.parse(builder, parser);
     }
     if (mAT.equals(builder.getTokenType())) {
-      return Annotation.parse(builder);
+      return Annotation.parse(builder, parser);
     }
-    if (DeclarationStart.parse(builder)) {
-      singleDeclarationParse(builder);
+    if (DeclarationStart.parse(builder, parser)) {
+      singleDeclarationParse(builder, parser);
       return true;
     }
-    return ExpressionStatement.argParse(builder);
+    return ExpressionStatement.argParse(builder, parser);
   }
 
-  public static void singleDeclarationParse(PsiBuilder builder) {
+  public static void singleDeclarationParse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker marker = builder.mark();
-    if (Modifiers.parse(builder)) {
+    if (Modifiers.parse(builder, parser)) {
       PsiBuilder.Marker rb = builder.mark();
       TypeSpec.parse(builder);
       if (!mIDENT.equals(builder.getTokenType())) {
@@ -58,14 +59,14 @@ public class StrictContextExpression implements GroovyElementTypes {
       }
       ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"));
       if (mASSIGN.equals(builder.getTokenType())) {
-        VariableInitializer.parse(builder);
+        VariableInitializer.parse(builder, parser);
       }
       marker.done(VARIABLE_DEFINITION);
     } else {
       if (TypeSpec.parse(builder)) {
         ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"));
         if (mASSIGN.equals(builder.getTokenType())) {
-          VariableInitializer.parse(builder);
+          VariableInitializer.parse(builder, parser);
         }
         marker.done(VARIABLE_DEFINITION);
       } else {

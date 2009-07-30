@@ -20,6 +20,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
@@ -32,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class PrimaryExpression implements GroovyElementTypes {
 
-  public static boolean parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
 
     if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
       ParserUtils.eatElement(builder, BUILT_IN_TYPE_EXPRESSION);
@@ -47,7 +48,7 @@ public class PrimaryExpression implements GroovyElementTypes {
       return true;
     }
     if (kNEW.equals(builder.getTokenType())) {
-      newExprParse(builder);
+      newExprParse(builder, parser);
       return true;
     }
     if (mIDENT.equals(builder.getTokenType())) {
@@ -55,22 +56,22 @@ public class PrimaryExpression implements GroovyElementTypes {
       return true;
     }
     if (mGSTRING_SINGLE_BEGIN.equals(builder.getTokenType())) {
-      StringConstructorExpression.parse(builder);
+      StringConstructorExpression.parse(builder, parser);
       return true;
     }
     if (mREGEX_BEGIN.equals(builder.getTokenType())) {
-      RegexConstructorExpression.parse(builder);
+      RegexConstructorExpression.parse(builder, parser);
       return true;
     }
     if (mLBRACK.equals(builder.getTokenType())) {
-      ListOrMapConstructorExpression.parse(builder);
+      ListOrMapConstructorExpression.parse(builder, parser);
       return true;
     }
     if (mLPAREN.equals(builder.getTokenType())) {
-      return parenthesizedExprParse(builder);
+      return parenthesizedExprParse(builder, parser);
     }
     if (mLCURLY.equals(builder.getTokenType())) {
-      OpenOrClosableBlock.parseClosableBlock(builder);
+      OpenOrClosableBlock.parseClosableBlock(builder, parser);
       return true;
     }
     if (TokenSets.CONSTANTS.contains(builder.getTokenType())) {
@@ -90,10 +91,10 @@ public class PrimaryExpression implements GroovyElementTypes {
     return false;
   }
 
-  public static boolean parenthesizedExprParse(PsiBuilder builder) {
+  public static boolean parenthesizedExprParse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, mLPAREN);
-    if (!AssignmentExpression.parse(builder)) {
+    if (!AssignmentExpression.parse(builder, parser)) {
       marker.rollbackTo();
       return false;
     }
@@ -117,7 +118,7 @@ public class PrimaryExpression implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  public static GroovyElementType newExprParse(PsiBuilder builder) {
+  public static GroovyElementType newExprParse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, kNEW);
     ParserUtils.getToken(builder, mNLS);
@@ -145,16 +146,16 @@ public class PrimaryExpression implements GroovyElementTypes {
             ParserUtils.lookAhead(builder, mNLS, mLPAREN)) {
 
       ParserUtils.getToken(builder, mNLS);
-      methodCallArgsParse(builder);
+      methodCallArgsParse(builder, parser);
       if (builder.getTokenType() == mLCURLY || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {
         ParserUtils.getToken(builder, mNLS);
-        OpenOrClosableBlock.parseClosableBlock(builder);
+        OpenOrClosableBlock.parseClosableBlock(builder, parser);
       }
     } else if (builder.getTokenType() == mLBRACK) {
       PsiBuilder.Marker forArray = builder.mark();
       while (ParserUtils.getToken(builder, mLBRACK)) {
         ParserUtils.getToken(builder, mNLS);
-        AssignmentExpression.parse(builder);
+        AssignmentExpression.parse(builder, parser);
         ParserUtils.getToken(builder, mNLS);
         ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
       }
@@ -174,11 +175,11 @@ public class PrimaryExpression implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  public static void methodCallArgsParse(PsiBuilder builder) {
+  public static void methodCallArgsParse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     if (ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
       ParserUtils.getToken(builder, mNLS);
-      ArgumentList.parseArgumentList(builder, mRPAREN);
+      ArgumentList.parseArgumentList(builder, mRPAREN, parser);
       ParserUtils.getToken(builder, mNLS);
       ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"));
     }

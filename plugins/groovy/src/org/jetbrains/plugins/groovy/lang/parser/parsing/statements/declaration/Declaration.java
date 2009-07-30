@@ -1,16 +1,17 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration;
@@ -20,6 +21,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeParameters;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
@@ -36,14 +38,14 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class Declaration implements GroovyElementTypes {
-  public static boolean parse(PsiBuilder builder, boolean isInClass) {
-    return parse(builder, isInClass, false);
+  public static boolean parse(PsiBuilder builder, boolean isInClass, GroovyParser parser) {
+    return parse(builder, isInClass, false, parser);
   }
 
-  public static boolean parse(PsiBuilder builder, boolean isInClass, boolean isInAnnotation) {
+  public static boolean parse(PsiBuilder builder, boolean isInClass, boolean isInAnnotation, GroovyParser parser) {
     PsiBuilder.Marker declMarker = builder.mark();
     //allows error messages
-    boolean modifiersParsed = Modifiers.parse(builder);
+    boolean modifiersParsed = Modifiers.parse(builder, parser);
 
     if (modifiersParsed && mLT == builder.getTokenType()) {
       TypeParameters.parse(builder);
@@ -54,7 +56,7 @@ public class Declaration implements GroovyElementTypes {
       } else {
         checkMarker.drop();
       }
-      IElementType decl = VariableDefinitions.parseDefinitions(builder, isInClass, false, false, true, modifiersParsed, false);
+      IElementType decl = VariableDefinitions.parseDefinitions(builder, isInClass, false, false, true, modifiersParsed, false, parser);
 
       if (WRONGWAY.equals(decl)) {
         declMarker.error(GroovyBundle.message("method.definitions.expected"));
@@ -75,7 +77,7 @@ public class Declaration implements GroovyElementTypes {
         }
 
         //current token isn't identifier
-        IElementType varDecl = VariableDefinitions.parse(builder, isInClass, modifiersParsed);
+        IElementType varDecl = VariableDefinitions.parse(builder, isInClass, modifiersParsed, parser);
 
         if (WRONGWAY.equals(varDecl)) {
           builder.error(GroovyBundle.message("variable.definitions.expected"));
@@ -88,7 +90,7 @@ public class Declaration implements GroovyElementTypes {
 
       } else {  //type was recognized, identifier here
         //starts after type
-        IElementType varDeclarationTop = VariableDefinitions.parse(builder, isInClass, modifiersParsed, false);
+        IElementType varDeclarationTop = VariableDefinitions.parse(builder, isInClass, modifiersParsed, false, parser);
 
         if (WRONGWAY.equals(varDeclarationTop)) {
           checkMarker.rollbackTo();
@@ -98,7 +100,7 @@ public class Declaration implements GroovyElementTypes {
           }
 
           //starts before "type" identifier, here can't be tuple, because next token is identifier (we are in "type recognized" branch)
-          IElementType varDecl = VariableDefinitions.parse(builder, isInClass, modifiersParsed, false);
+          IElementType varDecl = VariableDefinitions.parse(builder, isInClass, modifiersParsed, false, parser);
 
           if (WRONGWAY.equals(varDecl)) {
             builder.error(GroovyBundle.message("variable.definitions.expected"));
@@ -130,7 +132,7 @@ public class Declaration implements GroovyElementTypes {
       }
 
       if (modifiersParsed && builder.getTokenType() == mLPAREN) {
-        IElementType tupleDef = VariableDefinitions.parse(builder, isInClass, modifiersParsed, true);
+        IElementType tupleDef = VariableDefinitions.parse(builder, isInClass, modifiersParsed, true, parser);
         if (tupleDef == WRONGWAY) {
           declMarker.rollbackTo();
           return false;
@@ -151,7 +153,7 @@ public class Declaration implements GroovyElementTypes {
         }
       }
 
-      IElementType varDef = VariableDefinitions.parseDefinitions(builder, isInClass, false, false, false, typeParsed, false);
+      IElementType varDef = VariableDefinitions.parseDefinitions(builder, isInClass, false, false, false, typeParsed, false, parser);
       if (varDef != WRONGWAY) {
         declMarker.done(varDef);
         return true;
