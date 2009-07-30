@@ -368,7 +368,7 @@ public class MavenProjectImporter {
     new WriteAction() {
       protected void run(Result result) throws Throwable {
         try {
-          VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+          VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
           if (file != null) file.delete(this);
         }
         catch (IOException ignore) {
