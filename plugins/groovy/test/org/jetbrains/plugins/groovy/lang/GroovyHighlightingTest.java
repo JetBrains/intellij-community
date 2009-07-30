@@ -127,4 +127,8 @@ public class GroovyHighlightingTest extends JavaCodeInsightFixtureTestCase {
   public void testAnonymousClassStaticMethod() throws Throwable {doTest();}
   public void testAnonymousClassShoudImplementMethods() throws Throwable {doTest();}
 
+  
+  public void testDefaultMapConstructorNamedArgs() throws Throwable {doTest();}
+  public void testDefaultMapConstructorNamedArgsError() throws Throwable {doTest();}
+  public void testDefaultMapConstructorWhenDefConstructorExists() throws Throwable {doTest();}
 }

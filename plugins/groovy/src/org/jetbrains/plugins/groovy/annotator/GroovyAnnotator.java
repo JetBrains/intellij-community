@@ -845,6 +845,8 @@ public class GroovyAnnotator implements Annotator {
     final GroovyResolveResult constructorResolveResult = newExpression.resolveConstructorGenerics();
     if (constructorResolveResult.getElement() != null) {
       checkMethodApplicability(constructorResolveResult, refElement, holder);
+      final GrArgumentList argList = newExpression.getArgumentList();
+      if (argList != null && argList.getExpressionArguments().length == 0) checkDefaultMapConstructor(holder, argList);
     }
     else {
       final GroovyResolveResult[] results = newExpression.multiResolveConstructor();
@@ -863,6 +865,21 @@ public class GroovyAnnotator implements Annotator {
             String message = GroovyBundle.message("cannot.find.default.constructor", ((PsiClass)element).getName());
             holder.createWarningAnnotation(toHighlight, message);
           }
+          else checkDefaultMapConstructor(holder, argList);
+        }
+      }
+    }
+  }
+
+  private static void checkDefaultMapConstructor(AnnotationHolder holder, GrArgumentList argList) {
+    if (argList != null) {
+      final GrNamedArgument[] args = argList.getNamedArguments();
+      for (GrNamedArgument arg : args) {
+        final GrArgumentLabel label = arg.getLabel();
+        if (label == null) continue;
+        final PsiElement resolved = label.resolve();
+        if (resolved == null) {
+          holder.createErrorAnnotation(label, GroovyBundle.message("no.such.property", label.getName()));
         }
       }
     }

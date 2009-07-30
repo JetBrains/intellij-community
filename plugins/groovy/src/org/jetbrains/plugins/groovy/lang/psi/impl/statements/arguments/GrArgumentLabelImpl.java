@@ -23,19 +23,20 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ilyas
  */
-public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgumentLabel, PsiReference {
+public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgumentLabel {
 
   public GrArgumentLabelImpl(@NotNull ASTNode node) {
     super(node);
@@ -85,8 +86,9 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
         }
       }
 
-      if (parent instanceof GrExpression) {
-        PsiType type = ((GrExpression) parent).getType();
+      if (parent instanceof GrExpression || parent instanceof GrAnonymousClassDefinition) {
+        PsiType type =
+          parent instanceof GrExpression ? ((GrExpression)parent).getType() : ((GrAnonymousClassDefinition)parent).getBaseClassType();
         if (type instanceof PsiClassType) {
           PsiClass clazz = ((PsiClassType) type).resolve();
           if (clazz != null) {
