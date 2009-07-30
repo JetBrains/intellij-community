@@ -40,7 +40,7 @@ public class JumpToObjectAction extends DebuggerAction{
       return;
     }
 
-    debugProcess.getManagerThread().invokeLater(new NavigateCommand(debuggerContext, (ValueDescriptor)descriptor, debugProcess, e));
+    debugProcess.getManagerThread().schedule(new NavigateCommand(debuggerContext, (ValueDescriptor)descriptor, debugProcess, e));
   }
 
   public void update(final AnActionEvent e) {
@@ -63,7 +63,7 @@ public class JumpToObjectAction extends DebuggerAction{
 
     final NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
     if (descriptor instanceof ValueDescriptor) {
-      debugProcess.getManagerThread().invokeLater(new EnableCommand(debuggerContext, (ValueDescriptor)descriptor, debugProcess, e));
+      debugProcess.getManagerThread().schedule(new EnableCommand(debuggerContext, (ValueDescriptor)descriptor, debugProcess, e));
     }
     else {
       e.getPresentation().setVisible(false);
@@ -156,7 +156,7 @@ public class JumpToObjectAction extends DebuggerAction{
       catch (ClassNotLoadedException ex) {
         final String className = ex.className();
         if (loadClass(className) != null) {
-          myDebugProcess.getManagerThread().invokeLater(createRetryCommand());
+          myDebugProcess.getManagerThread().schedule(createRetryCommand());
         }
       }
     }

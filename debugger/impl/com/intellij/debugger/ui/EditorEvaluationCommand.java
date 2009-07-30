@@ -37,6 +37,10 @@ public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandI
     myDebuggerContext = (DebuggerManagerEx.getInstanceEx(project)).getContext();
   }
 
+  public Priority getPriority() {
+    return Priority.HIGH;
+  }
+
   protected abstract T evaluate(EvaluationContextImpl evaluationContext) throws EvaluateException;
 
   public T evaluate() throws EvaluateException {

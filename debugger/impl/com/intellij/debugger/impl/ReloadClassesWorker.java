@@ -172,16 +172,16 @@ class ReloadClassesWorker {
         }
         myDebuggerSession.refresh(false);
 
-        getDebugProcess().getManagerThread().invokeLater(new DebuggerCommandImpl() {
-          protected void action() throws Exception {
-            try {
-              virtualMachineProxy.resume();
-            }
-            catch (Exception e) {
-              processException(e);
-            }
-          }        
-        });
+        getDebugProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
+              protected void action() throws Exception {
+                try {
+                  virtualMachineProxy.resume();
+                }
+                catch (Exception e) {
+                  processException(e);
+                }
+              }
+            });
       }
     });
   }

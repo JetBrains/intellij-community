@@ -35,7 +35,7 @@ public class InspectAction extends DebuggerAction {
     if (!canInspect((ValueDescriptorImpl)descriptor, context)) {
       return;
     }
-    context.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(context) {
+    context.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(context) {
       public void threadAction() {
         try {
           final TextWithImports evaluationText = DebuggerTreeNodeExpression.createEvaluationText(node, context);
@@ -48,7 +48,7 @@ public class InspectAction extends DebuggerAction {
             inspectDescriptor = descriptor;
           }
 
-          DebuggerInvocationUtil.invokeLater(project, new Runnable() {
+          DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
             public void run() {
               final InspectDialog dialog = new InspectDialog(project, stateManager, ActionsBundle.actionText(DebuggerActions.INSPECT) + " '" + evaluationText + "'", inspectDescriptor);
               dialog.show();
@@ -56,7 +56,7 @@ public class InspectAction extends DebuggerAction {
           });
         }
         catch (final EvaluateException e1) {
-          DebuggerInvocationUtil.invokeLater(project, new Runnable() {
+          DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
             public void run() {
               Messages.showErrorDialog(project, e1.getMessage(), ActionsBundle.actionText(DebuggerActions.INSPECT));
             }

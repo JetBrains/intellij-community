@@ -19,18 +19,18 @@ public class AutoRendererAction extends AnAction{
     final DebuggerTreeNodeImpl[] selectedNodes = DebuggerAction.getSelectedNodes(e.getDataContext());
 
     if(debuggerContext != null && debuggerContext.getDebugProcess() != null) {
-      debuggerContext.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(debuggerContext) {
-        public void threadAction() {
-          for (int i = 0; i < selectedNodes.length; i++) {
-            DebuggerTreeNodeImpl selectedNode = selectedNodes[i];
-            NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
-            if (descriptor instanceof ValueDescriptorImpl) {
-              ((ValueDescriptorImpl) descriptor).setRenderer(null);
-              selectedNode.calcRepresentation();
+      debuggerContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
+          public void threadAction() {
+            for (int i = 0; i < selectedNodes.length; i++) {
+              DebuggerTreeNodeImpl selectedNode = selectedNodes[i];
+              NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
+              if (descriptor instanceof ValueDescriptorImpl) {
+                ((ValueDescriptorImpl) descriptor).setRenderer(null);
+                selectedNode.calcRepresentation();
+              }
             }
           }
-        }
-      });
+        });
     }
   }
 }

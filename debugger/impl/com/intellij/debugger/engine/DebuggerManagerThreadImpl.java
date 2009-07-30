@@ -25,7 +25,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
 
   DebuggerManagerThreadImpl() {
     //noinspection HardCodedStringLiteral
-    super("DebuggerManagerThreadImpl");
+    super();
   }
 
   public static DebuggerManagerThreadImpl createTestInstance() {
@@ -40,44 +40,38 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     LOG.assertTrue(isManagerThread(), "Should be invoked in manager thread, use DebuggerManagerThreadImpl.getInstance(..).invoke...");
   }
 
-  public void invokeAndWait(DebuggerCommandImpl managerCommand, Priority priority) {
-    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
-    LOG.assertTrue(!(currentThread() instanceof DebuggerManagerThreadImpl),
-                   "Should be invoked outside manager thread, use DebuggerManagerThreadImpl.getInstance(..).invoke...");
-    super.invokeAndWait(managerCommand, priority);
-  }
-
   public void invokeAndWait(DebuggerCommandImpl managerCommand) {
     LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     LOG.assertTrue(!(currentThread() instanceof DebuggerManagerThreadImpl),
                    "Should be invoked outside manager thread, use DebuggerManagerThreadImpl.getInstance(..).invoke...");
-    super.invokeAndWait(managerCommand, Priority.LOW);    
+    super.invokeAndWait(managerCommand);
   }
 
   public void invoke(DebuggerCommandImpl managerCommand) {
-    invoke(managerCommand, Priority.LOW);
-  }
-
-  public void invoke(DebuggerCommandImpl managerCommand, Priority priority) {
     if (currentThread() instanceof DebuggerManagerThreadImpl) {
       processEvent(managerCommand);
     }
     else {
-      invokeLater(managerCommand, priority);
+      schedule(managerCommand);
     }
   }
 
-  public void invokeLater(DebuggerCommandImpl managerCommand, Priority priority) {
+  public void pushBack(DebuggerCommandImpl managerCommand) {
     if(myEvents.isClosed()) {
       managerCommand.notifyCancelled();
     }
     else {
-      super.invokeLater(managerCommand, priority);
+      super.pushBack(managerCommand);
     }
   }
 
-  public void  invokeLater(DebuggerCommandImpl managerCommand) {
-    invokeLater(managerCommand, Priority.LOW);
+  public void schedule(DebuggerCommandImpl managerCommand) {
+    if(myEvents.isClosed()) {
+      managerCommand.notifyCancelled();
+    }
+    else {
+      super.schedule(managerCommand);
+    }
   }
 
   /**
@@ -89,7 +83,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   public void terminateAndInvoke(DebuggerCommandImpl command, int terminateTimeout) {
     final DebuggerCommandImpl currentCommand = myEvents.getCurrentEvent();
 
-    invoke(command, Priority.HIGH);
+    invoke(command);
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
     alarm.addRequest(new Runnable() {
       public void run() {
@@ -164,7 +158,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
       public void run() {
         ProgressManager.getInstance().runProcess(new Runnable() {
           public void run() {
-            invokeAndWait(command, Priority.HIGH);
+            invokeAndWait(command);
           }
         }, progressWindow);
       }
@@ -196,25 +190,25 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
           }
           request.interrupt();
         }
-      }, Priority.LOW);
+      });
     }
   }
 
   public void invokeCommand(final DebuggerCommand command) {
     if(command instanceof SuspendContextCommand) {
       SuspendContextCommand suspendContextCommand = (SuspendContextCommand)command;
-      invokeLater(new SuspendContextCommandImpl((SuspendContextImpl)suspendContextCommand.getSuspendContext()) {
-        public void contextAction() throws Exception {
-          command.action();
-        }
+      schedule(new SuspendContextCommandImpl((SuspendContextImpl)suspendContextCommand.getSuspendContext()) {
+          public void contextAction() throws Exception {
+            command.action();
+          }
 
-        protected void commandCancelled() {
-          command.commandCancelled();
-        }
-      });
+          protected void commandCancelled() {
+            command.commandCancelled();
+          }
+        });
     }
     else {
-      invokeLater(new DebuggerCommandImpl() {
+      schedule(new DebuggerCommandImpl() {
         protected void action() throws Exception {
           command.action();
         }

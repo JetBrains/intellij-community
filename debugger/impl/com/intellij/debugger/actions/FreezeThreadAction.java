@@ -1,14 +1,12 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
 /**
@@ -30,12 +28,12 @@ public class FreezeThreadAction extends DebuggerAction{
       final ThreadReferenceProxyImpl thread = threadDescriptor.getThreadReference();
 
       if(!threadDescriptor.isFrozen()) {
-        debugProcess.getManagerThread().invokeLater(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
-          public void contextAction() throws Exception {
-            debugProcess.createFreezeThreadCommand(thread).run();
-            debuggerTreeNode.calcValue();
-          }
-        });
+        debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
+              public void contextAction() throws Exception {
+                debugProcess.createFreezeThreadCommand(thread).run();
+                debuggerTreeNode.calcValue();
+              }
+            });
       }
     }
   }

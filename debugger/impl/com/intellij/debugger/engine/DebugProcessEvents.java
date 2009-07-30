@@ -338,9 +338,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
     //LOG.assertTrue(thread.isSuspended());
     preprocessEvent(suspendContext, thread);
 
-    //we use invokeLater to allow processing other events during processing this one
+    //we use schedule to allow processing other events during processing this one
     //this is especially nesessary if a method is breakpoint condition
-    getManagerThread().invokeLater(new SuspendContextCommandImpl(suspendContext) {
+    getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
       public void contextAction() throws Exception {
         final SuspendManager suspendManager = getSuspendManager();
         SuspendContextImpl evaluatingContext = SuspendManagerUtil.getEvaluatingContext(suspendManager, getSuspendContext().getThread());
@@ -371,8 +371,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
           if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
             // there could be explicit resume as a result of call to voteSuspend()
             // e.g. when breakpoint was considered invalid, in that case the filter will be applied _after_
-            // resuming and all breakpoints in other threads will be ignored. 
-            // As resume() implicitly cleares the filter, the filter must be always applied _before_ any resume() action happens 
+            // resuming and all breakpoints in other threads will be ignored.
+            // As resume() implicitly cleares the filter, the filter must be always applied _before_ any resume() action happens
             myBreakpointManager.applyThreadFilter(DebugProcessEvents.this, event.thread());
           }
           suspendManager.voteSuspend(suspendContext);

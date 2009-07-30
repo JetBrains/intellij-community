@@ -94,7 +94,7 @@ public class AddToWatchAction extends DebuggerAction {
   }
 
   public static void addFromNodes(final DebuggerContextImpl debuggerContext, final MainWatchPanel watchPanel, final DebuggerTreeNodeImpl[] selectedNodes) {
-    debuggerContext.getDebugProcess().getManagerThread().invokeLater(new AddToWatchesCommand(debuggerContext, selectedNodes, watchPanel));
+    debuggerContext.getDebugProcess().getManagerThread().schedule(new AddToWatchesCommand(debuggerContext, selectedNodes, watchPanel));
   }
 
   public static void doAddWatch(final MainWatchPanel watchPanel, final TextWithImports expression, final NodeDescriptorImpl descriptor) {
@@ -126,7 +126,7 @@ public class AddToWatchAction extends DebuggerAction {
         try {
           final TextWithImports expression = DebuggerTreeNodeExpression.createEvaluationText(node, myDebuggerContext);
           if (expression != null) {
-            DebuggerInvocationUtil.invokeLater(project, new Runnable() {
+            DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
               public void run() {
                 doAddWatch(myWatchPanel, expression, descriptor);
               }
@@ -134,7 +134,7 @@ public class AddToWatchAction extends DebuggerAction {
           }
         }
         catch (final EvaluateException e) {
-          DebuggerInvocationUtil.invokeLater(project, new Runnable() {
+          DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
             public void run() {
               Messages.showErrorDialog(project, e.getMessage(), ActionsBundle.actionText(DebuggerActions.ADD_TO_WATCH));
             }
@@ -144,7 +144,7 @@ public class AddToWatchAction extends DebuggerAction {
     }
 
     protected void commandCancelled() {
-      DebuggerInvocationUtil.invokeLater(myDebuggerContext.getProject(), new Runnable() {
+      DebuggerInvocationUtil.swingInvokeLater(myDebuggerContext.getProject(), new Runnable() {
         public void run() {
           for (DebuggerTreeNodeImpl node : mySelectedNodes) {
             final NodeDescriptorImpl descriptor = node.getDescriptor();

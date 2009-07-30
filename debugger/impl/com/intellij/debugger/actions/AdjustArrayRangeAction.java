@@ -1,18 +1,18 @@
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.settings.ArrayRendererConfigurable;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.ArrayRenderer;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.settings.ArrayRendererConfigurable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.options.ex.SingleConfigurableEditor;
-import com.intellij.openapi.options.Configurable;
 
 import javax.swing.*;
 
@@ -59,11 +59,11 @@ public class AdjustArrayRangeAction extends DebuggerAction {
     editor.show();
 
     if(editor.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-      debugProcess.getManagerThread().invokeLater(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
-        public void contextAction() throws Exception {
-          selectedNode.setRenderer(cloneRenderer);
-        }
-      });
+      debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
+          public void contextAction() throws Exception {
+            selectedNode.setRenderer(cloneRenderer);
+          }
+        });
     }
   }
 

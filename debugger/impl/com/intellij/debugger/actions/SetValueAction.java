@@ -54,7 +54,7 @@ public class SetValueAction extends DebuggerAction {
   }
 
   private void update(final DebuggerContextImpl context) {
-    DebuggerInvocationUtil.invokeLater(context.getProject(), new Runnable() {
+    DebuggerInvocationUtil.swingInvokeLater(context.getProject(), new Runnable() {
       public void run() {
         context.getDebuggerSession().refresh(false);
       }
@@ -275,6 +275,10 @@ public class SetValueAction extends DebuggerAction {
     ProgressWindowWithNotification progressWindow = new ProgressWindowWithNotification(true, debuggerContext.getProject());
 
     SuspendContextCommandImpl askSetAction = new DebuggerContextCommandImpl(debuggerContext) {
+      public Priority getPriority() {
+        return Priority.HIGH;
+      }
+
       public void threadAction() {
         final NodeDescriptorImpl descriptor = node.getDescriptor();
         String initialString = "";
@@ -291,7 +295,7 @@ public class SetValueAction extends DebuggerAction {
 
           final String initialString1 = initialString;
           final Project project = debuggerContext.getProject();
-          DebuggerInvocationUtil.invokeLater(project, new Runnable() {
+          DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
             public void run() {
               showEditor(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, initialString1), node, debuggerContext, setValueRunnable);
             }
@@ -363,7 +367,7 @@ public class SetValueAction extends DebuggerAction {
             }
             finally{
               if (!getProgressWindow().isCanceled()) {
-                DebuggerInvocationUtil.invokeLater(debuggerContext.getProject(), new Runnable() {
+                DebuggerInvocationUtil.swingInvokeLater(debuggerContext.getProject(), new Runnable() {
                   public void run() {
                     comboBox.addRecent(text);
                     cancelEditing();

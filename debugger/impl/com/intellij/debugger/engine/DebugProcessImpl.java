@@ -17,6 +17,7 @@ import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
@@ -1320,6 +1321,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
       myIsTerminateTargetVM = isTerminateTargetVM;
     }
 
+    public Priority getPriority() {
+      return Priority.HIGH;
+    }
+
     protected void action() throws Exception {
       if (isAttached()) {
         final VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
@@ -1446,6 +1451,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
       super(suspendContext);
     }
 
+    public Priority getPriority() {
+      return Priority.HIGH;
+    }
+
     public void contextAction() {
       showStatusText(DebuggerBundle.message("status.process.resumed"));
       getSuspendManager().resume(getSuspendContext());
@@ -1539,7 +1548,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       }
 
       if (myStackFrame.isBottom()) {
-        DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
+        DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
           public void run() {
             Messages.showMessageDialog(myProject, DebuggerBundle.message("error.pop.bottom.stackframe"), ActionsBundle.actionText(DebuggerActions.POP_FRAME), Messages.getErrorIcon());
           }
@@ -1551,7 +1560,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         thread.popFrames(myStackFrame);
       }
       catch (final EvaluateException e) {
-        DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
+        DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
           public void run() {
             Messages.showMessageDialog(myProject, DebuggerBundle.message("error.pop.stackframe", e.getLocalizedMessage()), ActionsBundle.actionText(DebuggerActions.POP_FRAME), Messages.getErrorIcon());
           }
@@ -1620,7 +1629,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         debugPortTimeout.addRequest(new Runnable() {
           public void run() {
             if(isInInitialState()) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
+              ApplicationManager.getApplication().schedule(new Runnable() {
                 public void run() {
                   String message = DebuggerBundle.message("status.connect.failed", DebuggerBundle.getAddressDisplayName(remoteConnection), DebuggerBundle.getTransportName(remoteConnection));
                   Messages.showErrorDialog(myProject, message, DebuggerBundle.message("title.generic.debug.dialog"));
@@ -1661,7 +1670,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     });
 
 
-    this.getManagerThread().invokeLater(new DebuggerCommandImpl() {
+    this.getManagerThread().schedule(new DebuggerCommandImpl() {
       protected void action() {
         VirtualMachine vm = null;
 
@@ -1704,11 +1713,11 @@ public abstract class DebugProcessImpl implements DebugProcess {
           semaphore.up();
         }
 
-        if(vm != null) {
+        if (vm != null) {
           final VirtualMachine vm1 = vm;
           afterProcessStarted(new Runnable() {
             public void run() {
-              getManagerThread().invokeLater(new DebuggerCommandImpl() {
+              getManagerThread().schedule(new DebuggerCommandImpl() {
                 protected void action() throws Exception {
                   commitVM(vm1);
                 }
@@ -1717,6 +1726,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
           });
         }
       }
+
       protected void commandCancelled() {
         try {
           super.commandCancelled();
@@ -1764,11 +1774,19 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   public ResumeCommand createResumeCommand(SuspendContextImpl suspendContext) {
+    return createResumeCommand(suspendContext, PrioritizedTask.Priority.HIGH);
+  }
+
+  public ResumeCommand createResumeCommand(SuspendContextImpl suspendContext, final PrioritizedTask.Priority priority) {
     final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
     return new ResumeCommand(suspendContext) {
       public void contextAction() {
         breakpointManager.applyThreadFilter(DebugProcessImpl.this, null); // clear the filter on resume
         super.contextAction();
+      }
+
+      public Priority getPriority() {
+        return priority;
       }
     };
   }
@@ -1812,7 +1830,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   public void setBreakpointsMuted(final boolean muted) {
     if (isAttached()) {
-      getManagerThread().invokeLater(new DebuggerCommandImpl() {
+      getManagerThread().schedule(new DebuggerCommandImpl() {
         protected void action() throws Exception {
           // set the flag before enabling/disabling cause it affects if breakpoints will create requests
           if (myBreakpointsMuted.getAndSet(muted) != muted) {

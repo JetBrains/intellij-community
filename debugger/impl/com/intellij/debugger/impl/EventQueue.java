@@ -28,6 +28,21 @@ public class EventQueue<E> {
     }
   }
 
+  public void pushBack(@NotNull E event, int priority) {
+    if(LOG.isDebugEnabled()) {
+      LOG.debug("pushBack event " + event);
+    }
+
+    myLock.lock();
+    try {
+      getEventsList(priority).addFirst(event);
+      myEventsAvailable.signalAll();
+    }
+    finally {
+      myLock.unlock();
+    }
+  }
+
   public void put(@NotNull E event, int priority) {
     if(LOG.isDebugEnabled()) {
       LOG.debug("put event " + event);

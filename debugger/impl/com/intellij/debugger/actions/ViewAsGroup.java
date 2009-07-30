@@ -54,19 +54,19 @@ public class ViewAsGroup extends ActionGroup{
 
       LOG.assertTrue(debuggerContext != null && nodes != null);
 
-      debuggerContext.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(debuggerContext) {
-        public void threadAction() {
-          for (final DebuggerTreeNodeImpl node : nodes) {
-            if (node.getDescriptor() instanceof ValueDescriptorImpl) {
-              final ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)node.getDescriptor();
-              if (state) {
-                valueDescriptor.setRenderer(myNodeRenderer);
-                node.calcRepresentation();
+      debuggerContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
+          public void threadAction() {
+            for (final DebuggerTreeNodeImpl node : nodes) {
+              if (node.getDescriptor() instanceof ValueDescriptorImpl) {
+                final ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)node.getDescriptor();
+                if (state) {
+                  valueDescriptor.setRenderer(myNodeRenderer);
+                  node.calcRepresentation();
+                }
               }
             }
           }
-        }
-      });
+        });
     }
   }
 
@@ -131,7 +131,7 @@ public class ViewAsGroup extends ActionGroup{
     final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(event.getDataContext());
     final DebuggerTreeNodeImpl[] selectedNodes = DebuggerAction.getSelectedNodes(event.getDataContext());
 
-    debuggerContext.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(debuggerContext) {
+    debuggerContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
       public void threadAction() {
         myChildren = calcChildren(selectedNodes);
         DebuggerAction.enableAction(event, myChildren.length > 0);

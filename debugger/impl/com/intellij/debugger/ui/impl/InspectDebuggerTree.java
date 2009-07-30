@@ -7,10 +7,10 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.PopupHandler;
 
 import java.awt.*;
@@ -59,11 +59,11 @@ public class InspectDebuggerTree extends DebuggerTree{
 
 
   private void updateNode(final DebuggerContextImpl context) {
-    context.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(context) {
+    context.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(context) {
       public void threadAction() {
         final DebuggerTreeNodeImpl node = getNodeFactory().createNode(myInspectDescriptor, context.createEvaluationContext());
 
-        DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+        DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
           public void run() {
             DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl) getModel().getRoot();
             root.removeAllChildren();

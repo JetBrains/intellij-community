@@ -26,14 +26,14 @@ public class EditSourceAction extends DebuggerAction{
     final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
     final DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
     if(debuggerContext != null && selectedNode != null) {
-      debuggerContext.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(debuggerContext) {
-        public void threadAction() {
-          final SourcePosition sourcePosition = getSourcePosition(selectedNode, debuggerContext);
-          if (sourcePosition != null) {
-            sourcePosition.navigate(true);
+      debuggerContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
+          public void threadAction() {
+            final SourcePosition sourcePosition = getSourcePosition(selectedNode, debuggerContext);
+            if (sourcePosition != null) {
+              sourcePosition.navigate(true);
+            }
           }
-        }
-      });
+        });
     }
   }
 
@@ -92,11 +92,11 @@ public class EditSourceAction extends DebuggerAction{
     });
 
     if(debuggerContext != null && debuggerContext.getDebugProcess() != null) {
-      debuggerContext.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(debuggerContext) {
+      debuggerContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
         public void threadAction() {
           final SourcePosition position = getSourcePosition(node, debuggerContext);
           if (position != null) {
-            DebuggerInvocationUtil.invokeLater(project, new Runnable() {
+            DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
               public void run() {
                 presentation.setEnabled(true);
               }

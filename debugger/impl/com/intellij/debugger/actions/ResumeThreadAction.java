@@ -29,7 +29,7 @@ public class ResumeThreadAction extends DebuggerAction{
 
       if (threadDescriptor.isSuspended()) {
         final ThreadReferenceProxyImpl thread = threadDescriptor.getThreadReference();
-        debugProcess.getManagerThread().invokeLater(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
+        debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
           public void contextAction() throws Exception {
             debugProcess.createResumeThreadCommand(getSuspendContext(), thread).run();
             debuggerTreeNode.calcValue();

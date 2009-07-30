@@ -7,7 +7,6 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.InvokeThread;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.tree.TreeBuilder;
 import com.intellij.debugger.ui.impl.tree.TreeBuilderNode;
@@ -109,7 +108,11 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
           labelChanged();
           childrenChanged(true);
         }
-      }, InvokeThread.Priority.NORMAL);
+        public Priority getPriority() {
+          return Priority.NORMAL;
+        }
+
+      });
     }
 
     labelChanged();

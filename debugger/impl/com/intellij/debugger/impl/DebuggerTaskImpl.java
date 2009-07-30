@@ -7,7 +7,7 @@ package com.intellij.debugger.impl;
  * Time: 12:56:52 PM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class InvokeAndWaitEventImpl implements InvokeAndWaitEvent{
+public abstract class DebuggerTaskImpl implements DebuggerTask {
   private boolean myOnHold = false;
   
   public synchronized final void release() {

@@ -13,16 +13,12 @@ import java.util.concurrent.*;
  * Time: 11:42:03 AM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class InvokeThread<E> {
-  public enum Priority {
-    HIGH, NORMAL, LOW
-  }
+public abstract class InvokeThread<E extends PrioritizedTask> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.InvokeThread");
-  private final String myWorkerThreadName;
 
   private static final ThreadLocal<WorkerThreadRequest> ourWorkerRequest = new ThreadLocal<WorkerThreadRequest>();
 
-  public static final class WorkerThreadRequest<E> implements Runnable {
+  public static final class WorkerThreadRequest<E extends PrioritizedTask> implements Runnable {
     private final InvokeThread<E> myOwner;
     private volatile Future<?> myRequestFuture;
 
@@ -101,9 +97,8 @@ public abstract class InvokeThread<E> {
 
   private volatile WorkerThreadRequest myCurrentRequest = null;
 
-  public InvokeThread(String name) {
-    myEvents = new EventQueue<E>(Priority.values().length);
-    myWorkerThreadName = name;
+  public InvokeThread() {
+    myEvents = new EventQueue<E>(PrioritizedTask.Priority.values().length);
     startNewWorkerThread();
   }
 
@@ -152,11 +147,18 @@ public abstract class InvokeThread<E> {
     return request != null? request.getOwner() : null;
   }
 
-  public void invokeLater(E r, Priority priority) {
+  public void schedule(E r) {
     if(LOG.isDebugEnabled()) {
-      LOG.debug("invokeLater " + r + " in " + this);
+      LOG.debug("schedule " + r + " in " + this);
     }
-    myEvents.put(r, priority.ordinal());
+    myEvents.put(r, r.getPriority().ordinal());
+  }
+
+  public void pushBack(E r) {
+    if(LOG.isDebugEnabled()) {
+      LOG.debug("pushBack " + r + " in " + this);
+    }
+    myEvents.pushBack(r, r.getPriority().ordinal());
   }
 
   protected void switchToRequest(WorkerThreadRequest newWorkerThread) {

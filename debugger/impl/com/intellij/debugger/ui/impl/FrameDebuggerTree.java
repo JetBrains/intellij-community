@@ -323,7 +323,7 @@ public class FrameDebuggerTree extends DebuggerTree {
       }
 
       final DebuggerTreeNodeImpl rootNode1 = rootNode;
-      DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+      DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
         public void run() {
           getMutableModel().setRoot(rootNode1);
           treeChanged();

@@ -40,6 +40,10 @@ public abstract class BaseValueAction extends DebuggerAction {
       if(debuggerContext != null && debuggerContext.getDebuggerSession() != null) {
         final ProgressWindowWithNotification progressWindow = new ProgressWindowWithNotification(true, project);
         SuspendContextCommandImpl copyValueAction = new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
+          public Priority getPriority() {
+            return Priority.HIGH;
+          }
+
           public void contextAction() throws Exception {
             //noinspection HardCodedStringLiteral
             progressWindow.setText(DebuggerBundle.message("progress.evaluating", "toString()"));
@@ -48,7 +52,7 @@ public abstract class BaseValueAction extends DebuggerAction {
 
             if (progressWindow.isCanceled()) return;
 
-            DebuggerInvocationUtil.invokeLater(project, new Runnable() {
+            DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
               public void run() {
                 String text = valueAsString;
 

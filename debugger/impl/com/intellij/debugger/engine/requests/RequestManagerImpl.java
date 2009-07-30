@@ -364,7 +364,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   public void processAttached(DebugProcessImpl process) {
     myEventRequestManager = myDebugProcess.getVirtualMachineProxy().eventRequestManager();
     // invoke later, so that requests are for sure created only _after_ 'processAttached()' methods of other listeneres are executed
-    process.getManagerThread().invokeLater(new DebuggerCommandImpl() {
+    process.getManagerThread().schedule(new DebuggerCommandImpl() {
       protected void action() throws Exception {
         final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getBreakpointManager();
         for (final Breakpoint breakpoint : breakpointManager.getBreakpoints()) {

@@ -143,7 +143,7 @@ public class BreakpointManager implements JDOMExternalizable {
     for (Iterator<DebuggerSession> iterator = sessions.getSectionsIterator(); getSectionsIterator.hasNext();) {
       DebuggerSession session = iterator.next();
       final DebugProcessImpl process = session.getProcess();
-      process.getManagerThread().invokeLater(new DebuggerCommandImpl() {
+      process.getManagerThread().schedule(new DebuggerCommandImpl() {
         protected void action() throws Exception {
           process.getRequestsManager().deleteRequest(breakpoint);
           process.getRequestsManager().setInvalid(breakpoint, "Source code changed");

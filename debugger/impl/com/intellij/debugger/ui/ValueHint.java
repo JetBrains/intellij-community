@@ -11,7 +11,6 @@ import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.InvokeThread;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.InspectDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
@@ -26,8 +25,8 @@ import com.intellij.psi.*;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHintTreeComponent;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
+import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHintTreeComponent;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
@@ -68,7 +67,11 @@ public class ValueHint extends AbstractValueHint {
     try {
       final ExpressionEvaluator evaluator = EvaluatorBuilderImpl.getInstance().build(myCurrentExpression, debuggerContext.getSourcePosition());
 
-      debuggerContext.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(debuggerContext) {
+      debuggerContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
+        public Priority getPriority() {
+          return Priority.HIGH;
+        }
+
         public void threadAction() {
           try {
             final EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
@@ -108,7 +111,7 @@ public class ValueHint extends AbstractValueHint {
           }
         }
 
-      }, InvokeThread.Priority.HIGH);
+      });
     }
     catch (EvaluateException e) {
       LOG.debug(e);
@@ -145,14 +148,14 @@ public class ValueHint extends AbstractValueHint {
               public void run() {
                 final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(getProject()).getContext();
                 final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
-                debugProcess.getManagerThread().invokeLater(new DebuggerContextCommandImpl(debuggerContext) {
-                  public void threadAction() {
-                    descriptor.setRenderer(debugProcess.getAutoRenderer(descriptor));
-                    final InspectDebuggerTree tree = getInspectTree(descriptor);
-                    showTreePopup(tree, debuggerContext, myCurrentExpression.getText(),
-                                  new ValueHintTreeComponent(ValueHint.this, tree, myCurrentExpression.getText()));
-                  }
-                });
+                debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
+                              public void threadAction() {
+                                descriptor.setRenderer(debugProcess.getAutoRenderer(descriptor));
+                                final InspectDebuggerTree tree = getInspectTree(descriptor);
+                                showTreePopup(tree, debuggerContext, myCurrentExpression.getText(),
+                                              new ValueHintTreeComponent(ValueHint.this, tree, myCurrentExpression.getText()));
+                              }
+                            });
               }
             });
           }

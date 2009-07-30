@@ -371,15 +371,15 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       final RangeHighlighter highlighter = getHighlighter();
       if (highlighter != null) {
         DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-              public void run() {
-                if (highlighter.isValid()) {
-                  MarkupModel markupModel = highlighter.getDocument().getMarkupModel(myProject);
-                  markupModel.removeHighlighter(highlighter);
-                  //we should delete it here, so gutter will not fire events to deleted breakpoint
-                  BreakpointWithHighlighter.super.delete();
-                }
-              }
-            });
+          public void run() {
+            if (highlighter.isValid()) {
+              MarkupModel markupModel = highlighter.getDocument().getMarkupModel(myProject);
+              markupModel.removeHighlighter(highlighter);
+              //we should delete it here, so gutter will not fire events to deleted breakpoint
+              BreakpointWithHighlighter.super.delete();
+            }
+          }
+        });
       }
     }
 

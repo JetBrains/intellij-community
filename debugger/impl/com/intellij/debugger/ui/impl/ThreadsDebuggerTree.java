@@ -138,7 +138,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
         groups = Collections.emptyList();
       }
 
-      DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+      DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
         public void run() {
           getMutableModel().setRoot(root);
           treeChanged();

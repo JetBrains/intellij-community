@@ -70,7 +70,7 @@ public class PositionHighlighter {
   }
 
   private void showLocationInEditor() {
-    myContext.getDebugProcess().getManagerThread().invokeLater(new ShowLocationCommand(myContext));
+    myContext.getDebugProcess().getManagerThread().schedule(new ShowLocationCommand(myContext));
   }
 
   private void refresh() {
@@ -349,7 +349,7 @@ public class PositionHighlighter {
       });
 
       if(isExecutionPoint) {
-        DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
+        DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
           public void run() {
             final SourcePosition highlightPosition = getHighlightPosition(events, position);
             showExecutionPoint(highlightPosition, events);
@@ -357,7 +357,7 @@ public class PositionHighlighter {
         });
       }
       else {
-        DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
+        DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
           public void run() {
             showSelection(position);
           }

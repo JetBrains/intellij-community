@@ -133,10 +133,10 @@ public class DebuggerSession {
         setStateRunnable.run();
       }
       else {
-        getProcess().getManagerThread().invokeLater(new SuspendContextCommandImpl(context.getSuspendContext()) {
+        getProcess().getManagerThread().schedule(new SuspendContextCommandImpl(context.getSuspendContext()) {
           public void contextAction() throws Exception {
             context.initCaches();
-            DebuggerInvocationUtil.invokeLater(getProject(), setStateRunnable);
+            DebuggerInvocationUtil.swingInvokeLater(getProject(), setStateRunnable);
           }
         });
       }
@@ -211,7 +211,7 @@ public class DebuggerSession {
   /* Stepping */
   private void resumeAction(final DebugProcessImpl.ResumeCommand command, int event) {
     getContextManager().setState(SESSION_EMPTY_CONTEXT, STATE_WAIT_EVALUATION, event, null);
-    myDebugProcess.getManagerThread().invokeLater(command, InvokeThread.Priority.HIGH);
+    myDebugProcess.getManagerThread().schedule(command);
   }
 
   public void stepOut() {
@@ -254,7 +254,7 @@ public class DebuggerSession {
   }
 
   public void pause() {
-    myDebugProcess.getManagerThread().invokeLater(myDebugProcess.createPauseCommand());
+    myDebugProcess.getManagerThread().schedule(myDebugProcess.createPauseCommand());
   }
 
   /*Presentation*/

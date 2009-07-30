@@ -1,6 +1,6 @@
 package com.intellij.debugger.engine.events;
 
-import com.intellij.debugger.impl.InvokeAndWaitEventImpl;
+import com.intellij.debugger.impl.DebuggerTaskImpl;
 
 /**
  * Created by IntelliJ IDEA.
@@ -9,10 +9,14 @@ import com.intellij.debugger.impl.InvokeAndWaitEventImpl;
  * Time: 6:04:07 PM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class DebuggerCommandImpl extends InvokeAndWaitEventImpl {
+public abstract class DebuggerCommandImpl extends DebuggerTaskImpl {
   protected abstract void action() throws Exception;
 
   protected void commandCancelled() {
+  }
+
+  public Priority getPriority() {
+    return Priority.LOW;
   }
 
   public final void notifyCancelled() {

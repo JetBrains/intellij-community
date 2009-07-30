@@ -34,7 +34,7 @@ public class PopFrameAction extends DebuggerAction {
       if(debugProcess == null) {
         return;
       }
-      debugProcess.getManagerThread().invokeLater(debugProcess.createPopFrameCommand(debuggerContext, stackFrame));
+      debugProcess.getManagerThread().schedule(debugProcess.createPopFrameCommand(debuggerContext, stackFrame));
     }
     catch (NativeMethodException e2){
       Messages.showMessageDialog(project, DebuggerBundle.message("error.native.method.exception"), ActionsBundle.actionText(DebuggerActions.POP_FRAME), Messages.getErrorIcon());

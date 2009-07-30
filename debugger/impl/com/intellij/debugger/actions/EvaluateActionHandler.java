@@ -20,7 +20,9 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -56,18 +58,18 @@ public class EvaluateActionHandler extends DebuggerActionHandler {
       final String actionName = event.getPresentation().getText();
 
       if (selectedNode != null && selectedNode.getDescriptor() instanceof ValueDescriptorImpl) {
-        context.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(context) {
+        context.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(context) {
           public void threadAction() {
             try {
               final TextWithImports evaluationText = DebuggerTreeNodeExpression.createEvaluationText(selectedNode, context);
-              DebuggerInvocationUtil.invokeLater(project, new Runnable() {
+              DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
                 public void run() {
                   showEvaluationDialog(project, evaluationText);
                 }
               });
             }
             catch (final EvaluateException e1) {
-              DebuggerInvocationUtil.invokeLater(project, new Runnable() {
+              DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
                 public void run() {
                   Messages.showErrorDialog(project, e1.getMessage(), actionName);
                 }
@@ -76,7 +78,7 @@ public class EvaluateActionHandler extends DebuggerActionHandler {
           }
 
           protected void commandCancelled() {
-            DebuggerInvocationUtil.invokeLater(project, new Runnable() {
+            DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
               public void run() {
                 if(selectedNode.getDescriptor() instanceof WatchItemDescriptor) {
                   try {

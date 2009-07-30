@@ -8,12 +8,23 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
 
 public class DebuggerInvocationUtil {
+  public static void swingInvokeLater(final Project project, @NotNull final Runnable runnable) {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (project != null && !project.isDisposed()) {
+          runnable.run();
+        }
+      }
+    });
+  }
   public static void invokeLater(final Project project, @NotNull final Runnable runnable) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {

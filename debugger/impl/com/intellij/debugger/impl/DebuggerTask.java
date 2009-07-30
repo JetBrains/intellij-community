@@ -7,7 +7,7 @@ package com.intellij.debugger.impl;
  * Time: 2:40:47 PM
  * To change this template use File | Settings | File Templates.
  */
-public interface InvokeAndWaitEvent {
+public interface DebuggerTask extends PrioritizedTask{
   void release();
   void hold();
   void waitFor();

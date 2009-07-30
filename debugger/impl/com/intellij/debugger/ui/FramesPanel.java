@@ -155,7 +155,7 @@ public class FramesPanel extends UpdatableDebuggerView {
 
     final DebugProcessImpl process = getContext().getDebugProcess();
     if (process != null) {
-      process.getManagerThread().invokeLater(new RefreshFramePanelCommand(updateOnly && myThreadsCombo.getItemCount() != 0));
+      process.getManagerThread().schedule(new RefreshFramePanelCommand(updateOnly && myThreadsCombo.getItemCount() != 0));
     }
   }
 
@@ -212,10 +212,10 @@ public class FramesPanel extends UpdatableDebuggerView {
       final ThreadReferenceProxyImpl currentThread = currentThreadDescriptor != null? currentThreadDescriptor.getThreadReference() : null;
 
       if (myRefreshOnly && threadToSelect.equals(currentThread)) {
-        context.getDebugProcess().getManagerThread().invokeLater(new UpdateFramesListCommand(context, threadContext));
+        context.getDebugProcess().getManagerThread().schedule(new UpdateFramesListCommand(context, threadContext));
       }
       else {
-        context.getDebugProcess().getManagerThread().invokeLater(new RebuildFramesListCommand(context, threadContext));
+        context.getDebugProcess().getManagerThread().schedule(new RebuildFramesListCommand(context, threadContext));
       }
 
       if (myRefreshOnly) {
@@ -224,7 +224,7 @@ public class FramesPanel extends UpdatableDebuggerView {
           descriptor.setContext(evaluationContext);
           descriptor.updateRepresentation(evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
         }
-        DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+        DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
           public void run() {
             try {
               myThreadsListener.setEnabled(false);
@@ -260,14 +260,14 @@ public class FramesPanel extends UpdatableDebuggerView {
 
       if (!suspendContext.isResumed()) {
         final SuspendContextImpl threadContext = SuspendManagerUtil.getSuspendContextForThread(suspendContext, threadToSelect);
-        context.getDebugProcess().getManagerThread().invokeLater(new RebuildFramesListCommand(context, threadContext));
+        context.getDebugProcess().getManagerThread().schedule(new RebuildFramesListCommand(context, threadContext));
         refillThreadsCombo(threadToSelect);
       }
     }
 
     private void refillThreadsCombo(final ThreadReferenceProxyImpl threadToSelect) {
       final List<ThreadDescriptorImpl> threadItems = createThreadDescriptorsList();
-      DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+      DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
         public void run() {
           try {
             myThreadsListener.setEnabled(false);
@@ -298,7 +298,7 @@ public class FramesPanel extends UpdatableDebuggerView {
 
     public void contextAction() throws Exception {
       updateFrameList(myDebuggerContext.getThreadProxy());
-      DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+      DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
         public void run() {
           try {
             myFramesListener.setEnabled(false);
@@ -362,7 +362,7 @@ public class FramesPanel extends UpdatableDebuggerView {
       final ThreadReferenceProxyImpl thread = myDebuggerContext.getThreadProxy();
       try {
         if(!getSuspendContext().getDebugProcess().getSuspendManager().isSuspended(thread)) {
-          DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+          DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
             public void run() {
               try {
                 myFramesListener.setEnabled(false);
@@ -406,7 +406,7 @@ public class FramesPanel extends UpdatableDebuggerView {
       int index = 0;
       final long timestamp = System.nanoTime();
       for (StackFrameProxyImpl stackFrameProxy : frames) {
-        managerThread.invokeLater(
+        managerThread.schedule(
           new AppendFrameCommand(getSuspendContext(), stackFrameProxy, evaluationContext, tracker, index++, stackFrameProxy.equals(contextFrame), totalFramesCount, timestamp)
         );
       }
@@ -448,7 +448,7 @@ public class FramesPanel extends UpdatableDebuggerView {
   }
 
   
-  private volatile long myFramesLastUpdateTime = 0;
+  private volatile long myFramesLastUpdateTime = 0L;
   private class AppendFrameCommand extends SuspendContextCommandImpl {
     private final StackFrameProxyImpl myFrame;
     private final EvaluationContextImpl myEvaluationContext;
@@ -475,7 +475,8 @@ public class FramesPanel extends UpdatableDebuggerView {
       final StackFrameDescriptorImpl descriptor = new StackFrameDescriptorImpl(myFrame, myTracker);
       descriptor.setContext(myEvaluationContext);
       descriptor.updateRepresentation(myEvaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
-      DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+      final Project project = getProject();
+      DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
         public void run() {
           try {
             myFramesListener.setEnabled(false);

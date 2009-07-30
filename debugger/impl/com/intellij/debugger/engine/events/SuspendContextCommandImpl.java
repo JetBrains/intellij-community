@@ -1,8 +1,9 @@
 package com.intellij.debugger.engine.events;
 
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.impl.InvokeThread;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.Stack;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,6 +29,7 @@ public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
 
     final SuspendContextImpl suspendContext = getSuspendContext();
 
+    final int prio = getPriority().ordinal();
     if (suspendContext == null) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("skip processing - context is null " + this);
@@ -51,9 +53,17 @@ public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
       }
       finally{
         suspendContext.myInProgress = false;
-        final SuspendContextCommandImpl postponed = suspendContext.pollPostponedCommand();
-        if(postponed != null) {
-          suspendContext.getDebugProcess().getManagerThread().invokeLater(postponed, InvokeThread.Priority.HIGH);
+        SuspendContextCommandImpl postponed = suspendContext.pollPostponedCommand();
+        if (postponed != null) {
+          final Stack<SuspendContextCommandImpl> stack = new Stack<SuspendContextCommandImpl>();
+          while (postponed != null) {
+            stack.push(postponed);
+            postponed = suspendContext.pollPostponedCommand();
+          }
+          final DebuggerManagerThreadImpl managerThread = suspendContext.getDebugProcess().getManagerThread();
+          while (!stack.isEmpty()) {
+            managerThread.pushBack(stack.pop());
+          }
         }
       }
     }
