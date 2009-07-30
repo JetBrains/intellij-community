@@ -6,7 +6,6 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiParameter;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -101,6 +100,6 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
   private void performAction() {
     final PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase
       .REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
-    InlineParameterHandler.invoke(getProject(), myEditor, (PsiParameter) element);
+    new InlineParameterHandler().inlineElement(getProject(), myEditor, element);
   }
 }

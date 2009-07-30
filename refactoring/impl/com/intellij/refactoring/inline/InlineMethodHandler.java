@@ -19,14 +19,18 @@ import com.intellij.util.Processor;
 import java.util.ArrayList;
 import java.util.List;
 
-class InlineMethodHandler {
+class InlineMethodHandler extends JavaInlineActionHandler {
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
 
   private InlineMethodHandler() {
   }
 
-  public static void invoke(final Project project, Editor editor, PsiMethod method) {
-    method = (PsiMethod)method.getNavigationElement();
+  public boolean canInlineElement(PsiElement element) {
+    return element instanceof PsiMethod && element.getNavigationElement() instanceof PsiMethod;
+  }
+
+  public void inlineElement(final Project project, Editor editor, PsiElement element) {
+    PsiMethod method = (PsiMethod)element.getNavigationElement();
     if (method.getBody() == null){
       String message;
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -70,8 +74,8 @@ class InlineMethodHandler {
         return;
       }
       if (reference != null) {
-        final PsiElement element = reference.getElement();
-        PsiCall constructorCall = element instanceof PsiJavaCodeReferenceElement ? RefactoringUtil.getEnclosingConstructorCall((PsiJavaCodeReferenceElement)element) : null;
+        final PsiElement refElement = reference.getElement();
+        PsiCall constructorCall = refElement instanceof PsiJavaCodeReferenceElement ? RefactoringUtil.getEnclosingConstructorCall((PsiJavaCodeReferenceElement)refElement) : null;
         if (constructorCall == null || !method.equals(constructorCall.resolveMethod())) reference = null;
       }
     }

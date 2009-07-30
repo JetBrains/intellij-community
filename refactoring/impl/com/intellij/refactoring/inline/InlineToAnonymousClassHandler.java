@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -13,14 +14,35 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 /**
  * @author yole
  */
-public class InlineToAnonymousClassHandler {
-  private InlineToAnonymousClassHandler() {
+public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
+  @Override
+  public boolean isEnabledOnElement(PsiElement element) {
+    return element instanceof PsiMethod || element instanceof PsiClass;
   }
 
-  public static void invoke(final Project project, final Editor editor, final PsiClass psiClass) {
+  public boolean canInlineElement(PsiElement element) {
+    if (element instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)element;
+      if (method.isConstructor() && !InlineMethodHandler.isChainingConstructor(method)) {
+        return true;
+      }
+    }
+    if (!(element instanceof PsiClass)) return false;
+    Collection<PsiClass> inheritors = ClassInheritorsSearch.search((PsiClass)element).findAll();
+    return inheritors.size() == 0;
+  }
+
+  public boolean canInlineElementInEditor(PsiElement element) {
+    return canInlineElement(element);
+  }
+
+  public void inlineElement(final Project project, final Editor editor, final PsiElement psiElement) {
+    final PsiClass psiClass = psiElement instanceof PsiMethod ? ((PsiMethod) psiElement).getContainingClass() : (PsiClass) psiElement;
     PsiCall callToInline = findCallToInline(editor);
 
     String errorMessage = getCannotInlineMessage(psiClass);

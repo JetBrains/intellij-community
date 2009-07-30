@@ -39,7 +39,6 @@ public class HelpID {
   public static final String INLINE_CONSTRUCTOR = "refactoring.inlineConstructor";
   public static final String INLINE_VARIABLE    = "refactoring.inlineVariable";
   public static final String INLINE_FIELD       = "refactoring.inlineField";
-  public static final String INLINE_INCLUDE     = "refactoring.inlineInclude";
 
   public static final String MIGRATION          = "refactoring.migrate";
 

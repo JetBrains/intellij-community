@@ -1,0 +1,69 @@
+/**
+ * created at Nov 21, 2001
+ * @author Jeka
+ */
+package com.intellij.refactoring.inline;
+
+import com.intellij.ide.DataManager;
+import com.intellij.lang.refactoring.InlineActionHandler;
+import com.intellij.lang.refactoring.InlineHandler;
+import com.intellij.lang.refactoring.InlineHandlers;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+
+public class InlineRefactoringActionHandler implements RefactoringActionHandler {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineHandler");
+  private static final String REFACTORING_NAME = RefactoringBundle.message("inline.title");
+
+  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+    LOG.assertTrue(elements.length == 1);
+    if (dataContext == null) {
+      dataContext = DataManager.getInstance().getDataContext();
+    }
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    for(InlineActionHandler handler: Extensions.getExtensions(InlineActionHandler.EP_NAME)) {
+      if (handler.canInlineElement(elements[0])) {
+        handler.inlineElement(project, editor, elements [0]);
+        return;
+      }
+    }
+  }
+
+  public void invoke(@NotNull final Project project, Editor editor, PsiFile file, DataContext dataContext) {
+    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+
+    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    if (element != null) {
+      for(InlineActionHandler handler: Extensions.getExtensions(InlineActionHandler.EP_NAME)) {
+        if (handler.canInlineElementInEditor(element)) {
+          handler.inlineElement(project, editor, element);
+          return;
+        }
+      }
+
+      final List<InlineHandler> handlers = InlineHandlers.getInlineHandlers(element.getLanguage());
+      for (InlineHandler handler : handlers) {
+        if (GenericInlineHandler.invoke(element, editor, handler)) {
+          return;
+        }
+      }
+
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.local.name"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, null);
+    }
+  }
+}

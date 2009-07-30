@@ -163,7 +163,6 @@
       <action id="RemoveMiddleman" class="com.intellij.refactoring.actions.RemoveMiddlemanAction"/>
       <action id="WrapReturnValue" class="com.intellij.refactoring.wrapreturnvalue.WrapReturnValueAction"/>
       <separator/>
-      <action id="Inline" class="com.intellij.refactoring.actions.InlineAction"/>
       <action id="AnonymousToInner" class="com.intellij.refactoring.actions.AnonymousToInnerAction"/>
       <action id="EncapsulateFields" class="com.intellij.refactoring.actions.EncapsulateFieldsAction"/>
       <action id="ReplaceTempWithQuery" class="com.intellij.refactoring.actions.TempWithQueryAction"/>

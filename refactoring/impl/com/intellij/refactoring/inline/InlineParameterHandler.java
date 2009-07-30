@@ -29,14 +29,20 @@ import java.util.List;
 /**
  * @author yole
  */
-public class InlineParameterHandler {
+public class InlineParameterHandler extends JavaInlineActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineParameterHandler");
   public static final String REFACTORING_NAME = RefactoringBundle.message("inline.parameter.refactoring");
 
-  private InlineParameterHandler() {
+  public boolean canInlineElement(PsiElement element) {
+    return false;
   }
 
-  public static void invoke(final Project project, final Editor editor, final PsiParameter psiParameter) {
+  public boolean canInlineElementInEditor(PsiElement element) {
+    return element instanceof PsiParameter && element.getParent() instanceof PsiParameterList;
+  }
+
+  public void inlineElement(final Project project, final Editor editor, final PsiElement psiElement) {
+    final PsiParameter psiParameter = (PsiParameter) psiElement;
     final PsiParameterList parameterList = (PsiParameterList) psiParameter.getParent();
     if (!(parameterList.getParent() instanceof PsiMethod)) {
       return;

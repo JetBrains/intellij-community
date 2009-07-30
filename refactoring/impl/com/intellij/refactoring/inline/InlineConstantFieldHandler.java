@@ -3,10 +3,7 @@ package com.intellij.refactoring.inline;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.HelpID;
@@ -16,13 +13,15 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 /**
  * @author ven
  */
-public class InlineConstantFieldHandler {
+public class InlineConstantFieldHandler extends JavaInlineActionHandler {
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.field.title");
 
-  private InlineConstantFieldHandler() {
+  public boolean canInlineElement(PsiElement element) {
+    return element instanceof PsiField;
   }
 
-  public static void invoke(Project project, Editor editor, PsiField field) {
+  public void inlineElement(Project project, Editor editor, PsiElement element) {
+    PsiField field = (PsiField) element;
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, field)) return;
 
     if (!field.hasModifierProperty(PsiModifier.FINAL)) {

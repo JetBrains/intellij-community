@@ -3,6 +3,8 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.lang.refactoring.InlineActionHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,12 +36,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-class InlineLocalHandler {
+public class InlineLocalHandler extends JavaInlineActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineLocalHandler");
 
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.variable.title");
 
-  private InlineLocalHandler() {
+  public boolean canInlineElement(PsiElement element) {
+    return element instanceof PsiLocalVariable;
+  }
+
+  public void inlineElement(Project project, Editor editor, PsiElement element) {
+    final PsiReference psiReference = TargetElementUtilBase.findReference(editor);
+    final PsiReferenceExpression refExpr = psiReference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)psiReference) : null;
+    invoke(project, editor, (PsiLocalVariable) element, refExpr);
   }
 
   /**
