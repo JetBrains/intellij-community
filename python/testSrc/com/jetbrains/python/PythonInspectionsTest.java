@@ -55,6 +55,11 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doTest(getTestName(false), inspection);
   }
 
+  public void testPyTrailingSemicolonInspection() throws Throwable {
+    LocalInspectionTool inspection = new PyTrailingSemicolonInspection();
+    doTest(getTestName(false), inspection);
+  }
+
   protected String getTestDataPath() {
     return PathManager.getHomePath() + "/plugins/python/testData/inspections/";
   }

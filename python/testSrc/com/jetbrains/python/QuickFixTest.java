@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.inspections.PyMethodParametersInspection;
 import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.inspections.PyTrailingSemicolonInspection;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -96,6 +97,13 @@ public class QuickFixTest extends DaemonAnalyzerTestCase {
       "AddMethodFromMethod.py",
       PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.method.$0.to.class.$1", "y", "A"),
       true, true
+    );
+  }
+
+  public void testRemoveTrailingSemicolon() throws Exception {
+    doInspectionTest(
+      "RemoveTrailingSemicolon.py", PyTrailingSemicolonInspection.class,
+      PyBundle.message("QFIX.remove.trailing.semicolon"), true, true
     );
   }
 
