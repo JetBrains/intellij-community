@@ -165,7 +165,7 @@ public class ManagedLibrariesEditor {
 
     for (Library library : myLibrariesContainer.getAllLibraries()) {
       if (!usedLibraries.contains(library)) {
-        final LibraryManager manager = findManagerFor(library);
+        final LibraryManager manager = findManagerFor(library, myManagers, myLibrariesContainer);
         if (manager != null) {
           libs.putValue(manager, new ManagedLibrary(library, manager));
         }
@@ -299,7 +299,7 @@ public class ManagedLibrariesEditor {
       if (entry instanceof LibraryOrderEntry) {
         final Library library = ((LibraryOrderEntry)entry).getLibrary();
         if (library != null) {
-          final LibraryManager manager = findManagerFor(library);
+          final LibraryManager manager = findManagerFor(library, myManagers, myLibrariesContainer);
           if (manager != null) {
             libraries.add(new ManagedLibrary(library, manager));
           }
@@ -310,16 +310,16 @@ public class ManagedLibrariesEditor {
   }
 
   @Nullable
-  private LibraryManager findManagerFor(@NotNull Library library) {
-    for (final LibraryManager manager : myManagers) {
+  public static LibraryManager findManagerFor(@NotNull Library library, final LibraryManager[] managers, final LibrariesContainer container) {
+    for (final LibraryManager manager : managers) {
       final String name = library.getName();
       if (name != null && name.startsWith(manager.getLibraryPrefix())) {
         return manager;
       }
     }
 
-    for (final LibraryManager manager : myManagers) {
-      if (manager.managesLibrary(library, myLibrariesContainer)) {
+    for (final LibraryManager manager : managers) {
+      if (manager.managesLibrary(library, container)) {
         return manager;
       }
     }

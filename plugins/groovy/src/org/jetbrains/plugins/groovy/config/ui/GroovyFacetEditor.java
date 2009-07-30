@@ -15,30 +15,28 @@
 
 package org.jetbrains.plugins.groovy.config.ui;
 
-import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager;
+import org.jetbrains.plugins.groovy.config.LibraryManager;
+import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
@@ -47,225 +45,187 @@ import java.util.TreeSet;
  * @author ilyas
  */
 public class GroovyFacetEditor {
-  private TextFieldWithBrowseButton myPathToGroovy;
+  @NonNls private static final String GROOVY_HOME = "GROOVY_HOME";
+  private static final Comparator<Pair<Library, LibraryManager>> LIBRARY_COMPARATOR = new Comparator<Pair<Library, LibraryManager>>() {
+    public int compare(Pair<Library, LibraryManager> o1, Pair<Library, LibraryManager> o2) {
+      final String name1 = o1.first.getName();
+      final String name2 = o2.first.getName();
+      if (name1 == null || name2 == null) return 1;
+      return -name1.compareToIgnoreCase(name2);
+    }
+  };
+
+  private TextFieldWithBrowseButton mySdkPath;
   private JPanel myPanel;
   private JComboBox myComboBox;
-  private JCheckBox myAddNewGdkCb;
-  private FacetEditorContext myEditorContext;
-  private final LibraryTable.Listener myLibraryListener;
-  @NonNls private static final String GROOVY_HOME = "GROOVY_HOME";
+  private JCheckBox myAddNewSdkCb;
+  private AbstractGroovyLibraryManager myChosenManager;
 
-  public GroovyFacetEditor(@Nullable Project project, String defaultVersion) {
-    myLibraryListener = new MyLibraryListener();
-    Library[] libraries = getGroovyLibraries(project);
+  public GroovyFacetEditor(@Nullable Project project) {
+    Set<Pair<Library, LibraryManager>> libs = configureComboBox(project);
+    configureSdkPathField(project);
+    configureNewSdkCheckBox(!libs.isEmpty());
+  }
 
-    if (libraries.length > 0) {
-      if (defaultVersion == null) {
-        defaultVersion = libraries[libraries.length - 1].getName();
+  private Set<Pair<Library, LibraryManager>> configureComboBox(Project project) {
+    final LibrariesContainer container = LibrariesContainerFactory.createContainer(project);
+    final AbstractGroovyLibraryManager[] managers = AbstractGroovyLibraryManager.EP_NAME.getExtensions();
+    Set<Pair<Library, LibraryManager>> libs = new TreeSet<Pair<Library, LibraryManager>>(LIBRARY_COMPARATOR);
+    for (Library library : container.getAllLibraries()) {
+      final LibraryManager manager = ManagedLibrariesEditor.findManagerFor(library, managers, container);
+      if (manager != null) {
+        libs.add(Pair.create(library, manager));
       }
-      adjustVersionComboBox(libraries, defaultVersion);
+    }
+    if (!libs.isEmpty()) {
+      myComboBox.setRenderer(new DefaultListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+          super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          if (value instanceof Pair) {
+            final Pair<Library, LibraryManager> pair = (Pair<Library, LibraryManager>) value;
+            setIcon(pair.second.getIcon());
+            setText(pair.first.getName());
+          }
+          return this;
+        }
+      });
+      
+      Pair<Library, LibraryManager> maxValue = libs.iterator().next();
+      for (final Pair<Library, LibraryManager> lib : libs) {
+        myComboBox.addItem(lib);
+        final String version = lib.first.getName();
+        FontMetrics fontMetrics = myComboBox.getFontMetrics(myComboBox.getFont());
+        if (fontMetrics.stringWidth(version) > fontMetrics.stringWidth(maxValue.getFirst().getName())) {
+          maxValue = lib;
+        }
+      }
+      myComboBox.setPrototypeDisplayValue(maxValue);
     }
     else {
       myComboBox.setEnabled(false);
       myComboBox.setVisible(false);
     }
-
-    FacetEditorContext context = getEditorContext();
-    configureEditFieldForGroovyPath(context != null ? context.getProject() : null);
-    configureNewGdkCheckBox(libraries.length > 0);
-    addListenerToTables(project);
-  }
-
-  private static Library[] getGroovyLibraries(final Project project) {
-    final Comparator<Library> c = new Comparator<Library>() {
-      public int compare(Library o1, Library o2) {
-        final String name1 = o1.getName();
-        final String name2 = o2.getName();
-        if (name1 == null || name2 == null) return 1;
-        return -name1.compareToIgnoreCase(name2);
-      }
-    };
-    Set<Library> libs = new TreeSet<Library>(c);
-    libs.addAll(Arrays.asList(GroovyConfigUtils.getInstance().getAllSDKLibraries(project)));
-    libs.addAll(Arrays.asList(GrailsConfigUtils.getInstance().getAllSDKLibraries(project)));
-    return libs.toArray(new Library[libs.size()]);
-  }
-
-  private void addListenerToTables(@Nullable final Project project) {
-    LibraryTablesRegistrar.getInstance().getLibraryTable().addListener(myLibraryListener);
-    if (project != null) {
-      ProjectLibraryTable.getInstance(project).addListener(myLibraryListener);
-    }
+    return libs;
   }
 
   @Nullable
   public Library getSelectedLibrary() {
-    if (myComboBox != null && myComboBox.getSelectedItem() != null && myComboBox.getSelectedItem() instanceof MyLibraryStruct) {
-      return ((MyLibraryStruct)myComboBox.getSelectedItem()).library;
+    final Object selectedItem = myComboBox.getSelectedItem();
+    if (selectedItem != null && selectedItem instanceof Pair) {
+      return ((Pair<Library,LibraryManager>)selectedItem).first;
     }
     return null;
   }
 
   @Nullable
   public String getNewSdkPath() {
-    return myPathToGroovy.getText();
+    return mySdkPath.getText();
+  }
+
+  @Nullable
+  public AbstractGroovyLibraryManager getChosenManager() {
+    if (addNewSdk()) {
+      return myChosenManager;
+    }
+    final Object selectedItem = myComboBox.getSelectedItem();
+    if (selectedItem != null && selectedItem instanceof Pair) {
+      return (AbstractGroovyLibraryManager)((Pair)selectedItem).second;
+    }
+    return null;
   }
 
   public boolean addNewSdk() {
-    return myAddNewGdkCb.isSelected() && myPathToGroovy.isVisible();
+    return myAddNewSdkCb.isSelected() && mySdkPath.isVisible();
   }
 
-  private void adjustVersionComboBox(Library[] libraries, final String defaultGlobalLibName) {
-    myComboBox.removeAllItems();
-    String maxValue = "";
-    final MyLibraryStruct[] structs = ContainerUtil.map(libraries, new Function<Library, MyLibraryStruct>() {
-      public MyLibraryStruct fun(final Library library) {
-        return new MyLibraryStruct(library);
-      }
-    }, new MyLibraryStruct[0]);
-
-    for (MyLibraryStruct struct : structs) {
-      myComboBox.addItem(struct);
-      final String version = struct.toString();
-      FontMetrics fontMetrics = myComboBox.getFontMetrics(myComboBox.getFont());
-      if (fontMetrics.stringWidth(version) > fontMetrics.stringWidth(maxValue)) {
-        maxValue = version;
-      }
-    }
-
-    myComboBox.setPrototypeDisplayValue(maxValue + "_");
-    if (defaultGlobalLibName != null) {
-      final MyLibraryStruct defaultStruct = ContainerUtil.find(structs, new Condition<MyLibraryStruct>() {
-        public boolean value(final MyLibraryStruct struct) {
-          final String name = struct.toString();
-          return name != null &&
-                 name.equals(defaultGlobalLibName) &&
-                 LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraryByName(defaultGlobalLibName) != null;
-        }
-      });
-      if (defaultStruct != null) {
-        myComboBox.setSelectedItem(defaultStruct);
-      }
-      else if (structs.length > 0) {
-        myComboBox.setSelectedItem(structs[0]);
-      }
-    }
-  }
-
-  private void configureNewGdkCheckBox(boolean hasVersions) {
-    myAddNewGdkCb.setEnabled(true);
+  private void configureNewSdkCheckBox(boolean hasVersions) {
+    myAddNewSdkCb.setEnabled(true);
     if (hasVersions) {
-      myAddNewGdkCb.setSelected(false);
-      myAddNewGdkCb.setVisible(true);
-      myPathToGroovy.setEnabled(false);
-      myPathToGroovy.setVisible(false);
+      myAddNewSdkCb.setSelected(false);
+      myAddNewSdkCb.setVisible(true);
+      mySdkPath.setEnabled(false);
+      mySdkPath.setVisible(false);
     }
     else {
-      myAddNewGdkCb.setSelected(true);
-      myAddNewGdkCb.setEnabled(true);
-      myAddNewGdkCb.setVisible(false);
+      myAddNewSdkCb.setSelected(true);
+      myAddNewSdkCb.setEnabled(true);
+      myAddNewSdkCb.setVisible(false);
       myComboBox.setVisible(false);
-      myPathToGroovy.setEnabled(true);
-      myPathToGroovy.setVisible(true);
+      mySdkPath.setEnabled(true);
+      mySdkPath.setVisible(true);
     }
 
     final String s = System.getenv(GROOVY_HOME);
     if (s != null && s.length() > 0) {
-      myPathToGroovy.setText(s);
+      mySdkPath.setText(s);
     }
 
-    myAddNewGdkCb.addActionListener(new ActionListener() {
+    myAddNewSdkCb.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent event) {
-        boolean status = myAddNewGdkCb.isSelected();
-        myPathToGroovy.setEnabled(status);
-        myPathToGroovy.setVisible(status);
-        myPathToGroovy.setVisible(status);
+        boolean status = myAddNewSdkCb.isSelected();
+        mySdkPath.setEnabled(status);
+        mySdkPath.setVisible(status);
+        mySdkPath.setVisible(status);
         myComboBox.setEnabled(!status);
       }
     });
   }
 
-  private void configureEditFieldForGroovyPath(final Project project) {
-    myPathToGroovy.getButton().addActionListener(new ActionListener() {
+  private void configureSdkPathField(@Nullable final Project project) {
+    mySdkPath.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        myChosenManager = null;
+      }
+    });
+
+    mySdkPath.getButton().addActionListener(new ActionListener() {
 
       public void actionPerformed(final ActionEvent e) {
         final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
           public boolean isFileSelectable(VirtualFile file) {
-            return super.isFileSelectable(file) && (GroovyConfigUtils.getInstance().isSDKHome(file) || GrailsConfigUtils.getInstance().isSDKHome(file));
+            if (!super.isFileSelectable(file)) {
+              return false;
+            }
+
+            return findManager(file) != null;
           }
         };
         final FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
         final VirtualFile[] files = dialog.choose(null, project);
         if (files.length > 0) {
-          String path = files[0].getPath();
-          myPathToGroovy.setText(path);
+          final VirtualFile dir = files[0];
+          mySdkPath.setText(dir.getPath());
+          myChosenManager = findManager(dir);
         }
       }
     });
 
   }
 
-  public JComponent createComponent() {
+  @Nullable
+  private static AbstractGroovyLibraryManager findManager(VirtualFile dir) {
+    for (AbstractGroovyLibraryManager manager : AbstractGroovyLibraryManager.EP_NAME.getExtensions()) {
+      if (manager.isSDKHome(dir)) {
+        if (GroovyUtils.getFilesInDirectoryByPattern(dir.getPath() + "/lib", "groovy.*\\.jar").length > 0) {
+          return manager;
+        }
+      }
+    }
+    return null;
+  }
+
+  public JComponent getComponent() {
     return myPanel;
-  }
-
-  public FacetEditorContext getEditorContext() {
-    return myEditorContext;
-  }
-
-  protected void setEditorContext(FacetEditorContext editorContext) {
-    myEditorContext = editorContext;
   }
 
   private void createUIComponents() {
     myComboBox = new JComboBox() {
       public void setEnabled(boolean enabled) {
-        super.setEnabled(!myAddNewGdkCb.isSelected() && enabled);
+        super.setEnabled(!myAddNewSdkCb.isSelected() && enabled);
       }
     };
   }
 
-  private class MyLibraryListener implements LibraryTable.Listener {
-    public void afterLibraryAdded(Library library) {
-      for (Library groovyLib : GroovyConfigUtils.getInstance().getGlobalSDKLibraries()) {
-        if (groovyLib == library) {
-          myComboBox.addItem(new MyLibraryStruct(library));
-        }
-      }
-    }
-
-    public void afterLibraryRenamed(Library library) {
-      for (Library groovyLib : GroovyConfigUtils.getInstance().getGlobalSDKLibraries()) {
-        if (groovyLib == library) {
-          myComboBox.addItem(new MyLibraryStruct(library));
-        }
-      }
-    }
-
-    public void beforeLibraryRemoved(Library library) {
-      for (Library groovyLib : GroovyConfigUtils.getInstance().getGlobalSDKLibraries()) {
-        if (groovyLib == library) {
-          myComboBox.removeItem(new MyLibraryStruct(library));
-        }
-      }
-
-    }
-
-    public void afterLibraryRemoved(Library library) {
-    }
-  }
-
-  private static class MyLibraryStruct {
-    final Library library;
-
-    public MyLibraryStruct(final Library library) {
-      this.library = library;
-    }
-
-    @Nullable
-    @Override
-    public String toString() {
-      return library != null ? library.getName() : null;
-    }
-  }
 }

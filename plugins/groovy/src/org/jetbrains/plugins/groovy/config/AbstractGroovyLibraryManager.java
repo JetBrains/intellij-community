@@ -17,15 +17,16 @@ package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.facet.impl.ui.ProjectConfigurableContext;
 import com.intellij.facet.ui.ProjectSettingsContext;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,12 +44,8 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
   public static final ExtensionPointName<AbstractGroovyLibraryManager> EP_NAME = ExtensionPointName.create("org.intellij.groovy.libraryManager");
 
   @NotNull
-  protected static String generatePointerName(ProjectSettingsContext context, String version, final String libPrefix) {
-    final Set<String> usedLibraryNames = CollectionFactory.newTroveSet();
-    for (Library library : getAllDefinedLibraries(((ProjectConfigurableContext)context).getContainer())) {
-      usedLibraryNames.add(library.getName());
-    }
-
+  private static String generatePointerName(String version, final String libPrefix, final LibrariesContainer container,
+                                            final Set<String> usedLibraryNames) {
     String originalName = libPrefix + version;
     String newName = originalName;
     int index = 1;
@@ -57,10 +54,6 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
       index++;
     }
     return newName;
-  }
-
-  private static Library[] getAllDefinedLibraries(final LibrariesContainer container) {
-    return container.getAllLibraries();
   }
 
   @NotNull
@@ -81,41 +74,51 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
 
   @Override
   public Library createLibrary(@NotNull ProjectSettingsContext context) {
-    final String libraryKind = getLibraryCategoryName();
-    final Module module = context.getModule();
-    final Project project = module.getProject();
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       public boolean isFileSelectable(VirtualFile file) {
         return super.isFileSelectable(file) && isSDKHome(file);
       }
     };
+    final Project project = context.getModule().getProject();
     final VirtualFile[] files = FileChooserFactory.getInstance().createFileChooser(descriptor, project).choose(null, project);
     if (files.length == 1) {
-      String path = files[0].getPath();
-      List<String> versions = CollectionFactory.arrayList();
+      return createLibrary(files[0].getPath(), ((ProjectConfigurableContext)context).getContainer(), true);
+    }
+    return null;
+  }
 
-      final LibrariesContainer container = ((ProjectConfigurableContext)context).getContainer();
-      for (Library library : getAllDefinedLibraries(container)) {
-        if (managesLibrary(library, container)) {
-          ContainerUtil.addIfNotNull(getLibraryVersion(library, container), versions);
-        }
+  @Nullable
+  public Library createLibrary(@NotNull final String path, final LibrariesContainer container, final boolean inModuleSettings) {
+    final List<String> versions = CollectionFactory.arrayList();
+    final Set<String> usedLibraryNames = CollectionFactory.newTroveSet();
+    for (Library library : container.getAllLibraries()) {
+      usedLibraryNames.add(library.getName());
+      if (managesLibrary(library, container)) {
+        ContainerUtil.addIfNotNull(getLibraryVersion(library, container), versions);
       }
+    }
 
-      String newVersion = getSDKVersion(path);
+    final String newVersion = getSDKVersion(path);
+    final String libraryKind = getLibraryCategoryName();
 
-      boolean addVersion = !versions.contains(newVersion) ||
-                           Messages.showOkCancelDialog("Add one more " + libraryKind + " library of version " + newVersion + "?",
-                                                       "Duplicate library version", getDialogIcon()) == 0;
+    boolean addVersion = !versions.contains(newVersion) ||
+                         Messages.showOkCancelDialog("Add one more " + libraryKind + " library of version " + newVersion + "?",
+                                                     "Duplicate library version", getDialogIcon()) == 0;
 
-      if (addVersion && !AbstractConfigUtils.UNDEFINED_VERSION.equals(newVersion)) {
-        final String name = generatePointerName(context, newVersion, getLibraryPrefix());
-        final CreateLibraryDialog dialog = new CreateLibraryDialog(project, "Create " + libraryKind + " library",
-                                                                   "Create Project " + libraryKind + " library '" + name + "'",
-                                                                   "Create Global " + libraryKind + " library '" + name + "'");
-        dialog.show();
-        if (dialog.isOK()) {
-          return createSDKLibrary(path, name, project, true, dialog.isInProject());
-        }
+    if (addVersion && !AbstractConfigUtils.UNDEFINED_VERSION.equals(newVersion)) {
+      final Project project = container.getProject();
+      final String name = generatePointerName(newVersion, getLibraryPrefix(), container, usedLibraryNames);
+      final CreateLibraryDialog dialog = new CreateLibraryDialog(project, "Create " + libraryKind + " library",
+                                                                 "Create Project " + libraryKind + " library '" + name + "'",
+                                                                 "Create Global " + libraryKind + " library '" + name + "'");
+      dialog.show();
+      if (dialog.isOK()) {
+        return ApplicationManager.getApplication().runWriteAction(new Computable<Library>() {
+          @Nullable
+          public Library compute() {
+            return createSDKLibrary(path, name, project, inModuleSettings, dialog.isInProject());
+          }
+        });
       }
     }
     return null;
