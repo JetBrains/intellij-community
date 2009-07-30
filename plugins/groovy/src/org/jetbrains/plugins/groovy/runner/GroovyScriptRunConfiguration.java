@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -188,7 +189,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   }
 
   public static String getConfPath(String groovyHome) {
-    String confpath = groovyHome + GROOVY_STARTER_CONF;
+    String confpath = FileUtil.toSystemDependentName(groovyHome + GROOVY_STARTER_CONF);
     if (new File(confpath).exists()) {
       return confpath;
     }
