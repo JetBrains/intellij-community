@@ -56,7 +56,6 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
-import org.jetbrains.plugins.grails.GrailsCompilerExtension;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -95,8 +94,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     final ModuleChunk chunk = createChunk(module, compileContext);
     final List<String> patchers = new SmartList<String>();
-    final GroovyCompilerExtension[] extensions = {new GrailsCompilerExtension()};
-    for (final GroovyCompilerExtension extension : extensions) {
+    for (final GroovyCompilerExtension extension : GroovyCompilerExtension.EP_NAME.getExtensions()) {
       extension.enhanceCompilerClassPath(chunk, classPathBuilder);
       patchers.addAll(extension.getCompilationUnitPatchers(chunk));
     }

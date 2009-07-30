@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
 import com.intellij.util.PathsList;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class GroovyCompilerExtension {
+  public static final ExtensionPointName<GroovyCompilerExtension> EP_NAME = ExtensionPointName.create("org.intellij.groovy.compilerExtension");
 
   public abstract void enhanceCompilerClassPath(@NotNull ModuleChunk chunk, @NotNull PathsList classPath);
 
