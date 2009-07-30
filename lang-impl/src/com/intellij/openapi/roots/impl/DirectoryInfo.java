@@ -4,9 +4,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -29,6 +32,7 @@ public class DirectoryInfo {
    *  orderEntry to (classes of) which a directory belongs
    */
   private List<OrderEntry> orderEntries = null;
+  private volatile MultiMap<Module, OrderEntry> moduleOrderEntries = null;
 
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -72,10 +76,27 @@ public class DirectoryInfo {
     return orderEntries == null ? Collections.<OrderEntry>emptyList() : orderEntries;
   }
 
+  public Collection<OrderEntry> getOrderEntries(@NotNull Module module) {
+    if (orderEntries == null) {
+      return Collections.emptyList();
+    }
+
+    MultiMap<Module, OrderEntry> tmp = moduleOrderEntries;
+    if (tmp == null) {
+      tmp = new MultiMap<Module, OrderEntry>();
+      for (final OrderEntry orderEntry : orderEntries) {
+        tmp.putValue(orderEntry.getOwnerModule(), orderEntry);
+      }
+      moduleOrderEntries = tmp;
+    }
+    return tmp.get(module);
+  }
+
   @SuppressWarnings({"unchecked"})
   public void addOrderEntries(final List<OrderEntry> orderEntries,
                               final DirectoryInfo parentInfo,
                               final List<OrderEntry> oldParentEntries) {
+    moduleOrderEntries = null;
     if (this.orderEntries == null) {
       this.orderEntries = orderEntries;
     }
