@@ -9,6 +9,7 @@ import java.util.Map;
 
 public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   private static final Object MAP_LOCK = new Object();
+  private static final Object COPYABLE_MAP_LOCK = new Object();
   private static final Key<Map<Key, Object>> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
 
   private volatile LockPoolSynchronizedMap<Key, Object> myUserMap = null;
@@ -85,9 +86,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   }
 
   protected <T> void putCopyableUserDataImpl(Key<T> key, T value) {
-    LockPoolSynchronizedMap<Key, Object> map = getOrCreateMap();
-    map.getWriteLock().lock();
-    try {
+    synchronized (COPYABLE_MAP_LOCK) {
       Map<Key, Object> copyMap = getUserData(COPYABLE_USER_MAP_KEY);
       if (copyMap == null) {
         if (value == null) return;
@@ -101,12 +100,9 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
       else {
         copyMap.remove(key);
         if (copyMap.isEmpty()) {
-          map.remove(COPYABLE_USER_MAP_KEY);
+          putUserData(COPYABLE_USER_MAP_KEY, null);
         }
       }
-    }
-    finally {
-      map.getWriteLock().unlock();
     }
   }
 

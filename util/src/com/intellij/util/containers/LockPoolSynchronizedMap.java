@@ -228,11 +228,4 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> {
     }
   }
 
-  public JBLock getReadLock() {
-    return r;
-  }
-
-  public JBLock getWriteLock() {
-    return w;
-  }
 }
