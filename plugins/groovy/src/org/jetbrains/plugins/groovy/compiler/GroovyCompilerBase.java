@@ -56,10 +56,7 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
-import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
-import org.jetbrains.plugins.grails.config.GrailsFramework;
-import org.jetbrains.plugins.grails.config.GrailsModuleStructureUtil;
-import org.jetbrains.plugins.grails.util.GrailsUtils;
+import org.jetbrains.plugins.grails.GrailsCompilerExtension;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -91,24 +88,17 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     assert sdkType instanceof JavaSdkType;
     commandLine.setExePath(((JavaSdkType)sdkType).getVMExecutablePath(sdk));
 
-    final boolean shouldInjectGrails = GrailsUtils.hasGrailsSupport(module) ||
-                                         GrailsModuleStructureUtil.isCommonPluginsModule(module) ||
-                                         GrailsModuleStructureUtil.isCustomPluginModule(module);
-
     final PathsList classPathBuilder = new PathsList();
 
     classPathBuilder.add(PathUtil.getJarPathForClass(GroovycRunner.class));
     classPathBuilder.addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(LibrariesUtil.getGroovyHomePath(module) + "/lib", ".*(groovy|asm|antlr|junit|jline|ant|commons).*\\.jar"));
 
-    if (shouldInjectGrails) {
-      final VirtualFile grailsHome = GrailsFramework.INSTANCE.getSdkRoot(module);
-      if (grailsHome != null) {
-        final String dist = grailsHome.getPath() + "/dist";
-        classPathBuilder.addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(dist, GrailsFramework.GRAILS_BOOTSTRAP_JAR));
-        classPathBuilder.addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(dist, GrailsConfigUtils.GRAILS_CORE_JAR_PATTERN));
-
-        classPathBuilder.addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(grailsHome.getPath() + "/lib", ".*.jar"));
-      }
+    final ModuleChunk chunk = createChunk(module, compileContext);
+    final List<String> patchers = new SmartList<String>();
+    final GroovyCompilerExtension[] extensions = {new GrailsCompilerExtension()};
+    for (final GroovyCompilerExtension extension : extensions) {
+      extension.enhanceCompilerClassPath(chunk, classPathBuilder);
+      patchers.addAll(extension.getCompilationUnitPatchers(chunk));
     }
 
     if ("true".equals(System.getProperty("profile.groovy.compiler"))) {
@@ -136,7 +126,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     try {
       File fileWithParameters = File.createTempFile("toCompile", "");
-      fillFileWithGroovycParameters(module, toCompile, fileWithParameters, forStubs, compileContext, outputDir, shouldInjectGrails);
+      fillFileWithGroovycParameters(module, toCompile, fileWithParameters, compileContext, outputDir, patchers);
 
       commandLine.addParameter(forStubs ? "stubs" : "groovyc");
       commandLine.addParameter(fileWithParameters.getPath());
@@ -180,23 +170,6 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     }
   }
 
-  private static boolean required(String name) {
-    name = name.toLowerCase();
-    if (!name.endsWith(".jar")) return false;
-
-    name = name.substring(0, name.lastIndexOf('.'));
-    int ind = name.lastIndexOf('-');
-    if (ind != -1 && name.length() > ind + 1 && Character.isDigit(name.charAt(ind + 1))) {
-      name = name.substring(0, ind);
-    }
-
-    for (String requiredStr : required) {
-      if (name.contains(requiredStr)) return true;
-    }
-
-    return false;
-  }
-
   private static CompilerMessageCategory getMessageCategory(CompilerMessage compilerMessage) {
     String category;
     category = compilerMessage.getCategory();
@@ -209,8 +182,8 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     return CompilerMessageCategory.ERROR;
   }
 
-  private void fillFileWithGroovycParameters(Module module, List<VirtualFile> virtualFiles, File f, boolean forStubs, CompileContext context,
-                                             VirtualFile outputDir, final boolean shouldInjectGrails) {
+  private void fillFileWithGroovycParameters(Module module, List<VirtualFile> virtualFiles, File f, CompileContext context,
+                                             VirtualFile outputDir, final List<String> patchers) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Running groovyc on: " + virtualFiles.toString());
     }
@@ -243,16 +216,9 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     }
 
     printer.println(GroovycRunner.CLASSPATH);
-    final ModuleChunk chunk = new ModuleChunk((CompileContextEx)context, new Chunk<Module>(module), Collections.<Module, List<VirtualFile>>emptyMap());
+    final ModuleChunk chunk = createChunk(module, context);
     printer.println(chunk.getCompilationClasspath() + File.pathSeparator + CompilerPaths.getModuleOutputPath(module, false) + File.pathSeparator + CompilerPaths.getModuleOutputPath(module, true));
 
-    List<String> patchers = new SmartList<String>();
-    if (shouldInjectGrails) {
-      final VirtualFile grailsHome = GrailsFramework.INSTANCE.getSdkRoot(module);
-      if (grailsHome != null) {
-        patchers.add("org.jetbrains.groovy.compiler.rt.GrailsInjectingPatcher");
-      }
-    }
     if (!patchers.isEmpty()) {
       printer.println(GroovycRunner.PATCHERS);
       for (final String patcher : patchers) {
@@ -271,6 +237,10 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     printer.println(GroovycRunner.OUTPUTPATH);
     printer.println(PathUtil.getLocalPath(outputDir));
     printer.close();
+  }
+
+  private static ModuleChunk createChunk(Module module, CompileContext context) {
+    return new ModuleChunk((CompileContextEx)context, new Chunk<Module>(module), Collections.<Module, List<VirtualFile>>emptyMap());
   }
 
   @Nullable
