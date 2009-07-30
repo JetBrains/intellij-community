@@ -265,6 +265,7 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
           cancel();
           break;
         case KeyEvent.VK_DELETE:
+        case KeyEvent.VK_BACK_SPACE: // Mac users
           closeTabOrToolWindow();
           break;
       }
