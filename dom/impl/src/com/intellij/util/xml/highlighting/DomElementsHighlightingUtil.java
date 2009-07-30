@@ -48,7 +48,11 @@ public class DomElementsHighlightingUtil {
     });
   }
 
+  // TODO: move it to DomElementProblemDescriptorImpl
   private static ProblemHighlightType getProblemHighlightType(final DomElementProblemDescriptor problemDescriptor) {
+    if (problemDescriptor.getHighlightType() != null) {
+      return problemDescriptor.getHighlightType();
+    }
     if (problemDescriptor instanceof DomElementResolveProblemDescriptor) {
       final TextRange range = ((DomElementResolveProblemDescriptor)problemDescriptor).getPsiReference().getRangeInElement();
       if (range.getStartOffset() != range.getEndOffset()) {

@@ -5,6 +5,7 @@ package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,7 +56,15 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
                                                    final String message,
                                                    final TextRange textRange,
                                                    final LocalQuickFix... fixes) {
-    return addProblem(new DomElementProblemDescriptorImpl(domElement, message, highlightType, textRange, fixes));
+    return addProblem(new DomElementProblemDescriptorImpl(domElement, message, highlightType, textRange, null, fixes));
+  }
+
+  public DomElementProblemDescriptor createProblem(@NotNull DomElement domElement,
+                                                   ProblemHighlightType highlightType,
+                                                   String message,
+                                                   @Nullable TextRange textRange,
+                                                   LocalQuickFix... fixes) {
+    return addProblem(new DomElementProblemDescriptorImpl(domElement, message, HighlightSeverity.ERROR, textRange, highlightType, fixes));
   }
 
   @NotNull

@@ -16,6 +16,7 @@
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
@@ -40,6 +41,8 @@ public interface DomElementAnnotationHolder extends Iterable<DomElementProblemDe
   DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, HighlightSeverity highlightType, String message, LocalQuickFix... fixes);
 
   DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, HighlightSeverity highlightType, String message, TextRange textRange, LocalQuickFix... fixes);
+
+  DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, ProblemHighlightType highlightType, String message, TextRange textRange, LocalQuickFix... fixes);
 
   @NotNull
   DomElementResolveProblemDescriptor createResolveProblem(@NotNull GenericDomValue element, @NotNull PsiReference reference);

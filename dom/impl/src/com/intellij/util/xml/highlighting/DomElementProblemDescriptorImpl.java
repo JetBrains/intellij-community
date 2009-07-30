@@ -5,6 +5,7 @@
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,6 +38,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   private List<Annotation> myAnnotations;
   private Pair<TextRange, PsiElement> myPair;
   public static final Pair<TextRange,PsiElement> NO_PROBLEM = new Pair<TextRange, PsiElement>(null, null);
+  private final ProblemHighlightType myHighlightType;
 
   public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement, final String message, final HighlightSeverity type) {
     this(domElement, message, type, LocalQuickFix.EMPTY_ARRAY);
@@ -46,20 +48,21 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
                                          final String message,
                                          final HighlightSeverity type,
                                          @Nullable final TextRange textRange) {
-    this(domElement, message, type, textRange, LocalQuickFix.EMPTY_ARRAY);
+    this(domElement, message, type, textRange, null, LocalQuickFix.EMPTY_ARRAY);
   }
 
   public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
                                          final String message,
                                          final HighlightSeverity type,
                                          final LocalQuickFix... fixes) {
-    this(domElement, message, type, null, fixes);
+    this(domElement, message, type, null, null, fixes);
   }
 
   public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
                                          final String message,
                                          final HighlightSeverity type,
                                          @Nullable final TextRange textRange,
+                                         ProblemHighlightType highlightType,
                                          final LocalQuickFix... fixes) {
     myDomElement = domElement;
     final XmlElement element = domElement.getXmlElement();
@@ -75,6 +78,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
       LOG.assertTrue(psiElement != null, "Problems with explicit text range can't be created for DOM elements without underlying XML element");
       myPair = new Pair<TextRange, PsiElement>(textRange, psiElement);
     }
+    myHighlightType = highlightType;
   }
 
   @NotNull
@@ -212,5 +216,10 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
       parent = parent.getParent();
     }
     return null;
+  }
+
+  @Nullable
+  public ProblemHighlightType getHighlightType() {
+    return myHighlightType;
   }
 }

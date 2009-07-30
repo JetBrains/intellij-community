@@ -16,10 +16,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.SystemNotifications;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -409,5 +406,10 @@ public class ProgressManagerImpl extends ProgressManager {
         System.out.println(thread +" suspended ("+oldState+ "->"+thread.getState()+")");
       }
     }
+  }
+
+  @TestOnly
+  public static void setNeedToCheckCancel(boolean needToCheckCancel) {
+    ourNeedToCheckCancel = needToCheckCancel;
   }
 }

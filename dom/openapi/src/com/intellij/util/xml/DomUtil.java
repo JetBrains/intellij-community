@@ -388,7 +388,6 @@ public class DomUtil {
     return null;
   }
 
-  @Nullable
   public static <T extends DomElement> DomFileElement<T> getFileElement(@NotNull DomElement element) {
     final DomElement root = getRoot(element);
     return root instanceof DomFileElement ? (DomFileElement<T>)root : null;

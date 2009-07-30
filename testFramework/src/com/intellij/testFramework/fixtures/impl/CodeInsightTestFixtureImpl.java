@@ -253,7 +253,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
       protected void run() throws Throwable {
-        configureByFilesInner(filePaths);
+        if (filePaths.length > 0) {
+          configureByFilesInner(filePaths);
+        }
         collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings, duration);
       }
     }.execute().throwException();
