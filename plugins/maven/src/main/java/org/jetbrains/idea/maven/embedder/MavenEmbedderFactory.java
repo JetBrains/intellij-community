@@ -3,8 +3,8 @@ package org.jetbrains.idea.maven.embedder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.embedder.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -18,12 +18,12 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
-import java.net.URL;
 
 public class MavenEmbedderFactory {
   @NonNls private static final String PROP_MAVEN_HOME = "maven.home";
@@ -119,10 +119,13 @@ public class MavenEmbedderFactory {
     File directory = resolveMavenHomeDirectory(overrideMavenHome);
     if (directory == null) return null;
     File libs = new File(directory, LIB_DIR);
-    Pattern pattern = Pattern.compile("maven-\\d+\\.\\d+\\.\\d+-uber\\.jar");
-    for (File each : libs.listFiles()) {
-      if (pattern.matcher(each.getName()).matches()) {
-        return each;
+    File[] files = libs.listFiles();
+    if (files != null) {
+      Pattern pattern = Pattern.compile("maven-\\d+\\.\\d+\\.\\d+-uber\\.jar");
+      for (File each : files) {
+        if (pattern.matcher(each.getName()).matches()) {
+          return each;
+        }
       }
     }
     return null;
