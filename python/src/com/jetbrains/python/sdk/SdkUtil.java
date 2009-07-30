@@ -3,12 +3,16 @@ package com.jetbrains.python.sdk;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,8 +57,13 @@ public class SdkUtil {
       return new ProcessOutput();
     }
     try {
-      //noinspection HardCodedStringLiteral
-      Process process = Runtime.getRuntime().exec(command, null, new File(homePath));
+      List<String> commands = new ArrayList<String>();
+      if (SystemInfo.isWindows && StringUtil.endsWithIgnoreCase(command [0], ".bat")) {
+        commands.add("cmd");
+        commands.add("/c");
+      }
+      Collections.addAll(commands, command);
+      Process process = Runtime.getRuntime().exec(commands.toArray(new String[commands.size()]), null, new File(homePath));
       CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
       return processHandler.runProcess(timeout);
     }
