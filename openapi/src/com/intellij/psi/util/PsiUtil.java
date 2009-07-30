@@ -15,8 +15,6 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Comparing;
@@ -588,10 +586,6 @@ public final class PsiUtil extends PsiUtilBase {
     }
     else if (element instanceof PsiMethod) return ((PsiMethod)element).getReturnType();
     return null;
-  }
-
-  public static boolean isJspLanguage(final Language baseLanguage) {
-    return baseLanguage == StdLanguages.JSP || baseLanguage == StdLanguages.JSPX;
   }
 
   public static JspFile getJspFile(final PsiElement element) {
