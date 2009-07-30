@@ -38,7 +38,7 @@ public class ActionMenuItem extends JMenuItem {
   private MenuItemSynchronizer myMenuItemSynchronizer;
   private boolean myEnableMnemonics;
 
-  public ActionMenuItem(AnAction action, Presentation presentation, String place, DataContext context, final boolean enableMnemonics) {
+  public ActionMenuItem(AnAction action, Presentation presentation, String place, DataContext context, final boolean enableMnemonics, boolean prepareNow) {
     myAction = action;
     myPresentation = presentation;
     myPlace = place;
@@ -47,12 +47,17 @@ public class ActionMenuItem extends JMenuItem {
     myEvent = new AnActionEvent(null, context, place, myPresentation, ActionManager.getInstance(), 0);
     addActionListener(new ActionTransmitter());
     setBorderPainted(false);
-    init();
 
-    if (SystemInfo.isMacSystemMenu) {
-      // Menu items in MacOS system menu won't get addNotify() called. :(
-      installSynchronizer();
+    if (prepareNow) {
+      init();
+    } else {
+      setText("loading...");
     }
+  }
+
+  public void prepare() {
+    init();
+    installSynchronizer();
   }
 
   /**
@@ -71,6 +76,29 @@ public class ActionMenuItem extends JMenuItem {
   public void removeNotify() {
     uninstallSynchronizer();
     super.removeNotify();
+  }
+
+  @Override
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    //g.setColor(getBackground());
+    //g.fillRect(0, 0, getWidth(), getHeight());
+  }
+
+  @Override
+  protected void paintChildren(Graphics g) {
+    super.paintChildren(g);
+  }
+
+  @Override
+  protected void paintBorder(Graphics g) {
+    super.paintBorder(g);
+  }
+
+
+  @Override
+  public void paint(Graphics g) {
+    super.paint(g);
   }
 
   private void installSynchronizer() {

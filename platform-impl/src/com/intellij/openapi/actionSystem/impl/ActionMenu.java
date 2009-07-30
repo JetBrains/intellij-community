@@ -194,7 +194,7 @@ public final class ActionMenu extends JMenu {
 
   private void fillMenu() {
     DataContext context = myContext != null ? myContext : DataManager.getInstance().getDataContext();
-    Utils.fillMenu(myGroup, this, myMnemonicEnabled, myPresentationFactory, context, myPlace);
+    Utils.fillMenu(myGroup, this, myMnemonicEnabled, myPresentationFactory, context, myPlace, true);
   }
 
   private class MenuItemSynchronizer implements PropertyChangeListener {

@@ -923,8 +923,8 @@
     <action id="PopupHector">
       <keyboard-shortcut first-keystroke="ctrl alt shift H"/>
     </action>
-    <action id="UiDebugger">
-      <keyboard-shortcut first-keystroke="ctrl alt SLASH"/>
+    <action id="MaintenanceAction">
+      <keyboard-shortcut first-keystroke="ctrl alt shift SLASH"/>
     </action>
     <action id="ToolWindowSwitcher">
       <keyboard-shortcut first-keystroke="ctrl TAB"/>

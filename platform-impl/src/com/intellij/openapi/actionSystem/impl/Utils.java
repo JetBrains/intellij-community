@@ -8,6 +8,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -181,9 +183,13 @@ public class Utils{
   }
 
 
-  public static void fillMenu(@NotNull ActionGroup group,JComponent component, boolean enableMnemonics, PresentationFactory presentationFactory, DataContext context, String place){
+  public static void fillMenu(@NotNull ActionGroup group,JComponent component, boolean enableMnemonics, PresentationFactory presentationFactory, DataContext context, String place, boolean isWindowMenu){
     ArrayList<AnAction> list = new ArrayList<AnAction>();
     expandActionGroup(group, list, presentationFactory, context, place, ActionManager.getInstance());
+
+    final boolean fixMacScreenMenu = SystemInfo.isMacSystemMenu && isWindowMenu && Registry.is("actionSystem.mac.screenMenuNotUpdatedFix");
+
+    final ArrayList<ActionMenuItem> menuItems = new ArrayList<ActionMenuItem>();
 
     for (int i = 0; i < list.size(); i++) {
       AnAction action = list.get(i);
@@ -196,12 +202,31 @@ public class Utils{
         component.add(new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics));
       }
       else {
-        component.add(new ActionMenuItem(action, presentationFactory.getPresentation(action), place, context, enableMnemonics));
+        final ActionMenuItem each =
+          new ActionMenuItem(action, presentationFactory.getPresentation(action), place, context, enableMnemonics, !fixMacScreenMenu);
+        component.add(each);
+        menuItems.add(each);
       }
     }
 
     if (list.isEmpty()) {
-      component.add(new ActionMenuItem(EMPTY_MENU_FILLER, presentationFactory.getPresentation(EMPTY_MENU_FILLER), place, context, enableMnemonics));
+      final ActionMenuItem each =
+        new ActionMenuItem(EMPTY_MENU_FILLER, presentationFactory.getPresentation(EMPTY_MENU_FILLER), place, context, enableMnemonics,
+                           !fixMacScreenMenu);
+      component.add(each);
+      menuItems.add(each);
+    }
+
+    if (fixMacScreenMenu) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          for (ActionMenuItem each : menuItems) {
+            if (each.getParent() != null) {
+              each.prepare();
+            }
+          }
+        }
+      });
     }
   }
 }

@@ -227,6 +227,13 @@
       <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveFileAsTemplate"/>
     </action>
 
+    <action id="MaintenanceAction" class="com.intellij.ide.actions.MaintenanceAction"/>
+
+    <group id="MaintenanceGroup">
+      <action id="UiDebugger" class="com.intellij.ui.debugger.ShowUiDebuggerAction"/>
+      <action id="ShowRegistry" class="com.intellij.openapi.util.registry.ShowRegistryAction"/>
+    </group>
+
     <group text="IDEA Internal Actions" internal="true">
       <separator/>
       <action id="PsiViewer" internal="true" class="com.intellij.internal.psiView.ViewerAction"/>
@@ -262,8 +269,7 @@
 
       <separator/>
 
-      <action id="UiDebugger" class="com.intellij.ui.debugger.ShowUiDebuggerAction"/>
-      <action id="ShowRegistry" class="com.intellij.openapi.util.registry.ShowRegistryAction"/>
+      <reference ref="MaintenanceGroup"/>
 
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
