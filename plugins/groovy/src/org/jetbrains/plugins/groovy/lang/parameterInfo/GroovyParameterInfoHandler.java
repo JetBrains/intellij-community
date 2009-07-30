@@ -17,10 +17,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocat
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -99,13 +103,16 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
       final PsiClass clazz = ((GrConstructorInvocation) parent).getDelegatedClass();
       if (clazz != null) {
         final PsiMethod[] constructors = clazz.getConstructors();
-        variants = new GroovyResolveResult[constructors.length];
-        for (int i = 0; i < constructors.length; i++) {
-          final boolean isAccessible = com.intellij.psi.util.PsiUtil.isAccessible(constructors[i], place, null);
-          variants[i] = new GroovyResolveResultImpl(constructors[i], isAccessible);
-        }
+        variants = getConstructorResolveResult(constructors, place);
       }
-    } else if (parent instanceof GrApplicationStatement) {
+    } else if (parent instanceof GrAnonymousClassDefinition) {
+      final PsiElement element = ((GrAnonymousClassDefinition)parent).getBaseClassReferenceGroovy().resolve();
+      if (element instanceof PsiClass) {
+        final PsiMethod[] constructors = ((PsiClass)element).getConstructors();
+        variants = getConstructorResolveResult(constructors, place);
+      }
+    }
+    else if (parent instanceof GrApplicationStatement) {
       final GrExpression funExpr = ((GrApplicationStatement) parent).getFunExpression();
       if (funExpr instanceof GrReferenceExpression) {
         variants = ((GrReferenceExpression) funExpr).getSameNameVariants();
@@ -117,6 +124,14 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     context.showHint(place, place.getTextRange().getStartOffset(), this);
   }
 
+  private static GroovyResolveResult[] getConstructorResolveResult(PsiMethod[] constructors, PsiElement place) {
+    GroovyResolveResult[] variants = new GroovyResolveResult[constructors.length];
+    for (int i = 0; i < constructors.length; i++) {
+      final boolean isAccessible = com.intellij.psi.util.PsiUtil.isAccessible(constructors[i], place, null);
+      variants[i] = new GroovyResolveResultImpl(constructors[i], isAccessible);
+    }
+    return variants;
+  }
   public void updateParameterInfo(@NotNull GroovyPsiElement place, UpdateParameterInfoContext context) {
     int offset = context.getEditor().getCaretModel().getOffset();
     offset = CharArrayUtil.shiftForward(context.getEditor().getDocument().getText(), offset, " \t\n");

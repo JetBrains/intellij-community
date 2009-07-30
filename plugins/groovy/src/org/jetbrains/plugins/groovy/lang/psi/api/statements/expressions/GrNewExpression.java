@@ -16,8 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 /**
@@ -33,4 +35,7 @@ public interface GrNewExpression extends GrCallExpression {
   GroovyResolveResult resolveConstructorGenerics();
 
   int getArrayCount();
+
+  @Nullable
+  GrAnonymousClassDefinition getAnonymousClassDefinition();
 }

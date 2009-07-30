@@ -11,11 +11,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsParameterImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -306,4 +308,16 @@ public class GroovyOverrideImplementUtil {
     buffer.append(")");
     return buffer.toString();
   }
+
+  public static Collection<CandidateInfo> getMethodsToImplement(PsiClass typeDefinition) {
+    Collection<CandidateInfo> methodsToImplement = OverrideImplementUtil.getMethodsToOverrideImplement(typeDefinition, true);
+    methodsToImplement = ContainerUtil.findAll(methodsToImplement, new Condition<CandidateInfo>() {
+      public boolean value(CandidateInfo candidateInfo) {
+        //noinspection ConstantConditions
+        return !GrTypeDefinition.DEFAULT_BASE_CLASS_NAME
+          .equals(((PsiMethod)candidateInfo.getElement()).getContainingClass().getQualifiedName());
+      }
+    });
+    return methodsToImplement;
+  }  
 }

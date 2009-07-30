@@ -6,10 +6,10 @@ package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection;
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 
 import java.io.IOException;
 
@@ -121,4 +121,10 @@ public class GroovyHighlightingTest extends JavaCodeInsightFixtureTestCase {
     myFixture.enableInspections(new GroovyAssignabilityCheckInspection());
     doTest();
   }
+
+  public void testAnonymousClassConstructor() throws Throwable {doTest();}
+  public void testAnonymousClassAbstractMethod() throws Throwable {doTest();}
+  public void testAnonymousClassStaticMethod() throws Throwable {doTest();}
+  public void testAnonymousClassShoudImplementMethods() throws Throwable {doTest();}
+
 }

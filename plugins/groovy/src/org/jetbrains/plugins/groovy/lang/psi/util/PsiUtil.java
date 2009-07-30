@@ -54,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -226,7 +227,32 @@ public class PsiUtil {
 
       return result.toArray(new PsiType[result.size()]);
 
-    } else if (parent instanceof GrApplicationStatement) {
+    }
+    else if (parent instanceof GrAnonymousClassDefinition) {
+      final GrAnonymousClassDefinition anonymous = (GrAnonymousClassDefinition)parent;
+      final GrArgumentList argList = anonymous.getArgumentListGroovy();
+      List<PsiType> result = new ArrayList<PsiType>();
+
+      if (!forConstructor) {
+        GrNamedArgument[] namedArgs = argList.getNamedArguments();
+        if (namedArgs.length > 0) {
+          result.add(createMapType(place.getManager(), place.getResolveScope()));
+        }
+      }
+
+      GrExpression[] expressions = argList.getExpressionArguments();
+      for (GrExpression expression : expressions) {
+        PsiType type = getArgumentType(expression);
+        if (type == null) {
+          result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(argList));
+        } else {
+          result.add(type);
+        }
+      }
+
+      return result.toArray(new PsiType[result.size()]);
+    }
+    else if (parent instanceof GrApplicationStatement) {
       final GrApplicationStatement call = (GrApplicationStatement)parent;
       GrExpression[] args = call.getArguments();
       final GrArgumentList argList = call.getArgumentList();

@@ -15,7 +15,6 @@
 
 package org.jetbrains.plugins.groovy.annotator;
 
-import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
@@ -23,7 +22,6 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -35,10 +33,8 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicFix;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamize.DynamizeInvalidCodeFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
@@ -79,6 +75,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
+import org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil;
 import org.jetbrains.plugins.groovy.overrideImplement.quickFix.ImplementMethodsQuickFix;
 
 import java.util.*;
@@ -196,14 +193,7 @@ public class GroovyAnnotator implements Annotator {
     if (typeDefinition.isEnum() || typeDefinition.isAnnotationType()) return;
     if (typeDefinition instanceof GrTypeParameter) return;
 
-    Collection<CandidateInfo> methodsToImplement = OverrideImplementUtil.getMethodsToOverrideImplement(typeDefinition, true);
-    methodsToImplement = ContainerUtil.findAll(methodsToImplement, new Condition<CandidateInfo>() {
-      public boolean value(CandidateInfo candidateInfo) {
-        //noinspection ConstantConditions
-        return !GrTypeDefinition.DEFAULT_BASE_CLASS_NAME
-          .equals(((PsiMethod)candidateInfo.getElement()).getContainingClass().getQualifiedName());
-      }
-    });
+    Collection<CandidateInfo> methodsToImplement = GroovyOverrideImplementUtil.getMethodsToImplement(typeDefinition);
     if (methodsToImplement.isEmpty()) return;
 
     final PsiElement methodCandidateInfo = methodsToImplement.iterator().next().getElement();
@@ -211,9 +201,8 @@ public class GroovyAnnotator implements Annotator {
 
     String notImplementedMethodName = ((PsiMethod)methodCandidateInfo).getName();
 
-    final int startOffset = typeDefinition.getTextRange().getStartOffset();
-    final GrTypeDefinitionBody body = typeDefinition.getBody();
-    int endOffset = body != null ? body.getTextRange().getStartOffset() : typeDefinition.getTextRange().getEndOffset();
+    final int startOffset = typeDefinition.getTextOffset();
+    int endOffset = typeDefinition.getNameIdentifierGroovy().getTextRange().getEndOffset();
     final Annotation annotation = holder.createErrorAnnotation(new TextRange(startOffset, endOffset),
                                                                GroovyBundle.message("method.is.not.implemented", notImplementedMethodName));
     registerImplementsMethodsFix(typeDefinition, annotation);
@@ -229,7 +218,7 @@ public class GroovyAnnotator implements Annotator {
     final PsiMethod[] superMethods = method.findSuperMethods();
     if (superMethods.length > 0) {
       boolean isImplements = !method.hasModifierProperty(PsiModifier.ABSTRACT) && superMethods[0].hasModifierProperty(PsiModifier.ABSTRACT);
-      annotation.setGutterIconRenderer(new OverrideGutter(superMethods, isImplements));
+//      annotation.setGutterIconRenderer(new OverrideGutter(superMethods, isImplements));
     }
   }
 
@@ -326,6 +315,7 @@ public class GroovyAnnotator implements Annotator {
 
     //script methods
     boolean isMethodAbstract = modifiersList.hasExplicitModifier(PsiModifier.ABSTRACT);
+    final boolean isMethodStatic = modifiersList.hasExplicitModifier(PsiModifier.STATIC);
     if (method.getParent() instanceof GroovyFileBase) {
       if (isMethodAbstract) {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("script.cannot.have.modifier.abstract"));
@@ -341,7 +331,7 @@ public class GroovyAnnotator implements Annotator {
 
         //interface
         if (containingTypeDef.isInterface()) {
-          if (modifiersList.hasExplicitModifier(PsiModifier.STATIC)) {
+          if (isMethodStatic) {
             holder.createErrorAnnotation(modifiersList, GroovyBundle.message("interface.must.have.no.static.method"));
           }
 
@@ -357,6 +347,19 @@ public class GroovyAnnotator implements Annotator {
         else if (containingTypeDef.isAnnotationType()) {
           //annotation
           //todo
+        }
+        else if (containingTypeDef.isAnonymous()) {
+          //anonymous class
+          if (isMethodStatic) {
+            holder.createErrorAnnotation(modifiersList, GroovyBundle.message("static.declaration.in.inner.class"));
+          }
+          if (method.isConstructor()) {
+            holder.createErrorAnnotation(method.getNameIdentifierGroovy(),
+                                         GroovyBundle.message("constructors.are.not.allowed.in.anonymous.class"));
+          }
+          if (isMethodAbstract) {
+            holder.createErrorAnnotation(modifiersList, GroovyBundle.message("not.abstract.class.cannot.have.abstract.method"));
+          }
         }
         else {
           //class
@@ -374,7 +377,6 @@ public class GroovyAnnotator implements Annotator {
               holder.createErrorAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("not.abstract.method.should.have.body"));
             }
           }
-
         }
       }
   }
@@ -830,14 +832,11 @@ public class GroovyAnnotator implements Annotator {
     if (element instanceof PsiClass) {
       PsiClass clazz = (PsiClass)element;
       if (clazz.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        String message = clazz.isInterface()
-                         ? GroovyBundle.message("cannot.instantiate.interface", clazz.getName())
-                         : GroovyBundle.message("cannot.instantiate.abstract.class", clazz.getName());
-        holder.createErrorAnnotation(refElement, message);
-        if (clazz.isInterface()) {
-          Annotation annotation = holder.createInfoAnnotation(newExpression, null);
-          annotation.registerFix(DynamizeInvalidCodeFix.replaceInterfaceInstanceByMapFix(newExpression));
-          annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+        if (newExpression.getAnonymousClassDefinition() == null) {
+          String message = clazz.isInterface()
+                           ? GroovyBundle.message("cannot.instantiate.interface", clazz.getName())
+                           : GroovyBundle.message("cannot.instantiate.abstract.class", clazz.getName());
+          holder.createErrorAnnotation(refElement, message);
         }
         return;
       }

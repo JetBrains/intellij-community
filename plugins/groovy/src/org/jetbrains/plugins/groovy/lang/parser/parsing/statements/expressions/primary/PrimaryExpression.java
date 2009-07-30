@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOr
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks.ClassBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -124,32 +125,38 @@ public class PrimaryExpression implements GroovyElementTypes {
     ParserUtils.getToken(builder, mNLS);
     PsiBuilder.Marker rb = builder.mark();
     TypeArguments.parse(builder);
-    if (!TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType()) &&
-            !mIDENT.equals(builder.getTokenType())) {
+    if (!TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType()) && !mIDENT.equals(builder.getTokenType())) {
       rb.rollbackTo();
-    } else {
+    }
+    else {
       rb.drop();
     }
 
-
+    PsiBuilder.Marker anonymousMarker = builder.mark();
+    String name = null;
     if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
       ParserUtils.eatElement(builder, BUILT_IN_TYPE);
-    } else if (mIDENT.equals(builder.getTokenType())) {
+    }
+    else if (mIDENT.equals(builder.getTokenType())) {
+      name = builder.getTokenText();
       ReferenceElement.parseReferenceElement(builder);
-    } else {
+    }
+    else {
       builder.error(GroovyBundle.message("type.specification.expected"));
+      anonymousMarker.drop();
       marker.done(NEW_EXPRESSION);
       return NEW_EXPRESSION;
     }
 
-    if (builder.getTokenType() == mLPAREN ||
-            ParserUtils.lookAhead(builder, mNLS, mLPAREN)) {
-
+    if (builder.getTokenType() == mLPAREN || ParserUtils.lookAhead(builder, mNLS, mLPAREN)) {
       ParserUtils.getToken(builder, mNLS);
       methodCallArgsParse(builder, parser);
       if (builder.getTokenType() == mLCURLY || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {
         ParserUtils.getToken(builder, mNLS);
-        OpenOrClosableBlock.parseClosableBlock(builder, parser);
+        ClassBlock.parse(builder, name, parser);
+        anonymousMarker.done(ANONYMOUS_CLASS_DEFINITION);
+        marker.done(NEW_EXPRESSION);
+        return NEW_EXPRESSION;
       }
     } else if (builder.getTokenType() == mLBRACK) {
       PsiBuilder.Marker forArray = builder.mark();
@@ -160,11 +167,12 @@ public class PrimaryExpression implements GroovyElementTypes {
         ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
       }
       forArray.done(ARRAY_DECLARATOR);
-    } else {
+    }
+    else {
       builder.error(GroovyBundle.message("lparen.expected"));
     }
 
-
+    anonymousMarker.drop();
     marker.done(NEW_EXPRESSION);
     return NEW_EXPRESSION;
   }

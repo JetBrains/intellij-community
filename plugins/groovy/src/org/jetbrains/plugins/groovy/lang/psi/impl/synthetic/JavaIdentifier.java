@@ -15,9 +15,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.light.LightIdentifier;
 
 /**
@@ -28,7 +28,7 @@ public class JavaIdentifier extends LightIdentifier {
 
   public JavaIdentifier(PsiManager manager, PsiElement element) {
     super(manager, element.getText());
-    myElement=element;
+    myElement = element;
   }
 
   public TextRange getTextRange() {
@@ -42,5 +42,10 @@ public class JavaIdentifier extends LightIdentifier {
   @Override
   public int getStartOffsetInParent() {
     return myElement.getStartOffsetInParent();
+  }
+
+  @Override
+  public int getTextOffset() {
+    return myElement.getTextOffset();
   }
 }

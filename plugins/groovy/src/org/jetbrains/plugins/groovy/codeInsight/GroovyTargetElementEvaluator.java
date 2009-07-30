@@ -36,11 +36,23 @@ public class GroovyTargetElementEvaluator implements TargetElementEvaluator {
   public PsiElement getElementByReference(PsiReference ref, int flags) {
     PsiElement sourceElement = ref.getElement();
     if (sourceElement == null) return null;
-    if (sourceElement instanceof GrCodeReferenceElement && sourceElement.getParent() instanceof GrNewExpression) {
-      final PsiMethod constructor = ((GrNewExpression)sourceElement.getParent()).resolveConstructor();
-      final GrNewExpression newExpr = (GrNewExpression)sourceElement.getParent();
+
+    GrNewExpression newExpr = null;
+    if (sourceElement instanceof GrCodeReferenceElement) {
+      if (sourceElement.getParent() instanceof GrNewExpression) {
+        newExpr = (GrNewExpression)sourceElement.getParent();
+      }
+      else if (sourceElement.getParent().getParent() instanceof GrNewExpression) {//anonymous class declaration
+        newExpr = (GrNewExpression)sourceElement.getParent().getParent();
+      }
+    }
+    if (newExpr != null) {
+      final PsiMethod constructor = newExpr.resolveConstructor();
       final GrArgumentList argumentList = newExpr.getArgumentList();
-      if (constructor != null && argumentList != null && argumentList.getNamedArguments().length != 0 && argumentList.getExpressionArguments().length == 0) {
+      if (constructor != null &&
+          argumentList != null &&
+          argumentList.getNamedArguments().length != 0 &&
+          argumentList.getExpressionArguments().length == 0) {
         if (constructor.getParameterList().getParametersCount() == 0) return constructor.getContainingClass();
       }
       return constructor;

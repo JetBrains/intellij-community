@@ -72,7 +72,7 @@ public class GrClassImplUtil {
     return superClass != null ? superClass : getBaseClass(grType);
   }
 
-  private static PsiClass getBaseClass(GrTypeDefinition grType) {
+  public static PsiClass getBaseClass(GrTypeDefinition grType) {
     if (grType.isEnum()) {
       return JavaPsiFacade.getInstance(grType.getProject()).findClass(CommonClassNames.JAVA_LANG_ENUM, grType.getResolveScope());
     }

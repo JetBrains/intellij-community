@@ -77,4 +77,8 @@ public interface GrTypeDefinition extends GrTopStatement, NavigatablePsiElement,
 
   @Nullable
   PsiElement getRBraceGroovy();
+
+  boolean isAnonymous();
+
+  String getName();
 }

@@ -34,7 +34,9 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
 
   public GrTypeDefinitionStub createStub(TypeDef psi, StubElement parentStub) {
     String[] superClassNames = psi.getSuperClassNames();
-    return new GrTypeDefinitionStubImpl(parentStub, psi.getName(), superClassNames, this, psi.getQualifiedName(), getAnnotationNames(psi));
+    final byte flags = GrTypeDefinitionStubImpl.buildFlags(psi);
+    return new GrTypeDefinitionStubImpl(parentStub, psi.getName(), superClassNames, this, psi.getQualifiedName(), getAnnotationNames(psi),
+                                        flags);
   }
 
   private static String[] getAnnotationNames(GrTypeDefinition psi) {
@@ -57,6 +59,7 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
   public void serialize(GrTypeDefinitionStub stub, StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     dataStream.writeName(stub.getQualifiedName());
+    dataStream.writeByte(stub.getFlags());
     writeStringArray(dataStream, stub.getSuperClassNames());
     writeStringArray(dataStream, stub.getAnnotations());
   }
@@ -71,9 +74,10 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
   public GrTypeDefinitionStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
     String name = StringRef.toString(dataStream.readName());
     String qname = StringRef.toString(dataStream.readName());
+    byte flags=dataStream.readByte();
     String[] superClasses = readStringArray(dataStream);
     String[] annos = readStringArray(dataStream);
-    return new GrTypeDefinitionStubImpl(parentStub, name, superClasses, this, qname, annos);
+    return new GrTypeDefinitionStubImpl(parentStub, name, superClasses, this, qname, annos, flags);
   }
 
   private static String[] readStringArray(StubInputStream dataStream) throws IOException {

@@ -22,6 +22,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.IGroovyDocElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.GroovyDocPsiCreator;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrIdentifier;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowsClauseImpl;
@@ -102,7 +103,7 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     //Identifiers & literal
     if (elem.equals(LITERAL)) return new GrLiteralImpl(node);
     if (elem.equals(LABEL)) return new GrLabelImpl(node);
-
+    if (elem.equals(IDENTIFIER)) return new GrIdentifier(node);
     //Lists, maps etc...
     if (elem.equals(LIST_OR_MAP)) return new GrListOrMapImpl(node);
 
@@ -238,6 +239,7 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(SUPER_REFERENCE_EXPRESSION)) return new GrSuperReferenceExpressionImpl(node);
     if (elem.equals(PARENTHESIZED_EXPRESSION)) return new GrParenthesizedExpressionImpl(node);
     if (elem.equals(NEW_EXPRESSION)) return new GrNewExpressionImpl(node);
+    if (elem.equals(ANONYMOUS_CLASS_DEFINITION)) return new GrAnonymousClassDefinitionImpl(node);
     if (elem.equals(ARRAY_DECLARATOR)) return new GrArrayDeclarationImpl(node);
 
     //Paths

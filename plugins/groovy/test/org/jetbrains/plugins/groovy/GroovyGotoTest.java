@@ -68,4 +68,12 @@ public class GroovyGotoTest extends JavaCodeInsightFixtureTestCase {
       }
     });
   }
+
+  public void testNewExpressionWithAnonymousClass() throws Throwable {
+    doTest(new Condition<PsiElement>() {
+      public boolean value(PsiElement element) {
+        return element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 2;
+      }
+    });
+  }
 }

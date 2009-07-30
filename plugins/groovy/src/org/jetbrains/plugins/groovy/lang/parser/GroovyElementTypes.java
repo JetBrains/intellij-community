@@ -42,6 +42,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GrStubElementType<GrTypeDefinitionStub, GrInterfaceDefinition> INTERFACE_DEFINITION = new GrInterfaceDefinitionElementType();
   GrStubElementType<GrTypeDefinitionStub, GrEnumTypeDefinition> ENUM_DEFINITION = new GrEnumDefinitionElementType();
   GrStubElementType<GrTypeDefinitionStub, GrAnnotationTypeDefinition> ANNOTATION_DEFINITION = new GrAnnotationDefinitionElementType();
+  GrStubElementType<GrTypeDefinitionStub, GrAnonymousClassDefinition> ANONYMOUS_CLASS_DEFINITION = new GrAnonymousClassDefinitionElementType();
 
   GrStubElementType<GrFieldStub, GrEnumConstant> ENUM_CONSTANT = new GrEnumConstantElementType();
   GrStubElementType<GrFieldStub, GrField> FIELD = new GrFieldElementType();
@@ -54,16 +55,14 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   GroovyElementType NONE = new GroovyElementType("no token"); //not a node
 
+  GroovyElementType IDENTIFIER = new GroovyElementType("Groovy identifier");
+
   // Indicates the wrongway of parsing
   GroovyElementType WRONGWAY = new GroovyElementType("Wrong way!");
-  // Auxiliary elements
-  GroovyElementType SEP = new GroovyElementType("Statement separator");
   GroovyElementType LITERAL = new GroovyElementType("Literal");
   //Packaging
   GroovyElementType PACKAGE_DEFINITION = new GroovyElementType("Package definition");
 
-  // Blocks
-  GroovyElementType STATEMENT = new GroovyElementType("Any statement");
   GroovyElementType CLOSABLE_BLOCK = new GroovyElementType("Closable block");
   GroovyElementType OPEN_BLOCK = new GroovyElementType("Open block");
 
@@ -71,7 +70,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   // Enum
   GroovyElementType ENUM_CONSTANTS = new GroovyElementType("Enumeration constants");
-  GroovyElementType ENUM_CONSTANT_ERROR = new GroovyElementType("Enumeration constant error");
   GroovyElementType IMPORT_STATEMENT = new GroovyElementType("Import statement");
   //Branch statements
   GroovyElementType BREAK_STATEMENT = new GroovyElementType("Break statement");
@@ -130,7 +128,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   GroovyElementType NEW_EXPRESSION = new GroovyElementType("New expressions");
 
-  GroovyElementType PRIMARY_EXPRESSION = new GroovyElementType("Primary expressions");
   GroovyElementType BUILT_IN_TYPE_EXPRESSION = new GroovyElementType("Built in type expression");
 
   // Lists & maps
@@ -144,7 +141,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType GSTRING = new GroovyElementType("GString");
 
   GroovyElementType REGEX = new GroovyElementType("Regular expression");
-  GroovyElementType DECLARATION = new GroovyElementType("declaration");
   //types
   GroovyElementType REFERENCE_ELEMENT = new GroovyElementType("reference element");
   GroovyElementType ARRAY_DECLARATOR = new GroovyElementType("array declarator");
@@ -159,9 +155,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType DEFAULT_ANNOTATION_VALUE = new GroovyElementType("default annotation value");
 
   GroovyElementType CONSTRUCTOR_DEFINITION = new GroovyElementType("constructor definition");
-  //bodies
-  //  GroovyElementType METHOD_BODY = new GroovyElementType("method body");
-  GroovyElementType CONSTRUCTOR_BODY_ERROR = new GroovyElementType("constructor body with error");
 
   //  GroovyElementType CONSTRUCTOR_BODY = new GroovyElementType("constructor body");
   GroovyElementType EXPLICIT_CONSTRUCTOR = new GroovyElementType("explicit constructor invokation");
@@ -189,7 +182,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType WHILE_STATEMENT = new GroovyElementType("while statement");
   // switch dtatement
   GroovyElementType SWITCH_STATEMENT = new GroovyElementType("switch statement");
-  GroovyElementType CASE_BLOCK = new GroovyElementType("case block");
   GroovyElementType CASE_SECTION = new GroovyElementType("case block");
 
   GroovyElementType CASE_LABEL = new GroovyElementType("case label");
@@ -203,7 +195,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType SYNCHRONIZED_STATEMENT = new GroovyElementType("synchronized block statement");
   GroovyElementType CLASS_INITIALIZER = new GroovyElementType("static compound statement");
 
-  GroovyElementType COMPOUND_STATEMENT = new GroovyElementType("compound statement");
   GroovyElementType VARIABLE_DEFINITION_ERROR = new GroovyElementType("variable definitions with errors");
   GroovyElementType VARIABLE_DEFINITION = new GroovyElementType("variable definitions");
   GroovyElementType MULTIPLE_VARIABLE_DEFINITION = new GroovyElementType("multivariable definition");
@@ -222,13 +213,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   //types
   GroovyElementType CLASS_TYPE_ELEMENT = new GroovyElementType("class type element"); //node
-
-  //balanced tokens
-  GroovyElementType BALANCED_TOKENS = new GroovyElementType("balanced tokens in the brackts"); //not a node
-
-  GroovyElementType UPPER_CASE_IDENT = new GroovyElementType("Upper case identifier");
-
-  TokenSet CLASS_BODY_SET = TokenSet.create(CLASS_BODY, ENUM_BODY);
 
   TokenSet BLOCK_SET = TokenSet.create(CLOSABLE_BLOCK,
           BLOCK_STATEMENT,

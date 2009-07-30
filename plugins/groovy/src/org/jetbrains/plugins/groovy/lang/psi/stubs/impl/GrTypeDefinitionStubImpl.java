@@ -11,21 +11,31 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
  * @author ilyas
  */
 public class GrTypeDefinitionStubImpl extends StubBase<GrTypeDefinition> implements GrTypeDefinitionStub {
+  private static final int ANONYMOUS = 0x01;
+  private static final int INTERFACE = 0x02;
+  private static final int ENUM = 0x04;
+  private static final int ANNOTATION = 0x08;
+
   private final StringRef myName;
   private final String[] mySuperClasses;
   private final StringRef myQualifiedName;
   private StringRef mySourceFileName;
   private final String[] myAnnotations;
+  private final byte myFlags;
 
-  public GrTypeDefinitionStubImpl(StubElement parent, final String name,
+  public GrTypeDefinitionStubImpl(StubElement parent,
+                                  final String name,
                                   final String[] supers,
                                   final IStubElementType elementType,
-                                  final String qualifiedName, String[] annotations) {
+                                  final String qualifiedName,
+                                  String[] annotations,
+                                  byte flags) {
     super(parent, elementType);
     myAnnotations = annotations;
     myName = StringRef.fromString(name);
     mySuperClasses = supers;
     myQualifiedName = StringRef.fromString(qualifiedName);
+    myFlags = flags;
   }
 
   public String[] getSuperClassNames() {
@@ -54,6 +64,35 @@ public class GrTypeDefinitionStubImpl extends StubBase<GrTypeDefinition> impleme
 
   public void setSourceFileName(final String sourceFileName) {
     mySourceFileName = StringRef.fromString(sourceFileName);
+  }
+
+  public boolean isAnnotationType() {
+    return (myFlags & ANNOTATION) != 0;
+  }
+
+  public boolean isAnonymous() {
+    return (myFlags & ANONYMOUS) != 0;
+  }
+
+  public boolean isInterface() {
+    return (myFlags & INTERFACE) != 0;
+  }
+
+  public boolean isEnum() {
+    return (myFlags & ENUM) != 0;
+  }
+
+  public byte getFlags() {
+    return myFlags;
+  }
+
+  public static byte buildFlags(GrTypeDefinition typeDefinition) {
+    byte flags = 0;
+    if (typeDefinition.isAnonymous()) flags |= ANONYMOUS;
+    if (typeDefinition.isAnnotationType()) flags |= ANNOTATION;
+    if (typeDefinition.isInterface()) flags |= INTERFACE;
+    if (typeDefinition.isEnum()) flags |= ENUM;
+    return flags;
   }
 
 }

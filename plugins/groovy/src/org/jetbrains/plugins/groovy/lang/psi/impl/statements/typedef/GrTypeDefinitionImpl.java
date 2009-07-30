@@ -168,7 +168,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
     return findChildByClass(GrImplementsClause.class);
   }
 
-  public final String[] getSuperClassNames() {
+  public  String[] getSuperClassNames() {
     return ArrayUtil.mergeArrays(getExtendsNames(), getImplementsNames(), String.class);
   }
 
@@ -230,7 +230,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
     return GrClassImplUtil.processDeclarations(this, processor, state, lastParent, place);
   }
 
-  @NotNull
+//  @NotNull
   public String getName() {
     return PsiImplUtil.getName(this);
   }
@@ -269,7 +269,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
   }
 
   @Nullable
-  public final PsiClass getSuperClass() {
+  public  PsiClass getSuperClass() {
     return GrClassImplUtil.getSuperClass(this);
   }
 
@@ -283,7 +283,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
   }
 
   @NotNull
-  public final PsiClassType[] getSuperTypes() {
+  public  PsiClassType[] getSuperTypes() {
     return GrClassImplUtil.getSuperTypes(this);
   }
 
@@ -457,6 +457,10 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
     return body.getRBrace();
   }
 
+  public boolean isAnonymous() {
+    return false;
+  }
+
   @Nullable
   public PsiIdentifier getNameIdentifier() {
     return new JavaIdentifier(getManager(), getNameIdentifierGroovy());
@@ -567,7 +571,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
     if (typeDefinitions.length > 1) return false;
     final String name = getName();
     final VirtualFile vFile = groovyFile.getVirtualFile();
-    return vFile != null && name.equals(vFile.getNameWithoutExtension());
+    return vFile != null && name != null && name.equals(vFile.getNameWithoutExtension());
   }
 
   public PsiElement getOriginalElement() {

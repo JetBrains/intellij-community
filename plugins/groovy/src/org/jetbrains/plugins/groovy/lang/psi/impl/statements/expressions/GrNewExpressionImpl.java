@@ -25,10 +25,11 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrArrayDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
@@ -36,8 +37,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,6 +63,10 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   }
 
   public PsiType getType() {
+    final GrAnonymousClassDefinition anonymous = getAnonymousClassDefinition();
+    if (anonymous != null) {
+      return anonymous.getBaseClassType();
+    }
     PsiType type = null;
     GrCodeReferenceElement refElement = getReferenceElement();
     if (refElement != null) {
@@ -83,7 +88,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
 
   public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) throws IncorrectOperationException {
     final GrArgumentList list = getArgumentList();
-    if (list == null) {
+    if (list == null) { //so it is not anonymous class declaration
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
       final GrArgumentList newList = factory.createExpressionArgumentList();
       PsiElement last = getLastChild();
@@ -97,7 +102,16 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return super.addNamedArgument(namedArgument);
   }
 
+  @Override
+  public GrArgumentList getArgumentList() {
+    final GrAnonymousClassDefinition anonymous = getAnonymousClassDefinition();
+    if (anonymous != null) return anonymous.getArgumentListGroovy();
+    return super.getArgumentList();
+  }
+
   public GrCodeReferenceElement getReferenceElement() {
+    final GrAnonymousClassDefinition anonymous = getAnonymousClassDefinition();
+    if (anonymous != null) return anonymous.getBaseClassReferenceGroovy();
     return findChildByClass(GrCodeReferenceElement.class);
   }
 
@@ -170,6 +184,10 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return arrayDeclaration.getArrayCount();
   }
 
+  public GrAnonymousClassDefinition getAnonymousClassDefinition() {
+    return findChildByClass(GrAnonymousClassDefinition.class);
+  }
+
   @Nullable
   public PsiMethod resolveMethod() {
     return resolveConstructor();
@@ -195,6 +213,4 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
 
     return result.toArray(new GroovyResolveResult[result.size()]);
   }
-
-
 }

@@ -133,6 +133,10 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
     return false;
   }
 
+  public boolean isAnonymous() {
+    return false;
+  }
+
   public boolean isAnnotationType() {
     return false;
   }
