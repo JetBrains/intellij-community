@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.grails.fileType;
+package org.jetbrains.plugins.groovy;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
@@ -22,7 +22,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 
 public class GroovyInjector implements ConcatenationAwareInjector {
   private static final String EVAL_NAME = "evaluate";
