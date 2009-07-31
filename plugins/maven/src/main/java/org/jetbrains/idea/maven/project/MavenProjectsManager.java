@@ -244,7 +244,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
     myImportingQueue.makeUserAware(myProject);
     myImportingQueue.makeDumbAware(myProject);
-    myImportingQueue.makeModalAware(myProject);
+    myImportingQueue.makeModalAware();
 
     mySchedulesQueue = new MavenMergingUpdateQueue(getComponentName() + ": Schedules queue", 1000, true, myProject);
     mySchedulesQueue.setPassThrough(false);
@@ -265,8 +265,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   private void listenForProjectsTreeChanges() {
     myProjectsTree.addListener(new MavenProjectsTree.ListenerAdapter() {
       @Override
-      public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored) {
-        scheduleImport();
+      public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
+        if (!fromImport) scheduleImport();
       }
 
       @Override

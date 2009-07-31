@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -132,6 +133,22 @@ public class MavenUtil {
 
   public static VirtualFile findProfilesXmlFile(VirtualFile pomFile) {
     return pomFile.getParent().findChild(MavenConstants.PROFILES_XML);
+  }
+
+  public static <T, U> List<T> collectFirsts(List<Pair<T, U>> pairs) {
+    List<T> result = new ArrayList<T>(pairs.size());
+    for (Pair<T, ?> each : pairs) {
+      result.add(each.first);
+    }
+    return result;
+  }
+
+  public static <T> List<T> collectSeconds(List<Pair<?, T>> pairs) {
+    List<T> result = new ArrayList<T>(pairs.size());
+    for (Pair<?, T> each : pairs) {
+      result.add(each.second);
+    }
+    return result;
   }
 
   public static List<String> collectPaths(List<VirtualFile> files) {

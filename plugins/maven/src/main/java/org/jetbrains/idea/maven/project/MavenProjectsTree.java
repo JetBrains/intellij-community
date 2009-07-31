@@ -223,15 +223,15 @@ public class MavenProjectsTree {
     }
   }
 
-  public void setIgnoredState(final List<MavenProject> projects, final boolean ignored) {
-    doSetIgnoredState(projects, ignored, true);
+  public void setIgnoredState(List<MavenProject> projects, boolean ignored) {
+    setIgnoredState(projects, ignored, false);
   }
 
-  public void setIgnoredStateDoNotFireEvent(final Collection<MavenProject> projects, final boolean ignored) {
-    doSetIgnoredState(projects, ignored, false);
+  public void setIgnoredState(List<MavenProject> projects, boolean ignored, boolean fromImport) {
+    doSetIgnoredState(projects, ignored, fromImport);
   }
 
-  private void doSetIgnoredState(final Collection<MavenProject> projects, final boolean ignored, final boolean fireProjectsIgnoredStateChanged) {
+  private void doSetIgnoredState(List<MavenProject> projects, final boolean ignored, boolean fromImport) {
     final List<String> paths = MavenUtil.collectPaths(MavenUtil.collectFiles(projects));
     doChangeIgnoreStatus(new Runnable() {
       public void run() {
@@ -242,7 +242,7 @@ public class MavenProjectsTree {
           myIgnoredFilesPaths.removeAll(paths);
         }
       }
-    }, fireProjectsIgnoredStateChanged);
+    }, fromImport);
   }
 
   public List<String> getIgnoredFilesPatterns() {
@@ -260,11 +260,11 @@ public class MavenProjectsTree {
     });
   }
 
-  private void doChangeIgnoreStatus(final Runnable runnable) {
-    doChangeIgnoreStatus(runnable, true);
+  private void doChangeIgnoreStatus(Runnable runnable) {
+    doChangeIgnoreStatus(runnable, false);
   }
 
-  private void doChangeIgnoreStatus(final Runnable runnable, final boolean fireProjectsIgnoredStateChanged) {
+  private void doChangeIgnoreStatus(Runnable runnable, boolean fromImport) {
     List<MavenProject> ignoredBefore;
     List<MavenProject> ignoredAfter;
 
@@ -282,9 +282,7 @@ public class MavenProjectsTree {
 
     if (ignored.isEmpty() && unignored.isEmpty()) return;
 
-    if (fireProjectsIgnoredStateChanged) {
-      fireProjectsIgnoredStateChanged(ignored, unignored);
-    }
+    fireProjectsIgnoredStateChanged(ignored, unignored, fromImport);
   }
 
   private List<MavenProject> getIgnoredProjects() {
@@ -1072,9 +1070,9 @@ public class MavenProjectsTree {
     }
   }
 
-  private void fireProjectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored) {
+  private void fireProjectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
     for (Listener each : myListeners) {
-      each.projectsIgnoredStateChanged(ignored, unignored);
+      each.projectsIgnoredStateChanged(ignored, unignored, fromImport);
     }
   }
 
@@ -1246,7 +1244,7 @@ public class MavenProjectsTree {
   public interface Listener extends EventListener {
     void profilesChanged(List<String> profiles);
 
-    void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored);
+    void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport);
 
     void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted);
 
@@ -1263,7 +1261,7 @@ public class MavenProjectsTree {
     public void profilesChanged(List<String> profiles) {
     }
 
-    public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored) {
+    public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
     }
 
     public void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted) {

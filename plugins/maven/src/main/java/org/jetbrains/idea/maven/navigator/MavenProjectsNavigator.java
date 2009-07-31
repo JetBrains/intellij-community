@@ -237,7 +237,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
 
   private class MyProjectsListener extends MavenProjectsTree.ListenerAdapter {
     @Override
-    public void projectsIgnoredStateChanged(final List<MavenProject> ignored, final List<MavenProject> unignored) {
+    public void projectsIgnoredStateChanged(final List<MavenProject> ignored, final List<MavenProject> unignored, boolean fromImport) {
       scheduleStructureUpdate(new Runnable() {
         public void run() {
           myStructure.updateIgnored(ContainerUtil.concat(ignored, unignored));

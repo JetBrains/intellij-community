@@ -112,37 +112,28 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
     }.execute();
   }
 
-  public void makeModalAware(Project project) {
-    MavenUtil.invokeAndWait(
-      project,
-      ModalityState.defaultModalityState(),
-      new Runnable() {
-        public void run() {
-          new ReadAction() {
-            protected void run(Result result) throws Throwable {
-              final ModalityStateListener listener = new ModalityStateListener() {
-                public void beforeModalityStateChanged(boolean entering) {
-                  if (entering) {
-                    mySuppendHelper.suspend();
-                  }
-                  else {
-                    mySuppendHelper.resume();
-                  }
-                }
-              };
-              LaterInvocator.addModalityStateListener(listener);
-              if (MavenUtil.isInModalContext()) {
-                mySuppendHelper.suspend();
-              }
-              Disposer.register(MavenMergingUpdateQueue.this, new Disposable() {
-                public void dispose() {
-                  LaterInvocator.removeModalityStateListener(listener);
-                }
-              });
-            }
-          }.execute();
+  public void makeModalAware() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    
+    final ModalityStateListener listener = new ModalityStateListener() {
+      public void beforeModalityStateChanged(boolean entering) {
+        if (entering) {
+          mySuppendHelper.suspend();
         }
-      });
+        else {
+          mySuppendHelper.resume();
+        }
+      }
+    };
+    LaterInvocator.addModalityStateListener(listener);
+    if (MavenUtil.isInModalContext()) {
+      mySuppendHelper.suspend();
+    }
+    Disposer.register(MavenMergingUpdateQueue.this, new Disposable() {
+      public void dispose() {
+        LaterInvocator.removeModalityStateListener(listener);
+      }
+    });
   }
 
   private class SuspendHelper {
