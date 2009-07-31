@@ -39,6 +39,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -53,6 +55,7 @@ import com.intellij.util.Chunk;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
@@ -65,6 +68,7 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * @author peter
@@ -73,6 +77,8 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyCompilerBase");
   private static final HashSet<String> required = new HashSet<String>(Arrays.asList("groovy", "asm", "antlr", "junit", "jline", "ant", "commons"));
   protected final Project myProject;
+  @NonNls private static final String GROOVYC_RUNNER_REQUIRED = ".*(groovy|asm|antlr|junit|jline|ant|commons).*\\.jar";
+  private static final Pattern GROOVYC_RUNNER_REQUIRED_PATTERN = Pattern.compile(GROOVYC_RUNNER_REQUIRED);
 
   public GroovyCompilerBase(Project project) {
     myProject = project;
@@ -90,7 +96,20 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     final PathsList classPathBuilder = new PathsList();
 
     classPathBuilder.add(PathUtil.getJarPathForClass(GroovycRunner.class));
-    classPathBuilder.addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(LibrariesUtil.getGroovyHomePath(module) + "/lib", ".*(groovy|asm|antlr|junit|jline|ant|commons).*\\.jar"));
+    final String libPath = LibrariesUtil.getGroovyHomePath(module) + "/lib";
+    if (new File(FileUtil.toSystemDependentName(libPath)).exists()) {
+      classPathBuilder.addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(libPath, GROOVYC_RUNNER_REQUIRED));
+    } else {
+      //non-traditional distribution
+      for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+        for (VirtualFile file : entry.getFiles(OrderRootType.CLASSES)) {
+          if (GROOVYC_RUNNER_REQUIRED_PATTERN.matcher(file.getName()).matches()) {
+            classPathBuilder.add(file);
+          }
+        }
+      }
+    }
+
 
     final ModuleChunk chunk = createChunk(module, compileContext);
     final List<String> patchers = new SmartList<String>();
