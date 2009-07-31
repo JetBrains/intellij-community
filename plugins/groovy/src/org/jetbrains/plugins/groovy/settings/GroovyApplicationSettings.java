@@ -20,8 +20,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.Transient;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ilyas
@@ -44,19 +42,6 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
   public Boolean CONVERT_PARAM_SPECIFY_MAP_TYPE = null;
   public Boolean CONVERT_PARAM_CREATE_NEW_PARAM = null;
 
-  @Transient private final boolean myJsSupportEnabled = classExists("com.intellij.lang.javascript.psi.JSElement");
-  @Transient private final boolean myCssSupportEnabled = classExists("com.intellij.psi.css.CssElement");
-
-  private static boolean classExists(@NonNls String qname) {
-    try {
-      Class.forName(qname);
-      return true;
-    }
-    catch (ClassNotFoundException e) {
-      return false;
-    }
-  }
-
   public GroovyApplicationSettings getState() {
     return this;
   }
@@ -69,11 +54,4 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
     return ServiceManager.getService(GroovyApplicationSettings.class);
   }
 
-  public boolean isJsSupportEnabled() {
-    return myJsSupportEnabled;
-  }
-
-  public boolean isCssSupportEnabled() {
-    return myCssSupportEnabled;
-  }
 }
