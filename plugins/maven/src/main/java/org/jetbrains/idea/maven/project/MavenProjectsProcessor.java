@@ -128,10 +128,10 @@ public class MavenProjectsProcessor {
 
     myCurrentTaskHandler = MavenUtil.runInBackground(myProject, myTitle, myCancellable, new MavenTask() {
       public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+        int counter = 0;
         while (true) {
           MavenProjectsProcessorTask task;
           int queueSize;
-          int counter = 0;
 
           synchronized (myQueue) {
             task = myQueue.peek();
@@ -141,8 +141,8 @@ public class MavenProjectsProcessor {
           try {
             indicator.checkCanceled();
 
-            indicator.getIndicator().setIndeterminate(false);
-            indicator.setFraction(counter++ / (double)(counter + queueSize));
+            counter++;
+            indicator.setFraction(counter / (double)(counter + queueSize));
 
             String text = myTitle;
             if (queueSize > 0) text += " (" + (queueSize + 1) + " in queue)";

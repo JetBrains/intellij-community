@@ -13,6 +13,7 @@
     <extensionPoint name="archetypesProvider" interface="org.jetbrains.idea.maven.indices.MavenArchetypesProvider"/>
   </extensionPoints>
 
+  <depends>com.intellij.properties</depends>
   <depends optional="true" config-file="jee-support.xml">com.intellij.javaee</depends>
   <depends optional="true" config-file="gwt-support.xml">com.intellij.gwt</depends>
   <depends optional="true" config-file="flex-support.xml">com.intellij.flex</depends>
