@@ -154,7 +154,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
         new String[]{
             IndicesBundle.message("maven.index.url"),
             IndicesBundle.message("maven.index.type"),
-            IndicesBundle.message("maven.index.timestamp"),
+            IndicesBundle.message("maven.index.updated"),
             ""};
 
     private final List<MavenIndex> myIndices;
@@ -192,10 +192,10 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
           return "Remote";
         case 2:
           if (i.getFailureMessage() != null) {
-            return IndicesBundle.message("maven.index.timestamp.error");
+            return IndicesBundle.message("maven.index.updated.error");
           }
           long timestamp = i.getUpdateTimestamp();
-          if (timestamp == -1) return IndicesBundle.message("maven.index.timestamp.unknown");
+          if (timestamp == -1) return IndicesBundle.message("maven.index.updated.never");
           return SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT).format(new Date(timestamp));
         case 3:
           return myManager.getUpdatingState(i);

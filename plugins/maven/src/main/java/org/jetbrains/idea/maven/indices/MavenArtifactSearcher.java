@@ -45,6 +45,8 @@ public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResu
     Map<String, MavenArtifactSearchResult> result = new THashMap<String, MavenArtifactSearchResult>();
 
     for (ArtifactInfo each : infos) {
+      if (!StringUtil.isEmptyOrSpaces(each.classifier)) continue; // todo skip for now
+      
       String key = makeKey(each);
       MavenArtifactSearchResult searchResult = result.get(key);
       if (searchResult == null) {

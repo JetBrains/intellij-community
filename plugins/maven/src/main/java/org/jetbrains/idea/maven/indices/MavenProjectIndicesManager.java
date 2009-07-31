@@ -2,13 +2,13 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
 import org.apache.lucene.search.Query;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 import org.sonatype.nexus.index.ArtifactInfo;
@@ -65,7 +65,7 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
     myUpdateQueue.queue(new Update(MavenProjectIndicesManager.this) {
       public void run() {
         List<MavenIndex> newIndices = MavenIndicesManager.getInstance().ensureIndicesExist(
-          getLocalRepository(), collectRemoteRepositories());
+          myProject, getLocalRepository(), collectRemoteRepositoriesIdsAndUrls());
         myProjectIndices = newIndices;
       }
     });
@@ -75,17 +75,14 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
     return MavenProjectsManager.getInstance(myProject).getLocalRepository();
   }
 
-  private Set<String> collectRemoteRepositories() {
-    Set<String> result = new THashSet<String>();
-
-    for (MavenProject each : getMavenProjectManager().getProjects()) {
-      for (MavenRemoteRepository eachRepository : each.getRemoteRepositories()) {
-        String url = eachRepository.getUrl();
-        if (url == null) continue;
-        result.add(url);
-      }
+  private Set<Pair<String, String>> collectRemoteRepositoriesIdsAndUrls() {
+    Set<Pair<String, String>> result = new THashSet<Pair<String, String>>();
+    for (MavenRemoteRepository each : getMavenProjectManager().getRemoteRepositories()) {
+      String id = each.getId();
+      String url = each.getUrl();
+      if (id == null || url == null) continue;
+      result.add(Pair.create(id, url));
     }
-
     return result;
   }
 
@@ -94,11 +91,11 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
   }
 
   public void scheduleUpdateAll() {
-    MavenIndicesManager.getInstance().scheduleUpdate(myProjectIndices);
+    MavenIndicesManager.getInstance().scheduleUpdate(myProject, myProjectIndices);
   }
 
   public void scheduleUpdate(List<MavenIndex> indices) {
-    MavenIndicesManager.getInstance().scheduleUpdate(indices);
+    MavenIndicesManager.getInstance().scheduleUpdate(myProject, indices);
   }
 
   public MavenIndicesManager.IndexUpdatingState getUpdatingState(MavenIndex index) {

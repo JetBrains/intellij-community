@@ -5,6 +5,10 @@ public class MavenIndexException extends Exception {
     super(cause);
   }
 
+  public MavenIndexException(String message) {
+    super(message);
+  }
+
   public MavenIndexException(String message, Throwable cause) {
     super(message, cause);
   }

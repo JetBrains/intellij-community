@@ -2,17 +2,16 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import org.apache.maven.embedder.MavenEmbedder;
-import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 
 import java.io.File;
-import java.util.Random;
 import java.util.Collections;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class MavenIndicesStressTest extends MavenTestCase implements MavenIndex.IndexListener {
+public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implements MavenIndex.IndexListener {
   public void test1() throws Exception {
     MavenCustomRepositoryHelper helper;
 
@@ -21,11 +20,11 @@ public abstract class MavenIndicesStressTest extends MavenTestCase implements Ma
     helper.copy("local2", "local1");
     //setRepositoryPath(fixture.getTestDataPath("local1"));
 
-    MavenEmbedder embedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings(), Collections.EMPTY_MAP).getEmbedder();
+    final MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings(), Collections.EMPTY_MAP);
     File indicesDir = new File(myDir, "indices");
 
     final MavenIndices indices = new MavenIndices(embedder, indicesDir, this);
-    final MavenIndex index = indices.add(getRepositoryPath(), MavenIndex.Kind.LOCAL);
+    final MavenIndex index = indices.add("id", getRepositoryPath(), MavenIndex.Kind.LOCAL);
 
     final AtomicBoolean isFinished = new AtomicBoolean(false);
 
@@ -34,7 +33,7 @@ public abstract class MavenIndicesStressTest extends MavenTestCase implements Ma
         try {
           for (int i = 0; i < 3; i++) {
             System.out.println("INDEXING #" + i);
-            indices.updateOrRepair(index, true, new EmptyProgressIndicator());
+            indices.updateOrRepair(index, embedder, true, new EmptyProgressIndicator());
           }
         }
         catch (ProcessCanceledException e) {
@@ -81,11 +80,11 @@ public abstract class MavenIndicesStressTest extends MavenTestCase implements Ma
     helper.copy("local2", "local1");
     setRepositoryPath(helper.getTestDataPath("local1"));
 
-    MavenEmbedder embedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings(), Collections.EMPTY_MAP).getEmbedder();
+    MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings(), Collections.EMPTY_MAP);
     File indicesDir = new File(myDir, "indices");
 
     MavenIndices indices = new MavenIndices(embedder, indicesDir, this);
-    MavenIndex index = indices.add(getRepositoryPath(), MavenIndex.Kind.LOCAL);
+    MavenIndex index = indices.add("id", getRepositoryPath(), MavenIndex.Kind.LOCAL);
 
     //index.addArtifact(new MavenId("group1", "artifact1", "1"));
     fail();

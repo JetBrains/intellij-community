@@ -344,7 +344,7 @@ public abstract class MavenTestCase extends TestCase {
   }
 
   protected <T, U> void assertUnorderedElementsAreEqual(Collection<U> actual, T... expected) {
-    String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + actual;
+    String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + new ArrayList<U>(actual);
     assertEquals(s, expected.length, actual.size());
 
     for (T eachExpected : expected) {
@@ -360,7 +360,7 @@ public abstract class MavenTestCase extends TestCase {
   }
 
   protected <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, T... expected) {
-    String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + actual;
+    String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + new ArrayList<U>(actual);
     assertEquals(s, expected.length, actual.size());
 
     List<U> actualList = new ArrayList<U>(actual);

@@ -1,12 +1,11 @@
 package org.jetbrains.idea.maven.indices;
 
-import org.jetbrains.idea.maven.MavenTestCase;
 import org.sonatype.nexus.index.ArtifactInfo;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MavenSearcherTest extends MavenTestCase {
+public class MavenSearcherTest extends MavenIndicesTestCase {
   MavenIndicesTestFixture myIndicesFixture;
 
   @Override
@@ -51,6 +50,18 @@ public class MavenSearcherTest extends MavenTestCase {
                              "JUnitCore(org.junit.runner) junit:junit:4.0");
 
     assertClassSearchResults("org.junit.After",
+                             "After(org.junit) junit:junit:4.0",
+                             "AfterClass(org.junit) junit:junit:4.0");
+
+    assertClassSearchResults("org.After",
+                             "After(org.junit) junit:junit:4.0",
+                             "AfterClass(org.junit) junit:junit:4.0");
+
+    assertClassSearchResults("junit.After",
+                             "After(org.junit) junit:junit:4.0",
+                             "AfterClass(org.junit) junit:junit:4.0");
+
+    assertClassSearchResults("or.jun.After",
                              "After(org.junit) junit:junit:4.0",
                              "AfterClass(org.junit) junit:junit:4.0");
 

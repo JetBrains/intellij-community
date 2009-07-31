@@ -8,22 +8,19 @@ import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
 import org.codehaus.plexus.PlexusContainer;
-import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.sonatype.nexus.index.*;
-import org.sonatype.nexus.index.context.IndexContextInInconsistentStateException;
 import org.sonatype.nexus.index.context.IndexingContext;
-import org.sonatype.nexus.index.scan.ScanningResult;
 import org.sonatype.nexus.index.updater.IndexUpdater;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
-public class NexusIndexerTest extends MavenTestCase {
+public class NexusIndexerTest extends MavenIndicesTestCase {
   private MavenCustomRepositoryHelper myRepositoryHelper;
   private MavenEmbedder myEmbedder;
   private NexusIndexer myIndexer;
@@ -82,7 +79,7 @@ public class NexusIndexerTest extends MavenTestCase {
     createProjectPom("");
 
     ArtifactInfo ai = new ArtifactInfo(c.getRepositoryId(), "group", "id", "version", null);
-    ArtifactContext a = new ArtifactContext(new File(myProjectPom.getPath()), null, null, ai);
+    ArtifactContext a = new ArtifactContext(new File(myProjectPom.getPath()), null, null, ai, null);
 
     myIndexer.addArtifactToIndex(a, c);
 
@@ -102,7 +99,9 @@ public class NexusIndexerTest extends MavenTestCase {
     }
   }
 
-  public void ignoreTestIteratingAddedArtifacts() throws Exception {
+  public void testIteratingAddedArtifacts() throws Exception {
+    if (ignore()) return;
+
     IndexingContext c = addContext("virtual", myIndexDir, null, null);
 
     addArtifact(c, "group1", "id1", "version1", "x:/path1");
@@ -137,8 +136,8 @@ public class NexusIndexerTest extends MavenTestCase {
     myIndexer.removeIndexingContext(i1, false);
     myIndexer.removeIndexingContext(i2, false);
     
-    addContext(null, new File(myIndexDir, "one"), null, null);
-    addContext(null, new File(myIndexDir, "two"), null, null);
+    addContext("id", new File(myIndexDir, "one"), null, null);
+    addContext("id", new File(myIndexDir, "two"), null, null);
   }
 
   private void addArtifact(IndexingContext c, String groupId, String artifactId, String version, String path) throws IOException {
@@ -148,7 +147,7 @@ public class NexusIndexerTest extends MavenTestCase {
     ai.sourcesExists = ArtifactAvailablility.fromString(Integer.toString(0));
     ai.javadocExists = ArtifactAvailablility.fromString(Integer.toString(0));
 
-    ArtifactContext a = new ArtifactContext(new File(path), null, null, ai);
+    ArtifactContext a = new ArtifactContext(new File(path), null, null, ai, null);
     myIndexer.addArtifactToIndex(a, c);
   }
 
@@ -163,7 +162,7 @@ public class NexusIndexerTest extends MavenTestCase {
         NexusIndexer.FULL_INDEX);
   }
 
-  private void assertSearchWorks() throws IOException, IndexContextInInconsistentStateException {
+  private void assertSearchWorks() throws IOException {
     WildcardQuery q = new WildcardQuery(new Term(ArtifactInfo.ARTIFACT_ID, "junit*"));
     Collection<ArtifactInfo> result = myIndexer.searchFlat(ArtifactInfo.VERSION_COMPARATOR, q);
     assertEquals(3, result.size());

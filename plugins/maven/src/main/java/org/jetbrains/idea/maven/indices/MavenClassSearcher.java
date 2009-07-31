@@ -1,18 +1,15 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.WildcardQuery;
 import org.sonatype.nexus.index.ArtifactInfo;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -24,32 +21,44 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
       return new Pair<String, Query>(pattern, new MatchAllDocsQuery());
     }
 
-    boolean exactSearch = pattern.endsWith(" ");
-    pattern = pattern.trim();
-    if (!exactSearch) pattern += "*";
+    List<String> parts = StringUtil.split(pattern, ".");
 
-    String queryPattern = pattern;
-    int dot = pattern.lastIndexOf(".");
-    if (dot != -1) {
-      queryPattern = queryPattern.substring(dot + 1);
+    StringBuilder newPattern = new StringBuilder();
+    for (int i = 0; i < parts.size() - 1; i++) {
+      String each = parts.get(i);
+      newPattern.append(each.trim());
+      newPattern.append("*.");
     }
 
-    Term term = new Term(ArtifactInfo.NAMES, queryPattern);
+    String className = parts.get(parts.size() - 1);
+    boolean exactSearch = className.endsWith(" ");
+    newPattern.append(className.trim());
+    if (!exactSearch) newPattern.append("*");
 
-    return new Pair<String, Query>(pattern, exactSearch
-                                            ? new TermQuery(term) : new WildcardQuery(term));
+    pattern = newPattern.toString();
+    String queryPattern = "*/" + pattern.replaceAll("\\.", "/");
+
+    return new Pair<String, Query>(pattern, new WildcardQuery(new Term(ArtifactInfo.NAMES, queryPattern)));
   }
 
   protected Collection<MavenClassSearchResult> processResults(Set<ArtifactInfo> infos, String pattern, int maxResult) {
     if (pattern.length() == 0 || pattern.equals("*")) {
-      pattern = "^(.*)$";
+      pattern = "^/(.*)$";
     }
     else {
-      boolean hasPackage = pattern.indexOf(".") != -1;
       pattern = pattern.replace(".", "/");
-      pattern = pattern.replaceAll("\\*", "[^/]*?");
-      if (!hasPackage) pattern = ".*?/" + pattern;
-      pattern = "^(" + pattern + ")$"; 
+
+      int lastDot = pattern.lastIndexOf("/");
+      String packagePattern = lastDot == -1 ? "" : (pattern.substring(0, lastDot) + "/");
+      String classNamePattern = lastDot == -1 ? pattern : pattern.substring(lastDot + 1);
+
+      packagePattern = packagePattern.replaceAll("\\*", ".*?");
+      classNamePattern = classNamePattern.replaceAll("\\*", "[^/]*?");
+
+      pattern = packagePattern + classNamePattern;
+
+      pattern = ".*?/" + pattern;
+      pattern = "^(" + pattern + ")$";
     }
     Pattern p;
     try {
@@ -65,8 +74,10 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
 
       Matcher matcher = p.matcher(each.classNames);
       while (matcher.find()) {
-        String classFQName = matcher.group();
+        String classFQName = matcher.group(1);
         classFQName = classFQName.replace("/", ".");
+        if (classFQName.startsWith(".")) classFQName = classFQName.substring(1);
+        
         String key = makeKey(classFQName, each);
 
         MavenClassSearchResult classResult = result.get(key);

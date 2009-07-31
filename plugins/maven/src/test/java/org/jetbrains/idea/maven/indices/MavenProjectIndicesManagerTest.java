@@ -1,10 +1,8 @@
 package org.jetbrains.idea.maven.indices;
 
-import org.jetbrains.idea.maven.MavenImportingTestCase;
-
 import java.util.List;
 
-public class MavenProjectIndicesManagerTest extends MavenImportingTestCase {
+public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
   private MavenIndicesTestFixture myIndicesFixture;
 
   @Override
@@ -63,15 +61,45 @@ public class MavenProjectIndicesManagerTest extends MavenImportingTestCase {
     assertTrue(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "junit", "4.0"));
   }
 
+  public void testUpdatingIndexUsingMirrors() throws Exception {
+    myIndicesFixture.tearDown();
+    myIndicesFixture = new MavenIndicesTestFixture(myDir, myProject, "local2", "remote_mirror");
+    myIndicesFixture.setUp();
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<repositories>" +
+                  "  <repository>" +
+                  "    <id>central</id>" +
+                  "    <url>xxx://does.not.matter</url>" +
+                  "  </repository>" +
+                  "</repositories>");
+
+    updateSettingsXmlFully("<settings>" +
+                           "  <mirrors>" +
+                           "    <mirror>" +
+                           "      <id>nexus</id>" +
+                           "      <mirrorOf>*</mirrorOf>" +
+                           "      <url>file:///" + myIndicesFixture.getRepositoryHelper().getTestDataPath("remote_mirror") + "</url>" +
+                           "    </mirror>" +
+                           "  </mirrors>" +
+                           "</settings>");
+
+    myIndicesFixture.getProjectIndicesManager().scheduleUpdateAll();
+    assertUnorderedElementsAreEqual(myIndicesFixture.getProjectIndicesManager().getGroupIds(), "test", "jmock", "junit");
+  }
+
   public void testCheckingLocalRepositoryForAbsentIndices() throws Exception {
     myIndicesFixture.tearDown();
     myIndicesFixture = new MavenIndicesTestFixture(myDir, myProject, "local2");
     myIndicesFixture.setUp();
 
     myIndicesFixture.addToRepository("local1");
-    
+
     assertUnorderedElementsAreEqual(
-        myIndicesFixture.getProjectIndicesManager().getGroupIds(), "jmock");
+      myIndicesFixture.getProjectIndicesManager().getGroupIds(), "jmock");
 
     assertTrue(myIndicesFixture.getProjectIndicesManager().hasGroupId("junit"));
     assertFalse(myIndicesFixture.getProjectIndicesManager().hasGroupId("xxx"));

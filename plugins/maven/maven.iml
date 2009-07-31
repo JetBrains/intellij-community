@@ -17,135 +17,36 @@
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-project/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-embedder/src/examples/simple-project/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-core/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-reporting-api/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-profile/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-lifecycle/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-embedder/src/test/embedder-test-project/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-core/src/test/repository-projects/test-extension/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-plugin-api/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-embedder/src/test/projects/isolated-project-getting-parent-pom/project/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-embedder/src/test/projects/no-artifact-in-repository-test/child-2/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/artifact/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-embedder/src/test/projects/no-artifact-in-repository-test/child-1/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-embedder/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-model/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../plexus/plexus-containers-46/plexus-containers-1.0-alpha-46/plexus-container-default/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../plexus/plexus-containers-46/plexus-containers-1.0-alpha-46/plexus-container-default/src/it/multi-plexus.xml/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../plexus/plexus-containers-46/plexus-containers-1.0-alpha-46/plexus-container-default/src/it/plexus-its/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../plexus/plexus-containers-46/plexus-containers-1.0-alpha-46/plexus-container-default/src/it/test-fodder/component-with-plexus.xml/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../plexus/plexus-containers-46/plexus-containers-1.0-alpha-46/plexus-component-annotations/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-file/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-http/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-ssh-common/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-http-lightweight/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-http-shared/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-webdav-jackrabbit/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-ftp/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-ssh/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-ssh-external/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-scm/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-provider-api/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-toolchain/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-core/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-profile/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-workspace/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-embedder-integration-tests/src/test/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-lifecycle/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-plugin-api/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/src" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-toolchain/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/components/maven-distribution" />
-          <root url="file://$MODULE_DIR$/../../../maven-plexus-src/interpolation/src/main/java" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/lucene-core-2.3.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/analyzers/src/java" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/highlighter/src/test" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/analyzers/src/test" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/spellchecker/src/java" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/wikipedia/src/java" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/spellchecker/src/test" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/benchmark/src/java" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/xml-query-parser/src/java" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/wordnet/src/java" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/db/bdb-je/src/test" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/benchmark/src/test" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/db/bdb/src/test" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/queries/src/test" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/snowball/src/test" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/lucli/src/java" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/memory/src/test" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/miscellaneous/src/java" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/db/bdb-je/src/java" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/regex/src/test" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/ant/src/test" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/src/test" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/regex/src/java" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/snowball/src/java" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/db/bdb/src/java" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/src/demo" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/miscellaneous/src/test" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/memory/src/java" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/surround/src/java" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/queries/src/java" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/surround/src/test" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/ant/src/java" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/wikipedia/src/test" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/highlighter/src/java" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/swing/src/test" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/swing/src/java" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/src/gcj" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/xml-query-parser/src/test" />
-          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/src/java" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/plexus-digest-1.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/plexus-utils-1.5.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/commons-beanutils.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/nexus-indexer-1.0.0-SNAPSHOT.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/../../../nexus-indexer/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/components/maven-plugin-api/target/generated-sources/modello" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/components/maven-core/target/generated-sources/modello" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/components/maven-reporting-api/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/components/maven-toolchain/target/generated-sources/modello" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/components/maven-core/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/components/maven-lifecycle/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/components/maven-embedder/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/components/maven-profile/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/components/maven-toolchain/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/components/maven-workspace/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/components/maven-project/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/components/maven-profile/target/generated-sources/modello" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/components/maven-lifecycle/target/generated-sources/modello" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/components/maven-core-it-runner/src/test/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/components/maven-model/target/generated-sources/modello" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/components/maven-plugin-api/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/wagon/wagon-providers/wagon-http-lightweight/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/wagon/wagon-providers/wagon-scm/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/wagon/wagon-providers/wagon-webdav-jackrabbit/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/wagon/wagon-provider-api/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/artifact/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/wagon/wagon-providers/wagon-http/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/wagon/wagon-providers/wagon-ftp/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/wagon/wagon-providers/wagon-ssh/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/wagon/wagon-providers/wagon-ssh-common-test/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/wagon/wagon-provider-test/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/wagon/wagon-providers/wagon-ssh-external/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/wagon/wagon-providers/wagon-ssh-common/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/wagon/wagon-providers/wagon-http-shared/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven/maven-2.1-SNAPSHOT/wagon/wagon-providers/wagon-file/src/main/java" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -159,6 +60,38 @@
           <root url="file://$MODULE_DIR$/../../../maven-src/archetype/archetype-common/target/generated-sources/modello" />
           <root url="file://$MODULE_DIR$/../../../maven-src/archetype/archetype-common/src/main/java" />
         </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/commons-beanutils.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="Nexus Indexer">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/lucene-core-2.3.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/nexus-indexer-1.2.3.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/mercury-artifact-1.0-alpha-6.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/../../../maven/nexus-indexer-1.2.3/src/main/java" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="Plexus">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/plexus-digest-1.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/plexus-utils-1.5.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="openapi" />

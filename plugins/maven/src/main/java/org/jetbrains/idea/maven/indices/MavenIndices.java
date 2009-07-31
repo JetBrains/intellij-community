@@ -3,12 +3,8 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
-import org.apache.maven.embedder.MavenEmbedder;
-import org.apache.maven.settings.Proxy;
-import org.apache.maven.wagon.proxy.ProxyInfo;
-import org.codehaus.plexus.PlexusContainer;
-import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.sonatype.nexus.index.ArtifactContextProducer;
 import org.sonatype.nexus.index.NexusIndexer;
@@ -19,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MavenIndices {
-  private final MavenEmbedder myEmbedder;
+  private final MavenEmbedderWrapper myEmbedder;
   private final NexusIndexer myIndexer;
   private final IndexUpdater myUpdater;
   private final ArtifactContextProducer myArtifactContextProducer;
@@ -30,20 +26,14 @@ public class MavenIndices {
   private final List<MavenIndex> myIndices = new ArrayList<MavenIndex>();
   private static final Object ourDirectoryLock = new Object();
 
-  public MavenIndices(MavenEmbedder e, File indicesDir, MavenIndex.IndexListener listener) {
-    myEmbedder = e;
+  public MavenIndices(MavenEmbedderWrapper embedder, File indicesDir, MavenIndex.IndexListener listener) {
+    myEmbedder = embedder;
     myIndicesDir = indicesDir;
     myListener = listener;
 
-    PlexusContainer p = myEmbedder.getPlexusContainer();
-    try {
-      myIndexer = (NexusIndexer)p.lookup(NexusIndexer.class);
-      myUpdater = (IndexUpdater)p.lookup(IndexUpdater.class);
-      myArtifactContextProducer = (ArtifactContextProducer)p.lookup(ArtifactContextProducer.class);
-    }
-    catch (ComponentLookupException ex) {
-      throw new RuntimeException(ex);
-    }
+    myIndexer = myEmbedder.getComponent(NexusIndexer.class);
+    myUpdater = myEmbedder.getComponent(IndexUpdater.class);
+    myArtifactContextProducer = myEmbedder.getComponent(ArtifactContextProducer.class);
 
     load();
   }
@@ -55,10 +45,10 @@ public class MavenIndices {
     if (indices == null) return;
     for (File each : indices) {
       if (!each.isDirectory()) continue;
-      
+
       try {
         MavenIndex index = new MavenIndex(myIndexer, myArtifactContextProducer, each, myListener);
-        if (findExisting(index.getRepositoryPathOrUrl(), index.getKind()) != null) {
+        if (find(index.getRepositoryId(), index.getRepositoryPathOrUrl(), index.getKind()) != null) {
           index.close();
           FileUtil.delete(each);
           continue;
@@ -88,25 +78,25 @@ public class MavenIndices {
     return new ArrayList<MavenIndex>(myIndices);
   }
 
-  public synchronized MavenIndex add(String repositoryPathOrUrl, MavenIndex.Kind kind) throws MavenIndexException {
-    MavenIndex index = findExisting(repositoryPathOrUrl, kind);
+  public synchronized MavenIndex add(String repositoryId, String repositoryPathOrUrl, MavenIndex.Kind kind) throws MavenIndexException {
+    MavenIndex index = find(repositoryId, repositoryPathOrUrl, kind);
     if (index != null) return index;
 
     File dir = getAvailableIndexDir();
-    index = new MavenIndex(myIndexer, myArtifactContextProducer, dir, repositoryPathOrUrl, kind, myListener);
+    index = new MavenIndex(myIndexer, myArtifactContextProducer, dir, repositoryId, repositoryPathOrUrl, kind, myListener);
     myIndices.add(index);
     return index;
   }
 
-  private MavenIndex findExisting(String repositoryPathOrUrl, MavenIndex.Kind kind) {
+  public MavenIndex find(String repositoryId, String repositoryPathOrUrl, MavenIndex.Kind kind) {
     File file = kind == MavenIndex.Kind.LOCAL ? new File(repositoryPathOrUrl.trim()) : null;
     for (MavenIndex each : myIndices) {
       switch (kind) {
         case LOCAL:
-          if (each.isForLocal(file)) return each;
+          if (each.isForLocal(repositoryId, file)) return each;
           break;
         case REMOTE:
-          if (each.isForRemote(repositoryPathOrUrl)) return each;
+          if (each.isForRemote(repositoryId, repositoryPathOrUrl)) return each;
           break;
       }
     }
@@ -132,21 +122,10 @@ public class MavenIndices {
     }
   }
 
-  public void updateOrRepair(MavenIndex i, boolean fullUpdate, ProgressIndicator progress) throws ProcessCanceledException {
-    i.updateOrRepair(myUpdater, getProxyInfo(), fullUpdate, progress);
-  }
-
-  private ProxyInfo getProxyInfo() {
-    Proxy proxy = myEmbedder.getSettings().getActiveProxy();
-    ProxyInfo result = null;
-    if (proxy != null) {
-      result = new ProxyInfo();
-      result.setHost(proxy.getHost());
-      result.setPort(proxy.getPort());
-      result.setNonProxyHosts(proxy.getNonProxyHosts());
-      result.setUserName(proxy.getUsername());
-      result.setPassword(proxy.getPassword());
-    }
-    return result;
+  public void updateOrRepair(MavenIndex index,
+                             MavenEmbedderWrapper embedderToUse,
+                             boolean fullUpdate,
+                             ProgressIndicator progress)throws ProcessCanceledException {
+    index.updateOrRepair(embedderToUse, myUpdater, fullUpdate, progress);
   }
 }

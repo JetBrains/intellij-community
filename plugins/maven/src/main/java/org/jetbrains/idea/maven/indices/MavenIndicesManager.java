@@ -2,6 +2,8 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
@@ -11,6 +13,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,16 +24,15 @@ import org.apache.maven.archetype.catalog.Archetype;
 import org.apache.maven.archetype.catalog.ArchetypeCatalog;
 import org.apache.maven.archetype.source.ArchetypeDataSource;
 import org.apache.maven.archetype.source.ArchetypeDataSourceException;
-import org.apache.maven.embedder.MavenEmbedder;
-import org.codehaus.plexus.PlexusContainer;
-import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -47,13 +49,15 @@ public class MavenIndicesManager implements ApplicationComponent {
   private static final String ELEMENT_REPOSITORY = "repository";
   private static final String ELEMENT_DESCRIPTION = "description";
 
+  private static final String LOCAL_REPOSITORY_ID = "local";
+
   public enum IndexUpdatingState {
     IDLE, WAITING, UPDATING
   }
 
   private volatile File myTestIndicesDir;
 
-  private volatile MavenEmbedder myEmbedder;
+  private volatile MavenEmbedderWrapper myEmbedder;
   private volatile MavenIndices myIndices;
 
   private final Object myUpdatingIndicesLock = new Object();
@@ -94,10 +98,10 @@ public class MavenIndicesManager implements ApplicationComponent {
     if (myIndices != null) return;
 
     MavenGeneralSettings defaultSettings = new MavenGeneralSettings();
-    myEmbedder = MavenEmbedderFactory.createEmbedder(defaultSettings, Collections.EMPTY_MAP).getEmbedder();
+    myEmbedder = MavenEmbedderFactory.createEmbedder(defaultSettings, Collections.EMPTY_MAP);
     myIndices = new MavenIndices(myEmbedder, getIndicesDir(), new MavenIndex.IndexListener() {
       public void indexIsBroken(MavenIndex index) {
-        scheduleUpdate(Collections.singletonList(index), false);
+        scheduleUpdate(null, Collections.singletonList(index), false);
       }
     });
 
@@ -130,7 +134,7 @@ public class MavenIndicesManager implements ApplicationComponent {
 
     if (myEmbedder != null) {
       try {
-        myEmbedder.stop();
+        myEmbedder.release();
       }
       catch (Exception e) {
         MavenLog.LOG.error("", e);
@@ -148,27 +152,28 @@ public class MavenIndicesManager implements ApplicationComponent {
     return getIndicesObject().getIndices();
   }
 
-  public synchronized List<MavenIndex> ensureIndicesExist(File localRepository,
-                                                          Collection<String> remoteRepositories) {
+  public synchronized List<MavenIndex> ensureIndicesExist(Project project,
+                                                          File localRepository,
+                                                          Collection<Pair<String, String>> remoteRepositoriesIdsAndUrls) {
     // MavenIndices.add method returns an existing index if it has already been added, thus we have to use set here.
     LinkedHashSet<MavenIndex> result = new LinkedHashSet<MavenIndex>();
 
     MavenIndices indicesObjectCache = getIndicesObject();
 
     try {
-      MavenIndex localIndex = indicesObjectCache.add(localRepository.getPath(), MavenIndex.Kind.LOCAL);
+      MavenIndex localIndex = indicesObjectCache.add(LOCAL_REPOSITORY_ID, localRepository.getPath(), MavenIndex.Kind.LOCAL);
       result.add(localIndex);
       if (localIndex.getUpdateTimestamp() == -1) {
-        scheduleUpdate(Collections.singletonList(localIndex));
+        scheduleUpdate(project, Collections.singletonList(localIndex));
       }
     }
     catch (MavenIndexException e) {
       MavenLog.LOG.warn(e);
     }
 
-    for (String eachRepo : remoteRepositories) {
+    for (Pair<String, String> eachIdAndUrl : remoteRepositoriesIdsAndUrls) {
       try {
-        result.add(indicesObjectCache.add(eachRepo, MavenIndex.Kind.REMOTE));
+        result.add(indicesObjectCache.add(eachIdAndUrl.first, eachIdAndUrl.second, MavenIndex.Kind.REMOTE));
       }
       catch (MavenIndexException e) {
         MavenLog.LOG.warn(e);
@@ -179,35 +184,33 @@ public class MavenIndicesManager implements ApplicationComponent {
   }
 
   public void addArtifact(File artifactFile, String name) {
-    File repository = getRepositoryFile(artifactFile, name);
+    String repositoryPath = getRepositoryUrl(artifactFile, name);
 
-    for (MavenIndex each : getIndices()) {
-      if (each.isForLocal(repository)) {
-        each.addArtifact(artifactFile);
-        return;
-      }
+    MavenIndex index = getIndicesObject().find(LOCAL_REPOSITORY_ID, repositoryPath, MavenIndex.Kind.LOCAL);
+    if (index != null) {
+      index.addArtifact(artifactFile);
     }
   }
 
-  private File getRepositoryFile(File artifactFile, String name) {
+  private String getRepositoryUrl(File artifactFile, String name) {
     List<String> parts = getArtifactParts(name);
 
     File result = artifactFile;
     for (int i = 0; i < parts.size(); i++) {
       result = result.getParentFile();
     }
-    return result;
+    return result.getPath();
   }
 
   private List<String> getArtifactParts(String name) {
     return StringUtil.split(name, "/");
   }
 
-  public void scheduleUpdate(List<MavenIndex> indices) {
-    scheduleUpdate(indices, true);
+  public void scheduleUpdate(Project project, List<MavenIndex> indices) {
+    scheduleUpdate(project, indices, true);
   }
 
-  private void scheduleUpdate(List<MavenIndex> indices, final boolean fullUpdate) {
+  private void scheduleUpdate(final Project projectOrNull, List<MavenIndex> indices, final boolean fullUpdate) {
     final List<MavenIndex> toSchedule = new ArrayList<MavenIndex>();
 
     synchronized (myUpdatingIndicesLock) {
@@ -219,21 +222,23 @@ public class MavenIndicesManager implements ApplicationComponent {
       myWaitingIndices.addAll(toSchedule);
     }
 
-    myUpdatingQueue.run(new Task.Backgroundable(null, IndicesBundle.message("maven.indices.updating"), true) {
+    myUpdatingQueue.run(new Task.Backgroundable(projectOrNull, IndicesBundle.message("maven.indices.updating"), true) {
       public void run(@NotNull ProgressIndicator indicator) {
-        doUpdateIndices(toSchedule, fullUpdate, indicator);
+        doUpdateIndices(projectOrNull, toSchedule, fullUpdate, indicator);
       }
     });
   }
 
-  private void doUpdateIndices(List<MavenIndex> indices, boolean fullUpdate, ProgressIndicator indicator) {
+  private void doUpdateIndices(final Project projectOrNull, List<MavenIndex> indices, boolean fullUpdate, ProgressIndicator indicator) {
     List<MavenIndex> remainingWaiting = new ArrayList<MavenIndex>(indices);
 
     try {
       for (MavenIndex each : indices) {
         if (indicator.isCanceled()) return;
 
-        indicator.setText(IndicesBundle.message("maven.indices.updating.index", each.getRepositoryPathOrUrl()));
+        indicator.setText(IndicesBundle.message("maven.indices.updating.index",
+                                                each.getRepositoryId(),
+                                                each.getRepositoryPathOrUrl()));
 
         synchronized (myUpdatingIndicesLock) {
           remainingWaiting.remove(each);
@@ -242,7 +247,26 @@ public class MavenIndicesManager implements ApplicationComponent {
         }
 
         try {
-          getIndicesObject().updateOrRepair(each, fullUpdate, indicator);
+          MavenEmbedderWrapper embedderToUse = null;
+          if (fullUpdate) {
+            embedderToUse = new ReadAction<MavenEmbedderWrapper>() {
+              @Override
+              protected void run(Result<MavenEmbedderWrapper> result) throws Throwable {
+                if (!projectOrNull.isDisposed()) {
+                  MavenGeneralSettings settings = MavenProjectsManager.getInstance(projectOrNull).getGeneralSettings();
+                  result.setResult(MavenEmbedderFactory.createEmbedder(settings, Collections.EMPTY_MAP));
+                }
+              }
+            }.execute().getResultObject();
+            if (embedderToUse == null /* project disposed */) throw new ProcessCanceledException();
+          }
+
+          try {
+            getIndicesObject().updateOrRepair(each, embedderToUse, fullUpdate, indicator);
+          }
+          finally {
+            if (embedderToUse != null) embedderToUse.release();
+          }
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
@@ -287,10 +311,9 @@ public class MavenIndicesManager implements ApplicationComponent {
 
   public synchronized Set<ArchetypeInfo> getArchetypes() {
     ensureInitialized();
-    PlexusContainer container = myEmbedder.getPlexusContainer();
     Set<ArchetypeInfo> result = new THashSet<ArchetypeInfo>();
-    result.addAll(getArchetypesFrom(container, "internal-catalog"));
-    result.addAll(getArchetypesFrom(container, "nexus"));
+    result.addAll(getArchetypesFrom("internal-catalog"));
+    result.addAll(getArchetypesFrom("nexus"));
     result.addAll(myUserArchetypes);
 
     for (MavenArchetypesProvider each : Extensions.getExtensions(MavenArchetypesProvider.EP_NAME)) {
@@ -369,9 +392,9 @@ public class MavenIndicesManager implements ApplicationComponent {
     return new File(getIndicesDir(), "UserArchetypes.xml");
   }
 
-  private List<ArchetypeInfo> getArchetypesFrom(PlexusContainer container, String roleHint) {
+  private List<ArchetypeInfo> getArchetypesFrom(String roleHint) {
     try {
-      ArchetypeDataSource source = (ArchetypeDataSource)container.lookup(ArchetypeDataSource.class, roleHint);
+      ArchetypeDataSource source = myEmbedder.getComponent(ArchetypeDataSource.class, roleHint);
       ArchetypeCatalog catalog = source.getArchetypeCatalog(new Properties());
 
       List<ArchetypeInfo> result = new ArrayList<ArchetypeInfo>();
@@ -380,9 +403,6 @@ public class MavenIndicesManager implements ApplicationComponent {
       }
 
       return result;
-    }
-    catch (ComponentLookupException e) {
-      MavenLog.LOG.warn(e);
     }
     catch (ArchetypeDataSourceException e) {
       MavenLog.LOG.warn(e);

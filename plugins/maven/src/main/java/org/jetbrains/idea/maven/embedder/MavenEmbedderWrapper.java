@@ -19,14 +19,13 @@ import org.apache.maven.extension.ExtensionManager;
 import org.apache.maven.monitor.event.DefaultEventMonitor;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectBuilder;
-import org.apache.maven.project.workspace.ProjectWorkspace;
 import org.apache.maven.project.interpolation.ModelInterpolator;
+import org.apache.maven.project.workspace.ProjectWorkspace;
 import org.apache.maven.workspace.MavenWorkspaceStore;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.ComponentDescriptor;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -118,6 +117,15 @@ public class MavenEmbedderWrapper {
   public <T> T getComponent(Class<? super T> clazz) {
     try {
       return (T)myEmbedder.getPlexusContainer().lookup(clazz.getName());
+    }
+    catch (ComponentLookupException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public <T> T getComponent(Class<? super T> clazz, String roleHint) {
+    try {
+      return (T)myEmbedder.getPlexusContainer().lookup(clazz.getName(), roleHint);
     }
     catch (ComponentLookupException e) {
       throw new RuntimeException(e);

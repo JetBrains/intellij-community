@@ -496,6 +496,16 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     return myProjectsTree.isIgnored(project);
   }
 
+  public Set<MavenRemoteRepository> getRemoteRepositories() {
+    Set<MavenRemoteRepository> result = new THashSet<MavenRemoteRepository>();
+    for (MavenProject each : getProjects()) {
+      for (MavenRemoteRepository eachRepository : each.getRemoteRepositories()) {
+        result.add(eachRepository);
+      }
+    }
+    return result;
+  }
+
   @TestOnly
   public MavenProjectsTree getProjectsTreeForTests() {
     return myProjectsTree;

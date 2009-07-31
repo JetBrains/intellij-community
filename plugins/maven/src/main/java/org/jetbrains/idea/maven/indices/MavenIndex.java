@@ -14,27 +14,29 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TopDocs;
-import org.apache.maven.wagon.proxy.ProxyInfo;
+import org.apache.maven.artifact.manager.WagonManager;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.project.TransferListenerAdapter;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.sonatype.nexus.index.*;
-import org.sonatype.nexus.index.context.IndexContextInInconsistentStateException;
+import org.sonatype.nexus.index.context.IndexUtils;
 import org.sonatype.nexus.index.context.IndexingContext;
 import org.sonatype.nexus.index.context.UnsupportedExistingLuceneIndexException;
-import org.sonatype.nexus.index.scan.ScanningResult;
+import org.sonatype.nexus.index.updater.IndexUpdateRequest;
 import org.sonatype.nexus.index.updater.IndexUpdater;
 
 import java.io.*;
 import java.util.*;
 
 public class MavenIndex {
-  private static final String CURRENT_VERSION = "2";
+  private static final String CURRENT_VERSION = "4";
 
   protected static final String INDEX_INFO_FILE = "index.properties";
 
   private static final String INDEX_VERSION_KEY = "version";
   private static final String KIND_KEY = "kind";
+  private static final String ID_KEY = "id";
   private static final String PATH_OR_URL_KEY = "pathOrUrl";
   private static final String TIMESTAMP_KEY = "lastUpdate";
   private static final String DATA_DIR_NAME_KEY = "dataDirName";
@@ -58,6 +60,7 @@ public class MavenIndex {
   private final ArtifactContextProducer myArtifactContextProducer;
   private final File myDir;
 
+  private final String myRepositoryId;
   private final String myRepositoryPathOrUrl;
   private final Kind myKind;
   private volatile Long myUpdateTimestamp;
@@ -73,12 +76,14 @@ public class MavenIndex {
   public MavenIndex(NexusIndexer indexer,
                     ArtifactContextProducer artifactContextProducer,
                     File dir,
+                    String repositoryId,
                     String repositoryPathOrUrl,
                     Kind kind,
                     IndexListener listener) throws MavenIndexException {
     myIndexer = indexer;
     myArtifactContextProducer = artifactContextProducer;
     myDir = dir;
+    myRepositoryId = repositoryId;
     myRepositoryPathOrUrl = normalizePathOrUrl(repositoryPathOrUrl);
     myKind = kind;
     myListener = listener;
@@ -109,7 +114,12 @@ public class MavenIndex {
       throw new MavenIndexException("Cannot read " + INDEX_INFO_FILE + " file", e);
     }
 
+    if (!CURRENT_VERSION.equals(props.getProperty(INDEX_VERSION_KEY))) {
+      throw new MavenIndexException("Incompatible index version, needs to be updated: " + dir);
+    }
+
     myKind = Kind.valueOf(props.getProperty(KIND_KEY));
+    myRepositoryId = props.getProperty(ID_KEY);
     myRepositoryPathOrUrl = normalizePathOrUrl(props.getProperty(PATH_OR_URL_KEY));
 
     try {
@@ -124,11 +134,6 @@ public class MavenIndex {
 
     if (!getUpdateDir().exists()) {
       myUpdateTimestamp = null;
-    }
-
-    if (!CURRENT_VERSION.equals(props.getProperty(INDEX_VERSION_KEY))) {
-      isBroken = true;
-      cleanupBrokenData();
     }
 
     open();
@@ -199,6 +204,7 @@ public class MavenIndex {
     Properties props = new Properties();
 
     props.setProperty(KIND_KEY, myKind.toString());
+    props.setProperty(ID_KEY, myRepositoryId);
     props.setProperty(PATH_OR_URL_KEY, myRepositoryPathOrUrl);
     props.setProperty(INDEX_VERSION_KEY, CURRENT_VERSION);
     if (myUpdateTimestamp != null) props.setProperty(TIMESTAMP_KEY, String.valueOf(myUpdateTimestamp));
@@ -219,6 +225,10 @@ public class MavenIndex {
     }
   }
 
+  public String getRepositoryId() {
+    return myRepositoryId;
+  }
+
   public File getRepositoryFile() {
     return myKind == Kind.LOCAL ? new File(myRepositoryPathOrUrl) : null;
   }
@@ -235,12 +245,12 @@ public class MavenIndex {
     return myKind;
   }
 
-  public boolean isForLocal(File repository) {
-    return myKind == Kind.LOCAL && getRepositoryFile().equals(repository);
+  public boolean isForLocal(String repositoryId, File repository) {
+    return myKind == Kind.LOCAL && myRepositoryId.equals(repositoryId) && getRepositoryFile().equals(repository);
   }
 
-  public boolean isForRemote(String url) {
-    return myKind == Kind.REMOTE && getRepositoryUrl().equalsIgnoreCase(normalizePathOrUrl(url));
+  public boolean isForRemote(String repositoryId, String url) {
+    return myKind == Kind.REMOTE && myRepositoryId.equals(repositoryId) && getRepositoryUrl().equalsIgnoreCase(normalizePathOrUrl(url));
   }
 
   public synchronized long getUpdateTimestamp() {
@@ -251,8 +261,8 @@ public class MavenIndex {
     return myFailureMessage;
   }
 
-  public void updateOrRepair(IndexUpdater updater,
-                             ProxyInfo proxyInfo,
+  public void updateOrRepair(MavenEmbedderWrapper embedderToUse,
+                             IndexUpdater updater,
                              boolean fullUpdate,
                              ProgressIndicator progress) {
     try {
@@ -260,7 +270,7 @@ public class MavenIndex {
         if (myKind == Kind.LOCAL) FileUtil.delete(getUpdateDir());
         IndexingContext context = createContext(getUpdateDir(), "update");
         try {
-          updateContext(context, updater, proxyInfo, progress);
+          updateContext(embedderToUse, context, updater, progress);
         }
         finally {
           myIndexer.removeIndexingContext(context, false);
@@ -283,7 +293,7 @@ public class MavenIndex {
 
   private void handleUpdateException(Exception e) {
     myFailureMessage = e.getMessage();
-    MavenLog.LOG.info("Failed to update Maven indices for: " + myRepositoryPathOrUrl, e);
+    MavenLog.LOG.info("Failed to update Maven indices for: [" + myRepositoryId + "] " + myRepositoryPathOrUrl, e);
   }
 
   private IndexingContext createContext(File contextDir, String suffix) throws IOException, UnsupportedExistingLuceneIndexException {
@@ -303,9 +313,9 @@ public class MavenIndex {
     return new File(myDir, UPDATE_DIR);
   }
 
-  private void updateContext(IndexingContext context,
+  private void updateContext(MavenEmbedderWrapper embedder,
+                             IndexingContext context,
                              IndexUpdater updater,
-                             ProxyInfo proxyInfo,
                              ProgressIndicator progress) throws IOException, UnsupportedExistingLuceneIndexException {
     if (Kind.LOCAL == myKind) {
       progress.setIndeterminate(true);
@@ -317,7 +327,12 @@ public class MavenIndex {
       }
     }
     else {
-      updater.fetchAndUpdateIndex(context, new TransferListenerAdapter(progress), proxyInfo);
+      IndexUpdateRequest request = new IndexUpdateRequest(context);
+      request.setResourceFetcher(new MavenIndexFetcher(myRepositoryId,
+                                                       getRepositoryUrl(),
+                                                       embedder.<WagonManager>getComponent(WagonManager.class),
+                                                       new TransferListenerAdapter(progress)));
+      updater.fetchAndUpdateIndex(request);
     }
   }
 
@@ -358,7 +373,7 @@ public class MavenIndex {
   }
 
   private void doUpdateIndexData(IndexData data,
-                                 ProgressIndicator progress) throws IOException, IndexContextInInconsistentStateException {
+                                 ProgressIndicator progress) throws IOException {
     Set<String> groups = new THashSet<String>();
     Set<String> groupsWithArtifacts = new THashSet<String>();
     Set<String> groupsWithArtifactsWithVersions = new THashSet<String>();
@@ -581,7 +596,7 @@ public class MavenIndex {
         for (int i = 0; i < docs.scoreDocs.length; i++) {
           int docIndex = docs.scoreDocs[i].doc;
           Document doc = myData.context.getIndexReader().document(docIndex);
-          ArtifactInfo artifactInfo = myData.context.constructArtifactInfo(doc);
+          ArtifactInfo artifactInfo = IndexUtils.constructArtifactInfo(doc, myData.context);
 
           if (artifactInfo == null) continue;
 
@@ -726,7 +741,7 @@ public class MavenIndex {
     public MyScanningListener() {
       ProgressIndicator p = ProgressManager.getInstance().getProgressIndicator();
       if (p == null) p = new EmptyProgressIndicator();
-      this.p =p; 
+      this.p = p;
     }
 
     public void scanningStarted(IndexingContext ctx) {
@@ -742,7 +757,9 @@ public class MavenIndex {
 
     public void artifactDiscovered(ArtifactContext ac) {
       p.checkCanceled();
-      p.setText2(IndicesBundle.message("maven.indices.updating.indexing", ac.getArtifact()));
+      ArtifactInfo info = ac.getArtifactInfo();
+      String artifact = info.groupId + ":" + info.artifactId + ":" + info.version;
+      p.setText2(artifact);
     }
   }
 
