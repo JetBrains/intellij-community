@@ -31,29 +31,42 @@ public class DfaUtil {
   public static Collection<PsiExpression> getCachedVariableValues(@Nullable final PsiVariable variable, @Nullable final PsiExpression context) {
     if (variable == null || context == null) return Collections.emptyList();
 
-    PsiCodeBlock codeBlock;
-    PsiElement element = context;
-    while ((codeBlock = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class)) != null) {
-      PsiAnonymousClass anon = PsiTreeUtil.getParentOfType(codeBlock, PsiAnonymousClass.class);
-      if (anon == null) break;
-      element = anon;
-    }
-    if (codeBlock == null) return Collections.emptyList();
-    final PsiCodeBlock topLevelBlock = codeBlock;
-
     CachedValue<MultiValuesMap<PsiVariable, PsiExpression>> cachedValue = context.getUserData(DFA_VARIABLE_INFO_KEY);
     if (cachedValue == null) {
       cachedValue = context.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<MultiValuesMap<PsiVariable, PsiExpression>>() {
         public Result<MultiValuesMap<PsiVariable, PsiExpression>> compute() {
-          final ValuableDataFlowRunner runner = new ValuableDataFlowRunner(context);
-          final MultiValuesMap<PsiVariable, PsiExpression> result;
-          if (runner.analyzeMethod(topLevelBlock, new StandardInstructionVisitor()) == RunnerResult.OK) {
-            result = runner.getAllVariableValues();
+          PsiElement codeBlock;
+          if (variable instanceof PsiParameter) {
+            codeBlock = ((PsiParameter)variable).getDeclarationScope();
+            if (codeBlock instanceof PsiMethod) {
+              codeBlock = ((PsiMethod)codeBlock).getBody();
+            }
+          }
+          else if (variable instanceof PsiLocalVariable) {
+            codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
           }
           else {
+            codeBlock = PsiTreeUtil.getParentOfType(context, PsiCodeBlock.class);
+          }
+          while (codeBlock != null) {
+            PsiAnonymousClass anon = PsiTreeUtil.getParentOfType(codeBlock, PsiAnonymousClass.class);
+            if (anon == null) break;
+            codeBlock = PsiTreeUtil.getParentOfType(anon, PsiCodeBlock.class);
+          }
+          final MultiValuesMap<PsiVariable, PsiExpression> result;
+          if (codeBlock == null) {
             result = null;
           }
-          return new Result<MultiValuesMap<PsiVariable, PsiExpression>>(result, topLevelBlock);
+          else {
+            final ValuableDataFlowRunner runner = new ValuableDataFlowRunner(context);
+            if (runner.analyzeMethod(codeBlock, new StandardInstructionVisitor()) == RunnerResult.OK) {
+              result = runner.getAllVariableValues();
+            }
+            else {
+              result = null;
+            }
+          }
+          return new Result<MultiValuesMap<PsiVariable, PsiExpression>>(result, codeBlock);
         }
       }, false);
       context.putUserData(DFA_VARIABLE_INFO_KEY, cachedValue);
