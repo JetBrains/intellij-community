@@ -842,4 +842,4 @@ if __name__ == "__main__":
       outfile.close()
     except:
       sys.stderr.write("Failed to process " + name + " while " + action + "\n")
-      raise
+      continue
