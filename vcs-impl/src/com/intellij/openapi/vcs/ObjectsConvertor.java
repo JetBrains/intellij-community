@@ -30,6 +30,12 @@ public class ObjectsConvertor {
     }
   };
 
+  public static final Convertor<File, FilePath> FILE_FILEPATH = new Convertor<File, FilePath>() {
+    public FilePath convert(File file) {
+      return FilePathImpl.create(file);
+    }
+  };
+
   public static final NotNullFunction<Object, Boolean> NOT_NULL = new NotNullFunction<Object, Boolean>() {
     @NotNull
     public Boolean fun(final Object o) {
@@ -37,7 +43,7 @@ public class ObjectsConvertor {
     }
   };
 
-  public static List<VirtualFile> fp2vf(final List<FilePath> in) {
+  public static List<VirtualFile> fp2vf(final Collection<FilePath> in) {
     return convert(in, FILEPATH_TO_VIRTUAL);
   }
 
