@@ -81,7 +81,7 @@ public class GitFileAnnotation implements FileAnnotation {
   /**
    * Date annotation aspect
    */
-  private final LineAnnotationAspect DATE_ASPECT = new LineAnnotationAspect() {
+  private final LineAnnotationAspect DATE_ASPECT = new LineAnnotationAspectAdapter() {
     public String getValue(int lineNumber) {
       if (myLines.size() <= lineNumber || lineNumber < 0 || myLines.get(lineNumber) == null) {
         return "";
@@ -99,7 +99,7 @@ public class GitFileAnnotation implements FileAnnotation {
   /**
    * author annotation aspect
    */
-  private final LineAnnotationAspect AUTHOR_ASPECT = new LineAnnotationAspect() {
+  private final LineAnnotationAspect AUTHOR_ASPECT = new LineAnnotationAspectAdapter() {
     public String getValue(int lineNumber) {
       if (myLines.size() <= lineNumber || lineNumber < 0 || myLines.get(lineNumber) == null) {
         return "";
@@ -276,7 +276,7 @@ public class GitFileAnnotation implements FileAnnotation {
   /**
    * Revision annotation aspect implementation
    */
-  private class RevisionAnnotationAspect implements LineAnnotationAspect, EditorGutterAction {
+  private class RevisionAnnotationAspect  extends LineAnnotationAspectAdapter implements EditorGutterAction {
     /**
      * {@inheritDoc}
      */

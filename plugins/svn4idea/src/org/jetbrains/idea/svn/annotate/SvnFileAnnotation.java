@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.SyncDateFormat;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnConfiguration;
@@ -44,7 +45,7 @@ public class SvnFileAnnotation implements FileAnnotation {
   private final List<AnnotationListener> myListeners = new ArrayList<AnnotationListener>();
   private final Map<Long, SvnFileRevision> myRevisionMap = new HashMap<Long, SvnFileRevision>();
 
-  private final LineAnnotationAspect DATE_ASPECT = new LineAnnotationAspect() {
+  private final LineAnnotationAspect DATE_ASPECT = new LineAnnotationAspectAdapter() {
     public String getValue(int lineNumber) {
       if (myInfos.size() <= lineNumber || lineNumber < 0) {
         return "";
@@ -67,9 +68,23 @@ public class SvnFileAnnotation implements FileAnnotation {
     protected long getRevision(int lineNum) {
       return myInfos.originalRevision(lineNum);
     }
+
+    @Override
+    public String getTooltipText(int lineNumber) {
+      if (myInfos.size() <= lineNumber || lineNumber < 0) {
+        return "";
+      }
+      final LineInfo info = myInfos.get(lineNumber);
+      SvnFileRevision svnRevision = myRevisionMap.get(info.getRevision());
+      if (svnRevision != null) {
+        final String tooltip = "Revision " + info.getRevision() + ": " + svnRevision.getCommitMessage();
+        return XmlStringUtil.escapeString(tooltip);
+      }
+      return "";
+    }
   };
 
-  private final LineAnnotationAspect AUTHOR_ASPECT = new LineAnnotationAspect() {
+  private final LineAnnotationAspect AUTHOR_ASPECT = new LineAnnotationAspectAdapter() {
     public String getValue(int lineNumber) {
       if (myInfos.size() <= lineNumber || lineNumber < 0) {
         return "";
@@ -251,7 +266,7 @@ public class SvnFileAnnotation implements FileAnnotation {
     };
   }
 
-  private class RevisionAnnotationAspect implements LineAnnotationAspect, EditorGutterAction {
+  private class RevisionAnnotationAspect extends LineAnnotationAspectAdapter implements EditorGutterAction {
     public String getValue(int lineNumber) {
       if (myInfos.size() <= lineNumber || lineNumber < 0) {
         return "";
