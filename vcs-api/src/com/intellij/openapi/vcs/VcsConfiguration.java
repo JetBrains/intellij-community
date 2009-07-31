@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.startup.StartupManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -166,7 +167,11 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
       saveCommitMessage(((Element)message).getAttributeValue(VALUE_ATTR));
     }
     if (ACTIVE_VCS_NAME != null && ACTIVE_VCS_NAME.length() > 0) {
-      ProjectLevelVcsManager.getInstance(myProject).setDirectoryMapping("", ACTIVE_VCS_NAME);
+      StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
+        public void run() {
+          ProjectLevelVcsManager.getInstance(myProject).setDirectoryMapping("", ACTIVE_VCS_NAME);
+        }
+      });
     }
   }
 

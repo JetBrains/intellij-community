@@ -8,6 +8,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.startup.StartupManager;
 import org.jdom.Element;
 
 /**
@@ -49,10 +50,16 @@ public class VcsManagerPerModuleConfiguration implements JDOMExternalizable, Mod
     DefaultJDOMExternalizer.readExternal(this, element);
     final ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManagerImpl.getInstanceEx(myModule.getProject());
     if (!USE_PROJECT_VCS) {
-      for(VirtualFile file: ModuleRootManager.getInstance(myModule).getContentRoots()) {
-        vcsManager.setDirectoryMapping(file.getPath(), ACTIVE_VCS_NAME);
-      }
-      vcsManager.cleanupMappings();
+      final VirtualFile[] roots = ModuleRootManager.getInstance(myModule).getContentRoots();
+
+      StartupManager.getInstance(myModule.getProject()).registerStartupActivity(new Runnable() {
+        public void run() {
+          for(VirtualFile file: roots) {
+            vcsManager.setDirectoryMapping(file.getPath(), ACTIVE_VCS_NAME);
+          }
+          vcsManager.cleanupMappings();
+        }
+      });
     }
   }
 
