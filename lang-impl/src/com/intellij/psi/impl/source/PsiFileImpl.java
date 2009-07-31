@@ -441,7 +441,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final PsiFile[] roots = new PsiFile[languages.size()];
     int i = 0;
     for (Language language : languages) {
-      roots[i++] = viewProvider.getPsi(language);
+      PsiFile psi = viewProvider.getPsi(language);
+      if (psi == null) {
+        LOG.error("PSI is null for "+language+"; in file: "+this);
+      }
+      roots[i++] = psi;
     }
     return roots;
   }
