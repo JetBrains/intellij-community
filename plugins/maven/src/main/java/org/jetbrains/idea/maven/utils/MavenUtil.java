@@ -56,17 +56,22 @@ public class MavenUtil {
     }
   }
 
-  public static void invokeAndWait(final Project p, final ModalityState state, final Runnable r) {
+  public static void invokeInDispatchThreadAndWait(final Project p, final ModalityState state, final Runnable r) {
     if (isNoBackgroundMode()) {
       r.run();
     }
     else {
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        public void run() {
-          if (p.isDisposed()) return;
-          r.run();
-        }
-      }, state);
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        r.run();
+      }
+      else {
+        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+          public void run() {
+            if (p.isDisposed()) return;
+            r.run();
+          }
+        }, state);
+      }
     }
   }
 

@@ -244,7 +244,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
     myImportingQueue.makeUserAware(myProject);
     myImportingQueue.makeDumbAware(myProject);
-    myImportingQueue.makeModalAware();
+    myImportingQueue.makeModalAware(myProject);
 
     mySchedulesQueue = new MavenMergingUpdateQueue(getComponentName() + ": Schedules queue", 1000, true, myProject);
     mySchedulesQueue.setPassThrough(false);

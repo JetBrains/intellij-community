@@ -46,7 +46,7 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
     else if (MavenUtil.isNoBackgroundMode()) {
       passThrough = true;
     }
-    
+
     if (passThrough) {
       update.run();
       return;
@@ -112,28 +112,33 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
     }.execute();
   }
 
-  public void makeModalAware() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    
-    final ModalityStateListener listener = new ModalityStateListener() {
-      public void beforeModalityStateChanged(boolean entering) {
-        if (entering) {
-          mySuppendHelper.suspend();
+  public void makeModalAware(Project project) {
+    MavenUtil.invokeInDispatchThreadAndWait(
+      project,
+      ModalityState.defaultModalityState(),
+      new Runnable() {
+        public void run() {
+          final ModalityStateListener listener = new ModalityStateListener() {
+            public void beforeModalityStateChanged(boolean entering) {
+              if (entering) {
+                mySuppendHelper.suspend();
+              }
+              else {
+                mySuppendHelper.resume();
+              }
+            }
+          };
+          LaterInvocator.addModalityStateListener(listener);
+          if (MavenUtil.isInModalContext()) {
+            mySuppendHelper.suspend();
+          }
+          Disposer.register(MavenMergingUpdateQueue.this, new Disposable() {
+            public void dispose() {
+              LaterInvocator.removeModalityStateListener(listener);
+            }
+          });
         }
-        else {
-          mySuppendHelper.resume();
-        }
-      }
-    };
-    LaterInvocator.addModalityStateListener(listener);
-    if (MavenUtil.isInModalContext()) {
-      mySuppendHelper.suspend();
-    }
-    Disposer.register(MavenMergingUpdateQueue.this, new Disposable() {
-      public void dispose() {
-        LaterInvocator.removeModalityStateListener(listener);
-      }
-    });
+      });
   }
 
   private class SuspendHelper {
