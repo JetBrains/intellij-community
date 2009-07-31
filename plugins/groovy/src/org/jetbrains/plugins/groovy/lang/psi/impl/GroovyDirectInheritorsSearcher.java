@@ -35,20 +35,26 @@ class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectCl
     final PsiClass clazz = queryParameters.getClassToProcess();
     final SearchScope scope = queryParameters.getScope();
     if (scope instanceof GlobalSearchScope) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        public Boolean compute() {
-          if (!clazz.isValid()) return true;
-
-          final PsiClass[] candidates = GroovyCacheUtil.getDeriverCandidates(clazz, (GlobalSearchScope) scope);
-          for (PsiClass candidate : candidates) {
-            if (candidate.isInheritor(clazz, false)) {
-              if (!consumer.process(candidate)) return false;
-            }
-          }
-
-          return true;
+      final PsiClass[] candidates = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
+        public PsiClass[] compute() {
+          if (!clazz.isValid()) return PsiClass.EMPTY_ARRAY;
+          return GroovyCacheUtil.getDeriverCandidates(clazz, (GlobalSearchScope)scope);
         }
-      }).booleanValue();
+      });
+      for (final PsiClass candidate : candidates) {
+        final boolean isInheritor = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          public Boolean compute() {
+            return candidate.isInheritor(clazz, false);
+          }
+        });
+        if (isInheritor) {
+          if (!consumer.process(candidate)) {
+            return false;
+          }
+        }
+      }
+
+      return true;
     }
 
     return true;

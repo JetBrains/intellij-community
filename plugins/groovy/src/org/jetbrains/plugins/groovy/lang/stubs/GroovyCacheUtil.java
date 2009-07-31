@@ -6,10 +6,12 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrDirectInheritorsIndex;
 
 import java.util.ArrayList;
@@ -39,6 +41,11 @@ public abstract class GroovyCacheUtil {
       if (parent instanceof GrTypeDefinition) {
         inheritors.add(((GrTypeDefinition)parent));
       }
+    }
+    final Collection<GrAnonymousClassDefinition> classes =
+      StubIndex.getInstance().get(GrAnonymousClassIndex.KEY, name, clazz.getProject(), scope);
+    for (GrAnonymousClassDefinition aClass : classes) {
+      inheritors.add(aClass);
     }
     return inheritors.toArray(new GrTypeDefinition[inheritors.size()]);
   }

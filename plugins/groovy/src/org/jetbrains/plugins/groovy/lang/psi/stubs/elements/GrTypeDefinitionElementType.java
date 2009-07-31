@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
@@ -17,6 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.impl.GrTypeDefinitionStubImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrShortClassNameIndex;
 
@@ -26,7 +28,8 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefinition> extends GrStubElementType<GrTypeDefinitionStub, TypeDef> {
+public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefinition>
+  extends GrStubElementType<GrTypeDefinitionStub, TypeDef> {
 
   public GrTypeDefinitionElementType(@NotNull String debugName) {
     super(debugName);
@@ -74,7 +77,7 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
   public GrTypeDefinitionStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
     String name = StringRef.toString(dataStream.readName());
     String qname = StringRef.toString(dataStream.readName());
-    byte flags=dataStream.readByte();
+    byte flags = dataStream.readByte();
     String[] superClasses = readStringArray(dataStream);
     String[] annos = readStringArray(dataStream);
     return new GrTypeDefinitionStubImpl(parentStub, name, superClasses, this, qname, annos, flags);
@@ -90,14 +93,26 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
   }
 
   public void indexStub(GrTypeDefinitionStub stub, IndexSink sink) {
-    String shortName = stub.getName();
-    if (shortName != null) {
-      sink.occurrence(GrShortClassNameIndex.KEY, shortName);
+    if (stub.isAnonymous()) {
+      final String[] classNames = stub.getSuperClassNames();
+      if (classNames.length != 1) return;
+      final String baseClassName = classNames[0];
+      if (baseClassName != null) {
+        final String shortName = PsiNameHelper.getShortClassName(baseClassName);
+        sink.occurrence(GrAnonymousClassIndex.KEY, shortName);
+      }
     }
-    final String fqn = stub.getQualifiedName();
-    if (fqn != null) {
-      sink.occurrence(GrFullClassNameIndex.KEY, fqn.hashCode());
+    else {
+      String shortName = stub.getName();
+      if (shortName != null) {
+        sink.occurrence(GrShortClassNameIndex.KEY, shortName);
+      }
+      final String fqn = stub.getQualifiedName();
+      if (fqn != null) {
+        sink.occurrence(GrFullClassNameIndex.KEY, fqn.hashCode());
+      }
     }
+
     for (String annName : stub.getAnnotations()) {
       if (annName != null) {
         sink.occurrence(GrAnnotatedMemberIndex.KEY, annName);
