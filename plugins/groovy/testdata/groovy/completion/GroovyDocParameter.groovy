@@ -5,7 +5,7 @@ class A{
    * @param y sdgfhjsd
    * @param <caret>
    */
-  def abc(def x, def y) {
+  def abc(def xx, def xy) {
 
   }
 }
