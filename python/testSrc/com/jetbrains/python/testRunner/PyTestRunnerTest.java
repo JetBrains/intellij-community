@@ -3,13 +3,12 @@ package com.jetbrains.python.testRunner;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.SystemProperties;
@@ -23,16 +22,6 @@ import java.util.List;
  * @author yole
  */
 public class PyTestRunnerTest extends LightPlatformTestCase {
-  private static class Output {
-    private final String stdout;
-    private final String stderr;
-
-    public Output(String stdout, String stderr) {
-      this.stdout = stdout;
-      this.stderr = stderr;
-    }
-  }
-
   public void testEmptySuite() throws ExecutionException {
     String[] result = runUTRunner(PathManager.getHomePath());
     assertEquals("##teamcity[testCount count='0']", result [0]);
@@ -45,7 +34,7 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     assertEquals(6, result.length);
     assertEquals("##teamcity[testCount count='2']", result [0]);
     assertEquals("##teamcity[testStarted location='python_uttestid://unittest1.BadTest.test_fails' name='test_fails (unittest1.BadTest)']", result[1]);
-    assertTrue(result [2], result[2].startsWith("##teamcity[testFailed name='test_fails (unittest1.BadTest)' details="));
+    assertTrue(result [2], result[2].startsWith("##teamcity[testFailed") && result [2].contains("name='test_fails (unittest1.BadTest)'"));
   }
 
   public void testClass() throws ExecutionException {
@@ -80,14 +69,14 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     List<String> allArgs = new ArrayList<String>();
     allArgs.add(utRunner.getPath());
     Collections.addAll(allArgs, args);
-    final Output output = runJython(workDir, helpersDir.getPath(), allArgs.toArray(new String[allArgs.size()]));
-    assertEquals(output.stderr, 0, splitLines(output.stderr).length);
-    return splitLines(output.stdout);
+    final ProcessOutput output = runJython(workDir, helpersDir.getPath(), allArgs.toArray(new String[allArgs.size()]));
+    assertEquals(output.getStderr(), 0, splitLines(output.getStderr()).length);
+    return splitLines(output.getStdout());
   }
 
   private static String[] splitLines(final String out) {
     List<String> result = new ArrayList<String>();
-    final String[] lines = out.split("\n");
+    final String[] lines = StringUtil.convertLineSeparators(out).split("\n");
     for (String line : lines) {
       if (line.length() > 0 && !line.contains("*sys-package-mgr*")) {
         result.add(line);
@@ -96,7 +85,7 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     return result.toArray(new String[result.size()]);
   }
 
-  private static Output runJython(String workDir, String pythonPath, String... args) throws ExecutionException {
+  private static ProcessOutput runJython(String workDir, String pythonPath, String... args) throws ExecutionException {
     final SimpleJavaSdkType sdkType = new SimpleJavaSdkType();
     final Sdk ideaJdk = sdkType.createJdk("tmp", SystemProperties.getJavaHome());
     SimpleJavaParameters parameters = new SimpleJavaParameters();
@@ -110,25 +99,8 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     parameters.getProgramParametersList().addAll(args);
     parameters.setWorkingDirectory(workDir);
 
-    final StringBuilder stdout = new StringBuilder();
-    final StringBuilder stderr = new StringBuilder();
-
     final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(sdkType.getVMExecutablePath(ideaJdk), parameters, false);
-    final OSProcessHandler processHandler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString()) {
-      @Override
-      public void notifyTextAvailable(String text, Key outputType) {
-        if (outputType == ProcessOutputTypes.STDOUT) {
-          stdout.append(text);
-        }
-        else if (outputType == ProcessOutputTypes.STDERR) {
-          stderr.append(text);
-        }
-      }
-    };
-    processHandler.startNotify();
-    processHandler.waitFor();
-
-    return new Output(StringUtil.convertLineSeparators(stdout.toString(), "\n"),
-      StringUtil.convertLineSeparators(stderr.toString(), "\n"));
+    final CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine.createProcess());
+    return processHandler.runProcess();
   }
 }
