@@ -122,6 +122,8 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration<RunConf
   }
 
   private void configureJavaParams(JavaParameters params, Module module, String confpath) throws CantRunException {
+    params.setJdk(ModuleRootManager.getInstance(module).getSdk());
+
     RunnerUtil.configureScriptSystemClassPath(params, module);
 
     params.setWorkingDirectory(getAbsoluteWorkDir());
