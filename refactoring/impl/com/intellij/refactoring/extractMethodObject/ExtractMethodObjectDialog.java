@@ -286,11 +286,6 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
       protected boolean areTypesDirected() {
         return true;
       }
-
-      @Override
-      public VariableData[] getVariableData() {
-        return myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
-      }
     };
   }
 

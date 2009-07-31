@@ -301,11 +301,6 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
       protected boolean areTypesDirected() {
         return ExtractMethodDialog.this.areTypesDirected();
       }
-
-      @Override
-      public VariableData[] getVariableData() {
-        return myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
-      }
     };
     myParamTabel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("parameters.border.title")));
     myCenterPanel.add(myParamTabel, BorderLayout.CENTER);
