@@ -1,5 +1,5 @@
 <!--
-  ~  Copyright 2000-2007 JetBrains s.r.o.
+  ~  Copyright 2000-2009 JetBrains s.r.o.
   ~  Licensed under the Apache License, Version 2.0 (the "License");
   ~  you may not use this file except in compliance with the License.
   ~  You may obtain a copy of the License at
@@ -18,13 +18,9 @@
   <id>org.intellij.groovy</id>
   <name>JetGroovy</name>
   <description>Plugin for Groovy language support</description>
-  <version>8.0</version>
+  <version>9.0</version>
   <vendor logo="/org/jetbrains/plugins/groovy/images/groovy_16x16.png" url="http://www.jetbrains.com">JetBrains Inc.
   </vendor>
-  <depends optional="true" config-file="groovy-js-integration.xml">JavaScript</depends>
-  <depends optional="true" config-file="groovy-spring-integration.xml">com.intellij.spring</depends>
-  <depends optional="true" config-file="groovy-javaee-integration.xml">com.intellij.javaee</depends>
-  <depends optional="true">com.intellij.css</depends>
   <depends>com.intellij.properties</depends>
 
   <extensionPoints>
@@ -36,24 +32,16 @@
     <extensionPoint name="positionManagerDelegate" interface="org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper"/>
     <extensionPoint name="compilerExtension" interface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerExtension"/>
     <extensionPoint name="facetExtension" interface="org.jetbrains.plugins.groovy.config.GroovyFacetExtension"/>
-
-    <extensionPoint name="grails.facetProvider" interface="org.jetbrains.plugins.grails.util.GrailsFacetProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
-    <nonCodeProcessor implementation="org.jetbrains.plugins.grails.references.domain.GrailsNonCodeMembersProcessor"/>
     <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.ImmutableAnnotationProcessor"/>
     <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.SingletonAnnotationProcessor"/>
     <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.BindableAnnotationProcessor"/>
     <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.VetoableAnnotationProcessor"/>
     <libraryManager implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryManager"/>
-    <libraryManager implementation="org.jetbrains.plugins.grails.config.GrailsLibraryManager"/>
-    <libraryManager implementation="org.jetbrains.plugins.groovy.griffon.GriffonLibraryManager"/>
-    <libraryManager implementation="org.jetbrains.plugins.gant.config.GantLibraryManager"/>
+    <libraryManager implementation="org.jetbrains.plugins.gant.config.GantLibraryManager" order="last"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.gant.debugger.GantPositionManagerHelper"/>
-    <compilerExtension implementation="org.jetbrains.plugins.grails.GrailsCompilerExtension"/>
-    <propertyEnhancer implementation="org.jetbrains.plugins.grails.InjectedServiceTypeProvider"/>
-    <facetExtension implementation="org.jetbrains.plugins.groovy.mvc.MvcFacetExtension"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -61,7 +49,7 @@
     <!--<expectedTypesProvider implementation="org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider"/>-->
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.groovy.GroovyFileTypeLoader"/>
-    <fileTypeFactory implementation="org.jetbrains.plugins.groovy.grails.GrailsFileTypeLoader"/>
+
     <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
     <frameworkSupport implementation="org.jetbrains.plugins.groovy.config.GroovyFacetSupportProvider"/>
     <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.PropertyRenameHandler"/>
@@ -72,9 +60,9 @@
 
     <!-- Groovy language -->
     <syntaxHighlighter key="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter"/>
-    <fileEditorProvider implementation="org.jetbrains.plugins.grails.perspectives.DomainClassesRelationsEditorProvider"/>
+
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GroovyAnnotator"/>
-    <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.grails.annotator.DomainClassAnnotator"/>
+
     <lang.psiStructureViewFactory language="Groovy"
                                   implementationClass="org.jetbrains.plugins.groovy.structure.GroovyStructureViewFactory"/>
     <lang.parserDefinition language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition"/>
@@ -83,9 +71,7 @@
     <lang.formatter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyFormattingModelBuilder"/>
 
     <liveTemplateContext implementation="org.jetbrains.plugins.groovy.GroovyTemplateContextType"/>
-    <liveTemplateContext implementation="org.jetbrains.plugins.grails.GspTemplateContextType"/>
 
-    <roots.watchedRootsProvider implementation="org.jetbrains.plugins.groovy.mvc.MvcWatchedRootProvider"/>
 
     <gotoSymbolContributor implementation="org.jetbrains.plugins.groovy.gotoclass.GroovyGoToSymbolContributor"/>
     <lang.refactoringSupport language="Groovy"
@@ -115,9 +101,7 @@
     <codeInsight.gotoSuper language="Groovy" implementationClass="com.intellij.codeInsight.navigation.JavaGotoSuperHandler"/>
     <lookup.charFilter implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyReferenceCharFilter"/>
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionContributor"/>
-    <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.grails.GrailsCompletionContributor"/>
-    <completion.contributor language="GSP" implementationClass="org.jetbrains.plugins.grails.GspCompletionContributor"/>
-    <completion.contributor language="HTML" implementationClass="org.jetbrains.plugins.grails.GspCompletionContributor"/>
+
     <debuggerClassFilterProvider implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerClassFilterProvider"/>
     <xdebugger.settings implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerSettings"/>
     <fileTypeIndentOptionsProvider implementation="org.jetbrains.plugins.groovy.formatter.GroovyIndentOptionsProvider"/>
@@ -130,9 +114,6 @@
 
     <directClassInheritorsSearch implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyDirectInheritorsSearcher"/>
 
-    <!--TestRun-->
-    <testSrcLocator implementation="org.jetbrains.plugins.grails.tests.runner.GrailsUrlProvider"/>
-    
     <!--Run/debug-->
     <configurationType implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType"/>
     <configurationProducer implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationProducer"/>
@@ -184,52 +165,12 @@
 
     <module.converter implementation="org.jetbrains.plugins.groovy.config.GroovyModuleConverter"/>
 
-    <!-- Grails and GSP -->
-    <syntaxHighlighter key="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspSyntaxHiglighter"/>
-    <lang.braceMatcher language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspPairedBraceMatcher"/>
-    <braceMatcher filetype="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspFileBraceMatcher"/>
-    <lang.commenter language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspCommenter"/>
-    <lang.foldingBuilder language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.folding.GspFoldingBuilder"/>
-    <lang.formatter language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.formatter.GspFormattingModelBuilder"/>
-    <lang.parserDefinition language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.parsing.gsp.GspParserDefinition"/>
-    <lang.fileViewProviderFactory language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.GspFileviewProviderFactory"/>
-    <fileTypeIndentOptionsProvider implementation="org.jetbrains.plugins.grails.lang.gsp.formatter.settings.GspIndentOptionsProvider"/>
-
-    <lang.findUsagesProvider language="GSP" implementationClass="org.jetbrains.plugins.grails.GrailsFindUsagesProvider"/>
-
-    <codeInsight.parameterInfo language="GSP"
-                               implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
-
-    <quoteHandler fileType="GSP" className="org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler"/>
-    <braceMatcher filetype="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspBraceMatcher"/>
-
     <iconProvider implementation="org.jetbrains.plugins.groovy.GroovyIconProvider"/>
-
-    <configurationType implementation="org.jetbrains.plugins.grails.runner.GrailsRunConfigurationType"/>
-    <configurationType implementation="org.jetbrains.plugins.grails.tests.runner.GrailsTestRunConfigurationType"/>
-    <configurationType implementation="org.jetbrains.plugins.groovy.griffon.GriffonRunConfigurationType"/>
-
-    <configurationProducer implementation="org.jetbrains.plugins.grails.tests.runner.GrailsTestRunConfigurationProducer"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory"
                     serviceImplementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"
                     serviceImplementation="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"/>
-    <projectService serviceInterface="org.jetbrains.plugins.grails.lang.gsp.psi.GspPsiElementFactory"
-                    serviceImplementation="org.jetbrains.plugins.grails.lang.gsp.psi.GspPsiElementFactoryImpl"/>
-    <projectService serviceInterface="org.jetbrains.plugins.grails.references.domain.DomainClassMembersProvider"
-                    serviceImplementation="org.jetbrains.plugins.grails.references.domain.DomainClassMembersProvider"/>
-    <projectService serviceInterface="org.jetbrains.plugins.groovy.mvc.MvcConsole"
-                    serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcConsole"/>
-
-    <moduleService serviceInterface="org.jetbrains.plugins.grails.plugins.control.GrailsPluginManager"
-                   serviceImplementation="org.jetbrains.plugins.grails.plugins.control.GrailsPluginManagerImpl"/>
-
-    <xml.fileNSInfoProvider implementation="org.jetbrains.plugins.grails.lang.gsp.completion.GspXmlFileNSInfoProvider"/>
-
-    <extendWordSelectionHandler implementation="org.jetbrains.plugins.grails.editor.selection.GrailsTagSelectioner"/>
-    <extendWordSelectionHandler implementation="org.jetbrains.plugins.grails.editor.selection.GrailsTagBodySelectioner"/>
-    <extendWordSelectionHandler implementation="org.jetbrains.plugins.grails.editor.selection.GrailsHtmlTagBodySelectioner"/>
 
     <!--Gant filetype-->
     <quoteHandler fileType="Gant" className="org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler"/>
@@ -240,7 +181,6 @@
 
     <psi.referenceContributor implementation="org.jetbrains.plugins.gant.reference.GantReferenceContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.providers.GroovyReferenceContributor"/>
-    <psi.referenceContributor implementation="org.jetbrains.plugins.grails.references.util.GrailsReferenceContributor"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.gant.reference.AntTasksProvider"
                     serviceImplementation="org.jetbrains.plugins.gant.reference.AntTasksProvider"/>
@@ -254,8 +194,6 @@
                     serviceImplementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager"/>
 
     <inspectionToolProvider implementation="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionProvider"/>
-
-    <concatenationAwareInjector implementation="org.jetbrains.plugins.grails.fileType.GroovyInjector"/>
 
     <problemFileHighlightFilter implementation="org.jetbrains.plugins.groovy.GroovyProblemFileHighlightFilter"/>
 
@@ -414,20 +352,9 @@
       <className>org.jetbrains.plugins.groovy.intentions.style.ReplaceAbstractClassInstanceByMapIntention</className>
     </intentionAction>
 
-    <projectService serviceInterface="org.jetbrains.plugins.grails.references.manager.GrailsImplicitVariableManager"
-                    serviceImplementation="org.jetbrains.plugins.grails.references.manager.GrailsImplicitVariableManagerImpl"/>
-
     <projectService serviceInterface="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"
                     serviceImplementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"/>
 
-    <toolWindow id="Grails" anchor="left" secondary="false" icon="/org/jetbrains/plugins/grails/images/grails.png"
-                factoryClass="org.jetbrains.plugins.grails.projectView.GrailsToolWindowFactory"
-                conditionClass="org.jetbrains.plugins.grails.projectView.GrailsToolWindowFactory"/>
-    <toolWindow id="Griffon" anchor="left" secondary="false" icon="/org/jetbrains/plugins/griffon/griffon.png"
-                factoryClass="org.jetbrains.plugins.groovy.griffon.GriffonToolWindowFactory"
-                conditionClass="org.jetbrains.plugins.groovy.griffon.GriffonToolWindowFactory"/>
-
-    <selectInTarget implementation="org.jetbrains.plugins.groovy.mvc.projectView.MvcProjectViewSelectInTarget"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
@@ -435,28 +362,6 @@
   </extensions>
 
   <actions>
-    <action id="Grails.GenerateViews" class="org.jetbrains.plugins.grails.actions.GenerateViewsAction"
-            text="Grails Views" description="Generate Grails Views">
-      <add-to-group group-id="GenerateGroup" anchor="last"/>
-    </action>
-    <action id="Grails.GenerateController" class="org.jetbrains.plugins.grails.actions.GenerateControllerAction"
-            text="Grails Controller" description="Generate Grails Controller">
-      <add-to-group group-id="GenerateGroup" anchor="last"/>
-    </action>
-    <action id="Grails.GenerateDomainClass" class="org.jetbrains.plugins.grails.actions.GenerateDomainClassAction"
-            text="Grails Domain Class" description="Generate Grails Domain Class">
-      <add-to-group group-id="GenerateGroup" anchor="last"/>
-    </action>
-    <action id="Grails.GenerateTests" class="org.jetbrains.plugins.grails.actions.GenerateTestsAction"
-            text="Grails Tests" description="Create Tests">
-      <add-to-group group-id="GenerateGroup" anchor="last"/>
-    </action>
-    <action id="Grails.GenerateControllerTests"
-            class="org.jetbrains.plugins.grails.actions.GenerateControllerTestsAction"
-            text="Grails Controller Tests" description="Create Controller Tests">
-      <add-to-group group-id="GenerateGroup" anchor="last"/>
-    </action>
-
     <action id="Groovy.NewScript" class="org.jetbrains.plugins.groovy.actions.NewScriptAction"
             text="Groovy Script" description="Create new Groovy script">
       <add-to-group group-id="NewGroup" anchor="last"/>
@@ -487,25 +392,6 @@
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
 
-    <group id="Grails" text="Grails" popup="false">
-      <action id="Grails.DomainClass" class="org.jetbrains.plugins.grails.actions.NewGrailsDomainClassAction"/>
-      <action id="Grails.Controller" class="org.jetbrains.plugins.grails.actions.NewGrailsControllerAction"/>
-      <action id="Grails.Service" class="org.jetbrains.plugins.grails.actions.NewGrailsServiceAction"/>
-      <action id="Grails.Script" class="org.jetbrains.plugins.grails.actions.NewGrailsScriptAction"/>
-      <action id="Grails.TagLib" class="org.jetbrains.plugins.grails.actions.NewGrailsTagLibAction"/>
-      <action id="Grails.GSP" class="org.jetbrains.plugins.grails.actions.NewGspAction"/>
-      <separator/>
-      <add-to-group group-id="NewGroup" anchor="first"/>
-    </group>
-
-    <action id="Grails.Plugins"
-            class="org.jetbrains.plugins.grails.plugins.GrailsPluginsAction"
-            text="Grails plugins" description="Grails plugins manager" icon="/org/jetbrains/plugins/grails/images/grails_plugin.png">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt K"/>
-    </action>
-
     <action id="Groovy.Doc.Generating"
             class="org.jetbrains.plugins.groovy.doc.actions.GenerateGroovyDocAction"
             text="Generate GroovyDoc" description="Generating Groovy Documentation"
@@ -514,32 +400,15 @@
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt D"/>
     </action>
 
-    <action id="Grails.WAR" class="org.jetbrains.plugins.grails.actions.GrailsWarAction"
-            text="Make Grails Web Archive" description="Generate Web Archive">
-      <add-to-group group-id="BuildMenu" anchor="last"/>
-    </action>
-    <action id="Mvc.RunTarget" class="org.jetbrains.plugins.groovy.mvc.MvcRunTarget"
-            text="Run Grails/Griffon Target" description="Run arbitrary Grails/Griffon target">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt G"/>
-    </action>
   </actions>
-
 
   <application-components>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.GroovyLoader</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.grails.fileType.GspLoader</implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.plugins.gant.GantLoader</implementation-class>
     </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.grails.GrailsLoader</implementation-class>
-    </component>
-    <!-- Groovy-based framework specific extension points -->
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry</implementation-class>
     </component>
@@ -553,16 +422,7 @@
       <implementation-class>org.jetbrains.plugins.groovy.compiler.GroovyCompilerLoader</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.mvc.projectView.MvcViewManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.grails.editor.EditorDecorator</implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.grails.GrailsProjectLoader</implementation-class>
     </component>
     <component>
       <interface-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager</interface-class>
@@ -570,9 +430,6 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyAddImportsPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer</implementation-class>
     </component>
   </project-components>
 
