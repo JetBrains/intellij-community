@@ -330,6 +330,10 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
           if (currentChildNames.contains(file.getName())) {
             currentChildNames.remove(file.getName());
 
+            if (myPathMacroSubstitutor != null) {
+              myPathMacroSubstitutor.collapsePaths(element);
+            }
+
             final byte[] text = StorageUtil.printElement(element);
             try {
               if (!Arrays.equals(file.loadBytes(), text)) {
