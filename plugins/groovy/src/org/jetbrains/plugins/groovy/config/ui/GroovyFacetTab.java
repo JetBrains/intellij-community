@@ -15,28 +15,20 @@
 
 package org.jetbrains.plugins.groovy.config.ui;
 
-import com.intellij.facet.impl.ui.FacetContextChangeListener;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.grails.config.GrailsLibraryManager;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager;
 import org.jetbrains.plugins.groovy.config.GroovyFacetConfiguration;
-import org.jetbrains.plugins.groovy.griffon.GriffonLibraryManager;
-import org.jetbrains.plugins.groovy.mvc.MvcFacetExtension;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import javax.swing.*;
@@ -51,7 +43,6 @@ public class GroovyFacetTab extends FacetEditorTab {
   private JPanel myPanel;
   private JRadioButton myCompile;
   private JRadioButton myCopyToOutput;
-  private JCheckBox myIsMvc;
   private JPanel myManagedLibrariesPanel;
 
   private final ManagedLibrariesEditor myManagedLibrariesEditor;
@@ -63,41 +54,12 @@ public class GroovyFacetTab extends FacetEditorTab {
 
     myManagedLibrariesPanel.add(myManagedLibrariesEditor.getComponent());
 
-    myManagedLibrariesEditor.getFacetEditorContext().addFacetContextChangeListener(new FacetContextChangeListener() {
-      public void moduleRootsChanged(ModifiableRootModel rootModel) {
-        updateMvcCheckbox();
-      }
-
-      public void facetModelChanged(@NotNull Module module) {
-      }
-    });
     myManagedLibrariesEditor.shouldHaveLibrary(new Condition<Library>() {
       public boolean value(Library libraryManager) {
         final VirtualFile[] files = editorContext.getLibraryFiles(libraryManager, OrderRootType.CLASSES);
         return StringUtil.isNotEmpty(LibrariesUtil.getGroovyOrGrailsLibraryHome(files));
       }
     }, "No Groovy-containing library is not configured yet");
-  }
-
-  private void updateMvcCheckbox() {
-    final boolean hasGrails = myManagedLibrariesEditor.findUsedLibrary(GrailsLibraryManager.class) != null;
-    final boolean hasGriffon = myManagedLibrariesEditor.findUsedLibrary(GriffonLibraryManager.class) != null;
-    final boolean hasMvc = hasGrails || hasGriffon;
-    if (!myIsMvc.isEnabled() && hasMvc) {
-      myIsMvc.setEnabled(true);
-      myIsMvc.setSelected(true);
-    } else if (!hasMvc) {
-      myIsMvc.setEnabled(false);
-      myIsMvc.setSelected(false);
-    }
-
-    if (hasGrails) {
-      myIsMvc.setText("Is Grails application");
-    } else if (hasGriffon) {
-      myIsMvc.setText("Is Griffon application");
-    } else {
-      myIsMvc.setText("Is Grails/Griffon application");
-    }
   }
 
   @Nls
@@ -113,10 +75,6 @@ public class GroovyFacetTab extends FacetEditorTab {
     if (myCompile.isSelected() != myConfiguration.isCompileGroovyFiles()) {
       return true;
     }
-    if (isMvcApplication() != MvcFacetExtension.isMvcApplication(myConfiguration)) {
-      return true;
-    }
-
     return false;
   }
 
@@ -127,19 +85,11 @@ public class GroovyFacetTab extends FacetEditorTab {
 
   public void apply() throws ConfigurationException {
     myConfiguration.setCompileGroovyFiles(myCompile.isSelected());
-    MvcFacetExtension.setMvcApplication(myConfiguration, isMvcApplication());
   }
 
-  @Nullable
-  private Boolean isMvcApplication() {
-    return myIsMvc.isEnabled() ? myIsMvc.isSelected() : null;
-  }
 
   public void reset() {
     (myConfiguration.isCompileGroovyFiles() ? myCompile : myCopyToOutput).setSelected(true);
-    final Boolean isMvc = MvcFacetExtension.isMvcApplication(myConfiguration);
-    updateMvcCheckbox();
-    myIsMvc.setSelected(isMvc != null && isMvc.booleanValue());
     myManagedLibrariesEditor.updateLibraryList();
   }
 
