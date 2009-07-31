@@ -7,5 +7,6 @@ class Test {
 
     private void newMethod(String s) {
         System.out.println(s);
+        System.out.println(s + s);
     }
 }

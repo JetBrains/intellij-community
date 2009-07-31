@@ -200,8 +200,10 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
     myCreateAnonymousClassWrapperRb.addActionListener(enableDisableListener);
     myCreateAnonymousClassWrapperRb.setEnabled(!myMultipleExitPoints);
 
-    myFoldCb.setSelected(true);
+    myFoldCb.setSelected(myVariableData.isFoldingSelectedByDefault());
     myFoldCb.setVisible(myVariableData.isFoldable());
+    myVariableData.setFoldingAvailable(myFoldCb.isSelected());
+
     myFoldCb.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myVariableData.setFoldingAvailable(myFoldCb.isSelected());

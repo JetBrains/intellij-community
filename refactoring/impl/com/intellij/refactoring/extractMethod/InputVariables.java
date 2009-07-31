@@ -104,9 +104,7 @@ public class InputVariables {
 
     boolean update = elements[0] == expression;
     for (ParameterTablePanel.VariableData inputVariable : myInputVariables) {
-      for (PsiReference reference : ReferencesSearch.search(inputVariable.variable, myScope)) {
-        myFolding.foldParameterUsagesInBody(inputVariable, reference.getElement(), elements);
-      }
+      myFolding.foldParameterUsagesInBody(inputVariable, elements, myScope);
     }
     return update ? (PsiExpression)elements[0] : expression;
   }

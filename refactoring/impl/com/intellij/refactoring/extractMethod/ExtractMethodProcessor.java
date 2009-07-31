@@ -306,23 +306,9 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     checkCanBeChainedConstructor();
 
-    List<PsiElement> elements = new ArrayList<PsiElement>();
-    for (PsiElement element : myElements) {
-      if (!(element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
-        elements.add(element);
-      }
-    }
 
-    if (myExpression != null) {
-      myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), myInputVariables.copy(), new ArrayList<PsiVariable>());
-      myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
-    }
-    else if (elements.size() > 0){
-      myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), myInputVariables.copy(), myOutputVariable != null ? new VariableReturnValue(myOutputVariable) : null, Arrays.asList(myOutputVariables));
-      myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
-    } else {
-      myDuplicates = new ArrayList<Match>();
-    }
+
+
 
     return true;
   }
@@ -483,6 +469,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   public void testRun() throws IncorrectOperationException {
+    myInputVariables.setFoldingAvailable(myInputVariables.isFoldingSelectedByDefault());
     myMethodName = myInitialMethodName;
     myVariableDatum = new ParameterTablePanel.VariableData[myInputVariables.getInputVariables().size()];
     for (int i = 0; i < myInputVariables.getInputVariables().size(); i++) {
@@ -496,6 +483,23 @@ public class ExtractMethodProcessor implements MatchProvider {
    * Invoked in command and in atomic action
    */
   public void doRefactoring() throws IncorrectOperationException {
+    List<PsiElement> elements = new ArrayList<PsiElement>();
+    for (PsiElement element : myElements) {
+      if (!(element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
+        elements.add(element);
+      }
+    }
+    if (myExpression != null) {
+      myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), myInputVariables.copy(), new ArrayList<PsiVariable>());
+      myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
+    }
+    else if (elements.size() > 0){
+      myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), myInputVariables.copy(), myOutputVariable != null ? new VariableReturnValue(myOutputVariable) : null, Arrays.asList(myOutputVariables));
+      myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
+    } else {
+      myDuplicates = new ArrayList<Match>();
+    }
+
     chooseAnchor();
 
     int col = myEditor.getCaretModel().getLogicalPosition().column;

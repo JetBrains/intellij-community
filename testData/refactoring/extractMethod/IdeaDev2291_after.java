@@ -1,10 +1,10 @@
 class Tester {
     void method(Object... array) {
         Object object = null;
-        newMethod(array.equals(object));
+        newMethod(object, array);
     }
 
-    private void newMethod(boolean b) {
-        b;
+    private void newMethod(Object object, Object[] array) {
+        array.equals(object);
     }
 }

@@ -1,12 +1,12 @@
 class Test {
     public static String bar(int x , int y) {
         while (true) {
-            newMethod(x == y);
+            newMethod(x, y);
         }
     }
 
-    private static void newMethod(boolean b) {
-        if (b) {
+    private static void newMethod(int x, int y) {
+        if (x == y) {
             return;
         }
         System.out.println("HW");

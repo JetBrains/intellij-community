@@ -11,6 +11,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -65,23 +66,29 @@ public class ParametersFolder {
     return false;
   }
 
-  public void foldParameterUsagesInBody(@NotNull ParameterTablePanel.VariableData data, @NotNull PsiElement element,
-                                              PsiElement[] psiElements) {
+  public void foldParameterUsagesInBody(@NotNull ParameterTablePanel.VariableData data, PsiElement[] elements, SearchScope scope) {
     if (myDeleted.contains(data.variable)) return;
     final PsiExpression psiExpression = myExpressions.get(data.variable);
     if (psiExpression == null) return;
-    final PsiExpression expression = findEquivalent(psiExpression, element);
-    if (expression != null && expression.isValid()) {
+    final Set<PsiExpression> eqExpressions = new HashSet<PsiExpression>();
+    for (PsiReference reference : ReferencesSearch.search(data.variable, scope)) {
+      final PsiExpression expression = findEquivalent(psiExpression, reference.getElement());
+      if (expression != null && expression.isValid()) {
+        eqExpressions.add(expression);
+      }
+    }
+
+    for (PsiExpression expression : eqExpressions) {
       final PsiExpression refExpression =
-        JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(data.variable.getName(), element);
-      for (int i = 0, psiElementsLength = psiElements.length; i < psiElementsLength; i++) {
-        PsiElement psiElement = psiElements[i];
+        JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(data.variable.getName(), expression);
+      final PsiElement replaced = expression.replace(refExpression);
+      for (int i = 0, psiElementsLength = elements.length; i < psiElementsLength; i++) {
+        PsiElement psiElement = elements[i];
         if (expression == psiElement) {
-          psiElements[i] = expression.replace(refExpression);
-          return;
+          elements[i] = replaced;
+          break;
         }
       }
-      expression.replace(refExpression);
     }
   }
 

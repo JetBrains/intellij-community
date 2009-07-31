@@ -1,6 +1,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -15,6 +16,7 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.Calendar;
 import java.util.List;
 
 public class ExtractMethodTest extends LightCodeInsightTestCase {
@@ -396,6 +398,11 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testWriteArrayAccess() throws Exception {
+    doTest();
+  }
+
+  @Bombed(month = Calendar.AUGUST, day = 3, user = "cdr")
+  public void testShortCircuit() throws Exception {
     doTest();
   }
 

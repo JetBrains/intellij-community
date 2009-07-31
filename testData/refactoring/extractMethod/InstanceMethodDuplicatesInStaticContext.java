@@ -1,4 +1,4 @@
-class Class {
+class Class1 {
     public static int staticMethod() {
         int a = 1;
         int b = 2;
