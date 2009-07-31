@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.refactoring;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -77,7 +78,7 @@ public class GroovyChangeContextUtil {
 
   }
 
-  public static void decodeContextInfo(PsiElement element, PsiClass thisClass, GrExpression thisAccessExpr) {
+  public static void decodeContextInfo(PsiElement element, @Nullable PsiClass thisClass, @Nullable GrExpression thisAccessExpr) {
     if (!(element instanceof GroovyPsiElement)) return;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       decodeContextInfo(child, thisClass, thisAccessExpr);
@@ -88,7 +89,7 @@ public class GroovyChangeContextUtil {
       if (element instanceof GrThisReferenceExpression) {
         final PsiClass thisQualClass = element.getCopyableUserData(QUALIFIER_CLASS_KEY);
         element.putCopyableUserData(QUALIFIER_CLASS_KEY, null);
-        if (!manager.areElementsEquivalent(thisClass, thisQualClass)) {
+        if (thisAccessExpr != null && !manager.areElementsEquivalent(thisClass, thisQualClass)) {
           element.replace(thisAccessExpr);
           return;
         }
