@@ -519,9 +519,6 @@ public class SvnVcs extends AbstractVcs {
     return new SvnConfigurable(myProject);
   }
 
-  public Project getProject() {
-    return myProject;
-  }
 
   public SvnConfiguration getSvnConfiguration() {
     return myConfiguration;
