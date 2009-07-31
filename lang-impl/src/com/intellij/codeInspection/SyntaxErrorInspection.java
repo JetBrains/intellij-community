@@ -41,9 +41,15 @@ public class SyntaxErrorInspection extends GlobalInspectionTool {
         }
         else {
           PsiElement parent = element;
-          do {
+          while(true) {
             parent = parent.getParent();
-          } while(parent != null && parent.getTextRange().getLength() == 0);
+            if (parent == null) break;
+            TextRange r = parent.getTextRange();
+            if (r == null) return; // no place to attach the problem descriptor to
+            if (r.getLength() > 0) {
+              break;
+            }
+          }
           if (parent == null) return;
           int offset = element.getTextRange().getStartOffset() - parent.getTextRange().getStartOffset();
           descriptor = manager.createProblemDescriptor(parent,
