@@ -17,14 +17,23 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.ResolveResult;
+import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocParameterReference;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterListOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+
+import java.util.ArrayList;
 
 /**
  * @author ilyas
@@ -45,7 +54,37 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
 
   @NotNull
   public ResolveResult[] multiResolve(boolean incompleteCode) {
-    return new ResolveResult[0];
+    final String name = getName();
+    if (name == null) return ResolveResult.EMPTY_ARRAY;
+    ArrayList<GroovyResolveResult> candidates = new ArrayList<GroovyResolveResult>();
+
+    final PsiElement owner = GrDocCommentUtil.findDocOwner(this);
+    if (owner instanceof GrMethod) {
+      final GrMethod method = (GrMethod)owner;
+      final GrParameter[] parameters = method.getParameters();
+
+      for (GrParameter parameter : parameters) {
+        if (name.equals(parameter.getName())) {
+          candidates.add(new GroovyResolveResultImpl(parameter, true));
+        }
+      }
+      return candidates.toArray(new ResolveResult[candidates.size()]);
+    }
+    else {
+      final PsiElement firstChild = getFirstChild();
+      if (owner instanceof GrTypeParameterListOwner && firstChild != null) {
+        final ASTNode node = firstChild.getNode();
+        if (node != null && GroovyDocTokenTypes.mGDOC_TAG_VALUE_LT.equals(node.getElementType())) {
+          final PsiTypeParameter[] typeParameters = ((PsiTypeParameterListOwner)owner).getTypeParameters();
+          for (PsiTypeParameter typeParameter : typeParameters) {
+            if (name.equals(typeParameter.getName())) {
+              candidates.add(new GroovyResolveResultImpl(typeParameter, true));
+            }
+          }
+        }
+      }
+    }
+    return ResolveResult.EMPTY_ARRAY;
   }
 
   public PsiElement getElement() {
@@ -56,32 +95,64 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
     return new TextRange(0, getTextLength());
   }
 
+  @Override
+  public String getName() {
+    return getReferenceNameElement().getText();
+  }
+
   @Nullable
   public PsiElement resolve() {
-    return null;
+    final ResolveResult[] results = multiResolve(false);
+    if (results.length != 1) return null;
+    return results[0].getElement();
   }
 
   public String getCanonicalText() {
-    return null;
+    return getName();
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    return null;
+    PsiElement nameElement = getReferenceNameElement();
+    ASTNode node = nameElement.getNode();
+    ASTNode newNameNode = GroovyPsiElementFactory.getInstance(getProject()).createDocMemberReferenceNameFromText(newElementName).getNode();
+    assert newNameNode != null && node != null;
+    node.getTreeParent().replaceChild(node, newNameNode);
+    return this;
   }
 
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    if (isReferenceTo(element)) return this;
     return null;
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    return false;
+    if (!(element instanceof GrParameter || element instanceof GrTypeParameter)) return false;
+    return getManager().areElementsEquivalent(element, resolve());
   }
 
   public Object[] getVariants() {
+    final PsiElement owner = GrDocCommentUtil.findDocOwner(this);
+    final PsiElement firstChild = getFirstChild();
+    if (owner instanceof GrTypeParameterListOwner && firstChild != null) {
+      final ASTNode node = firstChild.getNode();
+      if (node != null && GroovyDocTokenTypes.mGDOC_TAG_VALUE_LT.equals(node.getElementType())) {
+        return ((PsiTypeParameterListOwner)owner).getTypeParameters();
+      }
+    }
+    if (owner instanceof PsiMethod) {
+      return ((PsiMethod)owner).getParameterList().getParameters();
+    }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   public boolean isSoft() {
     return false;
+  }
+
+  @NotNull
+  public GrDocTagValueToken getReferenceNameElement() {
+    GrDocTagValueToken token = findChildByClass(GrDocTagValueToken.class);
+    assert token != null;
+    return token;
   }
 }

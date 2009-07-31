@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 /**
@@ -73,6 +74,22 @@ public class GroovyGotoTest extends JavaCodeInsightFixtureTestCase {
     doTest(new Condition<PsiElement>() {
       public boolean value(PsiElement element) {
         return element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 2;
+      }
+    });
+  }
+
+  public void testGroovyDocParameter1() throws Throwable {
+    doTest(new Condition<PsiElement>() {
+      public boolean value(PsiElement element) {
+        return element instanceof GrParameter && ((GrParameter)element).getName().equals("x");
+      }
+    });
+  }
+
+  public void testGroovyDocParameter2() throws Throwable {
+    doTest(new Condition<PsiElement>() {
+      public boolean value(PsiElement element) {
+        return element instanceof GrParameter && ((GrParameter)element).getName().equals("x");
       }
     });
   }

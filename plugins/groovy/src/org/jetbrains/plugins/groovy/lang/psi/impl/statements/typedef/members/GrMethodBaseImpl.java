@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -445,6 +447,11 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
   @Nullable
   public PsiDocComment getDocComment() {
     return null;
+  }
+
+  @Nullable
+  public GrDocComment getGrDocComment() {
+    return GrDocCommentUtil.findDocComment(this);
   }
 
   public boolean isDeprecated() {

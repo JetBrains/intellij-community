@@ -25,6 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -333,6 +334,10 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
 
   @Nullable
   public PsiDocComment getDocComment() {
+    return null;
+  }
+
+  public GrDocComment getGrDocComment() {
     return null;
   }
 

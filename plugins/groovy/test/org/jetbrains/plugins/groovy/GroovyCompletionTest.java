@@ -199,4 +199,8 @@ public class GroovyCompletionTest extends JavaCodeInsightFixtureTestCase {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
     assertNull(myFixture.getLookupElements());
   }
+
+  public void testGroovyDocParameter() throws Throwable {
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "x", "y");
+  }
 }

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
@@ -38,7 +39,7 @@ import java.util.Set;
  * @date: 26.03.2007
  */
 public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMethod, GrMember,
-        GrParametersOwner, GrTopLevelDefintion, GrTypeParameterListOwner {
+        GrParametersOwner, GrTopLevelDefintion, GrTypeParameterListOwner, GrDocCommentOwner {
   GrMethod[] EMPTY_ARRAY = new GrMethod[0];
   Key<Boolean> BUILDER_METHOD = Key.create("BUILDER_METHOD");
 

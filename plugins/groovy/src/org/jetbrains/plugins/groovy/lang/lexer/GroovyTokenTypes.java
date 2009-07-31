@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.lang.lexer;
 
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
@@ -37,7 +38,7 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes{
 
   IElementType mWS = new GroovyElementType("white space");
   IElementType mNLS = new GroovyElementType("new line");
-  TokenSet WHITE_SPACES_SET=TokenSet.create(mWS, mNLS);
+  TokenSet WHITE_SPACES_SET=TokenSet.create(mWS, mNLS, TokenType.WHITE_SPACE);
 
   /* **************************************************************************************************
  *  Comments

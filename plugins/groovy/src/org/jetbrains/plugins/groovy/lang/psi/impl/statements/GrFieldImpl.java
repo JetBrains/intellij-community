@@ -30,6 +30,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -302,5 +304,9 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
       }
     }
     return namedParameters.toArray(new HashSet[0]);
+  }
+
+  public GrDocComment getGrDocComment() {
+    return GrDocCommentUtil.findDocComment(this);
   }
 }
