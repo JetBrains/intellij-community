@@ -35,6 +35,7 @@
 
     <extensionPoint name="positionManagerDelegate" interface="org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper"/>
     <extensionPoint name="compilerExtension" interface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerExtension"/>
+    <extensionPoint name="facetExtension" interface="org.jetbrains.plugins.groovy.config.GroovyFacetExtension"/>
 
     <extensionPoint name="grails.facetProvider" interface="org.jetbrains.plugins.grails.util.GrailsFacetProvider"/>
   </extensionPoints>
@@ -52,6 +53,7 @@
     <positionManagerDelegate implementation="org.jetbrains.plugins.gant.debugger.GantPositionManagerHelper"/>
     <compilerExtension implementation="org.jetbrains.plugins.grails.GrailsCompilerExtension"/>
     <propertyEnhancer implementation="org.jetbrains.plugins.grails.InjectedServiceTypeProvider"/>
+    <facetExtension implementation="org.jetbrains.plugins.groovy.mvc.MvcFacetExtension"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

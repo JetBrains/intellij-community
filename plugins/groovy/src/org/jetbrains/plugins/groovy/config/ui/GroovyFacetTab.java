@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager;
 import org.jetbrains.plugins.groovy.config.GroovyFacetConfiguration;
 import org.jetbrains.plugins.groovy.griffon.GriffonLibraryManager;
+import org.jetbrains.plugins.groovy.mvc.MvcFacetExtension;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import javax.swing.*;
@@ -112,7 +113,7 @@ public class GroovyFacetTab extends FacetEditorTab {
     if (myCompile.isSelected() != myConfiguration.isCompileGroovyFiles()) {
       return true;
     }
-    if (isMvcApplication() != myConfiguration.getMvcApplication()) {
+    if (isMvcApplication() != MvcFacetExtension.isMvcApplication(myConfiguration)) {
       return true;
     }
 
@@ -126,7 +127,7 @@ public class GroovyFacetTab extends FacetEditorTab {
 
   public void apply() throws ConfigurationException {
     myConfiguration.setCompileGroovyFiles(myCompile.isSelected());
-    myConfiguration.setMvcApplication(isMvcApplication());
+    MvcFacetExtension.setMvcApplication(myConfiguration, isMvcApplication());
   }
 
   @Nullable
@@ -136,7 +137,7 @@ public class GroovyFacetTab extends FacetEditorTab {
 
   public void reset() {
     (myConfiguration.isCompileGroovyFiles() ? myCompile : myCopyToOutput).setSelected(true);
-    final Boolean isMvc = myConfiguration.getMvcApplication();
+    final Boolean isMvc = MvcFacetExtension.isMvcApplication(myConfiguration);
     updateMvcCheckbox();
     myIsMvc.setSelected(isMvc != null && isMvc.booleanValue());
     myManagedLibrariesEditor.updateLibraryList();
