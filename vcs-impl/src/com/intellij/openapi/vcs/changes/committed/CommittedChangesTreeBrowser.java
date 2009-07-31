@@ -65,7 +65,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private static final Object MORE_TAG = new Object();
 
   private final Project myProject;
+  // left part - with committed changelists list
   private final TreeWithEmptyText myChangesTree;
+  // right part - with details
   private final RepositoryChangesBrowser myChangesView;
   private List<CommittedChangeList> myChangeLists;
   private List<CommittedChangeList> mySelectedChangeLists;
@@ -358,6 +360,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }
     else if (key.equals(PlatformDataKeys.HELP_ID)) {
       sink.put(PlatformDataKeys.HELP_ID, myHelpId);
+    } else if (VcsDataKeys.SELECTED_CHANGES_IN_DETAILS.equals(key)) {
+      final List<Change> selectedChanges = myChangesView.getSelectedChanges();
+      sink.put(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS, selectedChanges.toArray(new Change[selectedChanges.size()]));
     }
   }
 

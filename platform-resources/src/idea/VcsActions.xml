@@ -138,7 +138,7 @@
       <action id="CommittedChanges.Details" class="com.intellij.openapi.vcs.changes.committed.ChangeListDetailsAction"
               icon="/actions/showChangesOnly.png"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
-      <action id="CommittedChanges.Revert" class="com.intellij.openapi.vcs.changes.actions.RevertChangesAction"
+      <action id="CommittedChanges.Revert" class="com.intellij.openapi.vcs.changes.actions.RevertChangeListAction"
               icon="/actions/rollback.png"/>
     </group>
     

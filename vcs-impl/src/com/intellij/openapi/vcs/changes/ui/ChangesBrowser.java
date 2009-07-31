@@ -311,6 +311,10 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     return files.toArray(new File[files.size()]);
   }
 
+  public List<Change> getSelectedChanges() {
+    return myViewer.getSelectedChanges();
+  }
+
   private VirtualFile[] getSelectedFiles() {
     final List<Change> changes = myViewer.getSelectedChanges();
     return ChangesUtil.getFilesFromChanges(changes);

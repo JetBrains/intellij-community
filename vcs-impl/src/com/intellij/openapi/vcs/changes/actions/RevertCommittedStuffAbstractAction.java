@@ -17,20 +17,28 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.Convertor;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
-public class RevertChangesAction extends AnAction implements DumbAware {
+abstract class RevertCommittedStuffAbstractAction extends AnAction implements DumbAware {
+  private final Convertor<AnActionEvent, Change[]> myForUpdateConvertor;
+  private final Convertor<AnActionEvent, Change[]> myForPerformConvertor;
+
+  public RevertCommittedStuffAbstractAction(final Convertor<AnActionEvent, Change[]> forUpdateConvertor,
+                                            final Convertor<AnActionEvent, Change[]> forPerformConvertor) {
+    myForUpdateConvertor = forUpdateConvertor;
+    myForPerformConvertor = forPerformConvertor;
+  }
+
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getRequiredData(PlatformDataKeys.PROJECT);
     final VirtualFile baseDir = project.getBaseDir();
     assert baseDir != null;
-    final Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN);
+    final Change[] changes = myForPerformConvertor.convert(e);
+    if (changes == null || changes.length == 0) return;
     final List<Change> changesList = new ArrayList<Change>();
     Collections.addAll(changesList, changes);
 
@@ -58,7 +66,7 @@ public class RevertChangesAction extends AnAction implements DumbAware {
 
   public void update(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final Change[] changes = e.getData(VcsDataKeys.CHANGES);
+    final Change[] changes = myForUpdateConvertor.convert(e);
     e.getPresentation().setEnabled(project != null && changes != null && changes.length > 0);
   }
 }

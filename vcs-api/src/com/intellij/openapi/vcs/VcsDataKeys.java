@@ -46,6 +46,7 @@ public interface VcsDataKeys {
   DataKey<ChangeList[]> CHANGE_LISTS = DataKey.create(DataConstants.CHANGE_LISTS);
   DataKey<Change[]> CHANGES = DataKey.create(DataConstants.CHANGES);
   DataKey<Change[]> CHANGES_WITH_MOVED_CHILDREN = DataKey.create("ChangeListView.ChangesWithDetails");
+  DataKey<Change[]> SELECTED_CHANGES_IN_DETAILS = DataKey.create("ChangeListView.SelectedChangesWithMovedSubtrees");
   @NonNls DataKey<List<Change>> CHANGES_IN_LIST_KEY = DataKey.create("ChangeListView.ChangesInList");
   @NonNls DataKey<List<VirtualFile>> MODIFIED_WITHOUT_EDITING_DATA_KEY = DataKey.create("ChangeListView.ModifiedWithoutEditing");
   DataKey<Change[]> SELECTED_CHANGES = DataKey.create("ChangeListView.SelectedChange");

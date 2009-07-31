@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction;
+import com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -47,6 +48,8 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
     toolBarGroup.add(editSourceAction);
     OpenRepositoryVersionAction action = new OpenRepositoryVersionAction();
     toolBarGroup.add(action);
+    final RevertSelectedChangesAction revertSelectedChangesAction = new RevertSelectedChangesAction();
+    toolBarGroup.add(revertSelectedChangesAction);
 
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("RepositoryChangesBrowserToolbar");
     final AnAction[] actions = group.getChildren(null);
