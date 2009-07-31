@@ -54,7 +54,7 @@ public class JUnitUtil {
     if (psiMethod.isConstructor()) return false;
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
-    if (AnnotationUtil.isAnnotated(aClass, RUN_WITH, false)) return true;
+    if (AnnotationUtil.isAnnotated(aClass, RUN_WITH, true)) return true;
     if (psiMethod.getParameterList().getParametersCount() > 0) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.STATIC) && BaseTestRunner.SUITE_METHODNAME.equals(psiMethod.getName())) return false;
     if (!psiMethod.getName().startsWith("test")) return false;
@@ -86,7 +86,7 @@ public class JUnitUtil {
     if (checkForTestCaseInheritance && isTestCaseInheritor(psiClass)) return true;
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
-    if (modifierList.findAnnotation(RUN_WITH) != null) return true;
+    if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, true)) return true;
 
     for (final PsiMethod method : psiClass.getMethods()) {
       if (isSuiteMethod(method)) return true;
@@ -115,7 +115,7 @@ public class JUnitUtil {
 
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
-    if (modifierList.findAnnotation(RUN_WITH) != null) return true;
+    if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, true)) return true;
     for (final PsiMethod method : psiClass.getMethods()) {
       if (isTestAnnotated(method)) return true;
     }
@@ -131,7 +131,7 @@ public class JUnitUtil {
 
   public static boolean isTestAnnotated(final PsiMethod method) {
     if (AnnotationUtil.isAnnotated(method, "org.junit.Test", false)) {
-      final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method.getContainingClass(), RUN_WITH);
+      final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(method.getContainingClass(), Collections.singleton(RUN_WITH));
       if (annotation != null) {
         final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
         for (PsiNameValuePair attribute : attributes) {
