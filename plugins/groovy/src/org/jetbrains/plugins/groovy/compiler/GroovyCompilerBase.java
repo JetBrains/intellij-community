@@ -75,10 +75,9 @@ import java.util.regex.Pattern;
  */
 public abstract class GroovyCompilerBase implements TranslatingCompiler {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyCompilerBase");
-  private static final HashSet<String> required = new HashSet<String>(Arrays.asList("groovy", "asm", "antlr", "junit", "jline", "ant", "commons"));
   protected final Project myProject;
   @NonNls private static final String GROOVYC_RUNNER_REQUIRED = ".*(groovy|asm|antlr|junit|jline|ant|commons).*\\.jar";
-  private static final Pattern GROOVYC_RUNNER_REQUIRED_PATTERN = Pattern.compile(GROOVYC_RUNNER_REQUIRED);
+  private static final Pattern NONTRADITIONAL_GROOVYC_RUNNER_REQUIRED = Pattern.compile(".*(groovy|junit|jline|ant).*\\.jar");
 
   public GroovyCompilerBase(Project project) {
     myProject = project;
@@ -101,9 +100,10 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       classPathBuilder.addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(libPath, GROOVYC_RUNNER_REQUIRED));
     } else {
       //non-traditional distribution
+      //groovy-all.jar doesn't contain some dependencies like JUnit, so we should find them ourselves in module classpath
       for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
         for (VirtualFile file : entry.getFiles(OrderRootType.CLASSES)) {
-          if (GROOVYC_RUNNER_REQUIRED_PATTERN.matcher(file.getName()).matches()) {
+          if (NONTRADITIONAL_GROOVYC_RUNNER_REQUIRED.matcher(file.getName()).matches()) {
             classPathBuilder.add(file);
           }
         }
