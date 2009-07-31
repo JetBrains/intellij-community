@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -66,9 +67,11 @@ public class PsiJavaDirectoryImpl extends PsiDirectoryImpl {
   }
 
   public void navigate(final boolean requestFocus) {
+    final ToolWindowEx window = (ToolWindowEx)ToolWindowManager.getInstance(getProject()).getToolWindow(ToolWindowId.PROJECT_VIEW);
+    window.ensureContentInitialized();
     final ProjectView projectView = ProjectView.getInstance(getProject());
     projectView.changeView(ProjectViewPane.ID);
     projectView.getProjectViewPaneById(ProjectViewPane.ID).select(this, getVirtualFile(), requestFocus);
-    ToolWindowManager.getInstance(getProject()).getToolWindow(ToolWindowId.PROJECT_VIEW).activate(null);
+    window.activate(null);
   }
 }
