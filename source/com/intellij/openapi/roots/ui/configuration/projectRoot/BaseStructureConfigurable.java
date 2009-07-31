@@ -148,14 +148,15 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
           } else {
             final Object object = node.getConfigurable().getEditableObject();
             final boolean unused = myContext.isUnused(object);
-            final boolean invalid = myContext.isInvalid(object);
+            final StructureConfigurableContext.ValidityLevel level = myContext.isInvalid(object);
+            final boolean invalid = level != StructureConfigurableContext.ValidityLevel.VALID;
             if (unused || invalid){
               Color fg = unused
                          ? UIUtil.getTextInactiveTextColor()
                          : selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground();
               append(displayName, new SimpleTextAttributes(invalid ? SimpleTextAttributes.STYLE_WAVED : SimpleTextAttributes.STYLE_PLAIN,
                                                            fg,
-                                                           Color.red));
+                                                           level == StructureConfigurableContext.ValidityLevel.ERROR ? Color.RED : Color.GRAY));
               setToolTipText(composeTooltipMessage(invalid, object, displayName, unused));
             }
             else {

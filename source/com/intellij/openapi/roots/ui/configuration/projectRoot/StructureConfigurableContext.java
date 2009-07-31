@@ -36,14 +36,16 @@ import java.util.*;
 public class StructureConfigurableContext implements Disposable {
   private static final Logger LOG = Logger.getInstance("#" + StructureConfigurableContext.class.getName());
 
-  @NonNls public static final String DELETED_LIBRARIES = "lib";
+  public enum ValidityLevel { VALID, WARNING, ERROR }
+
   public static final String NO_JDK = ProjectBundle.message("project.roots.module.jdk.problem.message");
   public static final String DUPLICATE_MODULE_NAME = ProjectBundle.message("project.roots.module.duplicate.name.message");
+  @NonNls public static final String DELETED_LIBRARIES = "lib";
 
   public final Map<Library, Set<String>> myLibraryDependencyCache = new HashMap<Library, Set<String>>();
   public final Map<Sdk, Set<String>> myJdkDependencyCache = new HashMap<Sdk, Set<String>>();
   public final Map<Module, Map<String, Set<String>>> myValidityCache = new HashMap<Module, Map<String, Set<String>>>();
-  public final Map<Library, Boolean> myLibraryPathValidityCache = new HashMap<Library, Boolean>(); //can be invalidated on startup only
+  public final Map<Library, ValidityLevel> myLibraryPathValidityCache = new HashMap<Library, ValidityLevel>(); //can be invalidated on startup only
   public final Map<Module, Set<String>> myModulesDependencyCache = new HashMap<Module, Set<String>>();
 
   private final ModuleManager myModuleManager;
@@ -254,10 +256,13 @@ public class StructureConfigurableContext implements Disposable {
     fireOnCacheChanged();
   }
 
-  public boolean isInvalid(final Object object) {
+  public ValidityLevel isInvalid(final Object object) {
      if (object instanceof Module){
        final Module module = (Module)object;
-       if (myValidityCache.containsKey(module)) return myValidityCache.get(module) != null;
+       if (myValidityCache.containsKey(module)) {
+         boolean valid = myValidityCache.get(module) == null;
+         return valid ? ValidityLevel.VALID : ValidityLevel.ERROR;
+       }
        myUpdateDependenciesAlarm.addRequest(new Runnable(){
          public void run() {
            ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -269,7 +274,7 @@ public class StructureConfigurableContext implements Disposable {
        }, 100);
      } else if (object instanceof LibraryEx) {
        final LibraryEx library = (LibraryEx)object;
-       if (myLibraryPathValidityCache.containsKey(library)) return myLibraryPathValidityCache.get(library).booleanValue();
+       if (myLibraryPathValidityCache.containsKey(library)) return myLibraryPathValidityCache.get(library);
        myUpdateDependenciesAlarm.addRequest(new Runnable(){
          public void run() {
            ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -280,16 +285,24 @@ public class StructureConfigurableContext implements Disposable {
          }
        }, 100);
      }
-     return false;
+     return ValidityLevel.VALID;
    }
 
    private void updateLibraryValidityCache(final LibraryEx library) {
      if (myLibraryPathValidityCache.containsKey(library)) return; //do not check twice
-     final boolean valid = library.allPathsValid(OrderRootType.CLASSES) && library.allPathsValid(JavadocOrderRootType.getInstance()) && library.allPathsValid(OrderRootType.SOURCES);
+     ValidityLevel level = ValidityLevel.VALID;
+     if (!(library.allPathsValid(JavadocOrderRootType.getInstance()) && library.allPathsValid(OrderRootType.SOURCES))) {
+       level = ValidityLevel.WARNING;
+     }
+     if (!library.allPathsValid(OrderRootType.CLASSES)) {
+       level = ValidityLevel.ERROR;
+     }
+
+     final ValidityLevel finalLevel = level;
      SwingUtilities.invokeLater(new Runnable(){
        public void run() {
          if (!myDisposed){
-           myLibraryPathValidityCache.put(library, valid ? Boolean.FALSE : Boolean.TRUE);
+           myLibraryPathValidityCache.put(library, finalLevel);
            fireOnCacheChanged();
          }
        }
