@@ -373,7 +373,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       Content content = ContentFactory.SERVICE.getInstance().createContent(updateInfoTree, VcsBundle.message(
         "toolwindow.title.update.action.info", displayActionName), true);
       Disposer.register(content, updateInfoTree);
-      ContentsUtil.addOrReplaceContent(contentManager, content, true);
+      ContentsUtil.addContent(contentManager, content, true);
       ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS).activate(null);
       updateInfoTree.expandRootChildren();
       return updateInfoTree;

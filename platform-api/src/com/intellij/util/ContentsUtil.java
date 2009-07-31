@@ -22,4 +22,11 @@ public class ContentsUtil {
       manager.setSelectedContent(content);
     }
   }
+
+  public static void addContent(final ContentManager manager, final Content content, final boolean select) {
+    manager.addContent(content);
+    if (select) {
+      manager.setSelectedContent(content);
+    }
+  }
 }
