@@ -5,6 +5,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -208,8 +209,12 @@ public abstract class MavenTestCase extends TestCase {
   }
 
   protected Module createModule(String name) throws IOException {
+    return createModule(name, StdModuleTypes.JAVA);
+  }
+
+  protected Module createModule(String name, ModuleType type) throws IOException {
     VirtualFile f = createProjectSubFile(name + "/" + name + ".iml");
-    Module module = ModuleManager.getInstance(myProject).newModule(f.getPath(), StdModuleTypes.JAVA);
+    Module module = ModuleManager.getInstance(myProject).newModule(f.getPath(), type);
     ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     model.addContentEntry(f.getParent());
     model.commit();
