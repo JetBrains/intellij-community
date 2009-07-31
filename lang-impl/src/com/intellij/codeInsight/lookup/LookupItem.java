@@ -93,7 +93,9 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   }
 
   public int hashCode() {
-    return myAllLookupStrings.hashCode() * 239 + getObject().hashCode();
+    final Object object = getObject();
+    assert object != this: getClass().getName();
+    return myAllLookupStrings.hashCode() * 239 + object.hashCode();
   }
 
   public String toString() {
