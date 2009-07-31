@@ -131,7 +131,7 @@ class TestMethod extends TestObject {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("test.method.doesnt.exist.error.message", methodName));
     }
 
-    if (!AnnotationUtil.isAnnotated(psiClass, JUnitUtil.RUN_WITH, false) && !testAnnotated) {
+    if (!AnnotationUtil.isAnnotated(psiClass, JUnitUtil.RUN_WITH, true) && !testAnnotated) {
       try {
         final PsiClass testCaseClass = JUnitUtil.getTestCaseClass(configurationModule.getModule());
         if (!psiClass.isInheritor(testCaseClass, true)) {
