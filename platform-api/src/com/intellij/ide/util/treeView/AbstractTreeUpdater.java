@@ -149,10 +149,10 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
 
       public void run() {
         if (myTreeBuilder.getTreeStructure().hasSomethingToCommit()) {
+          myTreeBuilder.getTreeStructure().commit();
           queue(this);
           return;
         }
-        myTreeBuilder.getTreeStructure().commit();
         try {
           performUpdate();
         }
