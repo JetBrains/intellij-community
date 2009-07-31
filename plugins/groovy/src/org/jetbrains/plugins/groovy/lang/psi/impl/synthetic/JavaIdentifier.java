@@ -48,4 +48,21 @@ public class JavaIdentifier extends LightIdentifier {
   public int getTextOffset() {
     return myElement.getTextOffset();
   }
+
+  @Override
+  public PsiElement getParent() {
+    return myElement.getParent();
+  }
+
+  @Override
+  public PsiElement getPrevSibling() {
+    return myElement.getPrevSibling();
+  }
+
+  @Override
+  public PsiElement getNextSibling() {
+    return myElement.getNextSibling();
+  }
+
+  
 }

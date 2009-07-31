@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -39,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -64,6 +66,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
@@ -74,6 +77,7 @@ import java.util.*;
  */
 public class PsiUtil {
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil");
+  public static final Key<JavaIdentifier> NAME_IDENTIFIER = new Key<JavaIdentifier>("Java Identifier");
 
   private PsiUtil() {
   }
@@ -711,5 +715,23 @@ public class PsiUtil {
       nextSibling = nextSibling.getNextSibling();
     }
     return nextSibling;
+  }
+
+  public static PsiIdentifier getJavaNameIdentifier(GrNamedElement namedElement) {
+    final PsiElement element = namedElement.getNameIdentifierGroovy();
+    JavaIdentifier identifier = element.getUserData(NAME_IDENTIFIER);
+    if (identifier == null) {
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (element) {
+        identifier = element.getUserData(NAME_IDENTIFIER);
+        if (identifier != null) {
+          return identifier;
+        }
+
+        identifier = new JavaIdentifier(element.getManager(), element);
+        element.putUserData(NAME_IDENTIFIER, identifier);
+      }
+    }
+    return identifier;
   }
 }

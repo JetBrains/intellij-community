@@ -38,8 +38,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -273,7 +273,7 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
 
   @Nullable
   public PsiIdentifier getNameIdentifier() {
-    return new JavaIdentifier(getManager(), getNameIdentifierGroovy());
+    return PsiUtil.getJavaNameIdentifier(this);
   }
 
   public PsiElement getScope() {
