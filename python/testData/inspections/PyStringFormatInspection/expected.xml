@@ -72,12 +72,22 @@
   </problem>
   <problem>
     <file>string-format.py</file>
+    <line>28</line>
+    <description>Unexpected type</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
     <line>29</line>
     <description>Unexpected type</description>
   </problem>
   <problem>
     <file>string-format.py</file>
     <line>30</line>
+    <description>Unexpected type</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>36</line>
     <description>Unexpected type</description>
   </problem>
 </problems>

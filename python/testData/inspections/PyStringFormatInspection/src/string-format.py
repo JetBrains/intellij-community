@@ -28,3 +28,9 @@
 '%d %s %f' % (4, 5, 6) #Unexpected type
 '%d %s %f' % (4, 5, 6.1) #Unexpected type
 '%d' % "name" #Unexpected type
+m = {'language': "Python", "#": 2}
+'#%(language)s has %(#)03d quote types.' % m  #ok
+i = "test"
+'%(name)s' % {'name': i}  #ok
+'%s' % i  #ok
+'%f' % i  #Unexpected type

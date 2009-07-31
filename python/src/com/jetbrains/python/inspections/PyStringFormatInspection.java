@@ -80,7 +80,6 @@ public class PyStringFormatInspection extends LocalInspectionTool {
       private boolean myProblemRegister = false;
       private final Visitor myVisitor;
 
-      // Simplify?
       private final Map<String, String> myFormatSpec = new HashMap<String, String>();
 
       public Inspection(Visitor visitor) {
@@ -88,8 +87,8 @@ public class PyStringFormatInspection extends LocalInspectionTool {
       }
 
       private int inspectArguments(@Nullable final PyExpression rightExpression) {
-        if (rightExpression instanceof PyLiteralExpression) {
-          if (!myFormatSpec.isEmpty()) {
+        if (rightExpression instanceof PyLiteralExpression || rightExpression instanceof PyReferenceExpression) {
+          if (myFormatSpec.get("1") != null) {
             checkType(rightExpression, myFormatSpec.get("1"));
           }
           return 1;
@@ -110,7 +109,7 @@ public class PyStringFormatInspection extends LocalInspectionTool {
           return expressions.length;
         }
         else if (rightExpression instanceof PyDictLiteralExpression) {
-          PyKeyValueExpression[] expressions = ((PyDictLiteralExpression)rightExpression).getElements();
+          final PyKeyValueExpression[] expressions = ((PyDictLiteralExpression)rightExpression).getElements();
           if (expressions == null) {
             return 0;
           }
@@ -118,9 +117,9 @@ public class PyStringFormatInspection extends LocalInspectionTool {
             registerProblem(rightExpression, "Format doesn't require a mapping");
           }
           for (PyKeyValueExpression expression : expressions) {
-            PyExpression key = expression.getKey();
+            final PyExpression key = expression.getKey();
             if (key instanceof PyStringLiteralExpression) {
-              String name = ((PyStringLiteralExpression)key).getStringValue();
+              final String name = ((PyStringLiteralExpression)key).getStringValue();
               if (myUsedMappingKeys.get(name) != null) {
                 myUsedMappingKeys.put(name, true);
                 final PyExpression value = expression.getValue();
@@ -144,7 +143,7 @@ public class PyStringFormatInspection extends LocalInspectionTool {
       }
 
       private void checkType(@NotNull final PyExpression expression, @NotNull final String expextedTypeName) {
-        PyType type = expression.getType();
+        final PyType type = expression.getType();
         if (type != null) {
           if (!expextedTypeName.equals(type.getName())) {
             registerProblem(expression, "Unexpected type");
@@ -153,10 +152,10 @@ public class PyStringFormatInspection extends LocalInspectionTool {
       }
 
       private void inspectFormat(@NotNull final PyStringLiteralExpression formatExpression) {
-        String literal = formatExpression.getStringValue().replace("%%", "");
+        final String literal = formatExpression.getStringValue().replace("%%", "");
 
         // 1. The '%' character
-        String[] sections = literal.split("%");
+        final String[] sections = literal.split("%");
 
         //  Skip the first item in the sections, it's always empty
         myExpectedArguments = sections.length - 1;
@@ -204,7 +203,6 @@ public class PyStringFormatInspection extends LocalInspectionTool {
           }
 
           // 7. Format specifier
-          // Simplify?
           if (characterNumber < length) {
             final char c = section.charAt(characterNumber);
             if (FORMAT_CONVERSIONS.containsKey(c)) {
@@ -259,7 +257,7 @@ public class PyStringFormatInspection extends LocalInspectionTool {
       }
 
       private void inspectArgumentsNumber(@NotNull final PyExpression rightExpression) {
-        int arguments = inspectArguments(rightExpression);
+        final int arguments = inspectArguments(rightExpression);
         if (myUsedMappingKeys.isEmpty()) {
           if (myExpectedArguments < arguments) {
             registerProblem(rightExpression, "Too many arguments for format string");
@@ -279,7 +277,7 @@ public class PyStringFormatInspection extends LocalInspectionTool {
     public void visitPyBinaryExpression(final PyBinaryExpression node) {
       if (node.getLeftExpression() instanceof PyStringLiteralExpression && node.isOperator("%")) {
         final Inspection inspection = new Inspection(this);
-        PyStringLiteralExpression literalExpression = (PyStringLiteralExpression)node.getLeftExpression();
+        final PyStringLiteralExpression literalExpression = (PyStringLiteralExpression)node.getLeftExpression();
         inspection.inspectFormat(literalExpression);
         if (inspection.isProblem()) {
           return;
