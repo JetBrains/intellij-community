@@ -29,10 +29,6 @@ public class MigrationPackageImpl extends PsiPackageImpl implements PsiPackage {
     return myMigration.isValid();
   }
 
-  public String getText() {
-    return null;
-  }
-
   public void handleQualifiedNameChange(@NotNull String newQualifiedName) {
     throw new UnsupportedOperationException();
   }

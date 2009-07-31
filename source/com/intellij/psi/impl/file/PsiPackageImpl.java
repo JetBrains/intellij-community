@@ -45,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -54,6 +55,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   private final PsiManagerEx myManager;
   private final String myQualifiedName;
   private volatile CachedValue<PsiModifierList> myAnnotationList;
+  private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
 
   private volatile Set<String> myPublicClassNamesCache;
   private final Object myPublicClassNamesCacheLock = new String("package classnames cache lock");
@@ -80,12 +82,32 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   @NotNull
   public PsiDirectory[] getDirectories() {
-    return getDirectories(GlobalSearchScope.allScope(myManager.getProject()));
+    final Collection<PsiDirectory> collection = getAllDirectories();
+    return collection.toArray(new PsiDirectory[collection.size()]);
+  }
+
+  private Collection<PsiDirectory> getAllDirectories() {
+    if (myDirectories == null) {
+      myDirectories = myManager.getCachedValuesManager().createCachedValue(new CachedValueProvider<Collection<PsiDirectory>>() {
+        public Result<Collection<PsiDirectory>> compute() {
+          return Result.create(new DirectoriesSearch().search(GlobalSearchScope.allScope(myManager.getProject())).findAll(),
+                               PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, ProjectRootManager.getInstance(getProject()));
+        }
+      }, false);
+    }
+    return myDirectories.getValue();
   }
 
   @NotNull
   public PsiDirectory[] getDirectories(@NotNull GlobalSearchScope scope) {
-    return new DirectoriesSearch().search(scope).toArray(PsiDirectory.EMPTY_ARRAY);
+    final List<PsiDirectory> result = new ArrayList<PsiDirectory>();
+    final Collection<PsiDirectory> directories = getAllDirectories();
+    for (final PsiDirectory directory : directories) {
+      if (scope.contains(directory.getVirtualFile())) {
+        result.add(directory);
+      }
+    }
+    return result.toArray(new PsiDirectory[result.size()]);
   }
 
   public RowIcon getElementIcon(final int elementFlags) {
@@ -128,6 +150,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     }
   }
 
+  @Nullable
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
     PsiDirectory[] dirs = getDirectories();
@@ -253,14 +276,17 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return PsiElement.EMPTY_ARRAY;
   }
 
+  @Nullable
   public PsiElement getParent() {
     return getParentPackage();
   }
 
+  @Nullable
   public PsiFile getContainingFile() {
     return null;
   }
 
+  @Nullable
   public TextRange getTextRange() {
     return null;
   }
@@ -281,6 +307,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return -1;
   }
 
+  @Nullable
   public String getText() {
     return null;
   }
@@ -328,8 +355,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   }
 
   public void checkDelete() throws IncorrectOperationException {
-    PsiDirectory[] dirs = getDirectories();
-    for (PsiDirectory dir : dirs) {
+    for (PsiDirectory dir : getDirectories()) {
       dir.checkDelete();
     }
   }
@@ -427,7 +453,8 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return getClassNamesCache().contains(name);
   }
 
-  private PsiPackage findSubPackageByName(String name, GlobalSearchScope scope) {
+  @Nullable
+  private PsiPackage findSubPackageByName(String name) {
     final String qName = getQualifiedName();
     final String subpackageQName = qName.length() > 0 ? qName + "." + name : name;
     PsiPackage aPackage = getFacade().findPackage(subpackageQName);
@@ -453,12 +480,12 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.CLASS)) {
       NameHint nameHint = processor.getHint(NameHint.KEY);
       if (nameHint != null) {
-        if (processClassesByName(processor, state, place, scope, migration, nameHint.getName(state))) return false;
+        if (processClassesByName(processor, state, place, scope, nameHint.getName(state))) return false;
       }
       else if (prefixMatcher != null && migration == null) {
         for (String className : getClassNamesCache()) {
           if (prefixMatcher.value(className)) {
-            if (processClassesByName(processor, state, place, scope, migration, className)) return false;
+            if (processClassesByName(processor, state, place, scope, className)) return false;
           }
         }
       }
@@ -477,7 +504,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.PACKAGE)) {
       NameHint nameHint = processor.getHint(NameHint.KEY);
       if (nameHint != null) {
-        PsiPackage aPackage = findSubPackageByName(nameHint.getName(state), scope);
+        PsiPackage aPackage = findSubPackageByName(nameHint.getName(state));
         if (aPackage != null) {
           if (!processor.execute(aPackage, state)) return false;
         }
@@ -507,8 +534,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return true;
   }
 
-  private boolean processClassesByName(PsiScopeProcessor processor, ResolveState state, PsiElement place, GlobalSearchScope scope,
-                                       PsiMigrationImpl migration, String className) {
+  private boolean processClassesByName(PsiScopeProcessor processor, ResolveState state, PsiElement place, GlobalSearchScope scope, String className) {
     final PsiClass[] classes = findClassesByName(className, scope);
     if (!processClasses(processor, state, place, classes)) return true;
     return false;
