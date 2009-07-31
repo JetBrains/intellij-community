@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.annotate;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Represents one part of a line annotation which is shown in the editor when the "Annotate"
  * action is invoked. Classes implementing this interface can also implement
@@ -29,4 +31,10 @@ public interface LineAnnotationAspect {
    * @return the annotation text 
    */
   String getValue(int lineNumber);
+
+  /**
+   * used if return value is not null
+   */
+  @Nullable
+  String getTooltipText(int lineNumber);
 }

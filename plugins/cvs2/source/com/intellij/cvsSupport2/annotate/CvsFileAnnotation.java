@@ -53,7 +53,7 @@ public class CvsFileAnnotation implements FileAnnotation{
   private final VirtualFile myFile;
   private final List<AnnotationListener> myListeners = new ArrayList<AnnotationListener>();
 
-  private final LineAnnotationAspect USER = new LineAnnotationAspect() {
+  private final LineAnnotationAspect USER = new LineAnnotationAspectAdapter() {
     public String getValue(int lineNumber) {
       if (lineNumber < 0 || lineNumber >= myAnnotations.length)  {
         return "";
@@ -64,7 +64,7 @@ public class CvsFileAnnotation implements FileAnnotation{
     }
   };
 
-  private final LineAnnotationAspect DATE = new LineAnnotationAspect() {
+  private final LineAnnotationAspect DATE = new LineAnnotationAspectAdapter() {
     public String getValue(int lineNumber) {
       if (lineNumber < 0 || lineNumber >= myAnnotations.length)  {
         return "";
@@ -75,7 +75,7 @@ public class CvsFileAnnotation implements FileAnnotation{
     }
   };
 
-  private final LineAnnotationAspect REVISION = new LineAnnotationAspect() {
+  private final LineAnnotationAspect REVISION = new LineAnnotationAspectAdapter() {
     public String getValue(int lineNumber) {
       if (lineNumber < 0 || lineNumber >= myAnnotations.length)  {
         return "";

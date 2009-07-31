@@ -245,6 +245,10 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
     @Override
     public String getToolTip(int line, Editor editor) {
+      final String aspectTooltip = myAspect.getTooltipText(line);
+      if (aspectTooltip != null) {
+        return aspectTooltip;
+      }
       final String text = getLineText(line, editor);
       return ((text == null) || (text.length() == 0)) ? "" : VcsBundle.message("annotation.original.revision.text", text);
     }
