@@ -29,7 +29,7 @@ public class GantReferenceCompletionTest extends CompletionTestBase {
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.addLibraryJars("GROOVY", TestUtils.getMockGrailsLibraryHome(), TestUtils.GROOVY_JAR);
+    moduleBuilder.addLibraryJars("GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR);
     moduleBuilder.addLibraryJars("GANT", TestUtils.getTestDataPath() + "/mockGantLib", GANT_JARS);
   }
 

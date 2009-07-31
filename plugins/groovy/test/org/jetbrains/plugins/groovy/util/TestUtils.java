@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -39,10 +38,8 @@ import java.util.List;
  * @author Ilya.Sergey
  */
 public abstract class TestUtils {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.util.TestUtils");
   public static final String TEMP_FILE = "temp.groovy";
   public static final String GSP_TEMP_FILE = "temp.gsp";
-  public static final String GDOC_TEMP_FILE = "temp.groovydoc";
   public static final String CARET_MARKER = "<caret>";
   public static final String BEGIN_MARKER = "<begin>";
   public static final String END_MARKER = "<end>";
@@ -53,29 +50,12 @@ public abstract class TestUtils {
     return getTestDataPath() + "/mockJDK";
   }
 
-  public static String getMockGrailsLibraryHome() {
-    return getTestDataPath() + "/mockGrailsLib";
-  }
-
   public static String getMockGroovyLibraryHome() {
     return getTestDataPath() + "/mockGroovyLib";
   }
 
   public static PsiFile createPseudoPhysicalGroovyFile(final Project project, final String text) throws IncorrectOperationException {
     return createPseudoPhysicalFile(project, TEMP_FILE, text);
-  }
-
-  public static PsiFile createPseudoPhysicalGDocFile(final Project project, final String text) throws IncorrectOperationException {
-    return PsiFileFactory.getInstance(project).createFileFromText(
-        GDOC_TEMP_FILE,
-        FileTypeManager.getInstance().getFileTypeByFileName(GDOC_TEMP_FILE),
-        text,
-        LocalTimeCounter.currentTime(),
-        true);
-  }
-
-  public static PsiFile createPseudoPhysicalGspFile(final Project project, final String text) throws IncorrectOperationException {
-    return createPseudoPhysicalFile(project, GSP_TEMP_FILE, text);
   }
 
 
@@ -116,15 +96,6 @@ public abstract class TestUtils {
   public static String removeEndMarker(String text) {
     int index = text.indexOf(END_MARKER);
     return text.substring(0, index) + text.substring(index + END_MARKER.length());
-  }
-
-  public static String transformForRelPathTest(String myTestFilePath) throws Exception {
-    String testName = myTestFilePath;
-    final int dotIdx = testName.indexOf('.');
-    if (dotIdx >= 0) {
-      testName = testName.substring(0, dotIdx);
-    }
-    return testName;
   }
 
   public static String[] getInputAndResult(File myTestFile) throws IOException {

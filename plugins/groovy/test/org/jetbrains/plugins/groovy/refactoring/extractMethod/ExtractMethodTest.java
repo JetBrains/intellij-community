@@ -99,7 +99,7 @@ public class ExtractMethodTest extends ActionTestCase {
     TestFixtureBuilder<IdeaProjectTestFixture> builder = JavaTestFixtureFactory.createFixtureBuilder();
     JavaModuleFixtureBuilder fixtureBuilder = builder.addModule(JavaModuleFixtureBuilder.class);
     fixtureBuilder.addJdk(TestUtils.getMockJdkHome());
-    fixtureBuilder.addLibraryJars("GROOVY", TestUtils.getMockGrailsLibraryHome(), TestUtils.GROOVY_JAR);
+    fixtureBuilder.addLibraryJars("GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR);
     return builder.getFixture();
   }
 }
