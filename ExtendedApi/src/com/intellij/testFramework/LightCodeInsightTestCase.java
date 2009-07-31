@@ -161,6 +161,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
   private static void setupFileEditorAndDocument(final String fileName, String fileText) throws IOException {
     EncodingProjectManager.getInstance(getProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
     EncodingProjectManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
+    PostprocessReformattingAspect.getInstance(ourProject).doPostponedFormatting();
     deleteVFile();
     myVFile = getSourceRoot().createChildData(null, fileName);
     VfsUtil.saveText(myVFile, fileText);
