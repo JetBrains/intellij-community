@@ -57,7 +57,7 @@ public class GroovyFacetTab extends FacetEditorTab {
     myManagedLibrariesEditor.shouldHaveLibrary(new Condition<Library>() {
       public boolean value(Library libraryManager) {
         final VirtualFile[] files = editorContext.getLibraryFiles(libraryManager, OrderRootType.CLASSES);
-        return StringUtil.isNotEmpty(LibrariesUtil.getGroovyOrGrailsLibraryHome(files));
+        return StringUtil.isNotEmpty(LibrariesUtil.getGroovyLibraryHome(files));
       }
     }, "No Groovy-containing library is not configured yet");
   }

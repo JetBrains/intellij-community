@@ -41,7 +41,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
@@ -105,7 +104,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   public String getSDKVersion(@NotNull Library library) {
-    return getSDKVersion(LibrariesUtil.getGroovyOrGrailsLibraryHome(library));
+    return getSDKVersion(LibrariesUtil.getGroovyLibraryHome(library));
   }
 
   public static boolean isGroovyAllJar(@NonNls final String name) {
@@ -172,13 +171,6 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
     return null;
   }
 
-  public void saveSDKDefaultLibName(String name) {
-    GroovyApplicationSettings settings = GroovyApplicationSettings.getInstance();
-    if (!UNDEFINED_VERSION.equals(name)) {
-      settings.DEFAULT_GROOVY_LIB_NAME = name;
-    }
-  }
-
   public static boolean isSDKConfigured(Module module) {
     return module != null && GroovyFacet.getInstance(module) != null;
   }
@@ -189,29 +181,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
     Library[] libraries = getSDKLibrariesByModule(module);
     if (libraries.length == 0) return "";
     Library library = libraries[0];
-    return LibrariesUtil.getGroovyOrGrailsLibraryHome(library);
-  }
-
-  public void setUpGroovyFacet(final ModifiableRootModel model) {
-    LibraryTable libTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
-    final Project project = model.getModule().getProject();
-    String name = GroovyApplicationSettings.getInstance().DEFAULT_GROOVY_LIB_NAME;
-    if (name != null && libTable.getLibraryByName(name) != null) {
-      Library library = libTable.getLibraryByName(name);
-      if (isSDKLibrary(library)) {
-        LibraryOrderEntry entry = model.addLibraryEntry(library);
-        LibrariesUtil.placeEntryToCorrectPlace(model, entry);
-      }
-    } else {
-      final Library[] libraries = getAllSDKLibraries(project);
-      if (libraries.length > 0) {
-        Library library = libraries[0];
-        if (isSDKLibrary(library)) {
-          LibraryOrderEntry entry = model.addLibraryEntry(library);
-          LibrariesUtil.placeEntryToCorrectPlace(model, entry);
-        }
-      }
-    }
+    return LibrariesUtil.getGroovyLibraryHome(library);
   }
 
   @Override

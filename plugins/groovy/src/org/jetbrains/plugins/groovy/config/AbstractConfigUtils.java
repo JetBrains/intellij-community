@@ -133,7 +133,7 @@ public abstract class AbstractConfigUtils {
 
   @NotNull
   public String getSDKLibVersion(Library library) {
-    return getSDKVersion(LibrariesUtil.getGroovyOrGrailsLibraryHome(library));
+    return getSDKVersion(LibrariesUtil.getGroovyLibraryHome(library));
   }
 
   public Library[] getSDKLibrariesByModule(final Module module) {
@@ -181,8 +181,6 @@ public abstract class AbstractConfigUtils {
     String prefix = SDK_LIB_PREFIX;
     return LibrariesUtil.generateNewLibraryName(version, prefix, project);
   }
-
-  public abstract void saveSDKDefaultLibName(String name);
 
   public Collection<String> getSDKVersions(final Project project) {
     return ContainerUtil.map2List(getAllSDKLibraries(project), new Function<Library, String>() {

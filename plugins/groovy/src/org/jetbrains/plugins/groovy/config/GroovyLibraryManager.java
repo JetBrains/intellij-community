@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.facet.ui.ProjectSettingsContext;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
@@ -38,7 +37,7 @@ public class GroovyLibraryManager extends AbstractGroovyLibraryManager {
 
   @Nls
   public String getLibraryVersion(@NotNull Library library, LibrariesContainer librariesContainer) {
-    return GroovyConfigUtils.getInstance().getSDKVersion(LibrariesUtil.getGroovyOrGrailsLibraryHome(librariesContainer.getLibraryFiles(library, OrderRootType.CLASSES)));
+    return GroovyConfigUtils.getInstance().getSDKVersion(LibrariesUtil.getGroovyLibraryHome(librariesContainer.getLibraryFiles(library, OrderRootType.CLASSES)));
   }
 
   @NotNull

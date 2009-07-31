@@ -72,18 +72,18 @@ public class LibrariesUtil {
   }
 
   @NotNull
-  public static String getGroovyOrGrailsLibraryHome(Library library) {
+  public static String getGroovyLibraryHome(Library library) {
     final VirtualFile[] classRoots = library.getFiles(OrderRootType.CLASSES);
-    return getGroovyOrGrailsLibraryHome(classRoots);
+    return getGroovyLibraryHome(classRoots);
   }
 
   @Nullable
   public static String getGroovyHomePath(Module module) {
-    final String home = getGroovyOrGrailsLibraryHome(ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES));
+    final String home = getGroovyLibraryHome(ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES));
     return StringUtil.isEmpty(home) ? null : home;
   }
 
-  public static String getGroovyOrGrailsLibraryHome(VirtualFile[] classRoots) {
+  public static String getGroovyLibraryHome(VirtualFile[] classRoots) {
     for (VirtualFile file : classRoots) {
       if (GroovyConfigUtils.isGroovyAllJar(file.getName())) {
         String jarPath = file.getPresentableUrl();

@@ -44,14 +44,10 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
   public Boolean CONVERT_PARAM_SPECIFY_MAP_TYPE = null;
   public Boolean CONVERT_PARAM_CREATE_NEW_PARAM = null;
 
-  // Groovy & Grails configuration settings
-  public String DEFAULT_GROOVY_LIB_NAME = null;
-  public String DEFAULT_GRAILS_LIB_NAME = null;
-
   @Transient private final boolean myJsSupportEnabled = classExists("com.intellij.lang.javascript.psi.JSElement");
   @Transient private final boolean myCssSupportEnabled = classExists("com.intellij.psi.css.CssElement");
 
-  private boolean classExists(@NonNls String qname) {
+  private static boolean classExists(@NonNls String qname) {
     try {
       Class.forName(qname);
       return true;
