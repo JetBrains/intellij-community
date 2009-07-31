@@ -83,7 +83,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       final Element macro = (Element)aChildren;
       String macroName = macro.getAttributeValue(NAME_ATTR);
       if (macroName != null) {
-        macroNames.put(macroName, macro.getAttributeValue(DESCRIPTION_ATTR));
+        final String description = macro.getAttributeValue(DESCRIPTION_ATTR);
+        macroNames.put(macroName, description != null && description.trim().length() > 0 ? description : null);
       }
     }
     return macroNames;
@@ -352,13 +353,42 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return storage.getFilePath();
   }
 
+  public void setUsedMacros(@NotNull Collection<String> macros) {
+    final BaseStorageData data = getMainStorageData();
+    if (data instanceof IprStorageData) {
+      ((IprStorageData)data).setUsedMacros(macros);
+    }
+  }
+
+  static Map<String, String> prepareUsedMacros(@NotNull final Collection<String> macros) {
+    final Set<String> filtered = new HashSet<String>(macros);
+
+    final PathMacros pathMacros = PathMacros.getInstance();
+    final Set<String> systemMacroNames = pathMacros.getSystemMacroNames();
+
+    for (Iterator<String> i = filtered.iterator(); i.hasNext();) {
+      String macro = i.next();
+
+      for (String systemMacroName : systemMacroNames) {
+        if (macro.equals(systemMacroName) || macro.contains("$" + systemMacroName + "$")) {
+          i.remove();
+        }
+      }
+    }
+
+    final Map<String, String> result = new HashMap<String, String>();
+    for (final String macroName : filtered) {
+      result.put(macroName, pathMacros.getDescription(macroName));
+    }
+
+    return result;
+  }
+
   protected XmlElementStorage getMainStorage() {
     final XmlElementStorage storage = (XmlElementStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
     assert storage != null;
     return storage;
   }
-
-
 
   protected StateStorageManager createStateStorageManager() {
     return new ProjectStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myProject);
@@ -383,8 +413,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
 
     @Override
-    protected int fixHash(int hash) {
-      return hash + (((ProjectEx)myProject).isSavePathsRelative() ? 1 : 0);
+    protected int computeHash() {
+      return super.computeHash() + (((ProjectEx)myProject).isSavePathsRelative() ? 1 : 0); 
     }
   }
 
@@ -404,16 +434,16 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   static class IprStorageData extends ProjectStorageData {
-    private final Set<String> myUsedMacros;
+    private final Map<String, String> myUsedMacros;
 
     IprStorageData(final String rootElementName, Project project) {
       super(rootElementName, project);
-      myUsedMacros = new TreeSet<String>();
+      myUsedMacros = new HashMap<String, String>();
     }
 
     IprStorageData(final IprStorageData storageData) {
       super(storageData);
-      myUsedMacros = new TreeSet<String>(storageData.myUsedMacros);
+      myUsedMacros = new HashMap<String, String>(storageData.myUsedMacros);
     }
 
     @Override
@@ -427,7 +457,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       final Element usedMacros = root.getChild(USED_MACROS_ELEMENT_NAME);
       if (usedMacros != null) {
         for (Element e : JDOMUtil.getElements(usedMacros)) {
-          myUsedMacros.add(e.getAttributeValue(NAME_ATTR));
+          myUsedMacros.put(e.getAttributeValue(NAME_ATTR), e.getAttributeValue(DESCRIPTION_ATTR));
         }
       }
     }
@@ -455,13 +485,13 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       if (!myUsedMacros.isEmpty()) {
         Element usedMacrosElement = new Element(USED_MACROS_ELEMENT_NAME);
 
-        for (String usedMacro : myUsedMacros) {
+        for (String usedMacro : myUsedMacros.keySet()) {
           Element macroElement = new Element(ELEMENT_MACRO);
 
           macroElement.setAttribute(NAME_ATTR, usedMacro);
 
-          final String description = PathMacros.getInstance().getDescription(usedMacro);
-          if (description != null) {
+          final String description = myUsedMacros.get(usedMacro);
+          if (description != null && description.trim().length() > 0) {
             macroElement.setAttribute(DESCRIPTION_ATTR, description);
           }
 
@@ -479,7 +509,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
 
     protected int computeHash() {
-      return super.computeHash()*31/* + myUsedMacros.hashCode()*/;
+      return super.computeHash()*31 + myUsedMacros.hashCode();
     }
 
     @Nullable
@@ -491,20 +521,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
     protected void setUsedMacros(Collection<String> m) {
       myUsedMacros.clear();
-      myUsedMacros.addAll(m);
-
-      final PathMacros pathMacros = PathMacros.getInstance();
-      final Set<String> systemMacroNames = pathMacros.getSystemMacroNames();
-
-      for (Iterator<String> i = myUsedMacros.iterator(); i.hasNext();) {
-        String macro = i.next();
-
-        for (String systemMacroName : systemMacroNames) {
-          if (macro.equals(systemMacroName) || macro.contains("$" + systemMacroName + "$")) {
-            i.remove();
-          }
-        }
-      }
+      myUsedMacros.putAll(prepareUsedMacros(m));
       clearHash();
     }
   }
@@ -536,7 +553,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
           updateUsedMacros();
           session.clearHash();
         }
-        else if (!session.isHashUpToDate()) {
+        else if (shouldUpdateMacros()){
           updateUsedMacros();
         }
       }
@@ -544,6 +561,11 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       result.addAll(super.getAllStorageFilesToSave(false));
 
       return result;
+    }
+
+    private boolean shouldUpdateMacros() {
+      final Map<String, String> macros = prepareUsedMacros(getUsedMacros());
+      return !macros.equals(getCurrentMacros());
     }
 
     protected void collectSubfilesToSave(final List<IFile> result) throws IOException { }
@@ -568,6 +590,18 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     protected void beforeSave() throws IOException {
     }
 
+    @Nullable
+    private Map<String, String> getCurrentMacros() {
+      final XmlElementStorage.MySaveSession session = (XmlElementStorage.MySaveSession)myStorageManagerSaveSession.getSaveSession(DEFAULT_STATE_STORAGE);
+      final XmlElementStorage.StorageData data = session.getData();
+
+      if (data instanceof IprStorageData) {
+        return ((IprStorageData)data).myUsedMacros;
+      }
+
+      return null;
+    }
+
     private void updateUsedMacros() {
       final XmlElementStorage.MySaveSession session = (XmlElementStorage.MySaveSession)myStorageManagerSaveSession.getSaveSession(DEFAULT_STATE_STORAGE);
       final XmlElementStorage.StorageData data = session.getData();
@@ -575,7 +609,9 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       if (data instanceof IprStorageData) {
         final IprStorageData storageData = (IprStorageData)data;
 
-        storageData.setUsedMacros(getUsedMacros());
+        final Collection<String> macros = getUsedMacros();
+        storageData.setUsedMacros(macros);
+        myProject.getStateStore().setUsedMacros(macros);
       }
     }
 

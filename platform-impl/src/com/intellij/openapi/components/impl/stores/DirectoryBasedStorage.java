@@ -116,10 +116,6 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     mySplitter.mergeStatesInto(state, subElements.toArray(new Element[subElements.size()]));
     myStorageData.removeComponent(componentName);
 
-    if (myPathMacroSubstitutor != null) {
-      myPathMacroSubstitutor.expandPaths(state);
-    }
-
     return DefaultStateSerializer.deserializeState(state, stateClass, mergeInto);
   }
 
@@ -142,6 +138,11 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
         String componentName = element.getAttributeValue(NAME);
         assert componentName != null;
+
+        if (myPathMacroSubstitutor != null) {
+          myPathMacroSubstitutor.expandPaths(element);
+        }
+        
         storageData.put(componentName, file, element);
       }
     }
@@ -205,6 +206,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   private class MySaveSession implements SaveSession {
     private final MyStorageData myStorageData;
     private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
+    private Set<String> myUsedMacros;
 
     private MySaveSession(final MyStorageData storageData, final TrackingPathMacroSubstitutor pathMacroSubstitutor) {
       myStorageData = storageData;
@@ -212,12 +214,25 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     }
 
     public Set<String> getUsedMacros() {
-      if (myPathMacroSubstitutor != null) {
-        return myPathMacroSubstitutor.getUsedMacros();
+      if (myUsedMacros == null) {
+        if (myPathMacroSubstitutor != null) {
+          myPathMacroSubstitutor.reset();
+
+          final Map<String, Map<IFile, Element>> states = myStorageData.myStates;
+          for (Map<IFile, Element> map : states.values()) {
+            for (Element e : map.values()) {
+              myPathMacroSubstitutor.collapsePaths((Element)e.clone());
+            }
+          }
+
+          myUsedMacros = new HashSet<String>(myPathMacroSubstitutor.getUsedMacros());
+        }
+        else {
+          myUsedMacros = new HashSet<String>();
+        }
       }
-      else {
-        return Collections.emptySet();
-      }
+
+      return myUsedMacros;
     }
 
     public void save() throws StateStorageException {
@@ -240,6 +255,11 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       myStorageData.process(new StorageDataProcessor() {
         public void process(final String componentName, final IFile file, final Element element) {
           currentNames.remove(file.getName());
+
+          if (myPathMacroSubstitutor != null) {
+            myPathMacroSubstitutor.collapsePaths(element);
+          }
+
           StorageUtil.save(file, element);
         }
       });
@@ -426,10 +446,6 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     private void setState(final String componentName, Object state, final Storage storageSpec) throws StateStorageException {
       try {
         final Element element = DefaultStateSerializer.serializeState(state, storageSpec);
-
-        if (myPathMacroSubstitutor != null) {
-          myPathMacroSubstitutor.collapsePaths(element);
-        }
 
         final List<Pair<Element, String>> states = mySplitter.splitState(element);
         for (Pair<Element, String> pair : states) {

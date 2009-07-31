@@ -93,6 +93,9 @@ public class MockProjectStore implements IProjectStore {
     return null;
   }
 
+  public void setUsedMacros(@NotNull Collection<String> macros) {
+  }
+
   public Set<String> getMacroTrackingSet() {
     return new TreeSet<String>();
   }
