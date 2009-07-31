@@ -93,7 +93,9 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
 
   }
 
-  private void ensureAnimation(boolean running) {
+  private boolean ensureAnimation(boolean running) {
+    boolean changes = myAnimator.isRunning() != running;
+
     if (running) {
       setOpaque(true);
       myAnimator.resume();
@@ -101,6 +103,8 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
       setOpaque(myPaintPassive);
       myAnimator.suspend();
     }
+
+    return changes;
   }
 
   public void addNotify() {
@@ -122,7 +126,9 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
 
   public void suspend() {
     myRunning = false;
-    ensureAnimation(false);
+    if (ensureAnimation(false)) {
+      repaint();
+    }
   }
 
   public void dispose() {
