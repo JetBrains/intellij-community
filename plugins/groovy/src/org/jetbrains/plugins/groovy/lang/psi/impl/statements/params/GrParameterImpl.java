@@ -24,6 +24,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -340,7 +342,16 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
       return super.getUseScope();
     }
 
-    return new LocalSearchScope(getDeclarationScope());
+    final PsiElement scope = getDeclarationScope();
+    if (scope instanceof GrDocCommentOwner) {
+      GrDocCommentOwner owner = (GrDocCommentOwner)scope;
+      final GrDocComment comment = owner.getGrDocComment();
+      if (comment != null) {
+        return new LocalSearchScope(new PsiElement[]{scope, comment});
+      }
+    }
+
+    return new LocalSearchScope(scope);
   }
 
   @NotNull
