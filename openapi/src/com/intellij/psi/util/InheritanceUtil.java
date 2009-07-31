@@ -80,7 +80,7 @@ public class InheritanceUtil {
     return false;
   }
 
-  public static boolean isInheritor(PsiClass psiClass, final String baseClassName) {
+  public static boolean isInheritor(@Nullable PsiClass psiClass, final String baseClassName) {
     if (psiClass == null) {
       return false;
     }
