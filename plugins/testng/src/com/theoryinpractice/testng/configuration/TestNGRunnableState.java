@@ -132,9 +132,11 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
+            final Project project = config.getProject();
+            if (project.isDisposed()) return;
             final TestFrameworkRunningModel model = console.getModel();
             final TestNGResults resultsView = console.getResultsView();
-            ToolWindowManager.getInstance(config.getProject()).notifyByBalloon(
+            ToolWindowManager.getInstance(project).notifyByBalloon(
               console.getProperties().isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN,
               model == null || resultsView.getStatus() == MessageHelper.SKIPPED_TEST
               ? MessageType.WARNING : (resultsView.getStatus() == MessageHelper.FAILED_TEST ? MessageType.ERROR : MessageType.INFO),

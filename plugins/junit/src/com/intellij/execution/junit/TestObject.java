@@ -245,7 +245,7 @@ public abstract class TestObject implements JavaCommandLine {
 
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-
+            if (myProject.isDisposed()) return;
             final JUnitRunningModel model = consoleView.getModel();
             final int failed = model != null ? Filter.DEFECTIVE_LEAF.and(JavaAwareFilter.METHOD(myProject)).select(model.getRoot().getAllTests()).size() : -1;
 
