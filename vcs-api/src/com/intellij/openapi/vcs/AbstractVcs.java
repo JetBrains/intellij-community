@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
+import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
@@ -381,6 +382,15 @@ public abstract class AbstractVcs extends StartedActivated {
   @Nullable
   public VcsExceptionsHotFixer getVcsExceptionsHotFixer() {
     return null;
+  }
+
+  // for VCSes, that tracks their dirty scopes themselves - for instance, P4
+  public VcsDirtyScope adjustDirtyScope(final VcsDirtyScope scope) {
+    return scope;
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 }
 

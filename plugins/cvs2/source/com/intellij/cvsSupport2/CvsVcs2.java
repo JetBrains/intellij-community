@@ -116,9 +116,6 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
 
   /* ======================================= ProjectComponent */
 
-  public Project getProject() {
-    return myProject;
-  }
 
   /* ======================================== AbstractVcs*/
   public String getName() {
