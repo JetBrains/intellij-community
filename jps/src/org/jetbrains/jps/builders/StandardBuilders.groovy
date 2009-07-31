@@ -112,6 +112,9 @@ class GroovyStubGenerator implements ModuleBuilder {
         src(path: it)
       }
 
+      include (name: "**/*.groovy")
+      include (name: "**/*.java")
+
       classpath {
         state.classpath.each {
           pathelement(location: it)

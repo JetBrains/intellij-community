@@ -112,8 +112,12 @@ public class IdeaProjectLoader {
               case "module":
                 def moduleName = entryTag.attribute("module-name")
                 def module = project.modules[moduleName]
-                if (module == null) project.error("Cannot resolve module $moduleName")
-                classpath module
+                if (module == null) {
+                  project.warning("Cannot resolve module $moduleName in $currentModuleName")
+                }
+                else {
+                  classpath module
+                }
                 break
 
               case "module-library":
@@ -126,8 +130,12 @@ public class IdeaProjectLoader {
                 switch (entryTag.attribute("level")) {
                   case "project":
                     def library = project.libraries[name]
-                    if (library == null) project.error("Cannot resolve library $name")
-                    classpath library
+                    if (library == null) {
+                      project.warning("Cannot resolve library $name in $currentModuleName")
+                    }
+                    else {
+                      classpath library
+                    }
                     break
 
                   case "application":

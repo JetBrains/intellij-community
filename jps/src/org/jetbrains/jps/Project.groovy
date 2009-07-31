@@ -58,7 +58,15 @@ class Project {
 
     def module = new Module(this, name, initializer)
     modules.put(name, module)
-    binding.setVariable(name, module)
+
+    try {
+      binding.getVariable(name);
+      warning("Variable '$name' is already defined in context. Equally named module will not be accessible. Use project.modules['$name'] instead")
+    }
+    catch (MissingPropertyException mpe) {
+      binding.setVariable(name, module)
+    }
+
     module
   }
 
@@ -68,7 +76,15 @@ class Project {
 
     lib = new Library(this, name, initializer)
     libraries.put(name, lib)
-    binding.setVariable(name, lib)
+
+    try {
+      binding.getVariable(name)
+      warning("Variable '$name' is already defined in context. Equally named library will not be accessible. Use project.libraries['$name'] instead")
+    }
+    catch (MissingPropertyException mpe) {
+      binding.setVariable(name, lib)
+    }
+
     lib
   }
 
@@ -76,7 +92,7 @@ class Project {
   def Map<String, Library> libraries = [:]
 
   def String toString() {
-    return modules.toString()
+    return "Project with ${modules.size()} modules and ${libraries.size()} libraries"
   }
 
   def List<Module> sortedModules() {
@@ -95,6 +111,9 @@ class Project {
         if (resolved instanceof Module) {
           collectModulesOnClasspath(resolved, result)
         }
+      }
+      else if (it instanceof Module) {
+        collectModulesOnClasspath(it, result)
       }
     }
 
