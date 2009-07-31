@@ -8,6 +8,7 @@ import org.jetbrains.jps.Library
  */
 public class IdeaProjectLoader {
   private int libraryCount = 0;
+
   def loadFromPath(Project project, String path) {
     def fileAtPath = new File(path)
 
@@ -50,7 +51,7 @@ public class IdeaProjectLoader {
 
     def librariesFolder = new File(dir, "libraries")
     if (librariesFolder.isDirectory()) {
-      librariesFolder.eachFile { File file ->
+      librariesFolder.eachFile {File file ->
         NodeList libs = new XmlParser(false, false).parse(file).library
         libs.each {Node libTag ->
           project.createLibrary(attr(libTag, "name"), libraryInitializer(libTag, projectBasePath, null))
@@ -71,7 +72,7 @@ public class IdeaProjectLoader {
     if (moduleDir != null) {
       answer = path.replace("\$MODULE_DIR\$", moduleDir)
     }
-    
+
     return answer
   }
 
@@ -100,8 +101,8 @@ public class IdeaProjectLoader {
 
   Object loadModule(Project project, String projectBasePath, String imlPath) {
     def moduleBasePath = new File(imlPath).getParentFile().getAbsolutePath()
-
-    project.createModule(moduleName(imlPath)) {
+    def currentModuleName = moduleName(imlPath)
+    project.createModule(currentModuleName) {
       def root = new XmlParser(false, false).parse(new File(imlPath))
       root.component.each {Node componentTag ->
         if ("NewModuleRootManager" == componentTag.attribute("name")) {
@@ -151,9 +152,28 @@ public class IdeaProjectLoader {
             String path = expandMacro(pathFromUrl(attr(exTag, "url")), projectBasePath, moduleBasePath)
             exclude path
           }
+
+          def languageLevel = attr(componentTag, "LANGUAGE_LEVEL")
+          if (languageLevel != null) {
+            def ll = convertLanguageLevel(languageLevel)
+            project.modules[currentModuleName]["sourceLevel"] = ll
+            project.modules[currentModuleName]["targetLevel"] = ll
+          }
         }
       }
     }
+  }
+
+  private String convertLanguageLevel(String imlPropertyText) {
+    switch (imlPropertyText) {
+      case "JDK_1_3": return "1.3"
+      case "JDK_1_4": return "1.4"
+      case "JDK_1_5": return "1.5"
+      case "JDK_1_6": return "1.6"
+      case "JDK_1_7": return "1.7"
+    }
+
+    return "1.6"
   }
 
   private String pathFromUrl(String url) {
@@ -163,7 +183,7 @@ public class IdeaProjectLoader {
     else if (url.startsWith("jar://")) {
       url = url.substring("jar://".length())
       if (url.endsWith("!/"))
-      url = url.substring(0, url.length() - "!/".length())
+        url = url.substring(0, url.length() - "!/".length())
     }
     url
   }
