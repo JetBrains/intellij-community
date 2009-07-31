@@ -194,6 +194,7 @@ public class BlockSupportImpl extends BlockSupport {
       else {
         mergeTrees(fileImpl, oldFileElement, newFileElement);
       }
+      ((PsiManagerEx)fileImpl.getManager()).getFileManager().setViewProvider(lightFile, null);
     }
   }
 
