@@ -58,6 +58,7 @@ import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.*;
 
 public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
@@ -408,6 +409,9 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     return Collections.unmodifiableMap(myUpdateRootInfos);
   }
 
+  private static final List<String> ourAuthKinds = Arrays.asList(ISVNAuthenticationManager.PASSWORD, ISVNAuthenticationManager.SSH,
+    ISVNAuthenticationManager.SSL, ISVNAuthenticationManager.USERNAME, "svn.ssl.server");
+
   public void clearAuthenticationDirectory() {
     final File authDir = new File(getConfigurationDirectory(), "auth");
     if (authDir.exists()) {
@@ -416,8 +420,19 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
           final ProgressIndicator ind = ProgressManager.getInstance().getProgressIndicator();
           if (ind != null) {
             ind.setIndeterminate(true);
-            ind.setText("Deleting " + authDir.getAbsolutePath());
-            FileUtil.delete(authDir);
+            ind.setText("Clearing stored credentials in " + authDir.getAbsolutePath());
+          }
+          final File[] files = authDir.listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+              return ourAuthKinds.contains(name);
+            }
+          });
+
+          for (File dir : files) {
+            if (ind != null) {
+              ind.setText("Deleting " + dir.getAbsolutePath());
+            }
+            FileUtil.delete(dir);
           }
         }
       }, "button.text.clear.authentication.cache", false, myProject);
