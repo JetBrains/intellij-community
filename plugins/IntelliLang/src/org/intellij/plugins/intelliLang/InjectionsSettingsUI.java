@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
@@ -76,7 +77,11 @@ public class InjectionsSettingsUI implements Configurable {
     myOriginalInjections = ContainerUtil
       .concat(InjectorUtils.getActiveInjectionSupportIds(), new Function<String, Collection<? extends BaseInjection>>() {
         public Collection<? extends BaseInjection> fun(final String s) {
-          return myConfiguration.getInjections(s);
+          return ContainerUtil.findAll(myConfiguration.getInjections(s), new Condition<BaseInjection>() {
+            public boolean value(final BaseInjection injection) {
+              return InjectedLanguage.findLanguageById(injection.getInjectedLanguageId()) != null;
+            }
+          });
         }
       });
     Collections.sort(myOriginalInjections, new Comparator<BaseInjection>() {
