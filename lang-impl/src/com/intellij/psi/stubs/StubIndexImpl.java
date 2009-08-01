@@ -85,6 +85,9 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       final String[] children = indexRootDir.list();
       // rebuild only if there exists what to rebuild
       needRebuild = versionFileExisted || children != null && children.length > 0;
+      if (needRebuild) {
+        LOG.info("Version has changed for stub index " + extension.getKey() + ". The index will be rebuilt.");
+      }
       FileUtil.delete(indexRootDir);
       IndexInfrastructure.rewriteVersion(versionFile, version);
     }
@@ -97,6 +100,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         break;
       }
       catch (IOException e) {
+        LOG.info(e);
         needRebuild = true;
         FileUtil.delete(indexRootDir);
         IndexInfrastructure.rewriteVersion(versionFile, version);
