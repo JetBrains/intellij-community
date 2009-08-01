@@ -37,6 +37,7 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     final Change[] changes = e.getData(VcsDataKeys.CHANGES);
+    if ((changes == null) || (changes.length == 0)) return;
     String commitMessage = "";
     ShelvedChangeList[] shelvedChangeLists = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
     if (shelvedChangeLists != null && shelvedChangeLists.length > 0) {
