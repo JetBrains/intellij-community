@@ -98,4 +98,17 @@ public class ContextComputationProcessor {
       else addStringFragment(String.valueOf(o), result);
     }
   }
+
+  @NotNull
+  public static PsiElement getTopLevelInjectionTarget(@NotNull final PsiElement host) {
+    PsiElement target = host;
+    PsiElement parent = target.getParent();
+    for (; parent != null; target = parent, parent = target.getParent()) {
+      if (parent instanceof PsiBinaryExpression) continue;
+      if (parent instanceof PsiParenthesizedExpression) continue;
+      if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != target) continue;
+      break;
+    }
+    return target;
+  }
 }

@@ -67,7 +67,7 @@ public class AnnotationUtilEx {
           }
         }
       }
-
+      element = ContextComputationProcessor.getTopLevelInjectionTarget(element);
       final PsiElement parent = element.getParent();
 
       if (element instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)element).getOperationSign().getTokenType() == JavaTokenType.PLUSEQ) {
@@ -80,10 +80,6 @@ public class AnnotationUtilEx {
           element = p.getLExpression();
           continue;
         }
-      }
-      else if (parent instanceof PsiExpression) {
-        element = parent;
-        continue;
       }
       else if (parent instanceof PsiReturnStatement) {
         final PsiMethod m = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);

@@ -46,6 +46,7 @@ import org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction;
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
+import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -156,14 +157,8 @@ public class JavaLanguageInjectionSupport implements LanguageInjectionSupport {
   }
 
   private static boolean doInjectInJava(final Project project, final PsiElement host, final String languageId) {
-    PsiElement target = host;
-    PsiElement parent = target.getParent();
-    for (; parent != null; target = parent, parent = target.getParent()) {
-      if (parent instanceof PsiBinaryExpression) continue;
-      if (parent instanceof PsiParenthesizedExpression) continue;
-      if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != target) continue;
-      break;
-    }
+    final PsiElement target = ContextComputationProcessor.getTopLevelInjectionTarget(host);
+    final PsiElement parent = target.getParent();
     if (parent instanceof PsiReturnStatement ||
         parent instanceof PsiMethod ||
         parent instanceof PsiNameValuePair) {
