@@ -39,7 +39,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
@@ -156,31 +155,6 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
     presentation.setEnabled(! plVcsManager.isBackgroundVcsOperationRunning());
     presentation.setVisible(true);
-  }
-
-  private FilePath[] filterRoots(final FilePath[] roots, final Project project) {
-    final ArrayList<FilePath> result = new ArrayList<FilePath>();
-    for (FilePath root : roots) {
-      AbstractVcs vcs = VcsUtil.getVcsFor(project, root);
-      if (vcs != null) {
-        if (!filterRootsBeforeAction() || canCheckinRoot(project, vcs, root)) {
-          CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
-          if (checkinEnvironment != null) {
-            result.add(root);
-          }
-        }
-      }
-    }
-    return result.toArray(new FilePath[result.size()]);
-  }
-
-  private static boolean canCheckinRoot(final Project project, final AbstractVcs vcs, final FilePath root) {
-    VirtualFile file = root.getVirtualFile();
-    if (file != null && !file.isDirectory()) {
-      final FileStatus fileStatus = ChangeListManager.getInstance(project).getStatus(file);
-      return fileStatus != FileStatus.UNKNOWN && fileStatus != FileStatus.NOT_CHANGED;
-    }
-    return vcs.fileIsUnderVcs(root);
   }
 
   protected boolean forceSyncUpdate(final AnActionEvent e) {
