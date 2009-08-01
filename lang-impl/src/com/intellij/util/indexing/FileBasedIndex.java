@@ -1213,30 +1213,32 @@ public class FileBasedIndex implements ApplicationComponent {
       iterateIndexableFiles(event.getFile(), new Processor<VirtualFile>() {
         public boolean process(final VirtualFile file) {
           FileContent fileContent = null;
-          final boolean isTooLarge = SingleRootFileViewProvider.isTooLarge(file);
-          for (ID<?, ?> indexId : myIndices.keySet()) {
+          // handle 'content-less' indices separately
+          for (ID<?, ?> indexId : myNotRequiringContentIndices) {
             if (getInputFilter(indexId).acceptInput(file)) {
-              if (needsFileContentLoading(indexId)) {
-                if (!isTooLarge) {
-                  w.lock();
-                  try {
-                    myFilesToUpdate.add(file);
-                  }
-                  finally {
-                    w.unlock();
-                  }
+              try {
+                if (fileContent == null) {
+                  fileContent = new FileContent(file);
                 }
+                updateSingleIndex(indexId, file, fileContent, null);
               }
-              else {
+              catch (StorageException e) {
+                LOG.info(e);
+                requestRebuild(indexId);
+              }
+            }
+          }
+          // For 'normal indices' schedule the file for update and stop iteration if at least one index accepts it 
+          if (!SingleRootFileViewProvider.isTooLarge(file)) {
+            for (ID<?, ?> indexId : myIndices.keySet()) {
+              if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
+                w.lock();
                 try {
-                  if (fileContent == null) {
-                    fileContent = new FileContent(file);
-                  }
-                  updateSingleIndex(indexId, file, fileContent, null);
+                  myFilesToUpdate.add(file);
+                  break; // no need to iterate further, as the file is already marked 
                 }
-                catch (StorageException e) {
-                  LOG.info(e);
-                  requestRebuild(indexId);
+                finally {
+                  w.unlock();
                 }
               }
             }
