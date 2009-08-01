@@ -16,32 +16,32 @@
 package org.intellij.plugins.intelliLang.inject.quickedit;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.Place;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.xml.util.XmlStringUtil;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.List;
+import java.util.Map;
 
 /**
  * "Quick Edit Language" intention action that provides a popup which shows an injected language
@@ -58,7 +58,6 @@ import java.util.regex.Pattern;
  * com.intellij.openapi.fileEditor.FileEditorManager#openTextEditor(com.intellij.openapi.fileEditor.OpenFileDescriptor, boolean).
  */
 public class QuickEditAction implements IntentionAction {
-  private static final Pattern SPACE_PATTERN = Pattern.compile("^(\\s*)(.*?)(\\s*)$");
 
   @NotNull
   public String getText() {
@@ -71,100 +70,76 @@ public class QuickEditAction implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (false && editor instanceof EditorWindow) {
-      final PsiElement context = file.getContext();
-      if (context == null) {
-        return false;
+    return getRangePair(file, editor.getCaretModel().getOffset()) != null;
+  }
+
+  @Nullable
+  private static Pair<PsiElement, TextRange> getRangePair(final PsiFile file, final int offset) {
+    final PsiLanguageInjectionHost host =
+      PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiLanguageInjectionHost.class, false);
+    if (host == null) return null;
+    final List<Pair<PsiElement, TextRange>> injections = InjectedLanguageUtil.getInjectedPsiFiles(host);
+    if (injections == null || injections.isEmpty()) return null;
+    final int offsetInElement = offset - host.getTextRange().getStartOffset();
+    return ContainerUtil.find(injections, new Condition<Pair<PsiElement, TextRange>>() {
+      public boolean value(final Pair<PsiElement, TextRange> pair) {
+        return pair.second.contains(offsetInElement);
       }
-      final PsiElement firstChild = context.getFirstChild();
-      if (firstChild != null) {
-        final ASTNode node = firstChild.getNode();
-        if (node == null || node.getElementType() == XmlElementType.XML_CDATA) {
-          return false;
-        }
-      }
-      return true;
-    }
-    else {
-      return false;
-    }
+    });
   }
 
   public void invoke(@NotNull Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiElement context = file.getContext();
-    final Document document = editor.getDocument();
-    final DocumentWindow docRange = ((DocumentWindow)document);
+    final int offset = editor.getCaretModel().getOffset();
+    final Pair<PsiElement, TextRange> pair = getRangePair(file, offset);
+    assert pair != null;
+    final PsiFile injectedFile = (PsiFile)pair.first;
+    final Place shreds = InjectedLanguageUtil.getShreds(injectedFile);
 
-    final boolean isInsideStringLiteral = context instanceof PsiLiteralExpression;
-    final boolean isInsideXml = context instanceof XmlElement;
-    final TextRange textRange = docRange.getHostRange(0);
-
-    final String prefix = "";//docRange.getPrefix();
-    final String suffix = "";//docRange.getSuffix();
-
-    final String fullText = getUnescapedText(textRange.substring(docRange.getDelegate().getText()), isInsideStringLiteral, isInsideXml);
-    final Matcher matcher = SPACE_PATTERN.matcher(fullText);
-    final String prefixSpace;
-    final String suffixSpace;
-    final String text;
-    if (matcher.matches()) {
-      prefixSpace = matcher.group(1);
-      text = prefix + matcher.group(2) + suffix;
-      suffixSpace = matcher.group(3);
-    }
-    else {
-      text = prefix + fullText + suffix;
-      prefixSpace = "";
-      suffixSpace = "";
-    }
-
-    final FileType ft = file.getLanguage().getAssociatedFileType();
-    final FileType fileType = ft != null ? ft : file.getFileType();
+    final FileType fileType = injectedFile.getFileType();
 
     final PsiFileFactory factory = PsiFileFactory.getInstance(project);
+    // todo /n handling bug or feature??
+    final String text = InjectedLanguageManager.getInstance(project).getUnescapedText(injectedFile); // injectedFile.getText() ??
     final PsiFile file2 =
         factory.createFileFromText("dummy." + fileType.getDefaultExtension(), fileType, text, LocalTimeCounter.currentTime(), true);
-    final Document d = PsiDocumentManager.getInstance(project).getDocument(file2);
-    assert d != null;
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(file2);
+    assert document != null;
 
-    final RangeMarker prefixRange;
-    if (prefix.length() > 0) {
-      prefixRange = d.createGuardedBlock(0, prefix.length());
-      prefixRange.setGreedyToLeft(true);
-    }
-    else {
-      prefixRange = null;
-    }
-    final RangeMarker suffixRange;
-    if (suffix.length() > 0) {
-      suffixRange = d.createGuardedBlock(text.length() - suffix.length(), text.length());
-      suffixRange.setGreedyToRight(true);
-    }
-    else {
-      suffixRange = null;
-    }
-
-    final QuickEditEditor e = new QuickEditEditor(d, project, fileType, new QuickEditEditor.QuickEditSaver() {
-      public void save(final String text) {
-        String t = text;
-
-        if (prefixRange != null) {
-          assert prefixRange.getStartOffset() == 0;
-          t = t.substring(prefixRange.getEndOffset());
-        }
-        if (suffixRange != null) {
-          final int length = suffixRange.getEndOffset() - suffixRange.getStartOffset();
-          t = t.substring(0, t.length() - length);
-        }
-        final String s = isInsideStringLiteral ? StringUtil.escapeStringCharacters(t) : (isInsideXml ? XmlStringUtil.escapeString(t) : t);
-
-        document.setText(prefix + prefixSpace + s + suffixSpace + suffix);
+    final Map<PsiLanguageInjectionHost.Shred, RangeMarker> markers = ContainerUtil.assignValues(shreds.iterator(), new Convertor<PsiLanguageInjectionHost.Shred, RangeMarker>() {
+      public RangeMarker convert(final PsiLanguageInjectionHost.Shred shred) {
+        final RangeMarker marker = document.createRangeMarker(shred.range.getStartOffset() + shred.prefix.length(), shred.range.getEndOffset() - shred.suffix.length());
+        marker.setGreedyToLeft(true);
+        marker.setGreedyToRight(true);
+        return marker;
       }
     });
-    e.getEditor().getCaretModel().moveToOffset(prefix.length());
+    int curOffset = 0;
+    for (PsiLanguageInjectionHost.Shred shred : shreds) {
+      final RangeMarker marker = markers.get(shred);
+      final int start = marker.getStartOffset();
+      final int end = marker.getEndOffset();
+      if (curOffset < start) {
+        final RangeMarker rangeMarker = document.createGuardedBlock(curOffset, start);
+        // todo greedy to left guarded blocks fail
+        if (curOffset == 0) rangeMarker.setGreedyToLeft(true);
+      }
+      curOffset = end + 1;
+    }
+    if (curOffset < text.length()) {
+      document.createGuardedBlock(curOffset, text.length()).setGreedyToRight(true);
+    }
 
-    // this doesn't seem to work
-    e.getEditor().getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    final QuickEditEditor e = new QuickEditEditor(document, project, fileType, new QuickEditEditor.QuickEditSaver() {
+      public void save(final String text) {
+        for (PsiLanguageInjectionHost.Shred shred : shreds) {
+          final PsiLanguageInjectionHost host = shred.host;
+          final TextRange range = new TextRange(markers.get(shred).getStartOffset(), markers.get(shred).getEndOffset());
+          ElementManipulators.getManipulator(host).handleContentChange(host, shred.getRangeInsideHost(), range.substring(text));
+        }
+      }
+    });
+    //e.getEditor().getCaretModel().moveToOffset(prefix.length());
+    //e.getEditor().getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
     // Using the popup doesn't seem to be a good idea because there's no completion possible inside it: When the
     // completion popup closes, the quickedit popup is gone as well - but I like the movable and resizable popup :(
@@ -174,22 +149,25 @@ public class QuickEditAction implements IntentionAction {
     builder.setResizable(true);
     builder.setRequestFocus(true);
     builder.setTitle("<html>Edit <b>" + fileType.getName() + "</b> Fragment</html>");
+    builder.setAdText("Press Ctrl+Enter to save, Escape to cancel.");
     builder.setCancelCallback(new Computable<Boolean>() {
       public Boolean compute() {
         e.setCancel(true);
-        e.uninstall();
+        try {
+          e.uninstall();
+        }
+        catch (Exception e1) {
+        }
         return Boolean.TRUE;
       }
     });
+    builder.setDimensionServiceKey(project, getClass().getSimpleName()+"DimensionKey", false);
+    builder.setModalContext(true);
 
     final JBPopup popup = builder.createPopup();
     e.install(popup);
 
-    popup.showInBestPositionFor(((EditorWindow)editor).getDelegate());
-  }
-
-  private static String getUnescapedText(String text, boolean insideStringLiteral, boolean insideXml) {
-    return insideStringLiteral ? StringUtil.unescapeStringCharacters(text) : (insideXml ? XmlUtil.unescape(text) : text);
+    popup.showInBestPositionFor(editor);
   }
 
   public boolean startInWriteAction() {
