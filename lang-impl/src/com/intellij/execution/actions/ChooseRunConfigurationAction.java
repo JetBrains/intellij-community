@@ -54,7 +54,7 @@ public class ChooseRunConfigurationAction extends AnAction {
     if (alternateExecutor != null) {
       popup.setAdText(String.format("Press SHIFT for %s", alternateExecutor.getActionName()));
     }
-    
+
     popup.showCenteredInCurrentWindow(project);
   }
 
@@ -239,6 +239,11 @@ public class ChooseRunConfigurationAction extends AnAction {
       super(title, createSettingsList(project));
       myProject = project;
       myAction = action;
+    }
+
+    @Override
+    public boolean isAutoSelectionEnabled() {
+      return false;
     }
 
     private static ItemWrapper[] createSettingsList(@NotNull final Project project) {
