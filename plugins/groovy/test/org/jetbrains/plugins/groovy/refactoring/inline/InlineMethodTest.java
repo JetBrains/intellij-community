@@ -16,118 +16,129 @@
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.refactoring.inline.GenericInlineHandler;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
-import junit.framework.Test;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.refactoring.CommonRefactoringTestCase;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author ilyas
  */
-public class InlineMethodTest extends CommonRefactoringTestCase {
+public class InlineMethodTest extends JavaCodeInsightFixtureTestCase {
+  public static final String CARET_MARKER = "<caret>";
+  public static final String BEGIN_MARKER = "<begin>";
+  public static final String END_MARKER = "<end>";
 
-  private static final String DATA_PATH = PathManager.getHomePath() + "/svnPlugins/groovy/testdata/groovy/refactoring/inlineMethod";
-
-  public InlineMethodTest() {
-    super(System.getProperty("path") != null ?
-        System.getProperty("path") :
-        DATA_PATH);
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/groovy/refactoring/inlineMethod/";
   }
 
+  public void testAbstr1() throws Throwable { doTest(); }
+  public void testBlock1() throws Throwable { doTest(); }
+  public void testBlock2() throws Throwable { doTest(); }
+  public void testBlock3() throws Throwable { doTest(); }
+  public void testBlock4() throws Throwable { doTest(); }
+  public void testCase1() throws Throwable { doTest(); }
+  public void testCase2() throws Throwable { doTest(); }
+  public void testClos_arg1() throws Throwable { doTest(); }
+  public void testClos_arg2() throws Throwable { doTest(); }
+  public void testClos_arg3() throws Throwable { doTest(); }
+  public void testCond() throws Throwable { doTest(); }
+  public void testExpr1() throws Throwable { doTest(); }
+  public void testExpr2() throws Throwable { doTest(); }
+  public void testExpr3() throws Throwable { doTest(); }
+  public void testExpr4() throws Throwable { doTest(); }
+  public void testFact() throws Throwable { doTest(); }
+  public void testFact2() throws Throwable { doTest(); }
+  public void testInit1() throws Throwable { doTest(); }
+  public void testMap_arg1() throws Throwable { doTest(); }
+  public void testQual1() throws Throwable { doTest(); }
+  public void testQual2() throws Throwable { doTest(); }
+  public void testQual3() throws Throwable { doTest(); }
+  public void testQual4() throws Throwable { doTest(); }
+  public void testQual5() throws Throwable { doTest(); }
+  public void testRef1() throws Throwable { doTest(); }
+  public void testRename1() throws Throwable { doTest(); }
+  public void testRename2() throws Throwable { doTest(); }
+  public void testRet1() throws Throwable { doTest(); }
+  public void testRet2() throws Throwable { doTest(); }
+  public void testRet3() throws Throwable { doTest(); }
+  public void testRet4() throws Throwable { doTest(); }
+  public void testRet5() throws Throwable { doTest(); }
+  public void testTail1() throws Throwable { doTest(); }
+  public void testTail1_1() throws Throwable { doTest(); }
+  public void testTail2() throws Throwable { doTest(); }
+  public void testTail3() throws Throwable { doTest(); }
+  public void testTail4() throws Throwable { doTest(); }
+  public void testTail5() throws Throwable { doTest(); }
+  public void testTail6() throws Throwable { doTest(); }
+  public void testVen_tail() throws Throwable { doTest(); }
+  public void testVen_tail2() throws Throwable { doTest(); }
+  public void testVoid() throws Throwable { doTest(); }
 
-  protected String processFile(String fileText) throws IncorrectOperationException, InvalidDataException, IOException {
-    String result = "";
+  protected void doTest() throws IncorrectOperationException, InvalidDataException, IOException {
+    doInlineTest(myFixture, getTestDataPath() + getTestName(true) + ".test", false);
+  }
+
+  public static void doInlineTest(final JavaCodeInsightTestFixture fixture, final String testFile, boolean withCaret) throws IOException {
+    final List<String> data = SimpleGroovyFileSetTestCase.readInput(testFile);
+    String fileText = data.get(0);
+
     int startOffset = fileText.indexOf(BEGIN_MARKER);
     fileText = TestUtils.removeBeginMarker(fileText);
     int endOffset = fileText.indexOf(END_MARKER);
     fileText = TestUtils.removeEndMarker(fileText);
-    PsiFile file = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
 
-    Assert.assertNotNull(file);
+    fixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
 
-    // Create physical file
-    String modulePath = getMyFixture().getTempDirPath();
-    File realFile = new File(modulePath + "/" + TestUtils.TEMP_FILE);
-    FileWriter fstream = new FileWriter(realFile);
-    BufferedWriter out = new BufferedWriter(fstream);
-    out.write(file.getText());
-    out.close();
-
-    VirtualFileManager fileManager = VirtualFileManager.getInstance();
-    fileManager.refresh(false);
-    VirtualFile virtualFile = fileManager.findFileByUrl("file://" + modulePath + "/" + TestUtils.TEMP_FILE);
-
-    assert virtualFile != null;
-
-    FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-    Editor myEditor = fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, virtualFile, 0), false);
-    assert myEditor != null;
-
-
-    file = PsiManager.getInstance(myProject).findFile(virtualFile);
-    Assert.assertTrue(file instanceof GroovyFileBase);
-
+    final PsiFile file = fixture.getFile();
+    final Editor myEditor = fixture.getEditor();
     setIndentationToNode(file.getNode());
-    PsiDocumentManager manager = PsiDocumentManager.getInstance(myProject);
-    try {
-      myEditor.getSelectionModel().setSelection(startOffset, endOffset);
-      myEditor.getCaretModel().moveToOffset(endOffset);
+    myEditor.getSelectionModel().setSelection(startOffset, endOffset);
+    myEditor.getCaretModel().moveToOffset(endOffset);
 
-      GroovyPsiElement selectedArea = GroovyRefactoringUtil.findElementInRange(((GroovyFileBase) file), startOffset, endOffset, GrReferenceExpression.class);
-      if (selectedArea == null) {
-        PsiElement identifier = GroovyRefactoringUtil.findElementInRange(((GroovyFileBase) file), startOffset,
-            endOffset, PsiElement.class);
-        if (identifier != null){
-          Assert.assertTrue("Selected area doesn't point to method", identifier.getParent() instanceof GrVariable);
-          selectedArea = (GrMethod)identifier.getParent();
-        }
-      }
-      Assert.assertNotNull("Selected area reference points to nothing", selectedArea);
-      PsiReference reference = selectedArea.getReference();
-      assert reference != null;
-      PsiElement element = selectedArea instanceof GrExpression ? reference.resolve() : selectedArea;
-      Assert.assertNotNull("Cannot resolve selected reference expression", element);
-      Assert.assertTrue(element instanceof GrMethod);
-
-      // handling inline refactoring
-      GenericInlineHandler.invoke(element, myEditor, new GroovyInlineHandler());
-      result = myEditor.getDocument().getText();
-      int caretOffset = myEditor.getCaretModel().getOffset();
-      String invokedResult = GroovyInlineMethodUtil.getInvokedResult();
-      result = "ok".equals(invokedResult) ?
-          result : //result.substring(0, caretOffset) + CARET_MARKER + result.substring(caretOffset) :
-          "FAIL: " + invokedResult;
-    } finally {
-      fileEditorManager.closeFile(virtualFile);
-      realFile.delete();
-      myEditor = null;
+    GroovyPsiElement selectedArea = GroovyRefactoringUtil.findElementInRange(((GroovyFileBase) file), startOffset, endOffset, GrReferenceExpression.class);
+    if (selectedArea == null) {
+    PsiElement identifier = GroovyRefactoringUtil.findElementInRange(((GroovyFileBase) file), startOffset, endOffset, PsiElement.class);
+    if (identifier != null){
+      Assert.assertTrue("Selected area doesn't point to method", identifier.getParent() instanceof GrVariable);
+      selectedArea = (GroovyPsiElement)identifier.getParent();
     }
+  }
+    Assert.assertNotNull("Selected area reference points to nothing", selectedArea);
+    PsiElement element = selectedArea instanceof GrExpression ? selectedArea.getReference().resolve() : selectedArea;
+    Assert.assertNotNull("Cannot resolve selected reference expression", element);
 
-    return result;
+    // handling inline refactoring
+    GenericInlineHandler.invoke(element, myEditor, new GroovyInlineHandler());
+    String result = myEditor.getDocument().getText();
+    String invokedResult = GroovyInlineMethodUtil.getInvokedResult();
+    final int caretOffset = myEditor.getCaretModel().getOffset();
+    result = "ok".equals(invokedResult) ?
+      (withCaret ? result.substring(0, caretOffset) + CARET_MARKER + result.substring(caretOffset) : result) :
+      "FAIL: " + invokedResult;
+
+    assertEquals(data.get(1), result);
   }
 
   private static void setIndentationToNode(ASTNode element){
@@ -137,11 +148,6 @@ public class InlineMethodTest extends CommonRefactoringTestCase {
     for (ASTNode node : element.getChildren(null)) {
       setIndentationToNode(node);
     }
-  }
-
-
-  public static Test suite() {
-    return new InlineMethodTest();
   }
 
 }

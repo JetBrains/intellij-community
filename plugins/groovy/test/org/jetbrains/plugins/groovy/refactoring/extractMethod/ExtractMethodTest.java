@@ -15,91 +15,82 @@
 
 package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.IncorrectOperationException;
-import junit.framework.Assert;
-import junit.framework.Test;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author ilyas
  */
-public class ExtractMethodTest extends ActionTestCase {
-
-  @NonNls
-  private static final String DATA_PATH = PathManager.getHomePath() + "/svnPlugins/groovy/testdata/groovy/refactoring/extractMethod";
-
-  protected Editor myEditor;
-  protected FileEditorManager fileEditorManager;
-  protected String newDocumentText;
-  protected PsiFile myFile;
-
-
-  public ExtractMethodTest() {
-    super(System.getProperty("path") != null ?
-        System.getProperty("path") :
-        DATA_PATH
-    );
+public class ExtractMethodTest extends JavaCodeInsightFixtureTestCase {
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/groovy/refactoring/extractMethod/";
   }
 
-  private String processFile(final PsiFile file) throws IncorrectOperationException, InvalidDataException, IOException {
-    String result = "";
-    String fileText = file.getText();
+  private String processFile(String fileText) throws IncorrectOperationException, InvalidDataException, IOException {
     int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER);
     fileText = TestUtils.removeBeginMarker(fileText);
     int endOffset = fileText.indexOf(TestUtils.END_MARKER);
     fileText = TestUtils.removeEndMarker(fileText);
-    myFile = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
-    fileEditorManager = FileEditorManager.getInstance(myProject);
-    myEditor = fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myFile.getVirtualFile(), 0), false);
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
 
-    Assert.assertTrue(myFile instanceof GroovyFile);
-    try {
-      myEditor.getSelectionModel().setSelection(startOffset, endOffset);
-      GroovyExtractMethodHandler handler = new GroovyExtractMethodHandler();
-      boolean invoked = handler.invokeOnEditor(myProject, myEditor, myFile);
-      result = invoked ? myEditor.getDocument().getText() : "FAILED: " + handler.getInvokeResult() ;
-      int caretOffset = myEditor.getCaretModel().getOffset();
-      result = invoked ? result.substring(0, caretOffset) + TestUtils.CARET_MARKER + result.substring(caretOffset) : result;
-    } finally {
-      fileEditorManager.closeFile(myFile.getVirtualFile());
-      myEditor = null;
-    }
+    final Editor myEditor = myFixture.getEditor();
+    myEditor.getSelectionModel().setSelection(startOffset, endOffset);
+    GroovyExtractMethodHandler handler = new GroovyExtractMethodHandler();
+    boolean invoked = handler.invokeOnEditor(getProject(), myEditor, myFixture.getFile());
 
-    return result;
+    String result = invoked ? myEditor.getDocument().getText() : "FAILED: " + handler.getInvokeResult();
+    int caretOffset = myEditor.getCaretModel().getOffset();
+    return invoked ? result.substring(0, caretOffset) + TestUtils.CARET_MARKER + result.substring(caretOffset) : result;
   }
 
 
-  public String transform(String testName, String[] data) throws Exception {
-    String fileText = data[0];
-    final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
-    String result = processFile(psiFile);
-    return result;
+  public void doTest() throws Exception {
+    final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + getTestName(true) + ".test");
+
+    String fileText = data.get(0);
+    String result = processFile(fileText);
+    assertEquals(data.get(1), result);
   }
 
-  public static Test suite() {
-    return new ExtractMethodTest();
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
+    moduleBuilder.addLibraryJars("GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR);
   }
 
-  protected IdeaProjectTestFixture createFixture() {
-    TestFixtureBuilder<IdeaProjectTestFixture> builder = JavaTestFixtureFactory.createFixtureBuilder();
-    JavaModuleFixtureBuilder fixtureBuilder = builder.addModule(JavaModuleFixtureBuilder.class);
-    fixtureBuilder.addJdk(TestUtils.getMockJdkHome());
-    fixtureBuilder.addLibraryJars("GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR);
-    return builder.getFixture();
-  }
+  public void testClos_em() throws Throwable { doTest(); }
+  public void testEm1() throws Throwable { doTest(); }
+  public void testEnum1() throws Throwable { doTest(); }
+  public void testErr1() throws Throwable { doTest(); }
+  public void testExpr1() throws Throwable { doTest(); }
+  public void testExpr2() throws Throwable { doTest(); }
+  public void testExpr3() throws Throwable { doTest(); }
+  public void testInput1() throws Throwable { doTest(); }
+  public void testInput2() throws Throwable { doTest(); }
+  public void testInter1() throws Throwable { doTest(); }
+  public void testInter2() throws Throwable { doTest(); }
+  public void testInter3() throws Throwable { doTest(); }
+  public void testInter4() throws Throwable { doTest(); }
+  public void testMeth_em1() throws Throwable { doTest(); }
+  public void testMeth_em2() throws Throwable { doTest(); }
+  public void testMeth_em3() throws Throwable { doTest(); }
+  public void testOutput1() throws Throwable { doTest(); }
+  public void testResul1() throws Throwable { doTest(); }
+  public void testRet1() throws Throwable { doTest(); }
+  public void testRet2() throws Throwable { doTest(); }
+  public void testRet3() throws Throwable { doTest(); }
+  public void testRet4() throws Throwable { doTest(); }
+  public void testVen1() throws Throwable { doTest(); }
+  public void testVen2() throws Throwable { doTest(); }
+  public void testVen3() throws Throwable { doTest(); }
+
 }
