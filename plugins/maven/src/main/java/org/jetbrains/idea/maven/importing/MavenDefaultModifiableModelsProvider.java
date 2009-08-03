@@ -2,20 +2,19 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.Collection;
 
@@ -76,6 +75,15 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
   public void commit() {
     long before = System.currentTimeMillis();
 
+    MavenUtil.invokeAndWait(myProject, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            throw new UnsupportedOperationException();
+          }
+        });
+      }
+    });
     new WriteAction() {
       protected void run(Result result) throws Throwable {
         ((ProjectRootManagerEx)ProjectRootManager.getInstance(myProject)).mergeRootsChangesDuring(new Runnable() {
@@ -102,5 +110,9 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
 
   public long getCommitTime() {
     return myCommitTime;
+  }
+
+  public ModalityState getModalityStateForQuestionDialogs() {
+    return ModalityState.NON_MODAL;
   }
 }

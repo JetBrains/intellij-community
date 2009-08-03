@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.facet.ModifiableFacetModel;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -27,4 +28,6 @@ public interface MavenModifiableModelsProvider extends MavenModelsProvider {
   void commit();
 
   long getCommitTime();
+
+  ModalityState getModalityStateForQuestionDialogs();
 }

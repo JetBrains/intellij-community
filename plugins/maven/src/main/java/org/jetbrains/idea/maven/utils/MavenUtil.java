@@ -39,10 +39,10 @@ import java.util.regex.PatternSyntaxException;
 
 public class MavenUtil {
   public static void invokeLater(Project p, Runnable r) {
-    invokeInDispatchThread(p, ModalityState.defaultModalityState(), r);
+    invokeLater(p, ModalityState.defaultModalityState(), r);
   }
 
-  public static void invokeInDispatchThread(final Project p, final ModalityState state, final Runnable r) {
+  public static void invokeLater(final Project p, final ModalityState state, final Runnable r) {
     if (isNoBackgroundMode()) {
       r.run();
     }
@@ -56,7 +56,11 @@ public class MavenUtil {
     }
   }
 
-  public static void invokeInDispatchThreadAndWait(final Project p, final ModalityState state, final Runnable r) {
+  public static void invokeAndWait(Project p, Runnable r) {
+    invokeAndWait(p, ModalityState.defaultModalityState(), r);
+  }
+
+  public static void invokeAndWait(final Project p, final ModalityState state, final Runnable r) {
     if (isNoBackgroundMode()) {
       r.run();
     }

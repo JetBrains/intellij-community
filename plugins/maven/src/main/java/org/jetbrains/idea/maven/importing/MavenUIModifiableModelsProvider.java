@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.facet.ModifiableFacetModel;
 
 public class MavenUIModifiableModelsProvider extends MavenBaseModifiableModelsProvider {
@@ -64,5 +65,9 @@ public class MavenUIModifiableModelsProvider extends MavenBaseModifiableModelsPr
 
   public long getCommitTime() {
     return 0;
+  }
+
+  public ModalityState getModalityStateForQuestionDialogs() {
+    return ModalityState.defaultModalityState();
   }
 }

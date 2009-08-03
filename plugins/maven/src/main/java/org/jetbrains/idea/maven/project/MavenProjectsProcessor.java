@@ -29,7 +29,13 @@ public class MavenProjectsProcessor {
     myEmbeddersManager = embeddersManager;
     myThread = new Thread(new Runnable() {
       public void run() {
-        while (doRunCycle()) { /* nothing */ }
+        try {
+          while (doRunCycle()) { /* nothing */ }
+        }
+        catch (Throwable e) {
+          MavenLog.LOG.error(e);
+          throw new RuntimeException(e);
+        }
       }
     }, getClass().getSimpleName() + ": " + title);
 
@@ -89,24 +95,19 @@ public class MavenProjectsProcessor {
     }
   }
 
-  public void cancelAndStop() {
+  public void stop() {
     if (isImmediateMode()) return;
 
-    try {
-      isStopped = true;
-      synchronized (myQueue) {
-        myQueue.notifyAll();
-      }
-      cancelAllPendingRequests();
-
-      MavenUtil.MavenTaskHandler handler = myCurrentTaskHandler;
-      if (handler != null) handler.stop();
-
-      myThread.join();
+    isStopped = true;
+    synchronized (myQueue) {
+      myQueue.notifyAll();
     }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
+    cancelAllPendingRequests();
+
+    MavenUtil.MavenTaskHandler handler = myCurrentTaskHandler;
+    if (handler != null) handler.stop();
+
+    //myThread.join();
   }
 
   public boolean doRunCycle() {
@@ -119,8 +120,7 @@ public class MavenProjectsProcessor {
       }
     }
     catch (InterruptedException e) {
-      MavenLog.LOG.error(e);
-      return false;
+      throw new RuntimeException(e);
     }
     if (isStopped) return false;
 

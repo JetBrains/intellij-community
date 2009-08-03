@@ -319,12 +319,12 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
     myWatcher.stop();
 
-    myReadingProcessor.cancelAndStop();
-    myResolvingProcessor.cancelAndStop();
-    myPluginsResolvingProcessor.cancelAndStop();
-    myFoldersResolvingProcessor.cancelAndStop();
-    myArtifactsDownloadingProcessor.cancelAndStop();
-    myPostProcessor.cancelAndStop();
+    myReadingProcessor.stop();
+    myResolvingProcessor.stop();
+    myPluginsResolvingProcessor.stop();
+    myFoldersResolvingProcessor.stop();
+    myArtifactsDownloadingProcessor.stop();
+    myPostProcessor.stop();
 
     myEmbeddersManager.release();
 

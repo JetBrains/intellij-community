@@ -1,7 +1,6 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
@@ -53,7 +52,7 @@ public class MavenModuleImporter {
     for (final FacetImporter importer : getSuitableFacetImporters()) {
       // facets use FacetConfiguration and like that do not have modifiable models,
       // therefore we have to take write lock
-      MavenUtil.invokeInDispatchThreadAndWait(myModule.getProject(), ModalityState.defaultModalityState(), new Runnable() {
+      MavenUtil.invokeAndWait(myModule.getProject(), new Runnable() {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
@@ -69,7 +68,7 @@ public class MavenModuleImporter {
     for (final FacetImporter importer : getSuitableFacetImporters()) {
       // facets use FacetConfiguration and like that do not have modifiable models,
       // therefore we have to take write lock
-      MavenUtil.invokeInDispatchThreadAndWait(myModule.getProject(), ModalityState.defaultModalityState(), new Runnable() {
+      MavenUtil.invokeAndWait(myModule.getProject(), new Runnable() {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {

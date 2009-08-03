@@ -2,7 +2,6 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.JavaModuleType;
@@ -104,7 +103,7 @@ public class MavenProjectImporter {
 
   private void doDeleteIncompatibleModules(final List<Pair<MavenProject, Module>> projectsWithModules) {
     final int[] result = new int[1];
-    MavenUtil.invokeInDispatchThreadAndWait(myProject, ModalityState.NON_MODAL, new Runnable() {
+    MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(), new Runnable() {
       public void run() {
         String message = ProjectBundle.message("maven.import.incompatible.modules",
                                                formatProjectsWithModules(projectsWithModules),
@@ -289,7 +288,7 @@ public class MavenProjectImporter {
     MavenProjectsManager.getInstance(myProject).setMavenizedModules(obsolete, false);
 
     final int[] result = new int[1];
-    MavenUtil.invokeInDispatchThreadAndWait(myProject, ModalityState.NON_MODAL, new Runnable() {
+    MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(), new Runnable() {
       public void run() {
         result[0] = Messages.showYesNoDialog(myProject,
                                              ProjectBundle.message("maven.import.message.delete.obsolete", formatModules(obsolete)),
