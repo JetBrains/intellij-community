@@ -1,8 +1,8 @@
 package org.jetbrains.jps.builders
 
-import org.jetbrains.jps.ModuleBuilder
-import org.jetbrains.jps.Module
 import org.jetbrains.jps.ModuleBuildState
+import org.jetbrains.jps.ModuleBuilder
+import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.Project
 
 /**
@@ -10,7 +10,7 @@ import org.jetbrains.jps.Project
  */
 class JavacBuilder implements ModuleBuilder {
 
-  def processModule(Module module, ModuleBuildState state) {
+  def processModule(ModuleChunk module, ModuleBuildState state) {
     if (state.sourceRoots.isEmpty()) return;
 
     def project = module.project
@@ -24,12 +24,14 @@ class JavacBuilder implements ModuleBuilder {
     if (sourceLevel != null) params.source = sourceLevel
     if (targetLevel != null) params.target = targetLevel
     
+    params.memoryMaximumSize = "512m"
+    params.fork = "true"
     ant.javac (params) {
       state.sourceRoots.each {
         src(path: it)
       }
 
-      module.excludes.each { String root ->
+      state.excludes.each { String root ->
         state.sourceRoots.each {String src ->
           if (root.startsWith("${src}/")) {
             exclude(name: "${root.substring(src.length() + 1)}/**")
@@ -48,7 +50,7 @@ class JavacBuilder implements ModuleBuilder {
 
 class ResourceCopier implements ModuleBuilder {
 
-  def processModule(Module module, ModuleBuildState state) {
+  def processModule(ModuleChunk module, ModuleBuildState state) {
     if (state.sourceRoots.isEmpty()) return;
 
     def project = module.project
@@ -70,7 +72,7 @@ class GroovycBuilder implements ModuleBuilder {
     project.binding.ant.taskdef (name: "groovyc", classname: "org.codehaus.groovy.ant.Groovyc")    
   }
 
-  def processModule(Module module, ModuleBuildState state) {
+  def processModule(ModuleChunk module, ModuleBuildState state) {
     if (state.sourceRoots.isEmpty()) return;
 
     def project = module.project
@@ -96,7 +98,7 @@ class GroovyStubGenerator implements ModuleBuilder {
     project.binding.ant.taskdef (name: "generatestubs", classname: "org.codehaus.groovy.ant.GenerateStubsTask")    
   }
 
-  def processModule(Module module, ModuleBuildState state) {
+  def processModule(ModuleChunk module, ModuleBuildState state) {
     if (state.sourceRoots.isEmpty()) return
 
     def project = module.project

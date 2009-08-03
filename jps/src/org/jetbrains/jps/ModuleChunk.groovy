@@ -67,5 +67,44 @@ class ModuleChunk {
     return getName();
   }
 
+  def List<String> getSourceRoots() {
+    map {it.sourceRoots}
+  }
+
+  def List<String> getTestRoots() {
+    map {it.testRoots}
+  }
+
+  def List<ClasspathItem> getClasspath() {
+    map {it.classpath}
+  }
+
+  def List<String> getExcludes() {
+    map {it.excludes}
+  }
+
+  private <T> List<T> map(Closure c) {
+    LinkedHashSet answer = new LinkedHashSet()
+    modules.each {
+      answer.addAll(c(it))
+    }
+    answer.asList()
+  }
+
+  def Project getProject() {
+    return representativeModule().project
+  }
+
+  private Module representativeModule() {
+    return modules.iterator().next()
+  }
+
+  def getAt(String key) {
+    representativeModule().getAt(key)
+  }
+
+  def String getCustomOutput() {
+    representativeModule().props["destDir"] // TODO traverse all modules instead
+  }
 
 }

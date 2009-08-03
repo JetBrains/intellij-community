@@ -6,40 +6,77 @@ import org.codehaus.gant.GantBinding
  * @author max
  */
 class ProjectBuilder {
-  final Map<Module, String> outputs = [:]
-  final Map<Module, String> testOutputs = [:]
-  final Map<Module, List<String>> cp = [:]
-  final Map<Module, List<String>> testCp = [:]
+  final Map<Module, ModuleChunk> mapping = [:]
+  final Map<ModuleChunk, String> outputs = [:]
+  final Map<ModuleChunk, String> testOutputs = [:]
+  final Map<ModuleChunk, List<String>> cp = [:]
+  final Map<ModuleChunk, List<String>> testCp = [:]
+  
   final Project project;
   final GantBinding binding;
+
+  List<ModuleChunk> chunks = null
 
   def ProjectBuilder(GantBinding binding, Project project) {
     this.project = project
     this.binding = binding
   }
 
+  private def buildChunks() {
+    if (chunks == null) {
+      chunks = new ChunkDAG().build(project, project.modules.values())
+      chunks.each { ModuleChunk chunk ->
+        chunk.modules.each {
+          mapping[it] = chunk
+        }
+      }
+      project.info("Total ${chunks.size()} chunks detected")
+    }
+  }
+
+  public def buildAll() {
+    buildChunks()
+    chunks.each {
+      makeChunk(it)
+      makeChunkTests(it)
+    }
+  }
+
+  private ModuleChunk chunkForModule(Module m) {
+    buildChunks();
+    mapping[m]
+  }
+
   def makeModule(Module module) {
-    String currentOutput = outputs[module]
+    return makeChunk(chunkForModule(module));
+  }
+
+  private def makeChunk(ModuleChunk chunk) {
+    String currentOutput = outputs[chunk]
     if (currentOutput != null) return currentOutput
 
-    project.info("Making module ${module.name}")
-    def dst = folderForModuleOutput(module, classesDir(binding.project))
-    outputs[module] = dst
-    compile(module, dst, false)
+    project.info("Making module ${chunk.name}")
+    def dst = folderForChunkOutput(chunk, classesDir(binding.project))
+    outputs[chunk] = dst
+    compile(chunk, dst, false)
 
-    return dst;
+    return dst
   }
 
   def makeModuleTests(Module module) {
-    String currentOutput = testOutputs[module]
+    return makeChunkTests(chunkForModule(module));
+  }
+
+  private def makeChunkTests(ModuleChunk chunk) {
+    String currentOutput = testOutputs[chunk]
     if (currentOutput != null) return currentOutput
 
-    project.info("Making tests for ${module.name}")
-    def dst = folderForModuleOutput(module, testClassesDir(binding.project))
-    testOutputs[module] = dst
-    compile(module, dst, true)
+    project.info("Making tests for ${chunk.name}")
+    def dst = folderForChunkOutput(chunk, testClassesDir(binding.project))
+    testOutputs[chunk] = dst
+    compile(chunk, dst, true)
 
-    return dst;
+    return dst
   }
 
   private String classesDir(Project project) {
@@ -50,64 +87,98 @@ class ProjectBuilder {
     return new File(project.targetFolder, "testClasses").absolutePath
   }
 
-  private String folderForModuleOutput(Module module, String basePath) {
-    def customOut = module.props["destDir"]
+  private String folderForChunkOutput(ModuleChunk chunk, String basePath) {
+    def customOut = chunk.customOutput
     if (customOut != null) return customOut
-    return new File(basePath, module.name).absolutePath
+    return new File(basePath, chunk.name).absolutePath
   }
 
-  def compile(Module module, String dst, boolean tests) {
+  def compile(ModuleChunk chunk, String dst, boolean tests) {
     def ant = binding.ant
     ant.mkdir dir: dst
 
-    List sources = tests ? module.testRoots : module.sourceRoots
+    List sources = validatePaths(tests ? chunk.testRoots : chunk.sourceRoots)
 
     def state = new ModuleBuildState
     (
             sourceRoots: sources,
-            classpath: moduleClasspath(module, tests),
+            excludes: chunk.excludes,
+            classpath: moduleClasspath(chunk, tests),
             targetFolder: dst,
             tempRootsToDelete: []
     )
 
+    state.print()
+
     project.builders().each {
-      it.processModule(module, state)
+      it.processModule(chunk, state)
     }
 
     state.tempRootsToDelete.each {
       binding.ant.delete(dir: it)
     }
     
-    binding.ant.project.setProperty("module.${module.name}.output.${tests ? "test" : "main"}", dst)
+    binding.ant.project.setProperty("module.${chunk.name}.output.${tests ? "test" : "main"}", dst)
   }
 
-  List<String> moduleClasspath(Module module, boolean test) {
-    Map<Module, List<String>> map = test ? testCp : cp
+  List<String> moduleClasspath(ModuleChunk chunk, boolean test) {
+    Map<ModuleChunk, List<String>> map = test ? testCp : cp
 
-    if (map[module] != null) return map[module]
+    if (map[chunk] != null) return map[chunk]
 
     Set<String> set = new LinkedHashSet()
+    Set<Object> processed = new HashSet()
 
-    module.classpath.flatten().each {
-      def resolved = project.resolve(it)
-      def roots = resolved.getClasspathRoots(test)
-      set.addAll(roots)
-    }
+    transitiveClasspath(chunk, test, set, processed)
 
     if (test) {
-      set.add(moduleOutput(module))
+      set.add(chunkOutput(chunk))
     }
 
-    map[module] = set.asList()
+    map[chunk] = set.asList()
+  }
+
+  private def transitiveClasspath(Object chunkOrModule, boolean test, Set<String> set, Set<Object> processed) {
+    if (processed.contains(chunkOrModule)) return
+    processed << chunkOrModule
+    
+    chunkOrModule.classpath.each {
+      if (it instanceof Module) {
+        transitiveClasspath(it, test, set, processed)
+      }
+      set.addAll(it.getClasspathRoots(test))
+    }
   }
 
   String moduleOutput(Module module) {
-    if (outputs[module] == null) binding.project.error("Module ${module.name} haven't yet been built");
-    return outputs[module]
+    return chunkOutput(chunkForModule(module))
   }
 
   String moduleTestsOutput(Module module) {
-    if (testOutputs[module] == null) binding.project.error("Tests for module ${module.name} haven't yet been built");
-    testOutputs[module]
+    chunkTestOutput(chunkForModule(module))
+  }
+
+  private def chunkOutput(ModuleChunk chunk) {
+    if (outputs[chunk] == null) binding.project.error("Module ${chunk.name} haven't yet been built");
+    return outputs[chunk]
+  }
+
+  private String chunkTestOutput(ModuleChunk chunk) {
+    if (testOutputs[chunk] == null) binding.project.error("Tests for module ${chunk.name} haven't yet been built");
+    testOutputs[chunk]
+  }
+
+  List<String> validatePaths(List<String> list) {
+    List<String> answer = new ArrayList<String>()
+    for (path in list) {
+      if (new File(path).exists()) {
+        answer.add(path)
+      }
+      else {
+        project.warning("'$path' does not exist!")
+      }
+    }
+
+    answer
   }
 }

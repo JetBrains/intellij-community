@@ -24,15 +24,18 @@ class Project {
   final List<Resolver> resolvers = []
   final Map<String, Object> props = [:]
 
+  final Map<String, Module> modules = [:]
+  final Map<String, Library> libraries = [:]
+
   String targetFolder = "."
 
   def Project(GantBinding binding) {
     builder = new ProjectBuilder(binding, this)
     this.binding = binding;
 
-    sourceGeneratingBuilders << new GroovyStubGenerator(this)
+    //sourceGeneratingBuilders << new GroovyStubGenerator(this)
     translatingBuilders << new JavacBuilder()
-    translatingBuilders << new GroovycBuilder(this)
+    //translatingBuilders << new GroovycBuilder(this)
     translatingBuilders << new ResourceCopier()
 
     resolvers << new ModuleResolver(project: this)
@@ -88,29 +91,8 @@ class Project {
     lib
   }
 
-  def Map<String, Module> modules = [:]
-  def Map<String, Library> libraries = [:]
-
   def String toString() {
     return "Project with ${modules.size()} modules and ${libraries.size()} libraries"
-  }
-
-  def List<Module> sortedModules() {
-    def result = new LinkedHashSet()
-    modules.values().each {
-      collectModulesOnClasspath(it, result)
-    }
-    return result.asList()
-  }
-
-  private def collectModulesOnClasspath(Module module, Set<Module> result) {
-    module.classpath.each {
-      if (it instanceof Module) {
-        collectModulesOnClasspath(it, result)
-      }
-    }
-
-    result.add(module)
   }
 
   def error(String message) {
@@ -126,7 +108,7 @@ class Project {
   }
 
   def makeAll() {
-    sortedModules().each { it.make(); it.makeTests() }
+    builder.buildAll()
   }
 
   def clean() {

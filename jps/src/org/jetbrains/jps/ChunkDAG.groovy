@@ -95,6 +95,7 @@ class ChunkDAG {
 
 
   private List<Module> convertToModules(List<ModuleChunk> chunks) {
+    Map<ModuleChunk, Module> mapping = [:]
     
   }
 }
