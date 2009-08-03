@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.getters.InheritorsGetter;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
@@ -94,7 +93,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
   }
 
   private static void addExpectedType(final CompletionResultSet result, final PsiType type, final PsiElement place) {
-    if (!InheritorsGetter.hasAccessibleConstructor(type)) return;
+    if (!JavaCompletionUtil.hasAccessibleConstructor(type)) return;
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
     if (psiClass == null) return;
