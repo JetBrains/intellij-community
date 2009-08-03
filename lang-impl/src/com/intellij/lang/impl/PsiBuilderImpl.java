@@ -868,6 +868,19 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return ASTFactory.composite(type);
   }
 
+  @Nullable
+  public String getErrorMessage(LighterASTNode node) {
+    if (node instanceof ErrorItem) return ((ErrorItem)node).myMessage;
+    if (node instanceof StartMarker) {
+      final StartMarker marker = (StartMarker)node;
+      if (marker.myType == TokenType.ERROR_ELEMENT && marker.myDoneMarker instanceof DoneWithErrorMarker) {
+        return ((DoneWithErrorMarker)marker.myDoneMarker).myMessage;
+      }
+    }
+
+    return null;
+  }
+
   private class MyComparator implements ShallowNodeComparator<ASTNode, LighterASTNode> {
     public ThreeState deepEqual(final ASTNode oldNode, final LighterASTNode newNode) {
       if (newNode instanceof Token) {
@@ -894,19 +907,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
 
       return ThreeState.UNSURE;
-    }
-
-    @Nullable
-    private String getErrorMessage(LighterASTNode node) {
-      if (node instanceof ErrorItem) return ((ErrorItem)node).myMessage;
-      if (node instanceof StartMarker) {
-        final StartMarker marker = (StartMarker)node;
-        if (marker.myType == TokenType.ERROR_ELEMENT && marker.myDoneMarker instanceof DoneWithErrorMarker) {
-          return ((DoneWithErrorMarker)marker.myDoneMarker).myMessage;
-        }
-      }
-
-      return null;
     }
 
     public boolean typesEqual(final ASTNode n1, final LighterASTNode n2) {

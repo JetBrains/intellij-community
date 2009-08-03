@@ -356,11 +356,12 @@ public class HtmlUtil {
         }
 
         public void textElement(final CharSequence display, final CharSequence physical, final int startoffset, final int endoffset) {
-
         }
 
         public void entityRef(final CharSequence ref, final int startOffset, final int endOffset) {
+        }
 
+        public void error(String message, int startOffset, int endOffset) {
         }
       });
     }

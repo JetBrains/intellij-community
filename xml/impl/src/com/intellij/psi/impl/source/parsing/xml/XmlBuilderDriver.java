@@ -58,25 +58,31 @@ public class XmlBuilderDriver {
       LighterASTNode child = children[i];
       final IElementType tt = child.getTokenType();
       if (tt == XmlElementType.XML_TAG || tt == XmlElementType.HTML_TAG) {
-        processTagNode(structure, child, builder);
+        processTagNode(b, structure, child, builder);
       }
       else if (tt == XmlElementType.XML_PROLOG) {
-        processPrologNode(builder, structure, child);
+        processPrologNode(b, builder, structure, child);
       }
     }
 
     structure.disposeChildren(children, count);
   }
 
-  private void processPrologNode(final XmlBuilder builder, final FlyweightCapableTreeStructure<LighterASTNode> structure,
-                                 final LighterASTNode prolog) {
+  private void processPrologNode(PsiBuilderImpl psiBuilder,
+                                 XmlBuilder builder,
+                                 FlyweightCapableTreeStructure<LighterASTNode> structure,
+                                 LighterASTNode prolog) {
     final Ref<LighterASTNode[]> prologChildren = new Ref<LighterASTNode[]>(null);
     final int prologChildrenCount = structure.getChildren(structure.prepareForGetChildren(prolog), prologChildren);
     for (int i = 0; i < prologChildrenCount; i++) {
       LighterASTNode node = prologChildren.get()[i];
-      if (node.getTokenType() == XmlElementType.XML_DOCTYPE) {
+      IElementType type = node.getTokenType();
+      if (type == XmlElementType.XML_DOCTYPE) {
         processDoctypeNode(builder, structure, node);
         break;
+      }
+      if (type == TokenType.ERROR_ELEMENT) {
+        processErrorNode(psiBuilder, node, builder);
       }
     }
   }
@@ -124,8 +130,17 @@ public class XmlBuilderDriver {
     return b;
   }
 
+  private void processErrorNode(PsiBuilderImpl psiBuilder, LighterASTNode node, XmlBuilder builder) {
+    assert node.getTokenType() == TokenType.ERROR_ELEMENT;
+    String message = psiBuilder.getErrorMessage(node);
+    assert message != null;
+    builder.error(message, node.getStartOffset(), node.getEndOffset());
+  }
 
-  private void processTagNode(FlyweightCapableTreeStructure<LighterASTNode> structure, LighterASTNode node, XmlBuilder builder) {
+  private void processTagNode(PsiBuilderImpl psiBuilder,
+                              FlyweightCapableTreeStructure<LighterASTNode> structure,
+                              LighterASTNode node,
+                              XmlBuilder builder) {
     final IElementType nodeTT = node.getTokenType();
     assert nodeTT == XmlElementType.XML_TAG || nodeTT == XmlElementType.HTML_TAG;
 
@@ -164,7 +179,8 @@ public class XmlBuilderDriver {
     for (int i = 0; i < count; i++) {
       LighterASTNode child = children[i];
       IElementType tt = child.getTokenType();
-      if (tt == XmlElementType.XML_TAG || tt == XmlElementType.HTML_TAG) processTagNode(structure, child, builder);
+      if (tt == TokenType.ERROR_ELEMENT) processErrorNode(psiBuilder, child, builder);
+      if (tt == XmlElementType.XML_TAG || tt == XmlElementType.HTML_TAG) processTagNode(psiBuilder, structure, child, builder);
       if (processAttrs && tt == XmlElementType.XML_ATTRIBUTE) processAttributeNode(child, structure, builder);
       if (processTexts && tt == XmlElementType.XML_TEXT) processTextNode(structure, child, builder);
       if (tt == XmlElementType.XML_ENTITY_REF) builder.entityRef(getTokenText(child), child.getStartOffset(), child.getEndOffset());

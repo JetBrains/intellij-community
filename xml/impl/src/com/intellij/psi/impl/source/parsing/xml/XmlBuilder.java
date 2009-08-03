@@ -23,4 +23,6 @@ public interface XmlBuilder {
   void textElement(CharSequence display, CharSequence physical, int startoffset, int endoffset);
 
   void entityRef(CharSequence ref, int startOffset, int endOffset);
+
+  void error(String message, int startOffset, int endOffset);
 }
