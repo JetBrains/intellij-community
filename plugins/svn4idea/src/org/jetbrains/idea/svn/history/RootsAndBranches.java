@@ -386,13 +386,18 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     return wrapper;
   }
 
+  // todo refactor to get rid of duplicate code dealing with separators
+  private String ensureEndsWithSeparator(final String wcPath) {
+    return wcPath.endsWith(File.separator) ? wcPath : (wcPath + File.separator);
+  }
+
   public void refresh() {
     final Map<String, CommittedChangeListsListener> refreshers = new HashMap<String, CommittedChangeListsListener>();
 
     for (Map.Entry<String, MergeInfoHolder> entry : myHolders.entrySet()) {
       final CommittedChangeListsListener refresher = entry.getValue().createRefresher(false);
       if (refresher != null) {
-        refreshers.put(entry.getKey(), refresher);
+        refreshers.put(ensureEndsWithSeparator(entry.getKey()), refresher);
       }
     }
 
@@ -406,7 +411,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
             final SvnChangeList svnList = (SvnChangeList) list;
             final String wcPath = svnList.getWcPath();
             if (wcPath != null) {
-              final CommittedChangeListsListener refresher = refreshers.get(wcPath.endsWith(File.separator) ? wcPath : (wcPath + File.separator));
+              final CommittedChangeListsListener refresher = refreshers.get(ensureEndsWithSeparator(wcPath));
               if (refresher != null) {
                 refresher.report(list);
               }
