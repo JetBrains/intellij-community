@@ -1531,6 +1531,7 @@ public class CompileDriver {
             final VirtualFile file = item.getFile();
             if (file == null) {
               LOG.error("FileProcessingCompiler.ProcessingItem.getFile() must not return null: compiler " + adapter.getCompiler().getDescription());
+              continue;
             }
             final String url = file.getUrl();
             allUrls.add(url);
