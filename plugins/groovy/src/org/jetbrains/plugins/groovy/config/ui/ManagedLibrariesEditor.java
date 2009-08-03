@@ -340,7 +340,6 @@ public class ManagedLibrariesEditor {
       usedManagers.add(library.manager);
     }
 
-    myAddButton.setEnabled(usedManagers.size() < myManagers.length);
     myValidatorsManager.validate();
   }
 
