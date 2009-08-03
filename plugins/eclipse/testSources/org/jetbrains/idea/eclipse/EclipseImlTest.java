@@ -80,7 +80,7 @@ public class EclipseImlTest extends IdeaTestCase {
       }
     });
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, getProject());
+    final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, getProject(), null);
     classpathReader.init(rootModel);
     classpathReader
       .readClasspath(rootModel, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(), new HashSet<String>(), null, classpathElement);

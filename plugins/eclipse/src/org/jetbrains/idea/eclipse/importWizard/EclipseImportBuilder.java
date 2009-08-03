@@ -28,10 +28,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.Function;
 import org.jdom.Element;
@@ -245,7 +245,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         rootModels[idx++] = rootModel;
 
         final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
-        final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project);
+        final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, getParameters().projectsToConvert);
         classpathReader.init(rootModel);
         if (classpathFile.exists()) {
           final Element classpathElement = JDOMUtil.loadDocument(classpathFile).getRootElement();

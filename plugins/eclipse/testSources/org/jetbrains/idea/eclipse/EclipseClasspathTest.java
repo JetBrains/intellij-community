@@ -36,13 +36,18 @@ import com.intellij.testFramework.IdeaTestCase;
 import junit.framework.Assert;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jetbrains.idea.eclipse.conversion.ConversionException;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
 import org.jetbrains.idea.eclipse.importWizard.EclipseProjectFinder;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 
 public class EclipseClasspathTest extends IdeaTestCase {
   @Override
@@ -65,7 +70,10 @@ public class EclipseClasspathTest extends IdeaTestCase {
 
   private void doTest(final String relativePath) throws Exception {
     final String path = getProject().getBaseDir().getPath() + relativePath;
+    checkModule(path, setUpModule(path));
+  }
 
+  private Module setUpModule(final String path) throws IOException, JDOMException, ConversionException {
     final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
     String fileText = new String(FileUtil.loadFileText(classpathFile)).replaceAll("\\$ROOT\\$", getProject().getBaseDir().getPath());
     if (!SystemInfo.isWindows) {
@@ -79,21 +87,46 @@ public class EclipseClasspathTest extends IdeaTestCase {
       }
     });
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, getProject());
+    final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, getProject(), null);
     classpathReader.init(rootModel);
     classpathReader
       .readClasspath(rootModel, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(), new HashSet<String>(), null,
                      classpathElement);
     rootModel.commit();
+    return module;
+  }
+
+  private void checkModule(String path, Module module) throws IOException, JDOMException, ConversionException {
+    final File classpathFile1 = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
+    if (!classpathFile1.exists()) return;
+    String fileText1 = new String(FileUtil.loadFileText(classpathFile1)).replaceAll("\\$ROOT\\$", getProject().getBaseDir().getPath());
+    if (!SystemInfo.isWindows) {
+      fileText1 = fileText1.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
+    }
+    final Element classpathElement1 = JDOMUtil.loadDocument(fileText1).getRootElement();
     final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     final Element resultClasspathElement = new Element(EclipseXml.CLASSPATH_TAG);
-    new EclipseClasspathWriter(model).writeClasspath(resultClasspathElement, classpathElement);
+    new EclipseClasspathWriter(model).writeClasspath(resultClasspathElement, classpathElement1);
     model.dispose();
 
     String resulted = new String(JDOMUtil.printDocument(new Document(resultClasspathElement), "\n"));
     Assert.assertTrue(resulted.replaceAll(StringUtil.escapeToRegexp(getProject().getBaseDir().getPath()), "\\$ROOT\\$"),
-                      JDOMUtil.areElementsEqual(classpathElement, resultClasspathElement));
+                      JDOMUtil.areElementsEqual(classpathElement1, resultClasspathElement));
   }
+
+
+  public void testMultiModuleDependencies() throws Exception {
+    List<String> paths = Arrays.asList(getProject().getBaseDir().getPath() + "/multi/m1", getProject().getBaseDir().getPath() + "/multi/m2/m22");
+
+    for (final String path: paths) {
+      setUpModule(path);
+    }
+
+    for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
+      checkModule(new File(module.getModuleFilePath()).getParent(), module);
+    }
+  }
+
 
   public void testAbsolutePaths() throws Exception {
     doTest("/parent/parent/test");

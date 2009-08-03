@@ -22,6 +22,8 @@ package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -189,6 +191,14 @@ public class EclipseClasspathWriter {
       if (contentRoot != null) {
         if (VfsUtil.isAncestor(contentRoot, file, false)) {
           return VfsUtil.getRelativePath(file, contentRoot, '/');
+        } else {
+          final Module module = ModuleUtil.findModuleForFile(file, project);
+          if (module != null) {
+            final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+            if (contentRoots.length > 0 && VfsUtil.isAncestor(contentRoots[0], file, false)) {
+              return "/" + module.getName() + "/" + VfsUtil.getRelativePath(file, contentRoots[0], '/');
+            }
+          }
         }
       }
       if (VfsUtil.isAncestor(projectBaseDir, file, false)) {

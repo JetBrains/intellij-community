@@ -21,6 +21,8 @@
 package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -55,11 +57,13 @@ import java.util.Set;
 public class EclipseClasspathReader {
   private final String myRootPath;
   private final Project myProject;
+  @Nullable private final List<String> myCurrentRoots;
   private ContentEntry myContentEntry;
 
-  public EclipseClasspathReader(final String rootPath, final Project project) {
+  public EclipseClasspathReader(final String rootPath, final Project project, @Nullable List<String> currentRoots) {
     myRootPath = rootPath;
     myProject = project;
+    myCurrentRoots = currentRoots;
   }
 
   public void init(ModifiableRootModel model) {
@@ -332,6 +336,28 @@ public class EclipseClasspathReader {
       final File file = new File(relativePath);
       if (file.exists()) {
         url = VfsUtil.pathToUrl(relativePath);
+      } else if (new File(path).exists()) {
+        url = VfsUtil.pathToUrl(path);
+      } else if (path.indexOf('/') < path.length() - 1){
+        final String relativeToOtherModule = path.substring(path.indexOf('/', 1) + 1);
+        final Module otherModule = ModuleManager.getInstance(myProject).findModuleByName(path.substring(0, path.indexOf('/')));
+        if (otherModule != null) {
+          final VirtualFile[] contentRoots = ModuleRootManager.getInstance(otherModule).getContentRoots();
+          if (contentRoots.length > 0) {
+            final File relativeToOtherModuleFile = new File(contentRoots[0].getPath(), relativeToOtherModule);
+            if (relativeToOtherModuleFile.exists()) {
+              url = VfsUtil.pathToUrl(relativeToOtherModuleFile.getPath());
+            }
+          }
+        } else if (myCurrentRoots != null) {
+          for (String currentRoot : myCurrentRoots) {
+            final File relativeToOtherModuleFile = new File(currentRoot, relativeToOtherModule);
+            if (relativeToOtherModuleFile.exists()) {
+              url = VfsUtil.pathToUrl(relativeToOtherModuleFile.getPath());
+              break;
+            }
+          }
+        }
       }
     }
     if (url == null) {

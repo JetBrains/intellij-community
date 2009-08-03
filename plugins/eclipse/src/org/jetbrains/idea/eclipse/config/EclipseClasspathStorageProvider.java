@@ -153,7 +153,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         assert parent != null;
         final String path = parent.getPath();
 
-        final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, module.getProject());
+        final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, module.getProject(), null);
         classpathReader.init(model);
         if (documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
 
