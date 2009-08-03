@@ -369,7 +369,6 @@ public class BackendCompilerWrapper {
     
     final Pair<int[], Set<VirtualFile>> deps =
         dependencyCache.findDependentClasses(myCompileContext, myProject, mySuccesfullyCompiledJavaFiles, myCompiler.getDependencyProcessor());
-    CompilerUtil.logDuration("Dependent classes marking", System.currentTimeMillis() - start);
 
     final TIntHashSet currentDeps = new TIntHashSet(deps.getFirst());
     currentDeps.removeAll(myProcessedNames.toArray());
@@ -425,7 +424,7 @@ public class BackendCompilerWrapper {
     }
     myCompileContext.getProgressIndicator().setText(CompilerBundle.message("progress.found.dependent.files", dependentFiles.size()));
 
-    CompilerUtil.logDuration("Finding dependent files in total", System.currentTimeMillis() - start);
+    CompilerUtil.logDuration("Finding dependencies", System.currentTimeMillis() - start);
     return dependentFiles;
   }
 
