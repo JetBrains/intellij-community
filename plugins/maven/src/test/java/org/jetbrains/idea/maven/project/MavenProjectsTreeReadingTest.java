@@ -1980,6 +1980,38 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertUnorderedElementsAreEqual(myTree.getActiveProfiles(), "one", "two");
   }
 
+  public void testOutputPathsAreBasedOnTargetPathWhenResolving() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<build>" +
+                     "  <directory>my-target</directory>" +
+                     "</build>");
+
+    updateAll(myProjectPom);
+
+    MavenProject project = myTree.getRootProjects().get(0);
+    assertPathEquals(pathFromBasedir("my-target"), project.getBuildDirectory());
+    assertPathEquals(pathFromBasedir("my-target/classes"), project.getOutputDirectory());
+    assertPathEquals(pathFromBasedir("my-target/test-classes"), project.getTestOutputDirectory());
+
+    MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(getMavenGeneralSettings());
+    try {
+      myTree.resolve(project,
+                     getMavenGeneralSettings(),
+                     embeddersManager,
+                     NULL_MAVEN_CONSOLE,
+                     EMPTY_MAVEN_PROCESS);
+    }
+    finally {
+      embeddersManager.release();
+    }
+
+    assertPathEquals(pathFromBasedir("my-target"), project.getBuildDirectory());
+    assertPathEquals(pathFromBasedir("my-target/classes"), project.getOutputDirectory());
+    assertPathEquals(pathFromBasedir("my-target/test-classes"), project.getTestOutputDirectory());
+  }
+
   private static class MyLoggingListener extends MavenProjectsTree.ListenerAdapter {
     String log = "";
 

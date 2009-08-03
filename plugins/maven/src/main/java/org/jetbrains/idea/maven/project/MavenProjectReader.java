@@ -378,10 +378,10 @@ public class MavenProjectReader {
 
     build.setDirectory(isEmptyOrSpaces(build.getDirectory()) ? "target" : build.getDirectory());
     build.setOutputDirectory(isEmptyOrSpaces(build.getOutputDirectory())
-                             ? "target/classes"
+                             ? "${project.build.directory}/classes"
                              : build.getOutputDirectory());
     build.setTestOutputDirectory(isEmptyOrSpaces(build.getTestOutputDirectory())
-                                 ? "target/test-classes"
+                                 ? "${project.build.directory}/test-classes"
                                  : build.getTestOutputDirectory());
   }
 

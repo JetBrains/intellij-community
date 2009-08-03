@@ -555,7 +555,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "</build>");
     assertModules("project");
 
-    assertExcludes("project", "foo", "target/classes", "target/test-classes");
+    assertExcludes("project", "foo");
     assertProjectOutput("project");
   }
 

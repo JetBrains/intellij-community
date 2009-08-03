@@ -220,6 +220,23 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertPathEquals(pathFromBasedir("myTestClasses"), build.getTestOutputDirectory());
   }
 
+  public void testOutputPathsAreBasedOnTargetPath() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<build>" +
+                     "  <directory>my-target</directory>" +
+                     "</build>");
+
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+
+    Build build = p.getBuild();
+    assertNotNull(build);
+    assertPathEquals(pathFromBasedir("my-target"), build.getDirectory());
+    assertPathEquals(pathFromBasedir("my-target/classes"), build.getOutputDirectory());
+    assertPathEquals(pathFromBasedir("my-target/test-classes"), build.getTestOutputDirectory());
+  }
+
   public void testDoesNotIncludeResourcesWithoutDirectory() throws Exception {
     createProjectPom("<build>" +
                      "  <resources>" +
@@ -669,11 +686,11 @@ public class MavenProjectReaderTest extends MavenTestCase {
   public void testPropertiesFromProfilesXmlNewStyle() throws Exception {
     createProjectPom("<name>${prop}</name>");
     createProfilesXml("<profile>" +
-                              "  <id>one</id>" +
-                              "  <properties>" +
-                              "    <prop>foo</prop>" +
-                              "  </properties>" +
-                              "</profile>");
+                      "  <id>one</id>" +
+                      "  <properties>" +
+                      "    <prop>foo</prop>" +
+                      "  </properties>" +
+                      "</profile>");
 
     org.apache.maven.project.MavenProject mavenProject = readProject(myProjectPom);
     assertEquals("${prop}", mavenProject.getName());
@@ -853,14 +870,6 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                                                            locator);
     assertTrue(result.isValid);
     return result.nativeMavenProject;
-  }
-
-  private String pathFromBasedir(String relPath) {
-    return pathFromBasedir(myProjectRoot, relPath);
-  }
-
-  private String pathFromBasedir(VirtualFile root, String relPath) {
-    return FileUtil.toSystemIndependentName(root.getPath() + "/" + relPath);
   }
 
   private void assertParent(org.apache.maven.project.MavenProject p,

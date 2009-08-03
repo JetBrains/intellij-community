@@ -172,6 +172,14 @@ public abstract class MavenTestCase extends TestCase {
     return myProjectRoot.getParent().getPath();
   }
 
+  protected String pathFromBasedir(String relPath) {
+    return pathFromBasedir(myProjectRoot, relPath);
+  }
+
+  protected String pathFromBasedir(VirtualFile root, String relPath) {
+    return FileUtil.toSystemIndependentName(root.getPath() + "/" + relPath);
+  }
+
   protected VirtualFile updateSettingsXml(String content) throws IOException {
     return updateSettingsXmlFully(createSettingsXmlContent(content));
   }
