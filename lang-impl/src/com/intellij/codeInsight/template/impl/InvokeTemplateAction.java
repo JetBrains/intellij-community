@@ -4,12 +4,16 @@
  */
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.util.ui.UIUtil;
 
 import java.util.Set;
@@ -45,6 +49,12 @@ public class InvokeTemplateAction extends AnAction {
 
 
   public void actionPerformed(AnActionEvent e) {
+    final Document document = myEditor.getDocument();
+    final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    if (file != null) {
+      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(file);
+    }
+
     String selectionString = myEditor.getSelectionModel().getSelectedText();
 
     if (selectionString != null) {
