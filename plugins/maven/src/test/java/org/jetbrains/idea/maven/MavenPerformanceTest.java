@@ -22,7 +22,7 @@ public abstract class MavenPerformanceTest extends MavenImportingTestCase {
   }
 
   public void testReading() throws Exception {
-    measure(new Runnable() {
+    measure(4000, new Runnable() {
       public void run() {
         myProjectsManager.waitForReadingCompletion();
       }
@@ -31,7 +31,7 @@ public abstract class MavenPerformanceTest extends MavenImportingTestCase {
 
   public void testImporting() throws Exception {
     myProjectsManager.waitForReadingCompletion();
-    measure(new Runnable() {
+    measure(8, new Runnable() {
       public void run() {
         myProjectsManager.importProjects();
       }
@@ -41,7 +41,7 @@ public abstract class MavenPerformanceTest extends MavenImportingTestCase {
   public void testReImporting() throws Exception {
     myProjectsManager.waitForReadingCompletion();
     myProjectsManager.importProjects();
-    measure(new Runnable() {
+    measure(2, new Runnable() {
       public void run() {
         myProjectsManager.importProjects();
       }
@@ -60,19 +60,21 @@ public abstract class MavenPerformanceTest extends MavenImportingTestCase {
     myProjectsManager.unscheduleAllTasksInTests();
 
     myProjectsManager.scheduleResolve(mavenProjects.subList(0, 100));
-    measure(new Runnable() {
+    measure(50000, new Runnable() {
       public void run() {
         myProjectsManager.waitForResolvingCompletion();
       }
     });
   }
 
-  private void measure(Runnable r) {
+  private void measure(long expected, Runnable r) {
     ProfilingUtil.startCPUProfiling();
     long before = System.currentTimeMillis();
     r.run();
     long after = System.currentTimeMillis();
-    System.out.println(getName() + ": " + (after - before) + " ->" + ProfilingUtil.captureCPUSnapshot());
+    long timing = after - before;
+    System.out.println(getName() + ": " + timing + " ->" + ProfilingUtil.captureCPUSnapshot());
     ProfilingUtil.stopCPUProfiling();
+    assertTrue(timing < expected);
   }
 }
