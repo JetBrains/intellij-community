@@ -16,6 +16,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -64,7 +65,7 @@ public class JavaResolveCache {
   }
 
   @Nullable
-  public PsiType getType(PsiExpression expr, Function<PsiExpression, PsiType> f) {
+  public PsiType getType(@NotNull PsiExpression expr, @NotNull Function<PsiExpression, PsiType> f) {
     PsiType type = myCalculatedTypes.get(expr);
     if (type == null) {
       type = f.fun(expr);
@@ -74,7 +75,7 @@ public class JavaResolveCache {
       type = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, expr, type);
     }
     if (!type.isValid()) {
-      LOG.error("Type is invalid: " + type);
+      LOG.error("Type is invalid: " + type+"; expr: '"+expr+"' is "+(expr.isValid() ? "valid":"invalid"));
     }
     return type == NULL_TYPE ? null : type;
   }
