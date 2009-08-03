@@ -7,6 +7,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.appengine.facet.AppEngineFacet;
+import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -18,6 +19,7 @@ public class AppEngineRunConfigurationEditor extends SettingsEditor<CommonModel>
   private JPanel myMainPanel;
   private JComboBox myAppEngineFacetComboBox;
   private JTextField myPortField;
+  private RawCommandLineEditor myServerParametersEditor;
   private final Project myProject;
 
   public AppEngineRunConfigurationEditor(Project project) {
@@ -32,6 +34,8 @@ public class AppEngineRunConfigurationEditor extends SettingsEditor<CommonModel>
     if (webFacet == null && myAppEngineFacetComboBox.getItemCount() == 1) {
       myAppEngineFacetComboBox.setSelectedIndex(0);
     }
+    myServerParametersEditor.setDialogCaption("Server Parameters");
+    myServerParametersEditor.setText(serverModel.getServerParameters());
   }
 
   protected void applyEditorTo(CommonModel s) throws ConfigurationException {
@@ -42,6 +46,7 @@ public class AppEngineRunConfigurationEditor extends SettingsEditor<CommonModel>
     catch (NumberFormatException e) {
       throw new ConfigurationException("'" + myPortField.getText() + "' is not valid port number");
     }
+    serverModel.setServerParameters(myServerParametersEditor.getText());
     final AppEngineFacet appEngineFacet = (AppEngineFacet)myAppEngineFacetComboBox.getSelectedItem();
     serverModel.setWebFacet(appEngineFacet != null ? appEngineFacet.getWebFacet() : null);
   }

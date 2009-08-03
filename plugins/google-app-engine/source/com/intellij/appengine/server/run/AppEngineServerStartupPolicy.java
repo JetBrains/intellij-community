@@ -37,8 +37,8 @@ public class AppEngineServerStartupPolicy implements JavaCommandLineStartupPolic
     javaParameters.getClassPath().add(toolsApiJarFile.getAbsolutePath());
     javaParameters.setMainClass("com.google.appengine.tools.development.DevAppServerMain");
 
-    final ServerModel serverModel = commonModel.getServerModel();
-    final WebFacet webFacet = ((AppEngineServerModel)serverModel).getWebFacet();
+    final AppEngineServerModel serverModel = (AppEngineServerModel) commonModel.getServerModel();
+    final WebFacet webFacet = serverModel.getWebFacet();
     if (webFacet == null) {
       throw new ExecutionException("Web Facet isn't specified");
     }
@@ -49,6 +49,9 @@ public class AppEngineServerStartupPolicy implements JavaCommandLineStartupPolic
     javaParameters.setJdk(jdk);
 
     final ParametersList parameters = javaParameters.getProgramParametersList();
+    parameters.addParametersString(serverModel.getServerParameters());
+    parameters.replaceOrAppend("-p", "");
+    parameters.replaceOrAppend("--port", "");
     parameters.add("-p", String.valueOf(serverModel.getLocalPort()));
     parameters.add("--disable_update_check");
 

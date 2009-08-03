@@ -1,30 +1,31 @@
 <idea-plugin>
   <name>Google App Engine Integration</name>
   <id>com.intellij.appengine</id>
-  <description>Provides support for developing Google App Engine applications</description>
-  <version>1.1.0.6</version>
-  <idea-version since-build="9000"/>
-  <depends>com.intellij.javaee</depends>
-  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
-  <category>Web/JavaEE Technologies</category>
-  <change-notes>
+  <description>
     <![CDATA[
-    This plugin provides the following features:
+    Provides support for developing Google App Engine applications. The following features are available:
     <ul>
-     <li> option on "Technologies" page of the module wizard to quickly create:
-       <ul>
-         <li>appengine-web.xml descriptor
-         <li>App Engine Facet
-         <li>App Engine Dev server run configuration
-         <li>jdoconfig.xml descriptor
-         <li>required libraries
-       </ul>
+     <li> option on "Technologies" page of the module wizard to quickly create an AppEngine project
      <li> inspection to report forbidden code in App Engine application
      <li> run configuration for Google App Engine Dev server
      <li> option to run JDO Enhancer on make (in Google App Engine Facet settings)
      <li> action for uploading an application to Google (Tools | Upload App Engine Application)
     </ul>
-   ]]></change-notes>
+   ]]>
+  </description>
+  <version>1.1.0.7</version>
+  <idea-version since-build="9000"/>
+  <depends>com.intellij.javaee</depends>
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <category>Web/JavaEE Technologies</category>
+  <change-notes>
+      <![CDATA[
+        <ul>
+          <li> option for Dev Server parameters in Run Configuration
+          <li> option for Dev Server parameters in Run Configuration
+        </ul>
+      ]]>
+  </change-notes>
 
   <extensions defaultExtensionNs="com.intellij">
     <javaee.appServerIntegration implementation="com.intellij.appengine.server.integration.AppEngineServerIntegration"/>

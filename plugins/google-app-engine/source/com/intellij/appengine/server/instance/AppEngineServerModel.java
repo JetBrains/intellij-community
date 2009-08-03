@@ -32,6 +32,7 @@ import java.util.List;
 public class AppEngineServerModel implements ServerModel {
   private FacetPointer<WebFacet> myWebFacetPointer;
   private int myPort = 8080;
+  private String myServerParameters = "";
   private CommonModel myCommonModel;
 
   public J2EEServerInstance createServerInstance() throws ExecutionException {
@@ -84,6 +85,7 @@ public class AppEngineServerModel implements ServerModel {
     final AppEngineModelSettings settings = new AppEngineModelSettings();
     XmlSerializer.deserializeInto(settings, element);
     myPort = settings.getPort();
+    myServerParameters = settings.getServerParameters();
     if (settings.myWebFacet != null) {
       myWebFacetPointer = FacetPointersManager.getInstance(myCommonModel.getProject()).create(settings.getWebFacet());
     }
@@ -93,7 +95,7 @@ public class AppEngineServerModel implements ServerModel {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    XmlSerializer.serializeInto(new AppEngineModelSettings(myPort, myWebFacetPointer), element, new SkipDefaultValuesSerializationFilters());
+    XmlSerializer.serializeInto(new AppEngineModelSettings(myPort, myWebFacetPointer, myServerParameters), element, new SkipDefaultValuesSerializationFilters());
   }
 
   @Nullable
@@ -103,6 +105,14 @@ public class AppEngineServerModel implements ServerModel {
 
   public void setPort(int port) {
     myPort = port;
+  }
+
+  public String getServerParameters() {
+    return myServerParameters;
+  }
+
+  public void setServerParameters(String serverParameters) {
+    myServerParameters = serverParameters;
   }
 
   public void setWebFacet(@Nullable WebFacet webFacet) {
@@ -119,12 +129,15 @@ public class AppEngineServerModel implements ServerModel {
     private int myPort = 8080;
     @Tag("web-facet")
     private String myWebFacet;
+    @Tag("server-parameters")
+    private String myServerParameters = "";
 
     public AppEngineModelSettings() {
     }
 
-    public AppEngineModelSettings(int port, FacetPointer<WebFacet> pointer) {
+    public AppEngineModelSettings(int port, FacetPointer<WebFacet> pointer, String serverParameters) {
       myPort = port;
+      myServerParameters = serverParameters;
       myWebFacet = pointer != null ? pointer.getId() : null;
     }
 
@@ -142,6 +155,14 @@ public class AppEngineServerModel implements ServerModel {
 
     public void setWebFacet(String webFacet) {
       myWebFacet = webFacet;
+    }
+
+    public String getServerParameters() {
+      return myServerParameters;
+    }
+
+    public void setServerParameters(String serverParameters) {
+      myServerParameters = serverParameters;
     }
   }
 }
