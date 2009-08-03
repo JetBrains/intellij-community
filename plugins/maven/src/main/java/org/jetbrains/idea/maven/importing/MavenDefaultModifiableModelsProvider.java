@@ -2,7 +2,10 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -79,31 +82,26 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            throw new UnsupportedOperationException();
+            ((ProjectRootManagerEx)ProjectRootManager.getInstance(myProject)).mergeRootsChangesDuring(new Runnable() {
+              public void run() {
+                for (Library.ModifiableModel each : myLibraryModels.values()) {
+                  each.commit();
+                }
+                myLibrariesModel.commit();
+                Collection<ModifiableRootModel> rootModels = myRootModels.values();
+
+                ProjectRootManager.getInstance(myProject).multiCommit(myModuleModel,
+                                                                      rootModels.toArray(new ModifiableRootModel[rootModels.size()]));
+
+                for (ModifiableFacetModel each : myFacetModels.values()) {
+                  each.commit();
+                }
+              }
+            });
           }
         });
       }
     });
-    new WriteAction() {
-      protected void run(Result result) throws Throwable {
-        ((ProjectRootManagerEx)ProjectRootManager.getInstance(myProject)).mergeRootsChangesDuring(new Runnable() {
-          public void run() {
-            for (Library.ModifiableModel each : myLibraryModels.values()) {
-              each.commit();
-            }
-            myLibrariesModel.commit();
-            Collection<ModifiableRootModel> rootModels = myRootModels.values();
-
-            ProjectRootManager.getInstance(myProject).multiCommit(myModuleModel,
-                                                                  rootModels.toArray(new ModifiableRootModel[rootModels.size()]));
-
-            for (ModifiableFacetModel each : myFacetModels.values()) {
-              each.commit();
-            }
-          }
-        });
-      }
-    }.execute();
 
     myCommitTime = System.currentTimeMillis() - before;
   }
