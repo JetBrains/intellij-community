@@ -13,4 +13,3 @@ class A {
     def preved = 3<caret>
   }
 }
-

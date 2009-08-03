@@ -18,15 +18,12 @@ package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
@@ -38,38 +35,26 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class IntroduceVariableTest extends JavaCodeInsightFixtureTestCase {
+public class IntroduceVariableValidatorTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/refactoring/introduceVariable/";
+    return "/svnPlugins/groovy/testdata/groovy/refactoring/introduceVariableValidator/";
   }
 
-  public void testAbs() throws Throwable { doTest(); }
-  public void testCall1() throws Throwable { doTest(); }
-  public void testCall2() throws Throwable { doTest(); }
-  public void testCall3() throws Throwable { doTest(); }
-  public void testClos1() throws Throwable { doTest(); }
-  public void testClos2() throws Throwable { doTest(); }
-  public void testClos3() throws Throwable { doTest(); }
-  public void testClos4() throws Throwable { doTest(); }
-  public void testF2() throws Throwable { doTest(); }
-  public void testField1() throws Throwable { doTest(); }
-  public void testFirst() throws Throwable { doTest(); }
-  public void testIf1() throws Throwable { doTest(); }
-  public void testIf2() throws Throwable { doTest(); }
-  public void testLocal1() throws Throwable { doTest(); }
+  public void testAll1() throws Throwable { doTest(); }
+  public void testAll2() throws Throwable { doTest(); }
+  public void testClass1() throws Throwable { doTest(); }
+  public void testClass2() throws Throwable { doTest(); }
+  public void testE() throws Throwable { doTest(); }
+  public void testFile1() throws Throwable { doTest(); }
+  public void testFile2() throws Throwable { doTest(); }
   public void testLoop1() throws Throwable { doTest(); }
   public void testLoop2() throws Throwable { doTest(); }
   public void testLoop3() throws Throwable { doTest(); }
-  public void testLoop4() throws Throwable { doTest(); }
-  public void testLoop5() throws Throwable { doTest(); }
-  public void testLoop6() throws Throwable { doTest(); }
-  public void testLoop7() throws Throwable { doTest(); }
-  public void testLoop8() throws Throwable { doTest(); }
+  public void testSimple() throws Throwable { doTest(); }
 
   protected static final String ALL_MARKER = "<all>";
-
   protected boolean replaceAllOccurences = false;
 
   private String processFile(String fileText) throws IncorrectOperationException, InvalidDataException, IOException {
@@ -78,7 +63,7 @@ public class IntroduceVariableTest extends JavaCodeInsightFixtureTestCase {
     if (startOffset < 0) {
       startOffset = fileText.indexOf(ALL_MARKER);
       replaceAllOccurences = true;
-      fileText = removeAllMarker(fileText);
+      fileText = IntroduceVariableTest.removeAllMarker(fileText);
     } else {
       replaceAllOccurences = false;
       fileText = TestUtils.removeBeginMarker(fileText);
@@ -103,29 +88,15 @@ public class IntroduceVariableTest extends JavaCodeInsightFixtureTestCase {
 
     PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurrences(GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), tempContainer);
     String varName = "preved";
-    final PsiType varType = null;
-    final GrVariableDeclaration varDecl = GroovyPsiElementFactory.getInstance(getProject()).createVariableDeclaration(new String[0],
-        GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), varType, varName);
-
-    introduceVariableBase.runRefactoring(selectedExpr, myEditor, ((GroovyPsiElement) tempContainer),
-        occurences, varName, varType, replaceAllOccurences, varDecl);
-
-
-    result = myEditor.getDocument().getText();
-    int caretOffset = myEditor.getCaretModel().getOffset();
-    result = result.substring(0, caretOffset) + TestUtils.CARET_MARKER + result.substring(caretOffset);
-
+    GroovyVariableValidator validator = new GroovyVariableValidator(introduceVariableBase, getProject(), selectedExpr, occurences, (GroovyPsiElement)tempContainer);
+      result = validator.isOKTest(varName, replaceAllOccurences);
     return result;
   }
+
 
   public void doTest() throws Exception {
     final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + getTestName(true) + ".test");
     assertEquals(data.get(1), processFile(data.get(0)));
-  }
-
-  protected static String removeAllMarker(String text) {
-    int index = text.indexOf(ALL_MARKER);
-    return text.substring(0, index) + text.substring(index + ALL_MARKER.length());
   }
 
 }
