@@ -83,7 +83,8 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     final Module module = ModuleUtil.findModuleForPsiElement(file);
     final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", REFACTORING_NAME),
                                                                 RefactoringBundle.message("replace.method.duplicates.scope.chooser.message"),
-                                                                project, scope, module != null ? module.getName() : null, false);
+                                                                project, scope, module != null ? module.getName() : null, false,
+                                                                AnalysisUIOptions.getInstance(project));
     dlg.show();
     if (dlg.isOK()) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {

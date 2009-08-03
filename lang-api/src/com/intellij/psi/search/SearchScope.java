@@ -38,5 +38,5 @@ public abstract class SearchScope {
   }
 
   @NotNull public abstract SearchScope intersectWith(@NotNull SearchScope scope2);
-  @NotNull public abstract SearchScope union(SearchScope scope);
+  @NotNull public abstract SearchScope union(@NotNull SearchScope scope);
 }

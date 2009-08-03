@@ -9,6 +9,7 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.util.Processor;
+import com.intellij.analysis.AnalysisScope;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,10 +17,18 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SliceUsage extends UsageInfo2UsageAdapter {
   private final SliceUsage myParent;
+  private final AnalysisScope myScope;
 
-  public SliceUsage(@NotNull UsageInfo usageInfo, SliceUsage parent) {
+  public SliceUsage(@NotNull UsageInfo usageInfo, @NotNull SliceUsage parent) {
     super(usageInfo);
     myParent = parent;
+    myScope = parent.myScope;
+    assert myScope != null;
+  }
+  public SliceUsage(@NotNull UsageInfo usageInfo, @NotNull AnalysisScope scope) {
+    super(usageInfo);
+    myParent = null;
+    myScope = scope;
   }
 
   public void processChildren(Processor<SliceUsage> processor) {
@@ -40,5 +49,14 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
 
   public SliceUsage getParent() {
     return myParent;
+  }
+
+  @NotNull
+  public AnalysisScope getScope() {
+    return myScope;
+  }
+
+  SliceUsage copy() {
+    return getParent() == null ? new SliceUsage(getUsageInfo(), getScope()) : new SliceUsage(getUsageInfo(), getParent());
   }
 }

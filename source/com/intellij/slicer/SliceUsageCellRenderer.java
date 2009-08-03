@@ -33,13 +33,16 @@ public class SliceUsageCellRenderer extends ColoredTreeCellRenderer {
     if (userObject instanceof MyColoredTreeCellRenderer) {
       MyColoredTreeCellRenderer node = (MyColoredTreeCellRenderer)userObject;
       node.customizeCellRenderer(this, tree, value, selected, expanded, leaf, row, hasFocus);
+      if (node instanceof SliceNode) {
+        setToolTipText(((SliceNode)node).getPresentation().getTooltip());
+      }
     }
     else {
       append(userObject.toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
   }
 
-  public void customizeTreeCellRenderer(UsageInfo2UsageAdapter sliceUsage) {
+  public void customizeCellRendererFor(UsageInfo2UsageAdapter sliceUsage) {
     TextChunk[] text = sliceUsage.getPresentation().getText();
     for (TextChunk textChunk : text) {
       append(textChunk.getText(), SimpleTextAttributes.fromTextAttributes(textChunk.getAttributes()));

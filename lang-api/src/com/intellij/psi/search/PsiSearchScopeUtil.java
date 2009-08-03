@@ -15,55 +15,21 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiSearchScopeUtil {
-  //TODO: move to SearchScope itself
-  public static SearchScope scopesUnion(SearchScope scope1, SearchScope scope2) {
-    if (scope1 instanceof LocalSearchScope) {
-      LocalSearchScope _scope1 = (LocalSearchScope)scope1;
-      if (scope2 instanceof LocalSearchScope) {
-        LocalSearchScope _scope2 = (LocalSearchScope)scope2;
-        return _scope1.union(_scope2);
-      }
-      else {
-        for (final PsiElement element : _scope1.getScope()) {
-          if (isInScope(scope2, element)) return scope2;
-        }
-        return null;
-      }
-    }
-    else if (scope2 instanceof LocalSearchScope) {
-      return scopesUnion(scope2, scope1);
-    }
-    else {
-      final GlobalSearchScope _scope1 = (GlobalSearchScope)scope1;
-      final GlobalSearchScope _scope2 = (GlobalSearchScope)scope2;
-      final Project project = _scope1.getProject();
-      return new GlobalSearchScope(project == _scope2.getProject() ? project : null) {
-        public boolean contains(VirtualFile file) {
-          return _scope1.contains(file) || _scope2.contains(file);
-        }
-
-        public int compare(VirtualFile file1, VirtualFile file2) {
-          return 0; //TODO?
-        }
-
-        public boolean isSearchInModuleContent(@NotNull Module aModule) {
-          return _scope1.isSearchInModuleContent(aModule) || _scope2.isSearchInModuleContent(aModule);
-        }
-
-        public boolean isSearchInLibraries() {
-          return _scope1.isSearchInLibraries() || _scope2.isSearchInLibraries();
-        }
-      };
-    }
+  /**
+   * @deprecated
+   * Use com.intellij.psi.search.SearchScope#union(com.intellij.psi.search.SearchScope)
+   */
+  @Deprecated
+  @NotNull
+  public static SearchScope scopesUnion(@NotNull SearchScope scope1, @NotNull SearchScope scope2) {
+    return scope1.union(scope2);
   }
 
   public static boolean isInScope(@NotNull SearchScope scope, @NotNull PsiElement element) {

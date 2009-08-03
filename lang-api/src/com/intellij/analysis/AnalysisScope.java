@@ -77,9 +77,9 @@ public class AnalysisScope {
 
   protected HashSet<VirtualFile> myFilesSet;
 
-  private boolean myIncludeTestSource = true;
+  protected boolean myIncludeTestSource = true;
 
-  public AnalysisScope(Project project) {
+  public AnalysisScope(@NotNull Project project) {
     myProject = project;
     myElement = null;
     myModules = null;
@@ -88,7 +88,7 @@ public class AnalysisScope {
     myType = PROJECT;
   }
 
-  public AnalysisScope(Module module) {
+  public AnalysisScope(@NotNull Module module) {
     myProject = null;
     myElement = null;
     myModules = null;
@@ -97,7 +97,7 @@ public class AnalysisScope {
     myType = MODULE;
   }
 
-  public AnalysisScope(final Module[] modules) {
+  public AnalysisScope(@NotNull Module[] modules) {
     myModules = Arrays.asList(modules);
     myModule = null;
     myProject = null;
@@ -106,7 +106,7 @@ public class AnalysisScope {
     myType = MODULES;
   }
 
-  public AnalysisScope(PsiDirectory psiDirectory) {
+  public AnalysisScope(@NotNull PsiDirectory psiDirectory) {
     myProject = null;
     myModules = null;
     myModule = null;
@@ -115,7 +115,7 @@ public class AnalysisScope {
     myType = DIRECTORY;    
   }
 
-  public AnalysisScope(PsiFile psiFile) {
+  public AnalysisScope(@NotNull PsiFile psiFile) {
     myProject = null;
     myElement = psiFile;
     myModule = null;
@@ -124,7 +124,7 @@ public class AnalysisScope {
     myType = FILE;
   }
 
-  public AnalysisScope(SearchScope scope, Project project) {
+  public AnalysisScope(@NotNull SearchScope scope, @NotNull Project project) {
     myProject = project;
     myElement = null;
     myModule = null;
@@ -133,11 +133,7 @@ public class AnalysisScope {
     myType = CUSTOM;
   }
 
-  public void setSearchInLibraries(final boolean searchInLibraries) {
-    mySearchInLibraries = searchInLibraries;
-  }
-
-  public AnalysisScope(Project project, Collection<VirtualFile> virtualFiles) {
+  public AnalysisScope(@NotNull Project project, @NotNull Collection<VirtualFile> virtualFiles) {
     myProject = project;
     myElement = null;
     myModule = null;
@@ -147,38 +143,47 @@ public class AnalysisScope {
     myType = VIRTUAL_FILES;
   }
 
+  public void setSearchInLibraries(final boolean searchInLibraries) {
+    mySearchInLibraries = searchInLibraries;
+  }
+
   public void setIncludeTestSource(final boolean includeTestSource) {
     myIncludeTestSource = includeTestSource;
   }
 
   protected PsiElementVisitor createFileSearcher() {
     final FileIndex fileIndex;
-    if (myModule != null){
+    if (myModule != null) {
       fileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
-    } else if (myModules != null && !myModules.isEmpty()){
+    }
+    else if (myModules != null && !myModules.isEmpty()) {
       fileIndex = ProjectRootManager.getInstance(myModules.get(0).getProject()).getFileIndex();
-    } else if (myElement != null){
+    }
+    else if (myElement != null) {
       fileIndex = ProjectRootManager.getInstance(myElement.getProject()).getFileIndex();
-    } else if (myProject != null){
+    }
+    else if (myProject != null) {
       fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    } else {
+    }
+    else {
       //can't be
       fileIndex = null;
     }
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
     return new PsiRecursiveElementVisitor() {
-      @Override public void visitFile(PsiFile file) {
+      @Override
+      public void visitFile(PsiFile file) {
         if (/*file instanceof PsiJavaFile && */mySearchInLibraries || !(file instanceof PsiCompiledElement)) {
           final VirtualFile virtualFile = file.getVirtualFile();
           if (virtualFile == null) return;
-          if (!myIncludeTestSource){
-            if (fileIndex == null || fileIndex.isInTestSourceContent(virtualFile)){
+          if (!myIncludeTestSource) {
+            if (fileIndex == null || fileIndex.isInTestSourceContent(virtualFile)) {
               return;
             }
           }
           myFilesSet.add(virtualFile);
-          if (indicator != null){
+          if (indicator != null) {
             indicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
             indicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, file.getProject()));
           }
@@ -604,5 +609,54 @@ public class AnalysisScope {
       modules.add(fileIndex.getModuleForFile(vFile));
     }
     return modules;
+  }
+
+  @NotNull
+  public SearchScope toSearchScope() {
+    switch (myType) {
+      case CUSTOM:
+        return myScope;
+      case DIRECTORY:
+      case FILE:
+        return new LocalSearchScope(myElement);
+      case INVALID:
+        return LocalSearchScope.EMPTY;
+      case MODULE:
+        GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(myModule);
+        return myIncludeTestSource ? moduleScope : GlobalSearchScope.notScope(GlobalSearchScope.projectTestScope(myProject)).intersectWith(moduleScope);
+      case MODULES:
+        SearchScope scope = GlobalSearchScope.EMPTY_SCOPE;
+        for (Module module : myModules) {
+          scope = scope.union(GlobalSearchScope.moduleScope(module));
+        }
+        return scope;
+      case PROJECT:
+        return myIncludeTestSource ? GlobalSearchScope.projectScope(myProject) : GlobalSearchScope.projectProductionScope(myProject);
+      case VIRTUAL_FILES:
+        return new GlobalSearchScope() {
+          @Override
+          public boolean contains(VirtualFile file) {
+            return myFilesSet.contains(file);
+          }
+
+          @Override
+          public int compare(VirtualFile file1, VirtualFile file2) {
+            return 0;
+          }
+
+          @Override
+          public boolean isSearchInModuleContent(@NotNull Module aModule) {
+            return false;
+          }
+
+          @Override
+          public boolean isSearchInLibraries() {
+            return false;
+          }
+        };
+      default:
+        LOG.error("invalid type " + myType);
+        return GlobalSearchScope.EMPTY_SCOPE;
+    }
   }
 }

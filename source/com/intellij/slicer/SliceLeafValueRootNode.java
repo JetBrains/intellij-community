@@ -3,11 +3,11 @@ package com.intellij.slicer;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.impl.NullUsage;
@@ -16,42 +16,51 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author cdr
  */
-public class SliceLeafValueRootNode extends AbstractTreeNode<Usage> implements Navigatable, MyColoredTreeCellRenderer {
+public class SliceLeafValueRootNode extends AbstractTreeNode<Usage> implements MyColoredTreeCellRenderer {
   final List<SliceNode> myCachedChildren;
 
   protected SliceLeafValueRootNode(@NotNull Project project, PsiElement leafExpression, SliceNode root) {
     super(project, leafExpression == PsiUtilBase.NULL_PSI_ELEMENT ? NullUsage.INSTANCE : new UsageInfo2UsageAdapter(new UsageInfo(leafExpression)));
 
-    SliceNode node = root.copy(ContainerUtil.singleton(leafExpression, SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY));
+    Set<PsiElement> withLeaves = ContainerUtil.singleton(leafExpression, SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
+    SliceNode node = root.copy(withLeaves);
     myCachedChildren = Collections.singletonList(node);
-    restructureChildrenByLeaf(node, root, leafExpression);
+    restructureChildrenByLeaf(node, root, leafExpression, withLeaves, null);
   }
 
-  private static void restructureChildrenByLeaf(SliceNode node, SliceNode oldRoot, @Nullable PsiElement leafExpression) {
+  private static void restructureChildrenByLeaf(SliceNode node, SliceNode oldRoot, @Nullable PsiElement leafExpression, Set<PsiElement> withLeaves,
+                                                SliceNode parent) {
     List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    node.myCachedChildren = children;
     assert oldRoot.getLeafExpressions().contains(leafExpression);
+    boolean iAmHereToStay = false;
     for (AbstractTreeNode cachedChild : oldRoot.myCachedChildren) {
       SliceNode cachedSliceNode = (SliceNode)cachedChild;
-      if (cachedSliceNode.getDuplicate() != null) {
+      if (cachedSliceNode.hasDuplicate()) {
         // put entire (potentially unbounded) subtree here
-        children.add(cachedSliceNode);
+        //children.add(cachedSliceNode.copy(withLeaves));
       }
       else if (cachedSliceNode.getLeafExpressions().contains(leafExpression)) {
-        SliceNode newNode = cachedSliceNode.copy(ContainerUtil.singleton(leafExpression, SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY));
+        SliceNode newNode = cachedSliceNode.copy(withLeaves);
         children.add(newNode);
-
-        restructureChildrenByLeaf(newNode, cachedSliceNode, leafExpression);
+        PsiElement element = newNode.getValue().getElement();
+        if (element != null && element.getManager().areElementsEquivalent(element, leafExpression)) {
+          iAmHereToStay = true;
+        }
+        if (!cachedSliceNode.myCachedChildren.isEmpty()) {
+          restructureChildrenByLeaf(newNode, cachedSliceNode, leafExpression, withLeaves, node);
+        }
       }
     }
-    node.myCachedChildren = children;
+
+    if (!iAmHereToStay && children.isEmpty() && parent != null) {
+      parent.myCachedChildren.remove(node);
+    }
   }
 
   @NotNull
@@ -95,7 +104,7 @@ public class SliceLeafValueRootNode extends AbstractTreeNode<Usage> implements N
     if (usage instanceof UsageInfo2UsageAdapter) {
       PsiElement element = ((UsageInfo2UsageAdapter)usage).getElement();
       if (element == null) {
-        renderer.append("Invalid", SimpleTextAttributes.ERROR_ATTRIBUTES);
+        renderer.append(UsageViewBundle.message("node.invalid") + " ", SliceUsageCellRenderer.ourInvalidAttributes);
       }
       else {
         renderer.append(element.getText(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);

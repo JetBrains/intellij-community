@@ -42,53 +42,53 @@ public abstract class BaseAnalysisAction extends AnAction {
     DataContext dataContext = e.getDataContext();
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final Module module = e.getData(LangDataKeys.MODULE);
-    if (project != null) {
-      AnalysisScope scope = getInspectionScope(dataContext);
-      LOG.assertTrue(scope != null);
-      /*if (scope.getScopeType() == AnalysisScope.VIRTUAL_FILES){
-        FileDocumentManager.getInstance().saveAllDocuments();
-        analyze(project, scope);
-        return;
-      }*/
-      final boolean rememberScope = e.getPlace().equals(ActionPlaces.MAIN_MENU);
-      final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
-      BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", myTitle),
-                                                                  AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoon),
-                                                                  project,
-                                                                  scope,
-                                                                  module != null && scope.getScopeType() != AnalysisScope.MODULE ? ModuleUtil
-                                                                    .getModuleNameInReadAction(module) : null,
-                                                                  rememberScope){
-        @Nullable
-        protected JComponent getAdditionalActionSettings(final Project project) {
-          return BaseAnalysisAction.this.getAdditionalActionSettings(project, this);
-        }
-
-
-        protected void doHelpAction() {
-          HelpManager.getInstance().invokeHelp(getHelpTopic());
-        }
-
-        protected Action[] createActions() {
-          return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-        }
-      };
-      dlg.show();
-      if (!dlg.isOK()) {
-        canceled();
-        return;
-      }
-      final int oldScopeType = uiOptions.SCOPE_TYPE;
-      scope = dlg.getScope(uiOptions, scope, project, module);
-      if (!rememberScope){
-        uiOptions.SCOPE_TYPE = oldScopeType;
-      }
-      uiOptions.ANALYZE_TEST_SOURCES = dlg.isInspectTestSources();
-      scope.setIncludeTestSource(dlg.isInspectTestSources());
-      FileDocumentManager.getInstance().saveAllDocuments();
-
-      analyze(project, scope);
+    if (project == null) {
+      return;
     }
+    AnalysisScope scope = getInspectionScope(dataContext);
+    LOG.assertTrue(scope != null);
+    /*if (scope.getScopeType() == AnalysisScope.VIRTUAL_FILES){
+    FileDocumentManager.getInstance().saveAllDocuments();
+    analyze(project, scope);
+    return;
+  }*/
+    final boolean rememberScope = e.getPlace().equals(ActionPlaces.MAIN_MENU);
+    final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
+    BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", myTitle),
+                                                                AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoon),
+                                                                project,
+                                                                scope,
+                                                                module != null && scope.getScopeType() != AnalysisScope.MODULE ? ModuleUtil
+                                                                  .getModuleNameInReadAction(module) : null,
+                                                                rememberScope, AnalysisUIOptions.getInstance(project)){
+      @Nullable
+      protected JComponent getAdditionalActionSettings(final Project project) {
+        return BaseAnalysisAction.this.getAdditionalActionSettings(project, this);
+      }
+
+
+      protected void doHelpAction() {
+        HelpManager.getInstance().invokeHelp(getHelpTopic());
+      }
+
+      protected Action[] createActions() {
+        return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+      }
+    };
+    dlg.show();
+    if (!dlg.isOK()) {
+      canceled();
+      return;
+    }
+    final int oldScopeType = uiOptions.SCOPE_TYPE;
+    scope = dlg.getScope(uiOptions, scope, project, module);
+    if (!rememberScope){
+      uiOptions.SCOPE_TYPE = oldScopeType;
+    }
+    uiOptions.ANALYZE_TEST_SOURCES = dlg.isInspectTestSources();
+    FileDocumentManager.getInstance().saveAllDocuments();
+
+    analyze(project, scope);
   }
 
   @NonNls

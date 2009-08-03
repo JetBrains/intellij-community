@@ -44,11 +44,14 @@ public class UsageInfo {
     this.startOffset = startOffset;
     this.endOffset = endOffset;
     this.isNonCodeUsage = isNonCodeUsage;
+    LOG.assertTrue(startOffset >= 0, startOffset);
+    LOG.assertTrue(endOffset >= startOffset, endOffset-startOffset);
   }
 
   public UsageInfo(@NotNull PsiElement element, boolean isNonCodeUsage) {
     LOG.assertTrue(element.isValid());
     element = element.getNavigationElement();
+
     mySmartPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
     myVirtualFile = element.getContainingFile().getVirtualFile();
 
@@ -60,6 +63,8 @@ public class UsageInfo {
     endOffset = range.getEndOffset() - range.getStartOffset();
 
     this.isNonCodeUsage = isNonCodeUsage;
+    LOG.assertTrue(startOffset >= 0, startOffset);
+    LOG.assertTrue(endOffset >= startOffset, endOffset-startOffset);
   }
 
   public UsageInfo(@NotNull PsiElement element, int startOffset, int endOffset) {

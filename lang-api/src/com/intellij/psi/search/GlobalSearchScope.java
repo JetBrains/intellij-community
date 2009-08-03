@@ -108,7 +108,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   @NotNull
-  public SearchScope union(SearchScope scope) {
+  public SearchScope union(@NotNull SearchScope scope) {
     if (scope instanceof GlobalSearchScope) return uniteWith((GlobalSearchScope)scope);
     return union((LocalSearchScope)scope);
   }

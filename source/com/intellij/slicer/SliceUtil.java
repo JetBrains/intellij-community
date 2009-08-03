@@ -12,6 +12,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,7 +23,7 @@ import java.util.Set;
  * @author cdr
  */
 public class SliceUtil {
-  public static boolean processUsagesFlownDownToTheExpression(PsiExpression expression, Processor<SliceUsage> processor, SliceUsage parent) {
+  public static boolean processUsagesFlownDownToTheExpression(@NotNull PsiExpression expression, @NotNull Processor<SliceUsage> processor, @NotNull SliceUsage parent) {
     expression = simplify(expression);
     Processor<SliceUsage> uniqueProcessor =
         new CommonProcessors.UniqueProcessor<SliceUsage>(processor, new TObjectHashingStrategy<SliceUsage>() {
@@ -45,7 +46,7 @@ public class SliceUtil {
       final PsiVariable variable = (PsiVariable)resolved;
       final Set<PsiExpression> expressions = new THashSet<PsiExpression>(DfaUtil.getCachedVariableValues(variable, ref));
       PsiExpression initializer = variable.getInitializer();
-      if (initializer != null) expressions.add(initializer);
+      if (initializer != null && expressions.isEmpty()) expressions.add(initializer);
       if (!handToProcessor(expressions, uniqueProcessor, parent)) return false;
       if (resolved instanceof PsiField) {
         return processFieldUsages((PsiField)resolved, uniqueProcessor, parent);
@@ -79,11 +80,13 @@ public class SliceUtil {
 
   private static boolean handToProcessor(Collection<PsiExpression> expressions, Processor<SliceUsage> processor, SliceUsage parent) {
     for (PsiExpression exp : expressions) {
-      final PsiExpression realExpression;
-      realExpression = exp.getParent() instanceof DummyHolder? (PsiExpression) ((DummyHolder)exp.getParent()).getContext() : exp;
+      final PsiExpression realExpression =
+        exp.getParent() instanceof DummyHolder ? (PsiExpression)((DummyHolder)exp.getParent()).getContext() : exp;
       assert realExpression != null;
-      SliceUsage usage = new SliceUsage(new UsageInfo(realExpression), parent);
-      if (!processor.process(usage)) return false;
+      if (!(realExpression instanceof PsiCompiledElement)) {
+        SliceUsage usage = new SliceUsage(new UsageInfo(realExpression), parent);
+        if (!processor.process(usage)) return false;
+      }
     }
     return true;
   }
@@ -122,29 +125,30 @@ public class SliceUtil {
   static boolean processFieldUsages(final PsiField field, final Processor<SliceUsage> processor, final SliceUsage parent) {
     if (field.hasInitializer()) {
       PsiExpression initializer = field.getInitializer();
-      if (initializer != null) {
-        SliceFieldUsage usage = new SliceFieldUsage(new UsageInfo(initializer), parent, field);
+      if (initializer != null && !(field instanceof PsiCompiledElement)) {
+        SliceFieldUsage usage = new SliceFieldUsage(new UsageInfo(initializer), field, parent);
         if (!processor.process(usage)) return false;
       }
     }
-    return ReferencesSearch.search(field).forEach(new Processor<PsiReference>() {
+    return ReferencesSearch.search(field, parent.getScope().toSearchScope()).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference reference) {
         SliceManager.getInstance(field.getProject()).checkCanceled();
         PsiElement element = reference.getElement();
         if (!(element instanceof PsiReferenceExpression)) return true;
+        if (element instanceof PsiCompiledElement) return true;
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
         PsiElement parentExpr = referenceExpression.getParent();
         if (PsiUtil.isOnAssignmentLeftHand(referenceExpression)) {
           PsiExpression rExpression = ((PsiAssignmentExpression)parentExpr).getRExpression();
-          SliceFieldUsage usage = new SliceFieldUsage(new UsageInfo(rExpression), parent, field);
+          SliceFieldUsage usage = new SliceFieldUsage(new UsageInfo(rExpression), field, parent);
           return processor.process(usage);
         }
         if (parentExpr instanceof PsiPrefixExpression && ((PsiPrefixExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiPrefixExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiPrefixExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
-          SliceFieldUsage usage = new SliceFieldUsage(new UsageInfo(parentExpr), parent, field);
+          SliceFieldUsage usage = new SliceFieldUsage(new UsageInfo(parentExpr), field, parent);
           return processor.process(usage);
         }
         if (parentExpr instanceof PsiPostfixExpression && ((PsiPostfixExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiPostfixExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiPostfixExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
-          SliceFieldUsage usage = new SliceFieldUsage(new UsageInfo(parentExpr), parent, field);
+          SliceFieldUsage usage = new SliceFieldUsage(new UsageInfo(parentExpr), field, parent);
           return processor.process(usage);
         }
         return true;
@@ -164,12 +168,13 @@ public class SliceUtil {
     superMethods.add(method);
     final Set<PsiReference> processed = new THashSet<PsiReference>(); //usages of super method and overridden method can overlap
     for (final PsiMethod containingMethod : superMethods) {
-      if (!MethodReferencesSearch.search(containingMethod).forEach(new Processor<PsiReference>() {
+      if (!MethodReferencesSearch.search(containingMethod, parent.getScope().toSearchScope(), true).forEach(new Processor<PsiReference>() {
         public boolean process(final PsiReference reference) {
           synchronized (processed) {
             if (!processed.add(reference)) return true;
           }
           PsiElement element = reference.getElement().getParent();
+          if (element instanceof PsiCompiledElement) return true;
           PsiExpressionList argumentList;
           if (element instanceof PsiAnonymousClass) {
             argumentList = ((PsiAnonymousClass)element).getArgumentList();

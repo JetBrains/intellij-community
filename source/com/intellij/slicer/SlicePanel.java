@@ -24,6 +24,7 @@ import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.analysis.AnalysisScope;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -98,7 +99,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     }
   }
 
-  public SlicePanel(Project project, final SliceUsage root) {
+  public SlicePanel(Project project, final SliceUsage root, AnalysisScope scope) {
     super(new BorderLayout());
     myProject = project;
     myTree = createTree();
@@ -108,7 +109,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     myBuilder = new SliceTreeBuilder(myTree, project);
     myBuilder.setCanYieldUpdate(true);
     Disposer.register(this, myBuilder);
-    final SliceNode rootNode = new SliceRootNode(project, root, targetEqualUsages, myBuilder);
+    final SliceNode rootNode = new SliceRootNode(project, root, targetEqualUsages, myBuilder, scope);
     myBuilder.setRoot(rootNode);
 
     layoutPanel();

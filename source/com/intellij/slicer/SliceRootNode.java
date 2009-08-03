@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.analysis.AnalysisScope;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -15,8 +16,10 @@ import java.util.*;
  * @author cdr
  */
 public class SliceRootNode extends SliceNode {
-  protected SliceRootNode(@NotNull Project project, @NotNull SliceUsage rootUsage, @NotNull Map<SliceUsage, List<SliceNode>> targetEqualUsages, SliceTreeBuilder treeBuilder) {
-    super(project, new SliceUsage(new UsageInfo(rootUsage.getElement().getContainingFile()), null), targetEqualUsages, treeBuilder, Collections.<PsiElement>emptyList());
+  protected SliceRootNode(@NotNull Project project, @NotNull SliceUsage rootUsage, @NotNull Map<SliceUsage, List<SliceNode>> targetEqualUsages,
+                          SliceTreeBuilder treeBuilder,
+                          AnalysisScope scope) {
+    super(project, new SliceUsage(new UsageInfo(rootUsage.getElement().getContainingFile()), scope), targetEqualUsages, treeBuilder, Collections.<PsiElement>emptyList());
 
     switchToAllLeavesTogether(rootUsage);
   }

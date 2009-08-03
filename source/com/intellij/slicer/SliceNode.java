@@ -22,11 +22,11 @@ import java.util.*;
 /**
  * @author cdr
  */
-public class SliceNode extends AbstractTreeNode<SliceUsage> implements DuplicateNodeRenderer.DuplicatableNode, MyColoredTreeCellRenderer {
+public class SliceNode extends AbstractTreeNode<SliceUsage> implements DuplicateNodeRenderer.DuplicatableNode<SliceNode>, MyColoredTreeCellRenderer {
   protected List<AbstractTreeNode> myCachedChildren;
   private volatile long storedModificationCount = -1;
   protected boolean initialized;
-  private DefaultMutableTreeNode duplicate;
+  private SliceNode duplicate;
   protected final Map<SliceUsage, List<SliceNode>> targetEqualUsages;
   protected final SliceTreeBuilder myTreeBuilder;
   private final Collection<PsiElement> leafExpressions = new THashSet<PsiElement>(SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
@@ -41,8 +41,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   }
 
   SliceNode copy(Collection<PsiElement> withLeaves) {
-    SliceUsage myUsage = getValue();
-    SliceUsage newUsage = new SliceUsage(myUsage.getUsageInfo(), myUsage.getParent());
+    SliceUsage newUsage = getValue().copy();
     SliceNode newNode = new SliceNode(getProject(), newUsage, targetEqualUsages, myTreeBuilder, withLeaves);
     newNode.storedModificationCount = storedModificationCount;
     newNode.initialized = initialized;
@@ -55,7 +54,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     final Collection[] nodes = new Collection[1];
     ProgressManager.getInstance().runProcess(new Runnable(){
       public void run() {
-        nodes[0] = getChildrenUnderProgress(new ProgressIndicatorBase());
+        nodes[0] = getChildrenUnderProgress(ProgressManager.getInstance().getProgressIndicator());
       }
     }, new ProgressIndicatorBase());
     return nodes[0];
@@ -63,8 +62,8 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
 
   public Collection<? extends AbstractTreeNode> getChildrenUnderProgress(ProgressIndicator progress) {
     long count = PsiManager.getInstance(getProject()).getModificationTracker().getModificationCount();
-    if (myCachedChildren != null && storedModificationCount == count || !isValid()) {
-      return myCachedChildren;
+    if (myCachedChildren != null && storedModificationCount == count || !isValid() || myTreeBuilder.splitByLeafExpressions) {
+      return myCachedChildren == null ? Collections.<AbstractTreeNode>emptyList() : myCachedChildren;
     }
     myCachedChildren = Collections.synchronizedList(new ArrayList<AbstractTreeNode>());
     storedModificationCount = count;
@@ -93,7 +92,6 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
             myTreeBuilder.addSubtreeToUpdate(node);
           }
         });
-        //myTreeBuilder.addSubtreeToUpdateByElement(getValue());
       }
     }, progress);
     return myCachedChildren;
@@ -118,6 +116,9 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     if (presentation != null) {
       presentation.setChanged(presentation.isChanged() || changed);
       changed = false;
+      if (duplicate != null) {
+        presentation.setTooltip("Duplicate node");
+      }
     }
   }
 
@@ -130,18 +131,15 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     }
     eq.add(this);
     if (eq.size() > 1) {
-      final SliceNode dup = eq.get(0);
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          if (!myTreeBuilder.isDisposed()) {
-            duplicate = myTreeBuilder.getNodeForElement(dup);
-          }
-        }
-      });
+      duplicate = eq.get(0);
     }
   }
+
+  public boolean hasDuplicate() {
+    return duplicate != null;
+  }
   
-  public DefaultMutableTreeNode getDuplicate() {
+  public SliceNode getDuplicate() {
     return duplicate;
   }
 
@@ -179,7 +177,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     renderer.setIcon(getPresentation().getIcon(expanded));
     if (isValid()) {
       SliceUsage sliceUsage = getValue();
-      renderer.customizeTreeCellRenderer(sliceUsage);
+      renderer.customizeCellRendererFor(sliceUsage);
       renderer.setToolTipText(sliceUsage.getPresentation().getTooltipText());
     }
     else {
@@ -201,4 +199,6 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   public String toString() {
     return getValue()==null?"<null>":getValue().toString();
   }
+
+
 }

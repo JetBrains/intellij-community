@@ -65,8 +65,7 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
         SearchScope accessScope = methods[0].getUseScope();
         for (int i = 1; i < methods.length; i++) {
           PsiMethod method1 = methods[i];
-          SearchScope someScope = PsiSearchScopeUtil.scopesUnion(accessScope, method1.getUseScope());
-          accessScope = someScope == null ? accessScope : someScope;
+          accessScope = accessScope.union(method1.getUseScope());
         }
         return accessScope;
       }

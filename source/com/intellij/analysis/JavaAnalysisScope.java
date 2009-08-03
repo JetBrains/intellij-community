@@ -12,7 +12,10 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -102,5 +105,14 @@ public class JavaAnalysisScope extends AnalysisScope {
     } else {
       super.accept(visitor, needReadAction);
     }
+  }
+
+  @NotNull
+  @Override
+  public SearchScope toSearchScope() {
+    if (myType == PACKAGE) {
+      return new PackageScope((PsiPackage)myElement, true, true);
+    }
+    return super.toSearchScope();
   }
 }

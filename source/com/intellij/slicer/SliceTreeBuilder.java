@@ -59,7 +59,6 @@ public class SliceTreeBuilder extends AbstractTreeBuilder{
       return;
     }
 
-
     root.setChanged();
     root.restructureByLeaves(leaves);
     root.setChanged();

@@ -17,7 +17,7 @@ public class SliceBackwardHandler implements CodeInsightActionHandler {
     PsiDocumentManager.getInstance(project).commitAllDocuments(); // prevents problems with smart pointers creation
     PsiElement expression = getExpressionAtCaret(editor, file);
     if (expression == null) {
-      HintManager.getInstance().showErrorHint(editor, "Cannot find what to slice. Please stand on the expression or field or method parameter and try again.");
+      HintManager.getInstance().showErrorHint(editor, "Cannot find what to analyze. Please stand on the expression or field or method parameter and try again.");
       return;
     }
     slice(expression);
@@ -37,12 +37,11 @@ public class SliceBackwardHandler implements CodeInsightActionHandler {
   @Nullable
   public static PsiElement getExpressionAtCaret(final Editor editor, final PsiFile file) {
     int offset = TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
-    if (offset != 0) return findParentElement(file.findElementAt(offset));
-    return null;
-  }
-
-  @Nullable
-  private static PsiElement findParentElement(PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PsiExpression.class, PsiParameter.class, PsiField.class);
+    if (offset == 0) {
+      return null;
+    }
+    PsiElement element = PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiExpression.class, PsiParameter.class, PsiField.class);
+    if (element instanceof PsiLiteralExpression) return null;
+    return element;
   }
 }

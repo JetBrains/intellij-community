@@ -2,17 +2,17 @@ package com.intellij.slicer;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaReference;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.impl.source.tree.SourceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Collection;
 
 /**
@@ -23,7 +23,7 @@ public class SliceLeafAnalyzer {
     public int computeHashCode(PsiElement element) {
       if (element == null) return 0;
       PsiElement o = elementToCompare(element);
-      String text = o instanceof PsiNamedElement ? ((PsiNamedElement)o).getName() : o.getText();
+      String text = o instanceof PsiNamedElement ? ((PsiNamedElement)o).getName() : SourceUtil.getTextSkipWhiteSpaceAndComments(o.getNode());
       return Comparing.hashcode(text);
     }
 
@@ -38,18 +38,17 @@ public class SliceLeafAnalyzer {
 
     public boolean equals(PsiElement o1, PsiElement o2) {
       return o1 != null && o2 != null && PsiEquivalenceUtil.areElementsEquivalent(o1, o2);
-      //return Comparing.equal(elementToCompare(o1), elementToCompare(o2));
     }
   };
 
   @NotNull
   public static Collection<PsiElement> calcLeafExpressions(@NotNull SliceNode root, @NotNull ProgressIndicator progress) {
     root.update(null);
+    root.getLeafExpressions().clear();
     Collection<PsiElement> leaves;
-    DefaultMutableTreeNode duplicate = root.getDuplicate();
-    if (duplicate != null) {
-      SliceNode dupNode = (SliceNode)duplicate.getUserObject();
-      leaves = dupNode.getLeafExpressions();
+    if (root.hasDuplicate()) {
+      SliceNode duplicate = root.getDuplicate();
+      leaves = duplicate.getLeafExpressions();
       //null means other
       //leaves = ContainerUtil.singleton(PsiUtilBase.NULL_PSI_ELEMENT, LEAF_ELEMENT_EQUALITY);
       //return leaves;//todo

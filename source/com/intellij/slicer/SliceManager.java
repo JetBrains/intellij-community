@@ -1,13 +1,18 @@
 package com.intellij.slicer;
 
+import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.AnalysisUIOptions;
+import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -47,10 +52,19 @@ public class SliceManager {
   }
 
   public void slice(@NotNull PsiElement element) {
+    Module module = ModuleUtil.findModuleForPsiElement(element);
+    AnalysisUIOptions analysisUIOptions = new AnalysisUIOptions();
+    analysisUIOptions.SCOPE_TYPE = AnalysisScope.PROJECT;
+    BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog("Dataflow to this", "Analyze scope", myProject, new AnalysisScope(element.getContainingFile()), module.getName(), true,
+                                                                   analysisUIOptions);
+    dialog.show();
+    if (!dialog.isOK()) return;
+    AnalysisScope scope = dialog.getScope(analysisUIOptions, new AnalysisScope(myProject), myProject, module);
+
     final SliceToolwindowSettings sliceToolwindowSettings = SliceToolwindowSettings.getInstance(myProject);
-    SliceUsage usage = createSliceUsage(element);
+    SliceUsage usage = createRootUsage(element, scope);
     final Content[] myContent = new Content[1];
-    final SlicePanel slicePanel = new SlicePanel(myProject, usage) {
+    final SlicePanel slicePanel = new SlicePanel(myProject, usage, scope) {
       protected void close() {
         myContentManager.removeContent(myContent[0], true);
       }
@@ -90,17 +104,17 @@ public class SliceManager {
     return title;
   }
 
-  public static SliceUsage createSliceUsage(PsiElement element) {
+  public static SliceUsage createRootUsage(@NotNull PsiElement element, @NotNull AnalysisScope scope) {
     UsageInfo usageInfo = new UsageInfo(element);
     SliceUsage usage;
     if (element instanceof PsiField) {
-      usage = new SliceFieldUsage(usageInfo, null, (PsiField)element);
+      usage = new SliceFieldUsage(usageInfo, (PsiField)element, scope);
     }
     else if (element instanceof PsiParameter) {
-      usage = new SliceParameterUsage(usageInfo, (PsiParameter)element, null);
+      usage = new SliceParameterUsage(usageInfo, (PsiParameter)element, scope);
     }
     else {
-      usage = new SliceUsage(usageInfo, null);
+      usage = new SliceUsage(usageInfo, scope);
     }
     return usage;
   }

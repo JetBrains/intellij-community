@@ -13,11 +13,12 @@ import java.util.Enumeration;
  * @author cdr
  */
 public class DuplicateNodeRenderer {
-  public interface DuplicatableNode {
+  public interface DuplicatableNode<T> {
     //returns first duplicate node, if any, or null if there are none
     //duplicate nodes are painted gray
-    @Nullable
-    DefaultMutableTreeNode getDuplicate();
+    @Nullable T getDuplicate();
+
+    boolean hasDuplicate();
   }
 
   public static void paintDuplicateNodesBackground(Graphics g, JTree tree) {
@@ -35,7 +36,7 @@ public class DuplicateNodeRenderer {
         Object userObject = node.getUserObject();
         if (!(userObject instanceof DuplicatableNode)) break;
         DuplicatableNode duplicatableNode = (DuplicatableNode)userObject;
-        if (duplicatableNode.getDuplicate() == null) break;
+        if (!duplicatableNode.hasDuplicate()) break;
         accumPath = accumRect == null ? path : accumPath.getParentPath();
         accumRect = union(tree.getPathBounds(accumPath), accumRect);
         node = (DefaultMutableTreeNode)node.getParent();

@@ -157,7 +157,7 @@ public class LocalSearchScope extends SearchScope {
   }
 
   @NotNull
-  public SearchScope union(SearchScope scope) {
+  public SearchScope union(@NotNull SearchScope scope) {
     if (scope instanceof LocalSearchScope) return union((LocalSearchScope)scope);
     return ((GlobalSearchScope)scope).union(this);
   }

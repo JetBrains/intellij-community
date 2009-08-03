@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.TitledSeparator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -46,37 +47,25 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private ButtonGroup myGroup;
 
   private static final String ALL = AnalysisScopeBundle.message("scope.option.uncommited.files.all.changelists.choice");
+  private final AnalysisUIOptions myAnalysisOptions;
 
-  public BaseAnalysisActionDialog(final String title,
-                                  final String analysisNoon,
-                                  final Project project,
-                                  final AnalysisScope scope,
+  public BaseAnalysisActionDialog(@NotNull String title,
+                                  @NotNull String analysisNoon,
+                                  @NotNull Project project,
+                                  @NotNull final AnalysisScope scope,
                                   final String moduleName,
-                                  final boolean rememberScope) {
+                                  final boolean rememberScope,
+                                  @NotNull AnalysisUIOptions analysisUIOptions) {
     super(true);
+    myAnalysisOptions = analysisUIOptions;
     myProject = project;
     myFileName = scope.getShortenName();
     myModuleName = moduleName;
     myRememberScope = rememberScope;
     myAnalysisNoon = analysisNoon;
-    myFileButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        validateTestSourcesCombo(scope);
-      }
-    });
     init();
     setTitle(title);
-    validateTestSourcesCombo(scope);
-  }
-
-  private void validateTestSourcesCombo(final AnalysisScope scope) {
-    myInspectTestSource.setEnabled(true);
-    if (myFileButton.isSelected()) {
-      if (!(scope.containsSources(true) && scope.containsSources(false))) {
-        myInspectTestSource.setSelected(scope.containsSources(true));
-        myInspectTestSource.setEnabled(false);
-      }
-    }
+    onScopeRadioButtonPressed();
   }
 
   public void setOKActionEnabled(boolean isEnabled) {
@@ -84,7 +73,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(myProject);
+    final AnalysisUIOptions uiOptions = myAnalysisOptions;
 
     myTitledSeparator.setText(myAnalysisNoon);
 
@@ -131,22 +120,19 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
     //correct selection
     myProjectButton.setSelected(myRememberScope && uiOptions.SCOPE_TYPE == AnalysisScope.PROJECT);
-    myFileButton.setSelected(!myRememberScope || (uiOptions.SCOPE_TYPE != AnalysisScope.PROJECT && !useModuleScope && uiOptions.SCOPE_TYPE != AnalysisScope.CUSTOM && !useUncommitedFiles));
+    myFileButton.setSelected(!myRememberScope ||
+                             uiOptions.SCOPE_TYPE != AnalysisScope.PROJECT && !useModuleScope && uiOptions.SCOPE_TYPE != AnalysisScope.CUSTOM && !useUncommitedFiles);
 
     myScopeCombo.setEnabled(myCustomScopeButton.isSelected());
 
-    final ActionListener updater = new ActionListener() {
+    final ActionListener radioButtonPressed = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        myScopeCombo.setEnabled(myCustomScopeButton.isSelected());
-        myChangeLists.setEnabled(myUncommitedFilesButton.isSelected());
-        if (!myFileButton.isSelected()) {
-          myInspectTestSource.setEnabled(true);
-        }
+        onScopeRadioButtonPressed();
       }
     };
     final Enumeration<AbstractButton> enumeration = myGroup.getElements();
     while (enumeration.hasMoreElements()) {
-      enumeration.nextElement().addActionListener(updater);
+      enumeration.nextElement().addActionListener(radioButtonPressed);
     }
 
     //additional panel - inspection profile chooser
@@ -157,6 +143,12 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
       wholePanel.add(additionalPanel, BorderLayout.CENTER);
     }
     return wholePanel;
+  }
+
+  private void onScopeRadioButtonPressed() {
+    myScopeCombo.setEnabled(myCustomScopeButton.isSelected());
+    myChangeLists.setEnabled(myUncommitedFilesButton.isSelected());
+    myInspectTestSource.setEnabled(!myFileButton.isSelected() && !myCustomScopeButton.isSelected());
   }
 
   @Nullable
@@ -185,7 +177,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    AnalysisUIOptions.getInstance(myProject).CUSTOM_SCOPE_NAME = myScopeCombo.getSelectedScopeName();
+    myAnalysisOptions.CUSTOM_SCOPE_NAME = myScopeCombo.getSelectedScopeName();
     super.doOKAction();
   }
 
@@ -193,26 +185,32 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     return myInspectTestSource.isSelected();
   }
 
-  public AnalysisScope getScope(AnalysisUIOptions uiOptions, AnalysisScope scope, Project project, Module module){
+  @NotNull
+  public AnalysisScope getScope(@NotNull AnalysisUIOptions uiOptions, @NotNull AnalysisScope defaultScope, @NotNull Project project, Module module) {
+    AnalysisScope scope;
     if (isProjectScopeSelected()) {
       scope = new AnalysisScope(project);
       uiOptions.SCOPE_TYPE = AnalysisScope.PROJECT;
     }
     else {
       final SearchScope customScope = getCustomScope();
-      if (customScope != null){
+      if (customScope != null) {
         scope = new AnalysisScope(customScope, project);
         uiOptions.SCOPE_TYPE = AnalysisScope.CUSTOM;
         uiOptions.CUSTOM_SCOPE_NAME = customScope.getDisplayName();
-      } else if (isModuleScopeSelected()) {
+      }
+      else if (isModuleScopeSelected()) {
         scope = new AnalysisScope(module);
         uiOptions.SCOPE_TYPE = AnalysisScope.MODULE;
-      } else if (isUncommitedFilesSelected()) {
+      }
+      else if (isUncommitedFilesSelected()) {
         final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-        List<VirtualFile> files = new ArrayList<VirtualFile>();
-        if (myChangeLists.getSelectedItem() == ALL){
+        List<VirtualFile> files;
+        if (myChangeLists.getSelectedItem() == ALL) {
           files = changeListManager.getAffectedFiles();
-        } else {
+        }
+        else {
+          files = new ArrayList<VirtualFile>();
           for (ChangeList list : changeListManager.getChangeListsCopy()) {
             if (!Comparing.strEqual(list.getName(), (String)myChangeLists.getSelectedItem())) continue;
             final Collection<Change> changes = list.getChanges();
@@ -229,8 +227,10 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
         }
         scope = new AnalysisScope(project, new HashSet<VirtualFile>(files));
         uiOptions.SCOPE_TYPE = AnalysisScope.UNCOMMITED_FILES;
-      } else {
-        uiOptions.SCOPE_TYPE = AnalysisScope.FILE;//just not project scope
+      }
+      else {
+        scope = defaultScope;
+        uiOptions.SCOPE_TYPE = defaultScope.getScopeType();//just not project scope
       }
     }
     uiOptions.ANALYZE_TEST_SOURCES = isInspectTestSources();
