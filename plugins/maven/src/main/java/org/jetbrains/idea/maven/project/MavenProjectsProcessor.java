@@ -4,10 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.runner.SoutMavenConsole;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
-import org.jetbrains.idea.maven.utils.MavenTask;
-import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.*;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -122,7 +119,8 @@ public class MavenProjectsProcessor {
       }
     }
     catch (InterruptedException e) {
-      throw new RuntimeException(e);
+      MavenLog.LOG.error(e);
+      return false;
     }
     if (isStopped) return false;
 

@@ -1,11 +1,14 @@
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.facets.FacetImporter;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -47,20 +50,40 @@ public class MavenModuleImporter {
   }
 
   public void preConfigFacets() {
-    for (FacetImporter importer : getSuitableFacetImporters()) {
-      importer.preProcess(myModule, myMavenProject, myModifiableModelsProvider);
+    for (final FacetImporter importer : getSuitableFacetImporters()) {
+      // facets use FacetConfiguration and like that do not have modifiable models,
+      // therefore we have to take write lock
+      MavenUtil.invokeInDispatchThreadAndWait(myModule.getProject(), ModalityState.defaultModalityState(), new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              importer.preProcess(myModule, myMavenProject, myModifiableModelsProvider);
+            }
+          });
+        }
+      });
     }
   }
 
-  public void configFacets(List<MavenProjectsProcessorTask> postTasks) {
-    for (FacetImporter importer : getSuitableFacetImporters()) {
-      importer.process(myModifiableModelsProvider,
-                       myModule,
-                       myRootModelAdapter,
-                       myMavenTree,
-                       myMavenProject,
-                       myMavenProjectToModuleName,
-                       postTasks);
+  public void configFacets(final List<MavenProjectsProcessorTask> postTasks) {
+    for (final FacetImporter importer : getSuitableFacetImporters()) {
+      // facets use FacetConfiguration and like that do not have modifiable models,
+      // therefore we have to take write lock
+      MavenUtil.invokeInDispatchThreadAndWait(myModule.getProject(), ModalityState.defaultModalityState(), new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              importer.process(myModifiableModelsProvider,
+                               myModule,
+                               myRootModelAdapter,
+                               myMavenTree,
+                               myMavenProject,
+                               myMavenProjectToModuleName,
+                               postTasks);
+            }
+          });
+        }
+      });
     }
   }
 

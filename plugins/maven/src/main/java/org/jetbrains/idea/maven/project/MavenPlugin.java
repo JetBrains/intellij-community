@@ -52,8 +52,8 @@ public class MavenPlugin implements Serializable {
       myExecutions.add(new Execution(each));
     }
 
-    for (Dependency dependency : (Iterable<Dependency>)plugin.getDependencies()) {
-      myDependencies.add(new MavenId(dependency.getGroupId(), dependency.getArtifactId(), dependency.getVersion()));
+    for (Dependency each : (Iterable<Dependency>)plugin.getDependencies()) {
+      myDependencies.add(new MavenId(each.getGroupId(), each.getArtifactId(), each.getVersion()));
     }
   }
 
