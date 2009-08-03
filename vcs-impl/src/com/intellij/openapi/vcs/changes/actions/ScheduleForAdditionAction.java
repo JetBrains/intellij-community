@@ -13,6 +13,7 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -20,7 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.List;
 
-public class ScheduleForAdditionAction extends AnAction {
+public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
     List<VirtualFile> files = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
     boolean enabled = files != null && !files.isEmpty();
