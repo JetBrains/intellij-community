@@ -36,4 +36,12 @@ public abstract class LookupElementFactory {
 
   public abstract <T> MutableLookupElement<T> createLookupElement(@NotNull T element, @NotNull String lookupString);
 
+  public static LookupElementBuilder builder(@NotNull String lookupString) {
+    return builder(lookupString, lookupString);
+  }
+
+  public static LookupElementBuilder builder(@NotNull String lookupString, @NotNull Object lookupObject) {
+    return new LookupElementBuilder(lookupString, lookupObject);
+  }
+
 }
