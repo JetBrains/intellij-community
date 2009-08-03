@@ -22,14 +22,15 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTupleDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTupleDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 /**
@@ -72,20 +73,32 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
+    if (lastParent != null) {
+      return true;
+    }
+
     GrExpression lValue = getLValue();
-    if (lastParent == null || !PsiTreeUtil.isAncestor(this, lastParent, false)) {
-      if (lValue instanceof GrReferenceExpressionImpl) {
-        GrReferenceExpressionImpl lRefExpr = (GrReferenceExpressionImpl) lValue;
-        String name = lRefExpr.getName();
-        String refName = processor instanceof ResolverProcessor ? ((ResolverProcessor) processor).getName() : null;
-        if (refName == null ||
-                (refName.equals(name) && !(lRefExpr.resolve() instanceof PsiVariable))) { //this is NOT quadratic since the next statement will prevent from further processing declarations upstream
-          if (!processor.execute(lRefExpr, ResolveState.initial())) return false;
-        }
+    if (lValue instanceof GrReferenceExpression) {
+      String refName = processor instanceof ResolverProcessor ? ((ResolverProcessor) processor).getName() : null;
+      if (isDeclarationAssignment((GrReferenceExpression) lValue, refName)) {
+        if (!processor.execute(lValue, ResolveState.initial())) return false;
       }
     }
 
     return true;
+  }
+
+  private static boolean isDeclarationAssignment(@NotNull GrReferenceExpression lRefExpr, @Nullable String nameHint) {
+    if (nameHint == null) {
+      return true;
+    }
+    if (nameHint.equals(lRefExpr.getName())) {
+      final PsiElement target = lRefExpr.resolve(); //this is NOT quadratic since the next statement will prevent from further processing declarations upstream
+      if (!(target instanceof PsiVariable) && !(target instanceof GrAccessorMethod)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void accept(GroovyElementVisitor visitor) {

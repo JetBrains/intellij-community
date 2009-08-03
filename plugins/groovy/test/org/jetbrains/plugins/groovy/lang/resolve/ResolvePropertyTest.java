@@ -227,6 +227,11 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     assertInstanceOf(ref.resolve(), GrMethod.class);
   }
 
+  public void testFieldAssignedInTheSameMethod() throws Exception {
+    PsiReference ref = configureByFile("fieldAssignedInTheSameMethod/FieldAssignedInTheSameMethod.groovy");
+    assertInstanceOf(ref.resolve(), GrAccessorMethod.class);
+  }
+
   private void doTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();
