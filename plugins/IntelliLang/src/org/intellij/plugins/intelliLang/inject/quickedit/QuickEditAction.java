@@ -20,6 +20,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
@@ -83,7 +84,7 @@ public class QuickEditAction implements IntentionAction {
     final int offsetInElement = offset - host.getTextRange().getStartOffset();
     return ContainerUtil.find(injections, new Condition<Pair<PsiElement, TextRange>>() {
       public boolean value(final Pair<PsiElement, TextRange> pair) {
-        return pair.second.contains(offsetInElement);
+        return pair.second.containsRange(offsetInElement, offsetInElement);
       }
     });
   }
@@ -98,8 +99,7 @@ public class QuickEditAction implements IntentionAction {
     final FileType fileType = injectedFile.getFileType();
 
     final PsiFileFactory factory = PsiFileFactory.getInstance(project);
-    // todo /n handling bug or feature??
-    final String text = InjectedLanguageManager.getInstance(project).getUnescapedText(injectedFile); // injectedFile.getText() ??
+    final String text = InjectedLanguageManager.getInstance(project).getUnescapedText(injectedFile);
     final PsiFile file2 =
         factory.createFileFromText("dummy." + fileType.getDefaultExtension(), fileType, text, LocalTimeCounter.currentTime(), true);
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file2);
@@ -120,7 +120,6 @@ public class QuickEditAction implements IntentionAction {
       final int end = marker.getEndOffset();
       if (curOffset < start) {
         final RangeMarker rangeMarker = document.createGuardedBlock(curOffset, start);
-        // todo greedy to left guarded blocks fail
         if (curOffset == 0) rangeMarker.setGreedyToLeft(true);
       }
       curOffset = end + 1;
@@ -138,8 +137,11 @@ public class QuickEditAction implements IntentionAction {
         }
       }
     });
-    //e.getEditor().getCaretModel().moveToOffset(prefix.length());
-    //e.getEditor().getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    if (!shreds.isEmpty()) {
+      final int start = markers.get(shreds.get(0)).getStartOffset();
+      e.getEditor().getCaretModel().moveToOffset(start);
+      e.getEditor().getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    }
 
     // Using the popup doesn't seem to be a good idea because there's no completion possible inside it: When the
     // completion popup closes, the quickedit popup is gone as well - but I like the movable and resizable popup :(
