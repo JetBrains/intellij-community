@@ -17,11 +17,11 @@ class KeywordLookupItem extends LookupItem<PsiKeyword> {
 
   @Override
   public boolean equals(final Object o) {
-    return o instanceof KeywordLookupItem && getObject().equals(((KeywordLookupItem)o).getObject());
+    return o instanceof KeywordLookupItem && getLookupString().equals(((KeywordLookupItem)o).getLookupString());
   }
 
   @Override
   public int hashCode() {
-    return getObject().hashCode();
+    return getLookupString().hashCode();
   }
 }
