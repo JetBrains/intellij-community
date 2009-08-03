@@ -531,7 +531,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     JavaCompletionUtil.initOffsets(file, file.getProject(), offsetMap, CompletionType.BASIC);
   }
 
-  public static void addImportForItem(PsiFile file, int startOffset, LookupItem item) throws IncorrectOperationException {
+  public static void addImportForItem(PsiFile file, int startOffset, LookupElement item) throws IncorrectOperationException {
     PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
 
     Object o = item.getObject();
