@@ -4,16 +4,15 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.text.BlockSupport;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +20,6 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class ExpectedTypeMacro implements Macro{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.macro.ExpectedTypeMacro");
 
   public String getName() {
     return "expectedType";
@@ -63,21 +61,18 @@ public class ExpectedTypeMacro implements Macro{
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     PsiType[] types = null;
 
-    int offset = context.getTemplateStartOffset();
+    final int offset = context.getTemplateStartOffset();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
-
-    //PsiElement element = file.findElementAt(offset);
-    //if (!(element instanceof PsiIdentifier)) {
-      PsiFile fileCopy = (PsiFile)file.copy();
-      BlockSupport blockSupport = ServiceManager.getService(project, BlockSupport.class);
-      try{
+    assert file != null;
+    final PsiFile fileCopy = (PsiFile)file.copy();
+    
+    new WriteCommandAction(project) {
+      protected void run(com.intellij.openapi.application.Result result) throws Throwable {
+        final BlockSupport blockSupport = ServiceManager.getService(project, BlockSupport.class);
         blockSupport.reparseRange(fileCopy, offset, offset, CompletionUtil.DUMMY_IDENTIFIER);
       }
-      catch(IncorrectOperationException e){
-        LOG.error(e);
-      }
-      PsiElement element = fileCopy.findElementAt(offset);
-    //}
+    }.execute();
+    PsiElement element = fileCopy.findElementAt(offset);
 
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiExpression) {
       ExpectedTypeInfo[] infos = ExpectedTypesProvider.getInstance(project).getExpectedTypes((PsiExpression)element.getParent(), false);
