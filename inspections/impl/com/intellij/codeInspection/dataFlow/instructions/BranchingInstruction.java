@@ -36,11 +36,11 @@ public abstract class BranchingInstruction extends Instruction {
     return myExpression;
   }
 
-  protected void setTrueReachable() {
+  public void setTrueReachable() {
     myIsTrueReachable = true;
   }
 
-  protected void setFalseReachable() {
+  public void setFalseReachable() {
     myIsFalseReachable = true;
   }
 
