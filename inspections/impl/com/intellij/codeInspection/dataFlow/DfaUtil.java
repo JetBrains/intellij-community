@@ -33,26 +33,9 @@ public class DfaUtil {
 
     CachedValue<MultiValuesMap<PsiVariable, PsiExpression>> cachedValue = context.getUserData(DFA_VARIABLE_INFO_KEY);
     if (cachedValue == null) {
+      final PsiElement codeBlock = getEnclosingCodeBlock(variable, context);
       cachedValue = context.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<MultiValuesMap<PsiVariable, PsiExpression>>() {
         public Result<MultiValuesMap<PsiVariable, PsiExpression>> compute() {
-          PsiElement codeBlock;
-          if (variable instanceof PsiParameter) {
-            codeBlock = ((PsiParameter)variable).getDeclarationScope();
-            if (codeBlock instanceof PsiMethod) {
-              codeBlock = ((PsiMethod)codeBlock).getBody();
-            }
-          }
-          else if (variable instanceof PsiLocalVariable) {
-            codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-          }
-          else {
-            codeBlock = PsiTreeUtil.getParentOfType(context, PsiCodeBlock.class);
-          }
-          while (codeBlock != null) {
-            PsiAnonymousClass anon = PsiTreeUtil.getParentOfType(codeBlock, PsiAnonymousClass.class);
-            if (anon == null) break;
-            codeBlock = PsiTreeUtil.getParentOfType(anon, PsiCodeBlock.class);
-          }
           final MultiValuesMap<PsiVariable, PsiExpression> result;
           if (codeBlock == null) {
             result = null;
@@ -74,6 +57,28 @@ public class DfaUtil {
     final MultiValuesMap<PsiVariable, PsiExpression> value = cachedValue.getValue();
     final Collection<PsiExpression> expressions = value == null ? null : value.get(variable);
     return expressions == null ? Collections.<PsiExpression>emptyList() : expressions;
+  }
+
+  private static PsiElement getEnclosingCodeBlock(final PsiVariable variable, final PsiExpression context) {
+    PsiElement codeBlock;
+    if (variable instanceof PsiParameter) {
+      codeBlock = ((PsiParameter)variable).getDeclarationScope();
+      if (codeBlock instanceof PsiMethod) {
+        codeBlock = ((PsiMethod)codeBlock).getBody();
+      }
+    }
+    else if (variable instanceof PsiLocalVariable) {
+      codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+    }
+    else {
+      codeBlock = PsiTreeUtil.getParentOfType(context, PsiCodeBlock.class);
+    }
+    while (codeBlock != null) {
+      PsiAnonymousClass anon = PsiTreeUtil.getParentOfType(codeBlock, PsiAnonymousClass.class);
+      if (anon == null) break;
+      codeBlock = PsiTreeUtil.getParentOfType(anon, PsiCodeBlock.class);
+    }
+    return codeBlock;
   }
 
   public static Collection<? extends PsiElement> getPossibleInitializationElements(final PsiElement qualifierExpression) {
