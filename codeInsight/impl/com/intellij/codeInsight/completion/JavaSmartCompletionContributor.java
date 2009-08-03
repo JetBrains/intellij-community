@@ -532,7 +532,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   }
 
   private static void addExpectedType(final CompletionResultSet result, final PsiType type, final CompletionParameters parameters) {
-    if (!InheritorsGetter.hasAccessibleConstructor(type)) return;
+    if (!JavaCompletionUtil.hasAccessibleConstructor(type)) return;
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
     if (psiClass == null) return;

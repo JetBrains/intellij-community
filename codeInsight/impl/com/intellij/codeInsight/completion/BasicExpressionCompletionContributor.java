@@ -109,14 +109,13 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
       protected void addCompletions(@NotNull final JavaSmartCompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
         final PsiType expectedType = parameters.getExpectedType();
-        final ClassLiteralGetter classGetter =
-            new ClassLiteralGetter(new FilterGetter(new ContextGetter() {
-              public Object[] get(final PsiElement context, final CompletionContext completionContext) {
-                return new Object[]{expectedType};
-              }
-            }, new ExcludeDeclaredFilter(ElementClassFilter.CLASS)));
-        for (final MutableLookupElement<PsiExpression> element : classGetter.getClassLiterals(position, null, result.getPrefixMatcher())) {
-          result.addElement(element.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
+        final FilterGetter baseGetter = new FilterGetter(new ContextGetter() {
+          public Object[] get(final PsiElement context, final CompletionContext completionContext) {
+            return new Object[]{expectedType};
+          }
+        }, new ExcludeDeclaredFilter(ElementClassFilter.CLASS));
+        for (final LookupElement element : ClassLiteralGetter.getClassLiterals(position, null, result.getPrefixMatcher(), baseGetter)) {
+          result.addElement(element);
         }
 
         for (final Object o : new TemplatesGetter().get(position, null)) {

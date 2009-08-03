@@ -896,4 +896,21 @@ public class JavaCompletionUtil {
 
     set.add(ret);
   }
+
+  public static boolean hasAccessibleConstructor(PsiType type) {
+    if (type instanceof PsiArrayType) return true;
+
+    final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+    if (psiClass == null) return false;
+
+    if (!(psiClass instanceof PsiCompiledElement)) return true;
+
+    final PsiMethod[] methods = psiClass.getConstructors();
+    if (methods.length == 0) return true;
+
+    for (final PsiMethod method : methods) {
+      if (!method.hasModifierProperty(PsiModifier.PRIVATE)) return true;
+    }
+    return false;
+  }
 }
