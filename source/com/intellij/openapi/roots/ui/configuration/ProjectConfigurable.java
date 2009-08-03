@@ -196,15 +196,8 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        final LanguageLevel newLevel = (LanguageLevel)myLanguageLevelCombo.getSelectedItem();
-        LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(newLevel);
-        ((ProjectEx)myProject).setSavePathsRelative(myRbRelativePaths.isSelected());
-        try {
-          myProjectJdkConfigurable.apply();
-        }
-        catch (ConfigurationException e) {
-          //cant't be
-        }
+        // set the output path first so that handlers of RootsChanged event sent after JDK is set
+        // would see the updated path
         String canonicalPath = myProjectCompilerOutput.getText();
         if (canonicalPath != null && canonicalPath.length() > 0) {
           try {
@@ -218,6 +211,16 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
         }
         else {
           compilerProjectExtension.setCompilerOutputPointer(null);
+        }
+
+        final LanguageLevel newLevel = (LanguageLevel)myLanguageLevelCombo.getSelectedItem();
+        LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(newLevel);
+        ((ProjectEx)myProject).setSavePathsRelative(myRbRelativePaths.isSelected());
+        try {
+          myProjectJdkConfigurable.apply();
+        }
+        catch (ConfigurationException e) {
+          //cant't be
         }
       }
     });

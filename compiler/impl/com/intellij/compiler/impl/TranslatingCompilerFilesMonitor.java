@@ -26,17 +26,17 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.indexing.IndexInfrastructure;
+import com.intellij.util.io.*;
 import com.intellij.util.messages.MessageBusConnection;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntLongHashMap;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntProcedure;
+import gnu.trove.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,10 +62,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.TranslatingCompilerFilesMonitor");
   @NonNls
   private static final String PATHS_TO_DELETE_FILENAME = "paths_to_delete.dat";
+  private static final String OUTPUT_ROOTS_FILENAME = "output_roots.dat";
   private static final FileAttribute ourSourceFileAttribute = new FileAttribute("_make_source_file_info_", 3);
   private static final FileAttribute ourOutputFileAttribute = new FileAttribute("_make_output_file_info_", 3);
 
   private final TIntObjectHashMap<TIntHashSet> mySourcesToRecompile = new TIntObjectHashMap<TIntHashSet>(); // ProjectId->set of source file paths
+  private PersistentHashMap<Integer, TIntHashSet> myOutputRootsStorage; // ProjectId->set of ids for output directories
   private final TIntObjectHashMap<Map<String, SourceUrlClassNamePair>> myOutputsToDelete = new TIntObjectHashMap<Map<String, SourceUrlClassNamePair>>(); // Map: projectId -> Map{output path -> [sourceUrl; classname]}
   private final SLRUCache<Project, File> myGeneratedDataPaths = new SLRUCache<Project, File>(8, 8) {
     @NotNull
@@ -78,7 +80,28 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       return CompilerPaths.getGeneratedDataDirectory(project);
     }
   };
+  private final SLRUCache<Integer, TIntHashSet> myProjectOutputRoots = new SLRUCache<Integer, TIntHashSet>(2, 2) {
+    protected void onDropFromCache(Integer key, TIntHashSet value) {
+      try {
+        myOutputRootsStorage.put(key, value);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
 
+    @NotNull
+    public TIntHashSet createValue(Integer key) {
+      TIntHashSet set = null;
+      try {
+        set = myOutputRootsStorage.get(key);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+      return set != null? set : new TIntHashSet();
+    }
+  };
   private final ProjectManager myProjectManager;
 
   public TranslatingCompilerFilesMonitor(VirtualFileManager vfsManager, ProjectManager projectManager) {
@@ -180,13 +203,17 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     return FileBasedIndex.getFileId(file);
   }
 
+  private static VirtualFile findFileById(int id) {
+    return IndexInfrastructure.findFileById((PersistentFS)ManagingFS.getInstance(), id);
+  }
+
   public void update(final CompileContext context, final TranslatingCompiler.OutputItem[] successfullyCompiled, final VirtualFile[] filesToRecompile)
       throws IOException {
     final Project project = context.getProject();
     final int projectId = getProjectId(project);
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     final IOException[] exceptions = {null};
-
+    final Set<String> outputRoots = new HashSet<String>();
     // need read action here to ensure that no modifications were made to VFS while updating file attributes
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -195,6 +222,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           final Set<VirtualFile> forceRecompile = new HashSet<VirtualFile>();
 
           for (TranslatingCompiler.OutputItem item : successfullyCompiled) {
+            final String outputRoot = item.getOutputRootDirectory();
+            if (outputRoot != null) {
+              outputRoots.add(outputRoot);
+            }
             final VirtualFile sourceFile = item.getSourceFile();
             final boolean isSourceValid = sourceFile.isValid();
             SourceFileInfo srcInfo = compiledSources.get(sourceFile);
@@ -217,7 +248,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
               if (outputFile != null) {
                 if (!sourceFile.equals(outputFile)) {
-                  final String outputRoot = item.getOutputRootDirectory();
                   final String className = MakeUtil.relativeClassPathToQName(outputPath.substring(outputRoot.length()), '/');
                   if (isSourceValid) {
                     srcInfo.addOutputPath(projectId, outputPath);
@@ -261,7 +291,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     if (exceptions[0] != null) {
       throw exceptions[0];
     }
-
     if (filesToRecompile.length > 0) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
@@ -273,6 +302,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       });
     }
+    registerOutputRoots(project, outputRoots);
   }
 
   @NotNull
@@ -317,12 +347,45 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       myOutputsToDelete.clear();
       FileUtil.delete(file);
     }
+    final File rootsFile = new File(CompilerPaths.getCompilerSystemDirectory(), OUTPUT_ROOTS_FILENAME);
+    try {
+      initOutputRootsFile(rootsFile);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      FileUtil.delete(rootsFile);
+      try {
+        initOutputRootsFile(rootsFile);
+      }
+      catch (IOException e1) {
+        LOG.error(e1);
+      }
+    }
+  }
+
+  private void initOutputRootsFile(File rootsFile) throws IOException {
+    myOutputRootsStorage = new PersistentHashMap<Integer, TIntHashSet>(rootsFile, new EnumeratorIntegerDescriptor(), new DataExternalizer<TIntHashSet>() {
+      public void save(DataOutput out, TIntHashSet value) throws IOException {
+        for (final TIntIterator it = value.iterator(); it.hasNext();) {
+          DataInputOutputUtil.writeINT(out, it.next());
+        }
+      }
+
+      public TIntHashSet read(DataInput in) throws IOException {
+        final DataInputStream _in = (DataInputStream)in;
+        final TIntHashSet set = new TIntHashSet();
+        while (_in.available() > 0) {
+          set.add(DataInputOutputUtil.readINT(_in));
+        }
+        return set;
+      }
+    });
   }
 
   public void disposeComponent() {
     final File file = new File(CompilerPaths.getCompilerSystemDirectory(), PATHS_TO_DELETE_FILENAME);
     try {
-      file.getParentFile().mkdirs();
+      FileUtil.createParentDirs(file);
       final DataOutputStream os = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
       try {
         synchronized (myOutputsToDelete) {
@@ -348,6 +411,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       }
       finally {
         os.close();
+        synchronized (myProjectOutputRoots) {
+          myProjectOutputRoots.clear();
+        }
+        myOutputRootsStorage.close();
       }
     }
     catch (IOException e) {
@@ -737,6 +804,67 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
+  private void markOldOutputRoots(final Project project, final Set<VirtualFile> roots) throws IOException {
+    final int projectId = getProjectId(project);
+    final int[] currentRoots = new int[roots.size()];
+    int index = 0;
+    for (VirtualFile root : roots) {
+      currentRoots[index++] = getFileId(root);
+    }
+
+    final TIntHashSet oldRoots;
+    synchronized (myProjectOutputRoots) {
+      oldRoots = new TIntHashSet(myProjectOutputRoots.get(projectId).toArray());
+    }
+    oldRoots.removeAll(currentRoots);
+
+    for (TIntIterator it = oldRoots.iterator(); it.hasNext();) {
+      final int id = it.next();
+      final VirtualFile outputRoot = findFileById(id);
+      if (outputRoot != null) {
+        processOldOutputRoot(projectId, outputRoot);
+      }
+    }
+
+    synchronized (myProjectOutputRoots) {
+      final TIntHashSet cachedRoots = myProjectOutputRoots.get(projectId);
+      cachedRoots.clear();
+      cachedRoots.addAll(currentRoots);
+    }
+  }
+
+  private void processOldOutputRoot(int projectId, VirtualFile outputRoot) {
+    // recursively mark all corresponding sources for recompilation
+    if (outputRoot.isDirectory()) {
+      for (VirtualFile child : outputRoot.getChildren()) {
+        processOldOutputRoot(projectId, child);
+      }
+    }
+    else {
+      // todo: possible optimization - process only those outputs that are not marked for deletion yet
+      final OutputFileInfo outputInfo = loadOutputInfo(outputRoot);
+      if (outputInfo != null) {
+        final String srcPath = outputInfo.getSourceFilePath();
+        final VirtualFile srcFile = srcPath != null? LocalFileSystem.getInstance().findFileByPath(srcPath) : null;
+        if (srcFile != null) {
+          addSourceForRecompilation(projectId, srcFile, null);
+        }
+      }
+    }
+  }
+
+  private void registerOutputRoots(Project project, Set<String> outputRoots) throws IOException {
+    final TIntArrayList list = new TIntArrayList();
+    for (String outputRoot : outputRoots) {
+      final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(outputRoot);
+      if (vFile != null) {
+        list.add(getFileId(vFile));
+      }
+    }
+    synchronized (myProjectOutputRoots) {
+      myProjectOutputRoots.get(getProjectId(project)).addAll(list.toNativeArray());
+    }
+  }
 
   private class MyProjectManagerListener extends ProjectManagerAdapter {
 
@@ -776,6 +904,13 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           }
 
           myRootsBefore = null;
+
+          try {
+            markOldOutputRoots(project, getAllOutputRoots(project));
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
         }
       });
 
@@ -827,6 +962,13 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                   processRecursively(root, false, processor);
                 }
               }
+              
+              try {
+                markOldOutputRoots(project, getAllOutputRoots(project));
+              }
+              catch (IOException e) {
+                LOG.error(e);
+              }
             }
           }.queue();
         }
@@ -839,6 +981,24 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         mySourcesToRecompile.remove(getProjectId(project));
       }
     }
+  }
+
+  private Set<VirtualFile> getAllOutputRoots(Project project) {
+    final Set<VirtualFile> allDirs = new HashSet<VirtualFile>();
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      final CompilerModuleExtension manager = CompilerModuleExtension.getInstance(module);
+      if (manager != null) {
+        final VirtualFile output = manager.getCompilerOutputPath();
+        if (output != null) {
+          allDirs.add(output);
+        }
+        final VirtualFile testsOutput = manager.getCompilerOutputPathForTests();
+        if (testsOutput != null) {
+          allDirs.add(testsOutput);
+        }
+      }
+    }
+    return allDirs;
   }
 
   private class MyVfsListener extends VirtualFileAdapter {
