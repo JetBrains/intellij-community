@@ -69,12 +69,12 @@ public class SLRUMap<K,V> {
   public void put(K key, V value) {
     V oldValue = myProtectedQueue.remove(key);
     if (oldValue != null) {
-      onDropFromCache(key, value);
+      onDropFromCache(key, oldValue);
     }
 
     oldValue = myProbationalQueue.put(getStableKey(key), value);
     if (oldValue != null) {
-      onDropFromCache(key, value);
+      onDropFromCache(key, oldValue);
     }
   }
 
