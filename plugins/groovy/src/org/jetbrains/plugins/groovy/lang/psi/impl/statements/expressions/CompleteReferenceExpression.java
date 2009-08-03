@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -47,8 +48,61 @@ import java.util.Set;
  * @author ven
  */
 public class CompleteReferenceExpression {
+  private CompleteReferenceExpression() {
+  }
+
   public static Object[] getVariants(GrReferenceExpressionImpl refExpr) {
     PsiElement refParent = refExpr.getParent();
+    List<String> namedArgsVariants = getNamedArgsVariants(refParent);
+
+    final GrExpression qualifier = refExpr.getQualifierExpression();
+    Object[] propertyVariants = getVariantsImpl(refExpr, CompletionProcessor.createPropertyCompletionProcessor(refExpr));
+    PsiType type = null;
+    if (qualifier == null) {
+      if (refParent instanceof GrArgumentList) {
+        final PsiElement argList = refParent.getParent();
+        if (argList instanceof GrExpression) {
+          GrExpression call = (GrExpression)argList; //add named argument label variants
+          type = call.getType();
+        }
+      }
+    }
+    else {
+      type = qualifier.getType();
+    }
+
+    if (type instanceof PsiClassType) {
+      PsiClass clazz = ((PsiClassType)type).resolve();
+      if (clazz != null) {
+        Set<String> accessedPropertyNames = new THashSet<String>();
+        List<LookupElement> props = getPropertyVariants(refExpr, clazz, accessedPropertyNames);
+
+        //propertyVariants = ArrayUtil.mergeArrays(propertyVariants, clazz.getFields(), Object.class);
+
+        List<Object> variantList = new ArrayList<Object>(props);
+        for (Object variant : propertyVariants) {
+          if (variant instanceof GrField && accessedPropertyNames.contains(((GrField) variant).getName())) continue;
+          variantList.add(variant);
+        }
+
+        propertyVariants = variantList.toArray(new Object[variantList.size()]);
+      }
+    }
+
+    propertyVariants =
+      ArrayUtil.mergeArrays(propertyVariants, namedArgsVariants.toArray(new Object[namedArgsVariants.size()]), Object.class);
+
+    if (refExpr.getKind() == GrReferenceExpressionImpl.Kind.TYPE_OR_PROPERTY) {
+      ResolverProcessor classVariantsCollector = CompletionProcessor.createClassCompletionProcessor(refExpr);
+      final Object[] classVariants = getVariantsImpl(refExpr, classVariantsCollector);
+      return ArrayUtil.mergeArrays(propertyVariants, classVariants, Object.class);
+    }
+    else {
+      return propertyVariants;
+    }
+  }
+
+  private static List<String> getNamedArgsVariants(PsiElement refParent) {
     List<String> namedArgsVariants = new LinkedList<String>();
     if (refParent instanceof GrArgumentList) {
       PsiElement refPParent = refParent.getParent();
@@ -84,59 +138,10 @@ public class CompleteReferenceExpression {
         }
       }
     }
-
-    final GrExpression qualifier = refExpr.getQualifierExpression();
-    Object[] propertyVariants = getVariantsImpl(refExpr, CompletionProcessor.createPropertyCompletionProcessor(refExpr));
-    PsiType type = null;
-    if (qualifier == null) {
-      PsiElement parent = refParent;
-      if (parent instanceof GrArgumentList) {
-        final PsiElement pparent = parent.getParent();
-        if (pparent instanceof GrExpression) {
-          GrExpression call = (GrExpression)pparent; //add named argument label variants
-          type = call.getType();
-        }
-      }
-    }
-    else {
-      type = qualifier.getType();
-    }
-
-    if (type instanceof PsiClassType) {
-      PsiClass clazz = ((PsiClassType)type).resolve();
-      if (clazz != null) {
-        List<LookupElement> props = getPropertyVariants(refExpr, clazz);
-
-        if (props.size() > 0) {
-          propertyVariants = ArrayUtil.mergeArrays(propertyVariants, props.toArray(new Object[props.size()]), Object.class);
-        }
-
-        propertyVariants = ArrayUtil.mergeArrays(propertyVariants, clazz.getFields(), Object.class);
-
-        List<Object> variantList = new ArrayList<Object>();
-        for (Object variant : propertyVariants) {
-          if (variant instanceof GrField && GroovyPropertyUtils.isProperty((GrField)variant)) continue;
-          variantList.add(variant);
-        }
-
-        propertyVariants = variantList.toArray(new Object[variantList.size()]);
-      }
-    }
-
-    propertyVariants =
-      ArrayUtil.mergeArrays(propertyVariants, namedArgsVariants.toArray(new Object[namedArgsVariants.size()]), Object.class);
-
-    if (refExpr.getKind() == GrReferenceExpressionImpl.Kind.TYPE_OR_PROPERTY) {
-      ResolverProcessor classVariantsCollector = CompletionProcessor.createClassCompletionProcessor(refExpr);
-      final Object[] classVariants = getVariantsImpl(refExpr, classVariantsCollector);
-      return ArrayUtil.mergeArrays(propertyVariants, classVariants, Object.class);
-    }
-    else {
-      return propertyVariants;
-    }
+    return namedArgsVariants;
   }
 
-  private static List<LookupElement> getPropertyVariants(GrReferenceExpression refExpr, PsiClass clazz) {
+  private static List<LookupElement> getPropertyVariants(GrReferenceExpression refExpr, PsiClass clazz, Set<String> accessedPropertyNames) {
     List<LookupElement> props = new ArrayList<LookupElement>();
     final LookupElementFactory factory = LookupElementFactory.getInstance();
     final PsiClass eventListener =
@@ -144,6 +149,7 @@ public class CompleteReferenceExpression {
     for (PsiMethod method : clazz.getAllMethods()) {
       if (GroovyPropertyUtils.isSimplePropertyAccessor(method)) {
         String prop = GroovyPropertyUtils.getPropertyName(method);
+        accessedPropertyNames.add(prop);
         props.add(factory.createLookupElement(prop).setIcon(GroovyIcons.PROPERTY));
       }
       else if (eventListener != null) {

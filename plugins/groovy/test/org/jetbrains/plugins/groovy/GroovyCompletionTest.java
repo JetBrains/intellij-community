@@ -21,11 +21,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Medvedev
- * Date: Feb 27, 2009
- * Time: 5:06:05 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Medvedev
  */
 public class GroovyCompletionTest extends JavaCodeInsightFixtureTestCase {
   @Override
@@ -198,6 +194,10 @@ public class GroovyCompletionTest extends JavaCodeInsightFixtureTestCase {
   public void testFieldSuggestedOnce5() throws Throwable {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
     assertNull(myFixture.getLookupElements());
+  }
+
+  public void testFieldSuggestedInMethodCall() throws Throwable {
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
   }
 
   public void testGroovyDocParameter() throws Throwable {
