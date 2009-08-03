@@ -6,6 +6,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
@@ -477,6 +478,8 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
     try {
       fillMapping(mapping, state.getMappingRoots());
       fillMapping(realMapping, state.getMoreRealMappingRoots());
+    } catch (ProcessCanceledException e) {
+      throw e;
     } catch (Throwable t) {
       LOG.info(t);
       return;
