@@ -96,7 +96,7 @@ public class GroovyCompletionData extends CompletionData {
     CompletionVariant variant = new CompletionVariant(new ParameterTypeFilter());
     variant.includeScopeClass(LeafPsiElement.class);
     variant.addCompletionFilter(TrueFilter.INSTANCE);
-    variant.addCompletion(new ClassesGetter(), TailType.SPACE);
+    variant.addCompletion(new ClassesGetter(), TailType.NONE);
     registerVariant(variant);
   }
 
