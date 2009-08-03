@@ -99,7 +99,7 @@ public class GitFileRevision implements VcsFileRevision, Comparable<VcsFileRevis
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.SHOW);
     h.setNoSSH(true);
     h.setCharset(BIN_ENCODING);
-    h.setStdoutSuppressed(true);
+    h.setSilent(true);
     h.addParameters(revision.getRev() + ":" + GitUtil.relativePath(root, path));
     String result = h.run();
     try {

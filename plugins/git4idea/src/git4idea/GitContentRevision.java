@@ -74,7 +74,7 @@ public class GitContentRevision implements ContentRevision {
     GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitHandler.SHOW);
     h.setCharset(myCharset);
     h.setNoSSH(true);
-    h.setStdoutSuppressed(true);
+    h.setSilent(true);
     h.addParameters(myRevision.getRev() + ":" + GitUtil.relativePath(root, myFile));
     return h.run();
   }
