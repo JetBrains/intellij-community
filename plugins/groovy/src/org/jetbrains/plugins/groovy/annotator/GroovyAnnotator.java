@@ -658,33 +658,29 @@ public class GroovyAnnotator implements Annotator {
           checkClosureApplicability(resolveResult, refExpr.getType(), refExpr, holder);
         }
       }
-      if (isAssignmentLHS(refExpr) || resolved instanceof PsiPackage) return;
+      if (isDeclarationAssignment(refExpr) || resolved instanceof PsiPackage) return;
     }
     else {
       GrExpression qualifier = refExpr.getQualifierExpression();
-      if (qualifier == null && isAssignmentLHS(refExpr)) return;
+      if (qualifier == null && isDeclarationAssignment(refExpr)) return;
 
       if (parent instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)parent).getReferenceName())) {
         checkSingleResolvedElement(holder, refExpr, resolveResult);
       }
     }
 
-    final PsiType refExprType = refExpr.getType();
-    PsiElement refNameElement = refExpr.getReferenceNameElement();
-    PsiElement elt = refNameElement == null ? refExpr : refNameElement;
-    Annotation annotation = holder.createInfoAnnotation(elt, null);
-
-    if (refExprType == null) {
-      if (resolved == null) {
-        if (refExpr.getQualifierExpression() == null) {
-          if (!(parent instanceof GrCallExpression)) {
-            registerCreateClassByTypeFix(refExpr, annotation);
-          }
-          registerAddImportFixes(refExpr, annotation);
+    if (resolved == null) {
+      PsiElement refNameElement = refExpr.getReferenceNameElement();
+      PsiElement elt = refNameElement == null ? refExpr : refNameElement;
+      Annotation annotation = holder.createInfoAnnotation(elt, null);
+      if (refExpr.getQualifierExpression() == null) {
+        if (!(parent instanceof GrCallExpression)) {
+          registerCreateClassByTypeFix(refExpr, annotation);
         }
-        registerReferenceFixes(refExpr, annotation);
-        annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
+        registerAddImportFixes(refExpr, annotation);
       }
+      registerReferenceFixes(refExpr, annotation);
+      annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
     }
   }
 
@@ -780,9 +776,37 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  public static boolean isAssignmentLHS(GrReferenceExpression refExpr) {
+  public static boolean isDeclarationAssignment(GrReferenceExpression refExpr) {
+    if (isAssignmentLhs(refExpr)) {
+      return isExpandoQualified(refExpr);
+    }
+    return false;
+  }
+
+  private static boolean isAssignmentLhs(GrReferenceExpression refExpr) {
     return refExpr.getParent() instanceof GrAssignmentExpression &&
-           refExpr.equals(((GrAssignmentExpression)refExpr.getParent()).getLValue());
+        refExpr.equals(((GrAssignmentExpression)refExpr.getParent()).getLValue());
+  }
+
+  private static boolean isExpandoQualified(GrReferenceExpression refExpr) {
+    final GrExpression qualifier = refExpr.getQualifierExpression();
+    if (qualifier == null) {
+      final PsiClass clazz = PsiTreeUtil.getParentOfType(refExpr, PsiClass.class);
+      if (clazz == null) { //script
+        return true;
+      }
+      return false; //in class, a property should normally be defined, so it's not a declaration
+    }
+
+    final PsiType type = qualifier.getType();
+    if (type instanceof PsiClassType) {
+      final PsiClassType classType = (PsiClassType)type;
+      final PsiClass psiClass = classType.resolve();
+      if (psiClass instanceof GroovyScriptClass) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void checkReferenceElement(AnnotationHolder holder, final GrCodeReferenceElement refElement) {

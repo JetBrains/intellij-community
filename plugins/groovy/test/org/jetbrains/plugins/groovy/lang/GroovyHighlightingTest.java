@@ -10,6 +10,7 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection;
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection;
 
 import java.io.IOException;
 
@@ -131,4 +132,10 @@ public class GroovyHighlightingTest extends JavaCodeInsightFixtureTestCase {
   public void testDefaultMapConstructorNamedArgs() throws Throwable {doTest();}
   public void testDefaultMapConstructorNamedArgsError() throws Throwable {doTest();}
   public void testDefaultMapConstructorWhenDefConstructorExists() throws Throwable {doTest();}
+
+  public void testUnresolvedLhsAssignment() throws Throwable {
+    myFixture.enableInspections(new GroovyUnresolvedAccessInspection());
+    doTest();
+  }
+
 }

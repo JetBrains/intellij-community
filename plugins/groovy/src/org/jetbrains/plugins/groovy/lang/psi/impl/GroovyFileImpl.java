@@ -244,7 +244,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     while (run != null) {
       if (!(run instanceof GrTopLevelDefintion) &&
           !(run instanceof GrImportStatement) &&
-          !run.processDeclarations(processor, state, lastParent, place)) {
+          !run.processDeclarations(processor, state, null, place)) {
         return false;
       }
       run = run.getPrevSibling();

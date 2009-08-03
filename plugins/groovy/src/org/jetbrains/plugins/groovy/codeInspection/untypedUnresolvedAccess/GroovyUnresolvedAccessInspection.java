@@ -18,10 +18,9 @@ package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import static org.jetbrains.plugins.groovy.annotator.GroovyAnnotator.isAssignmentLHS;
+import static org.jetbrains.plugins.groovy.annotator.GroovyAnnotator.isDeclarationAssignment;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -67,18 +66,16 @@ public class GroovyUnresolvedAccessInspection extends BaseInspection {
 
       PsiElement resolved = resolveResult.getElement();
       if (resolved != null) {
-        if (isAssignmentLHS(refExpr) || resolved instanceof PsiPackage) return;
+        if (isDeclarationAssignment(refExpr) || resolved instanceof PsiPackage) return;
       }
       else {
         GrExpression qualifier = refExpr.getQualifierExpression();
-        if (qualifier == null && isAssignmentLHS(refExpr)) return;
+        if (qualifier == null && isDeclarationAssignment(refExpr)) return;
       }
 
-      final PsiType refExprType = refExpr.getType();
-      if (refExprType == null && resolved == null) {
+      if (resolved == null) {
         PsiElement refNameElement = refExpr.getReferenceNameElement();
-        PsiElement element = refNameElement == null ? refExpr : refNameElement;
-        registerError(element);
+        registerError(refNameElement == null ? refExpr : refNameElement);
       }
     }
 

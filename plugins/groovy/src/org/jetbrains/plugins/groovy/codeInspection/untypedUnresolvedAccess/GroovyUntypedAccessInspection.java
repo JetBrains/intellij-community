@@ -22,7 +22,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import static org.jetbrains.plugins.groovy.annotator.GroovyAnnotator.isAssignmentLHS;
+import static org.jetbrains.plugins.groovy.annotator.GroovyAnnotator.isDeclarationAssignment;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -67,11 +67,11 @@ public class GroovyUntypedAccessInspection extends BaseInspection {
 
       PsiElement resolved = resolveResult.getElement();
       if (resolved != null) {
-        if (isAssignmentLHS(refExpr) || resolved instanceof PsiPackage) return;
+        if (isDeclarationAssignment(refExpr) || resolved instanceof PsiPackage) return;
       }
       else {
         GrExpression qualifier = refExpr.getQualifierExpression();
-        if (qualifier == null && isAssignmentLHS(refExpr)) return;
+        if (qualifier == null && isDeclarationAssignment(refExpr)) return;
       }
 
       final PsiType refExprType = refExpr.getType();
