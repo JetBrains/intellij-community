@@ -8,21 +8,24 @@
  */
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
-import com.intellij.psi.PsiElement;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.psi.PsiExpression;
 
 public class PushInstruction extends Instruction {
   private final DfaValue myValue;
-  private final PsiElement myPlace;
+  private final PsiExpression myPlace;
 
-  public PushInstruction(DfaValue value, PsiElement place) {
+  public PushInstruction(DfaValue value, PsiExpression place) {
     myValue = value != null ? value : DfaUnknownValue.getInstance();
     myPlace = place;
   }
 
-  public PsiElement getPlace() {
+  public PsiExpression getPlace() {
     return myPlace;
   }
 
