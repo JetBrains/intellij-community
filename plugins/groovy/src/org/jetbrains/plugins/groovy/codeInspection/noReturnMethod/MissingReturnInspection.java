@@ -21,7 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowUtil;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
 /**
  * @author ven
@@ -49,14 +48,14 @@ public class MissingReturnInspection extends LocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder problemsHolder, boolean onTheFly) {
     return new GroovyPsiElementVisitor(new GroovyElementVisitor() {
       public void visitClosure(GrClosableBlock closure) {
-        check(closure, problemsHolder);
+        check(closure, problemsHolder, false);
         super.visitClosure(closure);
       }
 
       public void visitMethod(GrMethod method) {
         final GrOpenBlock block = method.getBlock();
         if (block != null) {
-          check(block, problemsHolder);
+          check(block, problemsHolder, method.getReturnTypeElementGroovy() != null);
         }
         super.visitMethod(method);
       }
@@ -64,25 +63,27 @@ public class MissingReturnInspection extends LocalInspectionTool {
 
   }
 
-  private void check(GrCodeBlock block, ProblemsHolder holder) {
+  private static void check(GrCodeBlock block, ProblemsHolder holder, boolean mustReturnValue) {
     GrStatement[] statements = block.getStatements();
-    if (statements.length > 0 && !(statements[statements.length - 1] instanceof GrExpression)) {
-      if (hasValueReturns(block)) {
-        Instruction[] flow = block.getControlFlow();
-        if (!ControlFlowUtil.alwaysReturns(flow)) {
-          final PsiElement lastChild = block.getLastChild();
-          if (lastChild == null) return;
-          TextRange range = lastChild.getTextRange();
-          if (!lastChild.isValid() || !lastChild.isPhysical() || range.getStartOffset() >= range.getEndOffset()) {
-            return;
-          }
-          holder.registerProblem(lastChild, GroovyInspectionBundle.message("no.return.message"));
-        }
+    if (statements.length == 0 || !(statements[statements.length - 1] instanceof GrExpression)) {
+      final boolean hasReturns = hasReturnStatements(block);
+      if (!hasReturns && mustReturnValue || hasReturns && !ControlFlowUtil.alwaysReturns(block.getControlFlow())) {
+        addNoReturnMessage(block, holder);
       }
     }
   }
 
-  private boolean hasValueReturns(GrCodeBlock block) {
+  private static void addNoReturnMessage(GrCodeBlock block, ProblemsHolder holder) {
+    final PsiElement lastChild = block.getLastChild();
+    if (lastChild == null) return;
+    TextRange range = lastChild.getTextRange();
+    if (!lastChild.isValid() || !lastChild.isPhysical() || range.getStartOffset() >= range.getEndOffset()) {
+      return;
+    }
+    holder.registerProblem(lastChild, GroovyInspectionBundle.message("no.return.message"));
+  }
+
+  private static boolean hasReturnStatements(GrCodeBlock block) {
     class Visitor extends GroovyRecursiveElementVisitor {
       private boolean myFound = false;
 

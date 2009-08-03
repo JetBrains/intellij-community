@@ -11,6 +11,7 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAss
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection;
+import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 
 import java.io.IOException;
 
@@ -135,6 +136,11 @@ public class GroovyHighlightingTest extends JavaCodeInsightFixtureTestCase {
 
   public void testUnresolvedLhsAssignment() throws Throwable {
     myFixture.enableInspections(new GroovyUnresolvedAccessInspection());
+    doTest();
+  }
+
+  public void testMissingReturnWithLastLoop() throws Throwable {
+    myFixture.enableInspections(new MissingReturnInspection());
     doTest();
   }
 
