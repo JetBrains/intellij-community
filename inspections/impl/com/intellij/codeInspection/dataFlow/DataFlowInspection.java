@@ -68,10 +68,11 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   private void analyzeCodeBlock(final PsiCodeBlock body, ProblemsHolder holder) {
     if (body == null) return;
     final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(SUGGEST_NULLABLE_ANNOTATIONS);
-    final RunnerResult rc = dfaRunner.analyzeMethod(body, new StandardInstructionVisitor());
+    final StandardInstructionVisitor visitor = new StandardInstructionVisitor();
+    final RunnerResult rc = dfaRunner.analyzeMethod(body, visitor);
     if (rc == RunnerResult.OK) {
-      if (dfaRunner.problemsDetected()) {
-        createDescription(dfaRunner, holder);
+      if (dfaRunner.problemsDetected(visitor)) {
+        createDescription(dfaRunner, holder, visitor);
       }
     }
     else if (rc == RunnerResult.TOO_COMPLEX) {
@@ -112,13 +113,13 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     return null;
   }
 
-  private void createDescription(StandardDataFlowRunner runner, ProblemsHolder holder) {
+  private void createDescription(StandardDataFlowRunner runner, ProblemsHolder holder, StandardInstructionVisitor visitor) {
     Pair<Set<Instruction>,Set<Instruction>> constConditions = runner.getConstConditionalExpressions();
     Set<Instruction> trueSet = constConditions.getFirst();
     Set<Instruction> falseSet = constConditions.getSecond();
     Set<Instruction> npeSet = runner.getNPEInstructions();
     Set<Instruction> cceSet = runner.getCCEInstructions();
-    Set<Instruction> redundantInstanceofs = runner.getRedundantInstanceofs();
+    Set<Instruction> redundantInstanceofs = StandardDataFlowRunner.getRedundantInstanceofs(runner, visitor);
 
     ArrayList<Instruction> allProblems = new ArrayList<Instruction>();
     allProblems.addAll(trueSet);
@@ -172,8 +173,8 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       }
       else if (instruction instanceof BranchingInstruction) {
         PsiElement psiAnchor = ((BranchingInstruction)instruction).getPsiAnchor();
-        if (instruction instanceof BinopInstruction && ((BinopInstruction)instruction).isInstanceofRedundant()) {
-          if (((BinopInstruction)instruction).canBeNull()) {
+        if (instruction instanceof InstanceofInstruction && visitor.isInstanceofRedundant((InstanceofInstruction)instruction)) {
+          if (visitor.canBeNull((BinopInstruction)instruction)) {
             holder.registerProblem(psiAnchor,
                                    InspectionsBundle.message("dataflow.message.redundant.instanceof"),
                                    new RedundantInstanceofFix());

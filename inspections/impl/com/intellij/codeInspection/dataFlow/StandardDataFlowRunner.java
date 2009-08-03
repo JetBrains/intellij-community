@@ -13,10 +13,14 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReturnStatement;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -114,16 +118,27 @@ public class StandardDataFlowRunner extends DataFlowRunner {
     }
   }
 
-  public boolean problemsDetected() {
+  public boolean problemsDetected(StandardInstructionVisitor visitor) {
     final Pair<Set<Instruction>, Set<Instruction>> constConditions = getConstConditionalExpressions();
     return !constConditions.getFirst().isEmpty()
            || !constConditions.getSecond().isEmpty()
            || !myNPEInstructions.isEmpty()
            || !myCCEInstructions.isEmpty()
-           || !getRedundantInstanceofs().isEmpty()
+           || !getRedundantInstanceofs(this, visitor).isEmpty()
            || !myNullableArguments.isEmpty()
            || !myNullableAssignments.isEmpty()
            || !myNullableReturns.isEmpty()
            || !myUnboxedNullables.isEmpty();
+  }
+
+  @NotNull public static Set<Instruction> getRedundantInstanceofs(final DataFlowRunner runner, StandardInstructionVisitor visitor) {
+    HashSet<Instruction> result = new HashSet<Instruction>(1);
+    for (Instruction instruction : runner.getInstructions()) {
+      if (instruction instanceof InstanceofInstruction && visitor.isInstanceofRedundant((InstanceofInstruction)instruction)) {
+        result.add(instruction);
+      }
+    }
+
+    return result;
   }
 }

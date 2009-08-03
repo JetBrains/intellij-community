@@ -9,7 +9,6 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.dataFlow.instructions.BinopInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.BranchingInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -21,7 +20,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.EmptyStackException;
@@ -150,17 +148,8 @@ public class DataFlowRunner {
     return new DfaMemoryStateImpl(myValueFactory);
   }
 
-  @NotNull public Set<Instruction> getRedundantInstanceofs() {
-    HashSet<Instruction> result = new HashSet<Instruction>(1);
-    for (Instruction instruction : myInstructions) {
-      if (instruction instanceof BinopInstruction) {
-        if (((BinopInstruction)instruction).isInstanceofRedundant()) {
-          result.add(instruction);
-        }
-      }
-    }
-
-    return result;
+  public Instruction[] getInstructions() {
+    return myInstructions;
   }
 
   public DfaVariableValue[] getFields() {

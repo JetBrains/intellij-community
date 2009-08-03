@@ -322,9 +322,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     final PsiIfStatement statementFromText = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + outputVariable.getName() + " == null);", null);
     block.add(statementFromText);
 
-    final RunnerResult rc = dfaRunner.analyzeMethod(block, new StandardInstructionVisitor());
+    final StandardInstructionVisitor visitor = new StandardInstructionVisitor();
+    final RunnerResult rc = dfaRunner.analyzeMethod(block, visitor);
     if (rc == RunnerResult.OK) {
-      if (dfaRunner.problemsDetected()) {
+      if (dfaRunner.problemsDetected(visitor)) {
         final Pair<Set<Instruction>,Set<Instruction>>
           conditionalExpressions = dfaRunner.getConstConditionalExpressions();
         final Set<Instruction> falseSet = conditionalExpressions.getSecond();

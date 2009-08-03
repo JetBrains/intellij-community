@@ -5,6 +5,7 @@ import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.TypeCastInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -137,8 +138,7 @@ public class GuessManagerImpl extends GuessManager {
       }
     }
 
-    final ExpressionTypeInstructionFactory factory = new ExpressionTypeInstructionFactory();
-    DataFlowRunner runner = new DataFlowRunner(factory) {
+    DataFlowRunner runner = new DataFlowRunner(new InstructionFactory()) {
       protected DfaMemoryState createMemoryState() {
         return new ExpressionTypeMemoryState(getFactory());
       }
@@ -309,7 +309,7 @@ public class GuessManagerImpl extends GuessManager {
     return null;
   }
 
-  private static class ExpressionTypeInstructionVisitor extends StandardInstructionVisitor {
+  private static class ExpressionTypeInstructionVisitor extends InstructionVisitor {
     private Map<PsiExpression, PsiType> myResult;
     private PsiElement myForPlace;
 
@@ -319,6 +319,12 @@ public class GuessManagerImpl extends GuessManager {
 
     public Map<PsiExpression, PsiType> getResult() {
       return myResult;
+    }
+
+    @Override
+    public DfaInstructionState[] visitInstanceof(InstanceofInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+      memState.push(new DfaInstanceofValue(runner.getFactory(), instruction.getLeft(), instruction.getCastType()));
+      return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState)};
     }
 
     @Override

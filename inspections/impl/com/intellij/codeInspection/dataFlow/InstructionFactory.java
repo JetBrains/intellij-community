@@ -20,13 +20,8 @@ public class InstructionFactory {
     return new AssignInstruction(RExpression);
   }
 
-  public BinopInstruction createInstanceofInstruction(@NotNull PsiElement psiAnchor, @NotNull final PsiExpression left, @NotNull final PsiType castType) {
-    return new BinopInstruction(PsiKeyword.INSTANCEOF, psiAnchor, psiAnchor.getProject()) {
-      @Override
-      public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-        return visitor.visitInstanceof(this, runner, stateBefore);
-      }
-    };
+  public InstanceofInstruction createInstanceofInstruction(@NotNull PsiElement psiAnchor, @NotNull final PsiExpression left, @NotNull final PsiType castType) {
+    return new InstanceofInstruction(psiAnchor, psiAnchor.getProject(), left, castType);
   }
 
   public BinopInstruction createBinopInstruction(@NonNls String opSign, PsiElement psiAnchor, Project project) {
