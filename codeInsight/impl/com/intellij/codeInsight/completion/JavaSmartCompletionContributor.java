@@ -120,7 +120,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
             public void handleInsert(InsertionContext context) {
               final PsiElement position = AnalyzingJavaSmartCompletionContributor.getPosition(context, this);
               final Editor editor = context.getEditor();
-              if (or(psiElement(PsiParenthesizedExpression.class),
+              if (or(psiElement(PsiParenthesizedExpression.class).withLastChild(psiElement(JavaTokenType.RPARENTH)),
                      psiElement().afterLeaf(psiElement().withText("(").withParent(PsiTypeCastExpression.class))).accepts(position)) {
                 editor.getDocument().deleteString(context.getSelectionEndOffset(),
                                                   context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
