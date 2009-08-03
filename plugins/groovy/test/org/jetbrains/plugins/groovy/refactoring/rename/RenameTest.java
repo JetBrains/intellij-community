@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,7 +13,6 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
-import org.jetbrains.plugins.groovy.util.PathUtil;
 
 import java.util.List;
 
@@ -22,14 +22,15 @@ import java.util.List;
 public class RenameTest extends JavaCodeInsightFixtureTestCase {
 
   public void testClosureIt() throws Throwable { doTest(); }
-  public void testProperties$to_getter() throws Throwable { doTest(); }
-  public void testProperties$to_prop() throws Throwable { doTest(); }
-  public void testProperties$to_setter() throws Throwable { doTest(); }
+  public void testTo_getter() throws Throwable { doTest(); }
+  public void testTo_prop() throws Throwable { doTest(); }
+  public void testTo_setter() throws Throwable { doTest(); }
   public void testScriptMethod() throws Throwable { doTest(); }
 
   public void doTest() throws Throwable {
     final String testFile = getTestName(true).replace('$', '/') + ".test";
-    final List<String> list = SimpleGroovyFileSetTestCase.readInput(PathUtil.getDataPath(RenameTest.class) + "/" + testFile);
+    final List<String> list = SimpleGroovyFileSetTestCase.readInput(
+      PathManager.getHomePath() + "/svnPlugins/groovy/testdata/groovy/refactoring/rename/" + testFile);
 
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, list.get(0));
 

@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.refactoring.implExtQuickFix;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -9,7 +10,6 @@ import org.jetbrains.plugins.groovy.annotator.intentions.ChangeExtendsImplements
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
-import org.jetbrains.plugins.groovy.util.PathUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
  * Date: 11.10.2007
  */
 public class ImplementsExtendsQuickFixTest extends SimpleGroovyFileSetTestCase {
-    private static final String DATA_PATH = PathUtil.getDataPath(ImplementsExtendsQuickFixTest.class);
+    private static final String DATA_PATH = PathManager.getHomePath() + "/svnPlugins/groovy/testdata/groovy/extendsImplementsFix";
 
     public ImplementsExtendsQuickFixTest(String path) {
         super(path);

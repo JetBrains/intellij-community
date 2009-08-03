@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.refactoring.introduceVariable.validator;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -34,7 +35,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduc
 import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyVariableValidator;
 import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
-import org.jetbrains.plugins.groovy.util.PathUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.IOException;
@@ -45,7 +45,7 @@ import java.io.IOException;
 public class IntroduceVariableValidatorTest extends ActionTestCase {
 
   @NonNls
-  private static final String DATA_PATH = PathUtil.getDataPath(IntroduceVariableValidatorTest.class);
+  private static final String DATA_PATH = PathManager.getHomePath() + "/svnPlugins/groovy/testdata/groovy/refactoring/introduceVariableValidator";
 
   protected static final String ALL_MARKER = "<all>";
 
