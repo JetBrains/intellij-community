@@ -50,7 +50,7 @@ class ProjectBuilder {
     return new File(project.targetFolder, "testClasses").absolutePath
   }
 
-  def folderForModuleOutput(Module module, String basePath) {
+  private String folderForModuleOutput(Module module, String basePath) {
     def customOut = module.props["destDir"]
     if (customOut != null) return customOut
     return new File(basePath, module.name).absolutePath

@@ -7,7 +7,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
   Project project;
   String name;
 
-  List classpath = []
+  List<ClasspathItem> classpath = []
   List sourceRoots = []
   List testRoots = []
   List excludes = []
@@ -21,7 +21,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
     setInitializer({
       def meta = new InitializingExpando()
       meta.classpath = {Object[] arg ->
-        arg.each { classpath << it }
+        arg.each { classpath << project.resolve(it) }
       }
 
       meta.src = {Object[] arg ->

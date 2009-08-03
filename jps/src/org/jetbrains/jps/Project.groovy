@@ -105,14 +105,7 @@ class Project {
 
   private def collectModulesOnClasspath(Module module, Set<Module> result) {
     module.classpath.each {
-      if (it instanceof String) {
-        def resolved = modules[it]
-
-        if (resolved instanceof Module) {
-          collectModulesOnClasspath(resolved, result)
-        }
-      }
-      else if (it instanceof Module) {
+      if (it instanceof Module) {
         collectModulesOnClasspath(it, result)
       }
     }
