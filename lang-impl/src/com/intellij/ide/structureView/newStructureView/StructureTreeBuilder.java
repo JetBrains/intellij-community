@@ -68,7 +68,9 @@ class StructureTreeBuilder extends AbstractTreeBuilder {
   }
 
   protected final boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
-    return false;
+    // expand root node & its immediate children
+    final NodeDescriptor parent = nodeDescriptor.getParentDescriptor();
+    return super.isAutoExpandNode(parent == null? nodeDescriptor : parent);
   }
 
   protected final boolean isSmartExpand() {
