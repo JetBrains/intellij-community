@@ -6,14 +6,15 @@
  * To change template for new class use 
  * Code Style | Class Templates options (Tools | IDE Options).
  */
-package com.intellij.refactoring.util.classMembers;
+package com.intellij.refactoring.classMembers;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public class DelegatingMemberInfoModel implements MemberInfoModel {
-  private MemberInfoModel myDelegatingTarget;
+public class DelegatingMemberInfoModel<T extends PsiElement, M extends MemberInfoBase<T>> implements MemberInfoModel<T, M> {
+  private MemberInfoModel<T, M> myDelegatingTarget;
 
-  public DelegatingMemberInfoModel(MemberInfoModel delegatingTarget) {
+  public DelegatingMemberInfoModel(MemberInfoModel<T, M> delegatingTarget) {
     myDelegatingTarget = delegatingTarget;
   }
 
@@ -25,35 +26,35 @@ public class DelegatingMemberInfoModel implements MemberInfoModel {
     return myDelegatingTarget;
   }
 
-  public boolean isMemberEnabled(MemberInfo member) {
+  public boolean isMemberEnabled(M member) {
     return myDelegatingTarget.isMemberEnabled(member);
   }
 
-  public boolean isCheckedWhenDisabled(MemberInfo member) {
+  public boolean isCheckedWhenDisabled(M member) {
     return myDelegatingTarget.isCheckedWhenDisabled(member);
   }
 
-  public boolean isAbstractEnabled(MemberInfo member) {
+  public boolean isAbstractEnabled(M member) {
     return myDelegatingTarget.isAbstractEnabled(member);
   }
 
-  public boolean isAbstractWhenDisabled(MemberInfo member) {
+  public boolean isAbstractWhenDisabled(M member) {
     return myDelegatingTarget.isAbstractWhenDisabled(member);
   }
 
-  public int checkForProblems(@NotNull MemberInfo member) {
+  public int checkForProblems(@NotNull M member) {
     return myDelegatingTarget.checkForProblems(member);
   }
 
-  public void memberInfoChanged(MemberInfoChange event) {
+  public void memberInfoChanged(MemberInfoChange<T, M> event) {
     myDelegatingTarget.memberInfoChanged(event);
   }
 
-  public Boolean isFixedAbstract(MemberInfo member) {
+  public Boolean isFixedAbstract(M member) {
     return myDelegatingTarget.isFixedAbstract(member);
   }
 
-  public String getTooltipText(MemberInfo member) {
+  public String getTooltipText(M member) {
     return myDelegatingTarget.getTooltipText(member);
   }
 }

@@ -13,12 +13,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
-import com.intellij.refactoring.util.classMembers.*;
+import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
+import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +41,7 @@ public class PullUpDialog extends DialogWrapper {
   private final PsiClass myClass;
   private final List<PsiClass> mySuperClasses;
   private final MemberInfoStorage myMemberInfoStorage;
-  private MemberInfo[] myMemberInfos;
+  private List<MemberInfo> myMemberInfos;
   private JavaDocPanel myJavaDocPanel;
 
   private JComboBox myClassCombo;
@@ -53,7 +57,7 @@ public class PullUpDialog extends DialogWrapper {
     myClass = aClass;
     mySuperClasses = superClasses;
     myMemberInfoStorage = memberInfoStorage;
-    myMemberInfos = myMemberInfoStorage.getClassMemberInfos(aClass).toArray(new MemberInfo[0]);
+    myMemberInfos = myMemberInfoStorage.getClassMemberInfos(aClass);
     myCallback = callback;
 
     setTitle(JavaPullUpHandler.REFACTORING_NAME);
@@ -75,7 +79,7 @@ public class PullUpDialog extends DialogWrapper {
   }
 
   public MemberInfo[] getSelectedMemberInfos() {
-    ArrayList<MemberInfo> list = new ArrayList<MemberInfo>(myMemberInfos.length);
+    ArrayList<MemberInfo> list = new ArrayList<MemberInfo>(myMemberInfos.size());
     for (MemberInfo info : myMemberInfos) {
       if (info.isChecked() && myMemberInfoModel.isMemberEnabled(info)) {
         list.add(info);
@@ -163,7 +167,7 @@ public class PullUpDialog extends DialogWrapper {
     JPanel panel = new JPanel(new BorderLayout());
     myMemberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("members.to.be.pulled.up"), myMemberInfos, RefactoringBundle.message("make.abstract"));
     myMemberInfoModel = new MyMemberInfoModel();
-    myMemberInfoModel.memberInfoChanged(new MemberInfoChange(myMemberInfos));
+    myMemberInfoModel.memberInfoChanged(new MemberInfoChange<PsiMember, MemberInfo>(myMemberInfos));
     myMemberSelectionPanel.getTable().setMemberInfoModel(myMemberInfoModel);
     myMemberSelectionPanel.getTable().addMemberInfoChangeListener(myMemberInfoModel);
     panel.add(myMemberSelectionPanel, BorderLayout.CENTER);

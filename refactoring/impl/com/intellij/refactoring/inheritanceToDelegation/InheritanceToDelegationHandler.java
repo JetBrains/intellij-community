@@ -29,12 +29,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class InheritanceToDelegationHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationHandler");
   public static final String REFACTORING_NAME = RefactoringBundle.message("replace.inheritance.with.delegation.title");
 
-  private static final MemberInfo.Filter MEMBER_INFO_FILTER = new MemberInfo.Filter() {
+  private static final MemberInfo.Filter<PsiMember> MEMBER_INFO_FILTER = new MemberInfo.Filter<PsiMember>() {
     public boolean includeMember(PsiMember element) {
       if (element instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)element;
@@ -95,7 +97,7 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
       return;
     }
 
-    final HashMap<PsiClass,MemberInfo[]> basesToMemberInfos = new HashMap<PsiClass, MemberInfo[]>();
+    final HashMap<PsiClass, Collection<MemberInfo>> basesToMemberInfos = new HashMap<PsiClass, Collection<MemberInfo>>();
 
     for (PsiClass base : bases) {
       basesToMemberInfos.put(base, createBaseClassMemberInfos(base));
@@ -106,18 +108,18 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
                                       bases, basesToMemberInfos).show();
   }
 
-  private static MemberInfo[] createBaseClassMemberInfos(PsiClass baseClass) {
+  private static List<MemberInfo> createBaseClassMemberInfos(PsiClass baseClass) {
     final PsiClass deepestBase = RefactoringHierarchyUtil.getDeepestNonObjectBase(baseClass);
     LOG.assertTrue(deepestBase != null);
 
     final MemberInfoStorage memberInfoStorage = new MemberInfoStorage(baseClass, MEMBER_INFO_FILTER);
 
     ArrayList<MemberInfo> memberInfoList = new ArrayList<MemberInfo>(memberInfoStorage.getClassMemberInfos(deepestBase));
-    MemberInfo[] memberInfos = memberInfoStorage.getMemberInfosList(deepestBase);
+    List<MemberInfo> memberInfos = memberInfoStorage.getMemberInfosList(deepestBase);
     for (final MemberInfo memberInfo : memberInfos) {
       memberInfoList.add(memberInfo);
     }
 
-    return memberInfoList.toArray(new MemberInfo[memberInfoList.size()]);
+    return memberInfoList;
   }
 }

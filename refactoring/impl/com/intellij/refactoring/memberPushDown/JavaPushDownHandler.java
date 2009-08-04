@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -68,7 +69,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
       return;
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
-    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(aClass, new MemberInfo.Filter() {
+    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(aClass, new MemberInfo.Filter<PsiMember>() {
       public boolean includeMember(PsiMember element) {
         return true;
       }
@@ -76,7 +77,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
     List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(aClass);
     PsiManager manager = aClass.getManager();
 
-    for (MemberInfo member : members) {
+    for (MemberInfoBase<PsiMember> member : members) {
       if (manager.areElementsEquivalent(member.getMember(), aMember)) {
         member.setChecked(true);
         break;

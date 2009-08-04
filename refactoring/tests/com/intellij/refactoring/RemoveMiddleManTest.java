@@ -44,7 +44,7 @@ public class RemoveMiddleManTest extends MultiFileTestCase{
           info.setToAbstract(delete);
           infos.add(info);
         }
-        RemoveMiddlemanProcessor processor = new RemoveMiddlemanProcessor(field, infos.toArray(new MemberInfo[infos.size()]));
+        RemoveMiddlemanProcessor processor = new RemoveMiddlemanProcessor(field, infos);
         processor.run();
         LocalFileSystem.getInstance().refresh(false);
         FileDocumentManager.getInstance().saveAllDocuments();

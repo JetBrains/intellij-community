@@ -8,13 +8,16 @@
  */
 package com.intellij.refactoring.util.classMembers;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMember;
+import com.intellij.refactoring.classMembers.DependencyMemberInfoModel;
+import com.intellij.refactoring.classMembers.MemberInfoTooltipManager;
 
-public class InterfaceDependencyMemberInfoModel extends DependencyMemberInfoModel {
+public class InterfaceDependencyMemberInfoModel extends DependencyMemberInfoModel<PsiMember, MemberInfo> {
 
   public InterfaceDependencyMemberInfoModel(PsiClass aClass) {
     super(new InterfaceMemberDependencyGraph(aClass), WARNING);
-    setTooltipProvider(new MemberInfoTooltipManager.TooltipProvider() {
+    setTooltipProvider(new MemberInfoTooltipManager.TooltipProvider<PsiMember, MemberInfo>() {
       public String getTooltip(MemberInfo memberInfo) {
         return ((InterfaceMemberDependencyGraph) myMemberDependencyGraph).getElementTooltip(memberInfo.getMember());
       }

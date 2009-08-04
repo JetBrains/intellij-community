@@ -8,22 +8,24 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
+import com.intellij.refactoring.classMembers.DelegatingMemberInfoModel;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.ui.MemberSelectionTable;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.refactoring.util.classMembers.DelegatingMemberInfoModel;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
+import java.util.List;
 
 @SuppressWarnings({"OverridableMethodCallInConstructor"})
 public class RemoveMiddlemanDialog extends RefactoringDialog {
 
   private final JTextField fieldNameLabel;
 
-  private final MemberInfo[] delegateMethods;
+  private final List<MemberInfo> delegateMethods;
 
   private final PsiField myField;
 
@@ -31,7 +33,7 @@ public class RemoveMiddlemanDialog extends RefactoringDialog {
   RemoveMiddlemanDialog(PsiField field, MemberInfo[] delegateMethods) {
     super(field.getProject(), true);
     myField = field;
-    this.delegateMethods = delegateMethods;
+    this.delegateMethods = Arrays.asList(delegateMethods);
     fieldNameLabel = new JTextField();
     fieldNameLabel.setText(
       PsiFormatUtil.formatVariable(myField, PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_NAME, PsiSubstitutor.EMPTY));
@@ -49,7 +51,7 @@ public class RemoveMiddlemanDialog extends RefactoringDialog {
     panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 5, 0));
     final MemberSelectionPanel selectionPanel = new MemberSelectionPanel("Methods to inline", delegateMethods, "Delete");
     final MemberSelectionTable table = selectionPanel.getTable();
-    table.setMemberInfoModel(new DelegatingMemberInfoModel(table.getMemberInfoModel()) {
+    table.setMemberInfoModel(new DelegatingMemberInfoModel<PsiMember, MemberInfo>(table.getMemberInfoModel()) {
       @Override
       public int checkForProblems(@NotNull final MemberInfo member) {
         return hasSuperMethods(member) ? ERROR : OK;

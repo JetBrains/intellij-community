@@ -28,6 +28,8 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class ExtractSuperclassHandler implements RefactoringActionHandler, ExtractSuperclassDialog.Callback {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler");
 
@@ -78,7 +80,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     }
 
 
-    final MemberInfo[] memberInfos = MemberInfo.extractClassMembers(mySubclass, new MemberInfo.Filter() {
+    final List<MemberInfo> memberInfos = MemberInfo.extractClassMembers(mySubclass, new MemberInfo.Filter<PsiMember>() {
       public boolean includeMember(PsiMember element) {
         return true;
       }

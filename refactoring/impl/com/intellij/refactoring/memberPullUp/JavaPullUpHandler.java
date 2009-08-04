@@ -8,8 +8,8 @@
  */
 package com.intellij.refactoring.memberPullUp;
 
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -107,7 +108,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
 
 
     mySubclass = aClass;
-    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(mySubclass, new MemberInfo.Filter() {
+    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(mySubclass, new MemberInfo.Filter<PsiMember>() {
       public boolean includeMember(PsiMember element) {
         return true;
       }
@@ -115,7 +116,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
     List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(mySubclass);
     PsiManager manager = mySubclass.getManager();
 
-    for (MemberInfo member : members) {
+    for (MemberInfoBase<PsiMember> member : members) {
       if (manager.areElementsEquivalent(member.getMember(), aMember)) {
         member.setChecked(true);
         break;

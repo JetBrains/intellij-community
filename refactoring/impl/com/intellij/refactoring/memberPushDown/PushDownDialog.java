@@ -3,31 +3,34 @@ package com.intellij.refactoring.memberPushDown;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMember;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.classMembers.MemberInfoChange;
+import com.intellij.refactoring.classMembers.MemberInfoModel;
+import com.intellij.refactoring.classMembers.UsedByDependencyMemberInfoModel;
 import com.intellij.refactoring.memberPullUp.JavaDocPanel;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.refactoring.util.classMembers.MemberInfoChange;
-import com.intellij.refactoring.util.classMembers.MemberInfoModel;
-import com.intellij.refactoring.util.classMembers.UsedByDependencyMemberInfoModel;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class PushDownDialog extends RefactoringDialog {
-  private final MemberInfo[] myMemberInfos;
+  private final List<MemberInfo> myMemberInfos;
   private final PsiClass myClass;
   private JavaDocPanel myJavaDocPanel;
-  private MemberInfoModel myMemberInfoModel;
+  private MemberInfoModel<PsiMember, MemberInfo> myMemberInfoModel;
 
   public PushDownDialog(Project project, MemberInfo[] memberInfos, PsiClass aClass) {
     super(project, true);
-    myMemberInfos = memberInfos;
+    myMemberInfos = Arrays.asList(memberInfos);
     myClass = aClass;
 
     setTitle(JavaPushDownHandler.REFACTORING_NAME);
@@ -40,7 +43,7 @@ public class PushDownDialog extends RefactoringDialog {
   }
 
   public MemberInfo[] getSelectedMemberInfos() {
-    ArrayList<MemberInfo> list = new ArrayList<MemberInfo>(myMemberInfos.length);
+    ArrayList<MemberInfo> list = new ArrayList<MemberInfo>(myMemberInfos.size());
     for (MemberInfo info : myMemberInfos) {
       if (info.isChecked() && myMemberInfoModel.isMemberEnabled(info)) {
         list.add(info);
@@ -83,7 +86,7 @@ public class PushDownDialog extends RefactoringDialog {
     panel.add(memberSelectionPanel, BorderLayout.CENTER);
 
     myMemberInfoModel = new MyMemberInfoModel();
-    myMemberInfoModel.memberInfoChanged(new MemberInfoChange(myMemberInfos));
+    myMemberInfoModel.memberInfoChanged(new MemberInfoChange<PsiMember, MemberInfo>(myMemberInfos));
     memberSelectionPanel.getTable().setMemberInfoModel(myMemberInfoModel);
     memberSelectionPanel.getTable().addMemberInfoChangeListener(myMemberInfoModel);
 
@@ -104,7 +107,7 @@ public class PushDownDialog extends RefactoringDialog {
             new JavaDocPolicy(getJavaDocPolicy())));
   }
 
-  private class MyMemberInfoModel extends UsedByDependencyMemberInfoModel {
+  private class MyMemberInfoModel extends UsedByDependencyMemberInfoModel<PsiMember, PsiClass, MemberInfo> {
     public MyMemberInfoModel() {
       super(myClass);
     }

@@ -3,21 +3,27 @@ package com.intellij.refactoring.extractSuperclass;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.classMembers.MemberInfoChange;
+import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.JavaDocPolicy;
-import com.intellij.refactoring.util.classMembers.*;
+import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.List;
 
 class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
   private final InterfaceContainmentVerifier myContainmentVerifier = new InterfaceContainmentVerifier() {
@@ -34,14 +40,14 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
   private JLabel myPackageLabel;
   private final Callback myCallback;
 
-  public ExtractSuperclassDialog(Project project, PsiClass sourceClass, MemberInfo[] selectedMembers, Callback callback) {
+  public ExtractSuperclassDialog(Project project, PsiClass sourceClass, List<MemberInfo> selectedMembers, Callback callback) {
     super(project, sourceClass, selectedMembers, ExtractSuperclassHandler.REFACTORING_NAME);
     myCallback = callback;
     init();
   }
 
   public MemberInfo[] getSelectedMemberInfos() {
-    ArrayList<MemberInfo> list = new ArrayList<MemberInfo>(myMemberInfos.length);
+    ArrayList<MemberInfo> list = new ArrayList<MemberInfo>(myMemberInfos.size());
     for (MemberInfo info : myMemberInfos) {
       if (info.isChecked()) {
         list.add(info);
@@ -122,13 +128,13 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
     final MemberSelectionPanel memberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("members.to.form.superclass"),
                                                                                myMemberInfos, RefactoringBundle.message("make.abstract"));
     panel.add(memberSelectionPanel, BorderLayout.CENTER);
-    final MemberInfoModel memberInfoModel =
+    final MemberInfoModel<PsiMember, MemberInfo> memberInfoModel =
       new UsesAndInterfacesDependencyMemberInfoModel(mySourceClass, null, false, myContainmentVerifier) {
         public Boolean isFixedAbstract(MemberInfo member) {
           return Boolean.TRUE;
         }
       };
-    memberInfoModel.memberInfoChanged(new MemberInfoChange(myMemberInfos));
+    memberInfoModel.memberInfoChanged(new MemberInfoChange<PsiMember, MemberInfo>(myMemberInfos));
     memberSelectionPanel.getTable().setMemberInfoModel(memberInfoModel);
     memberSelectionPanel.getTable().addMemberInfoChangeListener(memberInfoModel);
 

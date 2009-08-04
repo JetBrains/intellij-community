@@ -26,6 +26,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 public class CreateTestAction extends PsiElementBaseIntentionAction {
   @NotNull
   public String getText() {
@@ -163,7 +165,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   private void addTestMethods(Editor editor,
                               PsiClass targetClass,
                               TestFrameworkDescriptor descriptor,
-                              MemberInfo[] methods,
+                              Collection<MemberInfo> methods,
                               boolean generateBefore,
                               boolean generateAfter) throws IncorrectOperationException {
     if (generateBefore) {

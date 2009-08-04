@@ -2,13 +2,14 @@ package com.intellij.refactoring.util.classMembers;
 
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.classMembers.MemberDependencyGraph;
 import com.intellij.util.containers.HashMap;
 
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-public class InterfaceMemberDependencyGraph implements MemberDependencyGraph {
+public class InterfaceMemberDependencyGraph implements MemberDependencyGraph<PsiMember, MemberInfo> {
   protected HashSet<PsiMethod> myInterfaceDependencies = null;
   protected HashMap<PsiMethod,HashSet<PsiClass>> myMembersToInterfacesMap = new HashMap<PsiMethod, HashSet<PsiClass>>();
   protected HashSet<PsiClass> myImplementedInterfaces;

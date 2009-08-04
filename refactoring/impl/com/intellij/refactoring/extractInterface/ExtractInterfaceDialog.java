@@ -4,19 +4,21 @@ import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.classMembers.DelegatingMemberInfoModel;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperBaseDialog;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperBaseProcessor;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.JavaDocPolicy;
-import com.intellij.refactoring.util.classMembers.DelegatingMemberInfoModel;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
   private JLabel myInterfaceNameLabel;
@@ -27,8 +29,8 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
     init();
   }
 
-  private static MemberInfo[] collectMembers(PsiClass c) {
-    return MemberInfo.extractClassMembers(c, new MemberInfo.Filter() {
+  private static List<MemberInfo> collectMembers(PsiClass c) {
+    return MemberInfo.extractClassMembers(c, new MemberInfoBase.Filter<PsiMember>() {
       public boolean includeMember(PsiMember element) {
         if (element instanceof PsiMethod) {
           return element.hasModifierProperty(PsiModifier.PUBLIC)
@@ -51,7 +53,7 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
     int[] rows = getCheckedRows();
     MemberInfo[] selectedMethods = new MemberInfo[rows.length];
     for (int idx = 0; idx < rows.length; idx++) {
-      selectedMethods[idx] = myMemberInfos[rows[idx]];
+      selectedMethods[idx] = myMemberInfos.get(rows[idx]);
     }
     return selectedMethods;
   }
@@ -65,8 +67,8 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
     }
     int[] rows = new int[count];
     int currentRow = 0;
-    for (int idx = 0; idx < myMemberInfos.length; idx++) {
-      if (myMemberInfos[idx].isChecked()) {
+    for (int idx = 0; idx < myMemberInfos.size(); idx++) {
+      if (myMemberInfos.get(idx).isChecked()) {
         rows[currentRow++] = idx;
       }
     }
@@ -153,7 +155,7 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
     JPanel panel = new JPanel(new BorderLayout());
     final MemberSelectionPanel memberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("members.to.form.interface"),
                                                                                myMemberInfos, null);
-    memberSelectionPanel.getTable().setMemberInfoModel(new DelegatingMemberInfoModel(memberSelectionPanel.getTable().getMemberInfoModel()) {
+    memberSelectionPanel.getTable().setMemberInfoModel(new DelegatingMemberInfoModel<PsiMember, MemberInfo>(memberSelectionPanel.getTable().getMemberInfoModel()) {
       public Boolean isFixedAbstract(MemberInfo member) {
         return Boolean.TRUE;
       }

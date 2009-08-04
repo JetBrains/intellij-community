@@ -88,6 +88,8 @@
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.refactoringSupport"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.refactoringSupport.classMembersRefactoringSupport"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.documentationProvider"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.namesValidator"

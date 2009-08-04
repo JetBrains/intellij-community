@@ -15,11 +15,12 @@ import com.intellij.ui.ScrollPaneFactory;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.util.List;
 
 public class MemberSelectionPanel extends JPanel {
   private final MemberSelectionTable myTable;
 
-  public MemberSelectionPanel(String title, MemberInfo[] memberInfo, String abstractColumnHeader) {
+  public MemberSelectionPanel(String title, List<MemberInfo> memberInfo, String abstractColumnHeader) {
     super();
     Border titledBorder = IdeBorderFactory.createTitledBorder(title);
     Border emptyBorder = BorderFactory.createEmptyBorder(0, 5, 5, 5);

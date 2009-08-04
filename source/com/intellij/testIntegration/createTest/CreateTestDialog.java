@@ -181,7 +181,7 @@ public class CreateTestDialog extends DialogWrapper {
       }
     });
     restoreShowInheritedMembersStatus();
-    myMethodsTable = new MemberSelectionTable(new MemberInfo[0], null);
+    myMethodsTable = new MemberSelectionTable(Collections.<MemberInfo>emptyList(), null);
     updateMethodsTable();
   }
 
@@ -214,7 +214,7 @@ public class CreateTestDialog extends DialogWrapper {
       each.setChecked(selectedMethods.contains(each.getMember()));
     }
 
-    myMethodsTable.setMemberInfos(methods.toArray(new MemberInfo[methods.size()]));
+    myMethodsTable.setMemberInfos(methods);
   }
 
   private void doSelectPackage() {
@@ -392,7 +392,7 @@ public class CreateTestDialog extends DialogWrapper {
     return myTargetDirectory;
   }
 
-  public MemberInfo[] getSelectedMethods() {
+  public Collection<MemberInfo> getSelectedMethods() {
     return myMethodsTable.getSelectedMemberInfos();
   }
 

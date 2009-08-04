@@ -6,25 +6,25 @@
  * To change template for new interface use 
  * Code Style | Class Templates options (Tools | IDE Options).
  */
-package com.intellij.refactoring.util.classMembers;
+package com.intellij.refactoring.classMembers;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 
 import java.util.Set;
 
-public interface MemberDependencyGraph {
+public interface MemberDependencyGraph<T extends PsiElement, M extends MemberInfoBase<T>> {
   /**
    * Call this to notify that a new member info have been added
    * or a state of some memberInfo have been changed.
    * @param memberInfo
    */
-  void memberChanged(MemberInfo memberInfo);
+  void memberChanged(M memberInfo);
 
   /**
    * Returns class members that are dependent on checked MemberInfos.
    * @return set of PsiMembers
    */
-  Set<? extends PsiMember> getDependent();
+  Set<? extends T> getDependent();
 
   /**
    * Returns PsiMembers of checked MemberInfos that member depends on.
@@ -32,5 +32,5 @@ public interface MemberDependencyGraph {
    * @param member
    * @return set of PsiMembers
    */
-  Set<? extends PsiMember> getDependenciesOf(PsiMember member);
+  Set<? extends T> getDependenciesOf(T member);
 }

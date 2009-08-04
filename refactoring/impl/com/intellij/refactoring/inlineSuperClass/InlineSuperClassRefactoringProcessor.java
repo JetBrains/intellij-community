@@ -44,7 +44,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     super(project);
     mySuperClass = superClass;
     myTargetClasses = targetClasses;
-    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(mySuperClass, new MemberInfo.Filter() {
+    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(mySuperClass, new MemberInfo.Filter<PsiMember>() {
       public boolean includeMember(PsiMember element) {
         return true;
       }

@@ -26,10 +26,10 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
 
   private final PsiField field;
   private final PsiClass containingClass;
-  private final MemberInfo[] myDelegateMethodInfos;
+  private final List<MemberInfo> myDelegateMethodInfos;
   private PsiMethod getter;
 
-  public RemoveMiddlemanProcessor(PsiField field, MemberInfo[] memberInfos) {
+  public RemoveMiddlemanProcessor(PsiField field, List<MemberInfo> memberInfos) {
     super(field.getProject());
     this.field = field;
     containingClass = field.getContainingClass();

@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
@@ -166,10 +167,9 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
   protected void moveUsedMethodsToInner() {
     if (!myUsages.isEmpty()) {
-      final MemberInfo[] memberInfos = new MemberInfo[myUsages.size()];
-      int i = 0;
+      final List<MemberInfo> memberInfos = new ArrayList<MemberInfo>();
       for (MethodToMoveUsageInfo usage : myUsages) {
-        memberInfos[i++] = new MemberInfo((PsiMethod)usage.getElement());
+        memberInfos.add(new MemberInfo((PsiMethod)usage.getElement()));
       }
 
       final MemberSelectionPanel panel = new MemberSelectionPanel("Methods to move to the extracted class", memberInfos, null);
@@ -187,7 +187,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       };
       dlg.show();
       if (dlg.isOK()) {
-        for (MemberInfo memberInfo : panel.getTable().getSelectedMemberInfos()) {
+        for (MemberInfoBase<PsiMember> memberInfo : panel.getTable().getSelectedMemberInfos()) {
           if (memberInfo.isChecked()) {
             myInnerClass.add(memberInfo.getMember().copy());
             memberInfo.getMember().delete();

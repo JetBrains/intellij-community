@@ -17,20 +17,20 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.ui.MemberSelectionTable;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.VisibilityPanel;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.refactoring.util.classMembers.MemberInfoChange;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -39,6 +39,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 public class MoveMembersDialog extends RefactoringDialog implements MoveMembersOptions {
@@ -48,7 +50,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
   private final Project myProject;
   private final PsiClass mySourceClass;
   private final String mySourceClassName;
-  private final MemberInfo[] myMemberInfos;
+  private final List<MemberInfo> myMemberInfos;
   private final ReferenceEditorComboWithBrowseButton myTfTargetClassName;
   private MemberSelectionTable myTable;
   private final MoveCallback myMoveCallback;
@@ -103,7 +105,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
         memberList.add(info);
       }
     }
-    myMemberInfos = memberList.toArray(new MemberInfo[memberList.size()]);
+    myMemberInfos = memberList;
     String fqName = initialTargetClass != null && !sourceClass.equals(initialTargetClass) ? initialTargetClass.getQualifiedName() : "";
     myTfTargetClassName = new ReferenceEditorComboWithBrowseButton(new ChooseClassAction(), fqName, PsiManager.getInstance(myProject), true, RECENTS_KEY);
 
@@ -127,7 +129,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     myTable = new MemberSelectionTable(myMemberInfos, null);
     myTable.setMemberInfoModel(myMemberInfoModel);
     myTable.addMemberInfoChangeListener(myMemberInfoModel);
-    myMemberInfoModel.memberInfoChanged(new MemberInfoChange(myMemberInfos));
+    myMemberInfoModel.memberInfoChanged(new MemberInfoChange<PsiMember, MemberInfo>(myMemberInfos));
     return myTable;
   }
 
@@ -194,7 +196,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
   }
 
   public PsiMember[] getSelectedMembers() {
-    final MemberInfo[] selectedMemberInfos = myTable.getSelectedMemberInfos();
+    final Collection<MemberInfo> selectedMemberInfos = myTable.getSelectedMemberInfos();
     ArrayList<PsiMember> list = new ArrayList<PsiMember>();
     for (MemberInfo selectedMemberInfo : selectedMemberInfos) {
       list.add(selectedMemberInfo.getMember());

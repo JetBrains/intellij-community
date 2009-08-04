@@ -12,13 +12,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
+import com.intellij.refactoring.classMembers.MemberInfoChange;
+import com.intellij.refactoring.classMembers.MemberInfoChangeListener;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.ui.MemberSelectionTable;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.refactoring.util.classMembers.DelegatingMemberInfoModel;
+import com.intellij.refactoring.classMembers.DelegatingMemberInfoModel;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.refactoring.util.classMembers.MemberInfoChange;
-import com.intellij.refactoring.util.classMembers.MemberInfoChangeListener;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -34,10 +35,10 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings({"OverridableMethodCallInConstructor"})
-class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeListener {
-  private final Map<MemberInfo, PsiMember> myMember2CauseMap = new HashMap<MemberInfo, PsiMember>();
+class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeListener<PsiMember, MemberInfo> {
+  private final Map<MemberInfoBase<PsiMember>, PsiMember> myMember2CauseMap = new HashMap<MemberInfoBase<PsiMember>, PsiMember>();
   private final PsiClass sourceClass;
-  private final MemberInfo[] memberInfo;
+  private final List<MemberInfo> memberInfo;
   private final JTextField classNameField;
   private final JTextField packageTextField;
   private final FixedSizeButton packageChooserButton;
@@ -59,7 +60,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     packageTextField.getDocument().addDocumentListener(docListener);
     packageChooserButton = new FixedSizeButton(packageTextField);
     sourceClassTextField = new JTextField();
-    final MemberInfo.Filter filter = new MemberInfo.Filter() {
+    final MemberInfo.Filter<PsiMember> filter = new MemberInfo.Filter<PsiMember>() {
       public boolean includeMember(PsiMember element) {
         if (element instanceof PsiMethod) {
           return !((PsiMethod)element).isConstructor() && ((PsiMethod)element).getBody() != null;
@@ -226,7 +227,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     final MemberSelectionPanel memberSelectionPanel =
       new MemberSelectionPanel(RefactorJBundle.message("members.to.extract.label"), memberInfo, null);
     final MemberSelectionTable table = memberSelectionPanel.getTable();
-    table.setMemberInfoModel(new DelegatingMemberInfoModel(table.getMemberInfoModel()) {
+    table.setMemberInfoModel(new DelegatingMemberInfoModel<PsiMember, MemberInfo>(table.getMemberInfoModel()) {
       public Boolean isFixedAbstract(MemberInfo member) {
         return Boolean.TRUE;
       }

@@ -11,14 +11,14 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.classMembers.MemberInfoChange;
+import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.classMembers.InterfaceMemberDependencyGraph;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.refactoring.util.classMembers.MemberInfoChange;
-import com.intellij.refactoring.util.classMembers.MemberInfoModel;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,12 +28,14 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 public class InheritanceToDelegationDialog extends RefactoringDialog {
   private final PsiClass[] mySuperClasses;
 
   private final PsiClass myClass;
-  private final HashMap<PsiClass,MemberInfo[]> myBasesToMemberInfos;
+  private final HashMap<PsiClass, Collection<MemberInfo>> myBasesToMemberInfos;
 
   private NameSuggestionsField myFieldNameField;
   private NameSuggestionsField myInnerClassNameField;
@@ -47,7 +49,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
   public InheritanceToDelegationDialog(Project project,
                                        PsiClass aClass,
                                        PsiClass[] superClasses,
-                                       HashMap<PsiClass,MemberInfo[]> basesToMemberInfos) {
+                                       HashMap<PsiClass,Collection<MemberInfo>> basesToMemberInfos) {
     super(project, true);
     myProject = project;
     myClass = aClass;
@@ -103,7 +105,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     }
   }
 
-  public MemberInfo[] getSelectedMemberInfos() {
+  public Collection<MemberInfo> getSelectedMemberInfos() {
     return myMemberSelectionPanel.getTable().getSelectedMemberInfos();
   }
 
@@ -119,7 +121,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
   protected void doAction() {
     JavaRefactoringSettings.getInstance().INHERITANCE_TO_DELEGATION_DELEGATE_OTHER = myCbGenerateGetter.isSelected();
 
-    final MemberInfo[] selectedMemberInfos = getSelectedMemberInfos();
+    final Collection<MemberInfo> selectedMemberInfos = getSelectedMemberInfos();
     final ArrayList<PsiClass> implementedInterfaces = new ArrayList<PsiClass>();
     final ArrayList<PsiMethod> delegatedMethods = new ArrayList<PsiMethod>();
 
@@ -216,7 +218,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     gbc.gridwidth = 1;
     gbc.insets = new Insets(4, 8, 4, 4);
 
-    myMemberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("delegate.members"), new MemberInfo[0], null);
+    myMemberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("delegate.members"), Collections.<MemberInfo>emptyList(), null);
     panel.add(myMemberSelectionPanel, gbc);
     MyMemberInfoModel memberInfoModel = new InheritanceToDelegationDialog.MyMemberInfoModel();
     myMemberSelectionPanel.getTable().setMemberInfoModel(memberInfoModel);
@@ -258,7 +260,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     myMemberSelectionPanel.getTable().fireExternalDataChange();
   }
 
-  private class MyMemberInfoModel implements MemberInfoModel {
+  private class MyMemberInfoModel implements MemberInfoModel<PsiMember, MemberInfo> {
     final HashMap<PsiClass,InterfaceMemberDependencyGraph> myGraphs;
 
     public MyMemberInfoModel() {
@@ -301,8 +303,8 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
       return null;
     }
 
-    public void memberInfoChanged(MemberInfoChange event) {
-      final MemberInfo[] changedMembers = event.getChangedMembers();
+    public void memberInfoChanged(MemberInfoChange<PsiMember, MemberInfo> event) {
+      final Collection<MemberInfo> changedMembers = event.getChangedMembers();
 
       for (MemberInfo changedMember : changedMembers) {
         getGraph().memberChanged(changedMember);

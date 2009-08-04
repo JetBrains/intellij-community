@@ -8,70 +8,25 @@
  */
 package com.intellij.refactoring.util.classMembers;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.util.containers.HashSet;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class MemberInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractSuperclass.MemberInfo");
-  private PsiMember myMember;
-  final private boolean isStatic;
-  final private String displayName;
-  private boolean isChecked = false;
-  private boolean toAbstract = false;
-  /**
-   * TRUE if is overriden, FALSE if implemented, null if not implemented or overriden
-   */
-  final private Boolean overrides;
+public class MemberInfo extends MemberInfoBase<PsiMember> {
   private final PsiReferenceList mySourceReferenceList;
-
-  public boolean isStatic() {
-    return isStatic;
-  }
-
-  public String getDisplayName() {
-    return displayName;
-  }
-
-  public boolean isChecked() {
-    return isChecked;
-  }
-
-  public void setChecked(boolean checked) {
-    isChecked = checked;
-  }
-
-  public boolean isToAbstract() {
-    return toAbstract;
-  }
-
-  public void setToAbstract(boolean toAbstract) {
-    this.toAbstract = toAbstract;
-  }
-
-  /**
-   * Returns Boolean.TRUE if getMember() overrides something, Boolean.FALSE if getMember()
-   * implements something, null if neither is the case.
-   * If getMember() is a PsiClass, returns Boolean.TRUE if this class comes
-   * from 'extends', Boolean.FALSE if it comes from 'implements' list, null
-   * if it is an inner class.
-   */
-  public Boolean getOverrides() {
-    return overrides;
-  }
 
   public MemberInfo(PsiMember member) {
     this(member, false, null);
   }
   public MemberInfo(PsiMember member, boolean isSuperClass, PsiReferenceList sourceReferenceList) {
+    super(member);
     LOG.assertTrue(member.isValid());
-    myMember = member;
     mySourceReferenceList = sourceReferenceList;
     if (member instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) member;
@@ -124,34 +79,17 @@ public class MemberInfo {
     }
   }
 
-  public PsiMember getMember() {
-    LOG.assertTrue(myMember.isValid());
-    return myMember;
-  }
-
-  /**
-   * Use this method solely to update element from smart pointer and the likes
-   * @param element
-   */
-  public void updateMember(PsiMember element) {
-    myMember = element;
-  }
-
   public PsiReferenceList getSourceReferenceList() {
     return mySourceReferenceList;
   }
 
-  public static interface Filter {
-    boolean includeMember(PsiMember member);
-  }
-
-  public static MemberInfo[] extractClassMembers(PsiClass subclass, Filter filter, boolean extractInterfacesDeep) {
+  public static List<MemberInfo> extractClassMembers(PsiClass subclass, Filter<PsiMember> filter, boolean extractInterfacesDeep) {
     List<MemberInfo> members = new ArrayList<MemberInfo>();
     extractClassMembers(subclass, members, filter, extractInterfacesDeep);
-    return members.toArray(new MemberInfo[members.size()]);
+    return members;
   }
 
-  public static void extractClassMembers(PsiClass subclass, List<MemberInfo> result, Filter filter, final boolean extractInterfacesDeep) {
+  public static void extractClassMembers(PsiClass subclass, List<MemberInfo> result, Filter<PsiMember> filter, final boolean extractInterfacesDeep) {
     if (extractInterfacesDeep) {
       extractSuperInterfaces(subclass, filter, result, new HashSet<PsiClass>());
     }
@@ -186,7 +124,7 @@ public class MemberInfo {
   }
 
   private static void extractSuperInterfaces(final PsiClass subclass,
-                                             final Filter filter,
+                                             final Filter<PsiMember> filter,
                                              final List<MemberInfo> result,
                                              Set<PsiClass> processed) {
     if (!processed.contains(subclass)) {
@@ -197,7 +135,7 @@ public class MemberInfo {
   }
 
   private static void extractSuperInterfacesFromReferenceList(final PsiReferenceList referenceList,
-                                                              final Filter filter,
+                                                              final Filter<PsiMember> filter,
                                                               final List<MemberInfo> result,
                                                               final Set<PsiClass> processed) {
     if (referenceList != null) {

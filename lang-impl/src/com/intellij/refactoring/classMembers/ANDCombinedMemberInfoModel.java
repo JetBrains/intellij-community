@@ -6,15 +6,16 @@
  * To change template for new class use 
  * Code Style | Class Templates options (Tools | IDE Options).
  */
-package com.intellij.refactoring.util.classMembers;
+package com.intellij.refactoring.classMembers;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public class ANDCombinedMemberInfoModel implements MemberInfoModel {
-  private final MemberInfoModel myModel1;
-  private final MemberInfoModel myModel2;
-  private final MemberInfoTooltipManager myTooltipManager = new MemberInfoTooltipManager(new MemberInfoTooltipManager.TooltipProvider() {
-    public String getTooltip(MemberInfo memberInfo) {
+public class ANDCombinedMemberInfoModel<T extends PsiElement, M extends MemberInfoBase<T>> implements MemberInfoModel<T, M> {
+  private final MemberInfoModel<T, M> myModel1;
+  private final MemberInfoModel<T, M> myModel2;
+  private final MemberInfoTooltipManager<T, M> myTooltipManager = new MemberInfoTooltipManager<T, M>(new MemberInfoTooltipManager.TooltipProvider<T, M>() {
+    public String getTooltip(M memberInfo) {
       final String tooltipText1 = myModel1.getTooltipText(memberInfo);
       if (tooltipText1 != null) return tooltipText1;
       return myModel2.getTooltipText(memberInfo);
@@ -22,53 +23,53 @@ public class ANDCombinedMemberInfoModel implements MemberInfoModel {
   });
 
 
-  public ANDCombinedMemberInfoModel(MemberInfoModel model1, MemberInfoModel model2) {
+  public ANDCombinedMemberInfoModel(MemberInfoModel<T, M> model1, MemberInfoModel<T, M> model2) {
     myModel1 = model1;
     myModel2 = model2;
   }
 
-  public boolean isMemberEnabled(MemberInfo member) {
+  public boolean isMemberEnabled(M member) {
     return myModel1.isMemberEnabled(member) && myModel2.isMemberEnabled(member);
   }
 
-  public boolean isCheckedWhenDisabled(MemberInfo member) {
+  public boolean isCheckedWhenDisabled(M member) {
     return myModel1.isCheckedWhenDisabled(member) && myModel2.isCheckedWhenDisabled(member);
   }
 
-  public boolean isAbstractEnabled(MemberInfo member) {
+  public boolean isAbstractEnabled(M member) {
     return myModel1.isAbstractEnabled(member) && myModel2.isAbstractEnabled(member);
   }
 
-  public boolean isAbstractWhenDisabled(MemberInfo member) {
+  public boolean isAbstractWhenDisabled(M member) {
     return myModel1.isAbstractWhenDisabled(member) && myModel2.isAbstractWhenDisabled(member);
   }
 
-  public int checkForProblems(@NotNull MemberInfo member) {
+  public int checkForProblems(@NotNull M member) {
     return Math.max(myModel1.checkForProblems(member), myModel2.checkForProblems(member));
   }
 
-  public void memberInfoChanged(MemberInfoChange event) {
+  public void memberInfoChanged(MemberInfoChange<T, M> event) {
     myTooltipManager.invalidate();
     myModel1.memberInfoChanged(event);
     myModel2.memberInfoChanged(event);
   }
 
-  public Boolean isFixedAbstract(MemberInfo member) {
+  public Boolean isFixedAbstract(M member) {
     final Boolean fixedAbstract1 = myModel1.isFixedAbstract(member);
     if(fixedAbstract1 == null) return null;
     if(fixedAbstract1.equals(myModel2.isFixedAbstract(member))) return fixedAbstract1;
     return null;
   }
 
-  public MemberInfoModel getModel1() {
+  public MemberInfoModel<T, M> getModel1() {
     return myModel1;
   }
 
-  public MemberInfoModel getModel2() {
+  public MemberInfoModel<T, M> getModel2() {
     return myModel2;
   }
 
-  public String getTooltipText(MemberInfo member) {
+  public String getTooltipText(M member) {
     return myTooltipManager.getTooltip(member);
   }
 }

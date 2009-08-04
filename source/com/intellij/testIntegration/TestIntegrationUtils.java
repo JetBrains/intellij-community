@@ -68,7 +68,7 @@ public class TestIntegrationUtils {
     List<MemberInfo> result = new ArrayList<MemberInfo>();
 
     do {
-      MemberInfo.extractClassMembers(clazz, result, new MemberInfo.Filter() {
+      MemberInfo.extractClassMembers(clazz, result, new MemberInfo.Filter<PsiMember>() {
         public boolean includeMember(PsiMember member) {
           if (!(member instanceof PsiMethod)) return false;
           PsiModifierList list = member.getModifierList();

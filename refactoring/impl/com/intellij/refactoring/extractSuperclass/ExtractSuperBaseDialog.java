@@ -4,8 +4,8 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -15,13 +15,14 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.JavaReferenceEditorUtil;
+import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.List;
 
 /**
  * @author dsl
@@ -30,7 +31,7 @@ public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
   protected String myRefactoringName;
   protected PsiClass mySourceClass;
   protected PsiDirectory myTargetDirectory;
-  protected MemberInfo[] myMemberInfos;
+  protected List<MemberInfo> myMemberInfos;
 
   protected JRadioButton myRbExtractSuperclass;
   protected JRadioButton myRbExtractSubclass;
@@ -41,7 +42,7 @@ public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
   protected JavaDocPanel myJavaDocPanel;
 
 
-  public ExtractSuperBaseDialog(Project project, PsiClass sourceClass, MemberInfo[] members, String refactoringName) {
+  public ExtractSuperBaseDialog(Project project, PsiClass sourceClass, List<MemberInfo> members, String refactoringName) {
     super(project, true);
     myRefactoringName = refactoringName;
 

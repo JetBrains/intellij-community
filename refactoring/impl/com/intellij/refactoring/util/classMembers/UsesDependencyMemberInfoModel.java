@@ -8,24 +8,23 @@
  */
 package com.intellij.refactoring.util.classMembers;
 
-import com.intellij.psi.*;
+import com.intellij.psi.NavigatablePsiElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
+import com.intellij.refactoring.classMembers.AbstractUsesDependencyMemberInfoModel;
 import org.jetbrains.annotations.NotNull;
 
-public class UsesDependencyMemberInfoModel extends DependencyMemberInfoModel {
-  private final PsiClass myClass;
+public class UsesDependencyMemberInfoModel<T extends NavigatablePsiElement, C extends PsiElement, M extends MemberInfoBase<T>>
+  extends AbstractUsesDependencyMemberInfoModel<T,C,M> {
 
-  public UsesDependencyMemberInfoModel(PsiClass aClass, PsiClass superClass, boolean recursive) {
-    super(new UsesMemberDependencyGraph(aClass, superClass, recursive), ERROR);
-    setTooltipProvider(new MemberInfoTooltipManager.TooltipProvider() {
-      public String getTooltip(MemberInfo memberInfo) {
-        return ((UsesMemberDependencyGraph) myMemberDependencyGraph).getElementTooltip(memberInfo.getMember());
-      }
-    });
-    myClass = aClass;
+  public UsesDependencyMemberInfoModel(C aClass, C superClass, boolean recursive) {
+    super(aClass, superClass, recursive);
   }
 
-  public int checkForProblems(@NotNull MemberInfo memberInfo) {
-    final int problem = super.checkForProblems(memberInfo);
+  @Override
+  protected int doCheck(@NotNull M memberInfo, int problem) {
     final PsiElement member = memberInfo.getMember();
     if(problem == ERROR
             && member instanceof PsiModifierListOwner
@@ -35,15 +34,4 @@ public class UsesDependencyMemberInfoModel extends DependencyMemberInfoModel {
     return problem;
   }
 
-  public void setSuperClass(PsiClass superClass) {
-    setMemberDependencyGraph(new UsesMemberDependencyGraph(myClass, superClass, false));
-  }
-
-  public boolean isCheckedWhenDisabled(MemberInfo member) {
-    return false;
-  }
-
-  public Boolean isFixedAbstract(MemberInfo member) {
-    return null;
-  }
 }

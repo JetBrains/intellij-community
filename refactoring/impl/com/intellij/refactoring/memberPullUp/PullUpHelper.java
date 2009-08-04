@@ -715,7 +715,7 @@ public class PullUpHelper {
     return false;
   }
 
-  public static boolean checkedInterfacesContain(MemberInfo[] memberInfos, PsiMethod psiMethod) {
+  public static boolean checkedInterfacesContain(Collection<MemberInfo> memberInfos, PsiMethod psiMethod) {
     for (MemberInfo memberInfo : memberInfos) {
       if (memberInfo.isChecked() &&
           memberInfo.getMember() instanceof PsiClass &&

@@ -9,11 +9,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.*;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
+import com.intellij.refactoring.classMembers.MemberInfoChange;
+import com.intellij.refactoring.classMembers.MemberInfoModel;
+import com.intellij.refactoring.classMembers.MemberInfoTooltipManager;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.refactoring.util.classMembers.MemberInfoChange;
-import com.intellij.refactoring.util.classMembers.MemberInfoModel;
-import com.intellij.refactoring.util.classMembers.MemberInfoTooltipManager;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -25,8 +26,8 @@ import javax.swing.event.TableModelListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author dsl
@@ -45,7 +46,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
   private final int myEqualsStepCode;
   private final int myHashcodeStepCode;
 
-  private final MemberInfo[] myClassFields;
+  private final List<MemberInfo> myClassFields;
   private static final MyMemberInfoFilter MEMBER_INFO_FILTER = new MyMemberInfoFilter();
 
 
@@ -69,10 +70,10 @@ public class GenerateEqualsWizard extends AbstractWizard {
       myEqualsPanel = null;
     }
     if (needHashCode) {
-      final MemberInfo[] hashCodeMemberInfos;
+      final List<MemberInfo> hashCodeMemberInfos;
       if (needEquals) {
         myFieldsToHashCode = createFieldToMemberInfoMap(true);
-        hashCodeMemberInfos = new MemberInfo[0];
+        hashCodeMemberInfos = Collections.emptyList();
       }
       else {
         hashCodeMemberInfos = myClassFields;
@@ -92,7 +93,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
     }
     myTestBoxedStep=testBoxedStep;
     myNonNullPanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.non.null.fields.chooser.title"),
-                                              new MemberInfo[0], null);
+                                              Collections.<MemberInfo>emptyList(), null);
     myFieldsToNonNull = createFieldToMemberInfoMap(false);
     for (final Map.Entry<PsiElement, MemberInfo> entry : myFieldsToNonNull.entrySet()) {
       entry.getValue().setChecked(((PsiField)entry.getKey()).getModifierList().findAnnotation(NotNull.class.getName()) != null);
@@ -146,7 +147,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
     return memberInfosToFields(myNonNullPanel.getTable().getSelectedMemberInfos());
   }
 
-  private static PsiField[] memberInfosToFields(MemberInfo[] infos) {
+  private static PsiField[] memberInfosToFields(Collection<MemberInfo> infos) {
     ArrayList<PsiField> list = new ArrayList<PsiField>();
     for (MemberInfo info : infos) {
       list.add((PsiField)info.getMember());
@@ -159,7 +160,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
       equalsFieldsSelected();
     }
     else if (getCurrentStep() == myHashcodeStepCode && myHashCodePanel != null) {
-      MemberInfo[] selectedMemberInfos = myHashCodePanel.getTable().getSelectedMemberInfos();
+      Collection<MemberInfo> selectedMemberInfos = myHashCodePanel.getTable().getSelectedMemberInfos();
       updateNonNullMemberInfos(selectedMemberInfos);
     }
 
@@ -180,7 +181,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
   }
 
   private void equalsFieldsSelected() {
-    MemberInfo[] selectedMemberInfos = myEqualsPanel.getTable().getSelectedMemberInfos();
+    Collection<MemberInfo> selectedMemberInfos = myEqualsPanel.getTable().getSelectedMemberInfos();
     updateHashCodeMemberInfos(selectedMemberInfos);
     updateNonNullMemberInfos(selectedMemberInfos);
   }
@@ -194,7 +195,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
   }
 
   private HashMap<PsiElement, MemberInfo> createFieldToMemberInfoMap(boolean checkedByDefault) {
-    MemberInfo[] memberInfos = MemberInfo.extractClassMembers(myClass, MEMBER_INFO_FILTER, false);
+    Collection<MemberInfo> memberInfos = MemberInfo.extractClassMembers(myClass, MEMBER_INFO_FILTER, false);
     final HashMap<PsiElement, MemberInfo> result = new HashMap<PsiElement, MemberInfo>();
     for (MemberInfo memberInfo : memberInfos) {
       memberInfo.setChecked(checkedByDefault);
@@ -203,26 +204,27 @@ public class GenerateEqualsWizard extends AbstractWizard {
     return result;
   }
 
-  private void updateHashCodeMemberInfos(MemberInfo[] equalsMemberInfos) {
+  private void updateHashCodeMemberInfos(Collection<MemberInfo> equalsMemberInfos) {
     if (myHashCodePanel == null) return;
-    MemberInfo[] hashCodeFields = new MemberInfo[equalsMemberInfos.length];
+    List<MemberInfo> hashCodeFields = new ArrayList<MemberInfo>();
 
-    for (int i = 0; i < equalsMemberInfos.length; i++) {
-      hashCodeFields[i] = (MemberInfo)myFieldsToHashCode.get(equalsMemberInfos[i].getMember());
+    for (MemberInfo equalsMemberInfo : equalsMemberInfos) {
+      hashCodeFields.add((MemberInfo)myFieldsToHashCode.get(equalsMemberInfo.getMember()));
     }
+
     myHashCodePanel.getTable().setMemberInfos(hashCodeFields);
   }
 
-  private void updateNonNullMemberInfos(MemberInfo[] equalsMemberInfos) {
+  private void updateNonNullMemberInfos(Collection<MemberInfo> equalsMemberInfos) {
     final ArrayList<MemberInfo> list = new ArrayList<MemberInfo>();
 
-    for (MemberInfo equalsMemberInfo : equalsMemberInfos) {
+    for (MemberInfoBase<PsiMember> equalsMemberInfo : equalsMemberInfos) {
       PsiField field = (PsiField)equalsMemberInfo.getMember();
       if (!(field.getType() instanceof PsiPrimitiveType)) {
         list.add(myFieldsToNonNull.get(equalsMemberInfo.getMember()));
       }
     }
-    myNonNullPanel.getTable().setMemberInfos(list.toArray(new MemberInfo[list.size()]));
+    myNonNullPanel.getTable().setMemberInfos(list);
   }
 
   private void updateStatus() {
@@ -334,15 +336,15 @@ public class GenerateEqualsWizard extends AbstractWizard {
 
   }
 
-  private static class MyMemberInfoFilter implements MemberInfo.Filter {
+  private static class MyMemberInfoFilter implements MemberInfoBase.Filter<PsiMember> {
     public boolean includeMember(PsiMember element) {
       return element instanceof PsiField && !element.hasModifierProperty(PsiModifier.STATIC);
     }
   }
 
 
-  private static class EqualsMemberInfoModel implements MemberInfoModel {
-    MemberInfoTooltipManager myTooltipManager = new MemberInfoTooltipManager(new MemberInfoTooltipManager.TooltipProvider() {
+  private static class EqualsMemberInfoModel implements MemberInfoModel<PsiMember, MemberInfo> {
+    MemberInfoTooltipManager<PsiMember, MemberInfo> myTooltipManager = new MemberInfoTooltipManager<PsiMember, MemberInfo>(new MemberInfoTooltipManager.TooltipProvider<PsiMember, MemberInfo>() {
       public String getTooltip(MemberInfo memberInfo) {
         if (checkForProblems(memberInfo) == OK) return null;
         if (!(memberInfo.getMember() instanceof PsiField)) return CodeInsightBundle.message("generate.equals.hashcode.internal.error");
@@ -387,7 +389,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
       return OK;
     }
 
-    public void memberInfoChanged(MemberInfoChange event) {
+    public void memberInfoChanged(MemberInfoChange<PsiMember, MemberInfo> event) {
     }
 
     public String getTooltipText(MemberInfo member) {
@@ -395,8 +397,8 @@ public class GenerateEqualsWizard extends AbstractWizard {
     }
   }
 
-  private static class HashCodeMemberInfoModel implements MemberInfoModel {
-    private final MemberInfoTooltipManager myTooltipManager = new MemberInfoTooltipManager(new MemberInfoTooltipManager.TooltipProvider() {
+  private static class HashCodeMemberInfoModel implements MemberInfoModel<PsiMember, MemberInfo> {
+    private final MemberInfoTooltipManager<PsiMember, MemberInfo> myTooltipManager = new MemberInfoTooltipManager<PsiMember, MemberInfo>(new MemberInfoTooltipManager.TooltipProvider<PsiMember, MemberInfo>() {
       public String getTooltip(MemberInfo memberInfo) {
         if (isMemberEnabled(memberInfo)) return null;
         if (!(memberInfo.getMember() instanceof PsiField)) return CodeInsightBundle.message("generate.equals.hashcode.internal.error");
@@ -431,7 +433,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
       return OK;
     }
 
-    public void memberInfoChanged(MemberInfoChange event) {
+    public void memberInfoChanged(MemberInfoChange<PsiMember, MemberInfo> event) {
     }
 
     public String getTooltipText(MemberInfo member) {
