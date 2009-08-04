@@ -259,6 +259,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (exitedStatement != null) {
       int offset = myPass1Flow.getEndOffset(exitedStatement);
+      if (offset == -1) offset = myPass1Flow.getInstructionCount();
       addInstruction(myInstructionFactory.createGotoInstruction(offset));
     }
 
