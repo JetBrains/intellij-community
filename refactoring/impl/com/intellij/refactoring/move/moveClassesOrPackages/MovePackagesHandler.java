@@ -2,8 +2,8 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.containers.HashSet;
@@ -33,26 +34,24 @@ public class MovePackagesHandler extends MoveClassesOrPackagesHandlerBase {
   }
 
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {
-    if (tryPackageRearrange(project, elements, targetContainer)) {
-      return;
-    }
-    super.doMove(project, elements, targetContainer, callback);
-  }
-
-  private static boolean tryPackageRearrange(final Project project, final PsiElement[] elements,
-                                             final PsiElement targetContainer) {
     if (targetContainer == null && canMoveOrRearrangePackages(elements) ) {
       PsiDirectory[] directories = new PsiDirectory[elements.length];
       System.arraycopy(elements, 0, directories, 0, directories.length);
       SelectMoveOrRearrangePackageDialog dialog = new SelectMoveOrRearrangePackageDialog(project, directories);
       dialog.show();
-      if (!dialog.isOK()) return true;
+      if (!dialog.isOK()) return;
+
       if (dialog.isPackageRearrageSelected()) {
         MoveClassesOrPackagesImpl.doRearrangePackage(project, directories);
-        return true;
+        return;
+      }
+
+      if (dialog.isMoveDirectory()) {
+        MoveFilesOrDirectoriesUtil.doMove(project, elements, targetContainer, null);
+        return;
       }
     }
-    return false;
+    super.doMove(project, elements, targetContainer, callback);
   }
 
   private static boolean canMoveOrRearrangePackages(PsiElement[] elements) {
@@ -80,6 +79,8 @@ public class MovePackagesHandler extends MoveClassesOrPackagesHandlerBase {
   private static class SelectMoveOrRearrangePackageDialog extends DialogWrapper {
     private JRadioButton myRbMovePackage;
     private JRadioButton myRbRearrangePackage;
+    private JRadioButton myRbMoveDirectory;
+
     private final PsiDirectory[] myDirectories;
 
     public SelectMoveOrRearrangePackageDialog(Project project, PsiDirectory[] directories) {
@@ -135,22 +136,39 @@ public class MovePackagesHandler extends MoveClassesOrPackagesHandlerBase {
       myRbRearrangePackage = new JRadioButton();
       myRbRearrangePackage.setText(rearrangeDescription);
 
+      final String moveDirectoryDescription;
+      if (myDirectories.length > 1) {
+        moveDirectoryDescription = "Move " + myDirectories.length + " directories to another directory";
+      }
+      else {
+        moveDirectoryDescription = "Move directory " + myDirectories[0].getVirtualFile().getPresentableUrl() + " to another directory";
+      }
+      myRbMoveDirectory = new JRadioButton();
+      myRbMoveDirectory.setMnemonic('d');
+      myRbMoveDirectory.setText(moveDirectoryDescription);
+
       ButtonGroup gr = new ButtonGroup();
       gr.add(myRbMovePackage);
       gr.add(myRbRearrangePackage);
+      gr.add(myRbMoveDirectory);
 
-      new RadioUpDownListener(myRbMovePackage, myRbRearrangePackage);
+      new RadioUpDownListener(myRbMovePackage, myRbRearrangePackage, myRbMoveDirectory);
 
       Box box = Box.createVerticalBox();
       box.add(Box.createVerticalStrut(5));
       box.add(myRbMovePackage);
       box.add(myRbRearrangePackage);
+      box.add(myRbMoveDirectory);
       panel.add(box, BorderLayout.CENTER);
       return panel;
     }
 
     public boolean isPackageRearrageSelected() {
       return myRbRearrangePackage.isSelected();
+    }
+
+    public boolean isMoveDirectory() {
+      return myRbMoveDirectory.isSelected();
     }
   }
 }
