@@ -17,13 +17,15 @@ package org.jetbrains.plugins.groovy.lang.editor.actions.moveUpDown;
 
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author ilyas
@@ -33,8 +35,6 @@ abstract class Mover {
   @NotNull
   protected LineRange toMove;
   protected LineRange toMove2; // can be null if the move is illegal
-  protected RangeMarker range1;
-  protected RangeMarker range2;
 
   protected Mover(final boolean isDown) {
     this.isDown = isDown;
@@ -47,20 +47,21 @@ abstract class Mover {
   protected abstract boolean checkAvailable(Editor editor, PsiFile file);
 
   public final void move(Editor editor, final PsiFile file) {
-    if (toMove == null || toMove2 == null) return;
+    if (toMove2 == null) return;
     final Document document = editor.getDocument();
     final int start = getLineStartSafeOffset(document, toMove.startLine);
     final int end = getLineStartSafeOffset(document, toMove.endLine);
-    range1 = document.createRangeMarker(start, end);
-
-    String textToInsert = document.getCharsSequence().subSequence(start, end).toString();
-    if (!StringUtil.endsWithChar(textToInsert, '\n')) textToInsert += '\n';
+    RangeMarker range1 = document.createRangeMarker(start, end);
 
     final int start2 = document.getLineStartOffset(toMove2.startLine);
     final int end2 = getLineStartSafeOffset(document, toMove2.endLine);
-    String textToInsert2 = document.getCharsSequence().subSequence(start2, end2).toString();
-    if (!StringUtil.endsWithChar(textToInsert2, '\n')) textToInsert2 += '\n';
-    range2 = document.createRangeMarker(start2, end2);
+    RangeMarker range2 = document.createRangeMarker(start2, end2);
+
+    String textToInsert = extractTextToInsert(document, start, end, end2 != document.getTextLength());
+
+    String textToInsert2 = extractTextToInsert(document, start2, end2, end != document.getTextLength());
+
+
     if (range1.getStartOffset() < range2.getStartOffset()) {
       range1.setGreedyToLeft(true);
       range1.setGreedyToRight(false);
@@ -96,17 +97,45 @@ abstract class Mover {
       restoreSelection(editor, selectionStart, selectionEnd, start, range2.getStartOffset());
     }
 
-    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
     caretModel.moveToOffset(range2.getStartOffset() + caretRelativePos);
 
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    reindentLines(document, project, range1, range2);
+
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  private static void reindentLines(Document document, Project project, final RangeMarker range1, final RangeMarker range2) {
+    List<Integer> lines2Reformat = new ArrayList<Integer>();
     if (range1.isValid()) {
-      codeStyleManager.adjustLineIndent(file, new TextRange(range1.getStartOffset(), range1.getEndOffset()));
+      lines2Reformat.add(document.getLineNumber(range1.getStartOffset()));
+      lines2Reformat.add(document.getLineNumber(range1.getEndOffset()));
     }
     if (range2.isValid()) {
-      codeStyleManager.adjustLineIndent(file, new TextRange(range2.getStartOffset(), range2.getEndOffset()));
+      lines2Reformat.add(document.getLineNumber(range2.getStartOffset()));
+      lines2Reformat.add(document.getLineNumber(range2.getEndOffset()));
     }
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    Collections.sort(lines2Reformat);
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    for (final Integer lineNumber : lines2Reformat) {
+      if (lineNumber < document.getLineCount()) {
+        codeStyleManager.adjustLineIndent(document, document.getLineStartOffset(lineNumber));
+      }
+    }
+  }
+
+  private static String extractTextToInsert(Document document, int start, int end, final boolean mayEndWithNewline) {
+    String textToInsert = document.getCharsSequence().subSequence(start, end).toString();
+    if (!StringUtil.endsWithChar(textToInsert, '\n')) {
+      if (mayEndWithNewline) {
+        return textToInsert + '\n';
+      }
+    }
+    else {
+      if (!mayEndWithNewline) {
+        return StringUtil.trimEnd(textToInsert, "\n");
+      }
+    }
+    return textToInsert;
   }
 
   protected static int getLineStartSafeOffset(final Document document, int line) {

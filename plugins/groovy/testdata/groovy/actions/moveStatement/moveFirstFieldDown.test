@@ -11,5 +11,5 @@ class FooBar {
 
   def b<caret>ar2
 
-  def bar
+    def bar
 }

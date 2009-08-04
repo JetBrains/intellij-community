@@ -78,10 +78,24 @@ public class StatementMover extends LineMover {
     range.firstElement = statements[0];
     range.lastElement = statements[statements.length - 1];
 
-    if (!checkMovingInsideOutside(file, editor, range)) {
-      toMove2 = null;
-      return true;
+    final PsiElement commonParent = PsiTreeUtil.findCommonParent(range.firstElement, range.lastElement);
+
+    // cannot move in/outside method/class/comment
+    Class<? extends PsiElement>[] classes = new Class[]{GrMethod.class, GrTypeDefinition.class, PsiComment.class, GroovyFile.class};
+    PsiElement guard = PsiTreeUtil.getParentOfType(commonParent, classes);
+    if (!calcInsertOffset(file, editor, range)) return false;
+    final Document document = editor.getDocument();
+    int insertOffset = isDown ? getLineStartSafeOffset(document, toMove2.endLine) - 1 : document.getLineStartOffset(toMove2.startLine);
+
+    PsiElement newGuard = file.getViewProvider().findElementAt(insertOffset);
+    newGuard = PsiTreeUtil.getParentOfType(newGuard, classes);
+    if (newGuard != null && newGuard != guard && isInside(insertOffset, newGuard) != PsiTreeUtil.isAncestor(newGuard, range.lastElement, false)) {
+      if (!PsiTreeUtil.isAncestor(guard, newGuard, false)) {
+        return false;
+      }
+      toMove2 = new LineRange(newGuard, newGuard, document);
     }
+
     return true;
   }
 
@@ -115,17 +129,9 @@ public class StatementMover extends LineMover {
     PsiElement guard = file.getViewProvider().findElementAt(offset);
     if (guard == null) return false;
 
-    // cannot move in/outside method/class/closure/comment
-    Class<? extends PsiElement>[] classes = new Class[]{GrMethod.class, GrTypeDefinition.class, PsiComment.class, GroovyFile.class};
-    guard = PsiTreeUtil.getParentOfType(guard, classes);
-    if (!calcInsertOffset(file, editor, result)) return false;
-    int insertOffset = isDown ? getLineStartSafeOffset(editor.getDocument(), toMove2.endLine) - 1 : editor.getDocument().getLineStartOffset(toMove2.startLine);
 
-    PsiElement newGuard = file.getViewProvider().findElementAt(insertOffset);
-    newGuard = PsiTreeUtil.getParentOfType(newGuard, classes);
-    if (newGuard == guard && isInside(insertOffset, newGuard) == isInside(offset, guard)) return true;
 
-    return false;
+    return true;
   }
 
   private static boolean isInside(final int offset, final PsiElement guard) {
@@ -152,6 +158,10 @@ public class StatementMover extends LineMover {
 
     while (true) {
       final int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));
+      if (offset == file.getTextLength()) {
+        return true;
+      }
+
       PsiElement element = firstNonWhiteElement(offset, file, true, true);
 
       while (element != null && !(element instanceof PsiFile)) {
