@@ -24,6 +24,7 @@ import com.intellij.ui.content.ContentManagerListener;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,10 +34,12 @@ import java.util.Map;
  */
 public abstract class DebuggerLogConsoleManagerBase implements DebuggerLogConsoleManager, Disposable {
   private final Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<AdditionalTabComponent, Content>();
-  private final Map<AdditionalTabComponent, ContentManagerListener> myContentListeners = new HashMap<AdditionalTabComponent, ContentManagerListener>();
+  private final Map<AdditionalTabComponent, ContentManagerListener> myContentListeners =
+    new HashMap<AdditionalTabComponent, ContentManagerListener>();
   private final Project myProject;
   private final LogFilesManager myManager;
   protected ExecutionEnvironment myEnvironment;
+  private final Icon DEFAULT_TAB_COMPONENT_ICON = IconLoader.getIcon("/fileTypes/text.png");
 
   public DebuggerLogConsoleManagerBase(Project project) {
     myProject = project;
@@ -64,7 +67,7 @@ public abstract class DebuggerLogConsoleManagerBase implements DebuggerLogConsol
     myEnvironment = env;
   }
 
-  public void addLogConsole(final String name, final String path, final long skippedContent) {
+  public void addLogConsole(final String name, final String path, final long skippedContent, Icon icon) {
     final Ref<Content> content = new Ref<Content>();
 
     final LogConsoleImpl log = new LogConsoleImpl(myProject, new File(path), skippedContent, name, false) {
@@ -76,10 +79,10 @@ public abstract class DebuggerLogConsoleManagerBase implements DebuggerLogConsol
     log.attachStopLogConsoleTrackingListener(getRunContentDescriptor().getProcessHandler());
     // Attach custom log handlers
     if (myEnvironment != null && myEnvironment.getRunProfile() instanceof RunConfigurationBase) {
-      ((RunConfigurationBase) myEnvironment.getRunProfile()).customizeLogConsole(log);
+      ((RunConfigurationBase)myEnvironment.getRunProfile()).customizeLogConsole(log);
     }
 
-    content.set(addLogComponent(log));
+    content.set(addLogComponent(log, icon));
     final ContentManagerAdapter l = new ContentManagerAdapter() {
       public void selectionChanged(final ContentManagerEvent event) {
         log.activate();
@@ -87,6 +90,10 @@ public abstract class DebuggerLogConsoleManagerBase implements DebuggerLogConsol
     };
     myContentListeners.put(log, l);
     getUi().addListener(l, this);
+  }
+
+  public void addLogConsole(String name, String path, long skippedContent) {
+    addLogConsole(name, path, skippedContent, DEFAULT_TAB_COMPONENT_ICON);
   }
 
   public void removeLogConsole(final String path) {
@@ -110,10 +117,14 @@ public abstract class DebuggerLogConsoleManagerBase implements DebuggerLogConsol
     addLogComponent(tabComponent);
   }
 
-  private Content addLogComponent(final AdditionalTabComponent tabComponent) {
+  private void addLogComponent(AdditionalTabComponent component) {
+    addLogComponent(component, DEFAULT_TAB_COMPONENT_ICON);
+  }
+
+  private Content addLogComponent(final AdditionalTabComponent tabComponent, Icon icon) {
     @NonNls final String id = "Log-" + tabComponent.getTabTitle();
-    final Content logContent = getUi().createContent(id, (ComponentWithActions)tabComponent, tabComponent.getTabTitle(),
-                                                  IconLoader.getIcon("/fileTypes/text.png"), tabComponent.getPreferredFocusableComponent());
+    final Content logContent = getUi().createContent(id, (ComponentWithActions)tabComponent, tabComponent.getTabTitle(), icon,
+                                                     tabComponent.getPreferredFocusableComponent());
     logContent.setCloseable(false);
     logContent.setDescription(tabComponent.getTooltip());
     myAdditionalContent.put(tabComponent, logContent);
