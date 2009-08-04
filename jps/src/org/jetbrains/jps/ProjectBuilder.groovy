@@ -94,10 +94,12 @@ class ProjectBuilder {
   }
 
   def compile(ModuleChunk chunk, String dst, boolean tests) {
+    List sources = validatePaths(tests ? chunk.testRoots : chunk.sourceRoots)
+
+    if (sources.isEmpty()) return
+    
     def ant = binding.ant
     ant.mkdir dir: dst
-
-    List sources = validatePaths(tests ? chunk.testRoots : chunk.sourceRoots)
 
     def state = new ModuleBuildState
     (
@@ -159,12 +161,33 @@ class ProjectBuilder {
   }
 
   private def chunkOutput(ModuleChunk chunk) {
-    if (outputs[chunk] == null) binding.project.error("Module ${chunk.name} haven't yet been built");
+    String currentOut = outputs[chunk]
+    if (currentOut == null) binding.project.error("Module ${chunk.name} haven't yet been built");
+
+    outputs[chunk] = zipIfNecessary(currentOut, chunk)
+
     return outputs[chunk]
+  }
+
+  private String zipIfNecessary(String currentOut, ModuleChunk chunk) {
+    def currentOutAsFile = new File(currentOut)
+
+    if (currentOutAsFile.isDirectory() && currentOutAsFile.list().length > 0) {
+      def zipFolder = new File(new File(currentOut).getParentFile(), "zips")
+      zipFolder.mkdirs();
+
+      File zipFile = new File(zipFolder, "${currentOutAsFile.getName()}.zip")
+      binding.ant.zip(destfile: zipFile.getAbsolutePath(), basedir: currentOut, level: "0")
+      zipFile.getAbsolutePath()
+    }
+    else {
+      currentOut
+    }
   }
 
   private String chunkTestOutput(ModuleChunk chunk) {
     if (testOutputs[chunk] == null) binding.project.error("Tests for module ${chunk.name} haven't yet been built");
+    testOutputs[chunk] = zipIfNecessary(testOutputs[chunk], chunk)
     testOutputs[chunk]
   }
 
