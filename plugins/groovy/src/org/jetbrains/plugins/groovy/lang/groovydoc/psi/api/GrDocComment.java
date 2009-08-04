@@ -16,9 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
 
 import com.intellij.psi.PsiComment;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
  */
 public interface GrDocComment extends PsiComment, GroovyDocPsiElement{
+
+  @Nullable
+  GrDocCommentOwner getOwner();
+
 }

@@ -16,11 +16,11 @@
 package org.jetbrains.plugins.groovy.lang.actions.updown;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManager;
@@ -56,8 +56,17 @@ public class GroovyMoveStatementTest extends JavaCodeInsightFixtureTestCase {
   public void testTryst1() throws Throwable { doTest(true); }
   public void testTryst2() throws Throwable { doTest(true); }
 
+  public void testStatementOutsideClosure() throws Throwable { doTest(true); }
+  public void testStatementInsideClosure() throws Throwable { doTest(false); }
+
+  public void testMoveGroovydocWithMethod() throws Throwable { doTest(true); }
+  public void testMoveMethodWithGroovydoc() throws Throwable { doTest(true); }
+  
+  public void testMoveSecondFieldUp() throws Throwable { doTest(false); }
+  public void testMoveFirstFieldDown() throws Throwable { doTest(true); }
+
   public void doTest(boolean down) throws Exception {
-    final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + (down ? "down/" : "up/") + getTestName(true) + ".test");
+    final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + getTestName(true) + ".test");
 
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
 

@@ -15,20 +15,19 @@
  */
 package org.jetbrains.plugins.groovy.lang.formatter;
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.grails.fileType.GspFileType;
 
 /**
  * @author peter
@@ -59,13 +58,6 @@ public abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTes
     gr.INDENT_SIZE = 2;
     gr.CONTINUATION_INDENT_SIZE = 4;
     gr.TAB_SIZE = 2;
-    CodeStyleSettings.IndentOptions gsp = myTempSettings.getIndentOptions(GspFileType.GSP_FILE_TYPE);
-    Assert.assertNotSame(gsp, settings.OTHER_INDENT_OPTIONS);
-
-    gsp.INDENT_SIZE = 2;
-    gsp.CONTINUATION_INDENT_SIZE = 4;
-    gsp.TAB_SIZE = 2;
-
     myTempSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
 
     CodeStyleSettingsManager.getInstance(project).setTemporarySettings(myTempSettings);
@@ -76,9 +68,6 @@ public abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTes
     myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).INDENT_SIZE = 200;
     myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).CONTINUATION_INDENT_SIZE = 200;
     myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).TAB_SIZE = 200;
-    myTempSettings.getIndentOptions(GspFileType.GSP_FILE_TYPE).INDENT_SIZE = 200;
-    myTempSettings.getIndentOptions(GspFileType.GSP_FILE_TYPE).CONTINUATION_INDENT_SIZE = 200;
-    myTempSettings.getIndentOptions(GspFileType.GSP_FILE_TYPE).TAB_SIZE = 200;
 
     myTempSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
     manager.dropTemporarySettings();

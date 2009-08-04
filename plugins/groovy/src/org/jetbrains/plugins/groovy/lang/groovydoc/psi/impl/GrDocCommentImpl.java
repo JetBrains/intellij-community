@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.tree.LazyParseablePsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
@@ -52,5 +53,9 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GroovyD
 
       child = child.getNextSibling();
     }
+  }
+
+  public GrDocCommentOwner getOwner() {
+    return GrDocCommentUtil.findDocOwner(this);
   }
 }

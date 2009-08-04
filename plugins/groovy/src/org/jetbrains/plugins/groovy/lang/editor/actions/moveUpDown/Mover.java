@@ -17,11 +17,12 @@ package org.jetbrains.plugins.groovy.lang.editor.actions.moveUpDown;
 
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -45,17 +46,8 @@ abstract class Mover {
    */
   protected abstract boolean checkAvailable(Editor editor, PsiFile file);
 
-  protected void beforeMove(final Editor editor) {
-
-  }
-
-  protected void afterMove(final Editor editor, final PsiFile file) {
-
-  }
-
   public final void move(Editor editor, final PsiFile file) {
     if (toMove == null || toMove2 == null) return;
-    beforeMove(editor);
     final Document document = editor.getDocument();
     final int start = getLineStartSafeOffset(document, toMove.startLine);
     final int end = getLineStartSafeOffset(document, toMove.endLine);
@@ -104,22 +96,22 @@ abstract class Mover {
       restoreSelection(editor, selectionStart, selectionEnd, start, range2.getStartOffset());
     }
 
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
     caretModel.moveToOffset(range2.getStartOffset() + caretRelativePos);
-    afterMove(editor, file);
+
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    if (range1.isValid()) {
+      codeStyleManager.adjustLineIndent(file, new TextRange(range1.getStartOffset(), range1.getEndOffset()));
+    }
+    if (range2.isValid()) {
+      codeStyleManager.adjustLineIndent(file, new TextRange(range2.getStartOffset(), range2.getEndOffset()));
+    }
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
   protected static int getLineStartSafeOffset(final Document document, int line) {
     if (line == document.getLineCount()) return document.getTextLength();
     return document.getLineStartOffset(line);
-  }
-
-  private static boolean lineContainsNonSpaces(final Document document, final int line) {
-    int lineStartOffset = document.getLineStartOffset(line);
-    int lineEndOffset = document.getLineEndOffset(line);
-    @NonNls String text = document.getCharsSequence().subSequence(lineStartOffset, lineEndOffset).toString();
-    return text.trim().length() != 0;
   }
 
   private static void restoreSelection(final Editor editor, final int selectionStart, final int selectionEnd, final int moveOffset, int insOffset) {

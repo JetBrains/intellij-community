@@ -15,7 +15,6 @@
 
 package org.jetbrains.plugins.groovy.lang.editor.actions.moveUpDown;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
@@ -23,15 +22,18 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -44,18 +46,8 @@ import java.util.List;
  */
 public class DeclarationMover extends LineMover {
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.editor.actions.moveUpDown.DeclarationMover");
-
   public DeclarationMover(final boolean isDown) {
     super(isDown);
-  }
-
-  protected void beforeMove(final Editor editor) {
-    super.beforeMove(editor);
-  }
-
-  protected void afterMove(final Editor editor, final PsiFile file) {
-    super.afterMove(editor, file);
   }
 
   protected boolean checkAvailable(Editor editor, PsiFile file) {
@@ -70,15 +62,17 @@ public class DeclarationMover extends LineMover {
 
     PsiElement first = psiRange.getFirst();
     first = PsiUtil.isNewLine(first) ? first.getNextSibling() : first;
-    PsiElement firstMember = PsiTreeUtil.getParentOfType(first, GrMember.class, false);
-    if (firstMember == null) firstMember = PsiTreeUtil.getParentOfType(first, GrTypeDefinition.class, false);
+    PsiElement firstMember = findMemberParent(first);
+    if (firstMember == null) {
+      return false;
+    }
 
     PsiElement second = psiRange.getSecond();
     second = PsiUtil.isNewLine(second) ? second.getPrevSibling() : second;
-    PsiElement lastMember = PsiTreeUtil.getParentOfType(second, GrMember.class, false);
-    if (lastMember == null) lastMember = PsiTreeUtil.getParentOfType(first, GrTypeDefinition.class, false);
-
-    if (firstMember == null || lastMember == null) return false;
+    PsiElement lastMember = findMemberParent(second);
+    if (lastMember == null) {
+      return false;
+    }
 
     LineRange range;
     if (firstMember == lastMember) {
@@ -121,12 +115,44 @@ public class DeclarationMover extends LineMover {
     return true;
   }
 
+  @Nullable
+  private static PsiElement findMemberParent(PsiElement first) {
+    if (first instanceof GrMembersDeclaration) {
+      final GrMember[] members = ((GrMembersDeclaration)first).getMembers();
+      if (members.length > 0) {
+        return first;
+      }
+    }
+
+    PsiElement member = PsiTreeUtil.getParentOfType(first, GrMember.class, false);
+    if (member == null) {
+      final GrDocComment comment = PsiTreeUtil.getParentOfType(first, GrDocComment.class, false);
+      if (comment != null) {
+        member = comment.getOwner();
+      }
+    }
+    if (member == null) {
+      member = PsiTreeUtil.getParentOfType(first, GrTypeDefinition.class, false);
+    }
+    return member;
+  }
+
+  @Nullable
   private static LineRange memberRange(@NotNull PsiElement member, Editor editor, LineRange lineRange) {
     final TextRange textRange = member.getTextRange();
     if (editor.getDocument().getTextLength() < textRange.getEndOffset()) return null;
-    final int startLine = editor.offsetToLogicalPosition(textRange.getStartOffset()).line;
+    int startLine = editor.offsetToLogicalPosition(textRange.getStartOffset()).line;
     final int endLine = editor.offsetToLogicalPosition(textRange.getEndOffset()).line + 1;
     if (!isInsideDeclaration(member, startLine, endLine, lineRange, editor)) return null;
+
+    if (member instanceof GrDocCommentOwner) {
+      final GrDocComment comment = ((GrDocCommentOwner)member).getGrDocComment();
+      if (comment != null) {
+        final int docStart = editor.offsetToLogicalPosition(comment.getTextRange().getStartOffset()).line;
+        return new LineRange(docStart, endLine);
+      }
+    }
+
 
     return new LineRange(startLine, endLine);
   }
@@ -142,8 +168,13 @@ public class DeclarationMover extends LineMover {
       return true;
     }
     List<PsiElement> memberSuspects = new ArrayList<PsiElement>();
-    GrModifierList modifierList = member instanceof GrMember ? ((GrMember) member).getModifierList() : null;
-    if (modifierList != null) memberSuspects.add(modifierList);
+    if (member instanceof GrMember) {
+      ContainerUtil.addIfNotNull(((GrMember) member).getModifierList(), memberSuspects);
+    }
+    if (member instanceof GrDocCommentOwner) {
+      ContainerUtil.addIfNotNull(((GrDocCommentOwner)member).getGrDocComment(), memberSuspects);
+    }
+
     if (member instanceof GrMethod) {
       final GrMethod method = (GrMethod) member;
       PsiElement nameIdentifier = method.getNameIdentifierGroovy();

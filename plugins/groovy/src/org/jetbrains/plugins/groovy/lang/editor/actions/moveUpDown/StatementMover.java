@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -53,10 +54,6 @@ public class StatementMover extends LineMover {
     super(down);
   }
 
-  protected void beforeMove(final Editor editor) {
-    super.beforeMove(editor);
-  }
-
   protected boolean checkAvailable(Editor editor, PsiFile file) {
     final boolean available = super.checkAvailable(editor, file);
     if (!available) return false;
@@ -69,6 +66,15 @@ public class StatementMover extends LineMover {
     final int endOffset = editor.logicalPositionToOffset(new LogicalPosition(range.endLine, 0));
     final PsiElement[] statements = GroovyRefactoringUtil.findStatementsInRange(file, startOffset, endOffset, false);
     if (statements.length == 0) return false;
+    for (final PsiElement statement : statements) {
+      if (statement instanceof GrMembersDeclaration) {
+        final GrMembersDeclaration declaration = (GrMembersDeclaration)statement;
+        if (declaration.getMembers().length > 0) {
+          return false;
+        }
+      }
+    }
+
     range.firstElement = statements[0];
     range.lastElement = statements[statements.length - 1];
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -85,7 +86,7 @@ class LineMover extends Mover {
   }
 
   static PsiElement firstNonWhiteElement(PsiElement element, final boolean lookRight, boolean withNewlines) {
-    if (element instanceof PsiWhiteSpace || PsiUtil.isNewLine(element) && withNewlines) {
+    while (element instanceof PsiWhiteSpace || StringUtil.isEmptyOrSpaces(element.getText()) || PsiUtil.isNewLine(element) && withNewlines) {
       element = lookRight ? element.getNextSibling() : element.getPrevSibling();
     }
     return element;

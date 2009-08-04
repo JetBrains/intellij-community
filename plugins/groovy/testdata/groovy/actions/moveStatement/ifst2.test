@@ -9,11 +9,11 @@ bbbbb
 }
 -----
 def boo() {
-if <caret>(true){
-  boo
-} else {
-  baa
-}
-aaaaa
-bbbbb
+  if <caret>(true){
+    boo
+  } else {
+    baa
+  }
+  aaaaa
+  bbbbb
 }
