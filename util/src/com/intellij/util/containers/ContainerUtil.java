@@ -445,6 +445,12 @@ public class ContainerUtil {
     }
   }
 
+  public static <K, V> void putIfNotNull(final K key, final V value, final Map<K, V> result) {
+    if (value != null) {
+      result.put(key, value);
+    }
+  }
+
   public static <T> void add(final T element, final Collection<T> result, final Disposable parentDisposable) {
     if (result.add(element)) {
       Disposer.register(parentDisposable, new Disposable() {
