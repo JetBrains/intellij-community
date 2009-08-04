@@ -221,7 +221,7 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   protected boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
-    return getTreeStructure().getRootElement() == nodeDescriptor.getElement();
+    return getTreeStructure().getRootElement() == getTreeStructureElement(nodeDescriptor);
   }
 
   protected boolean isAlwaysShowPlus(final NodeDescriptor descriptor) {
