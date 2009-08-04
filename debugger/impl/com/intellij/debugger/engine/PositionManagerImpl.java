@@ -278,6 +278,7 @@ public class PositionManagerImpl implements PositionManager {
     return null;
   }
 
+  //don't use JavaRecursiveElementWalkingVisitor because getNextSibling() works slowly for compiled elements 
   private class MethodFinder extends JavaRecursiveElementVisitor {
     private final String myClassName;
     private PsiClass myCompiledClass;
