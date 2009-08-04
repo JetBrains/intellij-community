@@ -574,10 +574,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     return bundle;
   }
 
-  /**
+  /**\
    * @param element description of link
    * @param pluginId
-   * @param primary
+   * @param secondary
    */
   private void processAddToGroupNode(AnAction action, Element element, final PluginId pluginId, boolean secondary) {
     // Real subclasses of AnAction should not be here
@@ -591,10 +591,73 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return;
     }
-    String groupId = element.getAttributeValue(GROUPID_ATTR_NAME);
+
+    // parent group
+    final AnAction parentGroup = getParentGroup(element.getAttributeValue(GROUPID_ATTR_NAME), actionName, pluginId);
+    if (parentGroup == null) {
+      return;
+    }
+
+    // anchor attribute
+    final Anchor anchor = parseAnchor(element.getAttributeValue(ANCHOR_ELEMENT_NAME),
+                                      actionName, pluginId);
+    if (anchor == null) {
+      return;
+    }
+
+    final String relativeToActionId = element.getAttributeValue(RELATIVE_TO_ACTION_ATTR_NAME);
+    if (!checkRelativeToAction(relativeToActionId, anchor, actionName, pluginId)) {
+      return;
+    }
+    final DefaultActionGroup group = (DefaultActionGroup)parentGroup;
+    group.addAction(action, new Constraints(anchor, relativeToActionId), this).setAsSecondary(secondary);
+  }
+
+  public boolean checkRelativeToAction(final String relativeToActionId,
+                                       @NotNull final Anchor anchor,
+                                       @NotNull final String actionName,
+                                       @Nullable final PluginId pluginId) {
+    if ((Anchor.BEFORE == anchor || Anchor.AFTER == anchor) && relativeToActionId == null) {
+      reportActionError(pluginId, actionName + ": \"relative-to-action\" cannot be null if anchor is \"after\" or \"before\"");
+      return false;
+    }
+    return true;
+  }
+
+  @Nullable
+  public Anchor parseAnchor(final String anchorStr,
+                            @Nullable final String actionName,
+                            @Nullable final PluginId pluginId) {
+    if (anchorStr == null) {
+      reportActionError(pluginId, actionName + ": attribute \"anchor\" should be defined");
+      return null;
+    }
+
+    if (FIRST.equalsIgnoreCase(anchorStr)) {
+      return Anchor.FIRST;
+    }
+    else if (LAST.equalsIgnoreCase(anchorStr)) {
+      return Anchor.LAST;
+    }
+    else if (BEFORE.equalsIgnoreCase(anchorStr)) {
+      return Anchor.BEFORE;
+    }
+    else if (AFTER.equalsIgnoreCase(anchorStr)) {
+      return Anchor.AFTER;
+    }
+    else {
+      reportActionError(pluginId, actionName + ": anchor should be one of the following constants: \"first\", \"last\", \"before\" or \"after\"");
+      return null;
+    }
+  }
+
+  @Nullable
+  public AnAction getParentGroup(final String groupId,
+                                 @Nullable final String actionName,
+                                 @Nullable final PluginId pluginId) {
     if (groupId == null || groupId.length() == 0) {
       reportActionError(pluginId, actionName + ": attribute \"group-id\" should be defined");
-      return;
+      return null;
     }
     AnAction parentGroup = getActionImpl(groupId, true);
     if (parentGroup == null) {
@@ -603,38 +666,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
     if (!(parentGroup instanceof DefaultActionGroup)) {
       reportActionError(pluginId, actionName + ": action with id \"" + groupId + "\" should be instance of " + DefaultActionGroup.class.getName() +
-      " but was " + parentGroup.getClass());
-      return;
+                                  " but was " + parentGroup.getClass());
+      return null;
     }
-    String anchorStr = element.getAttributeValue(ANCHOR_ELEMENT_NAME);
-    if (anchorStr == null) {
-      reportActionError(pluginId, actionName + ": attribute \"anchor\" should be defined");
-      return;
-    }
-    Anchor anchor;
-    if (FIRST.equalsIgnoreCase(anchorStr)) {
-      anchor = Anchor.FIRST;
-    }
-    else if (LAST.equalsIgnoreCase(anchorStr)) {
-      anchor = Anchor.LAST;
-    }
-    else if (BEFORE.equalsIgnoreCase(anchorStr)) {
-      anchor = Anchor.BEFORE;
-    }
-    else if (AFTER.equalsIgnoreCase(anchorStr)) {
-      anchor = Anchor.AFTER;
-    }
-    else {
-      reportActionError(pluginId, actionName + ": anchor should be one of the following constants: \"first\", \"last\", \"before\" or \"after\"");
-      return;
-    }
-    String relativeToActionId = element.getAttributeValue(RELATIVE_TO_ACTION_ATTR_NAME);
-    if ((Anchor.BEFORE == anchor || Anchor.AFTER == anchor) && relativeToActionId == null) {
-      reportActionError(pluginId, actionName + ": \"relative-to-action\" cannot be null if anchor is \"after\" or \"before\"");
-      return;
-    }
-    final DefaultActionGroup group = (DefaultActionGroup)parentGroup;
-    group.addAction(action, new Constraints(anchor, relativeToActionId), this).setAsSecondary(secondary);
+    return parentGroup;
   }
 
   /**
