@@ -52,7 +52,7 @@ public class MoveClassesOrPackagesImpl {
 
     final String initialTargetPackageName = getInitialTargetPackageName(initialTargetElement, psiElements);
     final PsiDirectory initialTargetDirectory = getInitialTargetDirectory(initialTargetElement, psiElements);
-    final boolean isTargetDirectoryFixed = getContainerDirectory(initialTargetElement) != null;
+    final boolean isTargetDirectoryFixed = initialTargetDirectory == null;
 
     boolean searchTextOccurences = false;
     for (int i = 0; i < psiElements.length && !searchTextOccurences; i++) {
@@ -269,7 +269,8 @@ public class MoveClassesOrPackagesImpl {
   @Nullable
   public static PsiDirectory getContainerDirectory(final PsiElement psiElement) {
     if (psiElement instanceof PsiPackage) {
-      return null; //??
+      final PsiDirectory[] directories = ((PsiPackage)psiElement).getDirectories();
+      return directories.length == 1 ? directories[0] : null; //??
     }
     if (psiElement instanceof PsiDirectory) {
       return (PsiDirectory)psiElement;
