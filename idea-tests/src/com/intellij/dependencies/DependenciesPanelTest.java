@@ -32,7 +32,7 @@
 package com.intellij.dependencies;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.idea.IdeaTestUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.DependencyUISettings;

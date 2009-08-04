@@ -1,7 +1,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.idea.IdeaTestUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.VirtualFile;

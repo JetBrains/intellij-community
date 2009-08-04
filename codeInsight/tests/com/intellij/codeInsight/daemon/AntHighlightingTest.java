@@ -12,7 +12,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.idea.IdeaTestUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.lang.ant.validation.AntDuplicateTargetsInspection;
 import com.intellij.openapi.vfs.VirtualFile;
 

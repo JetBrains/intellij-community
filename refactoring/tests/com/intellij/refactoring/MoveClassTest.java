@@ -1,7 +1,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.idea.IdeaTestUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
@@ -73,7 +73,7 @@ public class MoveClassTest extends CodeInsightTestCase {
     String rootAfter = root + "/after";
     VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
     myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
-    IdeaTestUtil.assertDirectoriesEqual(rootDir2, rootDir, MultiFileTestCase.CVS_FILE_FILTER);
+    IdeaTestUtil.assertDirectoriesEqual(rootDir2, rootDir, IdeaTestUtil.CVS_FILE_FILTER);
   }
 
   private void performAction(String[] classNames, String newPackageName) throws Exception{

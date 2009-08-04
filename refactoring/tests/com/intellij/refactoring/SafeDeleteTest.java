@@ -1,7 +1,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.idea.IdeaTestUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -54,7 +54,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         SafeDeleteTest.this.performAction(qClassName);
-        IdeaTestUtil.assertDirectoriesEqual(rootAfter, myRootBefore, CVS_FILE_FILTER);
+        IdeaTestUtil.assertDirectoriesEqual(rootAfter, myRootBefore, IdeaTestUtil.CVS_FILE_FILTER);
       }
     });
   }

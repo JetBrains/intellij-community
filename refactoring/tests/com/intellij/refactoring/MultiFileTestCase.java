@@ -1,24 +1,21 @@
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.idea.IdeaTestUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-import java.io.FilenameFilter;
 
 /**
  * @author dsl
  */
 public abstract class MultiFileTestCase extends CodeInsightTestCase {
-  public static final MyVirtualFileFilter CVS_FILE_FILTER = new MyVirtualFileFilter();
 
   protected boolean myDoCompare = true;
 
@@ -39,7 +36,7 @@ public abstract class MultiFileTestCase extends CodeInsightTestCase {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     if (myDoCompare) {
-      IdeaTestUtil.assertDirectoriesEqual(rootDir2, rootDir, CVS_FILE_FILTER);
+      IdeaTestUtil.assertDirectoriesEqual(rootDir2, rootDir, IdeaTestUtil.CVS_FILE_FILTER);
     }
   }
 
@@ -52,16 +49,6 @@ public abstract class MultiFileTestCase extends CodeInsightTestCase {
 
   protected interface PerformAction {
     void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception;
-  }
-
-  public static class MyVirtualFileFilter implements VirtualFileFilter, FilenameFilter{
-    public boolean accept(VirtualFile file) {
-      return !file.isDirectory() || !"CVS".equals(file.getName());
-    }
-
-    public boolean accept(File dir, String name) {
-      return name.indexOf("CVS") == -1;
-    }
   }
 
 }
