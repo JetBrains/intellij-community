@@ -98,9 +98,17 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
       myNameLabel.setText(text);
     }
     else {
-      myNameLabel.setText(psiElements[0] instanceof PsiFile ?
+      boolean isFile = true;
+      boolean isDirectory = true;
+      for (PsiElement psiElement : psiElements) {
+        isFile &= psiElement instanceof PsiFile;
+        isDirectory &= psiElement instanceof PsiDirectory;
+      }
+      myNameLabel.setText(isFile ?
                           RefactoringBundle.message("move.specified.files") :
-                          RefactoringBundle.message("move.specified.directories"));
+                          isDirectory ?
+                          RefactoringBundle.message("move.specified.directories") :
+                          RefactoringBundle.message("move.specified.elements"));
     }
     myTargetDirectoryField.setText(initialTargetDirectory == null ? "" : initialTargetDirectory.getVirtualFile().getPresentableUrl());
 
