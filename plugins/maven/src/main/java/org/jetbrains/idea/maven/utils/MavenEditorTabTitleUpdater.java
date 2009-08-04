@@ -18,7 +18,9 @@ package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
@@ -35,8 +37,8 @@ public class MavenEditorTabTitleUpdater extends SimpleProjectComponent {
 
     MavenProjectsManager.getInstance(myProject).addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
       @Override
-      public void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted) {
-        updateTabName(updated);
+      public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
+        updateTabName(MavenUtil.collectFirsts(updated));
       }
     });
   }

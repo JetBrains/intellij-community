@@ -1,9 +1,11 @@
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.Arrays;
@@ -570,7 +572,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     try {
       myTree.addListener(new MavenProjectsTree.ListenerAdapter() {
         @Override
-        public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+        public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                    org.apache.maven.project.MavenProject nativeMavenProject) {
           nativeProject[0] = nativeMavenProject;
         }
       });
@@ -617,7 +620,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
       final org.apache.maven.project.MavenProject[] nativeProject = new org.apache.maven.project.MavenProject[1];
       myTree.addListener(new MavenProjectsTree.ListenerAdapter() {
         @Override
-        public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+        public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, org.apache.maven.project.MavenProject nativeMavenProject) {
           nativeProject[0] = nativeMavenProject;
         }
       });
@@ -1836,8 +1839,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      "</profiles>");
 
     createProfilesXml("<profile>" +
-                              "  <id>two</id>" +
-                              "</profile>");
+                      "  <id>two</id>" +
+                      "</profile>");
 
     updateSettingsXml("<profiles>" +
                       "  <profile>" +
@@ -1860,8 +1863,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      "</profiles>");
 
     createProfilesXml("<profile>" +
-                              "  <id>two</id>" +
-                              "</profile>");
+                      "  <id>two</id>" +
+                      "</profile>");
 
     updateSettingsXml("<profiles>" +
                       "  <profile>" +
@@ -1897,8 +1900,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      "</profiles>");
 
     createProfilesXml("<profile>" +
-                              "  <id>two</id>" +
-                              "</profile>");
+                      "  <id>two</id>" +
+                      "</profile>");
 
     updateAll(Arrays.asList("one", "two"), myProjectPom);
     assertUnorderedElementsAreEqual(myTree.getActiveProfiles(), "one", "two");
@@ -1915,8 +1918,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertUnorderedElementsAreEqual(myTree.getActiveProfiles());
 
     createProfilesXml("<profile>" +
-                              "  <id>two</id>" +
-                              "</profile>");
+                      "  <id>two</id>" +
+                      "</profile>");
     update(myProjectPom);
     assertUnorderedElementsAreEqual(myTree.getActiveProfiles(), "two");
 
@@ -2016,8 +2019,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     String log = "";
 
     @Override
-    public void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted) {
-      append(updated, "updated:");
+    public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
+      append(MavenUtil.collectFirsts(updated), "updated:");
       append(deleted, "deleted:");
     }
 
@@ -2035,8 +2038,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     }
 
     @Override
-    public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
-      log += "resolved: " + project.getMavenId().getArtifactId() + " ";
+    public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, org.apache.maven.project.MavenProject nativeMavenProject) {
+      log += "resolved: " + projectWithChanges.first.getMavenId().getArtifactId() + " ";
     }
 
     @Override
@@ -2045,8 +2048,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     }
 
     @Override
-    public void foldersResolved(MavenProject project) {
-      log += "folders: " + project.getMavenId().getArtifactId() + " ";
+    public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+      log += "folders: " + projectWithChanges.first.getMavenId().getArtifactId() + " ";
     }
   }
 }

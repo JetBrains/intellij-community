@@ -2,6 +2,7 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.RuntimeInterruptedException;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -333,7 +334,7 @@ public class MavenProjectsTree {
       List<String> restoredProfiles = new ArrayList<String>(myTemporarilyRemovedProfiles);
       restoredProfiles.retainAll(availableProfiles);
       myTemporarilyRemovedProfiles.removeAll(restoredProfiles);
-      
+
       myActiveProfiles.removeAll(removedProfiles);
       myActiveProfiles.addAll(restoredProfiles);
     }
@@ -453,6 +454,7 @@ public class MavenProjectsTree {
     MavenProjectTimestamp timestamp = calculateTimestamp(mavenProject, activeProfiles, generalSettings);
     boolean isChanged = force || !timestamp.equals(myTimestamps.get(mavenProject));
 
+    MavenProjectChanges changes = new MavenProjectChanges();
     if (isChanged) {
       writeLock();
       try {
@@ -464,7 +466,7 @@ public class MavenProjectsTree {
         writeUnlock();
       }
       MavenId oldParentId = mavenProject.getParentId();
-      mavenProject.read(generalSettings, activeProfiles, reader, myProjectLocator);
+      changes = mavenProject.read(generalSettings, activeProfiles, reader, myProjectLocator);
 
       writeLock();
       try {
@@ -491,7 +493,7 @@ public class MavenProjectsTree {
     }
 
     if (isChanged || reconnected) {
-      updateContext.update(mavenProject);
+      updateContext.update(mavenProject, changes);
     }
 
     List<VirtualFile> existingModuleFiles = mavenProject.getExistingModuleFiles();
@@ -516,7 +518,7 @@ public class MavenProjectsTree {
     }
 
     for (MavenProject each : modulesToBecomeRoots) {
-      if (reconnect(null, each)) updateContext.update(each);
+      if (reconnect(null, each)) updateContext.update(each, new MavenProjectChanges());
     }
 
     for (VirtualFile each : existingModuleFiles) {
@@ -548,7 +550,7 @@ public class MavenProjectsTree {
       }
       else {
         if (reconnect(mavenProject, module)) {
-          updateContext.update(module);
+          updateContext.update(module, new MavenProjectChanges());
         }
       }
     }
@@ -658,7 +660,7 @@ public class MavenProjectsTree {
     for (MavenProject each : getModules(project)) {
       if (isManagedFile(each.getPath())) {
         if (reconnect(null, each)) {
-          updateContext.update(each);
+          updateContext.update(each, new MavenProjectChanges());
         }
       }
       else {
@@ -919,12 +921,14 @@ public class MavenProjectsTree {
       process.checkCanceled();
       process.setText(ProjectBundle.message("maven.resolving.pom", FileUtil.toSystemDependentName(mavenProject.getPath())));
       process.setText2("");
-      org.apache.maven.project.MavenProject nativeProject = mavenProject.resolve(generalSettings,
-                                                                                 embedder,
-                                                                                 new MavenProjectReader(),
-                                                                                 myProjectLocator,
-                                                                                 process);
-      fireProjectResolved(mavenProject, nativeProject);
+      Pair<MavenProjectChanges, org.apache.maven.project.MavenProject> resolveResult
+        = mavenProject.resolve(generalSettings,
+                               embedder,
+                               new MavenProjectReader(),
+                               myProjectLocator,
+                               process);
+
+      fireProjectResolved(Pair.create(mavenProject, resolveResult.first), resolveResult.second);
     }
     finally {
       embeddersManager.release(embedder);
@@ -967,8 +971,13 @@ public class MavenProjectsTree {
       process.setText(ProjectBundle.message("maven.updating.folders.pom", FileUtil.toSystemDependentName(mavenProject.getPath())));
       process.setText2("");
 
-      if (mavenProject.resolveFolders(embedder, importingSettings, new MavenProjectReader(), console, process)) {
-        fireFoldersResolved(mavenProject);
+      Pair<Boolean, MavenProjectChanges> resolveResult = mavenProject.resolveFolders(embedder,
+                                                                                     importingSettings,
+                                                                                     new MavenProjectReader(),
+                                                                                     console,
+                                                                                     process);
+      if (resolveResult.first) {
+        fireFoldersResolved(Pair.create(mavenProject, resolveResult.second));
       }
     }
     finally {
@@ -1076,15 +1085,16 @@ public class MavenProjectsTree {
     }
   }
 
-  private void fireProjectsUpdated(List<MavenProject> updated, List<MavenProject> deleted) {
+  private void fireProjectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
     for (Listener each : myListeners) {
       each.projectsUpdated(updated, deleted);
     }
   }
 
-  private void fireProjectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+  private void fireProjectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                   org.apache.maven.project.MavenProject nativeMavenProject) {
     for (Listener each : myListeners) {
-      each.projectResolved(project, nativeMavenProject);
+      each.projectResolved(projectWithChanges, nativeMavenProject);
     }
   }
 
@@ -1094,9 +1104,9 @@ public class MavenProjectsTree {
     }
   }
 
-  private void fireFoldersResolved(MavenProject project) {
+  private void fireFoldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
     for (Listener each : myListeners) {
-      each.foldersResolved(project);
+      each.foldersResolved(projectWithChanges);
     }
   }
 
@@ -1107,16 +1117,18 @@ public class MavenProjectsTree {
   }
 
   private class UpdateContext {
-    public final Set<MavenProject> updatedProjects = new LinkedHashSet<MavenProject>();
+    public final Map<MavenProject, MavenProjectChanges> updatedProjectsWithChanges = new LinkedHashMap<MavenProject, MavenProjectChanges>();
     public final Set<MavenProject> deletedProjects = new LinkedHashSet<MavenProject>();
 
-    public void update(MavenProject project) {
+    public void update(MavenProject project, MavenProjectChanges changes) {
       deletedProjects.remove(project);
-      updatedProjects.add(project);
+      MavenProjectChanges oldChanges = updatedProjectsWithChanges.get(project);
+      if (oldChanges != null) changes.add(oldChanges);
+      updatedProjectsWithChanges.put(project, changes);
     }
 
     public void deleted(MavenProject project) {
-      updatedProjects.remove(project);
+      updatedProjectsWithChanges.remove(project);
       deletedProjects.add(project);
     }
 
@@ -1127,9 +1139,13 @@ public class MavenProjectsTree {
     }
 
     public void fireUpdatedIfNecessary() {
-      if (updatedProjects.isEmpty() && deletedProjects.isEmpty()) return;
-      fireProjectsUpdated(updatedProjects.isEmpty() ? Collections.EMPTY_LIST : new ArrayList<MavenProject>(updatedProjects),
-                          deletedProjects.isEmpty() ? Collections.EMPTY_LIST : new ArrayList<MavenProject>(deletedProjects));
+      if (updatedProjectsWithChanges.isEmpty() && deletedProjects.isEmpty()) return;
+      fireProjectsUpdated(updatedProjectsWithChanges.isEmpty()
+                          ? Collections.EMPTY_LIST
+                          : MavenUtil.mapToList(updatedProjectsWithChanges),
+                          deletedProjects.isEmpty()
+                          ? Collections.EMPTY_LIST
+                          : new ArrayList<MavenProject>(deletedProjects));
     }
   }
 
@@ -1246,13 +1262,14 @@ public class MavenProjectsTree {
 
     void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport);
 
-    void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted);
+    void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted);
 
-    void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject);
+    void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                         org.apache.maven.project.MavenProject nativeMavenProject);
 
     void pluginsResolved(MavenProject project);
 
-    void foldersResolved(MavenProject project);
+    void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges);
 
     void artifactsDownloaded(MavenProject project);
   }
@@ -1264,16 +1281,17 @@ public class MavenProjectsTree {
     public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
     }
 
-    public void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted) {
+    public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
     }
 
-    public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+    public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                org.apache.maven.project.MavenProject nativeMavenProject) {
     }
 
     public void pluginsResolved(MavenProject project) {
     }
 
-    public void foldersResolved(MavenProject project) {
+    public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
     }
 
     public void artifactsDownloaded(MavenProject project) {

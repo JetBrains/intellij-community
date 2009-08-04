@@ -14,6 +14,7 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -270,20 +271,22 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       }
 
       @Override
-      public void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted) {
+      public void projectsUpdated(List<Pair<MavenProject,MavenProjectChanges>> updated, List<MavenProject> deleted) {
         myEmbeddersManager.clearCaches();
 
         unscheduleAllTasks(deleted);
 
+        List<MavenProject> updatedProject = MavenUtil.collectFirsts(updated);
+
         // import only updated and the dependents
-        Set<MavenProject> toImport = new THashSet<MavenProject>(updated);
-        for (MavenProject each : updated) {
+        Set<MavenProject> toImport = new THashSet<MavenProject>(updatedProject);
+        for (MavenProject each : updatedProject) {
           toImport.addAll(myProjectsTree.getDependentProjects(each));
         }
 
         // resolve updated, theirs dependents, and dependents of deleted
-        Set<MavenProject> toResolve = new THashSet<MavenProject>(updated);
-        for (MavenProject each : ContainerUtil.concat(updated, deleted)) {
+        Set<MavenProject> toResolve = new THashSet<MavenProject>(updatedProject);
+        for (MavenProject each : ContainerUtil.concat(updatedProject, deleted)) {
           toResolve.addAll(myProjectsTree.getDependentProjects(each));
         }
         
@@ -299,17 +302,19 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       }
 
       @Override
-      public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+      public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, org.apache.maven.project.MavenProject nativeMavenProject) {
+        MavenProject project = projectWithChanges.first;
         if (project.hasErrors()) return;
 
         if (project.hasUnresolvedPlugins()) {
           schedulePluginsResolving(project, nativeMavenProject);
         }
-        scheduleImport(project);
+        scheduleImport(projectWithChanges.first);
       }
 
       @Override
-      public void foldersResolved(MavenProject project) {
+      public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+        MavenProject project = projectWithChanges.first;
         if (project.hasErrors()) return;
         scheduleImport(project);
       }

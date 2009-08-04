@@ -1,5 +1,7 @@
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -76,7 +78,10 @@ public class MavenProject {
     myFile = file;
   }
 
-  private void set(MavenProjectReaderResult readerResult, boolean updateLastReadStamp, boolean resetArtifacts, boolean resetProfiles) {
+  private MavenProjectChanges set(MavenProjectReaderResult readerResult,
+                                  boolean updateLastReadStamp,
+                                  boolean resetArtifacts,
+                                  boolean resetProfiles) {
     State newState = myState.clone();
 
     if (updateLastReadStamp) newState.myLastReadStamp++;
@@ -119,7 +124,9 @@ public class MavenProject {
 
     newState.myModulesPathsAndNames = collectModulePathsAndNames(model, getDirectory(), newState.myActiveProfilesIds);
     List<String> newProfiles = collectProfilesIds(model);
-    if (resetProfiles || newState.myProfilesIds == null) newState.myProfilesIds = newProfiles;
+    if (resetProfiles || newState.myProfilesIds == null) {
+      newState.myProfilesIds = newProfiles;
+    }
     else {
       Set<String> mergedProfiles = new THashSet<String>(newState.myProfilesIds);
       mergedProfiles.addAll(newProfiles);
@@ -129,7 +136,13 @@ public class MavenProject {
     newState.myStrippedMavenModel = MavenUtil.cloneObject(model);
     MavenUtil.stripDown(newState.myStrippedMavenModel);
 
+    return setStete(newState);
+  }
+
+  private MavenProjectChanges setStete(State newState) {
+    MavenProjectChanges changes = myState.getChanges(newState);
     myState = newState;
+    return changes;
   }
 
   private static void doSetResolvedAttributes(State state, MavenProjectReaderResult readerResult, boolean reset) {
@@ -163,10 +176,10 @@ public class MavenProject {
     state.myExtensions = new ArrayList<MavenArtifact>(newExtensions);
   }
 
-  private void setFolders(MavenProjectReaderResult readerResult) {
+  private MavenProjectChanges setFolders(MavenProjectReaderResult readerResult) {
     State newState = myState.clone();
     doSetFolders(newState, readerResult);
-    myState = newState;
+    return setStete(newState);
   }
 
   private static void doSetFolders(State newState, MavenProjectReaderResult readerResult) {
@@ -313,7 +326,7 @@ public class MavenProject {
     return MavenUtil.findProfilesXmlFile(myFile);
   }
 
-  public boolean hasErrors()  {
+  public boolean hasErrors() {
     return !myState.myValid;
   }
 
@@ -391,42 +404,43 @@ public class MavenProject {
     return myState.myFilters;
   }
 
-  public void read(MavenGeneralSettings generalSettings,
-                   List<String> profiles,
-                   MavenProjectReader reader,
-                   MavenProjectReaderProjectLocator locator) {
-    set(reader.readProject(generalSettings, myFile, profiles, locator), true, false, true);
+  public MavenProjectChanges read(MavenGeneralSettings generalSettings,
+                                  List<String> profiles,
+                                  MavenProjectReader reader,
+                                  MavenProjectReaderProjectLocator locator) {
+    return set(reader.readProject(generalSettings, myFile, profiles, locator), true, false, true);
   }
 
-  public org.apache.maven.project.MavenProject resolve(MavenGeneralSettings generalSettings,
-                                                       MavenEmbedderWrapper embedder,
-                                                       MavenProjectReader reader,
-                                                       MavenProjectReaderProjectLocator locator,
-                                                       MavenProgressIndicator process) throws MavenProcessCanceledException {
+  public Pair<MavenProjectChanges, org.apache.maven.project.MavenProject> resolve(MavenGeneralSettings generalSettings,
+                                                                                  MavenEmbedderWrapper embedder,
+                                                                                  MavenProjectReader reader,
+                                                                                  MavenProjectReaderProjectLocator locator,
+                                                                                  MavenProgressIndicator process)
+    throws MavenProcessCanceledException {
     MavenProjectReaderResult result = reader.resolveProject(generalSettings,
                                                             embedder,
                                                             getFile(),
                                                             getActiveProfilesIds(),
                                                             locator,
                                                             process);
-    set(result, false, result.isValid, false);
-    return result.nativeMavenProject;
+    MavenProjectChanges changes = set(result, false, result.isValid, false);
+    return Pair.create(changes, result.nativeMavenProject);
   }
 
-  public boolean resolveFolders(MavenEmbedderWrapper embedder,
-                                MavenImportingSettings importingSettings,
-                                MavenProjectReader reader,
-                                MavenConsole console,
-                                MavenProgressIndicator p) throws MavenProcessCanceledException {
+  public Pair<Boolean, MavenProjectChanges> resolveFolders(MavenEmbedderWrapper embedder,
+                                                           MavenImportingSettings importingSettings,
+                                                           MavenProjectReader reader,
+                                                           MavenConsole console,
+                                                           MavenProgressIndicator p) throws MavenProcessCanceledException {
     MavenProjectReaderResult result = reader.generateSources(embedder,
                                                              importingSettings,
                                                              getFile(),
                                                              getActiveProfilesIds(),
                                                              console,
                                                              p);
-    if (result == null || !result.isValid) return false;
-    setFolders(result);
-    return true;
+    if (result == null || !result.isValid) return Pair.create(false, new MavenProjectChanges());
+    MavenProjectChanges changes = setFolders(result);
+    return Pair.create(true, changes);
   }
 
   public boolean isAggregator() {
@@ -582,7 +596,7 @@ public class MavenProject {
   public List<MavenArtifactNode> getDependenciesNodes() {
     return buildDependenciesNodes(myState.myDependencies);
   }
-  
+
   private static List<MavenArtifactNode> buildDependenciesNodes(List<MavenArtifact> artifacts) {
     List<MavenArtifactNode> result = new ArrayList<MavenArtifactNode>();
     for (MavenArtifact each : artifacts) {
@@ -591,7 +605,7 @@ public class MavenProject {
         MavenArtifactNode node = findNodeFor(eachKey, currentScope, true);
         if (node == null) {
           node = findNodeFor(eachKey, result, false);
-          if (node  == null) {
+          if (node == null) {
             MavenArtifact artifact = findArtifactFor(eachKey, artifacts);
             if (artifact == null) break;
             node = new MavenArtifactNode(artifact, new ArrayList<MavenArtifactNode>());
@@ -843,6 +857,32 @@ public class MavenProject {
       catch (CloneNotSupportedException e) {
         throw new RuntimeException(e);
       }
+    }
+
+    public MavenProjectChanges getChanges(State other) {
+      MavenProjectChanges result = new MavenProjectChanges();
+
+      result.packaging &= !Comparing.equal(myPackaging, other.myPackaging);
+
+      result.output &= !Comparing.equal(myFinalName, other.myFinalName);
+      result.output &= !Comparing.equal(myBuildDirectory, other.myBuildDirectory);
+      result.output &= !Comparing.equal(myOutputDirectory, other.myOutputDirectory);
+      result.output &= !Comparing.equal(myTestOutputDirectory, other.myTestOutputDirectory);
+
+      result.sources &= !Comparing.equal(mySources, other.mySources);
+      result.sources &= !Comparing.equal(myTestSources, other.myTestSources);
+      result.sources &= !Comparing.equal(myResources, other.myResources);
+      result.sources &= !Comparing.equal(myTestResources, other.myTestResources);
+
+      boolean repositoryChanged = !Comparing.equal(myLocalRepository, other.myLocalRepository);
+
+      result.dependencies &= repositoryChanged;
+      result.dependencies &= !Comparing.equal(myDependencies, other.myDependencies);
+
+      result.plugins &= repositoryChanged;
+      result.plugins &= !Comparing.equal(myPlugins, other.myPlugins);
+
+      return result;
     }
   }
 }

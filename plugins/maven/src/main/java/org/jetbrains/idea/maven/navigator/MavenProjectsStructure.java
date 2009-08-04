@@ -966,7 +966,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     private boolean hasNodeFor(MavenPlugin plugin) {
       for (PluginNode each : myPluginNodes) {
-        if (each.getPlugin().equals(plugin)) {
+        if (each.getPlugin().getMavenId().equals(plugin.getMavenId())) {
           return true;
         }
       }

@@ -9,6 +9,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -16,9 +17,7 @@ import com.intellij.util.ui.update.Update;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenProjectsTree;
+import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -170,14 +169,14 @@ public class MavenShortcutsManager extends SimpleProjectComponent {
     }
 
     @Override
-    public void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted) {
-      scheduleKeymapUpdate(updated, true);
+    public void projectsUpdated(List<Pair<MavenProject,MavenProjectChanges>> updated, List<MavenProject> deleted) {
+      scheduleKeymapUpdate(MavenUtil.collectFirsts(updated), true);
       scheduleKeymapUpdate(deleted, false);
     }
 
     @Override
-    public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
-      scheduleKeymapUpdate(Collections.singletonList(project), true);
+    public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, org.apache.maven.project.MavenProject nativeMavenProject) {
+      scheduleKeymapUpdate(Collections.singletonList(projectWithChanges.first), true);
     }
 
     @Override

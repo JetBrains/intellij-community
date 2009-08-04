@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
@@ -690,7 +691,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     final boolean[] called = new boolean[1];
     myProjectsManager.addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
       @Override
-      public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+      public void projectResolved(Pair<MavenProject,MavenProjectChanges> projectWithChanges, org.apache.maven.project.MavenProject nativeMavenProject) {
         called[0] = true;
       }
     });

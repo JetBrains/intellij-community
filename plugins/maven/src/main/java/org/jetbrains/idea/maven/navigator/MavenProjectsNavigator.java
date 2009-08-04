@@ -8,13 +8,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenProjectsTree;
-import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.MavenIcons;
@@ -255,16 +254,16 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     }
 
     @Override
-    public void projectsUpdated(final List<MavenProject> updated, final List<MavenProject> deleted) {
+    public void projectsUpdated(final List<Pair<MavenProject,MavenProjectChanges>> updated, final List<MavenProject> deleted) {
       scheduleStructureUpdate(new Runnable() {
         public void run() {
-          myStructure.updateProjects(updated, deleted);
+          myStructure.updateProjects(MavenUtil.collectFirsts(updated), deleted);
         }
       });
     }
 
-    public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
-      updateProject(project);
+    public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, org.apache.maven.project.MavenProject nativeMavenProject) {
+      updateProject(projectWithChanges.first);
     }
 
     public void pluginsResolved(MavenProject project) {

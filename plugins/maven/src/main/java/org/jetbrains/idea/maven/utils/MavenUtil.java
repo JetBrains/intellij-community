@@ -184,6 +184,14 @@ public class MavenUtil {
     return (collection instanceof Set ? collection : new THashSet<T>(collection));
   }
 
+  public static <T, U> List<Pair<T, U>> mapToList(Map<T, U> map) {
+    return ContainerUtil.map2List(map.entrySet(), new Function<Map.Entry<T, U>, Pair<T, U>>() {
+      public Pair<T, U> fun(Map.Entry<T, U> tuEntry) {
+        return Pair.create(tuEntry.getKey(), tuEntry.getValue());
+      }
+    });
+  }
+
   public static String formatHtmlImage(URL url) {
     return "<img src=\"" + url + "\"> ";
   }

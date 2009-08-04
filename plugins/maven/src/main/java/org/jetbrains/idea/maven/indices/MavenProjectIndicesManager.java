@@ -9,6 +9,7 @@ import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
 import org.apache.lucene.search.Query;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 import org.sonatype.nexus.index.ArtifactInfo;
@@ -50,12 +51,12 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
 
     getMavenProjectManager().addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
       @Override
-      public void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted) {
+      public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
         scheduleUpdateIndicesList();
       }
 
       @Override
-      public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+      public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, org.apache.maven.project.MavenProject nativeMavenProject) {
         scheduleUpdateIndicesList();
       }
     });
