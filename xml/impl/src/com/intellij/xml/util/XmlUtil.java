@@ -540,11 +540,6 @@ public class XmlUtil {
       }
       else if (XmlIncludeHandler.isXInclude(element)) {
         XmlTag tag = (XmlTag)element;
-
-        final PsiIncludeManager includeManager =
-          (PsiIncludeManager)element.getProject().getPicoContainer().getComponentInstanceOfType(PsiIncludeManager.class);
-
-        includeManager.includeProcessed(tag);
         if (!processXInclude(deepFlag, wideFlag, tag)) return false;
       }
 

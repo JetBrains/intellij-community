@@ -297,7 +297,7 @@ public class FileReferenceSet {
   }
 
   @Nullable
-  public PsiElement resolve() {
+  public PsiFileSystemItem resolve() {
     final FileReference lastReference = getLastReference();
     return lastReference == null ? null : lastReference.resolve();
   }

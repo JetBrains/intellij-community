@@ -141,7 +141,10 @@
                   serviceImplementation="com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl"/>
   <projectService serviceInterface="com.intellij.psi.codeStyle.CodeStyleManager"
                   serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl"/>
-  <projectService serviceInterface="com.intellij.pom.PomModel" serviceImplementation="com.intellij.pom.core.impl.PomModelImpl"/>
+  <projectService serviceInterface="com.intellij.pom.PomModel"
+                  serviceImplementation="com.intellij.pom.core.impl.PomModelImpl"/>
+  <projectService serviceInterface="com.intellij.psi.impl.include.FileIncludeManager"
+                  serviceImplementation="com.intellij.psi.impl.include.FileIncludeManagerImpl"/>
 
   <projectService serviceInterface="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"
                   serviceImplementation="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"/>
@@ -300,6 +303,7 @@
   <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndex"/>
   <fileBasedIndex implementation="com.intellij.psi.search.PropertyFileIndex"/>
   <fileBasedIndex implementation="com.intellij.psi.stubs.StubUpdatingIndex"/>
+  <fileBasedIndex implementation="com.intellij.psi.impl.include.FileIncludeIndex"/>
 
   <syntaxHighlighter factoryClass="com.intellij.openapi.fileTypes.LanguageFileTypeHighlighterProvider"/>
   <structureViewBuilder factoryClass="com.intellij.ide.highlighter.LanguageFileTypeStructureViewBuilderProvider"/>

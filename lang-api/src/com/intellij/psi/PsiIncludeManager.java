@@ -15,9 +15,6 @@ public interface PsiIncludeManager {
   @NotNull
   PsiFile[] getIncludingFiles(@NotNull PsiFile file);
 
-  @Nullable
-  PsiFile getInclusionContext(@NotNull PsiFile file);
-
   void includeProcessed(@NotNull PsiElement includeDirective);
 
   interface PsiIncludeHandler {

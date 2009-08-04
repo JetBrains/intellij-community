@@ -7,7 +7,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiIncludeManager;
+import com.intellij.psi.impl.include.FileIncludeManager;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,9 +21,9 @@ public class FileIncludeContextHectorPanel extends HectorComponentPanel {
   private ComboboxWithBrowseButton myContextFile;
   private JPanel myPanel;
   private final PsiFile myFile;
-  private final PsiIncludeManager myIncludeManager;
+  private final FileIncludeManager myIncludeManager;
 
-  public FileIncludeContextHectorPanel(final PsiFile file, final PsiIncludeManager includeManager) {
+  public FileIncludeContextHectorPanel(final PsiFile file, final FileIncludeManager includeManager) {
     myFile = file;
     myIncludeManager = includeManager;
 
@@ -46,7 +46,7 @@ public class FileIncludeContextHectorPanel extends HectorComponentPanel {
     final JComboBox comboBox = myContextFile.getComboBox();
 
     comboBox.setRenderer(new MyListCellRenderer(comboBox));
-    final PsiFile[] includingFiles = myIncludeManager.getIncludingFiles(myFile);
+    final VirtualFile[] includingFiles = myIncludeManager.getIncludingFiles(myFile.getVirtualFile(), false);
     comboBox.setModel(new DefaultComboBoxModel(includingFiles));
     myContextFile.setTextFieldPreferredWidth(30);
   }
@@ -81,9 +81,8 @@ public class FileIncludeContextHectorPanel extends HectorComponentPanel {
 
     @Nullable
     protected String getPath(final Object value) {
-      final PsiFile psiFile = (PsiFile)value;
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex();
-      VirtualFile file = psiFile.getOriginalFile().getVirtualFile();
+      final VirtualFile file = (VirtualFile)value;
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myFile.getProject()).getFileIndex();
       if (file != null) {
         VirtualFile root = fileIndex.getSourceRootForFile(file);
         if (root == null) {
