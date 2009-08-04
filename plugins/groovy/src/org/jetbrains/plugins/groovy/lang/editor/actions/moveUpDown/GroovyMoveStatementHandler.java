@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.editor.HandlerUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -58,12 +59,12 @@ public class GroovyMoveStatementHandler extends EditorWriteActionHandler {
   }
 
   private boolean executeWriteActionInner(Editor editor, DataContext dataContext) {
-    if (!HandlerUtils.canBeInvoked(editor, dataContext) ||
-        HandlerUtils.getLanguage(dataContext) != GroovyFileType.GROOVY_FILE_TYPE.getLanguage()) {
+    final Project project = editor.getProject();
+    if (project == null || !HandlerUtils.canBeInvoked(editor, dataContext) ||
+        PsiUtilBase.getLanguageInEditor(editor, project) != GroovyFileType.GROOVY_FILE_TYPE.getLanguage()) {
       return false;
     }
 
-    final Project project = editor.getProject();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = editor.getDocument();
     PsiFile file = documentManager.getPsiFile(document);

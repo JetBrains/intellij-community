@@ -1,0 +1,77 @@
+/*
+ * Copyright 2000-2008 JetBrains s.r.o.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.jetbrains.plugins.groovy.lang.actions.updown;
+
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.Result;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManager;
+import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
+
+import java.util.List;
+
+/**
+ * @author ilyas
+ */
+public class GroovyMoveStatementTest extends JavaCodeInsightFixtureTestCase {
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/groovy/actions/moveStatement/";
+  }
+
+  public void testClazz1() throws Throwable { doTest(true); }
+  public void testClazz2() throws Throwable { doTest(false); }
+
+  public void testClos2() throws Throwable { doTest(false); }
+
+  public void testMeth1() throws Throwable { doTest(true); }
+  public void testMeth2() throws Throwable { doTest(true); }
+  public void testMeth3() throws Throwable { doTest(false); }
+  public void testMeth4() throws Throwable { doTest(false); }
+
+  public void testIfst() throws Throwable { doTest(true); }
+  public void testIfst2() throws Throwable { doTest(false); }
+
+  public void testSimple1() throws Throwable { doTest(true); }
+  public void testSimple2() throws Throwable { doTest(false); }
+
+  public void testTryst1() throws Throwable { doTest(true); }
+  public void testTryst2() throws Throwable { doTest(true); }
+
+  public void doTest(boolean down) throws Exception {
+    final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + (down ? "down/" : "up/") + getTestName(true) + ".test");
+
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
+
+    final EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(down ?
+                                                                                           GroovyEditorActionsManager.MOVE_STATEMENT_DOWN_ACTION :
+                                                                                           GroovyEditorActionsManager.MOVE_STATEMENT_UP_ACTION);
+    new WriteCommandAction(getProject()) {
+      protected void run(Result result) throws Throwable {
+        final Editor editor = myFixture.getEditor();
+        handler.execute(editor, DataManager.getInstance().getDataContext(editor.getContentComponent()));
+      }
+    }.execute();
+    myFixture.checkResult(data.get(1));
+  }
+
+}
+
