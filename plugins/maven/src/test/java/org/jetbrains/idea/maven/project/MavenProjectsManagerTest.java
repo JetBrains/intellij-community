@@ -686,6 +686,32 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertModuleLibDeps("m1", "Maven: test:m2:1");
   }
 
+  public void testDoNotScheduleResolveOfInvalidProjectsDeleted() throws Exception {
+    final boolean[] called = new boolean[1];
+    myProjectsManager.addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
+      @Override
+      public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+        called[0] = true;
+      }
+    });
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1");
+    importProject();
+    assertModules("project");
+    assertFalse(called[0]); // on import
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>2");
+
+    waitForReadingCompletion();
+    resolveDependenciesAndImport();
+
+    assertFalse(called[0]); // on update
+  }
+
   public void testUpdatingFoldersAfterFoldersResolving() throws Exception {
     createStdProjectFolders();
     createProjectSubDirs("src1", "src2");

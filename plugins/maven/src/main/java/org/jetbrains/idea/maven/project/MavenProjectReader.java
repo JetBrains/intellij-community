@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -44,20 +45,20 @@ import java.util.*;
 public class MavenProjectReader {
   private static final String UNKNOWN = MavenId.UNKNOWN_VALUE;
 
-  private final Map<VirtualFile, Model> myRawModelsCache = new THashMap<VirtualFile, Model>();
+  private final Map<VirtualFile, ModelWithValidity> myRawModelsAndValidityCache = new THashMap<VirtualFile, ModelWithValidity>();
 
   public MavenProjectReaderResult readProject(MavenGeneralSettings generalSettings,
                                               VirtualFile file,
                                               List<String> activeProfiles,
                                               MavenProjectReaderProjectLocator locator) {
-    Pair<Model, List<Profile>> readResult = doReadProjectModel(generalSettings,
-                                                               file,
-                                                               activeProfiles,
-                                                               new THashSet<VirtualFile>(),
-                                                               locator);
+    Pair<ModelWithValidity, List<Profile>> readResult = doReadProjectModel(generalSettings,
+                                                                           file,
+                                                                           activeProfiles,
+                                                                           new THashSet<VirtualFile>(),
+                                                                           locator);
 
     File basedir = getBaseDir(file);
-    Model model = expandProperties(readResult.first, basedir);
+    Model model = expandProperties(readResult.first.model, basedir);
     alignModel(model, basedir);
 
     MavenProject mavenProject = new MavenProject(model);
@@ -68,42 +69,51 @@ public class MavenProjectReader {
                                         Collections.singletonList(model.getBuild().getTestSourceDirectory()),
                                         Collections.singletonList(model.getBuild().getScriptSourceDirectory()));
 
-    return new MavenProjectReaderResult(true,
-                                        activeProfiles,
-                                        Collections.EMPTY_LIST,
-                                        Collections.EMPTY_SET,
-                                        generalSettings.getEffectiveLocalRepository(),
-                                        mavenProject);
+    boolean isValid = readResult.first.validity;
+    List<MavenProjectProblem> problems = new ArrayList<MavenProjectProblem>();
+    if (!isValid) {
+      problems.add(new MavenProjectProblem(ProjectBundle.message("maven.project.problem.syntaxError"), true));
+    }
+    return new MavenProjectReaderResult(isValid,
+                                          activeProfiles,
+                                          problems,
+                                          Collections.EMPTY_SET,
+                                          generalSettings.getEffectiveLocalRepository(),
+                                          mavenProject);
   }
 
   private File getBaseDir(VirtualFile file) {
     return new File(file.getParent().getPath());
   }
 
-  private Pair<Model, List<Profile>> doReadProjectModel(MavenGeneralSettings generalSettings,
-                                                        VirtualFile file,
-                                                        List<String> activeProfiles,
-                                                        Set<VirtualFile> recursionGuard,
-                                                        MavenProjectReaderProjectLocator locator) {
-    Model mavenModel = myRawModelsCache.get(file);
-    if (mavenModel == null) {
-      mavenModel = doReadProjectModel(file, generalSettings);
-      myRawModelsCache.put(file, mavenModel);
+  private Pair<ModelWithValidity, List<Profile>> doReadProjectModel(MavenGeneralSettings generalSettings,
+                                                                    VirtualFile file,
+                                                                    List<String> activeProfiles,
+                                                                    Set<VirtualFile> recursionGuard,
+                                                                    MavenProjectReaderProjectLocator locator) {
+    ModelWithValidity modelWithValidity = myRawModelsAndValidityCache.get(file);
+    if (modelWithValidity == null) {
+      modelWithValidity = doReadProjectModel(file, generalSettings);
+      myRawModelsAndValidityCache.put(file, modelWithValidity);
     }
 
-    List<Profile> activatedProfiles = applyProfiles(mavenModel, getBaseDir(file), activeProfiles);
-    repairModelHeader(mavenModel);
-    resolveInheritance(generalSettings, mavenModel, file, activeProfiles, recursionGuard, locator);
-    repairModelBody(mavenModel);
+    Model model = modelWithValidity.model;
+    List<Profile> activatedProfiles = applyProfiles(model, getBaseDir(file), activeProfiles);
+    repairModelHeader(model);
+    if (!resolveInheritance(generalSettings, model, file, activeProfiles, recursionGuard, locator)) {
+      modelWithValidity.validity = false;
+    }
+    repairModelBody(model);
 
-    return Pair.create(mavenModel, activatedProfiles);
+    return Pair.create(modelWithValidity, activatedProfiles);
   }
 
-  private Model doReadProjectModel(VirtualFile file, MavenGeneralSettings generalSettings) {
+  private ModelWithValidity doReadProjectModel(VirtualFile file, MavenGeneralSettings generalSettings) {
     Model result = new Model();
 
-    Element xmlProject = readXml(file).getChild("project");
-    if (xmlProject == null) return result;
+    Pair<Element, Boolean> readXmlResult = readXml(file);
+    Element xmlProject = readXmlResult.first.getChild("project");
+    if (xmlProject == null) return new ModelWithValidity(result, false);
 
     result.setModelVersion(findChildValueByPath(xmlProject, "modelVersion"));
     result.setGroupId(findChildValueByPath(xmlProject, "groupId"));
@@ -130,8 +140,9 @@ public class MavenProjectReader {
     result.setBuild(new Build());
     readModelAndBuild(result, result.getBuild(), xmlProject);
 
-    result.setProfiles(collectProfiles(generalSettings, file, xmlProject));
-    return result;
+    Ref<Boolean> validity = new Ref<Boolean>(readXmlResult.second);
+    result.setProfiles(collectProfiles(generalSettings, file, xmlProject, validity));
+    return new ModelWithValidity(result, validity.get());
   }
 
   private void readModelAndBuild(ModelBase mavenModelBase,
@@ -174,13 +185,16 @@ public class MavenProjectReader {
     return result;
   }
 
-  private List<Profile> collectProfiles(MavenGeneralSettings generalSettings, VirtualFile file, Element xmlProject) {
+  private List<Profile> collectProfiles(MavenGeneralSettings generalSettings, VirtualFile file, Element xmlProject, Ref<Boolean> validity) {
     List<Profile> result = new ArrayList<Profile>();
     collectProfiles(findChildrenByPath(xmlProject, "profiles", "profile"), result);
 
     VirtualFile profilesFile = MavenUtil.findProfilesXmlFile(file);
     if (profilesFile != null) {
-      Element profilesFileElement = readXml(profilesFile);
+      Pair<Element, Boolean> readResult = readXml(profilesFile);
+      Element profilesFileElement = readResult.first;
+      if (!readResult.second) validity.set(false);
+
       Element rootElement = findChildByPath(profilesFileElement, "profiles");
       if (rootElement == null) rootElement = findChildByPath(profilesFileElement, "profilesXml.profiles");
       List<Element> xmlProfiles = collectChildren(rootElement, "profile");
@@ -188,15 +202,18 @@ public class MavenProjectReader {
     }
 
     for (VirtualFile each : generalSettings.getEffectiveSettingsFiles()) {
-      collectProfilesFromSettingsFile(each, result);
+      collectProfilesFromSettingsFile(each, result, validity);
     }
 
     return result;
   }
 
-  private void collectProfilesFromSettingsFile(VirtualFile settingsFile, List<Profile> result) {
+  private void collectProfilesFromSettingsFile(VirtualFile settingsFile, List<Profile> result, Ref<Boolean> validity) {
     if (settingsFile == null) return;
-    List<Element> xmlProfiles = findChildrenByPath(readXml(settingsFile), "settings.profiles", "profile");
+    Pair<Element, Boolean> readResult = readXml(settingsFile);
+    if (!readResult.second) validity.set(false);
+
+    List<Element> xmlProfiles = findChildrenByPath(readResult.first, "settings.profiles", "profile");
     collectProfiles(xmlProfiles, result);
   }
 
@@ -406,13 +423,13 @@ public class MavenProjectReader {
     return result;
   }
 
-  private void resolveInheritance(final MavenGeneralSettings generalSettings,
-                                  Model model,
-                                  VirtualFile file,
-                                  final List<String> activeProfiles,
-                                  final Set<VirtualFile> recursionGuard,
-                                  final MavenProjectReaderProjectLocator locator) {
-    if (recursionGuard.contains(file)) return;
+  private boolean resolveInheritance(final MavenGeneralSettings generalSettings,
+                                     Model model,
+                                     VirtualFile file,
+                                     final List<String> activeProfiles,
+                                     final Set<VirtualFile> recursionGuard,
+                                     final MavenProjectReaderProjectLocator locator) {
+    if (recursionGuard.contains(file)) return false;
     recursionGuard.add(file);
 
     Parent parent = model.getParent();
@@ -424,7 +441,7 @@ public class MavenProjectReader {
                                           parent.getRelativePath());
     }
 
-    Model parentModel = new MavenParentProjectFileProcessor<Model>() {
+    ModelWithValidity parentModelWithValidity = new MavenParentProjectFileProcessor<ModelWithValidity>() {
       @Nullable
       protected VirtualFile findManagedFile(@NotNull MavenId id) {
         return locator.findProjectFile(id);
@@ -432,24 +449,25 @@ public class MavenProjectReader {
 
       @Override
       @Nullable
-      protected Model processRelativeParent(VirtualFile parentFile) {
-        Model result = super.processRelativeParent(parentFile);
+      protected ModelWithValidity processRelativeParent(VirtualFile parentFile) {
+        ModelWithValidity result = super.processRelativeParent(parentFile);
         if (result == null) return null;
 
         MavenId parentId = parentDesc[0].getParentId();
-        if (!(parentId.equals(result.getGroupId(), result.getArtifactId(), result.getVersion()))) {
+        Model model = result.model;
+        if (!(parentId.equals(model.getGroupId(), model.getArtifactId(), model.getVersion()))) {
           return null;
         }
         return result;
       }
 
       @Override
-      protected Model processSuperParent(VirtualFile parentFile) {
+      protected ModelWithValidity processSuperParent(VirtualFile parentFile) {
         return null; // do not process superPom
       }
 
       @Override
-      protected Model doProcessParent(VirtualFile parentFile) {
+      protected ModelWithValidity doProcessParent(VirtualFile parentFile) {
         return doReadProjectModel(generalSettings,
                                   parentFile,
                                   activeProfiles,
@@ -458,9 +476,10 @@ public class MavenProjectReader {
       }
     }.process(generalSettings, file, parentDesc[0]);
 
-    if (parentModel != null) {
-      new DefaultModelInheritanceAssembler().assembleModelInheritance(model, parentModel);
-    }
+    if (parentModelWithValidity == null) return true; // no parent or parent not found;
+
+    new DefaultModelInheritanceAssembler().assembleModelInheritance(model, parentModelWithValidity.model);
+    return parentModelWithValidity.validity;
   }
 
   private Model expandProperties(Model model, File basedir) {
@@ -667,7 +686,7 @@ public class MavenProjectReader {
     return req;
   }
 
-  private Element readXml(VirtualFile file) {
+  private Pair<Element, Boolean> readXml(VirtualFile file) {
     final LinkedList<Element> stack = new LinkedList<Element>();
     final Element root = new Element("root");
 
@@ -677,8 +696,10 @@ public class MavenProjectReader {
     }
     catch (IOException e) {
       MavenLog.LOG.warn("Cannot read the pom file: " + e);
-      return root;
+      return Pair.create(root, false);
     }
+
+    final boolean[] validity = new boolean[]{true};
 
     XmlBuilderDriver driver = new XmlBuilderDriver(text);
     XmlBuilder builder = new XmlBuilder() {
@@ -733,11 +754,12 @@ public class MavenProjectReader {
       }
 
       public void error(String message, int startOffset, int endOffset) {
+        validity[0] = false;
       }
     };
 
     driver.build(builder);
-    return root;
+    return Pair.create(root, validity[0]);
   }
 
   private Element findChildByPath(Element element, String path) {
@@ -782,5 +804,15 @@ public class MavenProjectReader {
       }
     }
     return result;
+  }
+
+  private static class ModelWithValidity {
+    public Model model;
+    public boolean validity;
+
+    private ModelWithValidity(Model model, boolean validity) {
+      this.model = model;
+      this.validity = validity;
+    }
   }
 }

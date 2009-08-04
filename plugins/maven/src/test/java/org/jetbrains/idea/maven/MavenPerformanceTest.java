@@ -59,7 +59,7 @@ public abstract class MavenPerformanceTest extends MavenImportingTestCase {
 
     myProjectsManager.unscheduleAllTasksInTests();
 
-    myProjectsManager.scheduleResolve(mavenProjects.subList(0, 100));
+    myProjectsManager.scheduleResolveInTests(mavenProjects.subList(0, 100));
     measure(50000, new Runnable() {
       public void run() {
         myProjectsManager.waitForResolvingCompletion();

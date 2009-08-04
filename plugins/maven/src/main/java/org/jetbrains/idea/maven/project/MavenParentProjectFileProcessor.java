@@ -19,34 +19,32 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
 
     RESULT_TYPE result = null;
 
-    if (parentDesc != null) {
-      VirtualFile parentFile = findManagedFile(parentDesc.getParentId());
+    if (parentDesc == null) {
+      return processSuperParent(superPom);
+    }
+
+    VirtualFile parentFile = findManagedFile(parentDesc.getParentId());
+    if (parentFile != null) {
+      result = processManagedParent(parentFile);
+    }
+
+    if (result == null) {
+      parentFile = projectFile.getParent().findFileByRelativePath(parentDesc.getParentRelativePath());
+      if (parentFile != null && parentFile.isDirectory()) {
+        parentFile = parentFile.findFileByRelativePath(MavenConstants.POM_XML);
+      }
       if (parentFile != null) {
-        result = processManagedParent(parentFile);
-      }
-
-      if (result == null) {
-        parentFile = projectFile.getParent().findFileByRelativePath(parentDesc.getParentRelativePath());
-        if (parentFile != null && parentFile.isDirectory()) {
-          parentFile = parentFile.findFileByRelativePath(MavenConstants.POM_XML);
-        }
-        if (parentFile != null) {
-          result = processRelativeParent(parentFile);
-        }
-      }
-
-      if (result == null) {
-        File parentIoFile = MavenArtifactUtil.getArtifactFile(generalSettings.getEffectiveLocalRepository(),
-                                                              parentDesc.getParentId(), "pom");
-        parentFile = LocalFileSystem.getInstance().findFileByIoFile(parentIoFile);
-        if (parentFile != null) {
-          result = processRepositoryParent(parentFile);
-        }
+        result = processRelativeParent(parentFile);
       }
     }
 
     if (result == null) {
-      result = processSuperParent(superPom);
+      File parentIoFile = MavenArtifactUtil.getArtifactFile(generalSettings.getEffectiveLocalRepository(),
+                                                            parentDesc.getParentId(), "pom");
+      parentFile = LocalFileSystem.getInstance().findFileByIoFile(parentIoFile);
+      if (parentFile != null) {
+        result = processRepositoryParent(parentFile);
+      }
     }
 
     return result;

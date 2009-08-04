@@ -30,6 +30,12 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testInvalidXml() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+
+    assertTrue(readProject(myProjectPom, new NullProjectLocator()).isValid);
+
     createProjectPom("<foo>" +
                      "</bar>" +
                      "<" +
@@ -37,7 +43,9 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    MavenProjectReaderResult result = readProject(myProjectPom, new NullProjectLocator());
+    assertFalse(result.isValid);
+    org.apache.maven.project.MavenProject p = result.nativeMavenProject;
 
     assertEquals(new File(myProjectPom.getPath()), p.getFile());
     assertEquals(new File(myProjectRoot.getPath()), p.getBasedir());
@@ -47,13 +55,60 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("1", p.getVersion());
   }
 
+  public void testInvalidParentXml() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>parent</artifactId>" +
+                     "<version>1</version>" +
+                     "<foo");
+
+    VirtualFile module = createModulePom("module",
+                                         "<parent>" +
+                                         "  <groupId>test</groupId>" +
+                                         "  <artifactId>parent</artifactId>" +
+                                         "  <version>1</version>" +
+                                         "</parent>");
+
+    assertFalse(readProject(module, new NullProjectLocator()).isValid);
+  }
+
+  public void testProjectWithAbsentParentXmlIsValid() throws Exception {
+    createProjectPom("<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>parent</artifactId>" +
+                     "  <version>1</version>" +
+                     "</parent>");
+    assertTrue(readProject(myProjectPom, new NullProjectLocator()).isValid);
+  }
+
+  public void testInvalidProfilesXml() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+
+    createProfilesXml("<profiles");
+
+    assertFalse(readProject(myProjectPom, new NullProjectLocator()).isValid);
+  }
+
+  public void testInvalidSettingsXml() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+
+    updateSettingsXml("<settings");
+
+    assertFalse(readProject(myProjectPom, new NullProjectLocator()).isValid);
+  }
+
   public void testInvalidXmlWithNotClosedTag() throws Exception {
-    createProjectPom("<groupId>test</groupId" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1" +
                      "<name>foo</name>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    MavenProjectReaderResult readResult = readProject(myProjectPom, new NullProjectLocator());
+    assertFalse(readResult.isValid);
+    org.apache.maven.project.MavenProject p = readResult.nativeMavenProject;
 
     assertEquals(new File(myProjectPom.getPath()), p.getFile());
     assertEquals(new File(myProjectRoot.getPath()), p.getBasedir());
@@ -61,6 +116,27 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("test", p.getGroupId());
     assertEquals("project", p.getArtifactId());
     assertEquals("Unknown", p.getVersion());
+    assertEquals("foo", p.getName());
+  }
+
+  public void testInvalidXmlWithWrongClosingTag() throws Exception {
+    if (ignore()) return;
+    
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</vers>" +
+                     "<name>foo</name>");
+
+    MavenProjectReaderResult readResult = readProject(myProjectPom, new NullProjectLocator());
+    assertFalse(readResult.isValid);
+    org.apache.maven.project.MavenProject p = readResult.nativeMavenProject;
+
+    assertEquals(new File(myProjectPom.getPath()), p.getFile());
+    assertEquals(new File(myProjectRoot.getPath()), p.getBasedir());
+
+    assertEquals("test", p.getGroupId());
+    assertEquals("project", p.getArtifactId());
+    assertEquals("1", p.getVersion());
     assertEquals("foo", p.getName());
   }
 
@@ -593,7 +669,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
       public VirtualFile findProjectFile(MavenId coordinates) {
         return new MavenId("test", "parent", "1").equals(coordinates) ? parent : null;
       }
-    });
+    }).nativeMavenProject;
     assertEquals("value", p.getName());
   }
 
@@ -854,22 +930,19 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   private org.apache.maven.project.MavenProject readProject(VirtualFile file, String... profiles) {
-    return readProject(file, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    }, profiles);
+    MavenProjectReaderResult readResult = readProject(file, new NullProjectLocator(), profiles);
+    assertTrue(readResult.isValid);
+    return readResult.nativeMavenProject;
   }
 
-  private org.apache.maven.project.MavenProject readProject(VirtualFile file,
-                                                            MavenProjectReaderProjectLocator locator,
-                                                            String... profiles) {
+  private MavenProjectReaderResult readProject(VirtualFile file,
+                                               MavenProjectReaderProjectLocator locator,
+                                               String... profiles) {
     MavenProjectReaderResult result = new MavenProjectReader().readProject(getMavenGeneralSettings(),
                                                                            file,
                                                                            Arrays.asList(profiles),
                                                                            locator);
-    assertTrue(result.isValid);
-    return result.nativeMavenProject;
+    return result;
   }
 
   private void assertParent(org.apache.maven.project.MavenProject p,
@@ -896,5 +969,11 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertPathEquals(targetPath, resource.getTargetPath());
     assertOrderedElementsAreEqual(resource.getIncludes(), includes);
     assertOrderedElementsAreEqual(resource.getExcludes(), excludes);
+  }
+
+  private static class NullProjectLocator implements MavenProjectReaderProjectLocator {
+    public VirtualFile findProjectFile(MavenId coordinates) {
+      return null;
+    }
   }
 }

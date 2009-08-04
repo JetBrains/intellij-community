@@ -227,7 +227,10 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     return myProjectToNodeMapping.get(project);
   }
 
-  enum DisplayKind { ALWAYS, NEVER, NORMAL}
+  enum DisplayKind {
+    ALWAYS, NEVER, NORMAL
+  }
+
   private DisplayKind getDisplayKind(CustomNode node) {
     Class[] visibles = getVisibleNodesClasses();
     if (visibles == null) return DisplayKind.NORMAL;
@@ -385,7 +388,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
           result.append(each.getText());
         }
         return result.toString();
-      } else {
+      }
+      else {
         return myName;
       }
     }
@@ -616,20 +620,19 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private void updateErrorLevel() {
-      List<MavenProjectProblem> problems = myMavenProject.getProblems();
-      if (problems.isEmpty()) {
+      if (!myMavenProject.hasErrors()) {
         setNodeErrorLevel(ErrorLevel.NONE);
+        return;
       }
-      else {
-        boolean isError = false;
-        for (MavenProjectProblem each : problems) {
-          if (each.isCritical()) {
-            isError = true;
-            break;
-          }
+      List<MavenProjectProblem> problems = myMavenProject.getProblems();
+      boolean isError = false;
+      for (MavenProjectProblem each : problems) {
+        if (each.isCritical()) {
+          isError = true;
+          break;
         }
-        setNodeErrorLevel(isError ? ErrorLevel.ERROR : ErrorLevel.WARNING);
       }
+      setNodeErrorLevel(isError ? ErrorLevel.ERROR : ErrorLevel.WARNING);
     }
 
     @Override

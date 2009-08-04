@@ -25,9 +25,9 @@ import com.intellij.util.ui.update.Update;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenModifiableModelsProvider;
@@ -275,19 +275,27 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
         unscheduleAllTasks(deleted);
 
-        // resolve updated, theirs dependents, and dependents of deleted
-        Set<MavenProject> toResolve = new THashSet<MavenProject>(updated);
-        for (MavenProject each : ContainerUtil.concat(updated, deleted)) {
-          toResolve.addAll(myProjectsTree.getDependentProjects(each));
-        }
-
         // import only updated and the dependents
         Set<MavenProject> toImport = new THashSet<MavenProject>(updated);
         for (MavenProject each : updated) {
           toImport.addAll(myProjectsTree.getDependentProjects(each));
         }
+
+        // resolve updated, theirs dependents, and dependents of deleted
+        Set<MavenProject> toResolve = new THashSet<MavenProject>(updated);
+        for (MavenProject each : ContainerUtil.concat(updated, deleted)) {
+          toResolve.addAll(myProjectsTree.getDependentProjects(each));
+        }
+        
+        // do not try to resolve projects with syntactic errors
+        Iterator<MavenProject> it = toResolve.iterator();
+        while (it.hasNext()) {
+          MavenProject each = it.next();
+          if (each.hasErrors()) it.remove();
+        }
+
         scheduleImport(toImport);
-        scheduleResolve(new ArrayList<MavenProject>(toResolve));
+        scheduleResolve(toResolve);
       }
 
       @Override
@@ -302,6 +310,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
       @Override
       public void foldersResolved(MavenProject project) {
+        if (project.hasErrors()) return;
         scheduleImport(project);
       }
     });
@@ -515,7 +524,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     doScheduleUpdateProjects(null, false);
   }
 
-  public void forceUpdateProjects(List<MavenProject> projects) {
+  public void forceUpdateProjects(Collection<MavenProject> projects) {
     doScheduleUpdateProjects(projects, true);
   }
 
@@ -526,7 +535,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     doScheduleUpdateProjects(null, true);
   }
 
-  private void doScheduleUpdateProjects(final List<MavenProject> projects, final boolean force) {
+  private void doScheduleUpdateProjects(final Collection<MavenProject> projects, final boolean force) {
     // read when postStartupActivitias start
     MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
       public void run() {
@@ -546,7 +555,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     });
   }
 
-  public void scheduleResolve(final List<MavenProject> projects) {
+  private void scheduleResolve(final Collection<MavenProject> projects) {
     runWhenFullyOpen(new Runnable() {
       public void run() {
         for (MavenProject each : projects) {
@@ -559,11 +568,16 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   @TestOnly
+  public void scheduleResolveInTests(Collection<MavenProject> projects) {
+    scheduleResolve(projects);
+  }
+
+  @TestOnly
   public void scheduleResolveAllInTests() {
     scheduleResolve(getProjects());
   }
 
-  public void scheduleFoldersResolving(final List<MavenProject> projects) {
+  public void scheduleFoldersResolving(final Collection<MavenProject> projects) {
     runWhenFullyOpen(new Runnable() {
       public void run() {
         for (MavenProject each : projects) {
@@ -589,7 +603,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     });
   }
 
-  public void scheduleArtifactsDownloading(final List<MavenProject> projects) {
+  public void scheduleArtifactsDownloading(final Collection<MavenProject> projects) {
     runWhenFullyOpen(new Runnable() {
       public void run() {
         for (MavenProject each : projects) {
