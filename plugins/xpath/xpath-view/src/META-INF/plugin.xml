@@ -86,7 +86,7 @@
     <completion.contributor language="XPath" implementationClass="org.intellij.lang.xpath.completion.XPathCompletionContributor" />
 
     <fileBasedIndex implementation="org.intellij.lang.xpath.xslt.impl.XsltSymbolIndex" />
-    <psi.includeHandler implementation="org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex" />
+    <include.provider implementation="org.intellij.lang.xpath.xslt.impl.XsltIncludeProvider"/>
     
     <inspectionToolProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltStuffProvider" />
     <usageGroupingRuleProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltStuffProvider" />

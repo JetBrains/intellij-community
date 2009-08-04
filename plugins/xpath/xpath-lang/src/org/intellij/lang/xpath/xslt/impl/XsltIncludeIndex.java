@@ -16,137 +16,58 @@
 
 package org.intellij.lang.xpath.xslt.impl;
 
-import org.intellij.lang.xpath.psi.impl.ResolveUtil;
-import org.intellij.lang.xpath.xslt.XsltSupport;
-
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.event.PomModelEvent;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiIncludeManager;
-import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.include.FileIncludeManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.xml.NanoXmlUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Collections;
 
 /*
 * Created by IntelliJ IDEA.
 * User: sweinreuter
 * Date: 15.12.2008
 */
-public class XsltIncludeIndex implements PsiIncludeManager.PsiIncludeHandler {
-    private static final Logger LOG = Logger.getInstance(XsltIncludeIndex.class.getName());
+public class XsltIncludeIndex {
 
-    public boolean shouldCheckFile(@NotNull VirtualFile virtualFile) {
-        if (virtualFile.getFileType() != StdFileTypes.XML) {
-            return false;
-        }
 
-        try {
-            final XsltChecker checker = new XsltChecker();
-            NanoXmlUtil.parse(virtualFile.getInputStream(), checker);
-            return checker.isSupportedXsltFile();
-        } catch (IOException e) {
-            LOG.info("Cannot parse " + virtualFile.getUrl(), e);
-            return false;
-        }
+  public static boolean isReachableFrom(XmlFile which, XmlFile from) {
+        return from == which || _isReachableFrom(from.getVirtualFile(), FileIncludeManager.getManager(which.getProject()).getIncludingFiles(which.getVirtualFile(), true));
     }
 
-    public PsiIncludeManager.IncludeInfo[] findIncludes(PsiFile psiFile) {
-        if (!(psiFile instanceof XmlFile)) return PsiIncludeManager.IncludeInfo.EMPTY_ARRAY;
-
-        final List<XmlTag> includes = new SmartList<XmlTag>();
-        try {
-            final XmlTag root = ((XmlFile)psiFile).getDocument().getRootTag();
-            Collections.addAll(includes, root.findSubTags("include", XsltSupport.XSLT_NS));
-            Collections.addAll(includes, root.findSubTags("import", XsltSupport.XSLT_NS));
-        } catch (NullPointerException e) {
-            // nothing
-            return PsiIncludeManager.IncludeInfo.EMPTY_ARRAY;
-        }
-        final PsiIncludeManager.IncludeInfo[] info = new PsiIncludeManager.IncludeInfo[includes.size()];
-        for (int i = 0; i < info.length; i++) {
-            final XmlTag directive = includes.get(i);
-            final PsiFile target = resolve(psiFile, directive);
-            final String[] fileNames;
-            if (target != null) {
-                fileNames = new String[]{ target.getName() };
-            } else {
-                final String href = directive.getAttributeValue("href");
-                if (href != null && href.length() > 0) {
-                    final String[] parts = href.split("[/\\\\]");
-                    fileNames = new String[]{ parts[parts.length - 1] };
-                } else {
-                    fileNames = ArrayUtil.EMPTY_STRING_ARRAY;
-                }
-            }
-            info[i] = new PsiIncludeManager.IncludeInfo(target, directive, fileNames, this);
-        }
-        return info;
-    }
-
-    @Nullable
-    private static PsiFile resolve(PsiFile psiFile, XmlTag directive) {
-        final XmlAttribute href = directive.getAttribute("href");
-        return ResolveUtil.resolveFile(href, psiFile);
-    }
-
-    public static boolean isReachableFrom(XmlFile which, XmlFile from) {
-        final Project project = which.getProject();
-        if (project != from.getProject()) {
-            return false;
-        }
-        return _isReachableFrom(project.getComponent(PsiIncludeManager.class), from, which);
-    }
-
-    private static boolean _isReachableFrom(PsiIncludeManager manager, XmlFile from, PsiFile... which) {
+    private static boolean _isReachableFrom(VirtualFile from, VirtualFile[] which) {
         //noinspection ForLoopReplaceableByForEach
         for (int i = 0; i < which.length; i++) {
-            final PsiFile file = which[i];
+            final VirtualFile file = which[i];
             if (file == from) {
-                return true;
-            }
-            if (_isReachableFrom(manager, from, manager.getIncludingFiles(file))) {
                 return true;
             }
         }
         return false;
     }
 
-    public void includeChanged(PsiElement includeDirective, PsiFile targetFile, PomModelEvent event) {
-//        System.out.println("event = " + event);
-    }
-
-    public static boolean processBackwardDependencies(@NotNull XmlFile file, Processor<XmlFile> processor) {
-        final PsiIncludeManager manager = file.getProject().getComponent(PsiIncludeManager.class);
-        return _processBackwardDependencies(manager, manager.getIncludingFiles(file), processor);
-    }
-
-    private static boolean _processBackwardDependencies(PsiIncludeManager manager, PsiFile[] files, Processor<XmlFile> processor) {
-        //noinspection ForLoopReplaceableByForEach
-        for (int i = 0; i < files.length; i++) {
-            final PsiFile psiFile = files[i];
-            if (XsltSupport.isXsltFile(psiFile)) {
-                if (!processor.process((XmlFile)psiFile)) {
-                    return false;
-                }
-                if (!_processBackwardDependencies(manager, manager.getIncludingFiles(psiFile), processor)) {
-                    return false;
-                }
-            }
+  public static boolean processBackwardDependencies(@NotNull XmlFile file, Processor<XmlFile> processor) {
+      Project project = file.getProject();
+      final PsiManager psiManager = PsiManager.getInstance(project);
+      VirtualFile[] files = FileIncludeManager.getManager(project).getIncludingFiles(file.getVirtualFile(), true);
+      PsiFile[] psiFiles = ContainerUtil.map2Array(files, PsiFile.class, new NullableFunction<VirtualFile, PsiFile>() {
+        public PsiFile fun(VirtualFile file) {
+          return psiManager.findFile(file);
         }
-        return true;
+      });
+      for (final PsiFile psiFile : psiFiles) {
+        if (XsltSupport.isXsltFile(psiFile)) {
+          if (!processor.process((XmlFile)psiFile)) {
+            return false;
+          }
+        }
+      }
+      return true;
     }
+
 }
