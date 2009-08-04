@@ -3,94 +3,59 @@ package org.jetbrains.plugins.groovy.lang.smartEnter;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.IncorrectOperationException;
-import junit.framework.Assert;
-import junit.framework.Test;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
-import org.jetbrains.plugins.groovy.util.PathUtil;
-import org.jetbrains.plugins.groovy.util.TestUtils;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 05.08.2008
  */
-public class SmartEnterTest extends ActionTestCase {
+public class SmartEnterTest extends JavaCodeInsightFixtureTestCase {
 
-  @NonNls
-  private static final String DATA_PATH = PathUtil.getDataPath(SmartEnterTest.class);
-
-  protected Editor myEditor;
-  protected FileEditorManager fileEditorManager;
-  protected String newDocumentText;
-  protected PsiFile myFile;
-
-  public SmartEnterTest() {
-    super(System.getProperty("path") != null ?
-            System.getProperty("path") :
-            DATA_PATH
-    );
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/groovy/actions/smartEnter/";
   }
 
-  protected List<SmartEnterProcessor> getSmartProcessors(Language grLanguage) {
+  public void testMethCallComma() throws Throwable { doTest(); }
+  public void testMethCallWithArg() throws Throwable { doTest(); }
+  public void testMethodCallMissArg() throws Throwable { doTest(); }
+  public void testMissBody() throws Throwable { doTest(); }
+  public void testMissCondition() throws Throwable { doTest(); }
+  public void testMissIfclosureParen() throws Throwable { doTest(); }
+  public void testMissIfCurl() throws Throwable { doTest(); }
+  public void testMissingIfClosedParenth() throws Throwable { doTest(); }
+  public void testMissRParenth() throws Throwable { doTest(); }
+  public void testMissRParenthInMethod() throws Throwable { doTest(); }
+  public void testMissRQuote() throws Throwable { doTest(); }
+  public void testMissRQuoteInCompStr() throws Throwable { doTest(); }
+
+  protected static List<SmartEnterProcessor> getSmartProcessors(Language grLanguage) {
     return SmartEnterProcessors.INSTANCE.forKey(grLanguage);
   }
 
-  private String processFile(final PsiFile file) throws IncorrectOperationException, InvalidDataException, IOException {
-    String result;
-    String fileText = file.getText();
-    int offset = fileText.indexOf(CARET_MARKER);
-    fileText = TestUtils.removeCaretMarker(fileText);
-    myFile = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
-    fileEditorManager = FileEditorManager.getInstance(myProject);
-    VirtualFile virtualFile = myFile.getVirtualFile();
-    assert virtualFile != null;
-    myEditor = fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, virtualFile, 0), false);
-    Assert.assertNotNull(myEditor);
-    myEditor.getCaretModel().moveToOffset(offset);
+  public void doTest() throws Exception {
+    final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + getTestName(true) + ".test");
 
-    final List<SmartEnterProcessor> processors = getSmartProcessors(myFile.getLanguage());
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
 
-    try {
-      performAction(myProject, new Runnable() {
-        public void run() {
-          for (SmartEnterProcessor processor : processors) {
-            processor.process(myProject, myEditor, myFile);
-          }
+    final List<SmartEnterProcessor> processors = getSmartProcessors(GroovyFileType.GROOVY_LANGUAGE);
+    new WriteCommandAction(getProject()) {
+      protected void run(Result result) throws Throwable {
+        final Editor editor = myFixture.getEditor();
+        for (SmartEnterProcessor processor : processors) {
+          processor.process(getProject(), editor, myFixture.getFile());
         }
-      });
 
-      offset = myEditor.getCaretModel().getOffset();
-      result = myEditor.getDocument().getText();
-      result = result.substring(0, offset) + CARET_MARKER + result.substring(offset);
-    } finally {
-      fileEditorManager.closeFile(virtualFile);
-      myEditor = null;
-    }
-
-    return result;
+      }
+    }.execute();
+    myFixture.checkResult(data.get(1));
   }
 
-  public String transform(String testName, String[] data) throws Exception {
-    String fileText = data[0];
-    final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
-    String result = processFile(psiFile);
-    //System.out.println("------------------------ " + testName + " ------------------------");
-    //System.out.println(result);
-    //System.out.println("");
-    return result;
-  }
-
-  public static Test suite() {
-    return new SmartEnterTest();
-  }
 }
