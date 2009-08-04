@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -327,7 +328,11 @@ public abstract class GroovyRefactoringUtil {
         break;
       }
       if (parent == null) return PsiElement.EMPTY_ARRAY;
+      final PsiElement prev = parent;
       parent = parent.getParent();
+      if (parent instanceof GrCodeBlock && prev instanceof LeafPsiElement) { //braces
+        parent = parent.getParent();
+      }
     }
 
     if (!parent.equals(element1)) {

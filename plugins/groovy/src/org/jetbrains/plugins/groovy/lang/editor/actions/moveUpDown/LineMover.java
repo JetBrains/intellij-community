@@ -15,16 +15,18 @@
 
 package org.jetbrains.plugins.groovy.lang.editor.actions.moveUpDown;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -57,11 +59,16 @@ class LineMover extends Mover {
     if (range.endLine > maxLine && isDown) return false;
 
     toMove = range;
-    int nearLine = isDown ? range.endLine : range.startLine - 1;
-    toMove2 = new LineRange(nearLine, nearLine + 1);
+    updateComplementaryRange();
     return true;
   }
 
+  protected final void updateComplementaryRange() {
+    int nearLine = isDown ? toMove.endLine : toMove.startLine - 1;
+    toMove2 = new LineRange(nearLine, nearLine + 1);
+  }
+
+  @Nullable
   protected static Pair<PsiElement, PsiElement> getElementRange(Editor editor, PsiFile file, final LineRange range) {
     final int startOffset = editor.logicalPositionToOffset(new LogicalPosition(range.startLine, 0));
     PsiElement startingElement = firstNonWhiteElement(startOffset, file, true, true);
@@ -80,18 +87,26 @@ class LineMover extends Mover {
     return null;
   }
 
+  @Nullable
   static PsiElement firstNonWhiteElement(int offset, PsiFile file, final boolean lookRight, boolean withNewlines) {
-    final ASTNode leafElement = file.getNode().findLeafElementAt(offset);
-    return leafElement == null ? null : firstNonWhiteElement(leafElement.getPsi(), lookRight, withNewlines);
+    final PsiElement leafElement = file.findElementAt(offset);
+    return leafElement == null ? null : firstNonWhiteElement(leafElement, lookRight, withNewlines);
   }
 
-  static PsiElement firstNonWhiteElement(PsiElement element, final boolean lookRight, boolean withNewlines) {
+  @NotNull
+  static PsiElement firstNonWhiteElement(@NotNull PsiElement element, final boolean lookRight, boolean withNewlines) {
     while (element instanceof PsiWhiteSpace || StringUtil.isEmptyOrSpaces(element.getText()) || PsiUtil.isNewLine(element) && withNewlines) {
-      element = lookRight ? element.getNextSibling() : element.getPrevSibling();
+      final PsiElement candidate = lookRight ? element.getNextSibling() : element.getPrevSibling();
+      if (candidate == null) {
+        break;
+      }
+
+      element = candidate;
     }
     return element;
   }
 
+  @Nullable
   protected static Pair<PsiElement, PsiElement> getElementRange(final PsiElement parent,
                                                                 PsiElement element1,
                                                                 PsiElement element2) {
@@ -108,7 +123,7 @@ class LineMover extends Mover {
 
     if (element1 == null || element2 == null) return null;
     PsiElement commonParent = element1.getParent();
-    if ((!(element1 instanceof GrTopStatement) || !(element2 instanceof GrTopStatement)) &&
+    if ((!(element1 instanceof GrTopStatement || element1 instanceof PsiComment) || !(element2 instanceof GrTopStatement || element2 instanceof PsiComment)) &&
         commonParent == element2.getParent() &&
         commonParent instanceof GrTopStatement) {
       element1 = element2 = element1.getParent();

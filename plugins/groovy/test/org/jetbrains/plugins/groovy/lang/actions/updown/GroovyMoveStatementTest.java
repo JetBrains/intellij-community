@@ -69,8 +69,14 @@ public class GroovyMoveStatementTest extends JavaCodeInsightFixtureTestCase {
   public void testMoveFirstFieldDown() throws Throwable { downTest(); }
 
   public void testVariableOverMethodInScript() throws Throwable { downTest(); }
+  public void testVariableOverClassInScript() throws Throwable { downTest(); }
 
   public void testUpFromLastOffset() throws Throwable { upTest(); }
+  
+  public void testClosureWithPrequel() throws Throwable { upTest(); }
+
+  public void testMultiLineVariable() throws Throwable { downTest(); }
+  public void testClosureVariableByRBrace() throws Throwable { upTest(); }
 
   private void downTest() throws Exception {
     doTest(GroovyEditorActionsManager.MOVE_STATEMENT_DOWN_ACTION);

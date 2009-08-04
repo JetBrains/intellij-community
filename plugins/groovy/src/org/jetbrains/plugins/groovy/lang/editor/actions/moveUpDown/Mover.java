@@ -53,7 +53,7 @@ abstract class Mover {
     final int end = getLineStartSafeOffset(document, toMove.endLine);
     RangeMarker range1 = document.createRangeMarker(start, end);
 
-    final int start2 = document.getLineStartOffset(toMove2.startLine);
+    final int start2 = getLineStartSafeOffset(document, toMove2.startLine);
     final int end2 = getLineStartSafeOffset(document, toMove2.endLine);
     RangeMarker range2 = document.createRangeMarker(start2, end2);
 
@@ -139,7 +139,7 @@ abstract class Mover {
   }
 
   protected static int getLineStartSafeOffset(final Document document, int line) {
-    if (line == document.getLineCount()) return document.getTextLength();
+    if (line >= document.getLineCount()) return document.getTextLength();
     return document.getLineStartOffset(line);
   }
 

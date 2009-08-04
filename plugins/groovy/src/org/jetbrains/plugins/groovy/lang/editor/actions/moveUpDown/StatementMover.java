@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
@@ -60,6 +61,8 @@ public class StatementMover extends LineMover {
     LineRange range = toMove;
 
     if (editor == null) return false;
+    final Document document = editor.getDocument();
+
     range = expandLineRangeToCoverPsiElements(range, editor, file);
     if (range == null) return false;
     final int startOffset = editor.logicalPositionToOffset(new LogicalPosition(range.startLine, 0));
@@ -75,8 +78,10 @@ public class StatementMover extends LineMover {
       }
     }
 
-    range.firstElement = statements[0];
-    range.lastElement = statements[statements.length - 1];
+
+    range = toMove = new LineRange(statements[0], statements[statements.length - 1], document);
+
+    updateComplementaryRange();
 
     final PsiElement commonParent = PsiTreeUtil.findCommonParent(range.firstElement, range.lastElement);
 
@@ -84,7 +89,6 @@ public class StatementMover extends LineMover {
     Class<? extends PsiElement>[] classes = new Class[]{GrMethod.class, GrTypeDefinition.class, PsiComment.class, GroovyFile.class};
     PsiElement guard = PsiTreeUtil.getParentOfType(commonParent, classes);
     if (!calcInsertOffset(file, editor, range)) return false;
-    final Document document = editor.getDocument();
     int insertOffset = isDown ? getLineStartSafeOffset(document, toMove2.endLine) - 1 : document.getLineStartOffset(toMove2.startLine);
 
     PsiElement newGuard = file.getViewProvider().findElementAt(insertOffset);
@@ -93,12 +97,20 @@ public class StatementMover extends LineMover {
       if (!PsiTreeUtil.isAncestor(guard, newGuard, false)) {
         return false;
       }
+      while (true) {
+        PsiElement candidate = PsiTreeUtil.getParentOfType(newGuard, classes);
+        if (candidate == null || candidate == guard || !PsiTreeUtil.isAncestor(guard, candidate, false)) {
+          break;
+        }
+        newGuard = candidate;
+      }
       toMove2 = new LineRange(newGuard, newGuard, document);
     }
 
     return true;
   }
 
+  @Nullable
   private static LineRange expandLineRangeToCoverPsiElements(final LineRange range, Editor editor, final PsiFile file) {
     Pair<PsiElement, PsiElement> psiRange = getElementRange(editor, file, range);
     if (psiRange == null) return null;
@@ -123,17 +135,6 @@ public class StatementMover extends LineMover {
     return new LineRange(startLine, endLine);
   }
 
-  private boolean checkMovingInsideOutside(PsiFile file, final Editor editor, final LineRange result) {
-    final int offset = editor.getCaretModel().getOffset();
-
-    PsiElement guard = file.getViewProvider().findElementAt(offset);
-    if (guard == null) return false;
-
-
-
-    return true;
-  }
-
   private static boolean isInside(final int offset, final PsiElement guard) {
     if (guard == null) return false;
 
@@ -145,8 +146,13 @@ public class StatementMover extends LineMover {
       inside = guard.getTextRange();
     } else if (guard instanceof GrTypeDefinition) {
       GrTypeDefinitionBody body = ((GrTypeDefinition) guard).getBody();
-      if (body != null && body.getLBrace() != null)
-        inside = new TextRange(body.getLBrace().getTextOffset(), body.getTextRange().getEndOffset());
+      if (body != null) {
+        final PsiElement lBrace = body.getLBrace();
+        if (lBrace != null) {
+          inside = new TextRange(lBrace.getTextOffset(), body.getTextRange().getEndOffset());
+        }
+      }
+
     }
     return inside != null && inside.contains(offset);
   }

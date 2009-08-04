@@ -43,6 +43,8 @@ public class LineRange {
   public LineRange(@NotNull PsiElement startElement, @NotNull PsiElement endElement, @NotNull Document document) {
     this(document.getLineNumber(startElement.getTextRange().getStartOffset()),
         document.getLineNumber(endElement.getTextRange().getEndOffset()) + 1);
+    this.firstElement = startElement;
+    this.lastElement = endElement;
   }
 
   @NonNls

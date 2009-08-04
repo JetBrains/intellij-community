@@ -70,6 +70,8 @@ public class GroovyMoveStatementHandler extends EditorWriteActionHandler {
     PsiFile file = documentManager.getPsiFile(document);
     if (file == null || !(file instanceof GroovyFile)) return false;
 
+    documentManager.commitDocument(document);
+
     final Mover mover = getSuitableMover(editor, (GroovyFile) file);
     if (mover == null) return false;
     mover.move(editor, file);
