@@ -149,7 +149,7 @@ public class InjectorUtils {
 
   @NotNull
   public static Set<String> getActiveInjectionSupportIds() {
-    return ContainerUtil.map2Set(Extensions.getExtensions(LanguageInjectionSupport.EP_NAME), new NotNullFunction<LanguageInjectionSupport, String>() {
+    return ContainerUtil.map2Set(getActiveInjectionSupports(), new NotNullFunction<LanguageInjectionSupport, String>() {
       @NotNull
       public String fun(final LanguageInjectionSupport support) {
         return support.getId();
@@ -157,9 +157,13 @@ public class InjectorUtils {
     });
   }
 
+  public static LanguageInjectionSupport[] getActiveInjectionSupports() {
+    return Extensions.getExtensions(LanguageInjectionSupport.EP_NAME);
+  }
+
   @Nullable
   public static LanguageInjectionSupport findInjectionSupport(final String id) {
-    return ContainerUtil.find(Extensions.getExtensions(LanguageInjectionSupport.EP_NAME), new Condition<LanguageInjectionSupport>() {
+    return ContainerUtil.find(getActiveInjectionSupports(), new Condition<LanguageInjectionSupport>() {
       public boolean value(final LanguageInjectionSupport support) {
         return support.getId().equals(id);
       }

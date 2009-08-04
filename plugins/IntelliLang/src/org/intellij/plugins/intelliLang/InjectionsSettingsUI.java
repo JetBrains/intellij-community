@@ -27,25 +27,31 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SplitterProportionsData;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.tabs.BetterJTable;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Icons;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import gnu.trove.THashMap;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
+import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -53,8 +59,6 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author Gregory.Shrago
@@ -69,6 +73,10 @@ public class InjectionsSettingsUI implements Configurable {
 
   private final JPanel myRoot;
   private final InjectionsTable myInjectionsTable;
+  private final Map<String, LanguageInjectionSupport> mySupports = new THashMap<String, LanguageInjectionSupport>();
+  private final Map<String, AnAction> myEditActions = new THashMap<String, AnAction>();
+  private final List<AnAction> myAddActions = new ArrayList<AnAction>();
+  private ActionToolbar myToolbar;
 
   public InjectionsSettingsUI(final Project project, final Configuration configuration) {
     myProject = project;
@@ -84,16 +92,7 @@ public class InjectionsSettingsUI implements Configurable {
           });
         }
       });
-    Collections.sort(myOriginalInjections, new Comparator<BaseInjection>() {
-      public int compare(final BaseInjection o1, final BaseInjection o2) {
-        final int support = Comparing.compare(o1.getSupportId(), o2.getSupportId());
-        if (support != 0) return support;
-        final int lang = Comparing.compare(o1.getInjectedLanguageId(), o2.getInjectedLanguageId());
-        if (lang != 0) return lang;
-        final int name = Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
-        return name;
-      }
-    });
+    sortInjections(myOriginalInjections);
     myInjections = new ArrayList<BaseInjection>();
     for (BaseInjection injection : myOriginalInjections) {
       myInjections.add(injection.copy());
@@ -107,19 +106,77 @@ public class InjectionsSettingsUI implements Configurable {
     tablePanel.add(BetterJTable.createStripedJScrollPane(myInjectionsTable), BorderLayout.CENTER);
     tablePanel.add(Box.createVerticalStrut(10), BorderLayout.SOUTH);
 
+    final DefaultActionGroup group = createActions();
+
+    myToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    myToolbar.setTargetComponent(myInjectionsTable);
+    myRoot.add(myToolbar.getComponent(), BorderLayout.NORTH);
+    myRoot.add(tablePanel, BorderLayout.CENTER);
+  }
+
+  private DefaultActionGroup createActions() {
+    final Consumer<BaseInjection> consumer = new Consumer<BaseInjection>() {
+      public void consume(final BaseInjection injection) {
+        addInjection(injection);
+      }
+    };
+    final Factory<BaseInjection> producer = new Factory<BaseInjection>() {
+      public BaseInjection create() {
+        return getSelectedInjection();
+      }
+    };
+    for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
+      myAddActions.addAll(Arrays.asList(support.createAddActions(myProject, consumer)));
+      ContainerUtil.putIfNotNull(support.getId(), support.createEditAction(myProject, producer), myEditActions);
+      mySupports.put(support.getId(), support);
+    }
+
     final DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new AnAction("Add", "Add", Icons.ADD_ICON) {
+    final AnAction addAction = new AnAction("Add", "Add", Icons.ADD_ICON) {
+      @Override
+      public void update(final AnActionEvent e) {
+        e.getPresentation().setEnabled(!myAddActions.isEmpty());
+      }
+
       @Override
       public void actionPerformed(final AnActionEvent e) {
         performAdd(e);
       }
-    });
-    group.add(new AnAction("Remove", "Remove", Icons.DELETE_ICON) {
+    };
+    final AnAction removeAction = new AnAction("Remove", "Remove", Icons.DELETE_ICON) {
+      @Override
+      public void update(final AnActionEvent e) {
+        e.getPresentation().setEnabled(!getSelectedInjections().isEmpty());
+      }
+
       @Override
       public void actionPerformed(final AnActionEvent e) {
         performRemove();
       }
-    });
+    };
+
+    final AnAction editAction = new AnAction("Edit", "Edit", Icons.PROPERTIES_ICON) {
+      @Override
+      public void update(final AnActionEvent e) {
+        final AnAction action = getEditAction();
+        e.getPresentation().setEnabled(action != null);
+        if (action != null) action.update(e);
+      }
+
+      @Override
+      public void actionPerformed(final AnActionEvent e) {
+        final AnAction action = getEditAction();
+        action.actionPerformed(e);
+      }
+    };
+    group.add(addAction);
+    group.add(removeAction);
+    group.add(editAction);
+
+    addAction.registerCustomShortcutSet(CommonShortcuts.INSERT, myInjectionsTable);
+    removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myInjectionsTable);
+    editAction.registerCustomShortcutSet(CommonShortcuts.ENTER, myInjectionsTable);
+
     group.add(new AnAction("Import", "Import", IconLoader.getIcon("/actions/install.png")) {
       @Override
       public void actionPerformed(final AnActionEvent e) {
@@ -146,9 +203,34 @@ public class InjectionsSettingsUI implements Configurable {
         performToggleAction();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myInjectionsTable);
+    return group;
+  }
 
-    myRoot.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.NORTH);
-    myRoot.add(tablePanel, BorderLayout.CENTER);
+  private AnAction getEditAction() {
+    final BaseInjection injection = getSelectedInjection();
+    final String supportId = injection == null? null : injection.getSupportId();
+    return supportId == null? null : myEditActions.get(supportId);
+  }
+
+  private void addInjection(final BaseInjection injection) {
+    injection.initializePlaces(true);
+    myInjections.add(injection);
+    sortInjections(myInjections);
+    final int index = myInjections.indexOf(injection);
+    ((ListTableModel)myInjectionsTable.getModel()).fireTableDataChanged();
+    myInjectionsTable.getSelectionModel().setSelectionInterval(index, index);
+  }
+
+  private void sortInjections(final List<BaseInjection> injections) {
+    Collections.sort(injections, new Comparator<BaseInjection>() {
+      public int compare(final BaseInjection o1, final BaseInjection o2) {
+        final int support = Comparing.compare(o1.getSupportId(), o2.getSupportId());
+        if (support != 0) return support;
+        final int lang = Comparing.compare(o1.getInjectedLanguageId(), o2.getInjectedLanguageId());
+        if (lang != 0) return lang;
+        return Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
+      }
+    });
   }
 
   public JComponent createComponent() {
@@ -197,8 +279,9 @@ public class InjectionsSettingsUI implements Configurable {
     final int selectedRow = myInjectionsTable.getSelectedRow();
     if (selectedRow < 0) return;
     myInjections.removeAll(getSelectedInjections());
-    myInjectionsTable.updateUI();
-    myInjectionsTable.getSelectionModel().setLeadSelectionIndex(Math.min(myInjections.size()-1, selectedRow));
+    ((ListTableModel)myInjectionsTable.getModel()).fireTableDataChanged();
+    final int index = Math.min(myInjections.size() - 1, selectedRow);
+    myInjectionsTable.getSelectionModel().setSelectionInterval(index, index);
   }
 
   private List<BaseInjection> getSelectedInjections() {
@@ -209,9 +292,20 @@ public class InjectionsSettingsUI implements Configurable {
     return toRemove;
   }
 
-  private void performAdd(final AnActionEvent button) {
-    // todo add popup 
-    Messages.showInfoMessage(myProject, "Unfortunately this functionality is not yet implemented.\nUse in place \'Inject language\' intention action.", "Add Injection");
+  @Nullable
+  private BaseInjection getSelectedInjection() {
+    final int row = myInjectionsTable.getSelectedRow();
+    return row < 0? null : (BaseInjection)myInjectionsTable.getItems().get(row);
+  }
+
+  private void performAdd(final AnActionEvent e) {
+    final DefaultActionGroup group = new DefaultActionGroup();
+    for (AnAction action : myAddActions) {
+      group.add(action);
+    }
+
+    JBPopupFactory.getInstance().createActionGroupPopup(null, group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true)
+      .showUnderneathOf(myToolbar.getComponent());
   }
 
   @Nls
@@ -272,7 +366,7 @@ public class InjectionsSettingsUI implements Configurable {
 
   }
 
-  private static ColumnInfo[] createInjectionColumnInfos() {
+  private ColumnInfo[] createInjectionColumnInfos() {
     final TableCellRenderer booleanCellRenderer = createBooleanCellRenderer();
     final TableCellRenderer displayNameCellRenderer = createDisplayNameCellRenderer();
     final TableCellRenderer languageCellRenderer = createLanguageCellRenderer();
@@ -378,29 +472,21 @@ public class InjectionsSettingsUI implements Configurable {
     };
   }
 
-  private static TableCellRenderer createDisplayNameCellRenderer() {
+  private TableCellRenderer createDisplayNameCellRenderer() {
     return new TableCellRenderer() {
       final SimpleColoredComponent myLabel = new SimpleColoredComponent();
-      final Pattern myPattern = Pattern.compile("(.+)(\\(\\S+(?:\\.\\S+)+\\))");
+      final SimpleColoredText myText = new SimpleColoredText();
 
       public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected, final boolean hasFocus,
                                                      final int row,
                                                      final int column) {
         myLabel.clear();
-
         final BaseInjection injection = (BaseInjection)value;
-        myLabel.append(injection.getSupportId(), SimpleTextAttributes.GRAY_ATTRIBUTES);
-        myLabel.append(": ", SimpleTextAttributes.GRAY_ATTRIBUTES);
-
-        final String text = injection.getDisplayName();
-        final Matcher matcher = myPattern.matcher(text);
-        if (matcher.matches()) {
-          myLabel.append(matcher.group(1), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          myLabel.append(matcher.group(2), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        }
-        else {
-          myLabel.append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        }
+        final SimpleTextAttributes grayAttrs = isSelected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
+        myText.append(injection.getSupportId() + ": ", grayAttrs);
+        mySupports.get(injection.getSupportId()).setupPresentation(injection, myText, isSelected);
+        myText.appendToComponent(myLabel);
+        myText.clear();
         setLabelColors(myLabel, table, isSelected, row);
         return myLabel;
       }
@@ -413,22 +499,8 @@ public class InjectionsSettingsUI implements Configurable {
     }
     label.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
     label.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
-    //if (row % 2 != 0 && !isSelected) {
-    //  label.setBackground(darken(table.getBackground()));
-    //}
-    //else {
-    //  label.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
-    //}
     return label;
   }
-
-
-  //private static final double FACTOR = 0.92;
-  //public static Color darken(Color color) {
-  //  return new Color(Math.max((int)(color.getRed() * FACTOR), 0), Math.max((int)(color.getGreen() * FACTOR), 0),
-  //                   Math.max((int)(color.getBlue() * FACTOR), 0));
-  //}
-
 
   private void doImportAction(final DataContext dataContext) {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, false, true, false) {

@@ -1,12 +1,16 @@
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.ui.SimpleColoredText;
+import com.intellij.util.Consumer;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jdom.Element;
@@ -41,7 +45,11 @@ public interface LanguageInjectionSupport {
 
   BaseInjection createInjection(final Element element);
 
-  //void setupPresentation(final Injection injection, final SimpleColoredText presentation);
+  void setupPresentation(final BaseInjection injection, final SimpleColoredText presentation, final boolean isSelected);
 
   Configurable[] createSettings(final Project project, final Configuration configuration);
+
+  AnAction[] createAddActions(final Project project, final Consumer<BaseInjection> consumer);
+
+  AnAction createEditAction(final Project project, final Factory<BaseInjection> producer);
 }

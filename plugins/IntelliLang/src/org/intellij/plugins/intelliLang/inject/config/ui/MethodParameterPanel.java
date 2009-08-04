@@ -17,17 +17,14 @@ package org.intellij.plugins.intelliLang.inject.config.ui;
 
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -37,14 +34,14 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.dualView.TreeTableView;
+import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
+import com.intellij.ui.treeStructure.treetable.TreeColumnInfo;
 import com.intellij.util.Function;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
-import com.intellij.ui.treeStructure.treetable.TreeColumnInfo;
 import gnu.trove.THashMap;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
@@ -58,6 +55,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -131,6 +129,29 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
         return userObject instanceof PsiNamedElement? ((PsiNamedElement)userObject).getName() : null;
       }
     });
+    new AnAction("Toggle") {
+      @Override
+      public void actionPerformed(final AnActionEvent e) {
+        performToggleAction();
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myParamsTable);
+  }
+
+  private void performToggleAction() {
+    final Collection<DefaultMutableTreeNode> selectedInjections = myParamsTable.getSelection();
+    boolean enabledExists = false;
+    boolean disabledExists = false;
+    for (DefaultMutableTreeNode node : selectedInjections) {
+      final Boolean nodeSelected = isNodeSelected(node);
+      if (Boolean.TRUE == nodeSelected) enabledExists = true;
+      else if (Boolean.FALSE == nodeSelected) disabledExists = true;
+      if (enabledExists && disabledExists) break;
+    }
+    boolean allEnabled = !enabledExists && disabledExists;
+    for (DefaultMutableTreeNode node : selectedInjections) {
+      setNodeSelected(node, allEnabled);
+    }
+    myParamsTable.updateUI();
   }
 
   @Nullable
@@ -291,26 +312,46 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     myAdvancedPanel = new AdvancedPanel(myProject, myOrigInjection);    
   }
 
+  private Boolean isNodeSelected(final DefaultMutableTreeNode o) {
+    final Object userObject = o.getUserObject();
+    if (userObject instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)userObject;
+      return MethodParameterInjection.isInjectable(method.getReturnType(), method.getProject()) ? myData.get(method).isReturnFlag() : null;
+    }
+    else if (userObject instanceof PsiParameter) {
+      final PsiMethod method = getMethodByNode(o);
+      final PsiParameter parameter = (PsiParameter)userObject;
+      final int index = method.getParameterList().getParameterIndex(parameter);
+      return MethodParameterInjection.isInjectable(parameter.getType(), method.getProject()) ? myData.get(method).getParamFlags()[index] : null;
+    }
+    return null;
+  }
+
+  private void setNodeSelected(final DefaultMutableTreeNode o, final boolean value) {
+    final Object userObject = o.getUserObject();
+    if (userObject instanceof PsiMethod) {
+      myData.get((PsiMethod)userObject).setReturnFlag(value);
+    }
+    else if (userObject instanceof PsiParameter) {
+      final PsiMethod method = getMethodByNode(o);
+      final int index = method.getParameterList().getParameterIndex((PsiParameter)userObject);
+      myData.get(method).getParamFlags()[index] = value;
+    }
+  }
+
+  private static PsiMethod getMethodByNode(final DefaultMutableTreeNode o) {
+    final Object userObject = o.getUserObject();
+    if (userObject instanceof PsiMethod) return (PsiMethod)userObject;
+    return (PsiMethod)((DefaultMutableTreeNode)o.getParent()).getUserObject();
+  }
+
   private ColumnInfo[] createColumnInfos() {
     return new ColumnInfo[]{
         new ColumnInfo<DefaultMutableTreeNode, Boolean>(" ") { // "" for the first column's name isn't a good idea
           final BooleanTableCellRenderer myRenderer = new BooleanTableCellRenderer();
 
           public Boolean valueOf(DefaultMutableTreeNode o) {
-            final Object userObject = o.getUserObject();
-            if (userObject instanceof PsiMethod) {
-              final PsiMethod method = (PsiMethod)userObject;
-              return MethodParameterInjection.isInjectable(method.getReturnType(), method.getProject()) ?
-                     myData.get(method).isReturnFlag() : null;
-            }
-            else if (userObject instanceof PsiParameter) {
-              final PsiMethod method = getMethod(o);
-              final PsiParameter parameter = (PsiParameter)userObject;
-              final int index = method.getParameterList().getParameterIndex(parameter);
-              return MethodParameterInjection.isInjectable(parameter.getType(), method.getProject()) ?
-                     myData.get(method).getParamFlags()[index] : null;
-            }
-            return null;
+            return isNodeSelected(o);
           }
 
           public int getWidth(JTable table) {
@@ -327,15 +368,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
           }
 
           public void setValue(DefaultMutableTreeNode o, Boolean value) {
-            final Object userObject = o.getUserObject();
-            if (userObject instanceof PsiMethod) {
-              myData.get((PsiMethod)userObject).setReturnFlag(Boolean.TRUE.equals(value));
-            }
-            else if (userObject instanceof PsiParameter) {
-              final PsiMethod method = getMethod(o);
-              final int index = method.getParameterList().getParameterIndex((PsiParameter)userObject);
-              myData.get(method).getParamFlags()[index] = Boolean.TRUE.equals(value);
-            }
+            setNodeSelected(o, Boolean.TRUE.equals(value));
           }
 
           public Class<Boolean> getColumnClass() {
@@ -345,11 +378,6 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
           public boolean isCellEditable(DefaultMutableTreeNode o) {
             return valueOf(o) != null;
           }
-
-          private PsiMethod getMethod(final DefaultMutableTreeNode o) {
-            return (PsiMethod)((DefaultMutableTreeNode)o.getParent()).getUserObject();
-          }
-
 
         }, new TreeColumnInfo("Method/Parameters")
     };

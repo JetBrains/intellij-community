@@ -16,24 +16,17 @@
 
 package org.intellij.plugins.intelliLang.inject.groovy;
 
-import com.intellij.lang.Language;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiElement;
-import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
-import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
-import org.jdom.Element;
+import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
 
 /**
  * @author Gregory.Shrago
  */
-public class GroovyLanguageInjectionSupport implements LanguageInjectionSupport {
+public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
   @NonNls private static final String SUPPORT_ID = "groovy";
 
   @NotNull
@@ -48,25 +41,5 @@ public class GroovyLanguageInjectionSupport implements LanguageInjectionSupport 
 
   public boolean useDefaultInjector(final PsiElement host) {
     return host instanceof GroovyPsiElement;
-  }
-
-  public boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement) {
-    return false;
-  }
-
-  public boolean removeInjectionInPlace(final PsiLanguageInjectionHost psiElement) {
-    return false;
-  }
-
-  public boolean editInjectionInPlace(final PsiLanguageInjectionHost psiElement) {
-    return false;
-  }
-
-  public BaseInjection createInjection(final Element element) {
-    return new BaseInjection(SUPPORT_ID);
-  }
-
-  public Configurable[] createSettings(final Project project, final Configuration configuration) {
-    return new Configurable[0];
   }
 }
