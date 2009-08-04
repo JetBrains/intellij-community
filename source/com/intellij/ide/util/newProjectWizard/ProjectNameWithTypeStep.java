@@ -17,8 +17,8 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -220,14 +220,15 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
     } else {
       final Project project = wizardContext.getProject();
       assert project != null;
-      final VirtualFile baseDir = project.getBaseDir();
-      assert baseDir != null;
-      final String moduleName = ProjectWizardUtil.findNonExistingFileName(baseDir.getPath(), "untitled", "");
-      setModuleName(moduleName);
-      setModuleContentRoot(baseDir.getPath() + "/" + moduleName);
-      setImlFileLocation(baseDir.getPath() + "/" + moduleName);
-      myModuleName.setSelectionStart(0);
-      myModuleName.setSelectionEnd(moduleName.length());
+      VirtualFile baseDir = project.getBaseDir();
+      if (baseDir != null) { //e.g. was deleted
+        final String moduleName = ProjectWizardUtil.findNonExistingFileName(baseDir.getPath(), "untitled", "");
+        setModuleName(moduleName);
+        setModuleContentRoot(baseDir.getPath() + "/" + moduleName);
+        setImlFileLocation(baseDir.getPath() + "/" + moduleName);
+        myModuleName.setSelectionStart(0);
+        myModuleName.setSelectionEnd(moduleName.length());
+      }
     }
   }
 
