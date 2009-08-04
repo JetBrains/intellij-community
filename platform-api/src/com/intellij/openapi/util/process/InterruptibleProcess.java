@@ -55,25 +55,7 @@ public abstract class InterruptibleProcess extends InterruptibleActivity {
   }
 
   public static void close(final Process process) {
-    try {
-      process.getOutputStream().close();
-    }
-    catch (IOException e) {
-      //
-    }
-    try {
-      process.getInputStream().close();
-    }
-    catch (IOException e) {
-      //
-    }
-    try {
-      process.getErrorStream().close();
-    }
-    catch (IOException e) {
-      //
-    }
-    process.destroy();
+    ProcessCloseUtil.close(process);
   }
 
   public void closeProcess() {
