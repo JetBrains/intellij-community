@@ -3,3 +3,7 @@ String validatePaths() {
     println "abc"
   }
 <warning descr="Not all execution paths return a value">}</warning>
+
+void foo() {
+
+}

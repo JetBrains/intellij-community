@@ -6,6 +6,7 @@ package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.codeInspection.LocalInspectionTool;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
@@ -37,7 +38,8 @@ public class GroovyHighlightingTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
-  private void doTest() throws Throwable {
+  private void doTest(LocalInspectionTool... tools) throws Throwable {
+    myFixture.enableInspections(tools);
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy");
   }
 
@@ -89,40 +91,19 @@ public class GroovyHighlightingTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
-  public void testDontSimplifyString() throws Throwable {
-    myFixture.enableInspections(new GroovyTrivialIfInspection(), new GroovyTrivialConditionalInspection());
-    doTest();
-  }
+  public void testDontSimplifyString() throws Throwable { doTest(new GroovyTrivialIfInspection(), new GroovyTrivialConditionalInspection()); }
 
-  public void testRawMethodAccess() throws Throwable {
-    myFixture.enableInspections(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection());
-    doTest();
-  }
+  public void testRawMethodAccess() throws Throwable { doTest(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection()); }
 
-  public void testRawFieldAccess() throws Throwable {
-    myFixture.enableInspections(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection());
-    doTest();
-  }
+  public void testRawFieldAccess() throws Throwable { doTest(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection()); }
 
-  public void testRawArrayStyleAccess() throws Throwable {
-    myFixture.enableInspections(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection());
-    doTest();
-  }
+  public void testRawArrayStyleAccess() throws Throwable { doTest(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection()); }
 
-  public void testRawArrayStyleAccessToMap() throws Throwable {
-    myFixture.enableInspections(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection());
-    doTest();
-  }
+  public void testRawArrayStyleAccessToMap() throws Throwable { doTest(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection()); }
 
-  public void testRawArrayStyleAccessToList() throws Throwable {
-    myFixture.enableInspections(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection());
-    doTest();
-  }
+  public void testRawArrayStyleAccessToList() throws Throwable { doTest(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection()); }
 
-  public void testIncompatibleTypesAssignments() throws Throwable {
-    myFixture.enableInspections(new GroovyAssignabilityCheckInspection());
-    doTest();
-  }
+  public void testIncompatibleTypesAssignments() throws Throwable { doTest(new GroovyAssignabilityCheckInspection()); }
 
   public void testAnonymousClassConstructor() throws Throwable {doTest();}
   public void testAnonymousClassAbstractMethod() throws Throwable {doTest();}
@@ -134,14 +115,8 @@ public class GroovyHighlightingTest extends JavaCodeInsightFixtureTestCase {
   public void testDefaultMapConstructorNamedArgsError() throws Throwable {doTest();}
   public void testDefaultMapConstructorWhenDefConstructorExists() throws Throwable {doTest();}
 
-  public void testUnresolvedLhsAssignment() throws Throwable {
-    myFixture.enableInspections(new GroovyUnresolvedAccessInspection());
-    doTest();
-  }
+  public void testUnresolvedLhsAssignment() throws Throwable { doTest(new GroovyUnresolvedAccessInspection()); }
 
-  public void testMissingReturnWithLastLoop() throws Throwable {
-    myFixture.enableInspections(new MissingReturnInspection());
-    doTest();
-  }
+  public void testMissingReturnWithLastLoop() throws Throwable { doTest(new MissingReturnInspection()); }
 
 }

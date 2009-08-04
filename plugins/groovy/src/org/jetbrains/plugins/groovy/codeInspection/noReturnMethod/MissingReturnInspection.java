@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +56,8 @@ public class MissingReturnInspection extends LocalInspectionTool {
       public void visitMethod(GrMethod method) {
         final GrOpenBlock block = method.getBlock();
         if (block != null) {
-          check(block, problemsHolder, method.getReturnTypeElementGroovy() != null);
+          final boolean mustReturnValue = method.getReturnTypeElementGroovy() != null && method.getReturnType() != PsiType.VOID;
+          check(block, problemsHolder, mustReturnValue);
         }
         super.visitMethod(method);
       }
