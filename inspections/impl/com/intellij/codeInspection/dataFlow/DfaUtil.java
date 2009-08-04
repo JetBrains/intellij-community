@@ -12,12 +12,14 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Gregory.Shrago
@@ -41,9 +43,9 @@ public class DfaUtil {
             result = null;
           }
           else {
-            final ValuableDataFlowRunner runner = new ValuableDataFlowRunner(context);
-            if (runner.analyzeMethod(codeBlock, new StandardInstructionVisitor()) == RunnerResult.OK) {
-              result = runner.getAllVariableValues();
+            final ValuableInstructionVisitor visitor = new ValuableInstructionVisitor(context);
+            if (new ValuableDataFlowRunner().analyzeMethod(codeBlock, visitor) == RunnerResult.OK) {
+              result = visitor.myValues;
             }
             else {
               result = null;
@@ -159,5 +161,70 @@ public class DfaUtil {
       return true;
     }
     return false;
+  }
+
+  private static class ValuableInstructionVisitor extends StandardInstructionVisitor {
+    final MultiValuesMap<PsiVariable, PsiExpression> myValues = new MultiValuesMap<PsiVariable, PsiExpression>(true);
+    private final PsiExpression myContext;
+
+    public ValuableInstructionVisitor(PsiExpression context) {
+      myContext = context;
+    }
+
+    @Override
+    public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+      if (myContext == instruction.getPlace()) {
+        final Map<DfaVariableValue,DfaVariableState> map = ((ValuableDataFlowRunner.MyDfaMemoryState)memState).getVariableStates();
+        for (Map.Entry<DfaVariableValue, DfaVariableState> entry : map.entrySet()) {
+          ValuableDataFlowRunner.ValuableDfaVariableState state = (ValuableDataFlowRunner.ValuableDfaVariableState)entry.getValue();
+          DfaVariableValue variableValue = entry.getKey();
+          final PsiExpression psiExpression = state.myExpression;
+          if (psiExpression != null) {
+            myValues.put(variableValue.getPsiVariable(), psiExpression);
+          }
+        }
+      }
+      return super.visitPush(instruction, runner, memState);
+    }
+
+    @Override
+    public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+      final Instruction nextInstruction = runner.getInstruction(instruction.getIndex() + 1);
+
+      final DfaValue dfaSource = memState.pop();
+      final DfaValue dfaDest = memState.pop();
+
+      if (dfaDest instanceof DfaVariableValue) {
+        DfaVariableValue var = (DfaVariableValue)dfaDest;
+        final PsiExpression rightValue = instruction.getRExpression();
+        final PsiElement parent = rightValue == null ? null : rightValue.getParent();
+        final IElementType type = parent instanceof PsiAssignmentExpression
+                                  ? ((PsiAssignmentExpression)parent).getOperationTokenType() : JavaTokenType.EQ;
+        // store current value - to use in case of '+='
+        final PsiExpression prevValue = ((ValuableDataFlowRunner.ValuableDfaVariableState)((ValuableDataFlowRunner.MyDfaMemoryState)memState).getVariableState(var)).myExpression;
+        memState.setVarValue(var, dfaSource);
+        // state may have been changed so re-retrieve it
+        final ValuableDataFlowRunner.ValuableDfaVariableState curState = (ValuableDataFlowRunner.ValuableDfaVariableState)((ValuableDataFlowRunner.MyDfaMemoryState)memState).getVariableState(var);
+        final PsiExpression curValue = curState.myExpression;
+        final PsiExpression nextValue;
+        if (type == JavaTokenType.PLUSEQ && prevValue != null) {
+          PsiExpression tmpExpression;
+          try {
+            tmpExpression = JavaPsiFacade.getElementFactory(myContext.getProject())
+              .createExpressionFromText(prevValue.getText() + "+" + rightValue.getText(), rightValue);
+          }
+          catch (Exception e) {
+            tmpExpression = curValue == null ? rightValue : curValue;
+          }
+          nextValue = tmpExpression;
+        }
+        else {
+          nextValue = curValue == null ? rightValue : curValue;
+        }
+        curState.myExpression = nextValue;
+      }
+      memState.push(dfaDest);
+      return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, memState)};
+    }
   }
 }

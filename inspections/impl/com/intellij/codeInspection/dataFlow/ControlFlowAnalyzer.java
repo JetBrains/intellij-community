@@ -995,7 +995,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiExpression thenExpression = expression.getThenExpression();
       PsiExpression elseExpression = expression.getElseExpression();
 
-      final int elseOffset = elseExpression == null ? getEndOffset(expression) : getStartOffset(elseExpression);
+      final int elseOffset = elseExpression == null ? getEndOffset(expression) - 1 : getStartOffset(elseExpression);
       if (thenExpression != null) {
         condition.accept(this);
         generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);

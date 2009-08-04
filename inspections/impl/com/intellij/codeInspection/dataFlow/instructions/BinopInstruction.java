@@ -12,14 +12,16 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
 
 public class BinopInstruction extends BranchingInstruction {
   private final String myOperationSign;
@@ -37,65 +39,6 @@ public class BinopInstruction extends BranchingInstruction {
     setPsiAnchor(psiAnchor);
   }
 
-  public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
-    final Instruction next = runner.getInstruction(getIndex() + 1);
-
-    DfaValue dfaRight = memState.pop();
-    DfaValue dfaLeft = memState.pop();
-
-    if (myOperationSign != null) {
-      final DfaValueFactory factory = runner.getFactory();
-      if (("==".equals(myOperationSign) || "!=".equals(myOperationSign)) &&
-          dfaLeft instanceof DfaConstValue && dfaRight instanceof DfaConstValue) {
-        boolean negated = "!=".equals(myOperationSign) ^ (memState.canBeNaN(dfaLeft) || memState.canBeNaN(dfaRight));
-        if (dfaLeft == dfaRight ^ negated) {
-          memState.push(factory.getConstFactory().getTrue());
-          setTrueReachable();
-        }
-        else {
-          memState.push(factory.getConstFactory().getFalse());
-          setFalseReachable();
-        }
-        return new DfaInstructionState[]{new DfaInstructionState(next, memState)};
-      }
-
-      boolean negated = memState.canBeNaN(dfaLeft) || memState.canBeNaN(dfaRight);
-      DfaRelationValue dfaRelation = factory.getRelationFactory().create(dfaLeft, dfaRight, myOperationSign, negated);
-      if (dfaRelation != null) {
-        ArrayList<DfaInstructionState> states = new ArrayList<DfaInstructionState>();
-
-        final DfaMemoryState trueCopy = memState.createCopy();
-        if (trueCopy.applyCondition(dfaRelation)) {
-          trueCopy.push(factory.getConstFactory().getTrue());
-          setTrueReachable();
-          states.add(new DfaInstructionState(next, trueCopy));
-        }
-
-        DfaMemoryState falseCopy = memState;
-        if (falseCopy.applyCondition(dfaRelation.createNegated())) {
-          falseCopy.push(factory.getConstFactory().getFalse());
-          setFalseReachable();
-          states.add(new DfaInstructionState(next, falseCopy));
-        }
-
-        return states.toArray(new DfaInstructionState[states.size()]);
-      }
-      else if ("+".equals(myOperationSign)) {
-        memState.push(getNonNullStringValue(factory));
-        setTrueReachable();  // Not a branching instruction actually.
-        setFalseReachable();
-      }
-      else {
-        memState.push(DfaUnknownValue.getInstance());
-      }
-    }
-    else {
-      memState.push(DfaUnknownValue.getInstance());
-    }
-
-    return new DfaInstructionState[]{new DfaInstructionState(next, memState)};
-  }
-
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
     return visitor.visitBinop(this, runner, stateBefore);
@@ -103,7 +46,8 @@ public class BinopInstruction extends BranchingInstruction {
 
   public DfaValue getNonNullStringValue(final DfaValueFactory factory) {
     PsiElement anchor = getPsiAnchor();
-    PsiClassType string = PsiType.getJavaLangString(PsiManager.getInstance(myProject), anchor == null ? GlobalSearchScope.allScope(myProject) : anchor.getResolveScope());
+    Project project = myProject;
+    PsiClassType string = PsiType.getJavaLangString(PsiManager.getInstance(project), anchor == null ? GlobalSearchScope.allScope(project) : anchor.getResolveScope());
     return factory.getNotNullFactory().create(string);
   }
 

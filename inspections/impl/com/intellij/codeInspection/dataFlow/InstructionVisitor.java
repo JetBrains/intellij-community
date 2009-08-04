@@ -5,6 +5,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 
 /**
  * @author peter
@@ -20,7 +21,10 @@ public abstract class InstructionVisitor {
   }
 
   public DfaInstructionState[] visitBinop(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    return instruction.apply(runner, memState);
+    memState.pop();
+    memState.pop();
+    memState.push(DfaUnknownValue.getInstance());
+    return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState)};
   }
 
   public DfaInstructionState[] visitCheckReturnValue(CheckReturnValueInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
