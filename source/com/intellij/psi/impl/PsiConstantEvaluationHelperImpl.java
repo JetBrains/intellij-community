@@ -1,9 +1,6 @@
 package com.intellij.psi.impl;
 
-import com.intellij.psi.PsiConstantEvaluationHelper;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
 
 import java.util.Set;
@@ -18,6 +15,13 @@ public class PsiConstantEvaluationHelperImpl extends PsiConstantEvaluationHelper
 
   public Object computeConstantExpression(PsiExpression expression, boolean throwExceptionOnOverflow) {
     return ConstantExpressionEvaluator.computeConstantExpression(expression, throwExceptionOnOverflow);
+  }
+
+  @Override
+  public Object computeExpression(final PsiExpression expression,
+                                  final boolean throwExceptionOnOverflow,
+                                  final AuxEvaluator auxEvaluator) {
+    return ConstantExpressionEvaluator.computeConstantExpression(expression, null, throwExceptionOnOverflow, auxEvaluator);
   }
 
   public static Object computeCastTo(PsiExpression expression, PsiType castTo, Set<PsiVariable> visitedVars) {

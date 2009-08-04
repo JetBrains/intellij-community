@@ -17,6 +17,8 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.ConcurrentMap;
+
 /**
  * Service for evaluating values of constant expressions.
  *
@@ -45,4 +47,13 @@ public abstract class PsiConstantEvaluationHelper {
    * @return the result of the evaluation, or null if the expression is not a constant expression.
    */
   public abstract Object computeConstantExpression(PsiExpression expression, boolean throwExceptionOnOverflow);
+
+  public abstract Object computeExpression(PsiExpression expression, boolean throwExceptionOnOverflow,
+                                           @Nullable final AuxEvaluator auxEvaluator);
+
+  public interface AuxEvaluator {
+    Object computeExpression(final PsiExpression expression, final AuxEvaluator auxEvaluator);
+
+    ConcurrentMap<PsiElement, Object> getCacheMap(final boolean overflow);
+  }
 }

@@ -9,8 +9,9 @@ import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashSet;
 
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
-class ConstantExpressionVisitor extends JavaElementVisitor {
+class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstantEvaluationHelper.AuxEvaluator {
   private final StringInterner myInterner = new StringInterner();
 
   private Set<PsiVariable> myVisitedVars;
@@ -18,9 +19,12 @@ class ConstantExpressionVisitor extends JavaElementVisitor {
 
   private Object myResult;
 
-  ConstantExpressionVisitor(Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow) {
+  private final PsiConstantEvaluationHelper.AuxEvaluator myAuxEvaluator;
+
+  ConstantExpressionVisitor(Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow, final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
     myVisitedVars = visitedVars;
     myThrowExceptionOnOverflow = throwExceptionOnOverflow;
+    myAuxEvaluator = auxEvaluator;
   }
 
   Object handle(PsiElement element) {
@@ -473,6 +477,11 @@ class ConstantExpressionVisitor extends JavaElementVisitor {
     myResult = getStoredValue(expression.getExpression());
   }
 
+  @Override
+  public void visitMethodCallExpression(final PsiMethodCallExpression expression) {
+    myResult = myAuxEvaluator != null? myAuxEvaluator.computeExpression(expression, this) : null;
+  }
+
   @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
     PsiExpression qualifierExpression = expression.getQualifierExpression();
     while (qualifierExpression != null) {
@@ -504,12 +513,8 @@ class ConstantExpressionVisitor extends JavaElementVisitor {
 
       myVisitedVars.add(variable);
       try {
-        if (!(variable instanceof PsiVariableEx)) {
-          myResult = null; //?
-          return;
-        }
-
-        myResult = ((PsiVariableEx) variable).computeConstantValue(myVisitedVars);
+        myResult = variable instanceof PsiVariableEx? ((PsiVariableEx) variable).computeConstantValue(myVisitedVars) : null;
+        if (myResult == null && myAuxEvaluator != null) myResult = myAuxEvaluator.computeExpression(expression, this);
         return;
       }
       finally {
@@ -556,5 +561,13 @@ class ConstantExpressionVisitor extends JavaElementVisitor {
 
     if (result instanceof Float && ((Float) result).isInfinite()) throw new ConstantEvaluationOverflowException(expression);
     if (result instanceof Double && ((Double) result).isInfinite()) throw new ConstantEvaluationOverflowException(expression);
+  }
+
+  public Object computeExpression(final PsiExpression expression, final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
+    return ConstantExpressionEvaluator.computeConstantExpression(expression, myVisitedVars, myThrowExceptionOnOverflow, auxEvaluator);
+  }
+
+  public ConcurrentMap<PsiElement, Object> getCacheMap(final boolean overflow) {
+    throw new AssertionError("should not be called");
   }
 }
