@@ -4,11 +4,11 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiArrayAccessExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -16,12 +16,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public class FieldReferenceInstruction extends Instruction {
   private final PsiExpression myExpression;
-  private final boolean myIsPhysical;
   @Nullable private final String mySyntheticFieldName;
 
-  public FieldReferenceInstruction(PsiExpression expression, @Nullable @NonNls String syntheticFieldName) {
+  public FieldReferenceInstruction(@NotNull PsiExpression expression, @Nullable @NonNls String syntheticFieldName) {
     myExpression = expression;
-    myIsPhysical = expression.isPhysical();
     mySyntheticFieldName = syntheticFieldName;
   }
 
@@ -30,26 +28,16 @@ public class FieldReferenceInstruction extends Instruction {
     return visitor.visitFieldReference(this, runner, stateBefore);
   }
 
-  public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
-    final DfaValue qualifier = memState.pop();
-    if (myIsPhysical && !memState.applyNotNull(qualifier)) {
-      onInstructionProducesNPE(runner);
-      return DfaInstructionState.EMPTY_ARRAY;
-    }
-
-    return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(getIndex() + 1), memState)};
-  }
-
-  protected void onInstructionProducesNPE(final DataFlowRunner runner) {
-
-  }
-
   public String toString() {
     return "FIELD_REFERENCE: " + myExpression.getText();
   }
 
-  public PsiExpression getExpression() { return myExpression; }
+  @NotNull
+  public PsiExpression getExpression() {
+    return myExpression;
+  }
 
+  @Nullable 
   public PsiExpression getElementToAssert() {
     if (mySyntheticFieldName != null) return myExpression;
     return myExpression instanceof PsiArrayAccessExpression

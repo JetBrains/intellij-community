@@ -8,15 +8,11 @@
  */
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiVariable;
 
 public class AssignInstruction extends Instruction {
   private final PsiExpression myRExpression;
@@ -25,35 +21,9 @@ public class AssignInstruction extends Instruction {
     myRExpression = RExpression;
   }
 
-  public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
-    Instruction nextInstruction = runner.getInstruction(getIndex() + 1);
-
-    DfaValue dfaSource = memState.pop();
-    DfaValue dfaDest = memState.pop();
-
-    if (dfaDest instanceof DfaVariableValue) {
-      DfaVariableValue var = (DfaVariableValue) dfaDest;
-      final PsiVariable psiVariable = var.getPsiVariable();
-      if (AnnotationUtil.isAnnotated(psiVariable, AnnotationUtil.NOT_NULL, false)) {
-        if (!memState.applyNotNull(dfaSource)) {
-          onAssigningToNotNullableVariable(runner);
-        }
-      }
-      memState.setVarValue(var, dfaSource);
-    }
-
-    memState.push(dfaDest);
-
-    return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, memState)};
-  }
-
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
     return visitor.visitAssign(this, runner, stateBefore);
-  }
-
-  protected void onAssigningToNotNullableVariable(final DataFlowRunner runner) {
-
   }
 
   public PsiExpression getRExpression() {

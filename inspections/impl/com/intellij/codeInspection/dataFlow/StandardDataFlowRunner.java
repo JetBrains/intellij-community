@@ -44,7 +44,7 @@ public class StandardDataFlowRunner extends DataFlowRunner {
   private final Set<PsiExpression> myUnboxedNullables = new THashSet<PsiExpression>();
 
   public StandardDataFlowRunner(boolean suggestNullableAnnotations) {
-    super(new StandardInstructionFactory());
+    super(new InstructionFactory());
     mySuggestNullableAnnotations = suggestNullableAnnotations;
   }
 

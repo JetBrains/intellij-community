@@ -79,57 +79,28 @@ public class MethodCallInstruction extends Instruction {
     }
   }
 
-  public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
-    for (int i = 0; i < myArgs.length; i++) {
-      final DfaValue arg = memState.pop();
-      final int revIdx = myArgs.length - i - 1;
-      if (myArgs.length <= myParametersNotNull.length && revIdx < myParametersNotNull.length && myParametersNotNull[revIdx] && !memState.applyNotNull(arg)) {
-        onPassingNullParameter(runner, myArgs[revIdx]); // Parameters on stack are reverted.
-        if (arg instanceof DfaVariableValue) {
-          memState.setVarValue((DfaVariableValue)arg, myFactory.getNotNullFactory().create(((DfaVariableValue)arg).getPsiVariable().getType()));
-        }
-      }
-    }
+  @NotNull
+  public PsiExpression[] getArgs() {
+    return myArgs;
+  }
 
-    @NotNull final DfaValue qualifier = memState.pop();
-    try {
-      if (!memState.applyNotNull(qualifier)) {
-        if (myMethodType == MethodType.UNBOXING) {
-          onUnboxingNullable(runner);
-        }
-        else {
-          onInstructionProducesNPE(runner);
-        }
-        if (qualifier instanceof DfaVariableValue) {
-          memState.setVarValue((DfaVariableValue)qualifier, myFactory.getNotNullFactory().create(((DfaVariableValue)qualifier).getPsiVariable().getType()));
-        }
-      }
+  public boolean[] getParametersNotNull() {
+    return myParametersNotNull;
+  }
 
-      return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(getIndex() + 1), memState)};
-    }
-    finally {
-      pushResult(memState, qualifier);
-      if (myShouldFlushFields) {
-        memState.flushFields(runner);
-      }
-    }
+  public MethodType getMethodType() {
+    return myMethodType;
+  }
+
+  public boolean shouldFlushFields() {
+    return myShouldFlushFields;
   }
 
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
     return visitor.visitMethodCall(this, runner, stateBefore);
   }
-
-  protected void onInstructionProducesNPE(final DataFlowRunner runner) {
-  }
-
-  protected void onUnboxingNullable(final DataFlowRunner runner) {
-  }
-
-  protected void onPassingNullParameter(final DataFlowRunner runner, final PsiExpression expression) {
-  }
-
-  private void pushResult(DfaMemoryState state, final DfaValue oldValue) {
+  public void pushResult(DfaMemoryState state, final DfaValue oldValue) {
     DfaValue dfaValue = null;
     if (myType != null && (myType instanceof PsiClassType || myType.getArrayDimensions() > 0)) {
       dfaValue = myIsNotNull ? myFactory.getNotNullFactory().create(myType) : myFactory.getTypeFactory().create(myType, myIsNullable);
@@ -163,6 +134,7 @@ public class MethodCallInstruction extends Instruction {
     state.push(dfaValue == null ? DfaUnknownValue.getInstance() : dfaValue);
   }
 
+  @Nullable
   public PsiCallExpression getCallExpression() {
     return myCall;
   }

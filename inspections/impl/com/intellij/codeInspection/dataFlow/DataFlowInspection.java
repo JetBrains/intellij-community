@@ -68,7 +68,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   private void analyzeCodeBlock(final PsiCodeBlock body, ProblemsHolder holder) {
     if (body == null) return;
     final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(SUGGEST_NULLABLE_ANNOTATIONS);
-    final StandardInstructionVisitor visitor = new StandardInstructionVisitor();
+    final StandardInstructionVisitor visitor = new DataFlowInstructionVisitor();
     final RunnerResult rc = dfaRunner.analyzeMethod(body, visitor);
     if (rc == RunnerResult.OK) {
       if (dfaRunner.problemsDetected(visitor)) {
@@ -406,5 +406,36 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       gc.gridy++;
       add(myDontReportTrueAsserts, gc);
     }
+  }
+
+  private static class DataFlowInstructionVisitor extends StandardInstructionVisitor {
+
+    protected void onAssigningToNotNullableVariable(AssignInstruction instruction, DataFlowRunner runner) {
+          ((StandardDataFlowRunner)runner).onAssigningToNotNullableVariable(instruction.getRExpression());
+        }
+
+    protected void onNullableReturn(CheckReturnValueInstruction instruction, DataFlowRunner runner) {
+      ((StandardDataFlowRunner)runner).onNullableReturn(instruction.getReturn());
+    }
+
+    protected void onInstructionProducesNPE(FieldReferenceInstruction instruction, DataFlowRunner runner) {
+      ((StandardDataFlowRunner)runner).onInstructionProducesNPE(instruction);
+    }
+
+    protected void onInstructionProducesCCE(TypeCastInstruction instruction, DataFlowRunner runner) {
+      ((StandardDataFlowRunner)runner).onInstructionProducesCCE(instruction);
+    }
+
+    protected void onInstructionProducesNPE(MethodCallInstruction instruction, DataFlowRunner runner) {
+      ((StandardDataFlowRunner) runner).onInstructionProducesNPE(instruction);
+    }
+
+    protected void onUnboxingNullable(MethodCallInstruction instruction, DataFlowRunner runner) {
+      ((StandardDataFlowRunner) runner).onUnboxingNullable(instruction.getContext());
+    }
+
+    protected void onPassingNullParameter(DataFlowRunner runner, PsiExpression arg) {
+          ((StandardDataFlowRunner) runner).onPassingNullParameter(arg); // Parameters on stack are reverted.
+        }
   }
 }
