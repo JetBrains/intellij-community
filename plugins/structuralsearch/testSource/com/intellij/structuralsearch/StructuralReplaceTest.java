@@ -1,7 +1,7 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.idea.Bombed;
-import com.intellij.idea.IdeaTestUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.LocalSearchScope;
