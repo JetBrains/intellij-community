@@ -251,9 +251,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private static boolean rangeIntersect(int s1, int e1, int s2, int e2) {
-    return s2 < s1 && s1 < e2 || s2 < e1 && e1 < e2
-           || s1 < s2 && s2 < e1 || s1 < e2 && e2 < e1
-           || s1 == s2 && e1 == e2;
+    return s2 <= s1 && s1 < e2
+           || s2 < e1 && e1 <= e2
+           || s1 <= s2 && s2 < e1
+           || s1 < e2 && e2 <= e1
+           || s1==s2 && e1==e2
+           ;
   }
 
   @NotNull
