@@ -1,0 +1,137 @@
+/*
+ * @author max
+ */
+package com.intellij.tools;
+
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+
+import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+
+public class ScanSourceCommentsAction extends AnAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.tools.ScanSourceCommentsAction");
+
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+
+    final Project p = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final String file =
+      Messages.showInputDialog(p, "Enter path to the file comments will be extracted to", "Comments File Path", Messages.getQuestionIcon());
+
+    try {
+      final PrintStream stream = new PrintStream(file);
+      stream.println("Comments in " + p.getName());
+
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        public void run() {
+          final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+          ProjectRootManager.getInstance(p).getFileIndex().iterateContent(new ContentIterator() {
+            public boolean processFile(VirtualFile fileOrDir) {
+              if (fileOrDir.isDirectory()) {
+                indicator.setText("Extracting comments");
+                indicator.setText2(fileOrDir.getPresentableUrl());
+              }
+              scanCommentsInFile(p, fileOrDir);
+              return true;
+            }
+          });
+
+          indicator.setText2("");
+          int count = 1;
+          for (CommentDescriptor descriptor : myComments.values()) {
+            stream.println("#" + count + " ---------------------------------------------------------------");
+            descriptor.print(stream);
+            stream.println();
+            count++;
+          }
+
+        }
+      }, "Generating Comments", true, p);
+
+
+      stream.close();
+
+    }
+    catch (Throwable e1) {
+      LOG.error(e1);
+      Messages.showErrorDialog(p, "Error writing? " + e1.getMessage(), "Problem writing");
+    }
+  }
+
+  private Map<String, CommentDescriptor> myComments = new HashMap<String, CommentDescriptor>();
+
+  private void commentFound(VirtualFile file, String text) {
+    String reduced = text.replaceAll("\\s", "");
+    CommentDescriptor descriptor = myComments.get(reduced);
+    if (descriptor == null) {
+      descriptor = new CommentDescriptor(text);
+      myComments.put(reduced, descriptor);
+    }
+    descriptor.addFile(file);
+  }
+
+  private void scanCommentsInFile(Project project, final VirtualFile vFile) {
+    if (!vFile.isDirectory() && vFile.getFileType() instanceof LanguageFileType) {
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
+      if (psiFile == null) return;
+
+      for (PsiFile root : psiFile.getViewProvider().getAllFiles()) {
+        root.accept(new PsiRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitComment(PsiComment comment) {
+            commentFound(vFile, comment.getText());
+          }
+        });
+      }
+    }
+  }
+
+
+  private class CommentDescriptor {
+    private final String myText;
+    private final Set<VirtualFile> myFiles = new LinkedHashSet<VirtualFile>();
+
+    public CommentDescriptor(String text) {
+      myText = text;
+    }
+
+    public void addFile(VirtualFile file) {
+      myFiles.add(file);
+    }
+
+    public void print(PrintStream out) {
+      out.println(myText);
+      int count = myFiles.size();
+      int i = 0;
+
+      for (VirtualFile file : myFiles) {
+        out.println(file.getPresentableUrl());
+        count--;
+        i++;
+        if (i > 5 && count > 2) break;
+      }
+
+      if (count > 0) {
+        out.println("And " + count + " more files");
+      }
+    }
+  }
+}
