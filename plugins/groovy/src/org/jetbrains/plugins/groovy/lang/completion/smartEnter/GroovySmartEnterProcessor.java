@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.*;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.processors.GroovyPlainEnterProcessor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -59,34 +60,10 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
     fixers.add(new GrWhileConditionFixer());
     fixers.add(new GrWhileBodyFixer());
     fixers.add(new GrForBodyFixer());
-//    fixers.add(new IfConditionFixer());
-//    fixers.add(new WhileConditionFixer());
-//    fixers.add(new CatchDeclarationFixer());
-//    fixers.add(new SwitchExpressionFixer());
-//    fixers.add(new DoWhileConditionFixer());
-//    fixers.add(new BlockBraceFixer());
-//    fixers.add(new MissingIfBranchesFixer());
-//    fixers.add(new MissingWhileBodyFixer());
-//    fixers.add(new MissingSwitchBodyFixer());
-//    fixers.add(new MissingCatchBodyFixer());
-//    fixers.add(new MissingSynchronizedBodyFixer());
-//    fixers.add(new MissingForBodyFixer());
-//    fixers.add(new MissingForeachBodyFixer());
-//    fixers.add(new ParameterListFixer());
-//    fixers.add(new MissingMethodBodyFixer());
-//    fixers.add(new MissingReturnExpressionFixer());
-//    fixers.add(new MissingThrowExpressionFixer());
-//    fixers.add(new ParenthesizedFixer());
-//    fixers.add(new SemicolonFixer());
-//    fixers.add(new MissingArrayInitializerBraceFixer());
-//    fixers.add(new EnumFieldFixer());
-//    //ourFixers.add(new CompletionFixer());
+
     ourFixers = fixers.toArray(new GrFixer[fixers.size()]);
 
     List<EnterProcessor> processors = new ArrayList<EnterProcessor>();
-//    processors.add(new CommentBreakerEnterProcessor());
-//    processors.add(new AfterSemicolonEnterProcessor());
-//    processors.add(new BreakingControlFlowEnterProcessor());
     processors.add(new GroovyPlainEnterProcessor());
     ourEnterProcessors = processors.toArray(new EnterProcessor[processors.size()]);
   }
@@ -252,7 +229,14 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
     if (atCaret instanceof PsiWhiteSpace) return null;
     if (atCaret == null) return null;
 
-//    if ("}".equals(atCaret.getText())) return null;
+    final GrCodeBlock codeBlock = PsiTreeUtil.getParentOfType(atCaret, GrCodeBlock.class, false, GrControlStatement.class);
+    if (codeBlock != null) {
+      for (GrStatement statement : codeBlock.getStatements()) {
+        if (PsiTreeUtil.isAncestor(statement, atCaret, true)) {
+          return statement;
+        }
+      }
+    }
 
     PsiElement statementAtCaret = PsiTreeUtil.getParentOfType(atCaret,
             GrStatement.class,
@@ -264,20 +248,10 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
     if (statementAtCaret instanceof GrBlockStatement) return null;
     if (statementAtCaret == null) return null;
 
-    GrIfStatement ifStatement = PsiTreeUtil.getParentOfType(statementAtCaret, GrIfStatement.class);
-    GrForStatement forStatement = PsiTreeUtil.getParentOfType(statementAtCaret, GrForStatement.class);
-    GrWhileStatement whileStatement = PsiTreeUtil.getParentOfType(statementAtCaret, GrWhileStatement.class);
+    GrControlStatement controlStatement = PsiTreeUtil.getParentOfType(statementAtCaret, GrControlStatement.class);
 
-    if (ifStatement != null && !PsiTreeUtil.hasErrorElements(statementAtCaret)) {
-      return ifStatement;
-    }
-
-    if (forStatement != null && !PsiTreeUtil.hasErrorElements(statementAtCaret)) {
-      return forStatement;
-    }
-
-    if (whileStatement != null && !PsiTreeUtil.hasErrorElements(statementAtCaret)) {
-      return whileStatement;
+    if (controlStatement != null && !PsiTreeUtil.hasErrorElements(statementAtCaret)) {
+      return controlStatement;
     }
 
     return statementAtCaret instanceof GrStatement ||

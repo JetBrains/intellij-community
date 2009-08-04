@@ -36,6 +36,8 @@ public class SmartEnterTest extends JavaCodeInsightFixtureTestCase {
   public void testMissRQuote() throws Throwable { doTest(); }
   public void testMissRQuoteInCompStr() throws Throwable { doTest(); }
 
+  public void testGotoNextLineInFor() throws Throwable { doTest(); }
+
   protected static List<SmartEnterProcessor> getSmartProcessors(Language grLanguage) {
     return SmartEnterProcessors.INSTANCE.forKey(grLanguage);
   }

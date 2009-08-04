@@ -15,10 +15,12 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.formatter;
 
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+
 /**
  * Label interface for control statements
  *
  * @author ilyas
  */
-public interface GrControlStatement {
+public interface GrControlStatement extends GroovyPsiElement {
 }
