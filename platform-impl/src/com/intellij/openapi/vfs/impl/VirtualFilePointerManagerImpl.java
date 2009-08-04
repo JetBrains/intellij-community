@@ -126,6 +126,9 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     myContainers.clear();
   }
 
+  /**
+   * @see #create(String, com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
+   */
   @Deprecated
   public synchronized VirtualFilePointer create(String url, VirtualFilePointerListener listener) {
     return create(url, this, listener);
@@ -136,6 +139,9 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return create(null, url, parent, listener);
   }
 
+  /**
+   * @see #create(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
+   */
   @Deprecated
   public synchronized VirtualFilePointer create(VirtualFile file, VirtualFilePointerListener listener) {
     return create(file, this, listener);
@@ -215,7 +221,10 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return VfsUtil.urlToPath(url);
   }
 
-  @Deprecated // see com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl.duplicate()
+  /**
+   * @see #duplicate(com.intellij.openapi.vfs.pointers.VirtualFilePointer, com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
+   */
+  @Deprecated
   public synchronized VirtualFilePointer duplicate(VirtualFilePointer pointer, VirtualFilePointerListener listener) {
     return duplicate(pointer, this, listener);
   }
@@ -226,7 +235,11 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return create(pointer.getUrl(), parent, listener);
   }
 
-  @Deprecated()
+  /**
+   * Does nothing. To cleanup pointer correctly, just pass Disposable during its creation
+   * @see #create(String, com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
+   */
+  @Deprecated
   public synchronized void kill(VirtualFilePointer pointer, final VirtualFilePointerListener listener) {
   }
 
@@ -243,6 +256,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       VirtualFilePointerListener listener = entry.getKey();
       TreeMap<String, VirtualFilePointerImpl> map = entry.getValue();
       for (VirtualFilePointerImpl pointer : map.values()) {
+        myUrlToPointerMaps.clear();
         pointer.throwNotDisposedError("Not disposed pointer: listener="+listener);
       }
     }
@@ -252,7 +266,9 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     //}
     synchronized (myContainers) {
       if (!myContainers.isEmpty()) {
-        throw new RuntimeException("Not disposed container " + myContainers.iterator().next());
+        VirtualFilePointerContainerImpl container = myContainers.iterator().next();
+        myContainers.clear();
+        throw new RuntimeException("Not disposed container " + container);
       }
     }
   }
@@ -273,12 +289,18 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
   }
 
+  /**
+   * @see #createContainer(com.intellij.openapi.Disposable)
+   */
   @Deprecated
   public synchronized VirtualFilePointerContainer createContainer() {
     return createContainer(this);
   }
 
-  @Deprecated // see createContainer(VirtualFilePointerFactory factory, Disposable parent)
+  /**
+   * @see #createContainer(com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
+   */
+  @Deprecated
   public synchronized VirtualFilePointerContainer createContainer(final VirtualFilePointerFactory factory) {
     final VirtualFilePointerContainerImpl virtualFilePointerContainer = new VirtualFilePointerContainerImpl(this, this, null){
       @Override
@@ -434,7 +456,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private static class DelegatingDisposable implements Disposable {
     private final VirtualFilePointerImpl myPointer;
 
-    public DelegatingDisposable(VirtualFilePointerImpl pointer) {
+    private DelegatingDisposable(VirtualFilePointerImpl pointer) {
       myPointer = pointer;
     }
 
