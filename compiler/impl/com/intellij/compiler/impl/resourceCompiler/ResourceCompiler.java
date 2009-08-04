@@ -62,6 +62,7 @@ public class ResourceCompiler implements TranslatingCompiler {
 
     final List<OutputItem> processed = new ArrayList<OutputItem>(files.length);
     final List<CopyCommand> copyCommands = new ArrayList<CopyCommand>(files.length);
+    final long start = System.currentTimeMillis();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
@@ -122,6 +123,9 @@ public class ResourceCompiler implements TranslatingCompiler {
         );
       }
     }
+
+    CompilerUtil.logDuration("Copying resources", System.currentTimeMillis() - start);
+    
     if (!filesToRefresh.isEmpty()) {
       CompilerUtil.refreshIOFiles(filesToRefresh);
     }

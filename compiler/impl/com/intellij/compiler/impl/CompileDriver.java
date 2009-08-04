@@ -340,7 +340,8 @@ public class CompileDriver {
         }
         finally {
           compileContext.commitZipFiles();
-          
+          CompilerUtil.logDuration("Refreshing VFS in total", CompilerUtil.ourRefreshTime);
+          CompilerUtil.ourRefreshTime = 0L;
           final long finish = System.currentTimeMillis();
           CompilerUtil.logDuration(
             "\tCOMPILATION FINISHED; Errors: " +
@@ -597,7 +598,9 @@ public class CompileDriver {
         progressIndicator.popState();
       }
 
-      CompilerUtil.logDuration("Initial VFS refresh", System.currentTimeMillis() - refreshStart);
+      final long initialRefreshTime = System.currentTimeMillis() - refreshStart;
+      CompilerUtil.logDuration("Initial VFS refresh", initialRefreshTime);
+      CompilerUtil.ourRefreshTime += initialRefreshTime;
 
       DumbService.getInstance(myProject).waitForSmartMode();
 
@@ -923,7 +926,7 @@ public class CompileDriver {
         final boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
         final VirtualFile[] allSources = context.getProjectCompileScope().getFiles(null, true);
         if (myShouldClearOutputDirectory) {
-          clearOutputDirectories(context, myAllOutputDirectories);
+          clearOutputDirectories(myAllOutputDirectories);
         }
         else { // refresh is still required
           try {
@@ -1024,7 +1027,8 @@ public class CompileDriver {
     return outputDirs;
   }
 
-  private void clearOutputDirectories(CompileContextEx context, final Set<File> _outputDirectories) {
+  private void clearOutputDirectories(final Set<File> _outputDirectories) {
+    final long start = System.currentTimeMillis();
     // do not delete directories themselves, or we'll get rootsChanged() otherwise
     final List<File> outputDirectories = new ArrayList<File>(_outputDirectories);
     for (Pair<IntermediateOutputCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
@@ -1044,7 +1048,14 @@ public class CompileDriver {
     for (final File file : outputDirectories) {
       file.mkdirs();
     }
+    final long clearStop = System.currentTimeMillis();
+
     CompilerUtil.refreshIODirectories(outputDirectories);
+
+    final long refreshStop = System.currentTimeMillis();
+
+    CompilerUtil.logDuration("Clearing output dirs", clearStop - start);
+    CompilerUtil.logDuration("Refreshing output directories", refreshStop - clearStop);
   }
 
   private void clearCompilerSystemDirectory(final CompileContextEx context) {
@@ -1419,6 +1430,7 @@ public class CompileDriver {
     final boolean[] wereFilesDeleted = {false};
     CompilerUtil.runInContext(context, CompilerBundle.message("progress.synchronizing.output.directory"), new ThrowableRunnable<CacheCorruptedException>(){
       public void run() throws CacheCorruptedException {
+        final long start = System.currentTimeMillis();
         try {
           int current = 0;
           for (final Trinity<File, String, Boolean> trinity : toDelete) {
@@ -1464,6 +1476,7 @@ public class CompileDriver {
           }
         }
         finally {
+          CompilerUtil.logDuration("Sync output directory", System.currentTimeMillis() - start);
           CompilerUtil.refreshIOFiles(filesToRefresh);
         }
       }
