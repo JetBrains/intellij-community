@@ -62,7 +62,7 @@ public class QuickEditAction implements IntentionAction {
 
   @NotNull
   public String getText() {
-    return "Quick Edit Language";
+    return "Edit Injected Fragment";
   }
 
   @NotNull
