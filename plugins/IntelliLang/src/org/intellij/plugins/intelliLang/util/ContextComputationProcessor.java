@@ -93,7 +93,7 @@ public class ContextComputationProcessor {
       result.add(expression);
     }
     else {
-      final Object o = expression instanceof PsiExpression? myEvaluationHelper.computeSimpleExpression((PsiExpression)expression) : null;
+      final Object o = expression instanceof PsiExpression? myEvaluationHelper.computeExpression((PsiExpression)expression, true) : null;
       if (o == null) result.add(expression);
       else addStringFragment(String.valueOf(o), result);
     }

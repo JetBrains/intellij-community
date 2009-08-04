@@ -16,16 +16,20 @@
 package org.intellij.plugins.intelliLang.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.util.SmartList;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.util.containers.ConcurrentHashMap;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Computes the constant value of an expression while considering the substitution annotation for non-compile-time
@@ -34,6 +38,8 @@ import java.util.Collection;
  * This is a quite simplified implementation at the moment.
  */
 public class SubstitutedExpressionEvaluationHelper {
+  private static final Key<CachedValue<ConcurrentMap<PsiElement, Object>>> COMPUTED_MAP_KEY = Key.create("COMPUTED_MAP_KEY");
+
   private final PsiConstantEvaluationHelper myHelper;
   private final Configuration myConfiguration;
 
@@ -42,54 +48,58 @@ public class SubstitutedExpressionEvaluationHelper {
     myConfiguration = Configuration.getInstance();
   }
 
-  @Nullable
-  public Object computeSimpleExpression(PsiExpression e) {
-    if (e instanceof PsiLiteralExpression) {
-      return myHelper.computeConstantExpression(e);
-    }
-    else if (e instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression ref = (PsiReferenceExpression)e;
-      final PsiElement psiElement = ref.resolve();
-      if (psiElement != null) {
-        final Object o = myHelper.computeConstantExpression(e);
-        if (o != null) {
-          return o;
-        }
-        else if (psiElement instanceof PsiModifierListOwner) {
-          // find substitution
-          final Object substituted = calcSubstituted((PsiModifierListOwner)psiElement);
-          if (substituted != null) {
-            return substituted;
+  public Object computeExpression(final PsiExpression e, final boolean includeUncomputablesAsLiterals) {
+    return computeExpression(e, includeUncomputablesAsLiterals, null);
+  }
+
+  private Object computeExpression(final PsiExpression e, final boolean includeUncomputablesAsLiterals, final List<PsiExpression> uncomputables) {
+    final ConcurrentMap<PsiElement, Object> map = new ConcurrentHashMap<PsiElement, Object>();
+    //if (true) return myHelper.computeConstantExpression(e, false);
+    return myHelper.computeExpression(e, false, new PsiConstantEvaluationHelper.AuxEvaluator() {
+      public Object computeExpression(final PsiExpression o, final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
+        if (o instanceof PsiMethodCallExpression) {
+          final PsiMethodCallExpression c = (PsiMethodCallExpression)o;
+          final PsiMethod m = (PsiMethod)c.getMethodExpression().resolve();
+          final PsiType returnType = m != null? m.getReturnType() : null;
+          if (returnType != null && returnType != PsiType.VOID) {
+            // find substitution
+            final Object substituted = calcSubstituted(m);
+            if (substituted != null) return substituted;
+            //return returnType.getCanonicalText().equals(CommonClassNames.JAVA_LANG_STRING)? "\""+ o.getText()+"\"" : o.getText();
           }
-          else if (psiElement instanceof PsiVariable) {
-            final Collection<PsiExpression> values = DfaUtil.getCachedVariableValues(((PsiVariable)psiElement), ref);
-            // return the first computed value as far as we do not support multiple injection
-            for (PsiExpression value : values) {
-              final Object computedValue = myHelper.computeConstantExpression(value);
-              if (computedValue != null) {
-                return computedValue;
+        }
+        else if (o instanceof PsiReferenceExpression) {
+          final PsiElement resolved = ((PsiReferenceExpression)o).resolve();
+          if (resolved instanceof PsiModifierListOwner) {
+            // find substitution
+            final Object substituted = calcSubstituted((PsiModifierListOwner)resolved);
+            if (substituted != null) return substituted;
+            if (resolved instanceof PsiVariable) {
+              final Collection<PsiExpression> values = DfaUtil.getCachedVariableValues(((PsiVariable)resolved), o);
+              // return the first computed value as far as we do not support multiple injection
+              for (PsiExpression value : values) {
+                final Object computedValue = auxEvaluator.computeExpression(value, this);
+                if (computedValue != null) {
+                  return computedValue;
+                }
               }
             }
           }
         }
+        if (includeUncomputablesAsLiterals) {
+          final PsiExpression expression = o instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)o).getMethodExpression() : o;
+          final String text = expression.getText().replaceAll("\\s", "");
+          return "\"" + StringUtil.escapeStringCharacters(text) + "\"";
+        }
+        if (uncomputables != null) uncomputables.add(o);
         return null;
       }
-      else {
-        // unresolvable... no luck
+
+      public ConcurrentMap<PsiElement, Object> getCacheMap(final boolean overflow) {
+        return map;
+        //return PsiManager.getInstance(project).getCachedValuesManager().getCachedValue(project, COMPUTED_MAP_KEY, PROVIDER, false);
       }
-    }
-    else if (e instanceof PsiParenthesizedExpression) {
-      return computeSimpleExpression(((PsiParenthesizedExpression)e).getExpression());
-    }
-    else if (e instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression c = (PsiMethodCallExpression)e;
-      final PsiMethod m = (PsiMethod)c.getMethodExpression().resolve();
-      if (m != null && m.getReturnType() != PsiType.VOID) {
-        // find substitution
-        return calcSubstituted(m);
-      }
-    }
-    return myHelper.computeConstantExpression(e);
+    });
   }
 
   private Object calcSubstituted(final PsiModifierListOwner owner) {
@@ -109,64 +119,7 @@ public class SubstitutedExpressionEvaluationHelper {
    */
   @Nullable
   public static String computeExpression(@NotNull final PsiExpression e, @Nullable List<PsiExpression> nonConstant) {
-    final StringBuilder builder = new StringBuilder();
-    final List<PsiExpression> list = nonConstant != null ? nonConstant : new SmartList<PsiExpression>();
-    final PsiElementVisitor processor = new JavaRecursiveElementWalkingVisitor() {
-      SubstitutedExpressionEvaluationHelper helper = new SubstitutedExpressionEvaluationHelper(e.getProject());
-      @Override
-      public void visitConditionalExpression(PsiConditionalExpression expression) {
-        PsiExpression c = expression.getCondition();
-        final Object o = helper.myHelper.computeConstantExpression(c);
-        if (Boolean.TRUE.equals(o)) {
-          final PsiExpression then = expression.getThenExpression();
-          if (then != null) {
-            execute(then);
-          }
-        }
-        else if (Boolean.FALSE.equals(o)) {
-          final PsiExpression elseExpr = expression.getElseExpression();
-          if (elseExpr != null) {
-            execute(elseExpr);
-          }
-        }
-        else if (o == null) {
-          list.add(expression);
-        }
-      }
-
-      @Override
-      public void visitLiteralExpression(PsiLiteralExpression expression) {
-        execute(expression);
-      }
-
-      @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        execute(expression);
-      }
-
-      @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        execute(expression);
-      }
-
-      @Override
-      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
-        final PsiExpression expr = expression.getRExpression();
-        if (expr != null) expr.accept(this);
-      }
-
-      public void execute(PsiExpression e) {
-        final Object s = helper.computeSimpleExpression(e);
-        if (s != null) {
-          builder.append(String.valueOf(s));
-        }
-        else {
-          list.add(e);
-        }
-      }
-    };
-    e.accept(processor);
-
-    return list.isEmpty() ? builder.toString() : null;
+    final Object result = new SubstitutedExpressionEvaluationHelper(e.getProject()).computeExpression(e, false, nonConstant);
+    return result == null? null : String.valueOf(result);
   }
 }
