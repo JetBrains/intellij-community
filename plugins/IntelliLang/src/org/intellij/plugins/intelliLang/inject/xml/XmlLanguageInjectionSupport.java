@@ -182,7 +182,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     }
     final Pattern pattern = Pattern.compile("withLocalName[^\"]*\"([^\"]*)\"\\)+(?:\\.withNamespace[^\"]*\"([^\"]*)\")?");
     for (InjectionPlace place : injection.getInjectionPlaces()) {
-      if (place.isEnabled() && place.getElementPattern() != null && (element == null || place.getElementPattern().accepts(element))) {
+      if (element == null || place.getElementPattern() != null && place.getElementPattern().accepts(element)) {
         final Matcher matcher = pattern.matcher(place.getText());
         if (matcher.find()) {
           final Pair<String, String> pair1 = Pair.create(matcher.group(1), matcher.group(2));
@@ -194,7 +194,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
 
           if (result == null) {
             if (place.getText().startsWith("xmlTag")) result = new XmlTagInjection().copyFrom(injection);
-            if (place.getText().startsWith("xmlAttribute")) result = new XmlAttributeInjection().copyFrom(injection);
+            else if (place.getText().startsWith("xmlAttribute")) result = new XmlAttributeInjection().copyFrom(injection);
             else continue;
           }
           if (result instanceof XmlAttributeInjection) {
