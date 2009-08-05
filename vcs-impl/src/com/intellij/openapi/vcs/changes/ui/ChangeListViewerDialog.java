@@ -17,12 +17,15 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import com.intellij.ui.SeparatorFactory;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -39,7 +42,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
   private Project myProject;
   private CommittedChangeList myChangeList;
   private RepositoryChangesBrowser myChangesBrowser;
-  private JTextArea myCommitMessageArea;
+  private JEditorPane myCommitMessageArea;
   // do not related to local data/changes etc
   private final boolean myInAir;
   private Change[] myChanges;
@@ -48,7 +51,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
   public ChangeListViewerDialog(Project project, CommittedChangeList changeList) {
     super(project, true);
     myInAir = false;
-    initCommitMessageArea(changeList);
+    initCommitMessageArea(project, changeList);
     initDialog(project, changeList);
   }
 
@@ -77,13 +80,13 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     init();
   }
 
-  private void initCommitMessageArea(final CommittedChangeList changeList) {
-    myCommitMessageArea = new JTextArea();
-    myCommitMessageArea.setRows(3);
-    myCommitMessageArea.setWrapStyleWord(true);
-    myCommitMessageArea.setLineWrap(true);
+  private void initCommitMessageArea(final Project project, final CommittedChangeList changeList) {
+    myCommitMessageArea = new JEditorPane(UIUtil.HTML_MIME, "");
     myCommitMessageArea.setEditable(false);
-    myCommitMessageArea.setText(changeList.getComment());
+    @NonNls final String text = "<html><body>" + IssueLinkHtmlRenderer.formatTextWithLinks(project, changeList.getComment()) + "</body></html>";
+    myCommitMessageArea.setText(text);
+    myCommitMessageArea.setBackground(UIUtil.getComboBoxDisabledBackground());
+    myCommitMessageArea.addHyperlinkListener(new BrowserHyperlinkListener());
   }
 
 
