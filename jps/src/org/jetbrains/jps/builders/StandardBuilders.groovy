@@ -129,3 +129,28 @@ class GroovyStubGenerator implements ModuleBuilder {
   }
 
 }
+
+
+class JetBrainsInstrumentations implements ModuleBuilder {
+
+  def JetBrainsInstrumentations(Project project) {
+    project.binding.ant.taskdef(name: "jb_instrumentations", classname: "com.intellij.ant.InstrumentIdeaExtensions")
+  }
+
+  def processModule(ModuleChunk module, ModuleBuildState state) {
+    def project = module.project
+    def ant = project.binding.ant
+
+    ant.jb_instrumentations(destdir: state.targetFolder) {
+      state.sourceRoots.each {
+        src(path: it)
+      }
+
+      classpath {
+        state.classpath.each {
+          pathelement(location: it)
+        }
+      }
+    }
+  }
+}

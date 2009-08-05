@@ -10,6 +10,7 @@ import org.jetbrains.jps.builders.GroovyStubGenerator
 import org.jetbrains.jps.builders.JavacBuilder
 import org.jetbrains.jps.builders.GroovycBuilder
 import org.jetbrains.jps.builders.ResourceCopier
+import org.jetbrains.jps.builders.JetBrainsInstrumentations
 
 /**
  * @author max
@@ -33,10 +34,11 @@ class Project {
     builder = new ProjectBuilder(binding, this)
     this.binding = binding;
 
-    //sourceGeneratingBuilders << new GroovyStubGenerator(this)
+    sourceGeneratingBuilders << new GroovyStubGenerator(this)
     translatingBuilders << new JavacBuilder()
-    //translatingBuilders << new GroovycBuilder(this)
+    translatingBuilders << new GroovycBuilder(this)
     translatingBuilders << new ResourceCopier()
+    weavingBuilders << new JetBrainsInstrumentations(this)
 
     resolvers << new ModuleResolver(project: this)
     resolvers << new LibraryResolver(project: this)

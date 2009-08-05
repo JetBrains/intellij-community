@@ -4,6 +4,7 @@
       <w>Classpath</w>
       <w>Expando</w>
       <w>Groovyc</w>
+      <w>Instrumentations</w>
       <w>Javac</w>
       <w>args</w>
       <w>chunkey</w>

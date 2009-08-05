@@ -121,5 +121,8 @@
       </item>
     </group>
   </component>
+  <component name="uidesigner-configuration">
+    <option name="DEFAULT_LAYOUT_MANAGER" value="FormLayout" />
+  </component>
 </project>
 

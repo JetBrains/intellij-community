@@ -1,0 +1,28 @@
+import org.jetbrains.jps.*
+
+includeTool << Jps
+
+def projectHome = "."
+
+project.targetFolder = "${projectHome}/build"
+
+module("jps") {
+  src "${projectHome}/src"
+}
+
+target('default' : 'Default target') {
+  project.clean()
+  long start = System.currentTimeMillis()
+  project.makeAll()
+
+  layout("${project.targetFolder}/deploy") {
+    jar("jps.jar") {
+      module("jps")
+      zipfileset(src: "${projectHome}/lib/javac2.jar")
+      zipfileset(src: "${projectHome}/lib/antlayout.jar")
+    }
+  }
+  
+  println("Done building in ${(System.currentTimeMillis() - start) / 1000} seconds")
+
+}
