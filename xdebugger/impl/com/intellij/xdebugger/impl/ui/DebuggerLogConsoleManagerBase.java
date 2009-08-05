@@ -113,16 +113,24 @@ public abstract class DebuggerLogConsoleManagerBase implements DebuggerLogConsol
     }
   }
 
+  public void addAdditionalTabComponent(AdditionalTabComponent tabComponent, String id, Icon icon) {
+    addLogComponent(tabComponent, id, icon);
+  }
+
   public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent, final String id) {
-    addLogComponent(tabComponent);
+    addLogComponent(tabComponent, id);
   }
 
-  private void addLogComponent(AdditionalTabComponent component) {
-    addLogComponent(component, DEFAULT_TAB_COMPONENT_ICON);
+  private void addLogComponent(AdditionalTabComponent component, String id) {
+    addLogComponent(component, id, DEFAULT_TAB_COMPONENT_ICON);
   }
 
-  private Content addLogComponent(final AdditionalTabComponent tabComponent, Icon icon) {
+  private Content addLogComponent(AdditionalTabComponent tabComponent, Icon icon) {
     @NonNls final String id = "Log-" + tabComponent.getTabTitle();
+    return addLogComponent(tabComponent, id, icon);
+  }
+
+  private Content addLogComponent(final AdditionalTabComponent tabComponent, String id, Icon icon) {
     final Content logContent = getUi().createContent(id, (ComponentWithActions)tabComponent, tabComponent.getTabTitle(), icon,
                                                      tabComponent.getPreferredFocusableComponent());
     logContent.setCloseable(false);
