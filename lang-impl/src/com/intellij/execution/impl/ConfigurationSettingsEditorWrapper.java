@@ -55,10 +55,13 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
       myStepsPanel.setVisible(false);
     }
     else {
-      myStepsPanel.setLayout(new GridLayout(providers.length, 1));
+      myStepsPanel.setLayout(new GridLayout(myStepsBeforeLaunch.size(), 1));
       for (BeforeRunTaskProvider provider: providers) {
-        final StepBeforeLaunchRow stepRow = new StepBeforeLaunchRow(runConfiguration, myStepsBeforeLaunch, provider);
-        myStepsPanel.add(stepRow);
+        final BeforeRunTask task = myStepsBeforeLaunch.get(provider.getId());
+        if (task != null) {
+          final StepBeforeLaunchRow stepRow = new StepBeforeLaunchRow(runConfiguration, provider, task);
+          myStepsPanel.add(stepRow);
+        }
       }
     }
 
@@ -118,9 +121,9 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     private final JCheckBox myCheckBox;
     private FixedSizeButton myButton;
 
-    public StepBeforeLaunchRow(final RunConfiguration runConfiguration, final Map<Key<? extends BeforeRunTask>, BeforeRunTask> tasks, final BeforeRunTaskProvider<BeforeRunTask> provider) {
+    public StepBeforeLaunchRow(final RunConfiguration runConfiguration, final BeforeRunTaskProvider<BeforeRunTask> provider,
+                               final BeforeRunTask beforeRunTask) {
       super(new GridBagLayout());
-      final BeforeRunTask beforeRunTask = tasks.get(provider.getId());
       final boolean isChecked = beforeRunTask.isEnabled();
       myCheckBox = new JCheckBox(provider.getDescription(runConfiguration, beforeRunTask), isChecked);
       GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0 , 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0, 0);

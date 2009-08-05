@@ -88,7 +88,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
           final Map<BeforeRunTaskProvider<BeforeRunTask>, BeforeRunTask> activeProviders = new HashMap<BeforeRunTaskProvider<BeforeRunTask>, BeforeRunTask>();
           for (final BeforeRunTaskProvider<BeforeRunTask> provider : Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, myProject)) {
             final BeforeRunTask task = runManager.getBeforeRunTask(runConfiguration, provider.getId());
-            if (task.isEnabled()) {
+            if (task != null && task.isEnabled()) {
               activeProviders.put(provider, task);
             }
           }

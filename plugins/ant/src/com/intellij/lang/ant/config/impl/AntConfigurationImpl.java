@@ -810,9 +810,11 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       for (RunConfiguration configuration : runManager.getConfigurations(type)) {
         if (configName.equals(configuration.getName())) {
           final AntBeforeRunTask task = runManager.getBeforeRunTask(configuration, AntBeforeRunTaskProvider.ID);
-          task.setEnabled(true);
-          task.setTargetName(targetName);
-          task.setAntFileUrl(buildFileUrl);
+          if (task != null) {
+            task.setEnabled(true);
+            task.setTargetName(targetName);
+            task.setAntFileUrl(buildFileUrl);
+          }
         }
       }
     }
@@ -820,9 +822,11 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       for (ConfigurationFactory factory : type.getConfigurationFactories()) {
         final RunConfiguration template = runManager.getConfigurationTemplate(factory).getConfiguration();
         final AntBeforeRunTask task = runManager.getBeforeRunTask(template, AntBeforeRunTaskProvider.ID);
-        task.setEnabled(true);
-        task.setTargetName(targetName);
-        task.setAntFileUrl(buildFileUrl);
+        if (task != null) {
+          task.setEnabled(true);
+          task.setTargetName(targetName);
+          task.setAntFileUrl(buildFileUrl);
+        }
       }
     }
   }

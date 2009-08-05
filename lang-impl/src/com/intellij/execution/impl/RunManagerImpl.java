@@ -8,7 +8,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -16,8 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.HashMap;
-import java.util.HashSet;
 
 
 public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, ProjectComponent {
@@ -468,8 +466,10 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
         Key<? extends BeforeRunTask> id = getProviderKey(providerName);
         if (id != null) {
           final BeforeRunTask beforeRunTask = getProvider(id).createTask(settings.getConfiguration());
-          beforeRunTask.readExternal(methodElement);
-          map.put(id, beforeRunTask);
+          if (beforeRunTask != null) {
+            beforeRunTask.readExternal(methodElement);
+            map.put(id, beforeRunTask);
+          }
         }
       }
     }
@@ -590,7 +590,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       final Set<RunnerAndConfigurationSettingsImpl> checkedTemplates = new HashSet<RunnerAndConfigurationSettingsImpl>();
       for (RunnerAndConfigurationSettingsImpl settings : myConfigurations.values()) {
         final BeforeRunTask runTask = getBeforeRunTask(settings.getConfiguration(), taskProviderID);
-        if (runTask.isEnabled()) {
+        if (runTask != null && runTask.isEnabled()) {
           tasks.add((T)runTask);
         }
         else {
@@ -598,7 +598,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
           if (!checkedTemplates.contains(template)) {
             checkedTemplates.add(template);
             final BeforeRunTask templateTask = getBeforeRunTask(template.getConfiguration(), taskProviderID);
-            if (templateTask.isEnabled()) {
+            if (templateTask != null && templateTask.isEnabled()) {
               tasks.add((T)templateTask);
             }
           }
@@ -607,10 +607,16 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     }
     else {
       for (RunnerAndConfigurationSettingsImpl settings : myTemplateConfigurationsMap.values()) {
-        tasks.add((T)getBeforeRunTask(settings.getConfiguration(), taskProviderID));
+        final T task = getBeforeRunTask(settings.getConfiguration(), taskProviderID);
+        if (task != null) {
+          tasks.add(task);
+        }
       }
       for (RunnerAndConfigurationSettingsImpl settings : myConfigurations.values()) {
-        tasks.add((T)getBeforeRunTask(settings.getConfiguration(), taskProviderID));
+        final T task = getBeforeRunTask(settings.getConfiguration(), taskProviderID);
+        if (task != null) {
+          tasks.add(task);
+        }
       }
     }
     return tasks;
@@ -622,6 +628,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return null;
   }
 
+  @Nullable
   public <T extends BeforeRunTask> T getBeforeRunTask(RunConfiguration settings, Key<T> taskProviderID) {
     Map<Key<? extends BeforeRunTask>, BeforeRunTask> tasks = myConfigurationToBeforeTasksMap.get(settings);
     if (tasks == null) {
@@ -654,9 +661,11 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     final Map<Key<? extends BeforeRunTask>, BeforeRunTask> _tasks = new HashMap<Key<? extends BeforeRunTask>, BeforeRunTask>();
     for (BeforeRunTaskProvider<? extends BeforeRunTask> provider : Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, myProject)) {
       BeforeRunTask task = provider.createTask(settings);
-      Key<? extends BeforeRunTask> providerID = provider.getId();
-      _tasks.put(providerID, task);
-      settings.getFactory().configureBeforeRunTaskDefaults(providerID, task);
+      if (task != null) {
+        Key<? extends BeforeRunTask> providerID = provider.getId();
+        _tasks.put(providerID, task);
+        settings.getFactory().configureBeforeRunTaskDefaults(providerID, task);
+      }
     }
     return _tasks;
   }

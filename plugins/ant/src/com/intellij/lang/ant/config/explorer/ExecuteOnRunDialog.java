@@ -169,7 +169,7 @@ public final class ExecuteOnRunDialog extends DialogWrapper {
     for (ConfigurationFactory factory : type.getConfigurationFactories()) {
       final RunnerAndConfigurationSettingsImpl settings = ((RunManagerImpl)runManager).getConfigurationTemplate(factory);
       final AntBeforeRunTask task = runManager.getBeforeRunTask(settings.getConfiguration(), AntBeforeRunTaskProvider.ID);
-      if (task.isRunningTarget(myTarget)) {
+      if (task != null && task.isRunningTarget(myTarget)) {
         return true;
       }
     }
@@ -177,7 +177,7 @@ public final class ExecuteOnRunDialog extends DialogWrapper {
   }
   private boolean isConfigurationAssigned(RunConfiguration configuration) {
     final AntBeforeRunTask task = RunManagerEx.getInstanceEx(myProject).getBeforeRunTask(configuration, AntBeforeRunTaskProvider.ID);
-    return task.isRunningTarget(myTarget);
+    return task != null && task.isRunningTarget(myTarget);
   }
 
   protected void doOKAction() {
@@ -202,7 +202,7 @@ public final class ExecuteOnRunDialog extends DialogWrapper {
         for (ConfigurationFactory factory : configurationTypeDescriptor.getConfigurationType().getConfigurationFactories()) {
           final RunnerAndConfigurationSettingsImpl settings = runManager.getConfigurationTemplate(factory);
           final AntBeforeRunTask task = runManager.getBeforeRunTask(settings.getConfiguration(), AntBeforeRunTaskProvider.ID);
-          if (isChecked || task.isRunningTarget(myTarget)) {
+          if (task != null && (isChecked || task.isRunningTarget(myTarget))) {
             task.setEnabled(isChecked);
             task.setAntFileUrl(antfileUrl);
             task.setTargetName(targetName);
@@ -212,7 +212,7 @@ public final class ExecuteOnRunDialog extends DialogWrapper {
       else if (descriptor instanceof ConfigurationDescriptor) {
         final ConfigurationDescriptor configurationDescriptor = (ConfigurationDescriptor)descriptor;
         final AntBeforeRunTask task = runManager.getBeforeRunTask(configurationDescriptor.getConfiguration(), AntBeforeRunTaskProvider.ID);
-        if (isChecked || task.isRunningTarget(myTarget)) {
+        if (task != null && (isChecked || task.isRunningTarget(myTarget))) {
           task.setEnabled(isChecked);
           task.setAntFileUrl(antfileUrl);
           task.setTargetName(targetName);

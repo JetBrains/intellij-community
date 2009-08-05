@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public interface BeforeRunTaskProvider<T extends BeforeRunTask> {
   @NonNls ExtensionPointName<BeforeRunTaskProvider<BeforeRunTask>> EXTENSION_POINT_NAME = new ExtensionPointName<BeforeRunTaskProvider<BeforeRunTask>>("com.intellij.stepsBeforeRunProvider");
@@ -38,7 +39,10 @@ public interface BeforeRunTaskProvider<T extends BeforeRunTask> {
   boolean hasConfigurationButton();
 
   // lifecycle methods:
-  
+  /**
+   * @return 'before run' task for the configuration or null, if the task from this provider is not applicable to the specified configuration 
+   */
+  @Nullable
   T createTask(final RunConfiguration runConfiguration);
   
   void configureTask(final RunConfiguration runConfiguration, T task);
