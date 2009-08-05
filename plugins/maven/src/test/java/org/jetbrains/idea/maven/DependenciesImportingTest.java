@@ -1181,7 +1181,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/", "file://foo.sources"),
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/", "file://foo.javadoc"));
 
-    myProjectsManager.scheduleResolveAllInTests();
+    scheduleResolveAll();
     resolveDependenciesAndImport();
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
@@ -1214,7 +1214,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     myProjectsManager.listenForExternalChanges(); // to recognize repository change
     setRepositoryPath(new File(myDir, "__repo").getPath());
 
-    myProjectsManager.scheduleResolveAllInTests();
+    scheduleResolveAll();
     resolveDependenciesAndImport();
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
@@ -1269,7 +1269,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     myProjectsManager.listenForExternalChanges(); // to recognize repository change
     setRepositoryPath(new File(myDir, "__repo").getPath());
 
-    myProjectsManager.scheduleResolveAllInTests();
+    scheduleResolveAll();
 
     resolveDependenciesAndImport();
 
@@ -1303,7 +1303,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     myProjectsManager.listenForExternalChanges(); // to recognize repository change
     setRepositoryPath(new File(myDir, "__repo").getPath());
 
-    myProjectsManager.scheduleResolveAllInTests();
+    scheduleResolveAll();
 
     resolveDependenciesAndImport();
 
@@ -1435,6 +1435,60 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     assertProjectLibraries("Maven: group:lib1:1",
                            "Maven: group:lib2:1");
+  }
+
+  public void testRemovingUnusedLibrariesIfProjectRemoved() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>group</groupId>" +
+                          "    <artifactId>lib1</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>group</groupId>" +
+                          "    <artifactId>lib2</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    importProject();
+    assertProjectLibraries("Maven: group:lib1:1",
+                           "Maven: group:lib2:1");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "</modules>");
+
+    configConfirmationForYesAnswer();
+    readProjects(Arrays.asList(myProjectPom));
+    resolveDependenciesAndImport();
+    assertProjectLibraries("Maven: group:lib1:1");
   }
 
   public void testRemovingUnusedNonJARLibrary() throws Exception {

@@ -272,7 +272,7 @@ public class MavenArtifact implements Serializable {
     if (myType != null ? !myType.equals(that.myType) : that.myType != null) return false;
     if (myClassifier != null ? !myClassifier.equals(that.myClassifier) : that.myClassifier != null) return false;
     if (myScope != null ? !myScope.equals(that.myScope) : that.myScope != null) return false;
-    if (myTrail != null ? myTrail.equals(that.myTrail) : that.myTrail != null) return false;
+    if (myTrail != null ? !myTrail.equals(that.myTrail) : that.myTrail != null) return false;
 
     return true;
   }

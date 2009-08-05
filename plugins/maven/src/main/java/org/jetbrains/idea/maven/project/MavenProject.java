@@ -136,10 +136,10 @@ public class MavenProject {
     newState.myStrippedMavenModel = MavenUtil.cloneObject(model);
     MavenUtil.stripDown(newState.myStrippedMavenModel);
 
-    return setStete(newState);
+    return setState(newState);
   }
 
-  private MavenProjectChanges setStete(State newState) {
+  private MavenProjectChanges setState(State newState) {
     MavenProjectChanges changes = myState.getChanges(newState);
     myState = newState;
     return changes;
@@ -179,7 +179,7 @@ public class MavenProject {
   private MavenProjectChanges setFolders(MavenProjectReaderResult readerResult) {
     State newState = myState.clone();
     doSetFolders(newState, readerResult);
-    return setStete(newState);
+    return setState(newState);
   }
 
   private static void doSetFolders(State newState, MavenProjectReaderResult readerResult) {
@@ -438,7 +438,7 @@ public class MavenProject {
                                                              getActiveProfilesIds(),
                                                              console,
                                                              p);
-    if (result == null || !result.isValid) return Pair.create(false, new MavenProjectChanges());
+    if (result == null || !result.isValid) return Pair.create(false, MavenProjectChanges.NONE);
     MavenProjectChanges changes = setFolders(result);
     return Pair.create(true, changes);
   }
@@ -860,27 +860,29 @@ public class MavenProject {
     }
 
     public MavenProjectChanges getChanges(State other) {
+      if (myLastReadStamp == 0) return MavenProjectChanges.ALL;
+
       MavenProjectChanges result = new MavenProjectChanges();
 
-      result.packaging &= !Comparing.equal(myPackaging, other.myPackaging);
+      result.packaging |= !Comparing.equal(myPackaging, other.myPackaging);
 
-      result.output &= !Comparing.equal(myFinalName, other.myFinalName);
-      result.output &= !Comparing.equal(myBuildDirectory, other.myBuildDirectory);
-      result.output &= !Comparing.equal(myOutputDirectory, other.myOutputDirectory);
-      result.output &= !Comparing.equal(myTestOutputDirectory, other.myTestOutputDirectory);
+      result.output |= !Comparing.equal(myFinalName, other.myFinalName);
+      result.output |= !Comparing.equal(myBuildDirectory, other.myBuildDirectory);
+      result.output |= !Comparing.equal(myOutputDirectory, other.myOutputDirectory);
+      result.output |= !Comparing.equal(myTestOutputDirectory, other.myTestOutputDirectory);
 
-      result.sources &= !Comparing.equal(mySources, other.mySources);
-      result.sources &= !Comparing.equal(myTestSources, other.myTestSources);
-      result.sources &= !Comparing.equal(myResources, other.myResources);
-      result.sources &= !Comparing.equal(myTestResources, other.myTestResources);
+      result.sources |= !Comparing.equal(mySources, other.mySources);
+      result.sources |= !Comparing.equal(myTestSources, other.myTestSources);
+      result.sources |= !Comparing.equal(myResources, other.myResources);
+      result.sources |= !Comparing.equal(myTestResources, other.myTestResources);
 
       boolean repositoryChanged = !Comparing.equal(myLocalRepository, other.myLocalRepository);
 
-      result.dependencies &= repositoryChanged;
-      result.dependencies &= !Comparing.equal(myDependencies, other.myDependencies);
+      result.dependencies |= repositoryChanged;
+      result.dependencies |= !Comparing.equal(myDependencies, other.myDependencies);
 
-      result.plugins &= repositoryChanged;
-      result.plugins &= !Comparing.equal(myPlugins, other.myPlugins);
+      result.plugins |= repositoryChanged;
+      result.plugins |= !Comparing.equal(myPlugins, other.myPlugins);
 
       return result;
     }

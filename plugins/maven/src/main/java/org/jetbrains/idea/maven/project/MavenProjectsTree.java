@@ -454,7 +454,7 @@ public class MavenProjectsTree {
     MavenProjectTimestamp timestamp = calculateTimestamp(mavenProject, activeProfiles, generalSettings);
     boolean isChanged = force || !timestamp.equals(myTimestamps.get(mavenProject));
 
-    MavenProjectChanges changes = new MavenProjectChanges();
+    MavenProjectChanges changes = MavenProjectChanges.NONE;
     if (isChanged) {
       writeLock();
       try {
@@ -518,7 +518,7 @@ public class MavenProjectsTree {
     }
 
     for (MavenProject each : modulesToBecomeRoots) {
-      if (reconnect(null, each)) updateContext.update(each, new MavenProjectChanges());
+      if (reconnect(null, each)) updateContext.update(each, MavenProjectChanges.NONE);
     }
 
     for (VirtualFile each : existingModuleFiles) {
@@ -550,7 +550,7 @@ public class MavenProjectsTree {
       }
       else {
         if (reconnect(mavenProject, module)) {
-          updateContext.update(module, new MavenProjectChanges());
+          updateContext.update(module, MavenProjectChanges.NONE);
         }
       }
     }
@@ -660,7 +660,7 @@ public class MavenProjectsTree {
     for (MavenProject each : getModules(project)) {
       if (isManagedFile(each.getPath())) {
         if (reconnect(null, each)) {
-          updateContext.update(each, new MavenProjectChanges());
+          updateContext.update(each, MavenProjectChanges.NONE);
         }
       }
       else {
@@ -1122,9 +1122,7 @@ public class MavenProjectsTree {
 
     public void update(MavenProject project, MavenProjectChanges changes) {
       deletedProjects.remove(project);
-      MavenProjectChanges oldChanges = updatedProjectsWithChanges.get(project);
-      if (oldChanges != null) changes.add(oldChanges);
-      updatedProjectsWithChanges.put(project, changes);
+      updatedProjectsWithChanges.put(project, changes.mergedWith(updatedProjectsWithChanges.get(project)));
     }
 
     public void deleted(MavenProject project) {

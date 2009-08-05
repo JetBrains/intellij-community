@@ -12,9 +12,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -63,7 +64,9 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   private MavenProjectsProcessor myPostProcessor;
 
   private MavenMergingUpdateQueue myImportingQueue;
-  private final Set<MavenProject> myProjectsToImport = new THashSet<MavenProject>();
+  private final Object myImportingDataLock = new Object();
+  private final Map<MavenProject, MavenProjectChanges> myProjectsToImport = new THashMap<MavenProject, MavenProjectChanges>();
+  private boolean myImportModuleGroupsRequired = false;
 
   private MavenMergingUpdateQueue mySchedulesQueue;
 
@@ -254,7 +257,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   private void listenForSettingsChanges() {
     getImportingSettings().addListener(new MavenImportingSettings.Listener() {
       public void createModuleGroupsChanged() {
-        scheduleImport();
+        scheduleImport(true);
       }
 
       public void createModuleForAggregatorsChanged() {
@@ -278,11 +281,12 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
         List<MavenProject> updatedProject = MavenUtil.collectFirsts(updated);
 
+        // todo what for?
         // import only updated and the dependents
-        Set<MavenProject> toImport = new THashSet<MavenProject>(updatedProject);
-        for (MavenProject each : updatedProject) {
-          toImport.addAll(myProjectsTree.getDependentProjects(each));
-        }
+        //Set<MavenProject> toImport = new THashSet<MavenProject>(updatedProject);
+        //for (MavenProject each : updatedProject) {
+          //toImport.addAll(myProjectsTree.getDependentProjects(each));
+        //}
 
         // resolve updated, theirs dependents, and dependents of deleted
         Set<MavenProject> toResolve = new THashSet<MavenProject>(updatedProject);
@@ -297,7 +301,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
           if (each.hasErrors()) it.remove();
         }
 
-        scheduleImport(toImport);
+        scheduleImport(updated);
         scheduleResolve(toResolve);
       }
 
@@ -309,14 +313,13 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
         if (project.hasUnresolvedPlugins()) {
           schedulePluginsResolving(project, nativeMavenProject);
         }
-        scheduleImport(projectWithChanges.first);
+        scheduleImport(projectWithChanges);
       }
 
       @Override
       public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-        MavenProject project = projectWithChanges.first;
-        if (project.hasErrors()) return;
-        scheduleImport(project);
+        if (projectWithChanges.first.hasErrors()) return;
+        scheduleImport(projectWithChanges);
       }
     });
   }
@@ -355,11 +358,16 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     return isInitialized();
   }
 
-  public boolean isMavenizedModule(Module m) {
-    return "true".equals(m.getOptionValue(getMavenizedModuleOptionName()));
+  public boolean isMavenizedModule(final Module m) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        return "true".equals(m.getOptionValue(getMavenizedModuleOptionName()));
+      }
+    });
   }
 
-  public void setMavenizedModules(List<Module> modules, boolean mavenized) {
+  public void setMavenizedModules(Collection<Module> modules, boolean mavenized) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     for (Module m : modules) {
       if (mavenized) {
         m.setOption(getMavenizedModuleOptionName(), "true");
@@ -622,13 +630,23 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     scheduleArtifactsDownloading(getProjects());
   }
 
-  private void scheduleImport(MavenProject project) {
-    scheduleImport(Collections.singleton(project));
+  private void scheduleImport(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+    scheduleImport(Collections.singletonList(projectWithChanges));
   }
 
-  private void scheduleImport(Set<MavenProject> projects) {
-    synchronized (myProjectsToImport) {
-      myProjectsToImport.addAll(projects);
+  private void scheduleImport(List<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges) {
+    synchronized (myImportingDataLock) {
+      for (Pair<MavenProject, MavenProjectChanges> each : projectsWithChanges) {
+        MavenProjectChanges changes = each.second.mergedWith(myProjectsToImport.get(each.first));
+        myProjectsToImport.put(each.first, changes);
+      }
+    }
+    scheduleImport();
+  }
+
+  private void scheduleImport(boolean importModuleGroupsRequired) {
+    synchronized (myImportingDataLock) {
+      myImportModuleGroupsRequired = importModuleGroupsRequired;
     }
     scheduleImport();
   }
@@ -673,7 +691,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     for (VirtualFile each : projectFiles) {
       MavenProject project = findProject(each);
       if (project != null) {
-        scheduleImport(project);
+        scheduleImport(Pair.create(project, MavenProjectChanges.ALL));
       }
     }
   }
@@ -688,7 +706,9 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     for (MavenProject each : projects) {
       MavenProjectsProcessorEmptyTask dummyTask = new MavenProjectsProcessorEmptyTask(each);
 
-      myProjectsToImport.remove(each);
+      synchronized (myImportingDataLock) {
+        myProjectsToImport.remove(each);
+      }
 
       myResolvingProcessor.removeTask(dummyTask);
       myPluginsResolvingProcessor.removeTask(dummyTask);
@@ -762,10 +782,12 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   public List<Module> importProjects(final MavenModifiableModelsProvider modelsProvider) {
-    final Set<MavenProject> projectsToImport;
-    synchronized (myProjectsToImport) {
-      projectsToImport = new THashSet<MavenProject>(myProjectsToImport);
+    final Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges;
+    final boolean importModuleGroupsRequired;
+    synchronized (myImportingDataLock) {
+      projectsToImportWithChanges = new THashMap<MavenProject, MavenProjectChanges>(myProjectsToImport);
       myProjectsToImport.clear();
+      importModuleGroupsRequired = myImportModuleGroupsRequired;
     }
 
     long before = System.currentTimeMillis();
@@ -778,13 +800,15 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
         importer.set(new MavenProjectImporter(myProject,
                                               myProjectsTree,
                                               getFileToModuleMapping(modelsProvider),
-                                              projectsToImport,
+                                              projectsToImportWithChanges,
+                                              importModuleGroupsRequired,
                                               modelsProvider,
                                               getImportingSettings()));
         postTasks.set(importer.get().importProject());
       }
     };
 
+    // called from wizard or ui
     if (ApplicationManager.getApplication().isDispatchThread()) {
       r.run();
     }
@@ -796,7 +820,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       }).waitFor();
     }
 
-    long importTime = System.currentTimeMillis() - before;
+    //long importTime = System.currentTimeMillis() - before;
     //System.out.println("Import/Commit time: " + importTime + "/" + modelsProvider.getCommitTime() + " ms");
 
     VirtualFileManager.getInstance().refresh(isNormalProject());
@@ -856,7 +880,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       }
     }.execute().getResultObject();
 
-    scheduleImport(mavenProject);
+    scheduleImport(Pair.create(mavenProject, MavenProjectChanges.DEPENDENCIES));
 
     return result;
   }

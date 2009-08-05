@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -268,11 +267,7 @@ public class MavenIndicesManager implements ApplicationComponent {
             if (embedderToUse != null) embedderToUse.release();
           }
 
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              rehighlightAllPoms();
-            }
-          });
+          scheduleRehighlightAllPoms(projectOrNull);
         }
         finally {
           synchronized (myUpdatingIndicesLock) {
@@ -298,13 +293,16 @@ public class MavenIndicesManager implements ApplicationComponent {
     }
   }
 
-  private void rehighlightAllPoms() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+  private void scheduleRehighlightAllPoms(final Project projectOrNull) {
+    if (projectOrNull == null) return;
+    MavenUtil.invokeLater(projectOrNull, new Runnable() {
       public void run() {
-        for (Project each : ProjectManager.getInstance().getOpenProjects()) {
-          ((PsiModificationTrackerImpl)PsiManager.getInstance(each).getModificationTracker()).incCounter();
-          DaemonCodeAnalyzer.getInstance(each).restart();
-        }
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            ((PsiModificationTrackerImpl)PsiManager.getInstance(projectOrNull).getModificationTracker()).incCounter();
+            DaemonCodeAnalyzer.getInstance(projectOrNull).restart();
+          }
+        });
       }
     });
   }

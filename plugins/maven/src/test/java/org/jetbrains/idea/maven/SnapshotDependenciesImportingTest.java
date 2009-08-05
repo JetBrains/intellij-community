@@ -240,7 +240,7 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
                    "</build>");
     removeFromLocalRepository("test");
 
-    myProjectsManager.scheduleResolveAllInTests();
+    scheduleResolveAll();
     resolveDependenciesAndImport();
 
     assertModuleLibDep("project",

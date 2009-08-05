@@ -79,6 +79,14 @@ public class MavenUtil {
     }
   }
 
+  public static void invokeAndWaitWriteAction(Project p, final Runnable r) {
+    MavenUtil.invokeAndWait(p, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(r);
+      }
+    });
+  }
+
   public static void runDumbAware(final Project project, final Runnable r) {
     if (r instanceof DumbAware) {
       r.run();

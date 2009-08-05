@@ -43,7 +43,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectsTree myProjectsTree;
   protected MavenProjectsManager myProjectsManager;
-  private List<String> myProfilesList;
 
   @Override
   protected void setUpInWriteAction() throws Exception {
@@ -313,20 +312,28 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   private void doImportProjects(List<VirtualFile> files, String... profiles) {
-    myProfilesList = Arrays.asList(profiles);
-
     initProjectsManager(false);
-    myProjectsManager.resetManagedFilesAndProfilesInTests(files, myProfilesList);
+
+    readProjects(files, profiles);
     myProjectsManager.waitForResolvingCompletion();
     // todo replace with myMavenProjectsManager.flushPendingImportRequestsInTests();
     myProjectsManager.scheduleImportInTests(files);
     myProjectsManager.importProjects();
   }
 
+  protected void readProjects(List<VirtualFile> files, String... profiles) {
+    myProjectsManager.resetManagedFilesAndProfilesInTests(files, Arrays.asList(profiles));
+    waitForReadingCompletion();
+  }
+
   protected void initProjectsManager(boolean enableEventHandling) {
     myProjectsManager.initForTests();
     myProjectsTree = myProjectsManager.getProjectsTreeForTests();
     if (enableEventHandling) myProjectsManager.listenForExternalChanges();
+  }
+
+  protected void scheduleResolveAll() {
+    myProjectsManager.scheduleResolveAllInTests();
   }
 
   protected void waitForReadingCompletion() {

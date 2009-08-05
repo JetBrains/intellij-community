@@ -2,7 +2,6 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
@@ -78,32 +77,39 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
   public void commit() {
     long before = System.currentTimeMillis();
 
-    MavenUtil.invokeAndWait(myProject, new Runnable() {
+    MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        ((ProjectRootManagerEx)ProjectRootManager.getInstance(myProject)).mergeRootsChangesDuring(new Runnable() {
           public void run() {
-            ((ProjectRootManagerEx)ProjectRootManager.getInstance(myProject)).mergeRootsChangesDuring(new Runnable() {
-              public void run() {
-                for (Library.ModifiableModel each : myLibraryModels.values()) {
-                  each.commit();
-                }
-                myLibrariesModel.commit();
-                Collection<ModifiableRootModel> rootModels = myRootModels.values();
+            for (Library.ModifiableModel each : myLibraryModels.values()) {
+              each.commit();
+            }
+            myLibrariesModel.commit();
+            Collection<ModifiableRootModel> rootModels = myRootModels.values();
 
-                ProjectRootManager.getInstance(myProject).multiCommit(myModuleModel,
-                                                                      rootModels.toArray(new ModifiableRootModel[rootModels.size()]));
+            ProjectRootManager.getInstance(myProject).multiCommit(myModuleModel,
+                                                                  rootModels.toArray(new ModifiableRootModel[rootModels.size()]));
 
-                for (ModifiableFacetModel each : myFacetModels.values()) {
-                  each.commit();
-                }
-              }
-            });
+            for (ModifiableFacetModel each : myFacetModels.values()) {
+              each.commit();
+            }
           }
         });
       }
     });
 
     myCommitTime = System.currentTimeMillis() - before;
+  }
+
+  public void dispose() {
+    MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
+      public void run() {
+        for (ModifiableRootModel each : myRootModels.values()) {
+          each.dispose();
+        }
+        myModuleModel.dispose();
+      }
+    });
   }
 
   public long getCommitTime() {

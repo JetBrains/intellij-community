@@ -63,6 +63,9 @@ public class MavenUIModifiableModelsProvider extends MavenBaseModifiableModelsPr
   public void commit() {
   }
 
+  public void dispose() {
+  }
+
   public long getCommitTime() {
     return 0;
   }
