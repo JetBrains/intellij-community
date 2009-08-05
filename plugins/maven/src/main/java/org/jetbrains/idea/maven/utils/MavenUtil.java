@@ -160,9 +160,9 @@ public class MavenUtil {
     return result;
   }
 
-  public static <T> List<T> collectSeconds(List<Pair<?, T>> pairs) {
-    List<T> result = new ArrayList<T>(pairs.size());
-    for (Pair<?, T> each : pairs) {
+  public static <T, U> List<U> collectSeconds(List<Pair<T, U>> pairs) {
+    List<U> result = new ArrayList<U>(pairs.size());
+    for (Pair<T, U> each : pairs) {
       result.add(each.second);
     }
     return result;

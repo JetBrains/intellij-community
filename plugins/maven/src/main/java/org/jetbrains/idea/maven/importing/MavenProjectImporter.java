@@ -80,7 +80,7 @@ public class MavenProjectImporter {
 
     mapMavenProjectsToModulesAndNames();
 
-    boolean projectsHaveChanges = doProjectsToImportHaveChanges();
+    boolean projectsHaveChanges = projectsToImportHaveChanges();
     if (projectsHaveChanges) {
       hasChanges = true;
       importModules(postTasks);
@@ -95,8 +95,8 @@ public class MavenProjectImporter {
 
     boolean modulesDeleted = deleteObsoleteModules();
     hasChanges |= modulesDeleted;
-    if (hasDependenciesChanges() || modulesDeleted) {
-      hasChanges |= removeUnusedProjectLibraries();
+    if (hasChanges) {
+      removeUnusedProjectLibraries();
     }
 
     if (hasChanges) {
@@ -106,6 +106,13 @@ public class MavenProjectImporter {
     }
 
     return postTasks;
+  }
+
+  private boolean projectsToImportHaveChanges() {
+    for (MavenProjectChanges each : myProjectsToImportWithChanges.values()) {
+      if (each.hasChanges()) return true;
+    }
+    return false;
   }
 
   private Map<MavenProject, MavenProjectChanges> collectProjectsToImport(Map<MavenProject, MavenProjectChanges> projectsToImport) {
@@ -148,13 +155,6 @@ public class MavenProjectImporter {
   private boolean shouldCreateModuleFor(MavenProject project) {
     if (myProjectsTree.isIgnored(project)) return false;
     return !project.isAggregator() || myImportingSettings.isCreateModulesForAggregators();
-  }
-
-  private boolean doProjectsToImportHaveChanges() {
-    for (MavenProjectChanges each : myProjectsToImportWithChanges.values()) {
-      if (each.hasChanges()) return true;
-    }
-    return false;
   }
 
   private boolean deleteIncompatibleModules() {
@@ -265,8 +265,6 @@ public class MavenProjectImporter {
   }
 
   private void scheduleRefreshResolvedArtifacts(List<MavenProjectsProcessorTask> postTasks) {
-    if (!hasDependenciesChanges()) return;
-
     // We have to refresh all the resolved artifacts manually in order to
     // update all the VirtualFilePointers. It is not enough to call
     // VirtualFileManager.refresh() since the newly created files will be only
@@ -324,8 +322,6 @@ public class MavenProjectImporter {
     MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
       public void run() {
         ((ProjectEx)myProject).setSavePathsRelative(true);
-
-        if (!hasPluginsChanges()) return;
 
         String level = calcTargetLevel();
         if (level == null) return;
@@ -547,19 +543,5 @@ public class MavenProjectImporter {
 
   public List<Module> getCreatedModules() {
     return myCreatedModules;
-  }
-
-  private boolean hasPluginsChanges() {
-    for (MavenProjectChanges each : myProjectsToImportWithChanges.values()) {
-      if (each.plugins) return true;
-    }
-    return false;
-  }
-
-  private boolean hasDependenciesChanges() {
-    for (MavenProjectChanges each : myProjectsToImportWithChanges.values()) {
-      if (each.dependencies) return true;
-    }
-    return false;
   }
 }

@@ -274,26 +274,27 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       }
 
       @Override
-      public void projectsUpdated(List<Pair<MavenProject,MavenProjectChanges>> updated, List<MavenProject> deleted) {
+      public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
         myEmbeddersManager.clearCaches();
 
         unscheduleAllTasks(deleted);
 
-        List<MavenProject> updatedProject = MavenUtil.collectFirsts(updated);
+        List<MavenProject> updatedProjects = MavenUtil.collectFirsts(updated);
 
-        // todo what for?
-        // import only updated and the dependents
-        //Set<MavenProject> toImport = new THashSet<MavenProject>(updatedProject);
-        //for (MavenProject each : updatedProject) {
-          //toImport.addAll(myProjectsTree.getDependentProjects(each));
-        //}
+        // import only updated and the dependents (we need to update faced-deps, packaging etc);
+        List<Pair<MavenProject, MavenProjectChanges>> toImport = new ArrayList<Pair<MavenProject, MavenProjectChanges>>(updated);
+        for (MavenProject each : updatedProjects) {
+          for (MavenProject eachDependent : myProjectsTree.getDependentProjects(each)) {
+            toImport.add(Pair.create(eachDependent, MavenProjectChanges.DEPENDENCIES));
+          }
+        }
 
         // resolve updated, theirs dependents, and dependents of deleted
-        Set<MavenProject> toResolve = new THashSet<MavenProject>(updatedProject);
-        for (MavenProject each : ContainerUtil.concat(updatedProject, deleted)) {
+        Set<MavenProject> toResolve = new THashSet<MavenProject>(updatedProjects);
+        for (MavenProject each : ContainerUtil.concat(updatedProjects, deleted)) {
           toResolve.addAll(myProjectsTree.getDependentProjects(each));
         }
-        
+
         // do not try to resolve projects with syntactic errors
         Iterator<MavenProject> it = toResolve.iterator();
         while (it.hasNext()) {
@@ -301,14 +302,24 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
           if (each.hasErrors()) it.remove();
         }
 
-        scheduleImport(updated);
+        if (haveChanges(toImport) || !deleted.isEmpty()) {
+          scheduleImport(toImport);
+        }
         scheduleResolve(toResolve);
       }
 
+      private boolean haveChanges(List<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges) {
+        for (MavenProjectChanges each : MavenUtil.collectSeconds(projectsWithChanges)) {
+          if (each.hasChanges()) return true;
+        }
+        return false;
+      }
+
       @Override
-      public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, org.apache.maven.project.MavenProject nativeMavenProject) {
+      public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                  org.apache.maven.project.MavenProject nativeMavenProject) {
         MavenProject project = projectWithChanges.first;
-        if (project.hasErrors()) return;
+        if (project.hasErrors() || !projectWithChanges.second.hasChanges()) return;
 
         if (project.hasUnresolvedPlugins()) {
           schedulePluginsResolving(project, nativeMavenProject);
@@ -820,7 +831,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       }).waitFor();
     }
 
-    //long importTime = System.currentTimeMillis() - before;
+    long importTime = System.currentTimeMillis() - before;
     //System.out.println("Import/Commit time: " + importTime + "/" + modelsProvider.getCommitTime() + " ms");
 
     VirtualFileManager.getInstance().refresh(isNormalProject());

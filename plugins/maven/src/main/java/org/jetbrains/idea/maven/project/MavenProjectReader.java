@@ -377,7 +377,7 @@ public class MavenProjectReader {
     Build build = model.getBuild();
 
     if (isEmptyOrSpaces(build.getFinalName())) {
-      build.setFinalName(model.getArtifactId() + "-" + model.getVersion());
+      build.setFinalName("${project.artifactId}-${project.version}");
     }
 
     build.setSourceDirectory(isEmptyOrSpaces(build.getSourceDirectory())

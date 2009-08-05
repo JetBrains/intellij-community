@@ -16,6 +16,7 @@
 
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.util.JDOMUtil;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
@@ -35,6 +36,7 @@ public class MavenPlugin implements Serializable {
 
   private Element myConfiguration;
   private List<Execution> myExecutions = new ArrayList<Execution>();
+
   private List<MavenId> myDependencies = new ArrayList<MavenId>();
 
   protected MavenPlugin() {
@@ -122,12 +124,12 @@ public class MavenPlugin implements Serializable {
 
     MavenPlugin that = (MavenPlugin)o;
 
-    if (myArtifactId != null ? !myArtifactId.equals(that.myArtifactId) : that.myArtifactId != null) return false;
-    if (myConfiguration != null ? !myConfiguration.equals(that.myConfiguration) : that.myConfiguration != null) return false;
-    if (myDependencies != null ? !myDependencies.equals(that.myDependencies) : that.myDependencies != null) return false;
-    if (myExecutions != null ? !myExecutions.equals(that.myExecutions) : that.myExecutions != null) return false;
     if (myGroupId != null ? !myGroupId.equals(that.myGroupId) : that.myGroupId != null) return false;
+    if (myArtifactId != null ? !myArtifactId.equals(that.myArtifactId) : that.myArtifactId != null) return false;
     if (myVersion != null ? !myVersion.equals(that.myVersion) : that.myVersion != null) return false;
+    if (!JDOMUtil.areElementsEqual(myConfiguration, that.myConfiguration)) return false;
+    if (myExecutions != null ? !myExecutions.equals(that.myExecutions) : that.myExecutions != null) return false;
+    if (myDependencies != null ? !myDependencies.equals(that.myDependencies) : that.myDependencies != null) return false;
 
     return true;
   }
@@ -137,7 +139,7 @@ public class MavenPlugin implements Serializable {
     int result = myGroupId != null ? myGroupId.hashCode() : 0;
     result = 31 * result + (myArtifactId != null ? myArtifactId.hashCode() : 0);
     result = 31 * result + (myVersion != null ? myVersion.hashCode() : 0);
-    result = 31 * result + (myConfiguration != null ? myConfiguration.hashCode() : 0);
+    result = 31 * result + (myConfiguration != null ? JDOMUtil.getTreeHash(myConfiguration) : 0);
     result = 31 * result + (myExecutions != null ? myExecutions.hashCode() : 0);
     result = 31 * result + (myDependencies != null ? myDependencies.hashCode() : 0);
     return result;
@@ -171,10 +173,10 @@ public class MavenPlugin implements Serializable {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      Execution execution = (Execution)o;
+      Execution that = (Execution)o;
 
-      if (myConfiguration != null ? !myConfiguration.equals(execution.myConfiguration) : execution.myConfiguration != null) return false;
-      if (myGoals != null ? !myGoals.equals(execution.myGoals) : execution.myGoals != null) return false;
+      if (myGoals != null ? !myGoals.equals(that.myGoals) : that.myGoals != null) return false;
+      if (!JDOMUtil.areElementsEqual(myConfiguration, that.myConfiguration)) return false;
 
       return true;
     }
@@ -182,7 +184,7 @@ public class MavenPlugin implements Serializable {
     @Override
     public int hashCode() {
       int result = myGoals != null ? myGoals.hashCode() : 0;
-      result = 31 * result + (myConfiguration != null ? myConfiguration.hashCode() : 0);
+      result = 31 * result + (myConfiguration != null ? JDOMUtil.getTreeHash(myConfiguration) : 0);
       return result;
     }
   }

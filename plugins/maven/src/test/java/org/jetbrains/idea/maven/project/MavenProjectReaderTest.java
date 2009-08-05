@@ -793,6 +793,50 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("foo", mavenProject.getName());
   }
 
+
+  public void testDoNoInheritParentFinalNameIfUnspecified() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>parent</artifactId>" +
+                     "<version>1</version>");
+
+    VirtualFile module = createModulePom("module",
+                                         "<groupId>test</groupId>" +
+                                         "<artifactId>module</artifactId>" +
+                                         "<version>2</version>" +
+
+                                         "<parent>" +
+                                         "  <groupId>test</groupId>" +
+                                         "  <artifactId>parent</artifactId>" +
+                                         "  <version>1</version>" +
+                                         "</parent>");
+
+    org.apache.maven.project.MavenProject p = readProject(module, "one");
+    assertEquals("module-2", p.getBuild().getFinalName());
+  }
+  public void testDoInheritingParentFinalNameIfSpecified() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>parent</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <finalName>xxx</finalName>" +
+                     "</build>");
+
+    VirtualFile module = createModulePom("module",
+                                         "<groupId>test</groupId>" +
+                                         "<artifactId>module</artifactId>" +
+                                         "<version>2</version>" +
+
+                                         "<parent>" +
+                                         "  <groupId>test</groupId>" +
+                                         "  <artifactId>parent</artifactId>" +
+                                         "  <version>1</version>" +
+                                         "</parent>");
+
+    org.apache.maven.project.MavenProject p = readProject(module, "one");
+    assertEquals("xxx", p.getBuild().getFinalName());
+  }
+
   public void testActivatingProfilesByOS() throws Exception {
     createProjectPom("<name>${prop1}</name>" +
                      "<packaging>${prop2}</packaging>" +
