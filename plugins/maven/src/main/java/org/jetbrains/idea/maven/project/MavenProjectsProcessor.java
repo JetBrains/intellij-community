@@ -2,10 +2,12 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.runner.SoutMavenConsole;
 import org.jetbrains.idea.maven.utils.*;
 
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -21,6 +23,8 @@ public class MavenProjectsProcessor {
   private final BlockingQueue<MavenProjectsProcessorTask> myQueue = new LinkedBlockingQueue<MavenProjectsProcessorTask>();
   private volatile boolean isStopped;
   private volatile MavenUtil.MavenTaskHandler myCurrentTaskHandler;
+
+  private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
 
   public MavenProjectsProcessor(Project project, String title, boolean cancellable, MavenEmbeddersManager embeddersManager) {
     myProject = project;
@@ -162,10 +166,26 @@ public class MavenProjectsProcessor {
     }
     myCurrentTaskHandler = null;
 
+    fireIdle();
+
     return !isStopped;
   }
 
   private boolean isImmediateMode() {
     return MavenUtil.isNoBackgroundMode();
+  }
+
+  private void fireIdle() {
+    for (Listener each : myListeners) {
+      each.onIdle();
+    }
+  }
+
+  public void addListener(Listener l) {
+    myListeners.add(l);
+  }
+
+  public interface Listener {
+    void onIdle();
   }
 }

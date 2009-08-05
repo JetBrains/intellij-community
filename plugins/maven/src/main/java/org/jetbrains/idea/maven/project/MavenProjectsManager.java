@@ -149,6 +149,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     initWorkers();
     listenForSettingsChanges();
     listenForProjectsTreeChanges();
+    listenForProjectProcessors();
 
     MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
       public void run() {
@@ -318,21 +319,34 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       @Override
       public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                   org.apache.maven.project.MavenProject nativeMavenProject) {
-        MavenProject project = projectWithChanges.first;
-        if (project.hasErrors() || !projectWithChanges.second.hasChanges()) return;
+        if (!shouldSchedule(projectWithChanges)) return;
 
-        if (project.hasUnresolvedPlugins()) {
-          schedulePluginsResolving(project, nativeMavenProject);
+        if (projectWithChanges.first.hasUnresolvedPlugins()) {
+          schedulePluginsResolving(projectWithChanges.first, nativeMavenProject);
         }
-        scheduleImport(projectWithChanges);
+        scheduleForNextImport(projectWithChanges);
       }
 
       @Override
       public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-        if (projectWithChanges.first.hasErrors()) return;
-        scheduleImport(projectWithChanges);
+        if (!shouldSchedule(projectWithChanges)) return;
+        scheduleForNextImport(projectWithChanges);
       }
     });
+  }
+
+  private void listenForProjectProcessors() {
+    MavenProjectsProcessor.Listener l = new MavenProjectsProcessor.Listener() {
+      public void onIdle() {
+        scheduleImport();
+      }
+    };
+    myResolvingProcessor.addListener(l);
+    myFoldersResolvingProcessor.addListener(l);
+  }
+
+  private boolean shouldSchedule(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+    return !projectWithChanges.first.hasErrors() && projectWithChanges.second.hasChanges();
   }
 
   public void listenForExternalChanges() {
@@ -646,12 +660,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   private void scheduleImport(List<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges) {
-    synchronized (myImportingDataLock) {
-      for (Pair<MavenProject, MavenProjectChanges> each : projectsWithChanges) {
-        MavenProjectChanges changes = each.second.mergedWith(myProjectsToImport.get(each.first));
-        myProjectsToImport.put(each.first, changes);
-      }
-    }
+    scheduleForNextImport(projectsWithChanges);
     scheduleImport();
   }
 
@@ -672,6 +681,19 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
         });
       }
     });
+  }
+
+  private void scheduleForNextImport(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+    scheduleForNextImport(Collections.singletonList(projectWithChanges));
+  }
+
+  private void scheduleForNextImport(List<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges) {
+    synchronized (myImportingDataLock) {
+      for (Pair<MavenProject, MavenProjectChanges> each : projectsWithChanges) {
+        MavenProjectChanges changes = each.second.mergedWith(myProjectsToImport.get(each.first));
+        myProjectsToImport.put(each.first, changes);
+      }
+    }
   }
 
   private void runWhenFullyOpen(final Runnable runnable) {
