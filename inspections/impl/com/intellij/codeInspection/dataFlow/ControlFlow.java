@@ -32,7 +32,6 @@ public class ControlFlow {
   }
 
   public Instruction[] getInstructions(){
-    addInstruction(myInstructionFactory.createReturnInstruction());
     return myInstructions.toArray(new Instruction[myInstructions.size()]);
   }
 
@@ -85,10 +84,10 @@ public class ControlFlow {
 
   public String toString() {
     StringBuilder result = new StringBuilder();
-    final Instruction[] instructions = getInstructions();
+    final ArrayList<Instruction> instructions = myInstructions;
 
-    for (int i = 0; i < instructions.length; i++) {
-      Instruction instruction = instructions[i];
+    for (int i = 0; i < instructions.size(); i++) {
+      Instruction instruction = instructions.get(i);
       result.append(Integer.toString(i)).append(": ").append(instruction.toString());
       result.append("\n");
     }

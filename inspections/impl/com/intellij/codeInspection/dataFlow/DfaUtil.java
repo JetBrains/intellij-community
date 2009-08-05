@@ -18,6 +18,7 @@ import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -59,6 +60,23 @@ public class DfaUtil {
     final MultiValuesMap<PsiVariable, PsiExpression> value = cachedValue.getValue();
     final Collection<PsiExpression> expressions = value == null ? null : value.get(variable);
     return expressions == null ? Collections.<PsiExpression>emptyList() : expressions;
+  }
+  
+  @Nullable
+  public static PsiCodeBlock getTopmostBlockInSameClass(@NotNull PsiElement position) {
+    PsiCodeBlock block = PsiTreeUtil.getParentOfType(position, PsiCodeBlock.class, false, PsiMember.class, PsiFile.class);
+    if (block == null) {
+      return null;
+    }
+
+    PsiCodeBlock lastBlock = block;
+    while (true) {
+      block = PsiTreeUtil.getParentOfType(block, PsiCodeBlock.class, true, PsiMember.class, PsiFile.class);
+      if (block == null) {
+        return lastBlock;
+      }
+      lastBlock = block;
+    }
   }
 
   private static PsiElement getEnclosingCodeBlock(final PsiVariable variable, final PsiElement context) {

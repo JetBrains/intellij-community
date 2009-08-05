@@ -73,6 +73,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     LOG.assertTrue(myPass1Flow.getInstructionCount() == pass2Flow.getInstructionCount());
 
+    addInstruction(myInstructionFactory.createReturnInstruction());
+
     return pass2Flow;
   }
 
@@ -1262,30 +1264,6 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         addMethodThrows(ctr);
       }
 
-      final PsiAnonymousClass psiAnonymousClass = expression.getAnonymousClass();
-      if (psiAnonymousClass != null) {
-        final PsiMethod[] methods = psiAnonymousClass.getMethods();
-        for (PsiMethod method : methods) {
-          final PsiCodeBlock body = method.getBody();
-          if (body != null) {
-            addInstruction(myInstructionFactory.createPushInstruction(DfaUnknownValue.getInstance(), expression));
-            final ConditionalGotoInstruction condGoto = myInstructionFactory.createConditionalGotoInstruction(0, false, expression);
-            addInstruction(condGoto);
-            final GosubInstruction gosub = myInstructionFactory.createGosubInstruction(getStartOffset(body));
-            addInstruction(gosub);
-            condGoto.setOffset(gosub.getIndex() + 1);
-          }
-        }
-        addInstruction(myInstructionFactory.createGotoInstruction(getEndOffset(expression)));
-
-        for (PsiMethod method : methods) {
-          final PsiCodeBlock body = method.getBody();
-          if (body != null) {
-            visitCodeBlock(body);
-            addInstruction(myInstructionFactory.createReturnFromSubInstruction());
-          }
-        }
-      }
     }
 
     finishElement(expression);

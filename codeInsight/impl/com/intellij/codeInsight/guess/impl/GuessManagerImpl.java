@@ -127,25 +127,19 @@ public class GuessManagerImpl extends GuessManager {
 
   @NotNull
   private static Map<PsiExpression, PsiType> _getDataFlowExpressionTypes(final PsiExpression forPlace) {
-    PsiElement scope = forPlace.getParent();
-    PsiElement lastScope = scope;
-    while(true){
-      if (scope == null || scope instanceof PsiFile) break;
-      scope = scope.getParent();
-      if (scope instanceof PsiCodeBlock ||
-          scope instanceof PsiFile && PsiUtil.isInJspFile(scope)) {
-        lastScope = scope;
-      }
+    PsiElement scope = DfaUtil.getTopmostBlockInSameClass(forPlace);
+    if (scope == null) {
+      return Collections.emptyMap();
     }
 
-    DataFlowRunner runner = new DataFlowRunner(new InstructionFactory()) {
+    DataFlowRunner runner = new DataFlowRunner() {
       protected DfaMemoryState createMemoryState() {
         return new ExpressionTypeMemoryState(getFactory());
       }
     };
 
     final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(forPlace);
-    if (runner.analyzeMethod(lastScope, visitor) == RunnerResult.OK) {
+    if (runner.analyzeMethod(scope, visitor) == RunnerResult.OK) {
       final Map<PsiExpression, PsiType> map = visitor.getResult();
       if (map != null) {
         return map;

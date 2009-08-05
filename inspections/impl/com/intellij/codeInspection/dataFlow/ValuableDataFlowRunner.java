@@ -12,10 +12,7 @@ import com.intellij.psi.PsiVariable;
 /**
  * @author Gregory.Shrago
  */
-public class ValuableDataFlowRunner extends DataFlowRunner {
-  public ValuableDataFlowRunner() {
-    super(new InstructionFactory());
-  }
+public class ValuableDataFlowRunner extends AnnotationsAwareDataFlowRunner {
 
   protected DfaMemoryState createMemoryState() {
     return new MyDfaMemoryState(getFactory());

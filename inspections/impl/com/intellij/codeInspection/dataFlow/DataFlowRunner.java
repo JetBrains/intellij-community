@@ -8,23 +8,20 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.instructions.BranchingInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
+import com.intellij.psi.*;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.EmptyStackException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class DataFlowRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowRunner");
@@ -32,8 +29,8 @@ public class DataFlowRunner {
 
   private Instruction[] myInstructions;
   private DfaVariableValue[] myFields;
-  private final DfaValueFactory myValueFactory;
-  private final InstructionFactory myInstructionFactory;
+  private final DfaValueFactory myValueFactory = new DfaValueFactory();
+  private final InstructionFactory myInstructionFactory = new InstructionFactory();
 
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
   // is executed more than this limit times.
@@ -43,25 +40,43 @@ public class DataFlowRunner {
     return myInstructions[index];
   }
 
-  protected DataFlowRunner(final InstructionFactory instructionFactory) {
-    myInstructionFactory = instructionFactory;
-    myValueFactory = new DfaValueFactory();
+  protected DataFlowRunner() {
   }
 
   public DfaValueFactory getFactory() {
     return myValueFactory;
   }
 
-  protected InstructionFactory getInstructionFactory() {
-    return myInstructionFactory;
+  protected Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, InstructionVisitor visitor) {
+    if (psiBlock.getParent() instanceof PsiMethod) {
+      final PsiClass containingClass = ((PsiMethod)psiBlock.getParent()).getContainingClass();
+      if (containingClass instanceof PsiAnonymousClass) {
+        final PsiElement newExpression = containingClass.getParent();
+        final PsiCodeBlock block = DfaUtil.getTopmostBlockInSameClass(newExpression);
+        if (newExpression instanceof PsiNewExpression && block != null) {
+          final EnvironmentalInstructionVisitor envVisitor = new EnvironmentalInstructionVisitor(visitor, (PsiNewExpression)newExpression);
+          final RunnerResult result = analyzeMethod(block, envVisitor);
+          if (result == RunnerResult.OK) {
+            final Collection<DfaMemoryState> closureStates = envVisitor.getClosureStates();
+            if (!closureStates.isEmpty()) {
+              return closureStates;
+            }
+          }
+          return null;
+        }
+      }
+    }
+
+
+    return Arrays.asList(createMemoryState());
   }
 
-  public RunnerResult analyzeMethod(PsiElement psiBlock, InstructionVisitor visitor) {
-    final boolean isInMethod = psiBlock.getParent() instanceof PsiMethod;
-
+  public final RunnerResult analyzeMethod(@NotNull PsiElement psiBlock, InstructionVisitor visitor) {
     try {
-      final ControlFlowAnalyzer analyzer = createControlFlowAnalyzer();
-      final ControlFlow flow = analyzer.buildControlFlow(psiBlock);
+      final Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor);
+      if (initialStates == null) return RunnerResult.NOT_APPLICABLE;
+
+      final ControlFlow flow = createControlFlowAnalyzer().buildControlFlow(psiBlock);
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
 
       int endOffset = flow.getInstructionCount();
@@ -80,22 +95,13 @@ public class DataFlowRunner {
         if (instruction instanceof BranchingInstruction) branchCount++;
       }
 
-      if (branchCount > 80) return RunnerResult.TOO_COMPLEX; // Do not even try. Definetly will out of time.
+      if (branchCount > 80) return RunnerResult.TOO_COMPLEX; // Do not even try. Definitely will out of time.
 
       final ArrayList<DfaInstructionState> queue = new ArrayList<DfaInstructionState>();
-      final DfaMemoryState initialState = createMemoryState();
-
-      if (isInMethod) {
-        PsiMethod method = (PsiMethod)psiBlock.getParent();
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        for (PsiParameter parameter : parameters) {
-          if (AnnotationUtil.isNotNull(parameter)) {
-            initialState.applyNotNull(myValueFactory.getVarFactory().create(parameter, false));
-          }
-        }
+      for (final DfaMemoryState initialState : initialStates) {
+        queue.add(new DfaInstructionState(myInstructions[0], initialState));
       }
 
-      queue.add(new DfaInstructionState(myInstructions[0], initialState));
       long timeLimit = ourTimeLimit;
       final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
       final long before = System.currentTimeMillis();
@@ -190,4 +196,26 @@ public class DataFlowRunner {
     return Pair.create(trueSet, falseSet);
   }
 
+  private static class EnvironmentalInstructionVisitor extends DelegatingInstructionVisitor {
+    private final PsiNewExpression myNewExpression;
+    private final Set<DfaMemoryState> myClosureStates = new THashSet<DfaMemoryState>();
+
+    public EnvironmentalInstructionVisitor(@NotNull InstructionVisitor delegate, @NotNull PsiNewExpression newExpression) {
+      super(delegate);
+      myNewExpression = newExpression;
+    }
+
+    @Override
+    public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+      if (myNewExpression == instruction.getCallExpression()) {
+        myClosureStates.add(memState);
+      }
+      return super.visitMethodCall(instruction, runner, memState);
+    }
+
+    @NotNull
+    public Collection<DfaMemoryState> getClosureStates() {
+      return myClosureStates;
+    }
+  }
 }

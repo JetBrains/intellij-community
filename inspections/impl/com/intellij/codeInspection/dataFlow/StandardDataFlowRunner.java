@@ -12,22 +12,23 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.codeInsight.AnnotationUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class StandardDataFlowRunner extends DataFlowRunner {
+public class StandardDataFlowRunner extends AnnotationsAwareDataFlowRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowRunner");
 
   private final HashSet<Instruction> myNPEInstructions = new HashSet<Instruction>();
@@ -44,20 +45,28 @@ public class StandardDataFlowRunner extends DataFlowRunner {
   private final Set<PsiExpression> myUnboxedNullables = new THashSet<PsiExpression>();
 
   public StandardDataFlowRunner(boolean suggestNullableAnnotations) {
-    super(new InstructionFactory());
     mySuggestNullableAnnotations = suggestNullableAnnotations;
   }
 
   @Override
-  public RunnerResult analyzeMethod(PsiElement psiBlock, InstructionVisitor visitor) {
-    myIsInMethod = psiBlock.getParent() instanceof PsiMethod;
+  protected Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, InstructionVisitor visitor) {
+    final Collection<DfaMemoryState> initialStates = super.createInitialStates(psiBlock, visitor);
 
+    myIsInMethod = psiBlock.getParent() instanceof PsiMethod;
     if (myIsInMethod) {
       PsiMethod method = (PsiMethod)psiBlock.getParent();
       myInNullableMethod = AnnotationUtil.isNullable(method);
       myInNotNullMethod = AnnotationUtil.isNotNull(method);
     }
-    return super.analyzeMethod(psiBlock, visitor);
+
+    myNPEInstructions.clear();
+    myCCEInstructions.clear();
+    myNullableArguments.clear();
+    myNullableAssignments.clear();
+    myNullableReturns.clear();
+    myUnboxedNullables.clear();
+
+    return initialStates;
   }
 
   public void onInstructionProducesNPE(Instruction instruction) {
