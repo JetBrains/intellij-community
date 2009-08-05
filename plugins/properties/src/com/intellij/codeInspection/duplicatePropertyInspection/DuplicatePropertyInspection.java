@@ -154,7 +154,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
     Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module == null) return;
     final GlobalSearchScope scope = CURRENT_FILE
-                                    ? (GlobalSearchScope)GlobalSearchScope.fileScope(file)
+                                    ? GlobalSearchScope.fileScope(file)
                                     : MODULE_WITH_DEPENDENCIES
                                       ? GlobalSearchScope.moduleWithDependenciesScope(module)
                                       : GlobalSearchScope.projectScope(file.getProject());
