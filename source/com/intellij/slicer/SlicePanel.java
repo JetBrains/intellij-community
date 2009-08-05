@@ -99,14 +99,14 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     }
   }
 
-  public SlicePanel(Project project, final SliceUsage root, AnalysisScope scope) {
+  public SlicePanel(Project project, final SliceUsage root, AnalysisScope scope, boolean dataFlowToThis) {
     super(new BorderLayout());
     myProject = project;
     myTree = createTree();
 
     Map<SliceUsage, List<SliceNode>> targetEqualUsages = new DuplicateMap();
 
-    myBuilder = new SliceTreeBuilder(myTree, project);
+    myBuilder = new SliceTreeBuilder(myTree, project, dataFlowToThis);
     myBuilder.setCanYieldUpdate(true);
     Disposer.register(this, myBuilder);
     final SliceNode rootNode = new SliceRootNode(project, root, targetEqualUsages, myBuilder, scope);
@@ -294,7 +294,9 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
       }
     });
 
-    actionGroup.add(new AnalyzeLeavesAction(myBuilder));
+    if (myBuilder.dataFlowToThis) {
+      actionGroup.add(new AnalyzeLeavesAction(myBuilder));
+    }
 
     //actionGroup.add(new ContextHelpAction(HELP_ID));
 

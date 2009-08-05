@@ -1,6 +1,5 @@
 package com.intellij.slicer;
 
-import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -8,67 +7,59 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.codeInspection.dataFlow.DfaUtil;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 
 /**
  * @author cdr
  */
 public class SliceUtil {
-  public static boolean processUsagesFlownDownToTheExpression(@NotNull PsiExpression expression, @NotNull Processor<SliceUsage> processor, @NotNull SliceUsage parent) {
+  public static boolean processUsagesFlownDownTo(@NotNull PsiElement expression, @NotNull Processor<SliceUsage> processor, @NotNull SliceUsage parent) {
     expression = simplify(expression);
-    Processor<SliceUsage> uniqueProcessor =
-        new CommonProcessors.UniqueProcessor<SliceUsage>(processor, new TObjectHashingStrategy<SliceUsage>() {
-          public int computeHashCode(final SliceUsage object) {
-            return object.getUsageInfo().hashCode();
-          }
-
-          public boolean equals(final SliceUsage o1, final SliceUsage o2) {
-            return o1.getUsageInfo().equals(o2.getUsageInfo());
-          }
-        });
-
+    PsiElement original = expression;
     if (expression instanceof PsiReferenceExpression) {
       PsiReferenceExpression ref = (PsiReferenceExpression)expression;
       PsiElement resolved = ref.resolve();
       if (resolved instanceof PsiMethod && expression.getParent() instanceof PsiMethodCallExpression) {
-        return processUsagesFlownDownToTheExpression((PsiExpression)expression.getParent(), processor, parent);
+        return processUsagesFlownDownTo(expression.getParent(), processor, parent);
       }
       if (!(resolved instanceof PsiVariable)) return true;
-      final PsiVariable variable = (PsiVariable)resolved;
-      final Set<PsiExpression> expressions = new THashSet<PsiExpression>(DfaUtil.getCachedVariableValues(variable, ref));
+      expression = resolved;
+    }
+    if (expression instanceof PsiVariable) {
+      PsiVariable variable = (PsiVariable)expression;
+
+      final Set<PsiExpression> expressions = new THashSet<PsiExpression>(DfaUtil.getCachedVariableValues(variable, original));
       PsiExpression initializer = variable.getInitializer();
       if (initializer != null && expressions.isEmpty()) expressions.add(initializer);
-      if (!handToProcessor(expressions, uniqueProcessor, parent)) return false;
-      if (resolved instanceof PsiField) {
-        return processFieldUsages((PsiField)resolved, uniqueProcessor, parent);
+      if (!handToProcessor(expressions, processor, parent)) return false;
+      if (variable instanceof PsiField) {
+        return processFieldUsages((PsiField)variable, processor, parent);
       }
-      else if (resolved instanceof PsiParameter) {
-        return processParameterUsages((PsiParameter)resolved, uniqueProcessor, parent);
+      else if (variable instanceof PsiParameter) {
+        return processParameterUsages((PsiParameter)variable, processor, parent);
       }
     }
     if (expression instanceof PsiMethodCallExpression) {
-      return processMethodReturnValue((PsiMethodCallExpression)expression, uniqueProcessor, parent);
+      return processMethodReturnValue((PsiMethodCallExpression)expression, processor, parent);
     }
     if (expression instanceof PsiConditionalExpression) {
       PsiConditionalExpression conditional = (PsiConditionalExpression)expression;
       PsiExpression thenE = conditional.getThenExpression();
       PsiExpression elseE = conditional.getElseExpression();
-      if (thenE != null && !handToProcessor(Collections.singletonList(thenE), uniqueProcessor, parent)) return false;
-      if (elseE != null && !handToProcessor(Collections.singletonList(elseE), uniqueProcessor, parent)) return false;
+      if (thenE != null && !handToProcessor(thenE, processor, parent)) return false;
+      if (elseE != null && !handToProcessor(elseE, processor, parent)) return false;
     }
     return true;
   }
 
-  private static PsiExpression simplify(final PsiExpression expression) {
+  private static PsiElement simplify(@NotNull PsiElement expression) {
     if (expression instanceof PsiParenthesizedExpression) {
       return simplify(((PsiParenthesizedExpression)expression).getExpression());
     }
@@ -78,15 +69,20 @@ public class SliceUtil {
     return expression;
   }
 
-  private static boolean handToProcessor(Collection<PsiExpression> expressions, Processor<SliceUsage> processor, SliceUsage parent) {
+  private static boolean handToProcessor(@NotNull Collection<PsiExpression> expressions, @NotNull Processor<SliceUsage> processor, @NotNull SliceUsage parent) {
     for (PsiExpression exp : expressions) {
-      final PsiExpression realExpression =
-        exp.getParent() instanceof DummyHolder ? (PsiExpression)((DummyHolder)exp.getParent()).getContext() : exp;
-      assert realExpression != null;
-      if (!(realExpression instanceof PsiCompiledElement)) {
-        SliceUsage usage = new SliceUsage(new UsageInfo(realExpression), parent);
-        if (!processor.process(usage)) return false;
-      }
+      if (!handToProcessor(exp, processor, parent)) return false;
+    }
+    return true;
+  }
+
+  public static boolean handToProcessor(@NotNull PsiExpression exp, @NotNull Processor<SliceUsage> processor, @NotNull SliceUsage parent) {
+    final PsiExpression realExpression =
+      exp.getParent() instanceof DummyHolder ? (PsiExpression)((DummyHolder)exp.getParent()).getContext() : exp;
+    assert realExpression != null;
+    if (!(realExpression instanceof PsiCompiledElement)) {
+      SliceUsage usage = new SliceUsage(createUsageInfo(realExpression), parent);
+      if (!processor.process(usage)) return false;
     }
     return true;
   }
@@ -110,7 +106,7 @@ public class SliceUtil {
       public void visitReturnStatement(final PsiReturnStatement statement) {
         PsiExpression returnValue = statement.getReturnValue();
         if (returnValue == null) return;
-        UsageInfo usageInfo = new UsageInfo(returnValue);
+        UsageInfo usageInfo = createUsageInfo(returnValue);
         SliceUsage usage = new SliceUsage(usageInfo, parent);
         if (!processor.process(usage)) {
           stopWalking();
@@ -122,11 +118,15 @@ public class SliceUtil {
     return result[0];
   }
 
+  private static UsageInfo createUsageInfo(PsiExpression returnValue) {
+    return new UsageInfo(simplify(returnValue));
+  }
+
   static boolean processFieldUsages(final PsiField field, final Processor<SliceUsage> processor, final SliceUsage parent) {
     if (field.hasInitializer()) {
       PsiExpression initializer = field.getInitializer();
       if (initializer != null && !(field instanceof PsiCompiledElement)) {
-        SliceFieldUsage usage = new SliceFieldUsage(new UsageInfo(initializer), field, parent);
+        SliceFieldUsage usage = new SliceFieldUsage(createUsageInfo(initializer), field, parent);
         if (!processor.process(usage)) return false;
       }
     }
@@ -140,15 +140,15 @@ public class SliceUtil {
         PsiElement parentExpr = referenceExpression.getParent();
         if (PsiUtil.isOnAssignmentLeftHand(referenceExpression)) {
           PsiExpression rExpression = ((PsiAssignmentExpression)parentExpr).getRExpression();
-          SliceFieldUsage usage = new SliceFieldUsage(new UsageInfo(rExpression), field, parent);
+          SliceFieldUsage usage = new SliceFieldUsage(createUsageInfo(rExpression), field, parent);
           return processor.process(usage);
         }
         if (parentExpr instanceof PsiPrefixExpression && ((PsiPrefixExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiPrefixExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiPrefixExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
-          SliceFieldUsage usage = new SliceFieldUsage(new UsageInfo(parentExpr), field, parent);
+          SliceFieldUsage usage = new SliceFieldUsage(createUsageInfo((PsiExpression)parentExpr), field, parent);
           return processor.process(usage);
         }
         if (parentExpr instanceof PsiPostfixExpression && ((PsiPostfixExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiPostfixExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiPostfixExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
-          SliceFieldUsage usage = new SliceFieldUsage(new UsageInfo(parentExpr), field, parent);
+          SliceFieldUsage usage = new SliceFieldUsage(createUsageInfo((PsiExpression)parentExpr), field, parent);
           return processor.process(usage);
         }
         return true;
@@ -170,6 +170,7 @@ public class SliceUtil {
     for (final PsiMethod containingMethod : superMethods) {
       if (!MethodReferencesSearch.search(containingMethod, parent.getScope().toSearchScope(), true).forEach(new Processor<PsiReference>() {
         public boolean process(final PsiReference reference) {
+          SliceManager.getInstance(parameter.getProject()).checkCanceled();
           synchronized (processed) {
             if (!processed.add(reference)) return true;
           }
@@ -184,7 +185,7 @@ public class SliceUtil {
             argumentList = ((PsiCall)element).getArgumentList();
           }
           PsiExpression passExpression = argumentList.getExpressions()[paramSeqNo];
-          SliceParameterUsage usage = new SliceParameterUsage(new UsageInfo(passExpression), parameter, parent);
+          SliceParameterUsage usage = new SliceParameterUsage(createUsageInfo(passExpression), parameter, parent);
           return processor.process(usage);
         }
       })) return false;

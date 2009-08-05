@@ -29,8 +29,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class SliceManager {
   private final Project myProject;
-  private final ContentManager myContentManager;
-  private static final String TOOL_WINDOW_ID = "Dataflow to this";
+  private final ContentManager myBackContentManager;
+  private final ContentManager myForthContentManager;
+  private static final String BACKSLICE_TOOLWINDOW_ID = "Dataflow to this";
+  private static final String FORTHSLICE_TOOLWINDOW_ID = "Dataflow from this";
   private volatile boolean myCanceled;
 
   public static SliceManager getInstance(@NotNull Project project) {
@@ -39,9 +41,14 @@ public class SliceManager {
 
   public SliceManager(Project project, ToolWindowManager toolWindowManager, final Application application) {
     myProject = project;
-    final ToolWindow toolWindow= toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, true, ToolWindowAnchor.BOTTOM, project);
-    myContentManager = toolWindow.getContentManager();
-    new ContentManagerWatcher(toolWindow, myContentManager);
+    final ToolWindow toolWindow= toolWindowManager.registerToolWindow(BACKSLICE_TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, project);
+    myBackContentManager = toolWindow.getContentManager();
+    new ContentManagerWatcher(toolWindow, myBackContentManager);
+
+    final ToolWindow ftoolWindow= toolWindowManager.registerToolWindow(FORTHSLICE_TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, project);
+    myForthContentManager = ftoolWindow.getContentManager();
+    new ContentManagerWatcher(ftoolWindow, myForthContentManager);
+
     final MyApplicationListener myApplicationListener = new MyApplicationListener();
     application.addApplicationListener(myApplicationListener);
     Disposer.register(project, new Disposable() {
@@ -51,11 +58,21 @@ public class SliceManager {
     });
   }
 
-  public void slice(@NotNull PsiElement element) {
+  public void slice(@NotNull PsiElement element, boolean dataFlowToThis) {
+    if (dataFlowToThis) {
+      doSlice(element, "Dataflow to this", true, myBackContentManager, BACKSLICE_TOOLWINDOW_ID);
+    }
+    else{
+      doSlice(element, "Dataflow from this", false, myForthContentManager, FORTHSLICE_TOOLWINDOW_ID);
+    }
+  }
+
+  private void doSlice(PsiElement element, String dialogTitle, boolean dataFlowToThis, final ContentManager contentManager,
+                       final String toolwindowId) {
     Module module = ModuleUtil.findModuleForPsiElement(element);
     AnalysisUIOptions analysisUIOptions = new AnalysisUIOptions();
     analysisUIOptions.SCOPE_TYPE = AnalysisScope.PROJECT;
-    BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog("Dataflow to this", "Analyze scope", myProject, new AnalysisScope(element.getContainingFile()), module.getName(), true,
+    BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, new AnalysisScope(element.getContainingFile()), module.getName(), true,
                                                                    analysisUIOptions);
     dialog.show();
     if (!dialog.isOK()) return;
@@ -64,9 +81,9 @@ public class SliceManager {
     final SliceToolwindowSettings sliceToolwindowSettings = SliceToolwindowSettings.getInstance(myProject);
     SliceUsage usage = createRootUsage(element, scope);
     final Content[] myContent = new Content[1];
-    final SlicePanel slicePanel = new SlicePanel(myProject, usage, scope) {
+    final SlicePanel slicePanel = new SlicePanel(myProject, usage, scope, dataFlowToThis) {
       protected void close() {
-        myContentManager.removeContent(myContent[0], true);
+        contentManager.removeContent(myContent[0], true);
       }
 
       public boolean isAutoScroll() {
@@ -86,20 +103,18 @@ public class SliceManager {
       }
     };
 
-    String title = getElementDescription(element);
-    myContent[0] = myContentManager.getFactory().createContent(slicePanel, title, true);
-    myContentManager.addContent(myContent[0]);
-    myContentManager.setSelectedContent(myContent[0]);
+    myContent[0] = contentManager.getFactory().createContent(slicePanel, getElementDescription(element), true);
+    contentManager.addContent(myContent[0]);
+    contentManager.setSelectedContent(myContent[0]);
 
-    ToolWindowManager.getInstance(myProject).getToolWindow(TOOL_WINDOW_ID).activate(null);
+    ToolWindowManager.getInstance(myProject).getToolWindow(toolwindowId).activate(null);
   }
 
   public static String getElementDescription(PsiElement element) {
     PsiElement elementToSlice = element;
     if (element instanceof PsiReferenceExpression) elementToSlice = ((PsiReferenceExpression)element).resolve();
     if (elementToSlice == null) elementToSlice = element;
-    String title = "<html>"+
-                   ElementDescriptionUtil.getElementDescription(elementToSlice, RefactoringDescriptionLocation.WITHOUT_PARENT);
+    String title = "<html>"+ ElementDescriptionUtil.getElementDescription(elementToSlice, RefactoringDescriptionLocation.WITHOUT_PARENT);
     title = StringUtil.first(title, 100, true)+"</html>";
     return title;
   }

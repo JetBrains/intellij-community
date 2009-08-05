@@ -18,9 +18,11 @@ import java.util.Collection;
  */
 public class SliceTreeBuilder extends AbstractTreeBuilder{
   public boolean splitByLeafExpressions;
+  public final boolean dataFlowToThis;
 
-  public SliceTreeBuilder(JTree tree, Project project) {
+  public SliceTreeBuilder(JTree tree, Project project, boolean dataFlowToThis) {
     super(tree, (DefaultTreeModel)tree.getModel(), new SliceTreeStructure(project), AlphaComparator.INSTANCE, false);
+    this.dataFlowToThis = dataFlowToThis;
     initRootNode();
   }
 

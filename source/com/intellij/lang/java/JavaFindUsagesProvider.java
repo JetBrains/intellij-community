@@ -72,11 +72,14 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     if (element instanceof PsiClass) {
       if (((PsiClass)element).isAnnotationType()) {
         return LangBundle.message("java.terms.annotation.interface");
-      } else if (((PsiClass)element).isEnum()) {
+      }
+      if (((PsiClass)element).isEnum()) {
         return LangBundle.message("java.terms.enum");
-      } else if (((PsiClass)element).isInterface()) {
+      }
+      if (((PsiClass)element).isInterface()) {
         return LangBundle.message("java.terms.interface");
-      } else if (element instanceof PsiTypeParameter) {
+      }
+      if (element instanceof PsiTypeParameter) {
         return LangBundle.message("java.terms.type.parameter");
       }
       return LangBundle.message("java.terms.class");
@@ -96,9 +99,10 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       if (isConstructor) {
         return LangBundle.message("java.terms.constructor");
       }
-      else {
-        return LangBundle.message("java.terms.method");
-      }
+      return LangBundle.message("java.terms.method");
+    }
+    if (element instanceof PsiExpression) {
+      return LangBundle.message("java.terms.expression");
     }
 
     final String name = TypeNameManager.getTypeName(element.getClass());
@@ -116,16 +120,16 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     if (element instanceof PsiDirectory) {
       return getPackageName((PsiDirectory)element, false);
     }
-    else if (element instanceof PsiPackage) {
+    if (element instanceof PsiPackage) {
       return getPackageName((PsiPackage)element);
     }
-    else if (element instanceof PsiFile) {
+    if (element instanceof PsiFile) {
       return ((PsiFile)element).getVirtualFile().getPresentableUrl();
     }
-    else if (element instanceof PsiLabeledStatement) {
+    if (element instanceof PsiLabeledStatement) {
       return ((PsiLabeledStatement)element).getLabelIdentifier().getText();
     }
-    else if (element instanceof PsiClass) {
+    if (element instanceof PsiClass) {
       if (element instanceof PsiAnonymousClass) {
         return LangBundle.message("java.terms.anonymous.class");
       }
@@ -135,7 +139,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
         return qName == null ? aClass.getName() : qName;
       }
     }
-    else if (element instanceof PsiMethod) {
+    if (element instanceof PsiMethod) {
       PsiMethod psiMethod = (PsiMethod)element;
       String formatted = PsiFormatUtil.formatMethod(psiMethod,
                                                     PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
@@ -147,7 +151,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
 
       return formatted;
     }
-    else if (element instanceof PsiField) {
+    if (element instanceof PsiField) {
       PsiField psiField = (PsiField)element;
       String formatted = PsiFormatUtil.formatVariable(psiField, PsiFormatUtil.SHOW_NAME, PsiSubstitutor.EMPTY);
       PsiClass psiClass = psiField.getContainingClass();
@@ -157,8 +161,11 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
 
       return formatted;
     }
-    else if (element instanceof PsiVariable) {
+    if (element instanceof PsiVariable) {
       return PsiFormatUtil.formatVariable((PsiVariable)element, PsiFormatUtil.SHOW_NAME, PsiSubstitutor.EMPTY);
+    }
+    if (element instanceof PsiLiteralExpression) {
+      return element.getText();
     }
 
     return "";

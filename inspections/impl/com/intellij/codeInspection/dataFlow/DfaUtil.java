@@ -30,7 +30,7 @@ public class DfaUtil {
   private DfaUtil() {
   }
 
-  public static Collection<PsiExpression> getCachedVariableValues(@Nullable final PsiVariable variable, @Nullable final PsiExpression context) {
+  public static Collection<PsiExpression> getCachedVariableValues(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
     if (variable == null || context == null) return Collections.emptyList();
 
     CachedValue<MultiValuesMap<PsiVariable, PsiExpression>> cachedValue = context.getUserData(DFA_VARIABLE_INFO_KEY);
@@ -61,7 +61,7 @@ public class DfaUtil {
     return expressions == null ? Collections.<PsiExpression>emptyList() : expressions;
   }
 
-  private static PsiElement getEnclosingCodeBlock(final PsiVariable variable, final PsiExpression context) {
+  private static PsiElement getEnclosingCodeBlock(final PsiVariable variable, final PsiElement context) {
     PsiElement codeBlock;
     if (variable instanceof PsiParameter) {
       codeBlock = ((PsiParameter)variable).getDeclarationScope();
@@ -165,9 +165,9 @@ public class DfaUtil {
 
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {
     final MultiValuesMap<PsiVariable, PsiExpression> myValues = new MultiValuesMap<PsiVariable, PsiExpression>(true);
-    private final PsiExpression myContext;
+    private final PsiElement myContext;
 
-    public ValuableInstructionVisitor(PsiExpression context) {
+    public ValuableInstructionVisitor(PsiElement context) {
       myContext = context;
     }
 

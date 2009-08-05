@@ -70,14 +70,16 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     final SliceManager manager = SliceManager.getInstance(getProject());
     manager.runInterruptibly(new Runnable() {
       public void run() {
-        getValue().processChildren(new Processor<SliceUsage>() {
+        Processor<SliceUsage> processor = new Processor<SliceUsage>() {
           public boolean process(SliceUsage sliceUsage) {
             manager.checkCanceled();
             SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages, myTreeBuilder, getLeafExpressions());
             myCachedChildren.add(node);
             return true;
           }
-        });
+        };
+
+        getValue().processChildren(processor, myTreeBuilder.dataFlowToThis);
       }
     }, new Runnable(){
       public void run() {

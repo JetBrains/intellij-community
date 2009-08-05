@@ -6,8 +6,8 @@ import com.intellij.codeInsight.actions.CodeInsightAction;
 /**
  * @author cdr
  */
-public class SliceBackwardAction extends CodeInsightAction{
-  private final SliceHandler myHandler = new SliceHandler(true);
+public class SliceForwardAction extends CodeInsightAction{
+  private final SliceHandler myHandler = new SliceHandler(false);
 
   protected CodeInsightActionHandler getHandler() {
     return myHandler;
