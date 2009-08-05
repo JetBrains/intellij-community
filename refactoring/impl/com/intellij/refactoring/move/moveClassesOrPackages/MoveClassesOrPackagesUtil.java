@@ -217,7 +217,7 @@ public class MoveClassesOrPackagesUtil {
   }
 
   // Does not process non-code usages!
-  public static PsiClass doMoveClass(PsiClass aClass, MoveDestination moveDestination) throws IncorrectOperationException {
+  public static PsiClass doMoveClass(PsiClass aClass, PsiDirectory moveDestination) throws IncorrectOperationException {
     PsiClass newClass;
     for (MoveClassHandler handler : MoveClassHandler.EP_NAME.getExtensions()) {
       newClass = handler.doMoveClass(aClass, moveDestination);
@@ -225,12 +225,11 @@ public class MoveClassesOrPackagesUtil {
     }
 
     PsiFile file = aClass.getContainingFile();
-    PsiDirectory newDirectory = moveDestination.getTargetDirectory(file);
-    final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(newDirectory);
+    final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(moveDestination);
 
     newClass = aClass;
-    if (!newDirectory.equals(file.getContainingDirectory())) {
-      aClass.getManager().moveFile(file, newDirectory);
+    if (!moveDestination.equals(file.getContainingDirectory())) {
+      aClass.getManager().moveFile(file, moveDestination);
       if (file instanceof PsiClassOwner && newPackage != null) {
         ((PsiClassOwner)file).setPackageName(newPackage.getQualifiedName());
       }

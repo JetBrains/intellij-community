@@ -2,7 +2,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiClass;
-import com.intellij.refactoring.MoveDestination;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +17,7 @@ public interface MoveClassHandler {
    * @return null if it cannot move aClass
    */
   @Nullable
-  PsiClass doMoveClass(@NotNull PsiClass aClass, @NotNull MoveDestination moveDestination) throws IncorrectOperationException;
+  PsiClass doMoveClass(@NotNull PsiClass aClass, @NotNull PsiDirectory moveDestination) throws IncorrectOperationException;
 
   /**
    *

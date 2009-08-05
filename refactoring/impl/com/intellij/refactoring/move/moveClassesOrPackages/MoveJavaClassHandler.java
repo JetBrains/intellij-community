@@ -1,11 +1,10 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
-import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.refactoring.MoveDestination;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,15 +13,14 @@ import org.jetbrains.annotations.NotNull;
 public class MoveJavaClassHandler implements MoveClassHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveClassesOrPackages.MoveJavaClassHandler");
 
-  public PsiClass doMoveClass(@NotNull PsiClass aClass, @NotNull MoveDestination moveDestination) throws IncorrectOperationException {
+  public PsiClass doMoveClass(@NotNull PsiClass aClass, @NotNull PsiDirectory moveDestination) throws IncorrectOperationException {
     PsiFile file = aClass.getContainingFile();
-    PsiDirectory newDirectory = moveDestination.getTargetDirectory(file);
-    final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(newDirectory);
+    final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(moveDestination);
 
     PsiClass newClass = null;
     if (file instanceof PsiJavaFile && ((PsiJavaFile)file).getClasses().length > 1) {
       correctSelfReferences(aClass, newPackage);
-      final PsiClass created = JavaDirectoryService.getInstance().createClass(newDirectory, aClass.getName());
+      final PsiClass created = JavaDirectoryService.getInstance().createClass(moveDestination, aClass.getName());
       if (aClass.getDocComment() == null) {
         final PsiDocComment createdDocComment = created.getDocComment();
         if (createdDocComment != null) {
@@ -34,11 +32,11 @@ public class MoveJavaClassHandler implements MoveClassHandler {
       aClass.delete();
     }
     else if (file instanceof PsiJavaFile &&
-             !newDirectory.equals(file.getContainingDirectory()) &&
-             newDirectory.findFile(file.getName()) != null) {
+             !moveDestination.equals(file.getContainingDirectory()) &&
+             moveDestination.findFile(file.getName()) != null) {
       // moving second of two classes which were in the same file to a different directory (IDEADEV-3089)
       correctSelfReferences(aClass, newPackage);
-      PsiFile newFile = newDirectory.findFile(file.getName());
+      PsiFile newFile = moveDestination.findFile(file.getName());
       newClass = (PsiClass)newFile.add(aClass);
       aClass.delete();
     }

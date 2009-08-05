@@ -47,7 +47,7 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
     if (!LOG.assertTrue(targetContainer == null || targetContainer instanceof PsiDirectory || targetContainer instanceof PsiDirectoryContainer)) {
       return;
     }
-    MoveFilesOrDirectoriesUtil.doMove(project, elements, targetContainer, callback);
+    MoveFilesOrDirectoriesUtil.doMove(project, adjustForMove(project, elements, targetContainer), targetContainer, callback);
   }
 
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,

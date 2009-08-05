@@ -1,21 +1,45 @@
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.copy.JavaCopyFilesOrDirectoriesHandler;
+import com.intellij.refactoring.move.MoveCallback;
 
 public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHandler {
   @Override
   public boolean canMove(PsiElement[] elements, PsiElement targetContainer) {
-    for (PsiElement element : elements) {
-      if (element instanceof PsiDirectory && JavaCopyFilesOrDirectoriesHandler.hasPackages((PsiDirectory)element)) return false; //can't move packages && dirs at the same time
-      if (element instanceof PsiJavaFile && !PsiUtil.isInJspFile(element)) {
+    final PsiElement[] srcElements = adjustForMove(null, elements, targetContainer);
+    assert srcElements != null;
+
+    boolean allJava = true;
+    for (PsiElement element : srcElements) {
+      if (element instanceof PsiDirectory) {
+        allJava &= JavaCopyFilesOrDirectoriesHandler.hasPackages((PsiDirectory)element);
+      }
+      else if (element instanceof PsiFile) {
+        allJava &= element instanceof PsiJavaFile && !PsiUtil.isInJspFile(element);
+      }
+      else {
         return false;
       }
     }
-    return super.canMove(elements, targetContainer);
+    if (allJava) return false;
+
+    return super.canMove(srcElements, targetContainer);
   }
 
+  @Override
+  public PsiElement[] adjustForMove(Project project, PsiElement[] sourceElements, PsiElement targetElement) {
+    PsiElement[] result = new PsiElement[sourceElements.length];
+    for(int i = 0; i < sourceElements.length; i++) {
+      result[i] = sourceElements[i] instanceof PsiClass ? sourceElements[i].getContainingFile() : sourceElements[i];
+    }
+    return result;
+  }
+
+  @Override
+  public void doMove(Project project, PsiElement[] elements, PsiElement targetContainer, MoveCallback callback) {
+    super.doMove(project, elements, targetContainer, callback);    //To change body of overridden methods use File | Settings | File Templates.
+  }
 }

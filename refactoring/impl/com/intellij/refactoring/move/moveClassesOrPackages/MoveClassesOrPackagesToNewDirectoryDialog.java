@@ -14,12 +14,16 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.refactoring.*;
+import com.intellij.refactoring.JavaRefactoringFactory;
+import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.MoveDestination;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,7 +41,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
   private final PsiElement[] myElementsToMove;
   private final MoveCallback myMoveCallback;
 
-  public MoveClassesOrPackagesToNewDirectoryDialog(final PsiDirectory directory, PsiElement[] elementsToMove,
+  public MoveClassesOrPackagesToNewDirectoryDialog(@NotNull final PsiDirectory directory, PsiElement[] elementsToMove,
                                                    final MoveCallback moveCallback) {
     super(false);
     setTitle(MoveHandler.REFACTORING_NAME);
