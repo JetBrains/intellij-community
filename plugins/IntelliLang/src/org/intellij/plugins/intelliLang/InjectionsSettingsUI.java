@@ -215,10 +215,10 @@ public class InjectionsSettingsUI implements Configurable {
   private void addInjection(final BaseInjection injection) {
     injection.initializePlaces(true);
     myInjections.add(injection);
-    sortInjections(myInjections);
+    ((ListTableModel<BaseInjection>)myInjectionsTable.getModel()).setItems(myInjections);
     final int index = myInjections.indexOf(injection);
-    ((ListTableModel)myInjectionsTable.getModel()).fireTableDataChanged();
     myInjectionsTable.getSelectionModel().setSelectionInterval(index, index);
+    TableUtil.scrollSelectionToVisible(myInjectionsTable);
   }
 
   private void sortInjections(final List<BaseInjection> injections) {
@@ -252,7 +252,9 @@ public class InjectionsSettingsUI implements Configurable {
   }
 
   public boolean isModified() {
-    return !myOriginalInjections.equals(myInjections);
+    final List<BaseInjection> copy = new ArrayList<BaseInjection>(myInjections);
+    sortInjections(copy);
+    return !myOriginalInjections.equals(copy);
   }
 
   private void performSelectedInjectionsEnabled(final boolean enabled) {
@@ -282,6 +284,7 @@ public class InjectionsSettingsUI implements Configurable {
     ((ListTableModel)myInjectionsTable.getModel()).fireTableDataChanged();
     final int index = Math.min(myInjections.size() - 1, selectedRow);
     myInjectionsTable.getSelectionModel().setSelectionInterval(index, index);
+    TableUtil.scrollSelectionToVisible(myInjectionsTable);    
   }
 
   private List<BaseInjection> getSelectedInjections() {
