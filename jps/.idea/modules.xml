@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/samples/A/A.iml" filepath="$PROJECT_DIR$/samples/A/A.iml" />
       <module fileurl="file://$PROJECT_DIR$/samples/B/B.iml" filepath="$PROJECT_DIR$/samples/B/B.iml" />
+      <module fileurl="file://$PROJECT_DIR$/antlayout/antlayout.iml" filepath="$PROJECT_DIR$/antlayout/antlayout.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps.iml" filepath="$PROJECT_DIR$/jps.iml" />
     </modules>
   </component>
