@@ -17,6 +17,7 @@
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,10 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /*
 * Created by IntelliJ IDEA.
@@ -85,6 +83,11 @@ public class XsltSymbolIndex implements FileBasedIndexExtension<String, XsltSymb
     public ID<String, Kind> getName() {
         return NAME;
     }
+
+  @NotNull
+  public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
+    return Collections.emptyList();
+  }
 
     public DataIndexer<String, Kind, FileContent> getIndexer() {
         return new DataIndexer<String, Kind, FileContent>() {
