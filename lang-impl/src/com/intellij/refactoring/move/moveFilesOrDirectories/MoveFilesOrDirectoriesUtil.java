@@ -41,7 +41,7 @@ public class MoveFilesOrDirectoriesUtil {
    */
   public static void doMove(final Project project,
                             final PsiElement[] elements,
-                            PsiElement initialTargetElement,
+                            final PsiElement[] targetElement,
                             final MoveCallback moveCallback) {
     for (PsiElement element : elements) {
       if (!(element instanceof PsiFile) && !(element instanceof PsiDirectory)) {
@@ -49,8 +49,8 @@ public class MoveFilesOrDirectoriesUtil {
       }
     }
 
-    final PsiDirectory targetDirectory = resolveToDirectory(project, initialTargetElement);
-    if (initialTargetElement != null && targetDirectory == null) return;
+    final PsiDirectory targetDirectory = resolveToDirectory(project, targetElement[0]);
+    if (targetElement != null && targetElement[0] != null && targetDirectory == null) return;
 
     final PsiDirectory initialTargetDirectory = getInitialTargetDirectory(targetDirectory, elements);
 
@@ -59,6 +59,8 @@ public class MoveFilesOrDirectoriesUtil {
         final PsiDirectory targetDirectory = moveDialog.getTargetDirectory();
 
         LOG.assertTrue(targetDirectory != null);
+
+        targetElement[0] = targetDirectory;
 
         PsiManager manager = PsiManager.getInstance(project);
         try {

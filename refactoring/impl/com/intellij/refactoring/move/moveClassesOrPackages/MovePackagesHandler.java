@@ -4,20 +4,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.containers.HashSet;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 
 public class MovePackagesHandler extends MoveClassesOrPackagesHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveClassesOrPackages.MovePackagesHandler");
@@ -47,7 +48,40 @@ public class MovePackagesHandler extends MoveClassesOrPackagesHandlerBase {
       }
 
       if (dialog.isMoveDirectory()) {
-        MoveFilesOrDirectoriesUtil.doMove(project, elements, targetContainer, null);
+        final ArrayList<MoveRenameUsageInfo> usages = new ArrayList<MoveRenameUsageInfo>();
+        for (PsiDirectory directory : directories) {
+          final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
+          if (aPackage != null) {
+            for (PsiReference reference : ReferencesSearch.search(aPackage, directory.getUseScope())) {
+              usages.add(new MoveRenameUsageInfo(reference, aPackage));
+            }
+          }
+        }
+
+        final PsiElement[] targetDirectory = new PsiElement[]{targetContainer};
+        
+        MoveFilesOrDirectoriesUtil.doMove(project, elements, targetDirectory, new MoveCallback() {
+          public void refactoringCompleted() {
+            if (callback != null) callback.refactoringCompleted();
+            if (targetDirectory[0] instanceof PsiDirectory) {
+              final PsiPackage destPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)targetDirectory[0]);
+              if (destPackage != null) {
+                for (MoveRenameUsageInfo usage : usages) {
+                  final PsiPackage aPackage = (PsiPackage)usage.getReferencedElement();
+                  if (aPackage != null) {
+                    final PsiReference reference = usage.getReference();
+                    if (reference != null) {
+                      final PsiPackage pack = JavaPsiFacade.getInstance(project).findPackage(StringUtil.getQualifiedName(destPackage.getQualifiedName(), aPackage.getName()));
+                      if (pack != null) {
+                        reference.bindToElement(pack);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        });
         return;
       }
     }
