@@ -78,6 +78,16 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       }
     }
     super.visitOpenBlock(block);
+
+    if (!(block.getParent() instanceof GrBlockStatement && block.getParent().getParent() instanceof GrLoopStatement)) {
+      final GrStatement[] statements = block.getStatements();
+      if (statements.length > 0) {
+        final GrStatement last = statements[statements.length - 1];
+        if (last instanceof GrExpression) {
+          addNode(new MaybeReturnInstruction((GrExpression)last, myInstructionNumber++));
+        }
+      }
+    }
   }
 
   public Instruction[] buildControlFlow(GroovyPsiElement scope, GroovyPsiElement startInScope, GroovyPsiElement endInScope) {

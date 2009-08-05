@@ -5,9 +5,10 @@ if (true) {
   a = 2
 -----
 0(1) element: null
-1(2,4) element: IF statement
+1(2,5) element: IF statement
 2(3) element: Block statement
-3(6) WRITE a
-4(5) element: Assignment expression
-5(6) WRITE a
-6() element: null
+3(4) WRITE a
+4(7) element: Assignment expression MAYBE_RETURN
+5(6) element: Assignment expression
+6(7) WRITE a
+7() element: null

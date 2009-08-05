@@ -6,10 +6,10 @@ def foo = {
 -----
 def foo = {
     int x, int y ->
-    <caret>testMethod(y, x)
+    <caret>testMethod(x, y)
 }
 
-private def testMethod(int y, int x) {
+private def testMethod(int x, int y) {
   println(x + y)
   foo(x, y)
 }

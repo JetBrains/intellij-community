@@ -12,11 +12,12 @@ print e
 4(6) element: RETURN statement
 5(10) element: Finally clause
 6(5,7)  CALL 5
-7(14) AFTER CALL 6
+7(15) AFTER CALL 6
 8(5,9)  CALL 5
-9(12) AFTER CALL 8
+9(13) AFTER CALL 8
 10(11) READ e
-11(7,9)  RETURN
-12(13) READ print
-13(14) READ e
-14() element: null
+11(12) element: Reference expression MAYBE_RETURN
+12(7,9)  RETURN
+13(14) READ print
+14(15) READ e
+15() element: null

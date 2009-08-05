@@ -8,10 +8,10 @@ protected static def getGeneratedFileNames(String name, int boo) {
 -----
 protected static def getGeneratedFileNames(String name, int boo) {
     def names = new ArrayList<String>()
-    <caret>testMethod(names, name, boo)
+    <caret>testMethod(names, boo, name)
 }
 
-private static ArrayList testMethod(ArrayList<String> names, String name, int boo) {
+private static ArrayList testMethod(ArrayList<String> names, int boo, String name) {
   foo = null
   println(names.toString() + boo + name)
   println(names + foo)

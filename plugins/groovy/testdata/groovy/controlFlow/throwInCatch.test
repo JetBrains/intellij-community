@@ -7,16 +7,18 @@ try {
 }
 -----
 0(1) element: null
-1(2,3) element: Open block
-2(3,9) READ a
-3(4) element: Catch clause
-4(5) READ e
-5(7) element: THROW statement
-6(11) element: Finally clause
-7(6,8)  CALL 6
-8(13) AFTER CALL 7
-9(6,10)  CALL 6
-10(13) AFTER CALL 9
-11(12) READ c
-12(8,10)  RETURN
-13() element: null
+1(2,4) element: Open block
+2(3) READ a
+3(4,10) element: Reference expression MAYBE_RETURN
+4(5) element: Catch clause
+5(6) READ e
+6(8) element: THROW statement
+7(12) element: Finally clause
+8(7,9)  CALL 7
+9(15) AFTER CALL 8
+10(7,11)  CALL 7
+11(15) AFTER CALL 10
+12(13) READ c
+13(14) element: Reference expression MAYBE_RETURN
+14(9,11)  RETURN
+15() element: null

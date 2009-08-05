@@ -9,9 +9,9 @@ static def foo(int i, int j, int k) {
     def v
     println(i + j - k)
     v = 42
-    <caret>return testMethod(j, v)
+    <caret>return testMethod(v, j)
 }
 
-private static def testMethod(int j, int v) {
+private static def testMethod(int v, int j) {
   return v + j
 }

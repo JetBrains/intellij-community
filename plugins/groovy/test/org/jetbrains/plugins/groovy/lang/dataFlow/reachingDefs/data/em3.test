@@ -6,6 +6,6 @@ def foo(int iii) {
 }
 -----
 input:
-iii
 kkk
+iii
 output:

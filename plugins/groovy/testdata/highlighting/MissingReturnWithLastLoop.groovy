@@ -7,3 +7,11 @@ String validatePaths() {
 void foo() {
 
 }
+
+String fooz() {
+  if (zzz) {
+    "aaa"
+  } else {
+    "bbb"
+  }
+}

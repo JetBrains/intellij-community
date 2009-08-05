@@ -37,6 +37,9 @@ import java.util.*;
  * @author ven
  */
 public class ReachingDefinitionsCollector {
+  private ReachingDefinitionsCollector() {
+  }
+
   public static FragmentVariableInfos obtainVariableFlowInformation(final GrStatement first, final GrStatement last) {
     GroovyPsiElement context = PsiTreeUtil.getParentOfType(first, GrMethod.class, GrClosableBlock.class, GroovyFileBase.class);
     GrControlFlowOwner flowOwner;
@@ -52,33 +55,27 @@ public class ReachingDefinitionsCollector {
     final DFAEngine<TIntObjectHashMap<TIntHashSet>> engine = new DFAEngine<TIntObjectHashMap<TIntHashSet>>(flow, dfaInstance, lattice);
     final TIntObjectHashMap<TIntHashSet> dfaResult = postprocess(engine.performDFA(), flow, dfaInstance);
 
-    final TIntHashSet fragmentInstructions = getFragmentInstructions(first, last, flow);
+    final LinkedHashSet<Integer> fragmentInstructions = getFragmentInstructions(first, last, flow);
     final int[] postorder = ControlFlowUtil.postorder(flow);
-    TIntHashSet reachableFromFragmentReads = getReachable(fragmentInstructions, flow, dfaResult,
-        postorder);
-    TIntHashSet fragmentReads = filterReads(fragmentInstructions, flow);
+    LinkedHashSet<Integer> reachableFromFragmentReads = getReachable(fragmentInstructions, flow, dfaResult, postorder);
+    LinkedHashSet<Integer> fragmentReads = filterReads(fragmentInstructions, flow);
 
     final Map<String, VariableInfo> imap = new LinkedHashMap<String, VariableInfo>();
     final Map<String, VariableInfo> omap = new LinkedHashMap<String, VariableInfo>();
 
     final PsiManager manager = first.getManager();
 
-    fragmentReads.forEach(new TIntProcedure() {
-      public boolean execute(int ref) {
-        ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction) flow[ref];
-        String name = rwInstruction.getVariableName();
-        final int[] defs = dfaResult.get(ref).toArray();
-        if (!allDefsInFragment(defs, fragmentInstructions)) {
-          addVariable(name, imap, manager, getType(rwInstruction.getElement()));
-        }
-
-        return true;
+    for (final Integer ref : fragmentReads) {
+      ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction) flow[ref];
+      String name = rwInstruction.getVariableName();
+      final int[] defs = dfaResult.get(ref).toArray();
+      if (!allDefsInFragment(defs, fragmentInstructions)) {
+        addVariable(name, imap, manager, getType(rwInstruction.getElement()));
       }
-    });
+    }
 
-    reachableFromFragmentReads.forEach(new TIntProcedure() {
-      public boolean execute(int ref) {
-        ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction) flow[ref];
+    for (final Integer ref : reachableFromFragmentReads) {
+      ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction) flow[ref];
         String name = rwInstruction.getVariableName();
         final int[] defs = dfaResult.get(ref).toArray();
         if (anyDefInFragment(defs, fragmentInstructions)) {
@@ -94,10 +91,7 @@ public class ReachingDefinitionsCollector {
             addVariable(name, imap, manager, inputType);
           }
         }
-
-        return true;
-      }
-    });
+    }
 
     addClosureUsages(imap, omap, first, last, flowOwner);
 
@@ -164,21 +158,18 @@ public class ReachingDefinitionsCollector {
     info.addSubtype(type);
   }
 
-  private static TIntHashSet filterReads(final TIntHashSet instructions, final Instruction[] flow) {
-    final TIntHashSet result = new TIntHashSet();
-    instructions.forEach(new TIntProcedure() {
-      public boolean execute(int i) {
-        final Instruction instruction = flow[i];
-        if (instruction instanceof ReadWriteVariableInstruction && !((ReadWriteVariableInstruction) instruction).isWrite()) {
-          result.add(i);
-        }
-        return true;
+  private static LinkedHashSet<Integer> filterReads(final LinkedHashSet<Integer> instructions, final Instruction[] flow) {
+    final LinkedHashSet<Integer> result = new LinkedHashSet<Integer>();
+    for (final Integer i : instructions) {
+      final Instruction instruction = flow[i];
+      if (instruction instanceof ReadWriteVariableInstruction && !((ReadWriteVariableInstruction) instruction).isWrite()) {
+        result.add(i);
       }
-    });
+    }
     return result;
   }
 
-  private static boolean allDefsInFragment(int[] defs, TIntHashSet fragmentInstructions) {
+  private static boolean allDefsInFragment(int[] defs, LinkedHashSet<Integer> fragmentInstructions) {
     for (int def : defs) {
       if (!fragmentInstructions.contains(def)) return false;
     }
@@ -186,7 +177,7 @@ public class ReachingDefinitionsCollector {
     return true;
   }
 
-  private static boolean allProperDefsInFragment(int[] defs, int ref, TIntHashSet fragmentInstructions, int[] postorder) {
+  private static boolean allProperDefsInFragment(int[] defs, int ref, LinkedHashSet<Integer> fragmentInstructions, int[] postorder) {
     for (int def : defs) {
       if (!fragmentInstructions.contains(def) && postorder[def] < postorder[ref]) return false;
     }
@@ -195,7 +186,7 @@ public class ReachingDefinitionsCollector {
   }
 
 
-  private static boolean anyDefInFragment(int[] defs, TIntHashSet fragmentInstructions) {
+  private static boolean anyDefInFragment(int[] defs, LinkedHashSet<Integer> fragmentInstructions) {
     for (int def : defs) {
       if (fragmentInstructions.contains(def)) return true;
     }
@@ -203,6 +194,7 @@ public class ReachingDefinitionsCollector {
     return false;
   }
 
+  @Nullable
   private static PsiType getType(PsiElement element) {
     if (element instanceof GrVariable) return ((GrVariable) element).getTypeGroovy();
     else if (element instanceof GrReferenceExpression) return ((GrReferenceExpression) element).getType();
@@ -233,9 +225,8 @@ public class ReachingDefinitionsCollector {
     return result.toArray(new VariableInfo[result.size()]);
   }
 
-  private static TIntHashSet getFragmentInstructions(GrStatement first, GrStatement last, Instruction[] flow) {
-    TIntHashSet result;
-    result = new TIntHashSet();
+  private static LinkedHashSet<Integer> getFragmentInstructions(GrStatement first, GrStatement last, Instruction[] flow) {
+    LinkedHashSet<Integer> result = new LinkedHashSet<Integer>();
     for (Instruction instruction : flow) {
       if (isInFragment(instruction, first, last)) {
         result.add(instruction.num());
@@ -267,8 +258,8 @@ public class ReachingDefinitionsCollector {
     return true;
   }
 
-  private static TIntHashSet getReachable(final TIntHashSet fragmentInsns, final Instruction[] flow, TIntObjectHashMap<TIntHashSet> dfaResult, final int[] postorder) {
-    final TIntHashSet result = new TIntHashSet();
+  private static LinkedHashSet<Integer> getReachable(final LinkedHashSet<Integer> fragmentInsns, final Instruction[] flow, TIntObjectHashMap<TIntHashSet> dfaResult, final int[] postorder) {
+    final LinkedHashSet<Integer> result = new LinkedHashSet<Integer>();
     for (Instruction insn : flow) {
       if (insn instanceof ReadWriteVariableInstruction &&
           !((ReadWriteVariableInstruction) insn).isWrite()) {
@@ -291,6 +282,7 @@ public class ReachingDefinitionsCollector {
     return result;
   }
 
+  @SuppressWarnings({"UnusedDeclaration"})
   private static String dumpDfaResult(ArrayList<TIntObjectHashMap<TIntHashSet>> dfaResult, ReachingDefinitionsDfaInstance dfa) {
     final StringBuffer buffer = new StringBuffer();
     for (int i = 0; i < dfaResult.size(); i++) {
@@ -307,8 +299,6 @@ public class ReachingDefinitionsCollector {
           });
           return true;
         }
-
-        ;
       });
       buffer.append("\n");
     }

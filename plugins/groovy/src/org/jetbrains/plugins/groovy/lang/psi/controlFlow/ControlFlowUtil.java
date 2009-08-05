@@ -15,11 +15,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElement;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectIntHashMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -145,22 +142,4 @@ public class ControlFlowUtil {
     }
   }
 
-  public static boolean alwaysReturns(Instruction[] flow) {
-    boolean[] visited = new boolean[flow.length];
-    return alwaysReturnsInner(flow[flow.length - 1], flow[0], visited);
-  }
-
-  private static boolean alwaysReturnsInner(Instruction last, Instruction first, boolean[] visited) {
-    if (first == last) return false;
-    final PsiElement element = last.getElement();
-    if (element instanceof GrReturnStatement || element instanceof GrThrowStatement) return true;
-
-    visited[last.num()] = true;
-    for (Instruction pred : last.allPred()) {
-      if (!visited[pred.num()]) {
-        if (!alwaysReturnsInner(pred, first, visited)) return false;
-      }
-    }
-    return true;
-  }
 }
