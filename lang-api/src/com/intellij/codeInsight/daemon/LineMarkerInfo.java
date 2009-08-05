@@ -150,7 +150,7 @@ public class LineMarkerInfo<T extends PsiElement> {
         myInfo.getElement() != null &&
         renderer.myInfo.getElement() != null &&
         myInfo.getElement() == renderer.myInfo.getElement() &&
-        Comparing.equal(getTooltipText(), renderer.getTooltipText()) &&
+        Comparing.equal(myInfo.myTooltipProvider, renderer.myInfo.myTooltipProvider) &&
         Comparing.equal(myInfo.myIcon, renderer.myInfo.myIcon);
     } 
   }
