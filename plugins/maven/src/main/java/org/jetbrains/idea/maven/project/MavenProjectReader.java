@@ -75,11 +75,11 @@ public class MavenProjectReader {
       problems.add(new MavenProjectProblem(ProjectBundle.message("maven.project.problem.syntaxError"), true));
     }
     return new MavenProjectReaderResult(isValid,
-                                          activeProfiles,
-                                          problems,
-                                          Collections.EMPTY_SET,
-                                          generalSettings.getEffectiveLocalRepository(),
-                                          mavenProject);
+                                        activeProfiles,
+                                        problems,
+                                        Collections.EMPTY_SET,
+                                        generalSettings.getEffectiveLocalRepository(),
+                                        mavenProject);
   }
 
   private File getBaseDir(VirtualFile file) {

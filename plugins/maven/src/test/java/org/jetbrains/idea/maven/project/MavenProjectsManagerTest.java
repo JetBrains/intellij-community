@@ -1,7 +1,7 @@
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
@@ -750,5 +750,38 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     resolveFoldersAndImport();
 
     assertSources("project", "src/main/java", "src/main/resources", "src1", "src2");
+  }
+
+  public void testForceReimport() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+    importProject();
+    assertModules("project");
+
+    final StringBuilder builder = new StringBuilder();
+
+    myProjectsManager.addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
+      @Override
+      public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
+        builder.append("updated: ");
+        for (Pair<MavenProject, MavenProjectChanges> each : updated) {
+          builder.append(each.first.getMavenId().getArtifactId() + " ");
+        }
+      }
+
+      @Override
+      public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                  org.apache.maven.project.MavenProject nativeMavenProject) {
+        builder.append("resolved: " + projectWithChanges.first.getMavenId().getArtifactId() + " ");
+      }
+    });
+
+
+    myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+    waitForReadingCompletion();
+    myProjectsManager.waitForResolvingCompletion();
+
+    assertEquals("updated: project resolved: project ", builder.toString());
   }
 }
