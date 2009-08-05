@@ -242,6 +242,7 @@ public class InjectionsSettingsUI implements Configurable {
     for (BaseInjection injection : myOriginalInjections) {
       myInjections.add(injection.copy());
     }
+    ((ListTableModel<BaseInjection>)myInjectionsTable.getModel()).setItems(myInjections);
   }
 
   public void disposeUIResources() {
