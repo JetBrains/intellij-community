@@ -47,7 +47,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
   protected void tearDown() throws Exception {
     for (final AbstractProjectViewPSIPane myPane : myPanes) {
-      myPane.dispose();
+      Disposer.dispose(myPane);
     }
     myPanes = null;
     myStructure = null;
