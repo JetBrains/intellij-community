@@ -1,5 +1,6 @@
 package com.intellij.xml.index;
 
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -15,6 +16,8 @@ import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -85,6 +88,11 @@ public abstract class XmlIndex<V> implements FileBasedIndexExtension<String, V> 
         return parent.getName().equals("standardSchemas");
       }
     };
+  }
+
+  @NotNull
+  public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
+    return Collections.emptyList();
   }
 
   public KeyDescriptor<String> getKeyDescriptor() {

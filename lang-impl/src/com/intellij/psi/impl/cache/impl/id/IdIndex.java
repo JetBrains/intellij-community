@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
@@ -73,6 +74,11 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
       return Collections.emptyMap();
     }
   };
+
+  @NotNull
+  public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
+    return Collections.emptyList();
+  }
 
   public int getCacheSize() {
     return DEFAULT_CACHE_SIZE;

@@ -98,6 +98,11 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
     }
   };
 
+  @NotNull
+  public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
+    return Collections.emptyList();
+  }
+
   public ID<Integer, SerializedStubTree> getName() {
     return INDEX_ID;
   }

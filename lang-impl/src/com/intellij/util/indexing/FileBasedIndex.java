@@ -75,6 +75,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private final Map<ID<?, ?>, Semaphore> myUnsavedDataIndexingSemaphores = new HashMap<ID<?,?>, Semaphore>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
   private final Set<ID<?, ?>> myNotRequiringContentIndices = new HashSet<ID<?, ?>>();
+  private final Set<FileType> myNoLimitCheckTypes = new HashSet<FileType>();
 
   private final PerIndexDocumentMap<Long> myLastIndexedDocStamps = new PerIndexDocumentMap<Long>() {
     @Override
@@ -104,7 +105,6 @@ public class FileBasedIndex implements ApplicationComponent {
   private final Map<Document, PsiFile> myTransactionMap = new HashMap<Document, PsiFile>();
 
   private final FileContentStorage myFileContentAttic;
-  private final Map<ID<?, ?>, FileBasedIndexExtension<?, ?>> myExtentions = new HashMap<ID<?,?>, FileBasedIndexExtension<?,?>>();
 
   private static final int ALREADY_PROCESSED = 0x02;
 
@@ -278,7 +278,7 @@ public class FileBasedIndex implements ApplicationComponent {
         final UpdatableIndex<K, V, FileContent> index = createIndex(name, extension, memStorage);
         myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, new IndexableFilesFilter(extension.getInputFilter())));
         myUnsavedDataIndexingSemaphores.put(name, new Semaphore());
-        myExtentions.put(name, extension);
+        myNoLimitCheckTypes.addAll(extension.getFileTypesWithSizeLimitNotApplicable());
         break;
       }
       catch (IOException e) {
@@ -1229,7 +1229,7 @@ public class FileBasedIndex implements ApplicationComponent {
             }
           }
           // For 'normal indices' schedule the file for update and stop iteration if at least one index accepts it 
-          if (!SingleRootFileViewProvider.isTooLarge(file)) {
+          if (!isTooLarge(file)) {
             for (ID<?, ?> indexId : myIndices.keySet()) {
               if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
                 w.lock();
@@ -1279,7 +1279,7 @@ public class FileBasedIndex implements ApplicationComponent {
           }
         }
 
-        if (!SingleRootFileViewProvider.isTooLarge(file)) {
+        if (!isTooLarge(file)) {
           final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(myIndices.size());
 
           for (ID<?, ?> indexId : myIndices.keySet()) {
@@ -1520,7 +1520,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
         if (file instanceof VirtualFileWithId) {
           boolean oldStuff = true;
-          if (!SingleRootFileViewProvider.isTooLarge(file)) {
+          if (!isTooLarge(file)) {
             for (ID<?, ?> indexId : myIndices.keySet()) {
               try {
                 if (myFileContentAttic.containsContent(file) ? getInputFilter(indexId).acceptInput(file) : shouldIndexFile(file, indexId)) {
@@ -1586,6 +1586,14 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private static boolean isMock(final VirtualFile file) {
     return !(file instanceof NewVirtualFile);
+  }
+
+  private boolean isTooLarge(VirtualFile file) {
+    if (SingleRootFileViewProvider.isTooLarge(file)) {
+      final FileType type = FileTypeManager.getInstance().getFileTypeByFile(file);
+      return !myNoLimitCheckTypes.contains(type);
+    }
+    return false;
   }
 
   public CollectingContentIterator createContentIterator() {

@@ -1,8 +1,12 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
@@ -31,4 +35,16 @@ public interface FileBasedIndexExtension<K, V> {
    * @see FileBasedIndexExtension#DEFAULT_CACHE_SIZE
    */
   int getCacheSize();
+
+  /**
+   * For most indices the method should return an empty collection.
+   * @return collection of file types to which file size limit will not be applied when indexing.
+   * This is the way to allow indexing of files whose limit exceeds FileManagerImpl.MAX_INTELLISENSE_FILESIZE.
+   *
+   * Use carefully, because indexing large files may influence index update speed dramatically.
+   *
+   * @see com.intellij.psi.impl.file.impl.FileManagerImpl#MAX_INTELLISENSE_FILESIZE
+   */
+  @NotNull
+  Collection<FileType> getFileTypesWithSizeLimitNotApplicable();
 }

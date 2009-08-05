@@ -1,10 +1,13 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -28,6 +31,11 @@ public abstract class SingleEntryFileBasedIndexExtension<V> implements CustomImp
 
   public int getCacheSize() {
     return DEFAULT_CACHE_SIZE;
+  }
+
+  @NotNull
+  public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
+    return Collections.emptyList();
   }
 
   public abstract SingleEntryIndexer<V> getIndexer();

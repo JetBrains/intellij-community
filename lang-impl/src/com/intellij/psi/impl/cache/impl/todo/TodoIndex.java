@@ -25,6 +25,7 @@ import java.beans.PropertyChangeListener;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
@@ -111,6 +112,11 @@ public class TodoIndex implements CustomImplementationFileBasedIndexExtension<To
              fileType instanceof AbstractFileType;
     }
   };
+
+  @NotNull
+  public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
+    return Collections.emptyList();
+  }
 
   public int getCacheSize() {
     return DEFAULT_CACHE_SIZE;
