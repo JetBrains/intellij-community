@@ -132,7 +132,6 @@ public class SimpleColoredComponent extends JComponent {
   public synchronized void clear() {
     myIcon = null;
     myPaintFocusBorder = false;
-    setBorder(null);
     myFragments.clear();
     myAttributes.clear();
     myFragmentTags = null;
