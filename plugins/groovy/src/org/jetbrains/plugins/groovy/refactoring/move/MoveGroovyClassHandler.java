@@ -22,7 +22,6 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassHandler;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -38,11 +37,10 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
  * @author Maxim.Medvedev
  */
 public class MoveGroovyClassHandler implements MoveClassHandler {
-  public PsiClass doMoveClass(@NotNull PsiClass aClass, @NotNull MoveDestination moveDestination) throws IncorrectOperationException {
+  public PsiClass doMoveClass(@NotNull PsiClass aClass, @NotNull PsiDirectory moveDestination) throws IncorrectOperationException {
     if (!aClass.getLanguage().equals(GroovyFileType.GROOVY_LANGUAGE)) return null;
     PsiFile file = aClass.getContainingFile();
-    PsiDirectory newDirectory = moveDestination.getTargetDirectory(file);
-    final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(newDirectory);
+    final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(moveDestination);
 
     GroovyChangeContextUtil.encodeContextInfo(aClass);
 
@@ -51,7 +49,7 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
       if (((GroovyFile)file).isScript() || ((GroovyFile)file).getClasses().length > 1) {
         correctSelfReferences(aClass, newPackage);
         final PsiClass created = ((GroovyFile)GroovyTemplatesFactory
-          .createFromTemplate(newDirectory, aClass.getName(), aClass.getName() + NewGroovyActionBase.GROOVY_EXTENSION,
+          .createFromTemplate(moveDestination, aClass.getName(), aClass.getName() + NewGroovyActionBase.GROOVY_EXTENSION,
                               "GroovyClass.groovy")).getClasses()[0];
         if (aClass.getDocComment() == null) {
           final PsiDocComment createdDocComment = created.getDocComment();
@@ -63,18 +61,18 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
         correctOldClassReferences(newClass, aClass);
         aClass.delete();
       }
-      else if (!newDirectory.equals(file.getContainingDirectory()) && newDirectory.findFile(file.getName()) != null) {
+      else if (!moveDestination.equals(file.getContainingDirectory()) && moveDestination.findFile(file.getName()) != null) {
         // moving second of two classes which were in the same file to a different directory (IDEADEV-3089)
         correctSelfReferences(aClass, newPackage);
-        PsiFile newFile = newDirectory.findFile(file.getName());
+        PsiFile newFile = moveDestination.findFile(file.getName());
         TreeElement enter = Factory.createSingleLeafElement(GroovyTokenTypes.mNLS, "\n", 0, 1, null, aClass.getManager());
         newFile.getNode().addChild(enter);
         newClass = (PsiClass)newFile.add(aClass);
         aClass.delete();
       }
-      else if (!newDirectory.equals(file.getContainingDirectory()) && newDirectory.findFile(file.getName()) == null) {
-        if (!newDirectory.equals(file.getContainingDirectory())) {
-          aClass.getManager().moveFile(file, newDirectory);
+      else if (!moveDestination.equals(file.getContainingDirectory()) && moveDestination.findFile(file.getName()) == null) {
+        if (!moveDestination.equals(file.getContainingDirectory())) {
+          aClass.getManager().moveFile(file, moveDestination);
           newClass=((GroovyFile)file).getClasses()[0];
           if (newPackage != null) {
             ((PsiClassOwner)file).setPackageName(newPackage.getQualifiedName());
