@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Javac2">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/javac2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

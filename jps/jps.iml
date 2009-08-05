@@ -15,6 +15,9 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="groovy-1.6.3" level="application" />
     <orderEntry type="library" name="gant-1.6.1" level="application" />
+    <orderEntry type="library" name="Ant" level="project" />
+    <orderEntry type="library" name="Javac2" level="project" />
+    <orderEntry type="module" module-name="antlayout" />
   </component>
 </module>
 

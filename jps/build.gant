@@ -2,27 +2,21 @@ import org.jetbrains.jps.*
 
 includeTool << Jps
 
-def projectHome = "."
+def projectHome = "$basedir"
 def libs = "$projectHome/lib/"
 
 project.targetFolder = "${projectHome}/build"
 
-
 library("ANT") {
-  new File(libs).eachFile{ jar ->
-    def path = jar.absolutePath
-    def name = jar.name
-    if (name.startsWith("ant")) {
-      classpath path
-    }
-  }
+  classpath "$libs/ant-1.7.1.jar"
 }
 
 module("JPS") {
+  classpath antLayout
   src "${projectHome}/src"
 }
 
-module("antlayout") {
+module("antLayout") {
   classpath ANT
   src "${projectHome}/antLayout/src"
 }
@@ -35,7 +29,7 @@ target('default' : 'Default target') {
   layout("${project.targetFolder}/deploy") {
     jar("jps.jar") {
       module("JPS")
-      module("antlayout")
+      module("antLayout")
       zipfileset(src: "${projectHome}/lib/javac2.jar") {
         exclude (name: "JDOM*.class")
       }

@@ -130,7 +130,6 @@ class GroovyStubGenerator implements ModuleBuilder {
 
 }
 
-
 class JetBrainsInstrumentations implements ModuleBuilder {
 
   def JetBrainsInstrumentations(Project project) {
