@@ -99,7 +99,7 @@ public class EnhancerCompiler implements ClassPostProcessingCompiler {
         protected void run(final Result result) throws Throwable {
           context.getProgressIndicator().setText2("'" + facet.getModule().getName() + "' module, '" + facet.getWebFacet().getName() + "' facet, processing " + items.size() + " classes...");
           javaParameters.configureByModule(facet.getModule(), JavaParameters.JDK_AND_CLASSES);
-          javaParameters.getClassPath().add(sdk.getToolsApiJarFile().getAbsolutePath());
+          javaParameters.getClassPath().addFirst(sdk.getToolsApiJarFile().getAbsolutePath());
 
           final ParametersList vmParameters = javaParameters.getVMParametersList();
           vmParameters.add("-Xmx256m");
