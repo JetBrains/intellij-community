@@ -178,7 +178,7 @@ public class SelectBeforeRunTaskDialog extends DialogWrapper {
 
   private boolean doIsAssigned(RunConfiguration configuration) {
     MavenBeforeRunTask task = myRunManager.getBeforeRunTask(configuration, MavenBeforeRunTasksProvider.TASK_ID);
-    return task.isEnabled() && task.isFor(myMavenProject, myGoal);
+    return task != null && task.isEnabled() && task.isFor(myMavenProject, myGoal);
   }
 
   private void assign(ConfigurationType type, RunConfiguration configuration) {
@@ -195,9 +195,11 @@ public class SelectBeforeRunTaskDialog extends DialogWrapper {
 
   private void doAssign(RunConfiguration configuration) {
     MavenBeforeRunTask task = myRunManager.getBeforeRunTask(configuration, MavenBeforeRunTasksProvider.TASK_ID);
-    task.setProjectPath(myMavenProject.getPath());
-    task.setGoal(myGoal);
-    task.setEnabled(true);
+    if (task != null) {
+      task.setProjectPath(myMavenProject.getPath());
+      task.setGoal(myGoal);
+      task.setEnabled(true);
+    }
   }
 
   private void clearAll() {
