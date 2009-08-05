@@ -9,6 +9,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
@@ -55,6 +56,10 @@ public class CachedValueImpl<T> implements CachedValue<T> {
     JBReentrantReadWriteLock rw = LockFactory.createReadWriteLock();
     r = rw.readLock();
     w = rw.writeLock();
+  }
+
+  public boolean isFromMyProject(Project project) {
+    return project == myManager.getProject();
   }
 
   private static class Data<T> implements Disposable {
