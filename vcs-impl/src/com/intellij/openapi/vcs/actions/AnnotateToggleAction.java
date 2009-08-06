@@ -203,6 +203,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       final AnnotationFieldGutter gutter = new AnnotationFieldGutter(fileAnnotation, editor, aspect, presentation);
       gutters.add(gutter);
     }
+    gutters.add(new MyHighlightedAdditionalColumn(fileAnnotation, editor, null, presentation, highlighting));
 
     for (AnnotationFieldGutter gutter : gutters) {
       final AnnotationGutterLineConvertorProxy proxy = new AnnotationGutterLineConvertorProxy(getUpToDateLineNumber, gutter);
@@ -213,6 +214,24 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
         editor.getGutter().registerTextAnnotation(proxy);
       }
       annotations.add(gutter);
+    }
+  }
+
+  private static class MyHighlightedAdditionalColumn extends AnnotationFieldGutter {
+    private final HighlightAnnotationsActions myHighlighting;
+
+    private MyHighlightedAdditionalColumn(FileAnnotation annotation,
+                                          Editor editor,
+                                          LineAnnotationAspect aspect,
+                                          TextAnnotationPresentation presentation,
+                                          final HighlightAnnotationsActions highlighting) {
+      super(annotation, editor, aspect, presentation);
+      myHighlighting = highlighting;
+    }
+
+    @Override
+    public String getLineText(int line, Editor editor) {
+      return myHighlighting.isLineBold(line) ? "*" : "";
     }
   }
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -23,8 +24,10 @@ public class HighlightAnnotationsActions {
   public HighlightAnnotationsActions(final Project project, final VirtualFile virtualFile, final FileAnnotation fileAnnotation,
                                      final EditorGutterComponentEx gutter) {
     myGutter = gutter;
-    myBefore = new HightlightAction(true, project, virtualFile, fileAnnotation, myGutter);
-    myAfter = new HightlightAction(false, project, virtualFile, fileAnnotation, myGutter);
+    myBefore = new HightlightAction(true, project, virtualFile, fileAnnotation, myGutter, null);
+    final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
+    final VcsFileRevision afterSelected = ((fileRevisionList != null) && (fileRevisionList.size() > 1)) ? fileRevisionList.get(0) : null;
+    myAfter = new HightlightAction(false, project, virtualFile, fileAnnotation, myGutter, afterSelected);
     myRemove = new RemoveHighlightingAction();
   }
 
@@ -73,13 +76,14 @@ public class HighlightAnnotationsActions {
     private Boolean myShowComments;
 
     private HightlightAction(final boolean before, final Project project, final VirtualFile virtualFile, final FileAnnotation fileAnnotation,
-                             final EditorGutterComponentEx gutter) {
+                             final EditorGutterComponentEx gutter, @Nullable final VcsFileRevision selectedRevision) {
       myBefore = before;
       myProject = project;
       myVirtualFile = virtualFile;
       myFileAnnotation = fileAnnotation;
       myGutter = gutter;
       myShowComments = null;
+      mySelectedRevision = selectedRevision;
     }
 
     @Override
