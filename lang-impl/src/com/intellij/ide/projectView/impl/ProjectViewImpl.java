@@ -850,9 +850,11 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
 
   public void changeView(@NotNull String viewId, @Nullable String subId) {
     AbstractProjectViewPane pane = getProjectViewPaneById(viewId);
-    if (!viewId.equals(getCurrentViewId()) || subId != null && !subId.equals(pane.getSubId()) ||
+    LOG.assertTrue(pane != null, "Project view pane not found: " + viewId + "; subId:" + subId);
+    if (!viewId.equals(getCurrentViewId())
+        || subId != null && !subId.equals(pane.getSubId()) ||
         // element not in model anymore
-        pane != null && ((DefaultComboBoxModel)myCombo.getModel()).getIndexOf(Pair.create(viewId, pane.getSubId())) == -1) {
+        ((DefaultComboBoxModel)myCombo.getModel()).getIndexOf(Pair.create(viewId, pane.getSubId())) == -1) {
       myCombo.setSelectedItem(Pair.create(viewId, subId));
       viewSelectionChanged();
     }
