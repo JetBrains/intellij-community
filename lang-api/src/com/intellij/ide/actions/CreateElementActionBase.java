@@ -16,29 +16,18 @@
 
 package com.intellij.ide.actions;
 
-import com.intellij.CommonBundle;
-import com.intellij.history.LocalHistory;
-import com.intellij.history.LocalHistoryAction;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * The base class for actions which create new file elements.
@@ -130,85 +119,41 @@ public abstract class CreateElementActionBase extends AnAction {
     return message;
   }
 
-  protected class MyInputValidator implements InputValidator {
-    private final Project myProject;
+  protected class MyInputValidator extends ElementCreator implements InputValidator {
     private final PsiDirectory myDirectory;
-    private SmartPsiElementPointer[] myCreatedElements;
+    private PsiElement[] myCreatedElements;
 
     public MyInputValidator(final Project project, final PsiDirectory directory) {
-      myProject = project;
+      super(project, getErrorTitle());
       myDirectory = directory;
-      myCreatedElements = new SmartPsiElementPointer[0];
     }
 
     public boolean checkInput(final String inputString) {
       return true;
     }
 
+    @Override
+    public void checkBeforeCreate(String newName) throws IncorrectOperationException {
+      CreateElementActionBase.this.checkBeforeCreate(newName, myDirectory);
+    }
+
+    @Override
+    public PsiElement[] create(String newName) throws Exception {
+      return CreateElementActionBase.this.create(newName, myDirectory);
+    }
+
+    @Override
+    public String getActionName(String newName) {
+      return CreateElementActionBase.this.getActionName(myDirectory, newName);
+    }
+
     public boolean canClose(final String inputString) {
-      if (inputString.length() == 0) {
-        Messages.showMessageDialog(myProject, IdeBundle.message("error.name.should.be.specified"), CommonBundle.getErrorTitle(),
-                                   Messages.getErrorIcon());
-        return false;
-      }
-
-      try {
-        checkBeforeCreate(inputString, myDirectory);
-      }
-      catch (IncorrectOperationException e) {
-        Messages.showMessageDialog(myProject, filterMessage(e.getMessage()), getErrorTitle(), Messages.getErrorIcon());
-        return false;
-      }
-
-      final Exception[] exception = new Exception[1];
-
-      final Runnable command = new Runnable() {
-        public void run() {
-          final Runnable run = new Runnable() {
-            public void run() {
-              LocalHistoryAction action = LocalHistoryAction.NULL;
-              try {
-                action = LocalHistory.startAction(myProject, getActionName(myDirectory, inputString));
-
-                PsiElement[] psiElements = create(inputString, myDirectory);
-                myCreatedElements = new SmartPsiElementPointer[psiElements.length];
-                SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
-                for (int i = 0; i < myCreatedElements.length; i++) {
-                  myCreatedElements[i] = manager.createSmartPsiElementPointer(psiElements[i]);
-                }
-              }
-              catch (Exception ex) {
-                exception[0] = ex;
-              }
-              finally {
-                action.finish();
-              }
-            }
-          };
-          ApplicationManager.getApplication().runWriteAction(run);
-        }
-      };
-      CommandProcessor.getInstance().executeCommand(myProject, command, getCommandName(), null);
-
-      if (exception[0] != null) {
-        String errorMessage = filterMessage(exception[0].getMessage());
-        if (errorMessage == null || errorMessage.length() == 0) {
-          errorMessage = exception[0].toString();
-        }
-        Messages.showMessageDialog(myProject, errorMessage, getErrorTitle(), Messages.getErrorIcon());
-
-      }
-
-      return myCreatedElements.length != 0;
+      myCreatedElements = tryCreate(inputString);
+      return myCreatedElements.length > 0;
     }
 
     public final PsiElement[] getCreatedElements() {
-      List<PsiElement> elts = new ArrayList<PsiElement>();
-      for (SmartPsiElementPointer pointer : myCreatedElements) {
-        final PsiElement elt = pointer.getElement();
-        if (elt != null) elts.add(elt);
-      }
-      return elts.toArray(new PsiElement[elts.size()]);
+      return myCreatedElements;
     }
   }
 }
