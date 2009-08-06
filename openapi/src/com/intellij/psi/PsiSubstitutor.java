@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.KeyWithDefaultValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,12 @@ import java.util.Map;
  * @see com.intellij.psi.JavaResolveResult#getSubstitutor()
  */
 public interface PsiSubstitutor {
-  Key<PsiSubstitutor> KEY = new Key<PsiSubstitutor>("SUBSTITUTOR");
+  Key<PsiSubstitutor> KEY = new KeyWithDefaultValue<PsiSubstitutor>("SUBSTITUTOR") {
+    @Override
+    public PsiSubstitutor getDefaultValue() {
+      return EMPTY;
+    }
+  };
 
   /**
    * Empty, or natural, substitutor. For any type parameter <code>T</code>,

@@ -4,6 +4,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.KeyWithDefaultValue;
 import gnu.trove.THashMap;
 
 import java.util.Map;
@@ -16,10 +17,6 @@ public class ResolveState {
     return ourInitialState;
   }
 
-  public static <T> void defaultsTo(Key<T> key, T value) {
-    ourInitialState.myValues.put(key, value);
-  }
-
   public <T> ResolveState put(Key<T> key, T value) {
     final ResolveState copy = new ResolveState();
     copy.myValues.putAll(myValues);
@@ -29,6 +26,10 @@ public class ResolveState {
 
   @SuppressWarnings({"unchecked"})
   public <T> T get(Key<T> key) {
-    return (T)myValues.get(key);
+    final T value = (T)myValues.get(key);
+    if (value == null && key instanceof KeyWithDefaultValue) {
+      return ((KeyWithDefaultValue<T>) key).getDefaultValue();
+    }
+    return value;
   }
 }

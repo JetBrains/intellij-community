@@ -26,10 +26,6 @@ public abstract class JavaPsiFacade {
     return INSTANCE_KEY.getValue(project);
   }
 
-  static {
-    ResolveState.defaultsTo(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY);
-  }
-
   public static PsiElementFactory getElementFactory(@NotNull Project project) {
     return getInstance(project).getElementFactory();
   }
