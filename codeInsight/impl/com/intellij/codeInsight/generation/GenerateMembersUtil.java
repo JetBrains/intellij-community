@@ -62,7 +62,8 @@ public class GenerateMembersUtil {
     }
     if (element instanceof PsiField) {
       PsiField field = (PsiField) element;
-      if (!field.getTypeElement().getParent().equals(field)) {
+      PsiTypeElement typeElement = field.getTypeElement();
+      if (typeElement != null && !field.equals(typeElement.getParent())) {
         field.normalizeDeclaration();
         anchor = field;
       }
@@ -163,7 +164,7 @@ public class GenerateMembersUtil {
               lastChild = child;
               break;
             }
-            else if ((child instanceof PsiJavaToken && ",".equals(child.getText())) || child instanceof PsiEnumConstant) {
+            else if (child instanceof PsiJavaToken && ",".equals(child.getText()) || child instanceof PsiEnumConstant) {
               lastChild = child;
             }
           }
