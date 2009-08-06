@@ -93,7 +93,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     return myNameField;
   }
 
-  public static Builder createDialog(@NotNull final Project project, @NotNull final String title) {
+  public static <T extends PsiElement> Builder createDialog(@NotNull final Project project, @NotNull final String title) {
     final CreateFileFromTemplateDialog dialog = new CreateFileFromTemplateDialog(project, title);
 
     return new Builder() {
@@ -103,8 +103,8 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
         return this;
       }
 
-      public PsiElement show(@NotNull String errorTitle, @NotNull final FileCreator creator) {
-        final Ref<PsiElement> created = Ref.create(null);
+      public <T extends PsiElement> T show(@NotNull String errorTitle, @NotNull final FileCreator<T> creator) {
+        final Ref<T> created = Ref.create(null);
         dialog.myCreator = new ElementCreator(project, errorTitle) {
           @Override
           protected void checkBeforeCreate(String newName) throws IncorrectOperationException {
@@ -113,7 +113,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
           @Override
           protected PsiElement[] create(String newName) throws Exception {
-            final PsiElement element = creator.createFile(dialog.getEnteredName(), dialog.getTemplateName());
+            final T element = creator.createFile(dialog.getEnteredName(), dialog.getTemplateName());
             created.set(element);
             if (element != null) {
               return new PsiElement[]{element};
@@ -138,14 +138,14 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   public interface Builder {
     Builder addKind(@NotNull String kind, @Nullable Icon icon, @NotNull String templateName);
     @Nullable
-    PsiElement show(@NotNull String errorTitle, @NotNull FileCreator creator);
+    <T extends PsiElement> T show(@NotNull String errorTitle, @NotNull FileCreator<T> creator);
   }
 
-  public interface FileCreator {
+  public interface FileCreator<T> {
     void checkBeforeCreate(@NotNull String name, @NotNull String templateName) throws IncorrectOperationException;
 
     @Nullable
-    PsiElement createFile(@NotNull String name, @NotNull String templateName);
+    T createFile(@NotNull String name, @NotNull String templateName);
 
     @NotNull
     String getActionName(@NotNull String name, @NotNull String templateName);

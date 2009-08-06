@@ -21,7 +21,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +33,7 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public abstract class CreateTemplateInPackageAction extends AnAction {
+public abstract class CreateTemplateInPackageAction<T extends PsiElement> extends AnAction {
   protected CreateTemplateInPackageAction(String text, String description, Icon icon) {
     super(text, description, icon);
   }
@@ -49,13 +51,13 @@ public abstract class CreateTemplateInPackageAction extends AnAction {
     final PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null) return;
 
-    final PsiElement createdElement = buildDialog(project, dir).show(getErrorTitle(), new CreateFileFromTemplateDialog.FileCreator() {
+    final T createdElement = buildDialog(project, dir).show(getErrorTitle(), new CreateFileFromTemplateDialog.FileCreator<T>() {
       public void checkBeforeCreate(@NotNull String name, @NotNull String templateName) {
-        CreateTemplateInPackageAction.this.checkBeforeCreate(name, dir, templateName);
+        CreateTemplateInPackageAction.this.checkOrCreate(name, dir, templateName, true);
       }
 
-      public PsiElement createFile(@NotNull String name, @NotNull String templateName) {
-        return CreateTemplateInPackageAction.this.create(name, dir, templateName);
+      public T createFile(@NotNull String name, @NotNull String templateName) {
+        return CreateTemplateInPackageAction.this.checkOrCreate(name, dir, templateName, false);
       }
 
       @NotNull
@@ -64,11 +66,15 @@ public abstract class CreateTemplateInPackageAction extends AnAction {
       }
     });
     if (createdElement != null) {
-      view.selectElement(createdElement);
+      final PsiElement navigationElement = getNavigationElement(createdElement);
+      view.selectElement(navigationElement == null ? createdElement : navigationElement);
     }
   }
 
   @Nullable
+  protected abstract PsiElement getNavigationElement(@NotNull T createdElement);
+
+  @NotNull
   protected abstract CreateFileFromTemplateDialog.Builder buildDialog(Project project, PsiDirectory directory);
 
   public void update(final AnActionEvent e) {
@@ -98,13 +104,12 @@ public abstract class CreateTemplateInPackageAction extends AnAction {
     return false;
   }
 
-  protected final void checkBeforeCreate(String newName, PsiDirectory directory, String templateName) throws IncorrectOperationException {
+  @Nullable
+   private T checkOrCreate(String newName, PsiDirectory directory, String templateName, boolean check) throws IncorrectOperationException {
      PsiDirectory dir = directory;
      String className = newName;
 
      if (newName.contains(".")) {
-       dir = getTopLevelDir(dir);
-
        String[] names = newName.split("\\.");
 
        for (int i = 0; i < names.length - 1; i++) {
@@ -112,34 +117,11 @@ public abstract class CreateTemplateInPackageAction extends AnAction {
          PsiDirectory subDir = dir.findSubdirectory(name);
 
          if (subDir == null) {
-           dir.checkCreateSubdirectory(name);
-           return;
-         }
+           if (check) {
+             dir.checkCreateSubdirectory(name);
+             return null;
+           }
 
-         dir = subDir;
-       }
-
-       className = names[names.length - 1];
-     }
-
-     doCheckCreate(dir, className, templateName);
-   }
-
-   @NotNull
-   protected final PsiElement create(String newName, PsiDirectory directory, String templateName) throws IncorrectOperationException {
-     PsiDirectory dir = directory;
-     String className = newName;
-
-     if (newName.contains(".")) {
-       dir = getTopLevelDir(dir);
-
-       String[] names = newName.split("\\.");
-
-       for (int i = 0; i < names.length - 1; i++) {
-         String name = names[i];
-         PsiDirectory subDir = dir.findSubdirectory(name);
-
-         if (subDir == null) {
            subDir = dir.createSubdirectory(name);
          }
 
@@ -149,28 +131,18 @@ public abstract class CreateTemplateInPackageAction extends AnAction {
        className = names[names.length - 1];
      }
 
+    if (check) {
+      doCheckCreate(dir, className, templateName);
+      return null;
+    }
      return doCreate(dir, className, templateName);
    }
-
-  @NotNull
-  private static PsiDirectory getTopLevelDir(PsiDirectory dir) throws IncorrectOperationException {
-    JavaDirectoryService directoryService = JavaDirectoryService.getInstance();
-    while (true) {
-      PsiDirectory parent = dir.getParentDirectory();
-      if (parent == null) throw new IncorrectOperationException("No parent directory found for "+dir.getVirtualFile().getPresentableUrl());
-      PsiPackage parentPackage = directoryService.getPackage(parent);
-      if (parentPackage == null) break;
-      dir = parent;
-    }
-
-    return dir;
-  }
 
   protected void doCheckCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
     JavaDirectoryService.getInstance().checkCreateClass(dir, className);
   }
 
-  protected abstract PsiElement doCreate(final PsiDirectory dir, final String className, String templateName) throws IncorrectOperationException;
+  protected abstract T doCreate(final PsiDirectory dir, final String className, String templateName) throws IncorrectOperationException;
 
   protected abstract String getActionName(PsiDirectory directory, String newName, String templateName);
 

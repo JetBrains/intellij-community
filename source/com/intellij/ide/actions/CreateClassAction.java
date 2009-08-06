@@ -24,19 +24,22 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * The standard "New Class" action.
  *
  * @since 5.1
  */
-public class CreateClassAction extends CreateTemplateInPackageAction {
+public class CreateClassAction extends CreateTemplateInPackageAction<PsiClass> {
   public CreateClassAction() {
     super(IdeBundle.message("action.create.new.class"), IdeBundle.message("action.create.new.class"), Icons.CLASS_ICON);
   }
 
+  @NotNull
   @Override
   protected CreateFileFromTemplateDialog.Builder buildDialog(Project project, final PsiDirectory directory) {
     final CreateFileFromTemplateDialog.Builder builder = CreateFileFromTemplateDialog.
@@ -63,6 +66,11 @@ public class CreateClassAction extends CreateTemplateInPackageAction {
 
   protected final PsiClass doCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
     return JavaDirectoryService.getInstance().createClass(dir, className, templateName);
+  }
+
+  @Override
+  protected PsiElement getNavigationElement(@NotNull PsiClass createdElement) {
+    return createdElement.getLBrace();
   }
 
   @Override
