@@ -62,8 +62,9 @@
       <className>org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction</className>
     </intentionAction>
 
-    <codeInsight.unresolvedReferenceQuickFixProvider
-        implementation="org.jetbrains.idea.maven.dom.intentions.ResolveReferenceQuickFixProvider"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.idea.maven.dom.intentions.ResolveReferenceQuickFixProvider"/>
+
+    <gotoFileContributor implementation="org.jetbrains.idea.maven.vfs.MavenGotoPropertyFileContibutor"/>
   </extensions>
 
   <application-components>

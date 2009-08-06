@@ -40,6 +40,16 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAnd
     assertResolved(myProjectPom, findTag("project.version"));
   }
 
+  public void testCorrectlyCalculatingTextRangeWithLeadingWhitespaces() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>     ${<caret>project.version}</name>");
+
+    assertResolved(myProjectPom, findTag("project.version"));
+  }
+
   public void testBuiltInBasedirProperty() throws Exception {
     createProjectPom("<groupId>test</groupId" +
                      "<artifactId>project</artifactId>" +
