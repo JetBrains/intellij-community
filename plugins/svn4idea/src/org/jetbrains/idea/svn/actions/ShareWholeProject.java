@@ -45,6 +45,7 @@ public class ShareWholeProject extends AnAction {
         return;
       }
       final VirtualFile baseDir = myProject.getBaseDir();
+      if (baseDir == null) return;
 
       final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
       final MyCheckResult result = checkMappings(baseDir, vcsManager);
