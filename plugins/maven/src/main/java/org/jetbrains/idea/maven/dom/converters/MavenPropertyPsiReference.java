@@ -256,7 +256,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   private boolean schemaHasProperty(String schema, final String property) {
     return processSchema(schema, new SchemaProcessor<Boolean>() {
       @Nullable
-      public Boolean process(@NotNull String eachProperty) {
+      public Boolean process(@NotNull String eachProperty, XmlElementDescriptor descriptor) {
         if (eachProperty.equals(property)) return true;
         return null;
       }
@@ -285,13 +285,13 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   private void collectProjectSchemaVariants(final List<Object> result) {
     processSchema(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, new CollectingSchemaProcessor(result) {
       @Override
-      public Object process(@NotNull String property) {
-        super.process(property);
+      public Object process(@NotNull String property, XmlElementDescriptor descriptor) {
+        super.process(property, descriptor);
         String prefix = "project.";
         if (property.length() > prefix.length()) {
           String unqualified = property.substring(prefix.length());
-          super.process("pom." + unqualified);
-          super.process(unqualified);
+          super.process("pom." + unqualified, descriptor);
+          super.process(unqualified, descriptor);
         }
         return null;
       }
@@ -350,20 +350,37 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
                                 SchemaProcessor<T> processor,
                                 Set<XmlElementDescriptor> recursionGuard) {
     for (XmlElementDescriptor each : descriptors) {
+      if (isCollection(each)) continue;
+
       if (recursionGuard.contains(each)) continue;
       recursionGuard.add(each);
-      String name = each.getName();
-      if (prefix != null) name = prefix + "." + name;
+      try {
+        String name = each.getName();
+        if (prefix != null) name = prefix + "." + name;
 
-      T result = processor.process(name);
-      if (result != null) return result;
+        T result = processor.process(name, each);
+        if (result != null) return result;
 
-      result = doProcessSchema(each.getElementsDescriptors(null), name, processor, recursionGuard);
-      recursionGuard.remove(each);
-      if (result != null) return result;
+        result = doProcessSchema(each.getElementsDescriptors(null), name, processor, recursionGuard);
+        if (result != null) return result;
+      }
+      finally {
+        recursionGuard.remove(each);
+      }
     }
 
     return null;
+  }
+
+  private <T> boolean isCollection(XmlElementDescriptor each) {
+    XmlTag declaration = (XmlTag)each.getDeclaration();
+    if (declaration != null) {
+      XmlTag complexType = declaration.findFirstSubTag("xs:complexType");
+      if (complexType != null) {
+        if (complexType.findFirstSubTag("xs:sequence") != null) return true;
+      }
+    }
+    return false;
   }
 
   private interface PropertyProcessor<T> {
@@ -373,7 +390,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
   private interface SchemaProcessor<T> {
     @Nullable
-    T process(@NotNull String property);
+    T process(@NotNull String property, XmlElementDescriptor descriptor);
   }
 
   private class CollectingSchemaProcessor implements SchemaProcessor {
@@ -384,8 +401,8 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     }
 
     @Nullable
-    public Object process(@NotNull String property) {
-      myResult.add(createLookupElement(property, property));
+    public Object process(@NotNull String property, XmlElementDescriptor descriptor) {
+      myResult.add(createLookupElement(descriptor, property));
       return null;
     }
   }

@@ -138,9 +138,14 @@ public class MavenUtil {
   public static Properties getEnvProperties() {
     Properties reuslt = new Properties();
     for (Map.Entry<String, String> each : System.getenv().entrySet()) {
+      if (isMagicalProperty(each.getKey())) continue;
       reuslt.put(each.getKey(), each.getValue());
     }
     return reuslt;
+  }
+
+  private static boolean isMagicalProperty(String key) {
+    return key.startsWith("=");
   }
 
   public static File getPluginSystemDir(String folder) {

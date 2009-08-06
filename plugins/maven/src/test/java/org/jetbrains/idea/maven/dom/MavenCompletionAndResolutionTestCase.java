@@ -114,9 +114,14 @@ public abstract class MavenCompletionAndResolutionTestCase extends MavenImportin
     assertTrue(actual.toString(), actual.containsAll(Arrays.asList(expected)));
   }
 
+  protected void assertDoNotInclude(List<String> actual, String... expected) throws IOException {
+    List<String> actualCopy = new ArrayList<String>(actual);
+    actualCopy.removeAll(Arrays.asList(expected));
+    assertTrue(actual.toString(), actualCopy.size() == actual.size());
+  }
+
   protected void assertCompletionVariantsDoNotInclude(VirtualFile f, String... expected) throws IOException {
-    List<String> actual = getCompletionVariants(f);
-    assertFalse(actual.toString(), new ArrayList<String>(Arrays.asList(expected)).removeAll(actual));
+    assertDoNotInclude(getCompletionVariants(f), expected);
   }
 
   protected List<String> getCompletionVariants(VirtualFile f) throws IOException {

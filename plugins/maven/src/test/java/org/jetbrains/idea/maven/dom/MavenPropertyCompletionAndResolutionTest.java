@@ -600,4 +600,14 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAnd
     assertInclude(variants, "settings.localRepository");
     assertInclude(variants, "user.home", "env.TEMP");
   }
+
+  public void testDoNotIncludeCollectionPropertiesInCompletion() throws Exception {
+    importProjectWithProfiles("one");
+
+    createProjectPom("<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<name>${<caret>}</name>");
+    assertCompletionVariantsDoNotInclude(myProjectPom, "project.dependencies", "env.\\=C\\:", "idea.config.path");
+  }
 }
