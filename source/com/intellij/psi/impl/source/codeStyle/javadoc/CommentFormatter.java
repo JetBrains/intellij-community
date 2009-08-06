@@ -10,6 +10,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -34,19 +35,6 @@ public class CommentFormatter {
 
   public JDParser getParser() {
     return myParser;
-  }
-
-  public ASTNode formatComment(ASTNode child) {
-    if (!getSettings().ENABLE_JAVADOC_FORMATTING) return child;
-    PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(child);
-
-    if (psiElement instanceof PsiDocComment && psiElement.getParent() instanceof PsiDocCommentOwner && psiElement == ((PsiDocCommentOwner)psiElement.getParent()).getDocComment()) {
-      PsiDocCommentOwner parent = (PsiDocCommentOwner)psiElement.getParent();
-      processElementComment(parent);
-      return SourceTreeToPsiMap.psiElementToTree(parent.getDocComment());
-    }
-
-    return child;
   }
 
   public void process(ASTNode element) {
@@ -113,6 +101,7 @@ public class CommentFormatter {
     return text.substring(0, idx);
   }
 
+  @Nullable
   private String formatClassComment(PsiClass psiClass) {
     final String info = getOrigCommentInfo(psiClass);
     if (info == null) return null;
@@ -121,6 +110,7 @@ public class CommentFormatter {
     return comment.generate(getIndent(psiClass));
   }
 
+  @Nullable
   private String formatMethodComment(PsiMethod psiMethod) {
     final String info = getOrigCommentInfo(psiMethod);
     if (info == null) return null;
@@ -129,6 +119,7 @@ public class CommentFormatter {
     return comment.generate(getIndent(psiMethod));
   }
 
+  @Nullable
   private String formatFieldComment(PsiField psiField) {
     final String info = getOrigCommentInfo(psiField);
     if (info == null) return null;
@@ -152,7 +143,7 @@ public class CommentFormatter {
     }
     else {
       boolean first = true;
-      for (; ;) {
+      while (true) {
         if (e instanceof PsiDocComment) {
           PsiComment cm = (PsiComment)e;
           String text = cm.getText();
