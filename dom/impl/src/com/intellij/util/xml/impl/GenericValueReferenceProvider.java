@@ -119,9 +119,7 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
     AbstractConvertContext context = createConvertContext(psiElement, domValue);
 
     List<PsiReference> result = new ArrayList<PsiReference>();
-    String unresolvedText = domValue instanceof GenericAttributeValue
-                            ? ((XmlAttributeValue)psiElement).getValue()
-                            : ((XmlTag)psiElement).getValue().getText();
+    String unresolvedText = ElementManipulators.getValueText(psiElement);
 
     for (DomReferenceInjector each : DomUtil.getFileElement(domValue).getFileDescription().getReferenceInjectors()) {
       Collections.addAll(result, each.inject(unresolvedText, psiElement, context));

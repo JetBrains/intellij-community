@@ -31,7 +31,7 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile>{
 
   protected String getContainerText(PsiFile element, String name) {
     final PsiDirectory psiDirectory = element.getContainingDirectory();
-    LOG.assertTrue(psiDirectory != null, "File " + element.getName() + " of " + element.getClass().getName() + ", isValid " + element.isValid() + ", isPhysical " + element.isPhysical());
+    if (psiDirectory == null) return null; 
     final VirtualFile virtualFile = psiDirectory.getVirtualFile();
     final String relativePath = getRelativePath(virtualFile, element.getProject());
     if (relativePath == null) return "( " + File.separator + " )";
