@@ -3,10 +3,10 @@ package com.intellij.ui.plaf.beg;
 
 import com.intellij.util.ui.UIUtil;
 
-import java.awt.*;
 import javax.swing.*;
 import javax.swing.plaf.metal.MetalComboBoxButton;
 import javax.swing.plaf.metal.MetalLookAndFeel;
+import java.awt.*;
 
 public class BegComboBoxButton extends MetalComboBoxButton {
   public BegComboBoxButton(JComboBox cb, Icon i, boolean onlyIcon, CellRendererPane pane, JList list) {
@@ -124,7 +124,7 @@ public class BegComboBoxButton extends MetalComboBoxButton {
       comboIcon.paintIcon(this, g, iconLeft, iconTop);
 
       // Paint the focus
-      if (hasFocus()){
+      if (comboBox.hasFocus()){
         g.setColor(MetalLookAndFeel.getFocusColor());
 //            g.drawRect( left - 1, top - 1, width + 3, height + 1 );
         UIUtil.drawDottedRectangle(g, left - 1, top - 1, left + width, top + height);
@@ -174,8 +174,4 @@ public class BegComboBoxButton extends MetalComboBoxButton {
     }
   }
 
-  // TODO[vova,anton] replace this code with setFocusable method
-  public boolean isFocusTraversable() {
-    return !comboBox.isEditable();
-  }
 }
