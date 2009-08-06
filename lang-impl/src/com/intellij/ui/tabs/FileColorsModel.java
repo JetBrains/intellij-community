@@ -131,20 +131,24 @@ public class FileColorsModel implements Cloneable {
   private FileColorConfiguration findConfiguration(@NotNull final PsiFile colored) {
     for (final FileColorConfiguration configuration : myConfigurations) {
       final NamedScope scope = NamedScopeManager.getScope(myProject, configuration.getScopeName());
-      final NamedScopesHolder namedScopesHolder = NamedScopeManager.getHolder(myProject, configuration.getScopeName(), null);
-      if (scope.getValue() != null && namedScopesHolder != null && scope.getValue().contains(colored, namedScopesHolder)) {
-        return configuration;
+      if (scope != null) {
+        final NamedScopesHolder namedScopesHolder = NamedScopeManager.getHolder(myProject, configuration.getScopeName(), null);
+        if (scope.getValue() != null && namedScopesHolder != null && scope.getValue().contains(colored, namedScopesHolder)) {
+          return configuration;
+        }
       }
     }
 
     for (FileColorConfiguration configuration : mySharedConfigurations) {
       final NamedScope scope = NamedScopeManager.getScope(myProject, configuration.getScopeName());
-      final NamedScopesHolder namedScopesHolder = NamedScopeManager.getHolder(myProject, configuration.getScopeName(), null);
-      if (scope.getValue() != null && namedScopesHolder != null && scope.getValue().contains(colored, namedScopesHolder)) {
-        return configuration;
+      if (scope != null) {
+        final NamedScopesHolder namedScopesHolder = NamedScopeManager.getHolder(myProject, configuration.getScopeName(), null);
+        if (scope.getValue() != null && namedScopesHolder != null && scope.getValue().contains(colored, namedScopesHolder)) {
+          return configuration;
+        }
       }
     }
-    
+
     return null;
   }
 
@@ -161,7 +165,8 @@ public class FileColorsModel implements Cloneable {
     if (shared) {
       mySharedConfigurations.clear();
       mySharedConfigurations.addAll(configurations);
-    } else {
+    }
+    else {
       myConfigurations.clear();
       myConfigurations.addAll(configurations);
     }
