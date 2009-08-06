@@ -60,7 +60,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NonNls private static final String SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.SPLITTER_PROPORTION";
   private final Action[] myExecutorActions;
   private final boolean myShowVcsCommit;
-  private LocalChangeList myLastSelectedChangeList = null;
   private final Map<AbstractVcs, JPanel> myPerVcsOptionsPanels = new HashMap<AbstractVcs, JPanel>();
 
   @Nullable
@@ -70,6 +69,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final JLabel myWarningLabel;
 
   private final Map<String, CheckinChangeListSpecificComponent> myCheckinChangeListSpecificComponents;
+
+  private final Map<String, String> myListComments;
+  private String myLastSelectedListName;
 
   private static class MyUpdateButtonsRunnable implements Runnable {
     private CommitChangeListDialog myDialog;
@@ -157,6 +159,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myExecutors = executors;
     myShowVcsCommit = showVcsCommit;
     myVcs = singleVcs;
+    myListComments = new HashMap<String, String>();
 
     if (!myShowVcsCommit && ((myExecutors == null) || myExecutors.size() == 0)) {
       throw new IllegalArgumentException("nothing found to execute commit with");
@@ -211,7 +214,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (comment != null) {
       setCommitMessage(comment);
       myLastKnownComment = comment;
-      myLastSelectedChangeList = initialSelection;
+      myLastSelectedListName = initialSelection.getName();
     } else {
       setCommitMessage(VcsConfiguration.getInstance(project).LAST_COMMIT_MESSAGE);
       updateComment();
@@ -321,7 +324,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myExecutorActions = null;
     }
 
-    // todo +-
     myWarningLabel = new JLabel();
     myWarningLabel.setUI(new MultiLineLabelUI());
     myWarningLabel.setForeground(Color.red);
@@ -390,6 +392,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private void execute(final CommitExecutor commitExecutor) {
     if (!saveDialogState()) return;
+    saveComments(true);
     final CommitSession session = commitExecutor.createCommitSession();
     boolean isOK = true;
     if (SessionDialog.createConfigurationUI(session, getIncludedChanges(), getCommitMessage())!= null) {
@@ -402,6 +405,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       isOK = sessionDialog.isOK();
     }
     if (isOK) {
+      final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
       runBeforeCommitHandlers(new Runnable() {
         public void run() {
           try {
@@ -416,7 +420,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                 handler.checkinSuccessful();
               }
 
-              clearDefaulListComment();
+              defaultListCleaner.clean();
               close(OK_EXIT_CODE);
             }
             else {
@@ -438,13 +442,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
     else {
       session.executionCanceled();
-    }
-  }
-
-  private void clearDefaulListComment() {
-    final LocalChangeList list = (LocalChangeList) myBrowser.getSelectedChangeList();
-    if (isDefaultList(list)) {
-      list.setComment("");
     }
   }
 
@@ -470,10 +467,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void saveCommentIntoChangeList() {
-    if (myLastSelectedChangeList != null) {
+    if (myLastSelectedListName != null) {
       final String actualCommentText = myCommitMessageArea.getComment();
-      if (! Comparing.equal(myLastSelectedChangeList.getComment(), actualCommentText)) {
-        myLastSelectedChangeList.setComment(actualCommentText);
+      final String saved = myListComments.get(myLastSelectedListName);
+      if (! Comparing.equal(saved, actualCommentText)) {
+        myListComments.put(myLastSelectedListName, actualCommentText);
       }
     }
   }
@@ -484,12 +482,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private void updateComment() {
     final LocalChangeList list = (LocalChangeList) myBrowser.getSelectedChangeList();
-    if (list == null || list == myLastSelectedChangeList) {
+    if (list == null || (list.getName().equals(myLastSelectedListName))) {
       return;
-    } else if (myLastSelectedChangeList != null) {
+    } else if (myLastSelectedListName != null) {
       saveCommentIntoChangeList();
     }
-    myLastSelectedChangeList = list;
+    myLastSelectedListName = list.getName();
 
     String listComment = list.getComment();
     if (StringUtil.isEmptyOrSpaces(listComment)) {
@@ -595,6 +593,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   protected void doOKAction() {
     if (!saveDialogState()) return;
+    saveComments(true);
+    final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
 
     ensureDataIsActual(new Runnable() {
       public void run() {
@@ -606,7 +606,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
             }
           }, null);
 
-          clearDefaulListComment();
+          defaultListCleaner.clean();
         }
         catch (InputException ex) {
           ex.show();
@@ -632,12 +632,48 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return true;
   }
 
+  private class DefaultListCleaner {
+    private final boolean myToClean;
+
+    private DefaultListCleaner() {
+      final int selectedSize = getIncludedChanges().size();
+      final ChangeList selectedList = myBrowser.getSelectedChangeList();
+      final int totalSize = selectedList.getChanges().size();
+      myToClean = (totalSize == selectedSize) && (isDefaultList((LocalChangeList) selectedList));
+    }
+
+    void clean() {
+      if (myToClean) {
+        final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
+        clManager.editComment(myLastSelectedListName, "");
+      }
+    }
+  }
+
+  private void saveComments(final boolean isOk) {
+    final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
+    if (isOk) {
+      final int selectedSize = getIncludedChanges().size();
+      final ChangeList selectedList = myBrowser.getSelectedChangeList();
+      final int totalSize = selectedList.getChanges().size();
+      if (totalSize > selectedSize) {
+        myListComments.remove(myLastSelectedListName);
+      }
+    }
+    for (Map.Entry<String, String> entry : myListComments.entrySet()) {
+      final String name = entry.getKey();
+      final String value = entry.getValue();
+      clManager.editComment(name, value);
+    }
+  }
+
   @Override
   public void doCancelAction() {
     for (CheckinChangeListSpecificComponent component : myCheckinChangeListSpecificComponents.values()) {
       component.saveState();
     }
     saveCommentIntoChangeList();
+    saveComments(false);
     //VcsConfiguration.getInstance(myProject).saveCommitMessage(getCommitMessage());
     super.doCancelAction();
   }
