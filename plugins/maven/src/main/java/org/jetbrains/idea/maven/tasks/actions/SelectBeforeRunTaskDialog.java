@@ -317,7 +317,7 @@ public class SelectBeforeRunTaskDialog extends DialogWrapper {
 
       myCheckbox.setBackground(UIUtil.getTreeTextBackground());
       setBackground(selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground());
-      Color foreground = selected ? UIUtil.getTreeSelectonForeground() : UIUtil.getTreeTextForeground();
+      Color foreground = selected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeTextForeground();
       setForeground(foreground);
       myCheckbox.setForeground(foreground);
       myLabel.setForeground(foreground);
