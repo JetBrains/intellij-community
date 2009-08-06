@@ -23,19 +23,15 @@ module("antLayout") {
 
 target('default' : 'Default target') {
   project.clean()
-  long start = System.currentTimeMillis()
   project.makeAll()
 
   layout("${project.targetFolder}/deploy") {
     jar("jps.jar") {
       module("JPS")
       module("antLayout")
-      zipfileset(src: "${projectHome}/lib/javac2.jar") {
+      zipfileset(src: "${projectHome}/lib/javac2-all.jar") {
         exclude (name: "JDOM*.class")
       }
     }
   }
-  
-  println("Done building in ${(System.currentTimeMillis() - start) / 1000} seconds")
-
 }
