@@ -7,8 +7,8 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -54,7 +54,13 @@ public class JavaCompletionStatistician extends CompletionStatistician{
     if (o instanceof PsiMember) {
       final boolean isClass = o instanceof PsiClass;
       if (qualifierType != null) {
-        if (type == CompletionType.SMART) return JavaStatisticsManager.createInfo(qualifierType, (PsiMember)o);
+        if (type == CompletionType.SMART) {
+          String context = JavaStatisticsManager.getMemberUseKey1(qualifierType);
+          if (isClass) {
+            context += "###smartAfterNew";
+          }
+          return new StatisticsInfo(context, JavaStatisticsManager.getMemberUseKey2((PsiMember)o));
+        }
         if (!isClass && type == CompletionType.BASIC) return JavaStatisticsManager.createInfo(qualifierType, (PsiMember)o);
         return StatisticsInfo.EMPTY;
       }
