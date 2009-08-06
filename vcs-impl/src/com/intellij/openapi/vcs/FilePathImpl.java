@@ -29,7 +29,7 @@ public class FilePathImpl implements FilePath {
   private boolean myIsDirectory;
   private boolean myNonLocal;
 
-  private FilePathImpl(VirtualFile virtualParent, String name, final boolean isDirectory, VirtualFile child) {
+  private FilePathImpl(VirtualFile virtualParent, String name, final boolean isDirectory, VirtualFile child, final boolean forDeleted) {
     myVirtualParent = virtualParent;
     myName = name;
     myIsDirectory = isDirectory;
@@ -40,16 +40,22 @@ public class FilePathImpl implements FilePath {
       myFile = new File(new File(myVirtualParent.getPath()), myName);
     }
 
-    if (child == null) {
-      refresh();
-    }
-    else {
-      myVirtualFile = child;
+    if (! forDeleted) {
+      if (child == null) {
+        refresh();
+      }
+      else {
+        myVirtualFile = child;
+      }
     }
   }
 
   public FilePathImpl(VirtualFile virtualParent, String name, final boolean isDirectory) {
-    this(virtualParent, name, isDirectory, null);
+    this(virtualParent, name, isDirectory, null, false);
+  }
+
+  private FilePathImpl(VirtualFile virtualParent, String name, final boolean isDirectory, final boolean forDeleted) {
+    this(virtualParent, name, isDirectory, null, forDeleted);
   }
 
   public FilePathImpl(final File file, final boolean isDirectory) {
@@ -72,7 +78,7 @@ public class FilePathImpl implements FilePath {
   }
 
   public FilePathImpl(@NotNull VirtualFile virtualFile) {
-    this(virtualFile.getParent(), virtualFile.getName(), virtualFile.isDirectory(), virtualFile);
+    this(virtualFile.getParent(), virtualFile.getName(), virtualFile.isDirectory(), virtualFile, false);
   }
 
   public void refresh() {
@@ -233,7 +239,7 @@ public class FilePathImpl implements FilePath {
 
     VirtualFile virtualFileParent = lfs.findFileByIoFile(parentFile);
     if (virtualFileParent != null) {
-      return new FilePathImpl(virtualFileParent, selectedFile.getName(), isDirectory);
+      return new FilePathImpl(virtualFileParent, selectedFile.getName(), isDirectory, true);
     }
     else {
       return new FilePathImpl(selectedFile, isDirectory);
