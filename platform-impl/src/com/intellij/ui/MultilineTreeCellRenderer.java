@@ -104,7 +104,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements ja
     Color fgColor;
     if (mySelected && myHasFocus){
       bgColor = UIUtil.getTreeSelectionBackground();
-      fgColor = UIUtil.getTreeSelectonForeground();
+      fgColor = UIUtil.getTreeSelectionForeground();
     }
     else{
       bgColor = UIUtil.getTreeTextBackground();

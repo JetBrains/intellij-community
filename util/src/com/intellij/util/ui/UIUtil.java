@@ -182,10 +182,6 @@ public class UIUtil {
     return UIManager.getColor("Tree.textForeground");
   }
 
-  public static Color getTreeSelectonForeground() {
-    return UIManager.getColor("Tree.selectionForeground");
-  }
-
   public static Color getTreeSelectionBackground() {
     return UIManager.getColor("Tree.selectionBackground");
   }
