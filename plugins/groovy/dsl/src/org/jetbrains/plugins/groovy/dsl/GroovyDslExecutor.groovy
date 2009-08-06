@@ -60,6 +60,12 @@ public class GroovyDslExecutor {
     }
   }
 
+  def processClassVariants(ClassDescriptor descriptor, GroovyEnhancerConsumer consumer) {
+    for (e in myClassEnhancers) {
+      e(descriptor, consumer)
+    }
+  }
+
 }
 
 class EnhancerDelegate {

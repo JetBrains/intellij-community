@@ -18,24 +18,22 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.indexing.AdditionalIndexedRootsScope;
-import org.codehaus.groovy.control.CompilationFailedException;
+import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.dsl.*;
+import org.jetbrains.plugins.groovy.dsl.GroovyDslExecutor;
+import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
+import org.jetbrains.plugins.groovy.dsl.GroovyEnhancerConsumer;
+import org.jetbrains.plugins.groovy.dsl.ScriptWrapper;
 import org.jetbrains.plugins.groovy.extensions.script.GroovyScriptDetector;
 import org.jetbrains.plugins.groovy.extensions.script.ScriptDetectorRegistry;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -61,7 +59,6 @@ import java.util.LinkedHashMap;
  */
 public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl");
-  private static final Key<CachedValue<GroovyDslExecutor>> CACHED_ENHANCED_KEY = Key.create("CACHED_ENHANCED_KEY");
 
   private PsiClass myScriptClass;
   private static final String SYNTHETIC_PARAMETER_NAME = "args";
@@ -160,42 +157,14 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return true;
   }
 
-  private boolean processScriptEnhancements(final PsiElement place, PsiScopeProcessor processor) {
-    final PsiFile placeFile = getOriginalFile();
-    final VirtualFile placeVFfile = placeFile.getVirtualFile();
-    if (placeVFfile == null) {
-      return true;
-    }
+  private boolean processScriptEnhancements(final PsiElement place, final PsiScopeProcessor processor) {
+    return GroovyDslFileIndex.processExecutors(this, new PairProcessor<GroovyFile, GroovyDslExecutor>() {
+      public boolean process(GroovyFile groovyFile, GroovyDslExecutor executor) {
+        final StringBuilder classText = new StringBuilder();
 
-    final Project project = getProject();
-    for (final GroovyFile file : GroovyDslFileIndex.getDslFiles(new AdditionalIndexedRootsScope(getResolveScope(), StandardDslIndexedRootsProvider.class))) {
-      final VirtualFile vfile = file.getVirtualFile();
-      if (vfile == null || vfile.equals(placeVFfile)) {
-        continue;
-      }
-
-      CachedValue<GroovyDslExecutor> cachedEnhanced = file.getUserData(CACHED_ENHANCED_KEY);
-      if (cachedEnhanced == null) {
-        file.putUserData(CACHED_ENHANCED_KEY, cachedEnhanced = file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<GroovyDslExecutor>() {
-          public Result<GroovyDslExecutor> compute() {
-            try {
-              return Result.create(new GroovyDslExecutor(file.getText(), vfile.getName()), file);
-            }
-            catch (CompilationFailedException e) {
-              LOG.error(e);
-              return Result.create(null, file);
-            }
-          }
-        }, false));
-      }
-
-      final StringBuilder classText = new StringBuilder();
-
-      final GroovyDslExecutor value = cachedEnhanced.getValue();
-      if (value != null) {
-        value.processScriptVariants(new ScriptWrapper() {
+        executor.processScriptVariants(new ScriptWrapper() {
           public String getExtension() {
-            return placeVFfile.getExtension();
+            return getOriginalFile().getVirtualFile().getExtension();
           }
         }, new GroovyEnhancerConsumer() {
           public void property(String name, String type) {
@@ -213,10 +182,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
             classText.append(") {}\n");
           }
         });
-      }
+
       if (classText.length() > 0) {
         final PsiClass psiClass =
-          GroovyPsiElementFactory.getInstance(project).createGroovyFile("class GroovyEnhanced {\n" + classText + "}", false, place)
+          GroovyPsiElementFactory.getInstance(getProject()).createGroovyFile("class GroovyEnhanced {\n" + classText + "}", false, place)
             .getClasses()[0];
 
         final NameHint nameHint = processor.getHint(NameHint.KEY);
@@ -229,9 +198,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
           if ((expectedName == null || expectedName.equals(field.getName())) && !processor.execute(field, ResolveState.initial())) return false;
         }
       }
-    }
-
-    return true;
+        return true;
+      }
+    });
   }
 
 
@@ -280,6 +249,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
   }
 
+  @Nullable
   private PsiElement getAnchorToInsertImportAfter() {
     GrImportStatement[] importStatements = getImportStatements();
     if (importStatements.length > 0) {

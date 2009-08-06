@@ -30,6 +30,11 @@ public class GroovyDslTest extends JavaCodeInsightFixtureTestCase {
   public void testCompleteMethod() throws Throwable { doTest(); }
   public void testCompleteProperty() throws Throwable { doTest(); }
 
+  public void testCompleteClassMethod() throws Throwable {
+    myFixture.addFileToProject("stringEnhancer.gdsl", "enhanceClass(className:\"java.lang.String\") { method name:\"zzz\", type:\"void\", params:[:] }");
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+  }
+
   private void doTest() throws Throwable {
     myFixture.testCompletion(getTestName(false) + ".gdsl", getTestName(false) + "_after.gdsl");
   }

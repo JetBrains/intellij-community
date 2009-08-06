@@ -83,7 +83,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
       PsiDocumentManager docManager = PsiDocumentManager.getInstance(method.getProject());
       docManager.commitDocument(document);
       PsiFile psiFile = docManager.getPsiFile(document);
-      if (isExpressionStatement(psiFile, context.getStartOffset()) && PsiType.VOID.equals(method.getReturnType()) && '(' != context.getCompletionChar()) {
+      if (isExpressionStatement(psiFile, context.getStartOffset()) && PsiType.VOID.equals(method.getReturnType()) && '(' != context.getCompletionChar() && parameters.length > 0) {
         TailType.insertChar(editor, offset, ' ');
         return;
       }

@@ -3,4 +3,5 @@ enhanceScript(extension:"gdsl") {
   method name:"property", type:"void", params:[args:[:]]
 
   method name:"enhanceScript", type:"void", params:[args:[:], action:{}]
+  method name:"enhanceClass", type:"void", params:[args:[:], action:{}]
 }
