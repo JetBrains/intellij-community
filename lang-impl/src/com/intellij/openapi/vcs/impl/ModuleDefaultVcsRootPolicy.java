@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
@@ -10,17 +11,18 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vcs.changes.DirtBuilder;
+import com.intellij.openapi.vcs.changes.FilePathUnderVcs;
+import com.intellij.openapi.vcs.changes.VcsGuess;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.components.StorageScheme;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.io.File;
+import java.util.List;
 
 /**
  * @author yole
@@ -103,19 +105,27 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     return null;
   }
 
-  public void markDefaultRootsDirty(final DirtBuilder builder) {
+  public void markDefaultRootsDirty(final DirtBuilder builder, final VcsGuess vcsGuess) {
     final VirtualFile baseDir = myProject.getBaseDir();
 
     final Module[] modules = myModuleManager.getModules();
     final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
     if (StorageScheme.DIRECTORY_BASED.equals(storageScheme)) {
-      builder.addDirtyDirRecursively(new FilePathImpl(new File(PathUtil.toPresentableUrl(baseDir.getPath()), Project.DIRECTORY_STORE_FOLDER), true));
+      final File ioFile = new File(PathUtil.toPresentableUrl(baseDir.getPath()), Project.DIRECTORY_STORE_FOLDER);
+      final FilePathImpl fp = new FilePathImpl(ioFile, true);
+      final AbstractVcs vcs = vcsGuess.getVcsForDirty(fp);
+      if (vcs != null) {
+        builder.addDirtyDirRecursively(new FilePathUnderVcs(fp, vcs));
+      }
     }
 
     for(Module module: modules) {
       final VirtualFile[] files = ModuleRootManager.getInstanceChecked(module).getContentRoots();
       for(VirtualFile file: files) {
-        builder.addDirtyDirRecursively(new FilePathImpl(file));
+        final AbstractVcs vcs = vcsGuess.getVcsForDirty(file);
+        if (vcs != null) {
+          builder.addDirtyDirRecursively(new VcsRoot(vcs, file));
+        }
       }
     }
 

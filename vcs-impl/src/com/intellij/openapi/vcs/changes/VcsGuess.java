@@ -1,8 +1,10 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
@@ -11,7 +13,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
-class VcsGuess {
+public class VcsGuess {
   private final Project myProject;
   private final ProjectLevelVcsManagerImpl myVcsManager;
   private final ExcludedFileIndex myExcludedFileIndex;
@@ -23,7 +25,7 @@ class VcsGuess {
   }
 
   @Nullable
-  AbstractVcs getVcsForDirty(final VirtualFile file) {
+  public AbstractVcs getVcsForDirty(final VirtualFile file) {
     if (!file.isInLocalFileSystem()) {
       return null;
     }
@@ -38,11 +40,15 @@ class VcsGuess {
   }
 
   @Nullable
-  AbstractVcs getVcsForDirty(final FilePath filePath) {
+  public AbstractVcs getVcsForDirty(final FilePath filePath) {
     if (filePath.isNonLocal()) {
       return null;
     }
-    final VirtualFile validParent = ChangesUtil.findValidParent(filePath);
+    final VirtualFile validParent = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+      public VirtualFile compute() {
+        return ChangesUtil.findValidParent(filePath);
+      }
+    });
     if (validParent == null) {
       return null;
     }

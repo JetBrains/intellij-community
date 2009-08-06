@@ -28,7 +28,7 @@ public class Scopes {
     myScopes.clear();
     myEverythingDirty = true;
     final DirtBuilder builder = new DirtBuilder(myGuess);
-    DefaultVcsRootPolicy.getInstance(myProject).markDefaultRootsDirty(builder);
+    DefaultVcsRootPolicy.getInstance(myProject).markDefaultRootsDirty(builder, myGuess);
     takeDirt(builder);
   }
 
@@ -37,12 +37,12 @@ public class Scopes {
       markEverythingDirty();
       return;
     }
-    final List<DirtBuilder.MyVcsRoot> dirs = dirt.getDirsForVcs();
-    for (DirtBuilder.MyVcsRoot dir : dirs) {
+    final List<FilePathUnderVcs> dirs = dirt.getDirsForVcs();
+    for (FilePathUnderVcs dir : dirs) {
       getScope(dir.getVcs()).addDirtyDirRecursively(dir.getPath());
     }
-    final List<DirtBuilder.MyVcsRoot> files = dirt.getFilesForVcs();
-    for (DirtBuilder.MyVcsRoot file : files) {
+    final List<FilePathUnderVcs> files = dirt.getFilesForVcs();
+    for (FilePathUnderVcs file : files) {
       getScope(file.getVcs()).addDirtyFile(file.getPath());
     }
   }

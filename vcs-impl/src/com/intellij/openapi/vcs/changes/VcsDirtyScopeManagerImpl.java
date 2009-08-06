@@ -9,22 +9,21 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
  * @author max
  */
 public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements ProjectComponent {
-  private final VcsDirtyScopeManagerImpl.MyVfsListener myVfsListener;
   private final Project myProject;
   private final ChangeListManager myChangeListManager;
   private final ProjectLevelVcsManager myVcsManager;
@@ -37,7 +36,6 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     myProject = project;
     myChangeListManager = changeListManager;
     myVcsManager = vcsManager;
-    myVfsListener = new MyVfsListener();
 
     myLife = new SynchronizedLife();
     myGuess = new VcsGuess(myProject);
@@ -45,8 +43,6 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void projectOpened() {
-    VirtualFileManager.getInstance().addVirtualFileListener(myVfsListener);
-
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myLife.born();
       final AbstractVcs[] vcss = myVcsManager.getAllActiveVcss();
@@ -95,9 +91,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void projectClosed() {
-    myLife.kill();
-    
-    VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
+    killSelf();
   }
 
   @NotNull @NonNls
@@ -107,21 +101,53 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   public void initComponent() {}
 
+  private void killSelf() {
+    myLife.kill(new Runnable() {
+      public void run() {
+        myDirtBuilder.reset();
+      }
+    });
+  }
+
   public void disposeComponent() {
-    myLife.kill();
+    killSelf();
+  }
+
+  private void convertPaths(@Nullable final Collection<FilePath> from, final Collection<FilePathUnderVcs> to) {
+    if (from != null) {
+      for (FilePath fp : from) {
+        final AbstractVcs vcs = myGuess.getVcsForDirty(fp);
+        if (vcs != null) {
+          to.add(new FilePathUnderVcs(fp, vcs));
+        }
+      }
+    }
   }
 
   public boolean filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty) {
+    final ArrayList<FilePathUnderVcs> filesConverted = filesDirty == null ? null : new ArrayList<FilePathUnderVcs>(filesDirty.size());
+    final ArrayList<FilePathUnderVcs> dirsConverted = dirsRecursivelyDirty == null ? null : new ArrayList<FilePathUnderVcs>(dirsRecursivelyDirty.size());
+
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        convertPaths(filesDirty, filesConverted);
+        convertPaths(dirsRecursivelyDirty, dirsConverted);
+      }
+    });
+    final boolean haveStuff = ((filesConverted != null) && (! filesConverted.isEmpty())) ||
+                              ((dirsConverted != null) && (! dirsConverted.isEmpty()));
+    if (! haveStuff) return false;
+
     return takeDirt(new Consumer<DirtBuilder>() {
       public void consume(final DirtBuilder dirt) {
-        if (filesDirty != null) {
-          for (FilePath path : filesDirty) {
-            dirt.addDirtyFile(path);
+        if (filesConverted != null) {
+          for (FilePathUnderVcs root : filesConverted) {
+            dirt.addDirtyFile(root);
           }
         }
-        if (dirsRecursivelyDirty != null) {
-          for (FilePath path : dirsRecursivelyDirty) {
-            dirt.addDirtyDirRecursively(path);
+        if (dirsConverted != null) {
+          for (FilePathUnderVcs root : dirsConverted) {
+            dirt.addDirtyDirRecursively(root);
           }
         }
       }
@@ -141,21 +167,45 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     if (lifeDrop.isDone() && (! lifeDrop.isSuspened()) && (Boolean.TRUE.equals(wasNotEmptyRef.get()))) {
       myChangeListManager.scheduleUpdate();
     }
-    // no sence in checking correct here any more: vcs is searched for asynchronously
+    // no sense in checking correct here any more: vcs is searched for asynchronously
     return (! lifeDrop.isDone());
   }
 
+  private void convert(@Nullable final Collection<VirtualFile> from, final Collection<VcsRoot> to) {
+    if (from != null) {
+      for (VirtualFile vf : from) {
+        final AbstractVcs vcs = myGuess.getVcsForDirty(vf);
+        if (vcs != null) {
+          to.add(new VcsRoot(vcs, vf));
+        }
+      }
+    }
+  }
+
   public boolean filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty) {
+    final ArrayList<VcsRoot> filesConverted = filesDirty == null ? null : new ArrayList<VcsRoot>(filesDirty.size());
+    final ArrayList<VcsRoot> dirsConverted = dirsRecursivelyDirty == null ? null : new ArrayList<VcsRoot>(dirsRecursivelyDirty.size());
+
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        convert(filesDirty, filesConverted);
+        convert(dirsRecursivelyDirty, dirsConverted);
+      }
+    });
+    final boolean haveStuff = ((filesConverted != null) && (! filesConverted.isEmpty())) ||
+                              ((dirsConverted != null) && (! dirsConverted.isEmpty()));
+    if (! haveStuff) return false;
+
     return takeDirt(new Consumer<DirtBuilder>() {
       public void consume(final DirtBuilder dirt) {
-        if (filesDirty != null) {
-          for (VirtualFile path : filesDirty) {
-            dirt.addDirtyFile(new FilePathImpl(path));
+        if (filesConverted != null) {
+          for (VcsRoot root : filesConverted) {
+            dirt.addDirtyFile(root);
           }
         }
-        if (dirsRecursivelyDirty != null) {
-          for (VirtualFile path : dirsRecursivelyDirty) {
-            dirt.addDirtyDirRecursively(new FilePathImpl(path));
+        if (dirsConverted != null) {
+          for (VcsRoot root : dirsConverted) {
+            dirt.addDirtyDirRecursively(root);
           }
         }
       }
@@ -163,17 +213,23 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void fileDirty(final VirtualFile file) {
+    final AbstractVcs vcs = myGuess.getVcsForDirty(file);
+    if (vcs == null) return;
+    final VcsRoot root = new VcsRoot(vcs, file);
     takeDirt(new Consumer<DirtBuilder>() {
       public void consume(DirtBuilder dirtBuilder) {
-        dirtBuilder.addDirtyFile(new FilePathImpl(file));
+        dirtBuilder.addDirtyFile(root);
       }
     });
   }
 
   public void fileDirty(final FilePath file) {
+    final AbstractVcs vcs = myGuess.getVcsForDirty(file);
+    if (vcs == null) return;
+    final FilePathUnderVcs root = new FilePathUnderVcs(file, vcs);
     takeDirt(new Consumer<DirtBuilder>() {
       public void consume(DirtBuilder dirtBuilder) {
-        dirtBuilder.addDirtyFile(file);
+        dirtBuilder.addDirtyFile(root);
       }
     });
   }
@@ -183,17 +239,23 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void dirDirtyRecursively(final VirtualFile dir) {
+    final AbstractVcs vcs = myGuess.getVcsForDirty(dir);
+    if (vcs == null) return;
+    final VcsRoot root = new VcsRoot(vcs, dir);
     takeDirt(new Consumer<DirtBuilder>() {
       public void consume(DirtBuilder dirtBuilder) {
-        dirtBuilder.addDirtyDirRecursively(new FilePathImpl(dir));
+        dirtBuilder.addDirtyDirRecursively(root);
       }
     });
   }
 
   public void dirDirtyRecursively(final FilePath path) {
+    final AbstractVcs vcs = myGuess.getVcsForDirty(path);
+    if (vcs == null) return;
+    final FilePathUnderVcs root = new FilePathUnderVcs(path, vcs);
     takeDirt(new Consumer<DirtBuilder>() {
       public void consume(DirtBuilder dirtBuilder) {
-        dirtBuilder.addDirtyDirRecursively(path);
+        dirtBuilder.addDirtyDirRecursively(root);
       }
     });
   }
@@ -238,72 +300,6 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     return sb.toString();
   }
 
-  private class MyVfsListener extends VirtualFileAdapter {
-    @Override
-    public void contentsChanged(VirtualFileEvent event) {
-      fileDirty(event.getFile());
-    }
-
-    @Override
-    public void propertyChanged(VirtualFilePropertyEvent event) {
-      if (event.getPropertyName().equals(VirtualFile.PROP_NAME)) {
-        VirtualFile renamed = event.getFile();
-        if (renamed.getParent() != null) {
-          renamed = renamed.getParent();
-        }
-        dirtyFileOrDir(renamed);
-      }
-      else {
-        fileDirty(event.getFile());
-      }
-    }
-
-    private void dirtyFileOrDir(final VirtualFile file) {
-      if (file.isDirectory()) {
-          dirDirtyRecursively(file, true);
-        }
-        else {
-          fileDirty(file);
-        }
-    }
-
-    @Override
-    public void fileCreated(VirtualFileEvent event) {
-      fileDirty(event.getFile());
-    }
-
-    @Override
-    public void beforePropertyChange(VirtualFilePropertyEvent event) {
-      fileDirty(event.getFile());
-    }
-
-    @Override
-    public void beforeFileDeletion(VirtualFileEvent event) {
-      if (!event.getFile().isInLocalFileSystem()) return;
-      // need to keep track of whether the deleted file was a directory
-      final boolean directory = event.getFile().isDirectory();
-      final FilePathImpl path = new FilePathImpl(new File(event.getFile().getPath()), directory);
-      if (directory) {
-        dirDirtyRecursively(path);   // IDEADEV-12752
-      }
-      else {
-        fileDirty(path);
-      }
-    }
-
-    @Override
-    public void beforeFileMovement(VirtualFileMoveEvent event) {
-      // need to create FilePath explicitly without referring to VirtualFile because otherwise the FilePath
-      // will reference the path after the move
-      fileDirty(new FilePathImpl(new File(event.getFile().getPath()), event.getFile().isDirectory()));
-    }
-
-    @Override
-    public void fileMoved(VirtualFileMoveEvent event) {
-      dirtyFileOrDir(event.getFile());
-    }
-  }
-
   private static class LifeDrop {
     private final boolean myDone;
     private final boolean mySuspened;
@@ -338,9 +334,10 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       }
     }
 
-    public void kill() {
+    public void kill(Runnable runnable) {
       synchronized (myLock) {
         myStage = LifeStages.DEAD;
+        runnable.run();
       }
     }
 
