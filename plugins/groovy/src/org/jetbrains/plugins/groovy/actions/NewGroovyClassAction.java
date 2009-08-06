@@ -20,18 +20,21 @@ import com.intellij.ide.actions.CreateFileFromTemplateDialog;
 import com.intellij.ide.actions.CreateTemplateInPackageAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-public class NewGroovyClassAction extends CreateTemplateInPackageAction implements DumbAware {
+public class NewGroovyClassAction extends CreateTemplateInPackageAction<GrTypeDefinition> implements DumbAware {
   public NewGroovyClassAction() {
     super(GroovyBundle.message("newclass.menu.action.text"), GroovyBundle.message("newclass.menu.action.description"), GroovyIcons.CLASS);
   }
 
+  @NotNull
   @Override
   protected CreateFileFromTemplateDialog.Builder buildDialog(Project project, final PsiDirectory directory) {
     final CreateFileFromTemplateDialog.Builder builder = CreateFileFromTemplateDialog.
@@ -52,9 +55,15 @@ public class NewGroovyClassAction extends CreateTemplateInPackageAction implemen
     return CommonBundle.getErrorTitle();
   }
 
-  protected final PsiClass doCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
-    return ((GroovyFile)GroovyTemplatesFactory.createFromTemplate(dir, className, className + NewGroovyActionBase.GROOVY_EXTENSION, templateName))
-      .getClasses()[0];
+  @Override
+  protected PsiElement getNavigationElement(@NotNull GrTypeDefinition createdElement) {
+    return createdElement.getLBraceGroovy();
+  }
+
+  protected final GrTypeDefinition doCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
+    final String fileName = className + NewGroovyActionBase.GROOVY_EXTENSION;
+    final GroovyFile file = (GroovyFile)GroovyTemplatesFactory.createFromTemplate(dir, className, fileName, templateName);
+    return file.getTypeDefinitions()[0];
   }
 
 }
