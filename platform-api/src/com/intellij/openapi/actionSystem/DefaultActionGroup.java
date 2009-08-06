@@ -243,7 +243,6 @@ public class DefaultActionGroup extends ActionGroup {
       children[i + sortedSize] = myPairs.get(i).first;
     }
     // Replace ActionStubs with real actions
-    outer:
     for (int i = 0; i < children.length; i++) {
       AnAction action = children[i];
       if (!(action instanceof ActionStub)) {
@@ -253,32 +252,36 @@ public class DefaultActionGroup extends ActionGroup {
       // resolve action
       ActionManager actionManager = e != null ? e.getActionManager() : ActionManager.getInstance();
       AnAction actualAction = actionManager.getAction(stub.getId());
-
-      replace(stub, actualAction);
-
-      // Find in sorted children first
-      int index = mySortedChildren.indexOf(stub);
-      if (index != -1) {
-        children[i] = actualAction;
-        mySortedChildren.set(index, actualAction);
-        continue;
+      synchronized (mySortedChildren) {
+        replaceStubWithAction(stub, actualAction);
       }
-      // Try to find action within pairs
-      for (int j = 0; j < myPairs.size(); j++) {
-        Pair<AnAction, Constraints> pair = myPairs.get(j);
-        if (pair.first.equals(stub)) {
-          children[i] = actualAction;
-          myPairs.set(j, new Pair<AnAction, Constraints>(actualAction, pair.second));
-          continue outer;
-        }
-      }
-      throw new IllegalStateException("unknown stub: " + stub.getId() + "; actions=" + StringUtil.join(mySortedChildren, new Function<AnAction, String>() {
-        public String fun(AnAction action) {
-          return action.getTemplatePresentation().getText() + " of class " + action.getClass();
-        }
-      }, ","));
+      children[i] = actualAction;
     }
     return children;
+  }
+
+  private void replaceStubWithAction(ActionStub stub, AnAction actualAction) {
+    replace(stub, actualAction);
+
+    // Find in sorted children first
+    int index = mySortedChildren.indexOf(stub);
+    if (index != -1) {
+      mySortedChildren.set(index, actualAction);
+      return;
+    }
+    // Try to find action within pairs
+    for (int j = 0; j < myPairs.size(); j++) {
+      Pair<AnAction, Constraints> pair = myPairs.get(j);
+      if (pair.first.equals(stub)) {
+        myPairs.set(j, new Pair<AnAction, Constraints>(actualAction, pair.second));
+        return;
+      }
+    }
+    throw new IllegalStateException("unknown stub: " + stub.getId() + "; actions=" + StringUtil.join(mySortedChildren, new Function<AnAction, String>() {
+      public String fun(AnAction action) {
+        return action.getTemplatePresentation().getText() + " of class " + action.getClass();
+      }
+    }, ","));
   }
 
   /**
