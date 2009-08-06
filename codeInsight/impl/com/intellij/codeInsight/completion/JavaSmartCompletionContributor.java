@@ -144,7 +144,18 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
             return InstanceOfLeftPartTypeGetter.getLeftTypes(position);
           }
         });
-        final Set<PsiClassType> expectedClassTypes = new LinkedHashSet<PsiClassType>(ContainerUtil.findAll(leftTypes, PsiClassType.class));
+        final Set<PsiClassType> expectedClassTypes = new LinkedHashSet<PsiClassType>();
+        final Set<PsiClass> parameterizedTypes = new THashSet<PsiClass>();
+        for (final PsiType type : leftTypes) {
+          if (type instanceof PsiClassType) {
+            final PsiClassType classType = (PsiClassType)type;
+            if (!classType.isRaw()) {
+              ContainerUtil.addIfNotNull(classType.resolve(), parameterizedTypes);
+            }
+
+            expectedClassTypes.add(classType.rawType());
+          }
+        }
 
         processInheritors(parameters, position, position.getContainingFile(), expectedClassTypes, new Consumer<PsiType>() {
           public void consume(PsiType type) {
@@ -153,7 +164,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
             if (expectedClassTypes.contains(type)) return;
 
-            result.addElement(new JavaPsiClassReferenceElement(psiClass));
+            result.addElement(createInstanceofLookupElement(psiClass, parameterizedTypes));
           }
         }, result.getPrefixMatcher());
       }
@@ -413,6 +424,26 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         }, result.getPrefixMatcher());
       }
     });
+  }
+
+  private static LookupElement createInstanceofLookupElement(PsiClass psiClass, Set<PsiClass> toWildcardInheritors) {
+    final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+    if (typeParameters.length > 0) {
+      for (final PsiClass parameterizedType : toWildcardInheritors) {
+        if (psiClass.isInheritor(parameterizedType, true)) {
+          PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+          final PsiWildcardType wildcard = PsiWildcardType.createUnbounded(psiClass.getManager());
+          for (final PsiTypeParameter typeParameter : typeParameters) {
+            substitutor = substitutor.put(typeParameter, wildcard);
+          }
+          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
+          return PsiTypeLookupItem.createLookupItem(factory.createType(psiClass, substitutor));
+        }
+      }
+    }
+
+
+    return new JavaPsiClassReferenceElement(psiClass);
   }
 
   @Nullable
