@@ -174,19 +174,30 @@ public class SliceUtil {
           synchronized (processed) {
             if (!processed.add(reference)) return true;
           }
-          PsiElement element = reference.getElement().getParent();
-          if (element instanceof PsiCompiledElement) return true;
+          PsiElement refel = reference.getElement();
           PsiExpressionList argumentList;
-          if (element instanceof PsiAnonymousClass) {
-            argumentList = ((PsiAnonymousClass)element).getArgumentList();
+          if (refel instanceof PsiCall) {
+            // the case of enum constant decl
+            argumentList = ((PsiCall)refel).getArgumentList();
           }
           else {
-            if (!(element instanceof PsiCall)) return true;
-            argumentList = ((PsiCall)element).getArgumentList();
+            PsiElement element = refel.getParent();
+            if (element instanceof PsiCompiledElement) return true;
+            if (element instanceof PsiAnonymousClass) {
+              argumentList = ((PsiAnonymousClass)element).getArgumentList();
+            }
+            else {
+              if (!(element instanceof PsiCall)) return true;
+              argumentList = ((PsiCall)element).getArgumentList();
+            }
           }
-          PsiExpression passExpression = argumentList.getExpressions()[paramSeqNo];
-          SliceParameterUsage usage = new SliceParameterUsage(createUsageInfo(passExpression), parameter, parent);
-          return processor.process(usage);
+          PsiExpression[] expressions = argumentList.getExpressions();
+          if (paramSeqNo < expressions.length) {
+            PsiExpression passExpression = expressions[paramSeqNo];
+            SliceParameterUsage usage = new SliceParameterUsage(createUsageInfo(passExpression), parameter, parent);
+            return processor.process(usage);
+          }
+          return true;
         }
       })) return false;
     }
