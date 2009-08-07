@@ -265,6 +265,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   Collection<UsageInfo> testFindUsages(@NonNls String... fileNames) throws Throwable;
 
+  Collection<UsageInfo> findUsages(final PsiElement to) throws Throwable;
+
   void moveFile(@NonNls String filePath, @NonNls String to, final String... additionalFiles) throws Throwable;
 
   /**

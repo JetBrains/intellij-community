@@ -23,8 +23,9 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
+import com.intellij.find.FindManager;
+import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.find.findUsages.FindUsagesHandler;
-import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
@@ -526,17 +527,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public Collection<UsageInfo> testFindUsages(@NonNls final String... fileNames) throws Throwable {
     assertInitialized();
     configureByFiles(fileNames);
-    PsiElement referenceTo = TargetElementUtilBase
+    final PsiElement targetElement = TargetElementUtilBase
       .findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    assert targetElement != null : "Cannot find referenced element";
+    return findUsages(targetElement);
+  }
 
-    assert referenceTo != null : "Cannot find referenced element";
+  public Collection<UsageInfo> findUsages(@NotNull final PsiElement targetElement) {
     final Project project = getProject();
-    final FindUsagesHandler handler = new FindUsagesManager(project, null).getFindUsagesHandler(referenceTo, false);
+    final FindUsagesHandler handler = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().getFindUsagesHandler(targetElement, false);
 
     final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<UsageInfo>();
     final FindUsagesOptions options = new FindUsagesOptions(project, null);
     options.isUsages = true;
-    assert handler != null : "Cannot find handler for: " + referenceTo;
+    assert handler != null : "Cannot find handler for: " + targetElement;
     final PsiElement[] psiElements = ArrayUtil.mergeArrays(handler.getPrimaryElements(), handler.getSecondaryElements(), PsiElement.class);
     for (PsiElement psiElement : psiElements) {
       handler.processElementUsages(psiElement, processor, options);

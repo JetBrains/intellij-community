@@ -2,6 +2,7 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,6 +32,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.PsiElementRenameHandler");
 
   public static final ExtensionPointName<Condition<PsiElement>> VETO_RENAME_CONDITION_EP = ExtensionPointName.create("com.intellij.vetoRenameCondition");
+  public static DataKey<String> DEFAULT_NAME = DataKey.create("DEFAULT_NAME");
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = getElement(dataContext);
@@ -44,7 +46,14 @@ public class PsiElementRenameHandler implements RenameHandler {
     if (element == null) element = getElement(dataContext);
     LOG.assertTrue(element != null);
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    invoke(element, project, element, editor);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      final String newName = DEFAULT_NAME.getData(dataContext);
+      LOG.assertTrue(newName != null);
+      rename(element, project, element, editor, newName);
+    }
+    else {
+      invoke(element, project, element, editor);
+    }
   }
 
   public static void invoke(PsiElement element, Project project, PsiElement nameSuggestionContext, Editor editor) {
@@ -89,12 +98,21 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   public static void rename(PsiElement element, final Project project, PsiElement nameSuggestionContext, Editor editor) {
+    rename(element, project, nameSuggestionContext, editor, null);
+  }
+  
+  private static void rename(PsiElement element, final Project project, PsiElement nameSuggestionContext, Editor editor, final String defaultName) {
     RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
     element = processor.substituteElementToRename(element, editor);
     if (element == null) return;
 
     final RenameDialog dialog = new RenameDialog(project, element, nameSuggestionContext, editor);
-    dialog.show();
+    if (defaultName != null) {
+      dialog.performRename(defaultName);
+    }
+    else {
+      dialog.show();
+    }
   }
 
   public boolean isAvailableOnDataContext(DataContext dataContext) {

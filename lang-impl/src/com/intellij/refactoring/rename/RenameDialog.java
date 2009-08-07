@@ -25,6 +25,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.xml.util.XmlTagUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -250,16 +251,22 @@ public class RenameDialog extends RefactoringDialog {
   protected void doAction() {
     LOG.assertTrue(myPsiElement.isValid());
 
+    final String newName = getNewName();
+    performRename(newName);
+  }
+
+  @TestOnly
+  void performRename(final String newName) {
     final RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(myPsiElement);
     elementProcessor.setToSearchInComments(myPsiElement, isSearchInComments());
     if (myCbSearchTextOccurences.isEnabled()) {
       elementProcessor.setToSearchForTextOccurrences(myPsiElement, isSearchInNonJavaFiles());
     }
     if (mySuggestedNameInfo != null) {
-      mySuggestedNameInfo.nameChoosen(getNewName());
+      mySuggestedNameInfo.nameChoosen(newName);
     }
 
-    final RenameProcessor processor = new RenameProcessor(getProject(), myPsiElement, getNewName(), isSearchInComments(),
+    final RenameProcessor processor = new RenameProcessor(getProject(), myPsiElement, newName, isSearchInComments(),
                                                           isSearchInNonJavaFiles());
 
     for(Map.Entry<AutomaticRenamerFactory, JCheckBox> e: myAutomaticRenamers.entrySet()) {
