@@ -55,6 +55,8 @@
 
     <psi.referenceContributor implementation="org.jetbrains.idea.maven.dom.converters.MavenPropertyPsiReferenceContributor"/>
 
+    <usageTargetProvider implementation="org.jetbrains.idea.maven.dom.findUsages.MavenUsageTargetProvider"/>
+
     <standardResourceProvider implementation="org.jetbrains.idea.maven.dom.MavenSchemaProvider"/>
 
     <projectService serviceInterface="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"

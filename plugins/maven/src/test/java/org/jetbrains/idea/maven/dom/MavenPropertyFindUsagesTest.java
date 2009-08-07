@@ -63,6 +63,8 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
   }
 
   public void testFindUsagesFromTag() throws Exception {
+    if (ignore()) return;
+    
     createModulePom("module1",
                     "<groupId>test</groupId>" +
                     "<artifactId>module1</artifactId>" +
