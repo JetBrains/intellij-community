@@ -208,7 +208,7 @@ public class DataFlowRunner {
     @Override
     public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
       if (myNewExpression == instruction.getCallExpression()) {
-        myClosureStates.add(memState);
+        myClosureStates.add(memState.createCopy());
       }
       return super.visitMethodCall(instruction, runner, memState);
     }
