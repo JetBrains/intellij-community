@@ -9,6 +9,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
@@ -49,6 +50,9 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       searchScope = GlobalSearchScope.projectTestScope(myProject);
     }
 
+    final PsiClass originalClass = method.getContainingClass();
+    assert originalClass != null;
+    final PsiClassType originalType = JavaPsiFacade.getElementFactory(myProject).createType(originalClass);
     final Set<PsiMethod> methodsToFind = new HashSet<PsiMethod>();
     methodsToFind.add(method);
     methodsToFind.addAll(Arrays.asList(method.findDeepestSuperMethods()));
@@ -61,8 +65,13 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
             final PsiExpression qualifier = ((PsiReferenceExpression)reference).getQualifierExpression();
             if (qualifier instanceof PsiSuperExpression) { // filter super.foo() call inside foo() and similar cases (bug 8411)
               final PsiClass superClass = PsiUtil.resolveClassInType(qualifier.getType());
-              final PsiClass methodClass = method.getContainingClass();
-              if (methodClass != null && methodClass.isInheritor(superClass, true)) {
+              if (originalClass.isInheritor(superClass, true)) {
+                return true;
+              }
+            } if (qualifier != null) {
+              final PsiType qualifierType = qualifier.getType();
+              if (qualifierType == null) return true;
+              if (!TypeConversionUtil.isAssignable(qualifierType, originalType)) {
                 return true;
               }
             }
