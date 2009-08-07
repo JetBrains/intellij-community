@@ -122,4 +122,9 @@ public abstract class RenamePsiElementProcessor {
   public boolean forcesShowPreview() {
     return false;
   }
+
+  @Nullable
+  public PsiElement getElementToSearchInStringsAndComments(PsiElement element) {
+    return element;
+  }
 }

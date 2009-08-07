@@ -1,6 +1,7 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -8,9 +9,10 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
+import java.util.Collection;
 
 /**
  * @author yole
@@ -48,12 +50,22 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
     return newName;
   }
 
-  public void prepareRenaming(final PsiElement element, final String newName, final Map<PsiElement, String> allRenames) {
+  @NotNull
+  @Override
+  public Collection<PsiReference> findReferences(PsiElement element) {
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory) element);
-    if (aPackage != null && aPackage.getName() != null) {
-      allRenames.put(aPackage, newName);
-      RenamePsiPackageProcessor.preparePackageRenaming(aPackage, newName, allRenames);
+    if (aPackage != null) {
+      return ReferencesSearch.search(aPackage, element.getUseScope()).findAll();
     }
+    return ReferencesSearch.search(element).findAll();
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getElementToSearchInStringsAndComments(PsiElement element) {
+    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory) element);
+    if (aPackage != null) return aPackage;
+    return null;
   }
 
   @Nullable

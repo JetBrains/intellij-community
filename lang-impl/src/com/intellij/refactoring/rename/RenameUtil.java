@@ -55,27 +55,26 @@ public class RenameUtil {
 
     processor.findCollisions(element, newName, allRenames, result);
 
-    if (searchInStringsAndComments && !(element instanceof PsiDirectory)) {
-      String stringToSearch = ElementDescriptionUtil.getElementDescription(element, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
-      if (stringToSearch != null && stringToSearch.length() > 0) {
+    final PsiElement searchForInComments = processor.getElementToSearchInStringsAndComments(element);
+    if (searchInStringsAndComments && searchForInComments != null) {
+      String stringToSearch = ElementDescriptionUtil.getElementDescription(searchForInComments, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
+      if (stringToSearch.length() > 0) {
         final String stringToReplace = getStringToReplace(element, newName, false, processor);
-        TextOccurrencesUtil.UsageInfoFactory factory = new NonCodeUsageInfoFactory(element, stringToReplace);
-        TextOccurrencesUtil.addUsagesInStringsAndComments(element, stringToSearch, result, factory);
+        TextOccurrencesUtil.UsageInfoFactory factory = new NonCodeUsageInfoFactory(searchForInComments, stringToReplace);
+        TextOccurrencesUtil.addUsagesInStringsAndComments(searchForInComments, stringToSearch, result, factory);
       }
     }
 
 
-    if (searchForTextOccurences && !(element instanceof PsiDirectory)) {
-      String stringToSearch = ElementDescriptionUtil.getElementDescription(element, NonCodeSearchDescriptionLocation.NON_JAVA);
+    if (searchForTextOccurences && searchForInComments != null) {
+      String stringToSearch = ElementDescriptionUtil.getElementDescription(searchForInComments, NonCodeSearchDescriptionLocation.NON_JAVA);
 
-      if (stringToSearch != null) {
-        final String stringToReplace = getStringToReplace(element, newName, true, processor);
-        addTextOccurence(element, result, projectScope, stringToSearch, stringToReplace);
+      final String stringToReplace = getStringToReplace(element, newName, true, processor);
+      addTextOccurence(searchForInComments, result, projectScope, stringToSearch, stringToReplace);
 
-        Pair<String, String> additionalStringToSearch = processor.getTextOccurrenceSearchStrings(element, newName);
-        if (additionalStringToSearch != null) {
-          addTextOccurence(element, result, projectScope, additionalStringToSearch.first, additionalStringToSearch.second);
-        }
+      Pair<String, String> additionalStringToSearch = processor.getTextOccurrenceSearchStrings(searchForInComments, newName);
+      if (additionalStringToSearch != null) {
+        addTextOccurence(searchForInComments, result, projectScope, additionalStringToSearch.first, additionalStringToSearch.second);
       }
     }
 

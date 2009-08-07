@@ -1,13 +1,14 @@
 package com.intellij.refactoring.rename;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.NotNull;
@@ -60,14 +61,18 @@ public class DirectoryAsPackageRenameHandler implements RenameHandler {
         StringBuffer message = new StringBuffer();
         RenameUtil.buildPackagePrefixChangedMessage(virtualFiles, message, qualifiedName);
         buildMultipleDirectoriesInPackageMessage(message, aPackage, directories);
-        message.append(RefactoringBundle.message("directories.and.all.references.to.package.will.be.renamed", qualifiedName));
+        message.append(RefactoringBundle.message("directories.and.all.references.to.package.will.be.renamed", psiDirectory.getVirtualFile().getPresentableUrl()));
         int ret =
-          Messages.showYesNoDialog(project, message.toString(), RefactoringBundle.message("warning.title"), Messages.getWarningIcon());
-        if (ret != 0) {
-          return;
+          Messages.showDialog(project, message.toString(), RefactoringBundle.message("warning.title"),
+                              new String[]{
+                                RefactoringBundle.message("rename.package.button.text"),
+                                RefactoringBundle.message("rename.directory.button.text"),
+                              CommonBundle.getCancelButtonText()}, 0, Messages.getWarningIcon());
+        if (ret == 0) {
+          PsiElementRenameHandler.rename(aPackage, project, nameSuggestionContext, editor);
+        } else if (ret == 1){
+          PsiElementRenameHandler.rename(psiDirectory, project, nameSuggestionContext, editor);
         }
-        // if confirmed
-        PsiElementRenameHandler.rename(aPackage, project, nameSuggestionContext, editor);
       }
     }
   }
