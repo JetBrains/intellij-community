@@ -5,6 +5,7 @@ import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.project.MavenId;
 
+import java.util.Collections;
 import java.util.Set;
 
 public class MavenArtifactCoordinatesVersionConverter extends MavenArtifactCoordinatesConverter {
@@ -25,8 +26,8 @@ public class MavenArtifactCoordinatesVersionConverter extends MavenArtifactCoord
   }
 
   @Override
-  protected Set<String> doGetVariants(MavenId id, MavenProjectIndicesManager manager
-  ) {
+  protected Set<String> doGetVariants(MavenId id, MavenProjectIndicesManager manager) {
+    if (StringUtil.isEmpty(id.getGroupId()) || StringUtil.isEmpty(id.getArtifactId())) return Collections.emptySet();
     return manager.getVersions(id.getGroupId(), id.getArtifactId());
   }
 }

@@ -71,6 +71,20 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     assertCompletionVariants(myProjectPom);
   }
 
+  public void testDoNotCompleteArtifactIdIfNoGroupId() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <artifactId><caret></artifactId>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    assertCompletionVariants(myProjectPom); // should not throw
+  }
+
   public void testVersionCompletion() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -115,6 +129,20 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "</dependencies>");
 
     assertCompletionVariants(myProjectPom);
+  }
+
+  public void testDoNotCompleteVersionIfNoGroupIdAndArtifactId() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <version><caret></version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    assertCompletionVariants(myProjectPom); // should not throw
   }
 
   public void testAddingLocalProjectsIntoCompletion() throws Exception {
