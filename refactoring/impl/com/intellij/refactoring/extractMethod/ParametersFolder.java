@@ -176,7 +176,8 @@ public class ParametersFolder {
           }
           if (expression == null) break;
 
-          if (((PsiExpression)expression).getType() != PsiType.VOID) {
+          final PsiType expressionType = ((PsiExpression)expression).getType();
+          if (expressionType != null && expressionType != PsiType.VOID) {
             expressions.add((PsiExpression)expression);
           }
           expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
