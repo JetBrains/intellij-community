@@ -39,7 +39,7 @@ public class SliceManager {
     return ServiceManager.getService(project, SliceManager.class);
   }
 
-  public SliceManager(Project project, ToolWindowManager toolWindowManager, final Application application) {
+  public SliceManager(@NotNull Project project, @NotNull ToolWindowManager toolWindowManager, @NotNull final Application application) {
     myProject = project;
     final ToolWindow toolWindow= toolWindowManager.registerToolWindow(BACKSLICE_TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, project);
     myBackContentManager = toolWindow.getContentManager();
