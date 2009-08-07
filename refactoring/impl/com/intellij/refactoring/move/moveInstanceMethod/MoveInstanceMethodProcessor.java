@@ -302,8 +302,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       return createThisExpr(manager);
     }
 
-    expression.accept(new JavaRecursiveElementWalkingVisitor() {
-
+    expression.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         if (expression.isReferenceTo(myTargetVariable)) {
@@ -375,21 +374,22 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
                 //Target is a field, replace target.m -> m
                 qualifier.delete();
                 return;
-              } else {
-                final PsiElement resolved = expression.resolve();
-                if (myTargetVariable.equals(resolved)) {
-                  PsiThisExpression thisExpression = (PsiThisExpression)factory.createExpressionFromText("this", null);
-                  expression.replace(thisExpression);
+              }
+              final PsiElement resolved = expression.resolve();
+              if (myTargetVariable.equals(resolved)) {
+                PsiThisExpression thisExpression = (PsiThisExpression)factory.createExpressionFromText("this", null);
+                expression.replace(thisExpression);
+                return;
+              }
+              else if (myMethod.equals(resolved)) {
+              }
+              else {
+                PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(expression);
+                if (classReferencedByThis != null) {
+                  final String paramName = getParameterNameToCreate(classReferencedByThis);
+                  PsiReferenceExpression newQualifier = (PsiReferenceExpression)factory.createExpressionFromText(paramName, null);
+                  expression.setQualifierExpression(newQualifier);
                   return;
-                } else if (myMethod.equals(resolved)) {
-                } else {
-                  PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(expression);
-                  if (classReferencedByThis != null) {
-                    final String paramName = getParameterNameToCreate(classReferencedByThis);
-                    PsiReferenceExpression newQualifier = (PsiReferenceExpression)factory.createExpressionFromText(paramName, null);
-                    expression.setQualifierExpression(newQualifier);
-                    return;
-                  }
                 }
               }
               super.visitReferenceExpression(expression);

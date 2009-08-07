@@ -78,7 +78,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
 
     ((PsiReferenceExpressionImpl)refExpr).bindToElementViaStaticImport(((PsiMember)resolved).getContainingClass(), ((PsiNamedElement)resolved).getName(), ((PsiJavaFile)file).getImportList());
 
-    file.accept(new JavaRecursiveElementWalkingVisitor() {
+    file.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         if (expression.getParameterList() != null &&
             expression.getParameterList().getFirstChild() != null) return;

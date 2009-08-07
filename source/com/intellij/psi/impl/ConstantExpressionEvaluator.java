@@ -93,8 +93,19 @@ public class ConstantExpressionEvaluator extends JavaRecursiveElementWalkingVisi
                                                  final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
     if (expression == null) return null;
 
-    ConstantExpressionEvaluator evaluator = new ConstantExpressionEvaluator(visitedVars, throwExceptionOnOverflow, expression.getProject(),
-                                                                            auxEvaluator);
+    ConstantExpressionEvaluator evaluator = new ConstantExpressionEvaluator(visitedVars, throwExceptionOnOverflow, expression.getProject(), auxEvaluator);
+
+    if (expression instanceof PsiCompiledElement) {
+      // in case of compiled elements we are not allowed to use PSI walking
+      // but really in Cls there are only so many cases to handle
+      if (expression instanceof PsiPrefixExpression) {
+        PsiElement operand = ((PsiPrefixExpression)expression).getOperand();
+        if (operand == null) return null;
+        Object value = evaluator.myConstantExpressionVisitor.handle(operand);
+        ConstantExpressionVisitor.store(operand, value);
+      }
+      return evaluator.myConstantExpressionVisitor.handle(expression);
+    }
     expression.accept(evaluator);
     Object cached = evaluator.getCached(expression);
     return cached == NO_VALUE ? null : cached;

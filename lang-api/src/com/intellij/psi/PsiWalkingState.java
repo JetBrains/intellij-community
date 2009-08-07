@@ -1,9 +1,12 @@
 package com.intellij.psi;
 
+import com.intellij.openapi.diagnostic.Logger;
+
 /**
  * @author cdr
  */
 public abstract class PsiWalkingState {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiWalkingState");
   private boolean isDown;
   private boolean startedWalking;
   private final PsiElementVisitor myVisitor;
@@ -18,6 +21,10 @@ public abstract class PsiWalkingState {
   public void elementStarted(PsiElement element){
     isDown = true;
     if (!startedWalking) {
+      if (element instanceof PsiCompiledElement) {
+        // do not walk inside compiled PSI since getNextSibling() is too slow there
+        LOG.error(element+"; Do not use walking visitor inside compiled PSI since getNextSibling() is too slow there");
+      }
       stopped = false;
       startedWalking = true;
       walkChildren(element);

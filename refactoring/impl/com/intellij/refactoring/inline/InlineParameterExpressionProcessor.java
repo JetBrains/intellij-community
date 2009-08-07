@@ -110,7 +110,7 @@ public class InlineParameterExpressionProcessor {
   public static final Key<Boolean> CREATE_LOCAL_FOR_TESTS = Key.create("CREATE_INLINE_PARAMETER_LOCAL_FOR_TESTS");
 
   private void processParameterInitializer() {
-    myInitializer.accept(new JavaRecursiveElementWalkingVisitor() {
+    myInitializer.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement element = expression.resolve();
