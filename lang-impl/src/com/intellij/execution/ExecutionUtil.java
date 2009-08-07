@@ -84,6 +84,8 @@ public class ExecutionUtil {
     final RunManager runManager = RunManager.getInstance(project);
     RunConfiguration configuration = settings.getConfiguration();
     final Icon icon = settings.getFactory().getIcon(configuration);
+    LOG.assertTrue(icon != null, "Icon should not be null!");
+
     final Icon configurationIcon = runManager.isTemporary(configuration) ? IconLoader.getTransparentIcon(icon, 0.3f) : icon;
     if (invalid) {
       return LayeredIcon.create(configurationIcon, INVALID_CONFIGURATION);
