@@ -119,7 +119,9 @@ public class ParametersFolder {
       data.type = mostRanked.getType();
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(mostRanked.getProject());
       final SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, mostRanked, data.type);
-      data.name = nameInfo.names[0];
+      if (nameInfo.names.length > 0) {
+        data.name = nameInfo.names[0];
+      }
       setUniqueName(data);
     }
 
