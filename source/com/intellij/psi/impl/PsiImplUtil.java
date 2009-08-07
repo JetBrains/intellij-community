@@ -3,6 +3,7 @@ package com.intellij.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
@@ -26,6 +27,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -335,5 +337,43 @@ public class PsiImplUtil {
   public static boolean isDeprecatedByDocTag(PsiDocCommentOwner owner) {
     PsiDocComment docComment = owner.getDocComment();
     return docComment != null && docComment.findTagByName("deprecated") != null;
+  }
+
+  @Nullable
+  public static PsiAnnotationMemberValue setDeclaredAttributeValue(@NotNull PsiAnnotation psiAnnotation,
+                                                                    @Nullable String attributeName,
+                                                                           @Nullable PsiAnnotationMemberValue value,
+                                                                           @NotNull PairFunction<Project, String, PsiAnnotation> annotationCreator) {
+    final PsiAnnotationMemberValue existing = psiAnnotation.findDeclaredAttributeValue(attributeName);
+    if (value == null) {
+      if (existing == null) {
+        return null;
+      }
+      existing.getParent().delete();
+    } else {
+      if (existing != null) {
+        ((PsiNameValuePair)existing.getParent()).setValue(value);
+      } else {
+        final PsiNameValuePair[] attributes = psiAnnotation.getParameterList().getAttributes();
+        if (attributes.length == 1 && attributes[0].getName() == null) {
+          attributes[0].replace(createNameValuePair(attributes[0].getValue(), PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME + "=", annotationCreator));
+        }
+
+        boolean allowNoName = attributes.length == 0 && ("value".equals(attributeName) || null == attributeName);
+        final String namePrefix;
+        if (allowNoName) {
+          namePrefix = "";
+        } else {
+          namePrefix = attributeName + "=";
+        }
+        psiAnnotation.getParameterList().addBefore(createNameValuePair(value, namePrefix, annotationCreator), null);
+      }
+    }
+    return psiAnnotation.findDeclaredAttributeValue(attributeName);
+  }
+
+  public static PsiNameValuePair createNameValuePair(PsiAnnotationMemberValue value, String namePrefix,
+                                               PairFunction<Project, String, PsiAnnotation> annotationCreator) {
+    return annotationCreator.fun(value.getProject(), "@A(" + namePrefix + value.getText() + ")").getParameterList().getAttributes()[0];
   }
 }
