@@ -11,13 +11,16 @@ import com.intellij.psi.PsiManager;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author cdr
@@ -27,12 +30,21 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   private volatile long storedModificationCount = -1;
   protected boolean initialized;
   private SliceNode duplicate;
-  protected final Map<SliceUsage, List<SliceNode>> targetEqualUsages;
+  protected final DuplicateMap targetEqualUsages;
   protected final SliceTreeBuilder myTreeBuilder;
   private final Collection<PsiElement> leafExpressions = new THashSet<PsiElement>(SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
   protected boolean changed;
+  private static final TObjectHashingStrategy<SliceNode> SLICE_NODE_EQUALITY = new TObjectHashingStrategy<SliceNode>() {
+    public int computeHashCode(SliceNode object) {
+      return object.getValue().getUsageInfo().hashCode();
+    }
 
-  protected SliceNode(@NotNull Project project, SliceUsage sliceUsage, @NotNull Map<SliceUsage, List<SliceNode>> targetEqualUsages,
+    public boolean equals(SliceNode o1, SliceNode o2) {
+      return o1.getValue().getUsageInfo().equals(o2.getValue().getUsageInfo());
+    }
+  };
+
+  protected SliceNode(@NotNull Project project, SliceUsage sliceUsage, @NotNull DuplicateMap targetEqualUsages,
                       SliceTreeBuilder treeBuilder, @NotNull Collection<PsiElement> leafExpressions) {
     super(project, sliceUsage);
     this.targetEqualUsages = targetEqualUsages;
@@ -126,14 +138,15 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
 
   private void initializeDuplicateFlag() {
     SliceUsage sliceUsage = getValue();
-    List<SliceNode> eq = targetEqualUsages.get(sliceUsage);
+    Collection<SliceNode> eq = targetEqualUsages.get(sliceUsage);
     if (eq == null) {
-      eq = new SmartList<SliceNode>();
+      eq = new THashSet<SliceNode>(SLICE_NODE_EQUALITY);
       targetEqualUsages.put(sliceUsage, eq);
     }
+    eq.remove(this);
     eq.add(this);
     if (eq.size() > 1) {
-      duplicate = eq.get(0);
+      duplicate = eq.iterator().next();
     }
   }
 

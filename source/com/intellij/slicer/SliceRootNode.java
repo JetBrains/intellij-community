@@ -16,7 +16,7 @@ import java.util.*;
  * @author cdr
  */
 public class SliceRootNode extends SliceNode {
-  protected SliceRootNode(@NotNull Project project, @NotNull SliceUsage rootUsage, @NotNull Map<SliceUsage, List<SliceNode>> targetEqualUsages,
+  protected SliceRootNode(@NotNull Project project, @NotNull SliceUsage rootUsage, @NotNull DuplicateMap targetEqualUsages,
                           SliceTreeBuilder treeBuilder,
                           AnalysisScope scope) {
     super(project, new SliceUsage(new UsageInfo(rootUsage.getElement().getContainingFile()), scope), targetEqualUsages, treeBuilder, Collections.<PsiElement>emptyList());

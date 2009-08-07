@@ -1,8 +1,9 @@
 package com.intellij.slicer;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.actions.CloseTabToolbarAction;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -10,7 +11,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
@@ -24,9 +24,6 @@ import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.analysis.AnalysisScope;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -39,10 +36,8 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author cdr
@@ -64,47 +59,12 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   private final Project myProject;
   private boolean isDisposed;
 
-  // rehash map on each PSI modification since SmartPsiPointer's hashCode() and equals() are changed
-  private static class DuplicateMap extends THashMap<SliceUsage, List<SliceNode>> {
-    private long timeStamp = -1;
-    private DuplicateMap() {
-      super(new TObjectHashingStrategy<SliceUsage>() {
-        public int computeHashCode(SliceUsage object) {
-          return object.getUsageInfo().hashCode();
-        }
-
-        public boolean equals(SliceUsage o1, SliceUsage o2) {
-          return o1.getUsageInfo().equals(o2.getUsageInfo());
-        }
-      });
-    }
-
-    @Override
-    public List<SliceNode> put(SliceUsage key, List<SliceNode> value) {
-      long count = key.getElement().getManager().getModificationTracker().getModificationCount();
-      if (count != timeStamp) {
-        Map<SliceUsage, List<SliceNode>> map = new THashMap<SliceUsage, List<SliceNode>>(_hashingStrategy);
-        for (Map.Entry<SliceUsage, List<SliceNode>> entry : map.entrySet()) {
-          SliceUsage usage = entry.getKey();
-          PsiElement element = usage.getElement();
-          if (!element.isValid()) continue;
-          List<SliceNode> list = entry.getValue();
-          map.put(usage, list);
-        }
-        clear();
-        putAll(map);
-        timeStamp = count;
-      }
-      return super.put(key, value);
-    }
-  }
-
   public SlicePanel(Project project, final SliceUsage root, AnalysisScope scope, boolean dataFlowToThis) {
     super(new BorderLayout());
     myProject = project;
     myTree = createTree();
 
-    Map<SliceUsage, List<SliceNode>> targetEqualUsages = new DuplicateMap();
+    DuplicateMap targetEqualUsages = new DuplicateMap();
 
     myBuilder = new SliceTreeBuilder(myTree, project, dataFlowToThis);
     myBuilder.setCanYieldUpdate(true);
