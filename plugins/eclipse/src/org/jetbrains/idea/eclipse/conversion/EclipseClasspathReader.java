@@ -340,7 +340,7 @@ public class EclipseClasspathReader {
         url = VfsUtil.pathToUrl(path);
       } else if (path.indexOf('/') < path.length() - 1){
         final String relativeToOtherModule = path.substring(path.indexOf('/', 1) + 1);
-        final Module otherModule = ModuleManager.getInstance(myProject).findModuleByName(path.substring(0, path.indexOf('/')));
+        final Module otherModule = ModuleManager.getInstance(myProject).findModuleByName(path.substring(1, path.indexOf('/', 1)));
         if (otherModule != null) {
           final VirtualFile[] contentRoots = ModuleRootManager.getInstance(otherModule).getContentRoots();
           if (contentRoots.length > 0) {
