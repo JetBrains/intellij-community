@@ -45,6 +45,7 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -249,10 +250,13 @@ public abstract class TestObject implements JavaCommandLine {
             final JUnitRunningModel model = consoleView.getModel();
             final int failed = model != null ? Filter.DEFECTIVE_LEAF.and(JavaAwareFilter.METHOD(myProject)).select(model.getRoot().getAllTests()).size() : -1;
 
-            ToolWindowManager.getInstance(myProject).notifyByBalloon(
-              consoleView.getProperties().isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN,
-              failed == -1 ? MessageType.WARNING : (failed > 0 ? MessageType.ERROR : MessageType.INFO),
-              failed == -1 ? ExecutionBundle.message("test.not.started.progress.text") : (failed > 0 ? failed + " " + ExecutionBundle.message("junit.runing.info.tests.failed.label") :  ExecutionBundle.message("junit.runing.info.tests.passed.label")) , null, null);
+            final String testRunDebugId = consoleView.getProperties().isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
+            final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+            if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
+              toolWindowManager.notifyByBalloon(testRunDebugId,
+                                                                       failed == -1 ? MessageType.WARNING : (failed > 0 ? MessageType.ERROR : MessageType.INFO),
+                                                                       failed == -1 ? ExecutionBundle.message("test.not.started.progress.text") : (failed > 0 ? failed + " " + ExecutionBundle.message("junit.runing.info.tests.failed.label") :  ExecutionBundle.message("junit.runing.info.tests.passed.label")) , null, null);
+            }
           }
         });
       }

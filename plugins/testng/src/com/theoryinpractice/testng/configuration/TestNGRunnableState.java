@@ -39,6 +39,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
@@ -136,11 +137,15 @@ public class TestNGRunnableState extends JavaCommandLineState {
             if (project.isDisposed()) return;
             final TestFrameworkRunningModel model = console.getModel();
             final TestNGResults resultsView = console.getResultsView();
-            ToolWindowManager.getInstance(project).notifyByBalloon(
-              console.getProperties().isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN,
-              model == null || resultsView.getStatus() == MessageHelper.SKIPPED_TEST
-              ? MessageType.WARNING : (resultsView.getStatus() == MessageHelper.FAILED_TEST ? MessageType.ERROR : MessageType.INFO),
-              model == null ? "Tests were not started" : resultsView.getStatusLine() , null, null);
+            final String testRunDebugId = console.getProperties().isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
+            final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+            if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
+              toolWindowManager.notifyByBalloon(testRunDebugId,
+                                                model == null || resultsView.getStatus() == MessageHelper.SKIPPED_TEST
+                                                  ? MessageType.WARNING
+                                                  : (resultsView.getStatus() == MessageHelper.FAILED_TEST ? MessageType.ERROR : MessageType.INFO),
+                                                model == null ? "Tests were not started" : resultsView.getStatusLine(), null, null);
+            }
           }
         });
       }
