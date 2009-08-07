@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public class MavenModelValidationTest extends MavenCompletionAndResolutionWithIndicesTestCase {
+public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();

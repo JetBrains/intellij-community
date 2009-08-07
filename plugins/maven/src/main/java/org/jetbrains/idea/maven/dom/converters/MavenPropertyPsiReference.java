@@ -12,16 +12,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTagChild;
-import com.intellij.util.Icons;
+import com.intellij.psi.xml.*;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.Icons;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.pom.Navigatable;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,9 +27,11 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenSchemaProvider;
 import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.utils.MavenIcons;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -54,8 +54,8 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
     if (result instanceof XmlTag) {
       XmlTagChild[] children = ((XmlTag)result).getValue().getChildren();
-      if (children.length != 1) return result;
-      return new PsiElementWrapper(result, children[0]);
+      if (children.length != 1 || !(children[0] instanceof Navigatable)) return result;
+      return new PsiElementWrapper(result, (Navigatable)children[0]);
     }
 
     return result;
@@ -277,9 +277,9 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
   private void collectBasedirVariants(List<Object> result) {
     PsiDirectory basedir = PsiManager.getInstance(myProject).findDirectory(myVirtualFile.getParent());
-    result.add(createLookupElement(basedir, "basedir"));
-    result.add(createLookupElement(basedir, "pom.basedir"));
-    result.add(createLookupElement(basedir, "project.basedir"));
+    result.add(createLookupElement(basedir, "basedir", MavenIcons.MAVEN_ICON));
+    result.add(createLookupElement(basedir, "pom.basedir", MavenIcons.MAVEN_ICON));
+    result.add(createLookupElement(basedir, "project.basedir", MavenIcons.MAVEN_ICON));
   }
 
   private void collectProjectSchemaVariants(final List<Object> result) {
@@ -323,6 +323,10 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   }
 
   private LookupElement createLookupElement(Object element, String name) {
+    return createLookupElement(element, name, Icons.PROPERTY_ICON);
+  }
+
+  private LookupElement createLookupElement(Object element, String name, Icon icon) {
     LookupItem lookup = new LookupItem(element, name) {
       @NotNull
       @Override
@@ -330,7 +334,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
         return DefaultLookupItemRenderer.INSTANCE;
       }
     };
-    lookup.setIcon(Icons.PROPERTY_ICON);
+    lookup.setIcon(icon);
     lookup.setPresentableText(name);
     return lookup;
   }
@@ -402,7 +406,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
     @Nullable
     public Object process(@NotNull String property, XmlElementDescriptor descriptor) {
-      myResult.add(createLookupElement(descriptor, property));
+      myResult.add(createLookupElement(descriptor, property, MavenIcons.MAVEN_ICON));
       return null;
     }
   }

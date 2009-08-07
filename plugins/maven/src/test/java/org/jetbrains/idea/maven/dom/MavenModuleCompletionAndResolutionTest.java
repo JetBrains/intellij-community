@@ -7,7 +7,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public class MavenModuleCompletionAndResolutionTest extends MavenCompletionAndResolutionWithIndicesTestCase {
+public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   public void testCompleteFromAllAvailableModules() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

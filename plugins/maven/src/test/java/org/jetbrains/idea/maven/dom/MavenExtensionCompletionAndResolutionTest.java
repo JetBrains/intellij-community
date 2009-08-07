@@ -5,7 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
 
-public class MavenExtensionCompletionAndResolutionTest extends MavenCompletionAndResolutionWithIndicesTestCase {
+public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   @Override
   protected MavenIndicesTestFixture createIndicesFixture() {
     return new MavenIndicesTestFixture(myDir, myProject, "plugins");

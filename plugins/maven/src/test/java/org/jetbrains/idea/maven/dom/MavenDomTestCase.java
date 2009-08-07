@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public abstract class MavenCompletionAndResolutionTestCase extends MavenImportingTestCase {
+public abstract class MavenDomTestCase extends MavenImportingTestCase {
   protected CodeInsightTestFixture myCodeInsightFixture;
   private boolean myOriginalAutoCompletion;
 
@@ -52,6 +52,12 @@ public abstract class MavenCompletionAndResolutionTestCase extends MavenImportin
     myCodeInsightFixture.configureFromExistingVirtualFile(f);
     CaretModel e = myCodeInsightFixture.getEditor().getCaretModel();
     return myCodeInsightFixture.getFile().findReferenceAt(e.getOffset());
+  }
+
+  protected PsiElement getElementAtCaret(VirtualFile f) throws IOException {
+    myCodeInsightFixture.configureFromExistingVirtualFile(f);
+    CaretModel e = myCodeInsightFixture.getEditor().getCaretModel();
+    return myCodeInsightFixture.getFile().findElementAt(e.getOffset());
   }
 
   protected XmlTag findTag(String path) {

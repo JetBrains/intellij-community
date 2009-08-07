@@ -2,7 +2,7 @@ package org.jetbrains.idea.maven.dom;
 
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
 
-public abstract class MavenCompletionAndResolutionWithIndicesTestCase extends MavenCompletionAndResolutionTestCase {
+public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
   protected MavenIndicesTestFixture myIndicesFixture;
 
   @Override

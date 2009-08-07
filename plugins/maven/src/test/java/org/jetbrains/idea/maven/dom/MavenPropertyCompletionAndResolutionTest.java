@@ -10,7 +10,7 @@ import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
 import java.util.List;
 
-public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAndResolutionTestCase {
+public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
@@ -91,6 +91,18 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenCompletionAnd
                      "<version>1</version>" +
 
                      "<name>${project.artifactId}-${<caret>project.version}</name>");
+
+    assertResolved(myProjectPom, findTag("project.version"));
+  }
+
+  public void testResolvingFromPropertiesSection() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <foo>${<caret>project.version}</foo>" +
+                     "</properties>");
 
     assertResolved(myProjectPom, findTag("project.version"));
   }

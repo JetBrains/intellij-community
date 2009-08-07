@@ -11,7 +11,7 @@ import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
 import java.io.IOException;
 import java.util.List;
 
-public class MavenPluginCompletionAndResolutionTest extends MavenCompletionAndResolutionWithIndicesTestCase {
+public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   @Override
   protected MavenIndicesTestFixture createIndicesFixture() {
     return new MavenIndicesTestFixture(myDir, myProject, "plugins");

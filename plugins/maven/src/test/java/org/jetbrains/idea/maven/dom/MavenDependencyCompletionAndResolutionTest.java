@@ -18,7 +18,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import javax.swing.*;
 import java.awt.*;
 
-public class MavenDependencyCompletionAndResolutionTest extends MavenCompletionAndResolutionWithIndicesTestCase {
+public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();

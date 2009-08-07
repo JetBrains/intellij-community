@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 
-public class MavenParentCompletionAndResolutionTest extends MavenCompletionAndResolutionWithIndicesTestCase {
+public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   public void testVariants() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

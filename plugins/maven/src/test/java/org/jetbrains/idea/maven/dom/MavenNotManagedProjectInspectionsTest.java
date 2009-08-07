@@ -4,7 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.testFramework.PsiTestUtil;
 
-public class MavenNotManagedProjectInspectionsTest extends MavenCompletionAndResolutionTestCase {
+public class MavenNotManagedProjectInspectionsTest extends MavenDomTestCase {
   public void testWorkForNonMavenProjects() throws Throwable {
     Module m = createModule("module");
     PsiTestUtil.addContentRoot(m, myProjectRoot);
