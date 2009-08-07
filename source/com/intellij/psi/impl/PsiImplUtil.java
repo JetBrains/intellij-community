@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class PsiImplUtil {
@@ -110,7 +111,7 @@ public class PsiImplUtil {
     for (int i = 0; i < parameters.length; i++) {
       if (parameter.equals(parameters[i])) return i;
     }
-    LOG.assertTrue(false);
+    LOG.error("Parameter " + parameter + " not found among paramaters: " + Arrays.asList(parameters));
     return -1;
   }
 
