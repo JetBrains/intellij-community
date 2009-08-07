@@ -17,11 +17,15 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -31,6 +35,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
  * @date: 04.04.2007
  */
 public class GrAnnotationImpl extends GroovyPsiElementImpl implements GrAnnotation {
+  private static final PairFunction<Project, String, PsiAnnotation> ANNOTATION_CREATOR = new PairFunction<Project, String, PsiAnnotation>() {
+    public PsiAnnotation fun(Project project, String text) {
+      return GroovyPsiElementFactory.getInstance(project).createAnnotationFromText(text);
+    }
+  };
+
   public GrAnnotationImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -45,7 +55,7 @@ public class GrAnnotationImpl extends GroovyPsiElementImpl implements GrAnnotati
 
   @NotNull
   public PsiAnnotationParameterList getParameterList() {
-    return findChildByClass(PsiAnnotationParameterList.class);
+    return findNotNullChildByClass(PsiAnnotationParameterList.class);
   }
 
   @Nullable
@@ -64,19 +74,17 @@ public class GrAnnotationImpl extends GroovyPsiElementImpl implements GrAnnotati
     return null;
   }
 
-  @Nullable
-  public PsiAnnotationMemberValue findAttributeValue(@NonNls String attributeName) {
-    return null; //todo
+  public PsiAnnotationMemberValue findAttributeValue(String attributeName) {
+    return PsiImplUtil.findAttributeValue(this, attributeName);
   }
 
   @Nullable
-  public PsiAnnotationMemberValue findDeclaredAttributeValue(@NonNls String attributeName) {
-    return null; //todo
+  public PsiAnnotationMemberValue findDeclaredAttributeValue(@NonNls final String attributeName) {
+    return PsiImplUtil.findDeclaredAttributeValue(this, attributeName);
   }
 
-  @NotNull
   public <T extends PsiAnnotationMemberValue>  T setDeclaredAttributeValue(@NonNls String attributeName, T value) {
-    throw new UnsupportedOperationException("Method setDeclaredAttributeValue is not yet implemented in " + getClass().getName());
+    return (T)PsiImplUtil.setDeclaredAttributeValue(this, attributeName, value, ANNOTATION_CREATOR);
   }
 
   @Nullable

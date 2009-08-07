@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.groovy.codeInspection.noReturnMethod;
 
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -10,6 +9,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
+import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruc
 /**
  * @author ven
  */
-public class MissingReturnInspection extends LocalInspectionTool {
+public class MissingReturnInspection extends GroovySuppressableInspectionTool {
   @Nls
   @NotNull
   public String getGroupDisplayName() {

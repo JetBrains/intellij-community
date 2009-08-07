@@ -51,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorImpl;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
@@ -325,6 +326,11 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     GrTopLevelDefintion defintion = file.getTopLevelDefinitions()[0];
     assert defintion != null && defintion instanceof GrMethod;
     return ((GrMethod) defintion);
+  }
+
+  @Override
+  public GrAnnotation createAnnotationFromText(String annoText) {
+    return createMethodFromText(annoText + " void foo() {}").getModifierList().getAnnotations()[0];
   }
 
   public PsiFile createGroovyFile(String idText) {

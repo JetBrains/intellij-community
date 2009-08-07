@@ -30,7 +30,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 
-public abstract class BaseInspection extends LocalInspectionTool {
+public abstract class BaseInspection extends GroovySuppressableInspectionTool {
 
   private final String m_shortName = null;
   protected static final String ASSIGNMENT_ISSUES = "Assignment issues";

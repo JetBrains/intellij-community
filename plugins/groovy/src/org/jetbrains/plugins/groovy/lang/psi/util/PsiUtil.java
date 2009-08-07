@@ -43,10 +43,12 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -733,5 +735,17 @@ public class PsiUtil {
       }
     }
     return identifier;
+  }
+
+  @Nullable
+  public static PsiElement findEnclosingStatement(@Nullable PsiElement context) {
+    if (context == null) return null;
+    context = PsiTreeUtil.getParentOfType(context, GrStatement.class, false);
+    while (context != null) {
+      final PsiElement parent = context.getParent();
+      if (parent instanceof GrControlFlowOwner) return context;
+      context = parent;
+    }
+    return null;
   }
 }

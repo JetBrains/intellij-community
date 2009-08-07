@@ -14,7 +14,6 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection;
 
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 /**
  * @author ven
  */
-public abstract class GroovyLocalInspectionBase extends LocalInspectionTool {
+public abstract class GroovyLocalInspectionBase extends GroovySuppressableInspectionTool {
   @NotNull
    @Override
    public String[] getGroupPath() {

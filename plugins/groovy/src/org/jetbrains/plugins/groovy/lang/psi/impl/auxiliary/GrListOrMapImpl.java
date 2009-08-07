@@ -23,6 +23,7 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -55,6 +56,17 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
 
   public String toString() {
     return "Generalized list";
+  }
+
+  @Override
+  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+    final GrExpression[] initializers = getInitializers();
+    if (initializers.length == 0) {
+      return super.addInternal(first, last, getNode().getFirstChildNode(), false);
+    }
+    final ASTNode lastChild = getNode().getLastChildNode();
+    getNode().addLeaf(mCOMMA, ",", lastChild);
+    return super.addInternal(first, last, lastChild.getTreePrev(), false);
   }
 
   public PsiType getType() {
