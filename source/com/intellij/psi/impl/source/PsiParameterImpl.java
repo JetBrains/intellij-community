@@ -23,6 +23,7 @@ import com.intellij.util.PatchedSoftReference;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Arrays;
 
 public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> implements PsiParameter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterImpl");
@@ -181,7 +182,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
           return children[i];
         }
       }
-      LOG.assertTrue(false);
+      LOG.error("codeblock not found among parameter' "+this+" parents children: "+ Arrays.asList(children));
       return null;
     }
   }
