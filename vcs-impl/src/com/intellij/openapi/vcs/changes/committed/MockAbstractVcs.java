@@ -5,6 +5,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
@@ -12,6 +13,8 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.Nullable;
 
 public class MockAbstractVcs extends AbstractVcs {
+  private static final String NAME = "mock";
+  private static final VcsKey ourKey = createKey(NAME);
   private boolean myMarkExternalChangesAsCurrent = false;
   private LocalVcsItemsLocker myUpToDateRevisionProvider;
   private CheckinEnvironment myCheckinEnvironment;
@@ -20,7 +23,7 @@ public class MockAbstractVcs extends AbstractVcs {
   private ChangeProvider myChangeProvider;
 
   public MockAbstractVcs(Project project){
-    super(project);
+    super(project, NAME);
   }
 
   public CheckinEnvironment getCheckinEnvironment() {
@@ -35,12 +38,8 @@ public class MockAbstractVcs extends AbstractVcs {
     return myDiffProvider;
   }
 
-  public String getName() {
-    return "mock";
-  }
-
   public String getDisplayName() {
-    return "mock";
+    return NAME;
   }
 
   public Configurable getConfigurable() {
@@ -92,5 +91,9 @@ public class MockAbstractVcs extends AbstractVcs {
 
   public void setChangeProvider(final ChangeProvider changeProvider) {
     myChangeProvider = changeProvider;
+  }
+
+  public static VcsKey getKey() {
+    return ourKey;
   }
 }

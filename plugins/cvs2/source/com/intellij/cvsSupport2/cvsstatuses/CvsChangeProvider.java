@@ -144,7 +144,7 @@ public class CvsChangeProvider implements ChangeProvider {
     if (CvsUtil.fileIsUnderCvs(dir) && dir.getChildren().length == 1 /* admin dir */ &&
         dirContent.getDeletedFiles().isEmpty() && hasRemovedFiles(dirContent.getFiles())) {
       // directory is going to be deleted
-      builder.processChange(new Change(CurrentContentRevision.create(path), CurrentContentRevision.create(path), FileStatus.DELETED));
+      builder.processChange(new Change(CurrentContentRevision.create(path), CurrentContentRevision.create(path), FileStatus.DELETED), CvsVcs2.getKey());
     }
     for (VirtualFileEntry fileEntry : dirContent.getFiles()) {
       processFile(dir, fileEntry.getVirtualFile(), fileEntry.getEntry(), builder);
@@ -290,20 +290,20 @@ public class CvsChangeProvider implements ChangeProvider {
     if (status == FileStatus.NOT_CHANGED) {
       if (file != null && FileDocumentManager.getInstance().isFileModifiedAndDocumentUnsaved(file)) {
         builder.processChange(
-          new Change(createCvsRevision(filePath, number, isBinary), CurrentContentRevision.create(filePath), FileStatus.MODIFIED));
+          new Change(createCvsRevision(filePath, number, isBinary), CurrentContentRevision.create(filePath), FileStatus.MODIFIED), CvsVcs2.getKey());
       }
       return;
     }
     if (status == FileStatus.MODIFIED || status == FileStatus.MERGE || status == FileStatus.MERGED_WITH_CONFLICTS) {
       builder.processChange(new Change(createCvsRevision(filePath, number, isBinary),
-          CurrentContentRevision.create(filePath), status));
+          CurrentContentRevision.create(filePath), status), CvsVcs2.getKey());
     }
     else if (status == FileStatus.ADDED) {
-      builder.processChange(new Change(null, CurrentContentRevision.create(filePath), status));
+      builder.processChange(new Change(null, CurrentContentRevision.create(filePath), status), CvsVcs2.getKey());
     }
     else if (status == FileStatus.DELETED) {
       // not sure about deleted content
-      builder.processChange(new Change(createCvsRevision(filePath, number, isBinary), null, status));
+      builder.processChange(new Change(createCvsRevision(filePath, number, isBinary), null, status), CvsVcs2.getKey());
     }
     else if (status == FileStatus.DELETED_FROM_FS) {
       builder.processLocallyDeletedFile(filePath);

@@ -17,6 +17,7 @@
 package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -30,15 +31,15 @@ import java.util.List;
 public class MockChangelistBuilder implements ChangelistBuilder {
   private final List<Change> myChanges = new ArrayList<Change>();
 
-  public void processChange(Change change) {
+  public void processChange(Change change, VcsKey vcsKey) {
     myChanges.add(change);
   }
 
-  public void processChangeInList(Change change, @Nullable ChangeList changeList) {
+  public void processChangeInList(Change change, @Nullable ChangeList changeList, VcsKey vcsKey) {
     myChanges.add(change);
   }
 
-  public void processChangeInList(Change change, String changeListName) {
+  public void processChangeInList(Change change, String changeListName, VcsKey vcsKey) {
     myChanges.add(change);
   }
 

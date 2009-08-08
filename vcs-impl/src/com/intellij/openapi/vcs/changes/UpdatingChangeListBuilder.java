@@ -5,6 +5,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -44,11 +45,11 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     myFoldersCutDownWorker = foldersWorker;
   }
 
-  public void processChange(final Change change) {
-    processChangeInList( change, (ChangeList) null );
+  public void processChange(final Change change, VcsKey vcsKey) {
+    processChangeInList( change, (ChangeList) null, vcsKey);
   }
 
-  public void processChangeInList(final Change change, @Nullable final ChangeList changeList) {
+  public void processChangeInList(final Change change, @Nullable final ChangeList changeList, VcsKey vcsKey) {
     checkIfDisposed();
 
     final String fileName = ChangesUtil.getFilePath(change).getName();
@@ -67,7 +68,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     });
   }
 
-  public void processChangeInList(final Change change, final String changeListName) {
+  public void processChangeInList(final Change change, final String changeListName, VcsKey vcsKey) {
     checkIfDisposed();
 
     LocalChangeList list = null;
@@ -77,7 +78,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
         list = myGate.addChangeList(changeListName, null);
       }
     }
-    processChangeInList(change, list);
+    processChangeInList(change, list, vcsKey);
   }
 
   private boolean isExcluded(final VirtualFile file) {

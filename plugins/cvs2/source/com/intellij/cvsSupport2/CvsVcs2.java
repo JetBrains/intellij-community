@@ -61,7 +61,8 @@ import java.util.*;
  */
 
 public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFileProvider, CvsEntriesListener {
-
+  private static final String NAME = "CVS";
+  private static final VcsKey ourKey = createKey(NAME);
   private final Cvs2Configurable myConfigurable;
 
   @NonNls private static final String ourRevisionPattern = "\\d+(\\.\\d+)*";
@@ -90,7 +91,7 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
   private MergeProvider myMergeProvider;
 
   public CvsVcs2(Project project, CvsStorageComponent cvsStorageComponent) {
-    super(project);
+    super(project, NAME);
     myCvsHistoryProvider = new CvsHistoryProvider(project);
     myCvsCheckinEnvironment = new CvsCheckinEnvironment(getProject());
     myCvsCheckoutProvider = new CvsCheckoutProvider();
@@ -118,9 +119,6 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
 
 
   /* ======================================== AbstractVcs*/
-  public String getName() {
-    return "CVS";
-  }
 
   public String getDisplayName() {
     return CvsBundle.getCvsDisplayName();
@@ -159,7 +157,7 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
 
 
   public static CvsVcs2 getInstance(Project project) {
-    return (CvsVcs2) ProjectLevelVcsManager.getInstance(project).findVcsByName("CVS");
+    return (CvsVcs2) ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
   }
 
   public int getFilesToProcessCount() {
@@ -417,7 +415,7 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
 
   @Override
   public boolean isVersionedDirectory(final VirtualFile dir) {
-    final VirtualFile child = dir.findChild("CVS");
+    final VirtualFile child = dir.findChild(NAME);
     return child != null && child.isDirectory();
   }
 
@@ -431,6 +429,10 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
       myMergeProvider = new CvsMergeProvider();
     }
     return myMergeProvider;
+  }
+
+  public static VcsKey getKey() {
+    return ourKey;
   }
 }
 

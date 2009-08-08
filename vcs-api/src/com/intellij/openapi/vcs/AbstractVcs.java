@@ -50,13 +50,15 @@ public abstract class AbstractVcs extends StartedActivated {
   @NonNls protected static final String ourIntegerPattern = "\\d+";
 
   protected final Project myProject;
+  private final String myName;
   private VcsShowSettingOption myUpdateOption;
   private VcsShowSettingOption myStatusOption;
 
-  public AbstractVcs(Project project) {
+  public AbstractVcs(final Project project, final String name) {
     super(project);
 
     myProject = project;
+    myName = name;
   }
 
   // acts as adapter
@@ -73,7 +75,9 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   @NonNls
-  public abstract String getName();
+  public final String getName() {
+    return myName;
+  }
 
   @NonNls
   public abstract String getDisplayName();
@@ -391,6 +395,10 @@ public abstract class AbstractVcs extends StartedActivated {
 
   public Project getProject() {
     return myProject;
+  }
+
+  protected static VcsKey createKey(final String name) {
+    return new VcsKey(name);
   }
 }
 

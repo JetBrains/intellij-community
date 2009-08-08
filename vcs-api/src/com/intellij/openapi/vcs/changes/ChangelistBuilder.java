@@ -17,6 +17,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,10 +34,11 @@ public interface ChangelistBuilder {
    * version control system knows about.
    *
    * @param change a change to process.
+   * @param vcsKey
    */
-  void processChange(Change change);
+  void processChange(Change change, VcsKey vcsKey);
 
-  void processChangeInList(Change change, @Nullable ChangeList changeList);
+  void processChangeInList(Change change, @Nullable ChangeList changeList, VcsKey vcsKey);
 
   /**
    * Put the given change into the change list with the given name.
@@ -45,8 +47,9 @@ public interface ChangelistBuilder {
    *
    * @param change         Submitted change
    * @param changeListName A name for a change list.
+   * @param vcsKey
    */
-  void processChangeInList(Change change, String changeListName);
+  void processChangeInList(Change change, String changeListName, VcsKey vcsKey);
 
   /**
    * Process a file that is not under version control.
