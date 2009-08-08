@@ -114,6 +114,8 @@ public class SvnVcs extends AbstractVcs {
   private final static Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnVcs");
+  @NonNls public static final String VCS_NAME = "svn";
+  private static final VcsKey ourKey = createKey(VCS_NAME);
   private final Map<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>> myPropertyCache = new SoftHashMap<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>>();
 
   private final SvnConfiguration myConfiguration;
@@ -136,7 +138,6 @@ public class SvnVcs extends AbstractVcs {
   private MergeProvider myMergeProvider;
 
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
-  @NonNls public static final String VCS_NAME = "svn";
   public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
   public static final String pathToDirProps = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.DIR_PROPS_FILE_NAME;
   private final SvnChangelistListener myChangeListListener;
@@ -176,7 +177,7 @@ public class SvnVcs extends AbstractVcs {
 
   public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration, final ChangeListManager changeListManager,
                 final VcsDirtyScopeManager vcsDirtyScopeManager) {
-    super(project);
+    super(project, VCS_NAME);
     LOG.debug("ct");
     myConfiguration = svnConfiguration;
 
@@ -502,11 +503,6 @@ public class SvnVcs extends AbstractVcs {
       mySvnUpdateEnvironment = new SvnUpdateEnvironment(this);
     }
     return mySvnUpdateEnvironment;
-  }
-
-  public String getName() {
-    LOG.debug("getName");
-    return VCS_NAME;
   }
 
   public String getDisplayName() {
@@ -936,5 +932,9 @@ public class SvnVcs extends AbstractVcs {
         myDirtyScopeManager.filesDirty(null, folders);
       }
     }
+  }
+
+  public static VcsKey getKey() {
+    return ourKey;
   }
 }

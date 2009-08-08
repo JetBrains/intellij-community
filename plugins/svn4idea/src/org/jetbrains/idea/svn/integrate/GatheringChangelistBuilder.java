@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.update.UpdatedFilesReverseSide;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,15 +36,15 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
     myCheckSet = new HashSet<VirtualFile>();
   }
 
-  public void processChange(final Change change) {
+  public void processChange(final Change change, VcsKey vcsKey) {
     addChange(change);
   }
 
-  public void processChangeInList(final Change change, @Nullable final ChangeList changeList) {
+  public void processChangeInList(final Change change, @Nullable final ChangeList changeList, VcsKey vcsKey) {
     addChange(change);
   }
 
-  public void processChangeInList(final Change change, final String changeListName) {
+  public void processChangeInList(final Change change, final String changeListName, VcsKey vcsKey) {
     addChange(change);
   }
 

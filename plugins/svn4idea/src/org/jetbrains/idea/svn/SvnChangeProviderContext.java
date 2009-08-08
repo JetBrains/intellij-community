@@ -197,15 +197,17 @@ class SvnChangeProviderContext implements StatusReceiver {
                propStatus == SVNStatusType.STATUS_MODIFIED ||
                propStatus == SVNStatusType.STATUS_CONFLICTED) {
         myChangelistBuilder.processChangeInList(createChange(SvnContentRevision.create(myVcs, filePath, status.getCommittedRevision()),
-                                                 CurrentContentRevision.create(filePath), fStatus, status), changeListNameFromStatus(status));
+                                                 CurrentContentRevision.create(filePath), fStatus, status), changeListNameFromStatus(status),
+                                                SvnVcs.getKey());
         checkSwitched(filePath, myChangelistBuilder, status, fStatus);
       }
       else if (statusType == SVNStatusType.STATUS_ADDED) {
-        myChangelistBuilder.processChangeInList(createChange(null, CurrentContentRevision.create(filePath), fStatus, status), changeListNameFromStatus(status));
+        myChangelistBuilder.processChangeInList(createChange(null, CurrentContentRevision.create(filePath), fStatus, status), changeListNameFromStatus(status),
+                                                SvnVcs.getKey());
       }
       else if (statusType == SVNStatusType.STATUS_DELETED) {
         myChangelistBuilder.processChangeInList(createChange(SvnContentRevision.create(myVcs, filePath, status.getCommittedRevision()), null, fStatus, status),
-                                    changeListNameFromStatus(status));
+                                    changeListNameFromStatus(status), SvnVcs.getKey());
       }
       else if (statusType == SVNStatusType.STATUS_MISSING) {
         myChangelistBuilder.processLocallyDeletedFile(createLocallyDeletedChange(filePath, status));
@@ -220,7 +222,8 @@ class SvnChangeProviderContext implements StatusReceiver {
         VirtualFile file = filePath.getVirtualFile();
         if (file != null && FileDocumentManager.getInstance().isFileModifiedAndDocumentUnsaved(file)) {
           myChangelistBuilder.processChangeInList(createChange(SvnContentRevision.create(myVcs, filePath, status.getCommittedRevision()),
-                                                   CurrentContentRevision.create(filePath), FileStatus.MODIFIED, status), changeListNameFromStatus(status));
+                                                   CurrentContentRevision.create(filePath), FileStatus.MODIFIED, status), changeListNameFromStatus(status),
+                                                  SvnVcs.getKey());
         }
         checkSwitched(filePath, myChangelistBuilder, status, fStatus);
       }

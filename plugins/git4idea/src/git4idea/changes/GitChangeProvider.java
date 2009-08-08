@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -58,7 +59,7 @@ public class GitChangeProvider implements ChangeProvider {
     for (VirtualFile root : roots) {
       ChangeCollector c = new ChangeCollector(myProject, root);
       for (Change file : c.changes()) {
-        builder.processChange(file);
+        builder.processChange(file, GitVcs.getKey());
       }
       for (VirtualFile f : c.unversioned()) {
         builder.processUnversionedFile(f);

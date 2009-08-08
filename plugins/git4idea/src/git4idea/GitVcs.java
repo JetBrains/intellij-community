@@ -74,6 +74,7 @@ public class GitVcs extends AbstractVcs {
    * Vcs name
    */
   @NonNls public static final String NAME = "Git";
+  private static final VcsKey ourKey = createKey(NAME);
   /**
    * change provider
    */
@@ -176,7 +177,7 @@ public class GitVcs extends AbstractVcs {
                 @NotNull final GitHistoryProvider gitHistoryProvider,
                 @NotNull final GitRollbackEnvironment gitRollbackEnvironment,
                 @NotNull final GitVcsSettings gitSettings) {
-    super(project);
+    super(project, NAME);
     myVcsManager = gitVcsManager;
     mySettings = gitSettings;
     myChangeProvider = gitChangeProvider;
@@ -245,14 +246,6 @@ public class GitVcs extends AbstractVcs {
   public String getRevisionPattern() {
     // return the full commit hash pattern, possibly other revision formats should be supported as well
     return "[0-9a-fA-F]{40}";
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public String getName() {
-    return NAME;
   }
 
   /**
@@ -617,5 +610,9 @@ public class GitVcs extends AbstractVcs {
   @Override
   public RootsConvertor getCustomConvertor() {
     return GitRootConverter.INSTANCE;
+  }
+
+  public static VcsKey getKey() {
+    return ourKey;
   }
 }

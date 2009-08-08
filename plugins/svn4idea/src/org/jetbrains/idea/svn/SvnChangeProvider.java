@@ -167,7 +167,7 @@ public class SvnChangeProvider implements ChangeProvider {
       if ((deletedStatus != null) && (deletedStatus.getURL() != null) && Comparing.equal(copyFromURL, deletedStatus.getURL().toString())) {
         final String clName = changeListNameFromStatus(copiedFile.getStatus());
         builder.processChangeInList(context.createMovedChange(createBeforeRevision(deletedFile, true),
-                                 CurrentContentRevision.create(copiedFile.getFilePath()), copiedStatus, deletedStatus), clName);
+                                 CurrentContentRevision.create(copiedFile.getFilePath()), copiedStatus, deletedStatus), clName, SvnVcs.getKey());
         deletedToDelete.add(deletedFile);
         for(Iterator<SvnChangedFile> iterChild = context.getDeletedFiles().iterator(); iterChild.hasNext();) {
           SvnChangedFile deletedChild = iterChild.next();
@@ -187,7 +187,7 @@ public class SvnChangeProvider implements ChangeProvider {
             if (!context.isDeleted(newFilePath)) {
               builder.processChangeInList(context.createMovedChange(createBeforeRevision(deletedChild, true),
                                                             CurrentContentRevision.create(newFilePath),
-                                                            context.getTreeConflictStatus(newPath), childStatus), clName);
+                                                            context.getTreeConflictStatus(newPath), childStatus), clName, SvnVcs.getKey());
               deletedToDelete.add(deletedChild);
             }
           }
@@ -217,7 +217,8 @@ public class SvnChangeProvider implements ChangeProvider {
         final FilePath filePath = myFactory.createFilePathOnDeleted(wcPath, false);
         final SvnContentRevision beforeRevision = SvnContentRevision.create(myVcs, filePath, status.getCommittedRevision());
         final ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());
-        builder.processChangeInList(context.createMovedChange(beforeRevision, afterRevision, copiedStatus, status), changeListNameFromStatus(status));
+        builder.processChangeInList(context.createMovedChange(beforeRevision, afterRevision, copiedStatus, status), changeListNameFromStatus(status),
+                                    SvnVcs.getKey());
         foundRename = true;
       }
     }
