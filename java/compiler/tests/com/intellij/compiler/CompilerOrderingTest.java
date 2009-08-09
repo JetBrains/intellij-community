@@ -78,8 +78,7 @@ public class CompilerOrderingTest extends IdeaTestCase {
       return false;
     }
 
-    public ExitStatus compile(final CompileContext context, final VirtualFile[] files) {
-      return null;
+    public void compile(final CompileContext context, final VirtualFile[] files, OutputSink sink) {
     }
 
     @NotNull
