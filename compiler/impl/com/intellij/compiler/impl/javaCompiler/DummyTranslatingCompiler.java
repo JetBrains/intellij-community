@@ -6,14 +6,12 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ByteTrie;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -22,15 +20,14 @@ import java.util.List;
 public class DummyTranslatingCompiler implements TranslatingCompiler, IntermediateOutputCompiler{
   @NonNls private static final String DESCRIPTION = "DUMMY TRANSLATOR";
   @NonNls private static final String FILETYPE_EXTENSION = ".dummy";
-  private final ByteTrie myTrie = new ByteTrie();
 
   public boolean isCompilableFile(final VirtualFile file, final CompileContext context) {
     return file.getName().endsWith(FILETYPE_EXTENSION);
   }
 
-  public ExitStatus compile(final CompileContext context, final VirtualFile[] files) {
-    final List<OutputItem> items = new ArrayList<OutputItem>();
+  public void compile(final CompileContext context, final VirtualFile[] files, OutputSink sink) {
     final List<File> filesToRefresh = new ArrayList<File>();
+    final Map<String, Collection<OutputItem>> outputs = new HashMap<String, Collection<OutputItem>>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         for (final VirtualFile file : files) {
@@ -38,10 +35,15 @@ public class DummyTranslatingCompiler implements TranslatingCompiler, Intermedia
           try {
             final VirtualFile outputDir = context.getModuleOutputDirectory(module);
             if (outputDir != null) {
+              final String outputDirPath = outputDir.getPath();
               final File compiledFile = doCompile(outputDir, file);
               filesToRefresh.add(compiledFile);
-              String outputDirPath = outputDir.getPath();
-              items.add(new OutputItemImpl(outputDirPath, new String(FileUtil.toSystemIndependentName(compiledFile.getPath()).substring(outputDirPath.length() + 1)), file));
+              Collection<OutputItem> collection = outputs.get(outputDirPath);
+              if (collection == null) {
+                collection = new ArrayList<OutputItem>();
+                outputs.put(outputDirPath, collection);
+              }
+              collection.add(new OutputItemImpl(FileUtil.toSystemIndependentName(compiledFile.getPath()), file));
             }
           }
           catch (IOException e) {
@@ -51,15 +53,9 @@ public class DummyTranslatingCompiler implements TranslatingCompiler, Intermedia
       }
     });
     CompilerUtil.refreshIOFiles(filesToRefresh);
-    return new ExitStatus() {
-      public OutputItem[] getSuccessfullyCompiled() {
-        return items.toArray(new OutputItem[items.size()]);
-      }
-
-      public VirtualFile[] getFilesToRecompile() {
-        return VirtualFile.EMPTY_ARRAY;
-      }
-    };
+    for (Map.Entry<String, Collection<OutputItem>> entry : outputs.entrySet()) {
+      sink.add(entry.getKey(), entry.getValue(), VirtualFile.EMPTY_ARRAY);
+    }
   }
 
   private static File doCompile(VirtualFile out, VirtualFile src) throws IOException {

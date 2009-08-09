@@ -17,6 +17,8 @@ package com.intellij.openapi.compiler;
 
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.util.Collection;
+
 /**
  * A tag interface indicating that the compiler will translate one type of files into another (e.g. .java -> .class).
  * This affects the order of compiler calls.
@@ -24,10 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
  * SourceGeneratingCompiler -> SourceInstrumentingCompiler -> TranslatingCompiler ->  ClassInstrumentingCompiler -> ClassPostProcessingCompiler -> PackagingCompiler -> Validator
  */
 public interface TranslatingCompiler extends Compiler {
-  /**
-   * Empty array of output items which can be reused to avoid unnecessary allocations.
-   */
-  OutputItem[] EMPTY_OUTPUT_ITEM_ARRAY = new OutputItem[0];
 
   /**
    * Defines a single file compiled by the compiler.
@@ -46,35 +44,18 @@ public interface TranslatingCompiler extends Compiler {
      * @return the source file to be compiled
      */
     VirtualFile getSourceFile();
-
-    /**
-     * Returns the output directory for this output item.
-     *
-     * @return the output directory for this output item ('/' slashes used)
-     */
-    String getOutputRootDirectory();
   }
 
-  /**
-   * Defines the result of a compile operation.
-   *
-   * @see TranslatingCompiler#compile(CompileContext, com.intellij.openapi.vfs.VirtualFile[])
-   */
-  interface ExitStatus {
+  interface OutputSink {
     /**
-     * Returns the output items that were successfully compiled.
      *
-     * @return all output items that were successfully compiled
+     * @param outputRoot output directory
+     * @param items output items that were successfully compiled.
+     * @param filesToRecompile virtual files that should be considered as "modified" next time compilation is invoked.
      */
-    OutputItem[] getSuccessfullyCompiled();
-
-    /**
-     * Returns the list of virtual files that should be considered as "modified" next time compilation is invoked.
-     *
-     * @return a list of virtual files that should be considered as "modified" next time compilation is invoked
-     */
-    VirtualFile[] getFilesToRecompile();
+    void add(String outputRoot, Collection<OutputItem> items, VirtualFile[] filesToRecompile);
   }
+
 
   /**
    * Checks if the compiler can compile the specified file.
@@ -82,7 +63,7 @@ public interface TranslatingCompiler extends Compiler {
    * @param file    the file to check.
    * @param context the context for the current compile operation.
    * @return true if can compile the file, false otherwise. If the method returns false, <code>file</code>
-   *         will not be included in the list of files passed to {@link #compile(CompileContext, com.intellij.openapi.vfs.VirtualFile[])}.
+   *         will not be included in the list of files passed to {@link #compile(CompileContext,com.intellij.openapi.vfs.VirtualFile[], com.intellij.openapi.compiler.TranslatingCompiler.OutputSink)}.
    */
   boolean isCompilableFile(VirtualFile file, CompileContext context);
 
@@ -91,7 +72,7 @@ public interface TranslatingCompiler extends Compiler {
    *
    * @param context the context for the current compile operation.
    * @param files   the source files to compile.
-   * @return object containing the result of the compilation.
+   * @param sink storage that accepts compiler output results
    */
-  ExitStatus compile(CompileContext context, VirtualFile[] files);
+  void compile(CompileContext context, VirtualFile[] files, OutputSink sink);
 }

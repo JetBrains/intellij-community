@@ -781,9 +781,10 @@ public class CompileDriver {
     VirtualFile[] snapshot = null;
 
 
-    final List<TranslatingCompiler.OutputItem> postponedItems = new ArrayList<TranslatingCompiler.OutputItem>();
+    final TranslatorsOutputSink sink = new TranslatorsOutputSink(context, translators);
     try {
       for (int currentCompiler = 0, translatorsLength = translators.length; currentCompiler < translatorsLength; currentCompiler++) {
+        sink.setCurrentCompilerIndex(currentCompiler);
         final TranslatingCompiler translator = translators[currentCompiler];
         if (context.getProgressIndicator().isCanceled()) {
           throw new ExitException(ExitStatus.CANCELLED);
@@ -816,7 +817,7 @@ public class CompileDriver {
           _context = context;
         }
         final boolean compiledSomething =
-          compileSources(_context, translators, currentCompiler, snapshot, forceCompile, isRebuild, trackDependencies, onlyCheckStatus, postponedItems);
+          compileSources(_context, translators, currentCompiler, snapshot, forceCompile, isRebuild, trackDependencies, onlyCheckStatus, sink);
 
         if (compiledSomething) {
           generatedTypes.addAll(compilerManager.getRegisteredOutputTypes(translator));
@@ -832,18 +833,9 @@ public class CompileDriver {
       }
     }
     finally {
-      if (context.getMessageCount(CompilerMessageCategory.ERROR) == 0 && postponedItems.size() > 0) {
+      if (context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
         // perform update only if there were no errors, so it is guaranteed that the file was processd by all neccesary compilers
-        try {
-          final TranslatingCompiler.OutputItem[] successfullyCompiled =
-            postponedItems.toArray(new TranslatingCompiler.OutputItem[postponedItems.size()]);
-          TranslatingCompilerFilesMonitor.getInstance().update(context, successfullyCompiled, VirtualFile.EMPTY_ARRAY);
-        }
-        catch (IOException e) {
-          LOG.info(e);
-          context.requestRebuildNextTime(e.getMessage());
-          throw new ExitException(ExitStatus.ERRORS);
-        }
+        sink.flushPostponedItems();
       }
     }
     return didSomething;
@@ -1288,7 +1280,7 @@ public class CompileDriver {
                                  final boolean isRebuild,
                                  final boolean trackDependencies,
                                  final boolean onlyCheckStatus,
-                                 List<TranslatingCompiler.OutputItem> postponed) throws ExitException {
+                                 TranslatingCompiler.OutputSink sink) throws ExitException {
 
     final TranslatingCompiler compiler = compilers[currentCompiler];
 
@@ -1346,74 +1338,8 @@ public class CompileDriver {
       }
 
       if ((wereFilesDeleted[0] || !toCompile.isEmpty()) && context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
-        final TranslatingCompiler.ExitStatus exitStatus = compiler.compile(context, toCompile.toArray(new VirtualFile[toCompile.size()]));
-        final TranslatingCompiler.OutputItem[] successfullyCompiled = exitStatus.getSuccessfullyCompiled();
-        if (compiler instanceof IntermediateOutputCompiler) {
-          final LocalFileSystem lfs = LocalFileSystem.getInstance();
-          final List<VirtualFile> outputs = new ArrayList<VirtualFile>();
-          for (TranslatingCompiler.OutputItem item : successfullyCompiled) {
-            final VirtualFile vFile = lfs.findFileByPath(item.getOutputPath());
-            if (vFile != null) {
-              outputs.add(vFile);
-            }
-          }
-          context.markGenerated(outputs);
-        }
-        TranslatingCompiler.OutputItem[] toUpdate = successfullyCompiled;
-        final int nextCompiler = currentCompiler + 1;
-        if (nextCompiler < compilers.length ) {
-          boolean changes = false;
-          final List<TranslatingCompiler.OutputItem> updateNow = new ArrayList<TranslatingCompiler.OutputItem>(successfullyCompiled.length);
-          for (Iterator<TranslatingCompiler.OutputItem> it = postponed.iterator(); it.hasNext();) {
-            TranslatingCompiler.OutputItem item = it.next();
-            boolean shouldPostpone = false;
-            for (int idx = nextCompiler; idx < compilers.length; idx++) {
-              if (shouldPostpone = compilers[idx].isCompilableFile(item.getSourceFile(), context)) {
-                break;
-              }
-            }
-            if (!shouldPostpone) {
-              // the file is not compilable by the rest of compilers, so it is safe to update it now
-              it.remove();
-              updateNow.add(item);
-              changes = true;
-            }
-          }
-          for (TranslatingCompiler.OutputItem item : successfullyCompiled) {
-            boolean shouldPostpone = false;
-            for (int idx = nextCompiler; idx < compilers.length; idx++) {
-              if (shouldPostpone = compilers[idx].isCompilableFile(item.getSourceFile(), context)) {
-                break;
-              }
-            }
-            if (shouldPostpone) {
-              // the file is compilable by the next compiler in row, update should be postponed
-              postponed.add(item);
-              changes = true;
-            }
-            else {
-              updateNow.add(item);
-            }
-          }
-          if (changes) {
-            toUpdate = updateNow.toArray(new TranslatingCompiler.OutputItem[updateNow.size()]);
-          }
-        }
-        TranslatingCompilerFilesMonitor.getInstance().update(context, toUpdate, exitStatus.getFilesToRecompile());
-
-        //for (TranslatingCompiler.OutputItem item : successfullyCompiled) {
-        //  final String outputDir = item.getOutputRootDirectory();
-        //  final String outputPath = item.getOutputPath();
-        //  if (outputDir != null && outputPath != null) {
-        //    context.updateZippedOuput(outputDir, outputPath.substring(outputDir.length() + 1));
-        //  }
-        //}
+        compiler.compile(context, toCompile.toArray(new VirtualFile[toCompile.size()]), sink);
       }
-    }
-    catch (IOException e) {
-      LOG.info(e);
-      context.requestRebuildNextTime(e.getMessage());
-      throw new ExitException(ExitStatus.ERRORS);
     }
     finally {
       context.getProgressIndicator().popState();
@@ -2042,6 +1968,114 @@ public class CompileDriver {
       });
       if (ex[0] != null) {
         throw ex[0];
+      }
+    }
+  }
+
+  private static class TranslatorsOutputSink implements TranslatingCompiler.OutputSink {
+    final Map<String, Collection<TranslatingCompiler.OutputItem>> myPostponedItems = new HashMap<String, Collection<TranslatingCompiler.OutputItem>>();
+    private final CompileContextEx myContext;
+    private final TranslatingCompiler[] myCompilers;
+    private int myCurrentCompilerIdx;
+    //private LinkedBlockingQueue<Future> myFutures = new LinkedBlockingQueue<Future>();
+
+    private TranslatorsOutputSink(CompileContextEx context, TranslatingCompiler[] compilers) {
+      myContext = context;
+      this.myCompilers = compilers;
+    }
+
+    public void setCurrentCompilerIndex(int index) {
+      myCurrentCompilerIdx = index;
+    }
+
+    public void add(final String outputRoot, final Collection<TranslatingCompiler.OutputItem> items, final VirtualFile[] filesToRecompile) {
+      final TranslatingCompiler compiler = myCompilers[myCurrentCompilerIdx];
+      if (compiler instanceof IntermediateOutputCompiler) {
+        final LocalFileSystem lfs = LocalFileSystem.getInstance();
+        final List<VirtualFile> outputs = new ArrayList<VirtualFile>();
+        for (TranslatingCompiler.OutputItem item : items) {
+          final VirtualFile vFile = lfs.findFileByPath(item.getOutputPath());
+          if (vFile != null) {
+            outputs.add(vFile);
+          }
+        }
+        myContext.markGenerated(outputs);
+      }
+      final int nextCompilerIdx = myCurrentCompilerIdx + 1;
+      try {
+        if (nextCompilerIdx < myCompilers.length ) {
+          final Map<String, Collection<TranslatingCompiler.OutputItem>> updateNow = new java.util.HashMap<String, Collection<TranslatingCompiler.OutputItem>>();
+          // process postponed
+          for (Map.Entry<String, Collection<TranslatingCompiler.OutputItem>> entry : myPostponedItems.entrySet()) {
+            final String outputDir = entry.getKey();
+            final Collection<TranslatingCompiler.OutputItem> postponed = entry.getValue();
+            for (Iterator<TranslatingCompiler.OutputItem> it = postponed.iterator(); it.hasNext();) {
+              TranslatingCompiler.OutputItem item = it.next();
+              boolean shouldPostpone = false;
+              for (int idx = nextCompilerIdx; idx < myCompilers.length; idx++) {
+                if (shouldPostpone = myCompilers[idx].isCompilableFile(item.getSourceFile(), myContext)) {
+                  break;
+                }
+              }
+              if (!shouldPostpone) {
+                // the file is not compilable by the rest of compilers, so it is safe to update it now
+                it.remove();
+                addItemToMap(updateNow, outputDir, item);
+              }
+            }
+          }
+          // process items from current compilation
+          for (TranslatingCompiler.OutputItem item : items) {
+            boolean shouldPostpone = false;
+            for (int idx = nextCompilerIdx; idx < myCompilers.length; idx++) {
+              if (shouldPostpone = myCompilers[idx].isCompilableFile(item.getSourceFile(), myContext)) {
+                break;
+              }
+            }
+            if (shouldPostpone) {
+              // the file is compilable by the next compiler in row, update should be postponed
+              addItemToMap(myPostponedItems, outputRoot, item);
+            }
+            else {
+              addItemToMap(updateNow, outputRoot, item);
+            }
+          }
+          for (Map.Entry<String, Collection<TranslatingCompiler.OutputItem>> entry : updateNow.entrySet()) {
+            final String outputDir = entry.getKey();
+            final Collection<TranslatingCompiler.OutputItem> itemsToUpdate = entry.getValue();
+            TranslatingCompilerFilesMonitor.getInstance().update(myContext, outputDir, itemsToUpdate, filesToRecompile);
+          }
+        }
+        else {
+          TranslatingCompilerFilesMonitor.getInstance().update(myContext, outputRoot, items, filesToRecompile);
+        }
+      }
+      catch (IOException e) {
+        LOG.info(e);
+        myContext.requestRebuildNextTime(e.getMessage());
+      }
+    }
+
+    private void addItemToMap(Map<String, Collection<TranslatingCompiler.OutputItem>> map, String outputDir, TranslatingCompiler.OutputItem item) {
+      Collection<TranslatingCompiler.OutputItem> collection = map.get(outputDir);
+      if (collection == null) {
+        collection = new ArrayList<TranslatingCompiler.OutputItem>();
+        map.put(outputDir, collection);
+      }
+      collection.add(item);
+    }
+
+    public void flushPostponedItems() {
+      try {
+        for (Map.Entry<String, Collection<TranslatingCompiler.OutputItem>> entry : myPostponedItems.entrySet()) {
+          final String outputDir = entry.getKey();
+          final Collection<TranslatingCompiler.OutputItem> items = entry.getValue();
+          TranslatingCompilerFilesMonitor.getInstance().update(myContext, outputDir, items, VirtualFile.EMPTY_ARRAY);
+        }
+      }
+      catch (IOException e) {
+        LOG.info(e);
+        myContext.requestRebuildNextTime(e.getMessage());
       }
     }
   }

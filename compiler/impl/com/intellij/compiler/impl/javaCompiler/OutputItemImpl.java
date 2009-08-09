@@ -12,30 +12,23 @@ import org.jetbrains.annotations.Nullable;
 public class OutputItemImpl implements TranslatingCompiler.OutputItem{
 
   private final String myOutputPath;
-  private final String myOutputDir;
   private final VirtualFile mySourceFile;
 
   public OutputItemImpl(VirtualFile packageInfoFile) {
-    this(null, null, packageInfoFile);
+    this(null, packageInfoFile);
   }
 
   /**
-   * @param outputDir
-   * @param outputPath relative to output directory path of the output file ('/' slashes used)
+   * @param outputPath absolute path of the output file ('/' slashes used)
    * @param sourceFile corresponding source file
    */
-  public OutputItemImpl(String outputDir, @Nullable String outputPath, VirtualFile sourceFile) {
-    myOutputDir = outputDir;
+  public OutputItemImpl(@Nullable String outputPath, VirtualFile sourceFile) {
     myOutputPath = outputPath;
     mySourceFile = sourceFile;
   }
 
   public String getOutputPath() {
-    return (myOutputPath != null) ? myOutputDir + "/" + myOutputPath : null;
-  }
-
-  public String getOutputRootDirectory() {
-    return myOutputDir;
+    return myOutputPath;
   }
 
   public VirtualFile getSourceFile() {

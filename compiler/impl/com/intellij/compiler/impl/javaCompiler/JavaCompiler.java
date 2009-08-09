@@ -19,9 +19,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Collection;
 
 public class JavaCompiler implements TranslatingCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.JavaCompiler");
@@ -41,25 +38,20 @@ public class JavaCompiler implements TranslatingCompiler {
     return FILE_TYPE_MANAGER.getFileTypeByFile(file).equals(StdFileTypes.JAVA);
   }
 
-  public ExitStatus compile(CompileContext context, VirtualFile[] files) {
+  public void compile(CompileContext context, VirtualFile[] files, OutputSink sink) {
     final BackendCompiler backEndCompiler = getBackEndCompiler();
-    final BackendCompilerWrapper wrapper = new BackendCompilerWrapper(myProject, Arrays.asList(files), (CompileContextEx)context, backEndCompiler);
-    List<OutputItem> outputItems;
+    final BackendCompilerWrapper wrapper = new BackendCompilerWrapper(myProject, Arrays.asList(files), (CompileContextEx)context, backEndCompiler,
+                                                                      sink);
     try {
-      outputItems = wrapper.compile();
+      wrapper.compile();
     }
     catch (CompilerException e) {
-      outputItems = Collections.emptyList();
       context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
     }
     catch (CacheCorruptedException e) {
       LOG.info(e);
       context.requestRebuildNextTime(e.getMessage());
-      outputItems = Collections.emptyList();
     }
-
-    Collection<VirtualFile> vf = wrapper.getFilesToRecompile();
-    return new ExitStatusImpl(outputItems, vf.toArray(new VirtualFile[vf.size()]));
   }
 
   public boolean validateConfiguration(CompileScope scope) {
@@ -69,23 +61,5 @@ public class JavaCompiler implements TranslatingCompiler {
   private BackendCompiler getBackEndCompiler() {
     CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     return configuration.getDefaultCompiler();
-  }
-
-  private static class ExitStatusImpl implements ExitStatus {
-    private final List<OutputItem> myOutputItems;
-    private final VirtualFile[] myMyFilesToRecompile;
-
-    private ExitStatusImpl(List<OutputItem> outputItems, VirtualFile[] myFilesToRecompile) {
-      myOutputItems = outputItems;
-      myMyFilesToRecompile = myFilesToRecompile;
-    }
-
-    public OutputItem[] getSuccessfullyCompiled() {
-      return myOutputItems.toArray(new OutputItem[myOutputItems.size()]);
-    }
-
-    public VirtualFile[] getFilesToRecompile() {
-      return myMyFilesToRecompile;
-    }
   }
 }

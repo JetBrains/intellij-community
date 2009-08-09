@@ -207,13 +207,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     return IndexInfrastructure.findFileById((PersistentFS)ManagingFS.getInstance(), id);
   }
 
-  public void update(final CompileContext context, final TranslatingCompiler.OutputItem[] successfullyCompiled, final VirtualFile[] filesToRecompile)
+  public void update(final CompileContext context, final String outputRoot, final Collection<TranslatingCompiler.OutputItem> successfullyCompiled, final VirtualFile[] filesToRecompile)
       throws IOException {
     final Project project = context.getProject();
     final int projectId = getProjectId(project);
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     final IOException[] exceptions = {null};
-    final Set<String> outputRoots = new HashSet<String>();
     // need read action here to ensure that no modifications were made to VFS while updating file attributes
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -222,10 +221,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           final Set<VirtualFile> forceRecompile = new HashSet<VirtualFile>();
 
           for (TranslatingCompiler.OutputItem item : successfullyCompiled) {
-            final String outputRoot = item.getOutputRootDirectory();
-            if (outputRoot != null) {
-              outputRoots.add(outputRoot);
-            }
             final VirtualFile sourceFile = item.getSourceFile();
             final boolean isSourceValid = sourceFile.isValid();
             SourceFileInfo srcInfo = compiledSources.get(sourceFile);
@@ -245,7 +240,8 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               final VirtualFile outputFile = lfs.findFileByPath(outputPath);
 
               //assert outputFile != null : "Virtual file was not found for \"" + outputPath + "\"";
-
+              assert outputRoot != null;
+              
               if (outputFile != null) {
                 if (!sourceFile.equals(outputFile)) {
                   final String className = MakeUtil.relativeClassPathToQName(outputPath.substring(outputRoot.length()), '/');
@@ -277,7 +273,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             removeSourceForRecompilation(projectId, Math.abs(getFileId(file)));
             if ((fileStamp > compilationStartStamp && !((CompileContextEx)context).isGenerated(file)) || forceRecompile.contains(file)) {
               // changes were made during compilation, need to re-schedule compilation
-              // it is important to invoke removeSourceForRecompilation() before to make sure
+              // it is important to invoke removeSourceForRecompilation() before this call to make sure
               // the corresponding output paths will be scheduled for deletion
               addSourceForRecompilation(projectId, file, info);
             }
@@ -302,7 +298,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       });
     }
-    registerOutputRoots(project, outputRoots);
+    if (outputRoot != null) {
+      registerOutputRoot(project, outputRoot);
+    }
   }
 
   @NotNull
@@ -853,16 +851,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-  private void registerOutputRoots(Project project, Set<String> outputRoots) throws IOException {
-    final TIntArrayList list = new TIntArrayList();
-    for (String outputRoot : outputRoots) {
-      final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(outputRoot);
-      if (vFile != null) {
-        list.add(getFileId(vFile));
+  private void registerOutputRoot(Project project, String outputRoot) throws IOException {
+    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(outputRoot);
+    if (vFile != null) {
+      synchronized (myProjectOutputRoots) {
+        myProjectOutputRoots.get(getProjectId(project)).add(getFileId(vFile));
       }
-    }
-    synchronized (myProjectOutputRoots) {
-      myProjectOutputRoots.get(getProjectId(project)).addAll(list.toNativeArray());
     }
   }
 

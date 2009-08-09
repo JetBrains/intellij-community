@@ -27,9 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class ResourceCompiler implements TranslatingCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.resourceCompiler.ResourceCompiler");
@@ -56,12 +54,12 @@ public class ResourceCompiler implements TranslatingCompiler {
     return !StdFileTypes.JAVA.equals(FILE_TYPE_MANAGER.getFileTypeByFile(file)) && myConfiguration.isResourceFile(file.getName());
   }
 
-  public ExitStatus compile(final CompileContext context, final VirtualFile[] files) {
+  public void compile(final CompileContext context, final VirtualFile[] files, OutputSink sink) {
     context.getProgressIndicator().pushState();
     context.getProgressIndicator().setText(CompilerBundle.message("progress.copying.resources"));
 
-    final List<OutputItem> processed = new ArrayList<OutputItem>(files.length);
-    final List<CopyCommand> copyCommands = new ArrayList<CopyCommand>(files.length);
+    final Map<String, Collection<OutputItem>> processed = new HashMap<String, Collection<OutputItem>>();
+    final LinkedList<CopyCommand> copyCommands = new LinkedList<CopyCommand>();
     final long start = System.currentTimeMillis();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -93,7 +91,7 @@ public class ResourceCompiler implements TranslatingCompiler {
             targetPath = outputPath+"/"+relativePath;
           }
           if (sourcePath.equals(targetPath)) {
-            processed.add(new MyOutputItem(outputPath, targetPath, file));
+            addToMap(processed, outputPath, new MyOutputItem(targetPath, file));
           }
           else {
             copyCommands.add(new CopyCommand(outputPath, sourcePath, targetPath, file));
@@ -104,16 +102,18 @@ public class ResourceCompiler implements TranslatingCompiler {
 
     final List<File> filesToRefresh = new ArrayList<File>();
     // do actual copy outside of read action to reduce the time the application is locked on it
-    for (int i = 0; i < copyCommands.size(); i++) {
-      CopyCommand command = copyCommands.get(i);
+    int idx = 0;
+    final int total = copyCommands.size();
+    while (!copyCommands.isEmpty()) {
+      final CopyCommand command = copyCommands.removeFirst();
       if (context.getProgressIndicator().isCanceled()) {
         break;
       }
-      context.getProgressIndicator().setFraction(i * 1.0 / copyCommands.size());
-      context.getProgressIndicator().setText2("Copying "+command.getFromPath()+"...");
+      context.getProgressIndicator().setFraction((idx++) * 1.0 / total);
+      context.getProgressIndicator().setText2("Copying " + command.getFromPath() + "...");
       try {
         final MyOutputItem outputItem = command.copy(filesToRefresh);
-        processed.add(outputItem);
+        addToMap(processed, command.getOutputPath(), outputItem);
       }
       catch (IOException e) {
         context.addMessage(
@@ -128,13 +128,24 @@ public class ResourceCompiler implements TranslatingCompiler {
     
     if (!filesToRefresh.isEmpty()) {
       CompilerUtil.refreshIOFiles(filesToRefresh);
+      filesToRefresh.clear();
     }
 
+    for (Iterator<Map.Entry<String, Collection<OutputItem>>> it = processed.entrySet().iterator(); it.hasNext();) {
+      Map.Entry<String, Collection<OutputItem>> entry = it.next();
+      sink.add(entry.getKey(), entry.getValue(), VirtualFile.EMPTY_ARRAY);
+      it.remove(); // to free memory
+    }
     context.getProgressIndicator().popState();
+  }
 
-    final OutputItem[] itemsArray = processed.toArray(new OutputItem[processed.size()]);
-
-    return new MyExitStatus(itemsArray);
+  private static void addToMap(Map<String, Collection<OutputItem>> map, String outputDir, OutputItem item) {
+    Collection<OutputItem> list = map.get(outputDir);
+    if (list == null) {
+      list = new ArrayList<OutputItem>();
+      map.put(outputDir, list);
+    }
+    list.add(item);
   }
 
   private static class CopyCommand {
@@ -157,7 +168,11 @@ public class ResourceCompiler implements TranslatingCompiler {
       final File targetFile = new File(myToPath);
       FileUtil.copy(new File(myFromPath), targetFile);
       filesToRefresh.add(targetFile);
-      return new MyOutputItem(myOutputPath, myToPath, mySourceFile);
+      return new MyOutputItem(myToPath, mySourceFile);
+    }
+
+    public String getOutputPath() {
+      return myOutputPath;
     }
 
     public String getFromPath() {
@@ -175,41 +190,20 @@ public class ResourceCompiler implements TranslatingCompiler {
   }
 
   private static class MyOutputItem implements OutputItem {
-    private final String myOutputPath;
     private final String myTargetPath;
     private final VirtualFile myFile;
 
-    private MyOutputItem(String outputPath, String targetPath, VirtualFile file) {
-      myOutputPath = outputPath;
+    private MyOutputItem(String targetPath, VirtualFile sourceFile) {
       myTargetPath = targetPath;
-      myFile = file;
-    }
-
-    public String getOutputRootDirectory() {
-      return myOutputPath;
+      myFile = sourceFile;
     }
 
     public String getOutputPath() {
       return myTargetPath;
     }
+
     public VirtualFile getSourceFile() {
       return myFile;
-    }
-  }
-
-  private static class MyExitStatus implements ExitStatus {
-    private final OutputItem[] myItemsArray;
-
-    private MyExitStatus(OutputItem[] itemsArray) {
-      myItemsArray = itemsArray;
-    }
-
-    public OutputItem[] getSuccessfullyCompiled() {
-      return myItemsArray;
-    }
-
-    public VirtualFile[] getFilesToRecompile() {
-      return VirtualFile.EMPTY_ARRAY;
     }
   }
 }

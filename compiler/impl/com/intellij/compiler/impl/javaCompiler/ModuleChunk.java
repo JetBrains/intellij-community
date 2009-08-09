@@ -41,9 +41,6 @@ public class ModuleChunk extends Chunk<Module> {
   private final Map<VirtualFile, VirtualFile> myTransformedToOriginalMap = new THashMap<VirtualFile, VirtualFile>();
   private int mySourcesFilter = ALL_SOURCES;
 
-  public final List<File> myFilesToRefresh = new ArrayList<File>();
-  public final Map<String, Set<CompiledClass>> myFileNameToSourceMap=  new THashMap<String, Set<CompiledClass>>();
-
   public ModuleChunk(CompileContextEx context, Chunk<Module> chunk, Map<Module, List<VirtualFile>> moduleToFilesMap) {
     super(chunk.getNodes());
     myContext = context;
