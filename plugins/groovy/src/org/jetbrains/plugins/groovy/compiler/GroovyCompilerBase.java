@@ -83,8 +83,11 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     myProject = project;
   }
 
-  protected void runGroovycCompiler(CompileContext compileContext, Set<OutputItem> successfullyCompiled, Set<VirtualFile> toRecompile, final Module module,
-                         final List<VirtualFile> toCompile, boolean forStubs, VirtualFile outputDir) {
+  protected void runGroovycCompiler(CompileContext compileContext, final Module module,
+                                    final List<VirtualFile> toCompile,
+                                    boolean forStubs,
+                                    VirtualFile outputDir,
+                                    OutputSink sink) {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
     assert sdk != null; //verified before
@@ -155,11 +158,12 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     GroovycOSProcessHandler processHandler;
 
     try {
-      processHandler = new GroovycOSProcessHandler(compileContext, commandLine.createProcess(), commandLine.getCommandLineString());
+      processHandler = new GroovycOSProcessHandler(compileContext, commandLine.createProcess(), commandLine.getCommandLineString(), sink);
 
       processHandler.startNotify();
       processHandler.waitFor();
 
+      final List<VirtualFile> toRecompile = new ArrayList<VirtualFile>();
       Set<File> toRecompileFiles = processHandler.getToRecompileFiles();
       for (File toRecompileFile : toRecompileFiles) {
         final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(toRecompileFile);
@@ -180,7 +184,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       StringBuffer unparsedBuffer = processHandler.getUnparsedOutput();
       if (unparsedBuffer.length() != 0) compileContext.addMessage(CompilerMessageCategory.ERROR, unparsedBuffer.toString(), null, -1, -1);
 
-      successfullyCompiled.addAll(processHandler.getSuccessfullyCompiled());
+      sink.add(outputDir.getPath(), processHandler.getSuccessfullyCompiled(), toRecompile.toArray(new VirtualFile[toRecompile.size()]));
     }
     catch (ExecutionException e) {
       LOG.error(e);
@@ -261,11 +265,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
   }
 
   @Nullable
-  public ExitStatus compile(final CompileContext compileContext, final VirtualFile[] virtualFiles) {
-
-    Set<OutputItem> successfullyCompiled = new HashSet<OutputItem>();
-    Set<VirtualFile> toRecompileCollector = new HashSet<VirtualFile>();
-
+  public void compile(final CompileContext compileContext, final VirtualFile[] virtualFiles, OutputSink sink) {
     Map<Module, List<VirtualFile>> mapModulesToVirtualFiles = CompilerUtil.buildModuleToFilesMap(compileContext, virtualFiles);
     final List<Chunk<Module>> chunks =
       ModuleCompilerUtil.getSortedModuleChunks(myProject, new ArrayList<Module>(mapModulesToVirtualFiles.keySet()));
@@ -273,11 +273,6 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       for (final Module module : chunk.getNodes()) {
         final List<VirtualFile> moduleFiles = mapModulesToVirtualFiles.get(module);
         if (moduleFiles == null) {
-          continue;
-        }
-
-        if (!toRecompileCollector.isEmpty()) {
-          toRecompileCollector.addAll(moduleFiles);
           continue;
         }
 
@@ -299,43 +294,27 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
         }
 
         if (!toCompile.isEmpty()) {
-          compileFiles(compileContext, successfullyCompiled, toRecompileCollector, module, toCompile, compileContext.getModuleOutputDirectory(module));
+          compileFiles(compileContext, module, toCompile, compileContext.getModuleOutputDirectory(module), sink);
         }
         if (!toCompileTests.isEmpty()) {
-          compileFiles(compileContext, successfullyCompiled, toRecompileCollector, module, toCompileTests, compileContext.getModuleOutputDirectoryForTests(module));
+          compileFiles(compileContext, module, toCompileTests, compileContext.getModuleOutputDirectoryForTests(module), sink);
         }
 
         if (!toCopy.isEmpty()) {
-          copyFiles(compileContext, successfullyCompiled, toRecompileCollector, toCopy, configuration);
+          copyFiles(compileContext, toCopy, configuration, sink);
         }
 
       }
     }
-
-
-    final Set<OutputItem> compiledItems = successfullyCompiled;
-    final VirtualFile[] toRecompile = toRecompileCollector.toArray(new VirtualFile[toRecompileCollector.size()]);
-    return new ExitStatus() {
-      private final OutputItem[] myCompiledItems = compiledItems.toArray(new OutputItem[compiledItems.size()]);
-      private final VirtualFile[] myToRecompile = toRecompile;
-
-      public OutputItem[] getSuccessfullyCompiled() {
-        return myCompiledItems;
-      }
-
-      public VirtualFile[] getFilesToRecompile() {
-        return myToRecompile;
-      }
-    };
   }
 
-  protected abstract void copyFiles(CompileContext compileContext, Set<OutputItem> successfullyCompiled, Set<VirtualFile> toRecompileCollector, List<VirtualFile> toCopy,
-                         CompilerConfiguration configuration);
+  protected abstract void copyFiles(CompileContext compileContext, List<VirtualFile> toCopy, CompilerConfiguration configuration,
+                                    OutputSink sink);
 
-  protected abstract void compileFiles(CompileContext compileContext, Set<OutputItem> successfullyCompiled, Set<VirtualFile> toRecompileCollector,
-                                       Module module,
+  protected abstract void compileFiles(CompileContext compileContext, Module module,
                                        List<VirtualFile> toCompile,
-                                       VirtualFile outputDir);
+                                       VirtualFile outputDir,
+                                       OutputSink sink);
 
   public boolean isCompilableFile(VirtualFile file, CompileContext context) {
     final boolean result = GroovyFileType.GROOVY_FILE_TYPE.equals(file.getFileType());

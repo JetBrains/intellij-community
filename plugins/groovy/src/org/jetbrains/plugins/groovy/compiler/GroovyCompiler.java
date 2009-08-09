@@ -37,7 +37,6 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -59,18 +58,14 @@ public class GroovyCompiler extends GroovyCompilerBase {
   }
 
   @Override
-  protected void copyFiles(CompileContext compileContext, Set<OutputItem> successfullyCompiled, Set<VirtualFile> toRecompileCollector, List<VirtualFile> toCopy,
-                         CompilerConfiguration configuration) {
+  protected void copyFiles(CompileContext compileContext, List<VirtualFile> toCopy, CompilerConfiguration configuration, OutputSink sink) {
     final ResourceCompiler resourceCompiler = new ResourceCompiler(myProject, configuration);
-    final ExitStatus exitStatus = resourceCompiler.compile(compileContext, toCopy.toArray(new VirtualFile[toCopy.size()]));
-    successfullyCompiled.addAll(Arrays.asList(exitStatus.getSuccessfullyCompiled()));
-    toRecompileCollector.addAll(Arrays.asList(exitStatus.getFilesToRecompile()));
+    resourceCompiler.compile(compileContext, toCopy.toArray(new VirtualFile[toCopy.size()]), sink);
   }
 
   @Override
-  protected void compileFiles(CompileContext compileContext, Set<OutputItem> successfullyCompiled, Set<VirtualFile> toRecompileCollector,
-                              Module module, List<VirtualFile> toCompile, VirtualFile outputDir) {
-    runGroovycCompiler(compileContext, successfullyCompiled, toRecompileCollector, module, toCompile, false, outputDir);
+  protected void compileFiles(CompileContext compileContext, Module module, List<VirtualFile> toCompile, VirtualFile outputDir, OutputSink sink) {
+    runGroovycCompiler(compileContext, module, toCompile, false, outputDir, sink);
   }
 
   public boolean validateConfiguration(CompileScope compileScope) {

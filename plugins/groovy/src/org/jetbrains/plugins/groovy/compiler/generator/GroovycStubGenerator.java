@@ -35,7 +35,6 @@ import org.jetbrains.plugins.groovy.compiler.GroovyCompilerBase;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author peter
@@ -46,7 +45,7 @@ public class GroovycStubGenerator extends GroovyCompilerBase implements Intermed
   }
 
   @Override
-  public ExitStatus compile(CompileContext compileContext, VirtualFile[] virtualFiles) {
+  public void compile(CompileContext compileContext, VirtualFile[] virtualFiles, OutputSink sink) {
     boolean hasTests = false;
     for (final VirtualFile item : virtualFiles) {
       if (ProjectRootManager.getInstance(myProject).getFileIndex().isInTestSourceContent(item)) {
@@ -64,28 +63,21 @@ public class GroovycStubGenerator extends GroovyCompilerBase implements Intermed
       }
     }
 
-    return super.compile(compileContext, total.toArray(new VirtualFile[total.size()]));
+    compile(compileContext, total.toArray(new VirtualFile[total.size()]), sink);
   }
 
   @Override
-  protected void copyFiles(CompileContext compileContext,
-                           Set<OutputItem> successfullyCompiled,
-                           Set<VirtualFile> toRecompileCollector,
-                           List<VirtualFile> toCopy,
-                           CompilerConfiguration configuration) {
+  protected void copyFiles(CompileContext compileContext, List<VirtualFile> toCopy, CompilerConfiguration configuration, OutputSink sink) {
   }
 
   @Override
-  protected void compileFiles(CompileContext compileContext,
-                              Set<OutputItem> successfullyCompiled,
-                              Set<VirtualFile> toRecompileCollector,
-                              Module module,
-                              List<VirtualFile> toCompile, VirtualFile outputDir) {
+  protected void compileFiles(CompileContext compileContext, Module module,
+                              List<VirtualFile> toCompile, VirtualFile outputDir, OutputSink sink) {
     if (!isMixedProject(toCompile)) {
       return;
     }
 
-    runGroovycCompiler(compileContext, successfullyCompiled, toRecompileCollector, module, toCompile, true, outputDir);
+    runGroovycCompiler(compileContext, module, toCompile, true, outputDir, sink);
   }
 
   private static boolean isMixedProject(List<VirtualFile> toCompile) {

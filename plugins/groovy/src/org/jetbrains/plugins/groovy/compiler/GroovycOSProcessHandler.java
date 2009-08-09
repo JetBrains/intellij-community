@@ -36,17 +36,19 @@ import java.util.*;
  * @date: 16.04.2007
  */
 public class GroovycOSProcessHandler extends OSProcessHandler {
-  private final Set<TranslatingCompiler.OutputItem> compiledFilesNames = new HashSet<TranslatingCompiler.OutputItem>();
+  private final List<TranslatingCompiler.OutputItem> myCompiledItems = new ArrayList<TranslatingCompiler.OutputItem>();
   private final Set<File> toRecompileFiles = new HashSet<File>();
   private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
   private final StringBuffer unparsedOutput = new StringBuffer();
   private final CompileContext myContext;
+  private final TranslatingCompiler.OutputSink mySink;
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.GroovycOSProcessHandler");
 
-  public GroovycOSProcessHandler(CompileContext context, Process process, String s) {
+  public GroovycOSProcessHandler(CompileContext context, Process process, String s, TranslatingCompiler.OutputSink sink) {
     super(process, s);
     myContext = context;
+    mySink = sink;
   }
 
   public void notifyTextAvailable(final String text, final Key outputType) {
@@ -114,15 +116,10 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
             sourceFile = token;
           }
 
-          if (tokenizer.hasMoreTokens()) {
-            token = tokenizer.nextToken();
-            outputRootDirectory = token;
-          }
-
           LocalFileSystem.getInstance().refreshAndFindFileByPath(outputPath);
-          final TranslatingCompiler.OutputItem item = getOutputItem(outputPath, sourceFile, outputRootDirectory);
+          final TranslatingCompiler.OutputItem item = getOutputItem(outputPath, sourceFile);
           if (item != null) {
-            compiledFilesNames.add(item);
+            myCompiledItems.add(item);
           }
         }
 
@@ -209,7 +206,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
   }
 
   @Nullable
-  private TranslatingCompiler.OutputItem getOutputItem(final String outputPath, final String sourceFile, final String outputRootDir) {
+  private TranslatingCompiler.OutputItem getOutputItem(final String outputPath, final String sourceFile) {
 
     final VirtualFile sourceVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(sourceFile));
     if (sourceVirtualFile == null) return null; //the source might already have been deleted
@@ -222,15 +219,11 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
       public VirtualFile getSourceFile() {
         return sourceVirtualFile;
       }
-
-      public String getOutputRootDirectory() {
-        return outputRootDir;
-      }
     };
   }
 
-  public Set<TranslatingCompiler.OutputItem> getSuccessfullyCompiled() {
-    return Collections.unmodifiableSet(compiledFilesNames);
+  public List<TranslatingCompiler.OutputItem> getSuccessfullyCompiled() {
+    return myCompiledItems;
   }
 
   public Set<File> getToRecompileFiles() {
