@@ -64,8 +64,6 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
 
   protected JComponent createCenterPanel() {
     myEditor = new OptionsEditor(myProject, myGroups, myPreselected);
-    myEditor.setMinimumSize(new Dimension(500,400));
-    myEditor.setPreferredSize(new Dimension(1000,700));
     myEditor.getContext().addColleague(new OptionsEditorColleague.Adapter() {
       @Override
       public ActionCallback onModifiedAdded(final Configurable configurable) {
