@@ -5,7 +5,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.DocumentationUtil;
 import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
-import com.intellij.lang.documentation.MetaDataDocumentationProvider;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -18,6 +17,8 @@ import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.usageView.UsageViewTypeLocation;
+import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -42,15 +43,23 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.documentation.XmlDocumentationProvider");
 
-  private final DocumentationProvider myDocumentationProvider = new MetaDataDocumentationProvider();
   @NonNls private static final String NAME_ATTR_NAME = "name";
   @NonNls private static final String BASE_SITEPOINT_URL = "http://reference.sitepoint.com/html/";
 
 
   @Nullable
   public String getQuickNavigateInfo(PsiElement element) {
-    final String navigateInfo = myDocumentationProvider.getQuickNavigateInfo(element);
-    return navigateInfo != null? navigateInfo : super.getQuickNavigateInfo(element);
+    final String name = ElementDescriptionUtil.getElementDescription(element, UsageViewShortNameLocation.INSTANCE);
+    if (StringUtil.isNotEmpty(name)) return null;
+    final String typeName = ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE);
+    final PsiFile file = element.getContainingFile();
+    final StringBuilder sb = new StringBuilder();
+    if (StringUtil.isNotEmpty(typeName)) sb.append(typeName).append(" ");
+    sb.append(name);
+    if (file != null) {
+      sb.append(" [").append(file.getName()).append("]");
+    }
+    return sb.toString();
   }
 
   public String getUrlFor(PsiElement element, PsiElement originalElement) {

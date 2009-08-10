@@ -4,13 +4,13 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.ide.IconProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiTarget;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.ide.IconProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +81,7 @@ public class PomTargetPsiElementImpl extends RenameableFakePsiElement implements
       return ((PsiTarget)myTarget).getNavigationElement().isValid();
     }
 
-    return super.isValid();
+    return myTarget.isValid();
   }
 
   @Override
