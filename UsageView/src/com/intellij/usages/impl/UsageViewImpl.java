@@ -337,8 +337,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return toUsageViewToolbar(group);
   }
 
-  private static JComponent toUsageViewToolbar(final DefaultActionGroup group) {
+  private JComponent toUsageViewToolbar(final DefaultActionGroup group) {
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR, group, false);
+    actionToolbar.setTargetComponent(myRootPanel);
     return actionToolbar.getComponent();
   }
 
