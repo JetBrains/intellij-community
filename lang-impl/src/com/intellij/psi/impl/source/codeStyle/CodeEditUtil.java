@@ -32,7 +32,7 @@ public class CodeEditUtil {
   private CodeEditUtil() {
   }
 
-  public static void addChild(CompositeElement parent, ASTNode child, ASTNode anchorBefore) {
+  public static void addChild(ASTNode parent, ASTNode child, ASTNode anchorBefore) {
     addChildren(parent, child, child, anchorBefore);
   }
 
