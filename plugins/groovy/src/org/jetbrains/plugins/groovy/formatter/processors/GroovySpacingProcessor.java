@@ -49,6 +49,7 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_INLINE_TAG_END;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_INLINE_TAG_START;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_TAG_VALUE_RPAREN;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mNLS;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mRCURLY;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -62,6 +63,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 
 /**
  * @author ilyas
@@ -185,6 +187,13 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
       }
     }
 
+    @Override
+    public void visitAnnotation(GrAnnotation annotation) {
+      if (myChild2.getElementType() == ANNOTATION_ARGUMENTS) {
+        myResult = Spacing.createSpacing(0, 0, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      }
+    }
+
     public void visitArgumentList(GrArgumentList list) {
       if (myChild1.getElementType() == mLBRACK || myChild2.getElementType() == mRBRACK) {
         createSpaceInCode(mySettings.SPACE_WITHIN_BRACKETS);
@@ -259,7 +268,7 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
         myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_METHOD_LBRACE, mySettings.METHOD_BRACE_STYLE,
                 new TextRange(dependancyStart, myChild1.getTextRange().getEndOffset()), mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE);
       } else if (myChild1.getElementType() == MODIFIERS) {
-        processModifierList();
+        processModifierList(myChild1);
       } else if (COMMENT_SET.contains(myChild1.getElementType())
               && (myChild2.getElementType() == MODIFIERS || myChild2.getElementType() == REFERENCE_ELEMENT)) {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
@@ -499,10 +508,14 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
     }
 
 
-    private void processModifierList() {
-      if (mySettings.MODIFIER_LIST_WRAP) {
+    private void processModifierList(ASTNode modifierList) {
+      if (modifierList.getLastChildNode().getElementType() == ANNOTATION && mySettings.METHOD_ANNOTATION_WRAP == CodeStyleSettings.WRAP_ALWAYS) {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
-      } else {
+      }
+      else if (mySettings.MODIFIER_LIST_WRAP) {
+        myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      }
+      else {
         createSpaceProperty(true, false, 0);
       }
     }

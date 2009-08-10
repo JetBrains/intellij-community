@@ -279,7 +279,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public PsiElement createModifierFromText(String name) {
-    final GroovyFileBase file = createDummyFile(name + " def foo () {}");
+    final GroovyFileBase file = createDummyFile(name + "\"foo\"() {}");
     return file.getTopLevelDefinitions()[0].getFirstChild().getFirstChild();
   }
 
