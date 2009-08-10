@@ -15,8 +15,8 @@
  */
 package com.intellij.util.ui.update;
 
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.util.ObjectUtils;
 
 
 public class ComparableObjectCheck {
@@ -37,7 +37,7 @@ public class ComparableObjectCheck {
     }
 
     for (int i = 0; i < my.length; i++) {
-      if (!ObjectUtils.equals(my[i], his[i])) {
+      if (!Comparing.equal(my[i], his[i])) {
         return false;
       }
     }

@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
@@ -574,7 +575,7 @@ public final class EditorsSplitters extends JPanel {
         }
       }
 
-      boolean changed = !ObjectUtils.equals(newWindow, myCurrentWindow) || !ObjectUtils.equals(newFile, myCurrentFile);
+      boolean changed = !Comparing.equal(newWindow, myCurrentWindow) || !Comparing.equal(newFile, myCurrentFile);
 
       myCurrentFile = newFile;
       setCurrentWindow(newWindow);

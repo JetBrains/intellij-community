@@ -4,10 +4,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.ui.popup.IconButton;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pass;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.TimedDeadzone;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,9 +73,9 @@ class ActionButton extends IconButton implements ActionListener {
   private static boolean areEqual(Presentation p1, Presentation p2) {
     if (p1 == null || p2 == null) return false;
 
-    return ObjectUtils.equals(p1.getText(), p2.getText())
-           && ObjectUtils.equals(p1.getIcon(), p2.getIcon())
-           && ObjectUtils.equals(p1.getHoveredIcon(), p2.getHoveredIcon())
+    return Comparing.equal(p1.getText(), p2.getText())
+           && Comparing.equal(p1.getIcon(), p2.getIcon())
+           && Comparing.equal(p1.getHoveredIcon(), p2.getHoveredIcon())
            && p1.isEnabled() == p2.isEnabled()
            && p1.isVisible() == p2.isVisible();
 

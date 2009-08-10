@@ -1,10 +1,10 @@
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.PlaceInGrid;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -214,7 +214,7 @@ public class RunnerLayout  {
   }
 
   public boolean isToFocus(final String id, final String condition) {
-    return ObjectUtils.equals(id, getToFocus(condition));
+    return Comparing.equal(id, getToFocus(condition));
   }
 
   public void setToFocus(final String id, final String condition) {

@@ -428,7 +428,7 @@ public class ArrayUtil {
 
   public static int indexOf(Object[] objects, Object object) {
     for (int i = 0; i < objects.length; i++) {
-      if (ObjectUtils.equals(objects[i], object)) return i;
+      if (Comparing.equal(objects[i], object)) return i;
     }
     return -1;
   }

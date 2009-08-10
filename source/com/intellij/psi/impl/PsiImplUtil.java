@@ -2,8 +2,9 @@ package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
@@ -25,9 +26,8 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.PairFunction;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +57,7 @@ public class PsiImplUtil {
     PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     for (PsiNameValuePair attribute : attributes) {
       @NonNls final String name = attribute.getName();
-      if (ObjectUtils.equals(name, attributeName) || attributeName == null && name.equals(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)) {
+      if (Comparing.equal(name, attributeName) || attributeName == null && name.equals(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)) {
         return attribute.getValue();
       }
     }
@@ -76,7 +76,7 @@ public class PsiImplUtil {
       if (resolved != null) {
         PsiMethod[] methods = ((PsiClass)resolved).getMethods();
         for (PsiMethod method : methods) {
-          if (method instanceof PsiAnnotationMethod && ObjectUtils.equals(method.getName(), attributeName)) {
+          if (method instanceof PsiAnnotationMethod && Comparing.equal(method.getName(), attributeName)) {
             return ((PsiAnnotationMethod)method).getDefaultValue();
           }
         }
