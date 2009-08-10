@@ -11,6 +11,8 @@ import com.intellij.util.Function;
 import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
+import javax.swing.plaf.TreeUI;
+import javax.swing.plaf.basic.BasicTreeUI;
 import java.awt.*;
 import java.lang.ref.WeakReference;
 
@@ -71,11 +73,25 @@ public class DeferredIconImpl<T> implements DeferredIcon {
       final Job<Object> job = JobScheduler.getInstance().createJob("Evaluating deferred icon", Job.DEFAULT_PRIORITY);
       job.addTask(new Runnable() {
         public void run() {
+          int oldWidth = myDelegateIcon.getIconWidth();
           myDelegateIcon = evaluate();
+
+          final boolean shouldRevalidate = myDelegateIcon.getIconWidth() != oldWidth;
 
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
+              if (shouldRevalidate) {
+                // revalidate will not work: jtree caches size of nodes
+                if (target instanceof JTree) {
+                  final TreeUI ui = ((JTree)target).getUI();
+                  if (ui instanceof BasicTreeUI) {
+                    // yep, reset size cache
+                    ((BasicTreeUI)ui).setLeftChildIndent(((Integer)UIManager.get("Tree.leftChildIndent")).intValue());
+                  }
+                }
+              }
+
               if (c == target) {
                 c.repaint(x, y, getIconWidth(), getIconHeight());
               }
