@@ -48,7 +48,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
       PsiImportStatementBase[] statements = importList.getAllImportStatements();
       if (statements.length > 1) {
         final TextRange rangeToFold = getRangeToFold(importList);
-        if (rangeToFold != null) {
+        if (rangeToFold != null && rangeToFold.getEndOffset() > rangeToFold.getStartOffset()) {
           result.add(new FoldingDescriptor(importList, rangeToFold));
         }
       }
