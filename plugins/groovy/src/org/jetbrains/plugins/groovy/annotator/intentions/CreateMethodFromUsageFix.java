@@ -19,6 +19,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -28,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
@@ -79,7 +82,11 @@ public class CreateMethodFromUsageFix implements IntentionAction {
     GrMethod method = GroovyPsiElementFactory.getInstance(project).createMethodFromText(methodBuffer.toString());
     GrMemberOwner owner = myTargetClass;
     TypeConstraint[] constraints = GroovyExpectedTypesUtil.calculateTypeConstraints((GrExpression) myRefExpression.getParent());
-    method = owner.addMemberDeclaration(method, null);
+    PsiElement prevParent = PsiTreeUtil.findPrevParent(myTargetClass, myRefExpression);
+    if (prevParent instanceof GrTypeDefinitionBody) {
+      prevParent = PsiTreeUtil.findPrevParent(prevParent, myRefExpression);
+    }
+    method = owner.addMemberDeclaration(method, prevParent.getNextSibling());
 
     IntentionUtils.createTemplateForMethod(argTypes, paramTypesExpressions, method, owner, constraints, false);
   }

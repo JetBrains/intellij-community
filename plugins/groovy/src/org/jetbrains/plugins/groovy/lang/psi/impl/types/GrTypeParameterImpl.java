@@ -113,9 +113,6 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
     throw new UnsupportedOperationException("Cannot add member declaration to GrTypeParameter");
   }
 
-  public void removeMemberDeclaration(GrMembersDeclaration decl) {
-  }
-
   public GrTypeParameterImpl(@NotNull ASTNode node) {
     super(node);
   }

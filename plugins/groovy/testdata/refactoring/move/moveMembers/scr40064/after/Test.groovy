@@ -7,8 +7,8 @@ class Test {
 }
 
 class Test1 {
-  static int i
   {
     i = 0;
   }
+  static int i
 }
