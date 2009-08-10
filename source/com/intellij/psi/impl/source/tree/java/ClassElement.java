@@ -400,7 +400,7 @@ public class ClassElement extends CompositeElement implements Constants {
     return aClass.getRBrace();
   }
 
-  private static int getMemberOrderWeight(PsiElement member, CodeStyleSettings settings) {
+  public static int getMemberOrderWeight(PsiElement member, CodeStyleSettings settings) {
     if (member instanceof PsiField) {
       return member instanceof PsiEnumConstant ? 1 : settings.FIELDS_ORDER_WEIGHT + 1;
     }
