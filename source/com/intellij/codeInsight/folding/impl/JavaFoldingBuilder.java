@@ -439,6 +439,20 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
     }
   }
 
+  private static boolean hasOnlyOneMethod(@NotNull PsiAnonymousClass anonymousClass) {
+    if (anonymousClass.getFields().length != 0) {
+      return false;
+    }
+    if (anonymousClass.getInitializers().length != 0) {
+      return false;
+    }
+    if (anonymousClass.getInnerClasses().length != 0) {
+      return false;
+    }
+
+    return anonymousClass.getMethods().length == 1;
+  }
+
   private boolean addClosureFolding(final PsiClass aClass, final Document document, final List<FoldingDescriptor> foldElements, final boolean quick) {
     if (!JavaCodeFoldingSettings.getInstance().isCollapseLambdas()) {
       return false;
@@ -453,7 +467,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
         final PsiExpressionList argumentList = expression.getArgumentList();
         if (argumentList != null && argumentList.getExpressions().length == 0) {
           final PsiMethod[] methods = anonymousClass.getMethods();
-          if (methods.length == 1 && anonymousClass.getFields().length == 0 && (quick || seemsLikeLambda(anonymousClass.getBaseClassType().resolve()))) {
+          if (hasOnlyOneMethod(anonymousClass) && (quick || seemsLikeLambda(anonymousClass.getBaseClassType().resolve()))) {
             final PsiMethod method = methods[0];
             final PsiCodeBlock body = method.getBody();
             if (body != null) {
