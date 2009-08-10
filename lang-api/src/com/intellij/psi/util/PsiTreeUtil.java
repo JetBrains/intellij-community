@@ -591,4 +591,18 @@ public class PsiTreeUtil {
 
     return true;
   }
+
+  @NotNull
+  public static PsiElement findPrevParent(@NotNull PsiElement ancestor, @NotNull PsiElement descendant) {
+    PsiElement cur = descendant;
+    while (cur != null) {
+      final PsiElement parent = cur.getParent();
+      if (parent == ancestor) {
+        return cur;
+      }
+      cur = parent;
+    }
+    throw new AssertionError(descendant + " is not a descendant of " + ancestor);
+  }
+  
 }
