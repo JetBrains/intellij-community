@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * Alt-Enter in the code editor at the location where an intention is available,
  * and can be enabled or disabled in the "Intentions" settings dialog.
  *
- * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String[])
+ * @see IntentionManager#registerIntentionAndMetaData(com.intellij.codeInsight.intention.IntentionAction, java.lang.String...)
  */
 public interface IntentionAction {
   IntentionAction[] EMPTY_ARRAY = new IntentionAction[0];
@@ -46,7 +46,7 @@ public interface IntentionAction {
    * is also used to locate the description and preview text for the intention.
    *
    * @return the intention family ID.
-   * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String[])
+   * @see IntentionManager#registerIntentionAndMetaData(com.intellij.codeInsight.intention.IntentionAction, java.lang.String...)
    */
   @NotNull String getFamilyName();
 
