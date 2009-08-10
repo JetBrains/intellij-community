@@ -121,7 +121,7 @@ public abstract class CreateElementActionBase extends AnAction {
 
   protected class MyInputValidator extends ElementCreator implements InputValidator {
     private final PsiDirectory myDirectory;
-    private PsiElement[] myCreatedElements;
+    private PsiElement[] myCreatedElements = PsiElement.EMPTY_ARRAY;
 
     public MyInputValidator(final Project project, final PsiDirectory directory) {
       super(project, getErrorTitle());
