@@ -422,7 +422,7 @@ public class JBZipFile {
     }
   }
 
-  void eraseEntry(JBZipEntry entry) throws IOException {
+  public void eraseEntry(JBZipEntry entry) throws IOException {
     getOutputStream(); // Ensure OutputStream created, so we'll print out central directory at the end;
     entries.remove(entry);
     nameMap.remove(entry.getName());
