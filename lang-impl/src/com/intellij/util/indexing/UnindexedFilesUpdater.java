@@ -5,6 +5,7 @@ import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.startup.FileContentQueue;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -27,8 +28,8 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -78,7 +79,7 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
     final RegistryValue value = Registry.get(DumbServiceImpl.FILE_INDEX_BACKGROUND);
     if (!value.asBoolean()) {
       if (Messages.showDialog(myProject, "<html>" +
-                                         "While indices are updated in background, most of IntelliJ IDEA's<br>" +
+                                         "While indices are updated in background, most of " + ApplicationNamesInfo.getInstance().getFullProductName() + "'s<br>" +
                                          "smart functionality <b>won't be available</b>.<br>" +
                                          "Only the most basic editing and version control operations will be enabled.<br>" +
                                          "There will be no Goto Class, no error highlighting, <b>no refactorings</b>, etc!<br>" +

@@ -7,25 +7,26 @@ package com.intellij.openapi.project;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.ui.popup.BalloonHandler;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.BalloonHandler;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.event.HyperlinkListener;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -173,7 +174,7 @@ public class DumbServiceImpl extends DumbService {
         if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
 
         Messages.showMessageDialog("<html>" +
-                                   "IntelliJ IDEA is now indexing your source and library files. These indices are<br>" +
+                                   ApplicationNamesInfo.getInstance().getFullProductName() + " is now indexing your source and library files. These indices are<br>" +
                                    "needed for most of the smart functionality to work properly." +
                                    "<p>" +
                                    "During this process some actions that require these indices won't be available,<br>" +
