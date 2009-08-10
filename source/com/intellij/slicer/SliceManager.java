@@ -67,12 +67,12 @@ public class SliceManager {
     }
   }
 
-  private void doSlice(PsiElement element, String dialogTitle, boolean dataFlowToThis, final ContentManager contentManager,
-                       final String toolwindowId) {
+  private void doSlice(@NotNull PsiElement element, @NotNull String dialogTitle, boolean dataFlowToThis, @NotNull final ContentManager contentManager,
+                       @NotNull final String toolwindowId) {
     Module module = ModuleUtil.findModuleForPsiElement(element);
     AnalysisUIOptions analysisUIOptions = new AnalysisUIOptions();
     analysisUIOptions.SCOPE_TYPE = AnalysisScope.PROJECT;
-    BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, new AnalysisScope(element.getContainingFile()), module.getName(), true,
+    BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, new AnalysisScope(element.getContainingFile()), module == null ? null : module.getName(), true,
                                                                    analysisUIOptions);
     dialog.show();
     if (!dialog.isOK()) return;
