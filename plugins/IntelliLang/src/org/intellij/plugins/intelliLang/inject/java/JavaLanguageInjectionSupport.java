@@ -323,7 +323,9 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     if (InjectLanguageAction.doEditConfigurable(project, new MethodParameterInjectionConfigurable(methodParameterInjection, null, project))) {
       methodParameterInjection.initializePlaces(false);
       final BaseInjection newInjection = new BaseInjection(methodParameterInjection.getSupportId()).copyFrom(methodParameterInjection);
-      newInjection.mergeOriginalPlacesFrom(originalInjection, true);
+      if (originalInjection != null) {
+        newInjection.mergeOriginalPlacesFrom(originalInjection, true);
+      }
       Configuration.getInstance().replaceInjectionsWithUndo(
         project, Collections.singletonList(newInjection),
         ContainerUtil.createMaybeSingletonList(originalInjection),
