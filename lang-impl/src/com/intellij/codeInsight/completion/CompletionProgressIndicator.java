@@ -106,9 +106,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
             myLookup.setAdvertisementText(s);
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
+                if (myEditor.isDisposed() || myEditor.getComponent().getRootPane() == null) {
+                  return;
+                }
                 updateLookup();
               }
-            });
+            }, myQueue.getModalityState());
             return;
           }
         }
