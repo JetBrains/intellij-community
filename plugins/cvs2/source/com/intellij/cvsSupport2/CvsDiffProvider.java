@@ -14,8 +14,10 @@ import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
+import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
@@ -41,32 +43,7 @@ public class CvsDiffProvider implements DiffProvider{
   }
 
   public ItemLatestState getLastRevision(VirtualFile virtualFile) {
-    final String stickyData = CvsUtil.getStickyDateForDirectory(virtualFile.getParent());
-
-    if (stickyData != null) {
-      return new ItemLatestState(new CvsRevisionNumber(stickyData), true);
-    } else {
-      CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
-      final StatusOperation statusOperation = new StatusOperation(Collections.singletonList(new File(virtualFile.getPath())));
-      final Ref<Boolean> success = new Ref<Boolean>();
-      executor.performActionSync(new CommandCvsHandler(CvsBundle.message("operation.name.get.file.status"), statusOperation),
-      new CvsOperationExecutorCallback() {
-        public void executionFinished(final boolean successfully) {
-        }
-        public void executionFinishedSuccessfully() {
-          success.set(Boolean.TRUE);
-        }
-        public void executeInProgressAfterAction(final ModalityContext modaityContext) {
-        }
-      });
-
-      if (Boolean.TRUE.equals(success.get())) {
-        return new ItemLatestState(new CvsRevisionNumber(statusOperation.getRepositoryRevision()),
-                                   (statusOperation.getStatus() != null) && (! FileStatus.REMOVED.equals(statusOperation.getStatus())));
-      }
-
-      return new ItemLatestState(new CvsRevisionNumber("HEAD"), true);
-    }
+    return getLastRevision(CvsVfsUtil.getFileFor(virtualFile));
   }
 
   public ContentRevision createFileContent(final VcsRevisionNumber revisionNumber, VirtualFile selectedFile) {
@@ -91,6 +68,44 @@ public class CvsDiffProvider implements DiffProvider{
 
     } else {
       return null;
+    }
+  }
+
+  public ItemLatestState getLastRevision(FilePath filePath) {
+    return getLastRevision(filePath.getIOFile());
+  }
+
+  public VcsRevisionNumber getLatestCommittedRevision(VirtualFile vcsRoot) {
+    // todo
+    return null;
+  }
+
+  private ItemLatestState getLastRevision(final File file) {
+    final String stickyData = CvsUtil.getStickyDateForDirectory(file.getParentFile());
+
+    if (stickyData != null) {
+      return new ItemLatestState(new CvsRevisionNumber(stickyData), true);
+    } else {
+      CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
+      final StatusOperation statusOperation = new StatusOperation(Collections.singletonList(file));
+      final Ref<Boolean> success = new Ref<Boolean>();
+      executor.performActionSync(new CommandCvsHandler(CvsBundle.message("operation.name.get.file.status"), statusOperation),
+      new CvsOperationExecutorCallback() {
+        public void executionFinished(final boolean successfully) {
+        }
+        public void executionFinishedSuccessfully() {
+          success.set(Boolean.TRUE);
+        }
+        public void executeInProgressAfterAction(final ModalityContext modaityContext) {
+        }
+      });
+
+      if (Boolean.TRUE.equals(success.get())) {
+        return new ItemLatestState(new CvsRevisionNumber(statusOperation.getRepositoryRevision()),
+                                   (statusOperation.getStatus() != null) && (! FileStatus.REMOVED.equals(statusOperation.getStatus())));
+      }
+
+      return new ItemLatestState(new CvsRevisionNumber("HEAD"), true);
     }
   }
 }

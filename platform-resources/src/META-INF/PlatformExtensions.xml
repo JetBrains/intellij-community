@@ -117,6 +117,9 @@
   <projectService serviceInterface="com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI" 
                   serviceImplementation="com.intellij.openapi.vcs.impl.projectlevelman.AllVcses"/>
 
+  <projectService serviceInterface="com.intellij.openapi.vcs.changes.RemoteRevisionsCache"
+                  serviceImplementation="com.intellij.openapi.vcs.changes.RemoteRevisionsCache"/>
+
   <!-- General -->
   <applicationConfigurable implementation="com.intellij.ide.GeneralSettingsConfigurable"/>
 
@@ -160,4 +163,5 @@
 
   <progressFunComponentProvider implementation="com.intellij.featureStatistics.ProgressFunProvider"/>
   <projectConfigurable implementation="com.intellij.javaee.ExternalResourceConfigurable"/>
+  <!-- <checkinHandlerFactory implementation="com.intellij.openapi.vcs.CheckRemoteStatusCheckinHandlerFactory"/> -->
 </extensions>

@@ -114,6 +114,8 @@ public interface CheckinProjectPanel extends Refreshable {
    */
   void setCommitMessage(final String currentDescription);
 
+  void setWarning(final String s);
+
   /**
    * Gets the description for the check-in.
    *

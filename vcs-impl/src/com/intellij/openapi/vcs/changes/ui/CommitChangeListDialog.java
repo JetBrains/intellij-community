@@ -826,6 +826,15 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myCommitMessageArea.requestFocusInMessage();
   }
 
+  public Object getContextInfo(Object object) {
+    // todo
+    return null;
+  }
+
+  public void setWarning(String s) {
+    // todo
+  }
+
   private void setCommitMessageText(final String currentDescription) {
     myLastKnownComment = currentDescription;
     myCommitMessageArea.setText(currentDescription);

@@ -49,7 +49,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     processChangeInList( change, (ChangeList) null, vcsKey);
   }
 
-  public void processChangeInList(final Change change, @Nullable final ChangeList changeList, VcsKey vcsKey) {
+  public void processChangeInList(final Change change, @Nullable final ChangeList changeList, final VcsKey vcsKey) {
     checkIfDisposed();
 
     final String fileName = ChangesUtil.getFilePath(change).getName();
@@ -59,9 +59,9 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
       public void run() {
         if (ChangeListManagerImpl.isUnder(change, myScope)) {
           if (changeList != null) {
-            myChangeListWorker.addChangeToList(changeList.getName(), change);
+            myChangeListWorker.addChangeToList(changeList.getName(), change, vcsKey);
           } else {
-            myChangeListWorker.addChangeToCorrespondingList(change);
+            myChangeListWorker.addChangeToCorrespondingList(change, vcsKey);
           }
         }
       }

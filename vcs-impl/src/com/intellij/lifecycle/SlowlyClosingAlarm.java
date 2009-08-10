@@ -18,7 +18,7 @@ import java.util.concurrent.*;
 public class SlowlyClosingAlarm implements AtomicSectionsAware, Disposable {
   private final static Logger LOG = Logger.getInstance("#com.intellij.lifecycle.SlowlyClosingAlarm");
 
-  protected final ExecutorService myExecutorService;
+  protected final ControlledAlarmFactory.MyExecutorWrapper myExecutorService;
   // single threaded executor, so we have "shared" state here 
   private boolean myInUninterruptibleState;
   protected boolean myDisposeStarted;
@@ -50,10 +50,10 @@ public class SlowlyClosingAlarm implements AtomicSectionsAware, Disposable {
   }
 
   protected SlowlyClosingAlarm(@NotNull final Project project, @NotNull final String name) {
-    this(project, name, Executors.newSingleThreadExecutor(THREAD_FACTORY_OWN), false);
+    this(project, name, ControlledAlarmFactory.createExecutorWrapper(Executors.newSingleThreadExecutor(THREAD_FACTORY_OWN)), false);
   }
 
-  protected SlowlyClosingAlarm(@NotNull final Project project, @NotNull final String name, final ExecutorService executor,
+  protected SlowlyClosingAlarm(@NotNull final Project project, @NotNull final String name, final ControlledAlarmFactory.MyExecutorWrapper executor,
                                final boolean executorIsShared) {
     myName = name;
     myExecutorIsShared = executorIsShared;

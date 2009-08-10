@@ -19,9 +19,11 @@ import java.util.ArrayList;
 public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList> {
   private final ChangeListDecorator[] myDecorators;
   private final ChangeListManagerEx myClManager;
+  private final ChangeListRemoteState myChangeListRemoteState;
 
-  public ChangesBrowserChangeListNode(Project project, ChangeList userObject) {
+  public ChangesBrowserChangeListNode(Project project, ChangeList userObject, final ChangeListRemoteState changeListRemoteState) {
     super(userObject);
+    myChangeListRemoteState = changeListRemoteState;
     myClManager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
     myDecorators = project.getComponents(ChangeListDecorator.class);
   }
@@ -38,6 +40,10 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       }
       if (myClManager.isInUpdate()) {
         renderer.append(" " + VcsBundle.message("changes.nodetitle.updating"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      }
+      if (! myChangeListRemoteState.getState()) {
+        renderer.append(" ");
+        renderer.append(VcsBundle.message("changes.nodetitle.have.outdated.files"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
     }
     else {

@@ -32,6 +32,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
@@ -91,6 +92,16 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     myContentManager.addContent(content);
 
     scheduleRefresh();
+    final MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+    connection.subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            refreshView();
+          }
+        }, ModalityState.NON_MODAL, myProject.getDisposed());
+      }
+    });
   }
 
   public void projectClosed() {

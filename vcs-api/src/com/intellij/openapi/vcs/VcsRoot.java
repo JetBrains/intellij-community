@@ -29,4 +29,24 @@ public class VcsRoot {
     this.vcs = vcs;
     this.path = path;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    VcsRoot root = (VcsRoot)o;
+
+    if (path != null ? !path.equals(root.path) : root.path != null) return false;
+    if (vcs != null ? !vcs.getName().equals(root.vcs.getName()) : root.vcs != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = vcs != null ? vcs.getName().hashCode() : 0;
+    result = 31 * result + (path != null ? path.hashCode() : 0);
+    return result;
+  }
 }

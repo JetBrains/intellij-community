@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.history;
 
 public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
-
   VcsRevisionNumber NULL = new VcsRevisionNumber() {
     public String asString() {
       return "";

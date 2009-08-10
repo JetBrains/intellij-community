@@ -53,6 +53,7 @@ import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl;
+import com.intellij.openapi.vcs.changes.RemoteRevisionsCache;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesAdapter;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
@@ -499,8 +500,10 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
       if (myActionInfo.canChangeFileStatus()) {
         final List<VirtualFile> files = new ArrayList<VirtualFile>();
+        final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
         UpdateFilesHelper.iterateFileGroupFiles(myUpdatedFiles, new UpdateFilesHelper.Callback() {
           public void onFile(final String filePath, final String groupId) {
+            revisionsCache.invalidate(filePath);
             @NonNls final String path = VfsUtil.pathToUrl(filePath.replace(File.separatorChar, '/'));
             final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(path);
             if (file != null) {

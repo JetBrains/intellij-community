@@ -7,10 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SeparatorFactory;
@@ -47,17 +44,20 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   }
 
   public ChangesBrowser(final Project project, List<? extends ChangeList> changeLists, final List<Change> changes,
-                        ChangeList initialListSelection,
-                        final boolean capableOfExcludingChanges, final boolean highlightProblems, @Nullable final Runnable inclusionListener) {
+                        ChangeList initialListSelection, final boolean capableOfExcludingChanges, final boolean highlightProblems,
+                        @Nullable final Runnable inclusionListener, final MyUseCase useCase) {
     super(new BorderLayout());
 
     myProject = project;
     myCapableOfExcludingChanges = capableOfExcludingChanges;
 
-    myViewer = new ChangesTreeList<Change>(myProject, changes, capableOfExcludingChanges, highlightProblems, inclusionListener) {
-      protected DefaultTreeModel buildTreeModel(final List<Change> changes) {
+    final ChangeNodeDecorator decorator = MyUseCase.LOCAL_CHANGES.equals(useCase) ?
+                                          RemoteRevisionsCache.getInstance(myProject).getChangesNodeDecorator() : null;
+
+    myViewer = new ChangesTreeList<Change>(myProject, changes, capableOfExcludingChanges, highlightProblems, inclusionListener, decorator) {
+      protected DefaultTreeModel buildTreeModel(final List<Change> changes, ChangeNodeDecorator changeNodeDecorator) {
         TreeModelBuilder builder = new TreeModelBuilder(myProject, false);
-        return builder.buildModel(changes);
+        return builder.buildModel(changes, changeNodeDecorator);
       }
 
       protected List<Change> getSelectedObjects(final ChangesBrowserNode node) {
@@ -322,5 +322,10 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
   public ShowDiffAction getDiffAction() {
     return myDiffAction;
+  }
+
+  protected static enum MyUseCase {
+    LOCAL_CHANGES,
+    COMMITTED_CHANGES
   }
 }

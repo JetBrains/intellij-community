@@ -51,6 +51,7 @@ public abstract class AbstractVcs extends StartedActivated {
 
   protected final Project myProject;
   private final String myName;
+  private final VcsKey myKey;
   private VcsShowSettingOption myUpdateOption;
   private VcsShowSettingOption myStatusOption;
 
@@ -59,6 +60,7 @@ public abstract class AbstractVcs extends StartedActivated {
 
     myProject = project;
     myName = name;
+    myKey = new VcsKey(myName);
   }
 
   // acts as adapter
@@ -399,6 +401,15 @@ public abstract class AbstractVcs extends StartedActivated {
 
   protected static VcsKey createKey(final String name) {
     return new VcsKey(name);
+  }
+
+  public final VcsKey getKeyInstanceMethod() {
+    return myKey;
+  }
+
+  // todo ?
+  public boolean checkImmediateParentsBeforeCommit() {
+    return false;
   }
 }
 

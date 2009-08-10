@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeList;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
+import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
@@ -70,10 +71,10 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   private ChangesTreeList<Change> createChangesTree() {
-    return new ChangesTreeList<Change>(getProject(), Collections.<Change>emptyList(), false, false, null) {
+    return new ChangesTreeList<Change>(getProject(), Collections.<Change>emptyList(), false, false, null, null) {
       @Override
-      protected DefaultTreeModel buildTreeModel(List<Change> cc) {
-        return new TreeModelBuilder(getProject(), false).buildModel(cc);
+      protected DefaultTreeModel buildTreeModel(List<Change> cc, ChangeNodeDecorator changeNodeDecorator) {
+        return new TreeModelBuilder(getProject(), false).buildModel(cc, changeNodeDecorator);
       }
 
       @Override

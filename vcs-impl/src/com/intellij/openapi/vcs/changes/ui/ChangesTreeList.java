@@ -15,9 +15,9 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -56,13 +56,15 @@ public abstract class ChangesTreeList<T> extends JPanel {
   @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 
   private final Runnable myInclusionListener;
+  @Nullable private final ChangeNodeDecorator myChangeDecorator;
 
   public ChangesTreeList(final Project project, Collection<T> initiallyIncluded, final boolean showCheckboxes,
-                         final boolean highlightProblems, @Nullable final Runnable inclusionListener) {
+                         final boolean highlightProblems, @Nullable final Runnable inclusionListener, @Nullable final ChangeNodeDecorator decorator) {
     myProject = project;
     myShowCheckboxes = showCheckboxes;
     myHighlightProblems = highlightProblems;
     myInclusionListener = inclusionListener;
+    myChangeDecorator = decorator;
     myIncludedChanges = new HashSet<T>(initiallyIncluded);
 
     myCards = new CardLayout();
@@ -222,7 +224,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
       listModel.addElement(change);
     }
 
-    final DefaultTreeModel model = buildTreeModel(changes);
+    final DefaultTreeModel model = buildTreeModel(changes, myChangeDecorator);
     myTree.setModel(model);
 
     SwingUtilities.invokeLater(new Runnable() {
@@ -275,7 +277,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
     });
   }
 
-  protected abstract DefaultTreeModel buildTreeModel(final List<T> changes);
+  protected abstract DefaultTreeModel buildTreeModel(final List<T> changes, final ChangeNodeDecorator changeNodeDecorator);
 
   @SuppressWarnings({"SuspiciousMethodCalls"})
   private void toggleSelection() {
@@ -528,6 +530,9 @@ public abstract class ChangesTreeList<T> extends JPanel {
           final File parentFile = path.getIOFile().getParentFile();
           if (parentFile != null) {
             append(" (" + parentFile.getPath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
+          if ((value instanceof Change) && myChangeDecorator != null) {
+            myChangeDecorator.decorate((Change) value, this);
           }
         }
       };

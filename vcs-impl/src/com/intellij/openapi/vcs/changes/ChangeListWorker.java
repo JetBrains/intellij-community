@@ -4,8 +4,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
@@ -29,13 +31,16 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   private LocalChangeList myDefault;
 
   private ChangeListsIndexes myIdx;
+  private final ChangesDelta myDelta;
 
-  public ChangeListWorker(final Project project) {
+  public ChangeListWorker(final Project project, final PlusMinus<Pair<String, AbstractVcs>> deltaListener) {
     myProject = project;
     myMap = new HashMap<String, LocalChangeList>();
     myIdx = new ChangeListsIndexes();
     myLocallyDeleted = new DeletedFilesHolder();
     mySwitchedHolder = new SwitchedFileHolder(project, FileHolder.HolderType.SWITCHED);
+
+    myDelta = new ChangesDelta(project, deltaListener);
   }
 
   private ChangeListWorker(final ChangeListWorker worker) {
@@ -44,6 +49,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myIdx = new ChangeListsIndexes(worker.myIdx);
     myLocallyDeleted = worker.myLocallyDeleted.copy();
     mySwitchedHolder = (SwitchedFileHolder) worker.mySwitchedHolder.copy();
+    myDelta = worker.myDelta;
     
     LocalChangeList defaultList = null;
     for (LocalChangeList changeList : worker.myMap.values()) {
@@ -76,6 +82,8 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myMap.clear();
     myMap.putAll(worker.myMap);
     myDefault = worker.myDefault;
+    
+    myDelta.step(myIdx, worker.myIdx);
     myIdx = new ChangeListsIndexes(worker.myIdx);
     // todo +-
     myLocallyDeleted.takeFrom(worker.myLocallyDeleted);
@@ -158,28 +166,28 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return newList.copy();
   }
 
-  public boolean addChangeToList(@NotNull final String name, final Change change) {
+  public boolean addChangeToList(@NotNull final String name, final Change change, final VcsKey vcsKey) {
     final LocalChangeList changeList = myMap.get(name);
     if (changeList != null) {
       ((LocalChangeListImpl) changeList).addChange(change);
-      myIdx.changeAdded(change);
+      myIdx.changeAdded(change, vcsKey);
       correctChangeListEditHandler(changeList);
     }
     return changeList != null;
   }
 
-  public void addChangeToCorrespondingList(final Change change) {
+  public void addChangeToCorrespondingList(final Change change, final VcsKey vcsKey) {
     assert myDefault != null;
     for (LocalChangeList list : myMap.values()) {
       if (list.isDefault()) continue;
       if (((LocalChangeListImpl) list).processChange(change)) {
-        myIdx.changeAdded(change);
+        myIdx.changeAdded(change, vcsKey);
         correctChangeListEditHandler(list);
         return;
       }
     }
     ((LocalChangeListImpl) myDefault).processChange(change);
-    myIdx.changeAdded(change);
+    myIdx.changeAdded(change, vcsKey);
     correctChangeListEditHandler(myDefault);
   }
 

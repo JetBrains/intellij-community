@@ -4,7 +4,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListOwner;
 import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -62,18 +61,18 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   }
 
   public static ChangesBrowserNode create(final Project project, @NotNull Object userObject) {
-    if (userObject instanceof Change) {
+    /*if (userObject instanceof Change) {
       return new ChangesBrowserChangeNode(project, (Change) userObject);
-    }
+    }*/
     if (userObject instanceof VirtualFile) {
       return new ChangesBrowserFileNode(project, (VirtualFile) userObject);
     }
     if (userObject instanceof FilePath) {
       return new ChangesBrowserFilePathNode((FilePath) userObject);
     }
-    if (userObject instanceof ChangeList) {
+/*    if (userObject instanceof ChangeList) {
       return new ChangesBrowserChangeListNode(project, (ChangeList) userObject);
-    }
+    }*/
     if (userObject == IGNORED_FILES_TAG) {
       return new ChangesBrowserIgnoredFilesNode(userObject);
     }

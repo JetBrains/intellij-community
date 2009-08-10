@@ -57,7 +57,7 @@ class ChangeListManagerSerialization {
     final List<Element> changeNodes = (List<Element>)listNode.getChildren(NODE_CHANGE);
     for (Element changeNode : changeNodes) {
       try {
-        myWorker.addChangeToList(changeListName, readChange(changeNode));
+        myWorker.addChangeToList(changeListName, readChange(changeNode), null);
       }
       catch (OutdatedFakeRevisionException e) {
         // Do nothing. Just skip adding outdated revisions to the list.

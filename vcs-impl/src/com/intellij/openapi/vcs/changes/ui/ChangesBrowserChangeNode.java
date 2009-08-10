@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,10 +25,12 @@ import java.io.File;
  */
 public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> implements TreeLinkMouseListener.HaveTooltip {
   private final Project myProject;
+  private final ChangeNodeDecorator myDecorator;
 
-  protected ChangesBrowserChangeNode(final Project project, Change userObject) {
+  protected ChangesBrowserChangeNode(final Project project, Change userObject, @Nullable final ChangeNodeDecorator decorator) {
     super(userObject);
     myProject = project;
+    myDecorator = decorator;
     if (!ChangesUtil.getFilePath(userObject).isDirectory()) {
       myCount = 1;
     }
@@ -77,6 +80,10 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
       else {
         renderer.setIcon(filePath.getFileType().getIcon());
       }
+    }
+
+    if (myDecorator != null) {
+      myDecorator.decorate(change, renderer);
     }
   }
 

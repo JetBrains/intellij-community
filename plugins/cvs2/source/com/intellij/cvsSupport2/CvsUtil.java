@@ -284,8 +284,14 @@ public class CvsUtil {
     return new File(file, CVS);
   }
 
+  @Nullable
   public static String getStickyDateForDirectory(VirtualFile parentFile) {
     File file = CvsVfsUtil.getFileFor(parentFile);
+    return getStickyDateForDirectory(file);
+  }
+
+  @Nullable
+  public static String getStickyDateForDirectory(final File file) {
     String tag = loadStickyTagFrom(file);
     if (tag == null) return null;
     if (tag.startsWith(STICKY_DATE_PREFIX)) {
@@ -294,7 +300,7 @@ public class CvsUtil {
     if (tag.startsWith(STICKY_BRANCH_TAG_PREFIX)) {
       return tag.substring(STICKY_BRANCH_TAG_PREFIX.length());
     }
-    
+
     return tag;
   }
 
