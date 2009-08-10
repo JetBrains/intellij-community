@@ -159,7 +159,7 @@ public final class Configuration implements PersistentStateComponent<Element> {
 
   private void mergeWithDefaultConfiguration() {
     try {
-      final Configuration cfg = load(getClass().getClassLoader().getResourceAsStream("/" + COMPONENT_NAME + ".xml"));
+      final Configuration cfg = load(getClass().getResourceAsStream("/" + COMPONENT_NAME + ".xml"));
       if (cfg == null) return; // very strange
       importFrom(cfg);
     }
