@@ -100,7 +100,7 @@ public abstract class ChooseByNameBase{
   private static class MatchesComparator implements Comparator<String> {
     private final String myOriginalPattern;
 
-    public MatchesComparator(final String originalPattern) {
+    private MatchesComparator(final String originalPattern) {
       myOriginalPattern = originalPattern.trim();
     }
 
@@ -759,7 +759,7 @@ public abstract class ChooseByNameBase{
     private final int start;
     private final int end;
 
-    public RemoveCmd(final int start, final int end) {
+    private RemoveCmd(final int start, final int end) {
       this.start = start;
       this.end = end;
     }
@@ -773,7 +773,7 @@ public abstract class ChooseByNameBase{
     private final int idx;
     private final Object element;
 
-    public InsertCmd(final int idx, final Object element) {
+    private InsertCmd(final int idx, final Object element) {
       this.idx = idx;
       this.element = element;
     }
@@ -900,7 +900,7 @@ public abstract class ChooseByNameBase{
     private final KeyStroke forwardStroke;
     private final KeyStroke backStroke;
 
-    public MyTextField() {
+    private MyTextField() {
       super(40);
       enableEvents(AWTEvent.KEY_EVENT_MASK);
       myCompletionKeyStroke = getShortcut(IdeActions.ACTION_CODE_COMPLETION);
@@ -1039,7 +1039,7 @@ public abstract class ChooseByNameBase{
     private volatile boolean myCancelled = false;
     private boolean myCanCancel = true;
 
-    public CalcElementsThread(String pattern, boolean checkboxState, CalcElementsCallback callback, ModalityState modalityState) {
+    private CalcElementsThread(String pattern, boolean checkboxState, CalcElementsCallback callback, ModalityState modalityState) {
       myPattern = pattern;
       myCheckboxState = checkboxState;
       myCallback = callback;
@@ -1057,7 +1057,7 @@ public abstract class ChooseByNameBase{
             ensureNamesLoaded(myCheckboxState);
             addElementsByPattern(elements, myPattern);
             for (Object elem : elements) {
-              if (myCancelled) throw new ProcessCanceledException();
+              if (myCancelled) break;
               if (elem instanceof PsiElement) {
                 final PsiElement psiElement = (PsiElement)elem;
                 psiElement.isWritable(); // That will cache writable flag in VirtualFile. Taking the action here makes it canceleable.
@@ -1225,7 +1225,7 @@ patterns:
     try {
       for (String name : names) {
         if (calcElementsThread != null && calcElementsThread.myCancelled) {
-          throw new ProcessCanceledException();
+          break;
         }
         if (name != null) {
           if (myModel instanceof CustomMatcherModel) {

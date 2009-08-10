@@ -1,7 +1,6 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.util.PsiElementListCellRenderer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
@@ -16,7 +15,6 @@ import java.io.File;
 
 public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile>{
   private final int myMaxWidth;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.GotoFileCellRenderer");
 
   public GotoFileCellRenderer(int maxSize) {
     myMaxWidth = maxSize;
@@ -45,16 +43,14 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile>{
     if (project == null) {
       return url;
     }
-    else {
-      final VirtualFile baseDir = project.getBaseDir();
-      if (baseDir != null) {
-        //noinspection ConstantConditions
-        final String projectHomeUrl = baseDir.getPresentableUrl();
-        if (url.startsWith(projectHomeUrl)) {
-          final String cont = url.substring(projectHomeUrl.length());
-          if (cont.length() == 0) return null;
-          url = "..." + cont;
-        }
+    final VirtualFile baseDir = project.getBaseDir();
+    if (baseDir != null) {
+      //noinspection ConstantConditions
+      final String projectHomeUrl = baseDir.getPresentableUrl();
+      if (url.startsWith(projectHomeUrl)) {
+        final String cont = url.substring(projectHomeUrl.length());
+        if (cont.length() == 0) return null;
+        url = "..." + cont;
       }
     }
     return url;

@@ -536,6 +536,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
+  public Project getProject() {
+    return myProject;
+  }
+
   private class CloseAction extends AnAction implements DumbAware {
     private CloseAction() {
       super(UsageViewBundle.message("action.close"), null, IconLoader.getIcon("/actions/cancel.png"));
