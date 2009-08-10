@@ -547,12 +547,15 @@ public class AnalysisScope {
     if (myType == FILE) {
       final VirtualFile vFile = ((PsiFileSystemItem)myElement).getVirtualFile();
       modules.addAll(getAllInterestingModules(fileIndex, vFile));
-    } else if (myType == DIRECTORY) {
+    }
+    else if (myType == DIRECTORY) {
       final VirtualFile vFile = ((PsiFileSystemItem)myElement).getVirtualFile();
       modules.addAll(getAllInterestingModules(fileIndex, vFile));
-    } else if (myType == MODULE) {
+    }
+    else if (myType == MODULE) {
       modules.add(myModule);
-    } else if (myType == MODULES) {
+    }
+    else if (myType == MODULES) {
       modules.addAll(myModules);
     }
     return collectScopes(defaultProject, modules);
@@ -623,7 +626,7 @@ public class AnalysisScope {
         return LocalSearchScope.EMPTY;
       case MODULE:
         GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(myModule);
-        return myIncludeTestSource ? moduleScope : GlobalSearchScope.notScope(GlobalSearchScope.projectTestScope(myProject)).intersectWith(moduleScope);
+        return myIncludeTestSource ? moduleScope : GlobalSearchScope.notScope(GlobalSearchScope.projectTestScope(myModule.getProject())).intersectWith(moduleScope);
       case MODULES:
         SearchScope scope = GlobalSearchScope.EMPTY_SCOPE;
         for (Module module : myModules) {
