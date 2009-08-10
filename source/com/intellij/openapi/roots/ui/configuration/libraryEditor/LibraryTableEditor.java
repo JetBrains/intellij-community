@@ -310,6 +310,7 @@ public class LibraryTableEditor implements Disposable {
   }
 
   private Object[] getSelectedElements() {
+    if (myTreeBuilder.isDisposed()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
     final TreePath[] selectionPaths = myTreeBuilder.getTree().getSelectionPaths();
     if (selectionPaths == null) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
