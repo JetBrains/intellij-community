@@ -350,10 +350,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       if (condition != null) {
         condition.accept(this);
       }
-      final InstructionImpl thenInstruction = startNode(thenBranch);
       thenBranch.accept(this);
       addPendingEdge(ifStatement, myHead);
-      finishNode(thenInstruction);
     }
 
     myHead = head;
@@ -364,10 +362,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         condition.accept(this);
         myNegate = !myNegate;
       }
-      final InstructionImpl elseInstruction = startNode(elseBranch);
       elseBranch.accept(this);
       addPendingEdge(ifStatement, myHead);
-      finishNode(elseInstruction);
     }
 
     finishNode(ifInstruction);

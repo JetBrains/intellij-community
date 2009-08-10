@@ -9,15 +9,14 @@ if (url == null) {
 return url
 -----
 0(1) element: null
-1(2,10) element: IF statement
+1(2,9) element: IF statement
 2(3) READ url
-3(4) element: Block statement
-4(5,7) element: Open block
-5(6) WRITE url
-6(7,10) element: Assignment expression MAYBE_RETURN
-7(8) element: Catch clause
-8(9) READ e
-9(12) element: THROW statement
-10(11) READ url
-11(12) element: RETURN statement
-12() element: null
+3(4,6) element: Open block
+4(5) WRITE url
+5(6,9) element: Assignment expression MAYBE_RETURN
+6(7) element: Catch clause
+7(8) READ e
+8(11) element: THROW statement
+9(10) READ url
+10(11) element: RETURN statement
+11() element: null

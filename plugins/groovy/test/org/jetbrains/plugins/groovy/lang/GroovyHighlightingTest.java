@@ -118,5 +118,7 @@ public class GroovyHighlightingTest extends JavaCodeInsightFixtureTestCase {
   public void testUnresolvedLhsAssignment() throws Throwable { doTest(new GroovyUnresolvedAccessInspection()); }
 
   public void testMissingReturnWithLastLoop() throws Throwable { doTest(new MissingReturnInspection()); }
+  public void testMissingReturnWithUnknownCall() throws Throwable { doTest(new MissingReturnInspection()); }
+  public void testMissingReturnWithIf() throws Throwable { doTest(new MissingReturnInspection()); }
 
 }
