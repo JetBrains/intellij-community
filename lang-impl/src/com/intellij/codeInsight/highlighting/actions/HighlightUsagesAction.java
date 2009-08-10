@@ -6,6 +6,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 
@@ -26,7 +28,7 @@ public class HighlightUsagesAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     final Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    if (editor == null) return;
+    if (editor == null || project == null) return;
     String commandName = getTemplatePresentation().getText();
     if (commandName == null) commandName = "";
 
@@ -35,7 +37,12 @@ public class HighlightUsagesAction extends AnAction implements DumbAware {
       new Runnable() {
         public void run() {
           PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-          new HighlightUsagesHandler().invoke(project, editor, psiFile);
+          try {
+            HighlightUsagesHandler.invoke(project, editor, psiFile);
+          }
+          catch (IndexNotReadyException e1) {
+            DumbService.getInstance(project).showDumbModeNotification("This usage search requires indices and cannot be performed until they are built");
+          }
         }
       },
       commandName,

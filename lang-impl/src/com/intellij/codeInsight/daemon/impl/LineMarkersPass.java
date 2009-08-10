@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -49,7 +50,11 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
   }
 
   protected void applyInformationWithProgress() {
-    UpdateHighlightersUtil.setLineMarkersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myMarkers, Pass.UPDATE_ALL);
+    try {
+      UpdateHighlightersUtil.setLineMarkersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myMarkers, Pass.UPDATE_ALL);
+    }
+    catch (IndexNotReadyException ignored) {
+    }
   }
 
   protected void collectInformationWithProgress(final ProgressIndicator progress) {

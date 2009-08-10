@@ -4,6 +4,8 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.searches.DefinitionsSearch;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +49,13 @@ public class ImplementationSearcher {
     final PsiElement[][] result = new PsiElement[1][];
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        result[0] = DefinitionsSearch.search(element).toArray(PsiElement.EMPTY_ARRAY);
+        try {
+          result[0] = DefinitionsSearch.search(element).toArray(PsiElement.EMPTY_ARRAY);
+        }
+        catch (IndexNotReadyException e) {
+          DumbService.getInstance(element.getProject()).showDumbModeNotification("Implementation information isn't available while indices are built");
+          result[0] = null;
+        }
       }
     }, CodeInsightBundle.message("searching.for.implementations"), true, element.getProject())) {
       return null;
