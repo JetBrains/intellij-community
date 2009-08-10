@@ -39,6 +39,7 @@ public class EditorWithProviderComposite extends EditorComposite {
   }
 
   public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider() {
+    LOG.assertTrue(myEditors.length > 0, myEditors.length);
     if(myEditors.length==1){
       LOG.assertTrue(myTabbedPaneWrapper==null);
       return Pair.create (myEditors[0], myProviders [0]);
@@ -46,8 +47,11 @@ public class EditorWithProviderComposite extends EditorComposite {
     else{ // we have to get myEditor from tabbed pane
       LOG.assertTrue(myTabbedPaneWrapper!=null);
       final int index=myTabbedPaneWrapper.getSelectedIndex();
-      LOG.assertTrue(index>=0);
-      LOG.assertTrue(index<myEditors.length);
+      if (index == -1) {
+        LOG.error("No selected editors for " + getFile());
+      }
+      LOG.assertTrue(index>=0, index);
+      LOG.assertTrue(index<myEditors.length, index);
       return Pair.create (myEditors[index], myProviders [index]);
     }
   }
