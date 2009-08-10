@@ -13,13 +13,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public class VisibleHighlightingPassFactory extends AbstractProjectComponent {
+public abstract class VisibleHighlightingPassFactory extends AbstractProjectComponent {
   public VisibleHighlightingPassFactory(Project project) {
     super(project);
   }
 
   @Nullable
-  protected TextRange calculateRangeToProcess(Editor editor) {
+  protected static TextRange calculateRangeToProcess(Editor editor) {
     TextRange dirtyTextRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
     if (dirtyTextRange == null) return null;
     int startOffset = dirtyTextRange.getStartOffset();

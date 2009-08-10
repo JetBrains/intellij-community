@@ -35,12 +35,12 @@ public class FileStatusMap {
   }
 
   @Nullable
-  public static TextRange getDirtyTextRange(@NotNull Editor editor, int part) {
+  public static TextRange getDirtyTextRange(@NotNull Editor editor, int passId) {
     Document document = editor.getDocument();
     TextRange documentRange = TextRange.from(0, document.getTextLength());
 
     FileStatusMap me = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(editor.getProject())).getFileStatusMap();
-    TextRange dirtyScope = me.getFileDirtyScope(document, part);
+    TextRange dirtyScope = me.getFileDirtyScope(document, passId);
     if (dirtyScope == null || !documentRange.intersects(dirtyScope)) {
       return null;
     }
@@ -164,6 +164,27 @@ public class FileStatusMap {
       LOG.assertTrue(status.dirtyScopes.containsKey(passId), "Unknown pass " + passId);
       RangeMarker marker = status.dirtyScopes.get(passId);
       return marker == null ? null : marker.isValid() ? new TextRange(marker.getStartOffset(), marker.getEndOffset()) : new TextRange(0, document.getTextLength());
+    }
+  }
+  
+  public void markFileScopeDirty(@NotNull Document document, int passId) {
+    synchronized(myDocumentToStatusMap){
+      FileStatus status = myDocumentToStatusMap.get(document);
+      if (status == null){
+        return;
+      }
+      if (passId == Pass.WOLF) {
+        status.wolfPassFinfished = false;
+      }
+      else {
+        LOG.assertTrue(status.dirtyScopes.containsKey(passId));
+        RangeMarker marker = status.dirtyScopes.get(passId);
+        if (marker != null) {
+          ((DocumentEx)document).removeRangeMarker((RangeMarkerEx)marker);
+        }
+        marker = document.createRangeMarker(0, document.getTextLength());
+        status.dirtyScopes.put(passId, marker);
+      }
     }
   }
 

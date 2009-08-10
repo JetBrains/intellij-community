@@ -265,9 +265,9 @@ public abstract class PassExecutorService {
     }
 
     public void run() {
-      log(myUpdateProgress, myPass, "Started ");
-
       if (myUpdateProgress.isCanceled()) return;
+
+      log(myUpdateProgress, myPass, "Started. ");
 
       for (ScheduledPass successor : mySuccessorsOnSubmit) {
         int predecessorsToRun = successor.myRunningPredecessorsCount.decrementAndGet();
@@ -288,7 +288,7 @@ public abstract class PassExecutorService {
               }
               catch (ProcessCanceledException e) {
                 log(myUpdateProgress, myPass, "Canceled ");
-                myUpdateProgress.cancel(); //for the case then some smartasses throw PCE just for fun
+                myUpdateProgress.cancel(); //in case when some smartasses throw PCE just for fun
               }
               catch (RuntimeException e) {
                 LOG.error(e);
@@ -304,6 +304,8 @@ public abstract class PassExecutorService {
         }
       },myUpdateProgress);
 
+      log(myUpdateProgress, myPass, "Finished. ");
+
       if (!myUpdateProgress.isCanceled()) {
         applyInformationToEditors(myFileEditors, myPass, myUpdateProgress, myThreadsToStartCountdown);
         for (ScheduledPass successor : mySuccessorsOnCompletion) {
@@ -312,9 +314,6 @@ public abstract class PassExecutorService {
             submit(successor);
           }
         }
-      }
-      else {
-        int i  = 0;
       }
     }
   }

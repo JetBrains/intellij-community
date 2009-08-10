@@ -314,6 +314,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   public synchronized void stopProcess(boolean toRestartAlarm) {
+    PassExecutorService.log(myUpdateProgress, null, "Cancel by stopProcess ", toRestartAlarm);
     renewUpdateProgress(toRestartAlarm);
     myAlarm.cancelAllRequests();
     boolean restart = toRestartAlarm && !myDisposed && myInitialized/* && myDaemonListeners.myIsFrameFocused*/;
@@ -549,6 +550,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           }
         }
         // cancel all after calling createPasses() since there are perverts {@link com.intellij.util.xml.ui.DomUIFactoryImpl} who are changing PSI there
+        PassExecutorService.log(myUpdateProgress, null, "Cancel by alarm");
         renewUpdateProgress(true);
         myAlarm.cancelAllRequests();
         DaemonProgressIndicator progress = myUpdateProgress;

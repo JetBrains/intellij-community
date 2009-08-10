@@ -143,7 +143,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         }
       }
     })) {
-      GeneralHighlightingPass.cancelAndRestartDaemonLater(progress, myProject);
+      // we must be sure GHP will restart
+      fileStatusMap.markFileScopeDirty(getDocument(), Pass.UPDATE_ALL);
+      GeneralHighlightingPass.cancelAndRestartDaemonLater(progress, myProject, this);
     }
   }
 

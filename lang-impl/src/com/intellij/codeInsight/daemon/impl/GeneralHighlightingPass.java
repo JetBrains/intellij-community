@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightVisitor;
@@ -10,8 +11,8 @@ import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.concurrency.JobUtil;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.injected.editor.DocumentWindowImpl;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
@@ -35,8 +36,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
@@ -48,7 +49,6 @@ import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +69,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private final boolean myUpdateAll;
 
   private volatile Collection<HighlightInfo> myHighlights = Collections.emptyList();
-  private final Map<TextRange,Collection<HighlightInfo>> myInjectedPsiHighlights = new THashMap<TextRange, Collection<HighlightInfo>>();
+  private final Map<TextRange,Collection<HighlightInfo>> myInjectedPsiHighlights = new HashMap<TextRange, Collection<HighlightInfo>>();
 
   protected volatile boolean myHasErrorElement;
   private volatile boolean myErrorFound;
@@ -382,7 +382,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return myUpdateAll && myStartOffset == 0 && myEndOffset == myFile.getTextLength();
   }
 
-  private static final Key<Boolean> UPDATE_ALL_FINISHED = Key.create("UPDATE_ALL_FINISHED");
+  private static final Key<List<GeneralHighlightingPass>> UPDATE_ALL_FINISHED = Key.create("UPDATE_ALL_FINISHED");
   protected void applyInformationWithProgress() {
     myFile.putUserData(HAS_ERROR_ELEMENT, myHasErrorElement);
 
@@ -396,14 +396,21 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     myInjectedPsiHighlights.put(range, collection);
     myHighlights = Collections.emptyList();
 
-    Boolean updateAllFinished = myProgress.getUserData(UPDATE_ALL_FINISHED);
-    if (updateAllFinished == null || !updateAllFinished.booleanValue()) {
+    List<GeneralHighlightingPass> updateAllFinished = myProgress.getUserData(UPDATE_ALL_FINISHED);
+    if (updateAllFinished == null || !updateAllFinished.contains(this)) {
       // prevent situation when visible pass finished after updateAll pass and tries to wipe out its results
       UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myInjectedPsiHighlights, Pass.UPDATE_ALL);
+
+      if (myUpdateAll) {
+        if (updateAllFinished == null) {
+          updateAllFinished = new ArrayList<GeneralHighlightingPass>();
+          myProgress.putUserData(UPDATE_ALL_FINISHED, updateAllFinished);
+        }
+        updateAllFinished.add(this);
+      }
     }
 
     if (myUpdateAll) {
-      myProgress.putUserData(UPDATE_ALL_FINISHED, Boolean.TRUE);
       reportErrorsToWolf();
     }
   }
@@ -484,14 +491,15 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
       };
       if (!visitor.analyze(action, myUpdateAll, myFile)) {
-        cancelAndRestartDaemonLater(progress, myProject);
+        cancelAndRestartDaemonLater(progress, myProject, this);
       }
     }
 
     return gotHighlights;
   }
 
-  static Void cancelAndRestartDaemonLater(ProgressIndicator progress, final Project project) {
+  static Void cancelAndRestartDaemonLater(ProgressIndicator progress, final Project project, TextEditorHighlightingPass pass) {
+    PassExecutorService.log(progress, pass, "Cancel and restart");
     progress.cancel();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
