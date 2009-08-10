@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageViewNodeTextLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.xml.TypeNameManager;
+import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,6 +28,9 @@ public class DefaultPomTargetDescriptionProvider extends PomDescriptionProvider 
     }
     if (location == UsageViewNodeTextLocation.INSTANCE) {
       return TypeNameManager.getTypeName(element.getClass()) + " " + StringUtil.notNullize(element instanceof PomNamedTarget ? ((PomNamedTarget)element).getName() : null, "''");
+    }
+    if (location instanceof HighlightUsagesDescriptionLocation) {
+      return TypeNameManager.getTypeName(element.getClass());
     }
     return null;
   }
