@@ -29,10 +29,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -49,6 +46,7 @@ public class ExpectedHighlightingData {
 
   private final PsiFile myFile;
   @NonNls private static final String ANY_TEXT = "*";
+  String myText;
 
   public static class ExpectedHighlightingSet {
     private final boolean endOfLine;
@@ -86,6 +84,7 @@ public class ExpectedHighlightingData {
                                   boolean checkInfos,
                                   PsiFile file) {
     myFile = file;
+    myText = document.getText();
     highlightingTypes = new THashMap<String,ExpectedHighlightingSet>();
     highlightingTypes.put(ERROR_MARKER, new ExpectedHighlightingSet(HighlightInfoType.ERROR, HighlightSeverity.ERROR, false, true));
     highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(HighlightInfoType.WARNING, HighlightSeverity.WARNING, false, checkWarnings));
@@ -396,8 +395,44 @@ public class ExpectedHighlightingData {
     }
 
     if (failMessage.length() > 0) {
-      Assert.fail(failMessage);
+      compareTexts(infos, text, failMessage);
     }
+  }
+
+  private void compareTexts(Collection<HighlightInfo> infos, String text, String failMessage) {
+    final ArrayList<HighlightInfo> list = new ArrayList<HighlightInfo>(infos);
+    Collections.sort(list, new Comparator<HighlightInfo>() {
+      public int compare(HighlightInfo o1, HighlightInfo o2) {
+        return o2.startOffset - o1.startOffset;
+      }
+    });
+
+    StringBuilder sb = new StringBuilder();
+
+    int end = text.length();
+    for (HighlightInfo info : list) {
+
+      for (Map.Entry<String, ExpectedHighlightingSet> entry : highlightingTypes.entrySet()) {
+        final ExpectedHighlightingSet set = entry.getValue();
+        if(set.enabled
+           && set.severity == info.getSeverity()
+           //&& (set.defaultErrorType.equals(info.type))
+           && set.endOfLine == info.isAfterEndOfLine
+          ) {
+          final String severity = entry.getKey();
+          sb.insert(0, text.substring(info.endOffset, end));
+          sb.insert(0, "<"+
+                       severity +" descr=\"" + info.description+"\">"+ text.substring(info.startOffset, info.endOffset)+"</"+
+                       severity +">");
+          end = info.startOffset;
+          break;
+        }
+      }
+    }
+    sb.insert(0, text.substring(0, end));
+
+    Assert.assertEquals(failMessage + "\n" , myText, sb.toString());
+    Assert.fail(failMessage);
   }
 
   private static boolean infosContainsExpectedInfo(Collection<HighlightInfo> infos, HighlightInfo expectedInfo) {
