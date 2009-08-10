@@ -64,9 +64,38 @@ public class SvnDiffProvider implements DiffProvider {
   }
 
   public ItemLatestState getLastRevision(VirtualFile file) {
+    return getLastRevision(new File(file.getPath()));
+  }
+
+  public ContentRevision createFileContent(final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile) {
+    final SVNRevision svnRevision = ((SvnRevisionNumber)revisionNumber).getRevision();
+    FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(selectedFile);
     final SVNStatusClient client = myVcs.createStatusClient();
     try {
-      final SVNStatus svnStatus = client.doStatus(new File(file.getPresentableUrl()), true, false);
+      final SVNStatus svnStatus = client.doStatus(new File(selectedFile.getPresentableUrl()), false, false);
+      if (svnRevision.equals(svnStatus.getCommittedRevision())) {
+        return SvnContentRevision.create(myVcs, filePath, svnRevision);
+      }
+    }
+    catch (SVNException e) {
+      LOG.debug(e);    // most likely the file is unversioned
+    }
+    return SvnContentRevision.createRemote(myVcs, filePath, svnRevision);
+  }
+
+  public ItemLatestState getLastRevision(FilePath filePath) {
+    return getLastRevision(filePath.getIOFile());
+  }
+
+  public VcsRevisionNumber getLatestCommittedRevision(VirtualFile vcsRoot) {
+    // todo
+    return null;
+  }
+
+  private ItemLatestState getLastRevision(final File file) {
+    final SVNStatusClient client = myVcs.createStatusClient();
+    try {
+      final SVNStatus svnStatus = client.doStatus(file, true, false);
       if (svnStatus == null) {
         // IDEADEV-21785 (no idea why this can happen)
         LOG.info("No SVN status returned for " + file.getPath());
@@ -90,21 +119,5 @@ public class SvnDiffProvider implements DiffProvider {
       LOG.debug(e);    // most likely the file is unversioned
       return defaultResult();
     }
-  }
-
-  public ContentRevision createFileContent(final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile) {
-    final SVNRevision svnRevision = ((SvnRevisionNumber)revisionNumber).getRevision();
-    FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(selectedFile);
-    final SVNStatusClient client = myVcs.createStatusClient();
-    try {
-      final SVNStatus svnStatus = client.doStatus(new File(selectedFile.getPresentableUrl()), false, false);
-      if (svnRevision.equals(svnStatus.getCommittedRevision())) {
-        return SvnContentRevision.create(myVcs, filePath, svnRevision);
-      }
-    }
-    catch (SVNException e) {
-      LOG.debug(e);    // most likely the file is unversioned
-    }
-    return SvnContentRevision.createRemote(myVcs, filePath, svnRevision);
   }
 }

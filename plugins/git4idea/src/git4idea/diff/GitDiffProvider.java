@@ -145,4 +145,27 @@ public class GitDiffProvider implements DiffProvider {
     }
     return null;
   }
+
+  public ItemLatestState getLastRevision(FilePath filePath) {
+    if (filePath.isDirectory()) {
+      return null;
+    }
+    final VirtualFile vf = filePath.getVirtualFile();
+    if (vf != null) {
+      if (! ourGoodStatuses.contains(myStatusManager.getStatus(vf))) {
+        return null;
+      }
+    }
+    try {
+      return GitHistoryUtils.getLastRevision(myProject, filePath);
+    }
+    catch (VcsException e) {
+      return null;
+    }
+  }
+
+  public VcsRevisionNumber getLatestCommittedRevision(VirtualFile vcsRoot) {
+    // todo
+    return null;
+  }
 }
