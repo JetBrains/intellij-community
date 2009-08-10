@@ -304,9 +304,13 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
       return results;
     }
 
-    private GroovyResolveResult[] _resolve(GrCodeReferenceElementImpl ref, PsiManager manager,
+    private static GroovyResolveResult[] _resolve(GrCodeReferenceElementImpl ref, PsiManager manager,
                                            ReferenceKind kind) {
       final String refName = ref.getReferenceName();
+      if (refName == null) {
+        return GroovyResolveResult.EMPTY_ARRAY;
+      }
+
       switch (kind) {
         case CLASS_OR_PACKAGE_FQ:
         case CLASS_FQ:
@@ -340,8 +344,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
           if (qualifier != null) {
             PsiElement qualifierResolved = qualifier.resolve();
             if (qualifierResolved instanceof PsiPackage) {
-              PsiClass[] classes = ((PsiPackage) qualifierResolved).getClasses(ref.getResolveScope());
-              for (final PsiClass aClass : classes) {
+              for (final PsiClass aClass : ((PsiPackage) qualifierResolved).getClasses(ref.getResolveScope())) {
                 if (refName.equals(aClass.getName())) {
                   boolean isAccessible = PsiUtil.isAccessible(ref, aClass);
                   return new GroovyResolveResult[]{new GroovyResolveResultImpl(aClass, isAccessible)};

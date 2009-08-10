@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
  * @author ven
  */
 public interface GrReferenceElement extends GroovyPsiElement, PsiPolyVariantReference, PsiQualifiedReference {
+  @Nullable
   String getReferenceName();
   PsiElement getReferenceNameElement();
 
