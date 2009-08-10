@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Set;
@@ -29,7 +30,7 @@ import java.util.HashSet;
  */
 public abstract class ActionGroup extends AnAction {
   private boolean myPopup;
-  private final PropertyChangeSupport myChangeSupport;
+  private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
 
   private Set<AnAction> mySecondaryActions;
 
@@ -57,14 +58,24 @@ public abstract class ActionGroup extends AnAction {
    */
   public ActionGroup(String shortName, boolean popup){
     super(shortName);
-    myChangeSupport = new PropertyChangeSupport(this);
     setPopup(popup);
   }
 
+  public ActionGroup(String text, String description, Icon icon) {
+    super(text, description, icon);
+  }
+
   /**
-   * This method is final and empty because a group cannot have a handler.
+   * This method can be called in popup menus if {@link #canBePerformed()} is true
    */
-  public final void actionPerformed(AnActionEvent e){
+  public void actionPerformed(AnActionEvent e){
+  }
+
+  /**
+   * @return true if {@link #actionPerformed(AnActionEvent)} should be called   
+   */
+  public boolean canBePerformed() {
+    return false;
   }
 
   /**

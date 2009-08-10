@@ -457,8 +457,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
       if (!actionChoice.isEnabled()) return FINAL_CHOICE;
       final AnAction action = actionChoice.getAction();
       final DataContext dataContext = DataManager.getInstance().getDataContext(myContext);
-      if (action instanceof ActionGroup) {
-        return JBPopupFactory.getInstance().createActionsStep((ActionGroup)action, dataContext, myEnableMnemonics, false, null, myContext, false);
+      if (action instanceof ActionGroup && (!finalChoice || !((ActionGroup)action).canBePerformed())) {
+          return JBPopupFactory.getInstance().createActionsStep((ActionGroup)action, dataContext, myEnableMnemonics, false, null, myContext, false);
       }
       else {
         // invokeLater is required to get a chance for the popup to hide in case the action called displays modal dialog
