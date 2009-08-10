@@ -251,17 +251,27 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         final IElementType type = tree.getElementType();
 
         if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(tree)) {
+          if (!stubs.hasNext()) {
+            LOG.error("Stub list in" +
+                      this +
+                      " " +
+                      getName() +
+                      " has fewer elements than PSI. Last AST element: " +
+                      tree.getElementType() +
+                      " " +
+                      tree);
+          }
           final StubElement stub = stubs.next();
           if (stub.getStubType() != tree.getElementType()) {
             rebuildStub();
-            assert false : "Stub and PSI element type mismatch in " +
+            LOG.error("Stub and PSI element type mismatch in " +
                            getName() +
                            ": stub " +
                            stub +
                            ", AST " +
                            tree.getElementType() +
                            "; " +
-                           tree;
+                           tree);
           }
           final PsiElement psi = stub.getPsi();
           ((CompositeElement)tree).setPsi(psi);
