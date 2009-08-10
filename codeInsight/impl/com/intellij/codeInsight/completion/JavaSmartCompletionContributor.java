@@ -522,8 +522,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       final boolean shouldSearchForInheritors = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         public Boolean compute() {
           final PsiClass psiClass = type.resolve();
-          assert psiClass != null;
-          return !psiClass.hasModifierProperty(PsiModifier.FINAL);
+          return psiClass != null && psiClass.isValid() && !psiClass.hasModifierProperty(PsiModifier.FINAL);
         }
       }).booleanValue();
       if (shouldSearchForInheritors) {
