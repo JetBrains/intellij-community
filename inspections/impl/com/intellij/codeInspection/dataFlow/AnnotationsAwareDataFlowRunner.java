@@ -17,6 +17,10 @@ public class AnnotationsAwareDataFlowRunner extends DataFlowRunner {
   @Override
   protected Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, InstructionVisitor visitor) {
     final Collection<DfaMemoryState> initialStates = super.createInitialStates(psiBlock, visitor);
+    if (initialStates == null) {
+      return null;
+    }
+
     final PsiElement parent = psiBlock.getParent();
     if (parent instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)parent;

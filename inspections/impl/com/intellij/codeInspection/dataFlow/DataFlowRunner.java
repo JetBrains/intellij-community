@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -47,6 +48,7 @@ public class DataFlowRunner {
     return myValueFactory;
   }
 
+  @Nullable
   protected Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, InstructionVisitor visitor) {
     if (psiBlock.getParent() instanceof PsiMethod) {
       final PsiClass containingClass = ((PsiMethod)psiBlock.getParent()).getContainingClass();
