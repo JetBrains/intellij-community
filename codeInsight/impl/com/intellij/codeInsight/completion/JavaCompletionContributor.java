@@ -191,7 +191,7 @@ public class JavaCompletionContributor extends CompletionContributor {
                     final LookupItem item = element.as(LookupItem.class);
                     JavaCompletionUtil.highlightMemberOfContainer(item);
                     if (isSwitchLabel) {
-                      result.addElement(TailTypeDecorator.createDecorator(element, TailType.createSimpleTailType(';')));
+                      result.addElement(TailTypeDecorator.createDecorator(element, TailType.createSimpleTailType(':')));
                     } else {
                       if (file instanceof PsiJavaCodeReferenceCodeFragment &&
                           !((PsiJavaCodeReferenceCodeFragment)file).isClassesAccepted() && item != null) {
