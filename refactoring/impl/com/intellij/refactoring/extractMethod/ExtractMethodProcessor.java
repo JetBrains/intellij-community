@@ -445,8 +445,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   protected void apply(final AbstractExtractDialog dialog) {
     myMethodName = dialog.getChosenMethodName();
-    final List<ParameterTablePanel.VariableData> datas = dialog.getChosenParameters().getInputVariables();
-    myVariableDatum = datas.toArray(new ParameterTablePanel.VariableData[datas.size()]);
+    myVariableDatum = dialog.getChosenParameters();
     myStatic |= dialog.isMakeStatic();
     myIsChainedConstructor = dialog.isChainedConstructor();
     myMethodVisibility = dialog.getVisibility();

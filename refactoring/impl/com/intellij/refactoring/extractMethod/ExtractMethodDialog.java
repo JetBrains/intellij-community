@@ -28,7 +28,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 
@@ -58,6 +57,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
   private JCheckBox myFoldCb = new NonFocusableCheckBox(RefactoringBundle.message("declare.folded.parameters"));
   public JPanel myCenterPanel;
   public JPanel myParamTabel;
+  private ParameterTablePanel.VariableData[] myInputVariables;
 
   public ExtractMethodDialog(Project project,
                              PsiClass targetClass, final InputVariables inputVariables, PsiType returnType,
@@ -135,8 +135,8 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     return myNameField.getText();
   }
 
-  public InputVariables getChosenParameters() {
-    return myVariableData;
+  public ParameterTablePanel.VariableData[] getChosenParameters() {
+    return myInputVariables;
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -157,7 +157,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     }
 
     if (myCbMakeVarargs != null && myCbMakeVarargs.isSelected()) {
-      final ParameterTablePanel.VariableData data = myVariableData.getInputVariables().get(myVariableData.getInputVariables().size() - 1);
+      final ParameterTablePanel.VariableData data = myInputVariables[myInputVariables.length - 1];
       if (data.type instanceof PsiArrayType) {
         data.type = new PsiEllipsisType(((PsiArrayType)data.type).getComponentType());
       }
@@ -200,9 +200,11 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     myFoldCb.setSelected(myVariableData.isFoldingSelectedByDefault());
     myFoldCb.setVisible(myVariableData.isFoldable());
     myVariableData.setFoldingAvailable(myFoldCb.isSelected());
+    myInputVariables = myVariableData.getInputVariables().toArray(new ParameterTablePanel.VariableData[myVariableData.getInputVariables().size()]);
     myFoldCb.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myVariableData.setFoldingAvailable(myFoldCb.isSelected());
+        myInputVariables = myVariableData.getInputVariables().toArray(new ParameterTablePanel.VariableData[myVariableData.getInputVariables().size()]);
         createParametersPanel();
         updateSignature();
       }
@@ -243,7 +245,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
 
   private void updateVarargsEnabled() {
     if (myCbMakeVarargs != null) {
-      myCbMakeVarargs.setEnabled(myVariableData.getInputVariables().get(myVariableData.getInputVariables().size() - 1).type instanceof PsiArrayType);
+      myCbMakeVarargs.setEnabled(myInputVariables[myInputVariables.length - 1].type instanceof PsiArrayType);
     }
   }
 
@@ -284,7 +286,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     if (myParamTabel != null) {
       myCenterPanel.remove(myParamTabel);
     }
-    myParamTabel = new ParameterTablePanel(myProject, myVariableData.getInputVariables().toArray(new ParameterTablePanel.VariableData[myVariableData.getInputVariables().size()]), myElementsToExtract) {
+    myParamTabel = new ParameterTablePanel(myProject, myInputVariables, myElementsToExtract) {
       protected void updateSignature() {
         updateVarargsEnabled();
         ExtractMethodDialog.this.updateSignature();
@@ -353,14 +355,14 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     buffer.append("(");
     int count = 0;
     final String INDENT = "    ";
-    final List<ParameterTablePanel.VariableData> datas = myVariableData.getInputVariables();
-    for (int i = 0; i < datas.size() ;i++) {
-      ParameterTablePanel.VariableData data = datas.get(i);
+    final ParameterTablePanel.VariableData[] datas = myInputVariables;
+    for (int i = 0; i < datas.length;i++) {
+      ParameterTablePanel.VariableData data = datas[i];
       if (data.passAsParameter) {
         //String typeAndModifiers = PsiFormatUtil.formatVariable(data.variable,
         //  PsiFormatUtil.SHOW_MODIFIERS | PsiFormatUtil.SHOW_TYPE);
         PsiType type = data.type;
-        if (i == datas.size() - 1 && type instanceof PsiArrayType && myCbMakeVarargs.isSelected()) {
+        if (i == datas.length - 1 && type instanceof PsiArrayType && myCbMakeVarargs.isSelected()) {
           type = new PsiEllipsisType(((PsiArrayType)type).getComponentType());
         }
 
@@ -401,7 +403,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
               myReturnType
       );
       if (myTypeParameterList != null) prototype.getTypeParameterList().replace(myTypeParameterList);
-      for (ParameterTablePanel.VariableData data : myVariableData.getInputVariables()) {
+      for (ParameterTablePanel.VariableData data : myInputVariables) {
         if (data.passAsParameter) {
           prototype.getParameterList().add(factory.createParameter(data.name, data.type));
         }
