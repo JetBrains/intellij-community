@@ -1,6 +1,9 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.highlighter.WorkspaceFileType;
+import com.intellij.lifecycle.AtomicSectionsAware;
+import com.intellij.lifecycle.ControlledAlarmFactory;
+import com.intellij.lifecycle.SlowlyClosingAlarm;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
@@ -25,7 +28,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.Topic;
-import com.intellij.lifecycle.AtomicSectionsAware;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -95,7 +98,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myIgnoredIdeaLevel = new IgnoredFilesComponent(myProject);
     myUpdater = new UpdateRequestsQueue(myProject, ourUpdateAlarm, new ActualUpdater());
 
-    myWorker = new ChangeListWorker(myProject);
+    myWorker = new ChangeListWorker(myProject, new MyChangesDeltaForwarder(myProject, ourUpdateAlarm));
     myDelayedNotificator = new DelayedNotificator(myListeners, ourUpdateAlarm);
     myModifier = new Modifier(myWorker, myDelayedNotificator);
   }
@@ -895,6 +898,32 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public void showLocalChangesInvalidated() {
     synchronized (myDataLock) {
       myShowLocalChangesInvalidated = true;
+    }
+  }
+
+  private static class MyChangesDeltaForwarder implements PlusMinus<Pair<String, AbstractVcs>> {
+    private SlowlyClosingAlarm myAlarm;
+    private RemoteRevisionsCache myRevisionsCache;
+
+    public MyChangesDeltaForwarder(final Project project, final ExecutorService service) {
+      myAlarm = ControlledAlarmFactory.createOnSharedThread(project, "changes delta consumer forwarder", service);
+      myRevisionsCache = RemoteRevisionsCache.getInstance(project);
+    }
+
+    public void plus(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
+      myAlarm.addRequest(new Runnable() {
+        public void run() {
+          myRevisionsCache.plus(stringAbstractVcsPair);
+        }
+      });
+    }
+
+    public void minus(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
+      myAlarm.addRequest(new Runnable() {
+        public void run() {
+          myRevisionsCache.minus(stringAbstractVcsPair);
+        }
+      });
     }
   }
 }
