@@ -14,8 +14,10 @@ import java.util.List;
 
 /**
  * @author nik
+ *
+ * classpath is used for exploded WAR and EJB directories under exploded EAR
  */
-public class DirectoryPackagingElement extends CompositePackagingElement<DirectoryPackagingElement> {
+public class DirectoryPackagingElement extends CompositeElementWithClasspath<DirectoryPackagingElement> {
   private String myDirectoryName;
 
   public DirectoryPackagingElement() {
@@ -64,11 +66,6 @@ public class DirectoryPackagingElement extends CompositePackagingElement<Directo
   public void setDirectoryName(String directoryName) {
     myDirectoryName = directoryName;
   }
-
-  public void loadState(DirectoryPackagingElement state) {
-    myDirectoryName = state.getDirectoryName();
-  }
-
 
   public void rename(@NotNull String newName) {
     myDirectoryName = newName;

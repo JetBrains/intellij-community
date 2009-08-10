@@ -19,5 +19,7 @@ public abstract class PackagingElementPropertiesPanel<E extends PackagingElement
 
   public abstract void loadFrom(@NotNull E element);
 
+  public abstract boolean isModified(@NotNull E original);
+
   public abstract void saveTo(@NotNull E element);
 }

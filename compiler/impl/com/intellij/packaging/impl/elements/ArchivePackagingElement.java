@@ -4,11 +4,11 @@ import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.compiler.ant.Generator;
 import com.intellij.compiler.ant.artifacts.ArchiveAntCopyInstructionCreator;
 import com.intellij.compiler.ant.taskdefs.Jar;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.ArchiveElementPresentation;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
-import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
@@ -19,10 +19,9 @@ import java.util.List;
 /**
  * @author nik
  */
-public class ArchivePackagingElement extends CompositePackagingElement<ArchivePackagingElement> {
+public class ArchivePackagingElement extends CompositeElementWithClasspath<ArchivePackagingElement> {
   private String myArchiveFileName;
   private String myMainClass;
-  private String myClasspath;
 
   public ArchivePackagingElement() {
     super(PackagingElementFactoryImpl.ARCHIVE_ELEMENT_TYPE);
@@ -55,22 +54,16 @@ public class ArchivePackagingElement extends CompositePackagingElement<ArchivePa
   public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
                                                      @NotNull PackagingElementResolvingContext resolvingContext,
                                                      @NotNull ArtifactIncrementalCompilerContext compilerContext, @NotNull ArtifactType artifactType) {
-    computeChildrenInstructions(creator.archive(myArchiveFileName), resolvingContext, compilerContext, artifactType);
-  }
-
-  public ArchivePackagingElement getState() {
-    return this;
-  }
-
-  public void loadState(ArchivePackagingElement state) {
-    myArchiveFileName = state.getArchiveFileName();
-    myMainClass = state.getMainClass();
-    myClasspath = state.getClasspath();
+    computeChildrenInstructions(creator.archive(myArchiveFileName, getClasspath()), resolvingContext, compilerContext, artifactType);
   }
 
   @Attribute("name")
   public String getArchiveFileName() {
     return myArchiveFileName;
+  }
+
+  public ArchivePackagingElement getState() {
+    return this;
   }
 
   public void setArchiveFileName(String archiveFileName) {
@@ -84,15 +77,6 @@ public class ArchivePackagingElement extends CompositePackagingElement<ArchivePa
 
   public void setMainClass(String mainClass) {
     myMainClass = mainClass;
-  }
-
-  @Tag("classpath")
-  public String getClasspath() {
-    return myClasspath;
-  }
-
-  public void setClasspath(String classpath) {
-    myClasspath = classpath;
   }
 
   @Override

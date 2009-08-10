@@ -17,6 +17,9 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
+import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.impl.ui.properties.ArchiveElementPropertiesPanel;
+import com.intellij.packaging.impl.ui.properties.DirectoryElementPropertiesPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.PathUtil;
@@ -214,6 +217,11 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
       return new DirectoryPackagingElement();
     }
 
+    @Override
+    public PackagingElementPropertiesPanel<DirectoryPackagingElement> createElementPropertiesPanel(ArtifactEditorContext context) {
+      return new DirectoryElementPropertiesPanel(context);
+    }
+
     public DirectoryPackagingElement createComposite(@NotNull PackagingEditorContext context, CompositePackagingElement<?> parent) {
       final String initialValue = suggestFileName(parent, "folder", "");
       final String name = Messages.showInputDialog(context.getProject(), "Enter directory name: ", "New Directory", null, initialValue, null);
@@ -239,7 +247,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     }
 
     @Override
-    public PackagingElementPropertiesPanel<ArchivePackagingElement> createElementPropertiesPanel(PackagingEditorContext context) {
+    public PackagingElementPropertiesPanel<ArchivePackagingElement> createElementPropertiesPanel(ArtifactEditorContext context) {
       return new ArchiveElementPropertiesPanel(context);
     }
 

@@ -8,6 +8,8 @@ import com.intellij.compiler.impl.packagingCompiler.JarInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author nik
  */
@@ -32,9 +34,9 @@ public class CopyToDirectoryInstructionCreator extends IncrementalCompilerInstru
     return new CopyToDirectoryInstructionCreator(myContext, myOutputPath + "/" + directoryName, outputChild(directoryName));
   }
 
-  public IncrementalCompilerInstructionCreator archive(String archiveFileName) {
+  public IncrementalCompilerInstructionCreator archive(String archiveFileName, List<String> classpath) {
     String jarOutputPath = myOutputPath + "/" + archiveFileName;
-    final JarInfo jarInfo = new JarInfo();
+    final JarInfo jarInfo = new JarInfo(classpath);
     VirtualFile outputFile = outputChild(archiveFileName);
     myContext.registerJarFile(jarInfo, jarOutputPath);
     final ExplodedDestinationInfo destination = new ExplodedDestinationInfo(jarOutputPath, outputFile);

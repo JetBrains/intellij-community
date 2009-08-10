@@ -10,8 +10,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.artifacts.actions.*;
-import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.LibrarySourceItem;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -21,6 +21,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactProblemQuickFix;
 import com.intellij.packaging.ui.ArtifactValidationManager;
 import com.intellij.packaging.ui.PackagingEditorContext;
@@ -29,6 +30,8 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +59,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private final Project myProject;
   private final ComplexElementSubstitutionParameters mySubstitutionParameters = new ComplexElementSubstitutionParameters();
   private final EventDispatcher<ArtifactEditorListener> myDispatcher = EventDispatcher.create(ArtifactEditorListener.class);
-  private final PackagingEditorContext myContext;
+  private final ArtifactEditorContext myContext;
   private SourceItemsTree mySourceItemsTree;
   private final Artifact myOriginalArtifact;
   private final LayoutTreeComponent myLayoutTreeComponent;
@@ -64,9 +67,10 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private ArtifactPropertiesEditors myPropertiesEditors;
   private ArtifactErrorPanel myErrorPanel;
   private ArtifactEditorImpl.ArtifactValidationManagerImpl myValidationManager;
+  private MergingUpdateQueue myValidationQueue;
 
   public ArtifactEditorImpl(final PackagingEditorContext context, Artifact artifact) {
-    myContext = context;
+    myContext = new ArtifactEditorContextImpl(context, this);
     myOriginalArtifact = artifact;
     myProject = context.getProject();
     mySourceItemsTree = new SourceItemsTree(myContext, this);
@@ -79,11 +83,12 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     final String outputPath = artifact.getOutputPath();
     myOutputDirectoryField.addBrowseFolderListener(CompilerBundle.message("dialog.title.output.directory.for.artifact"),
                                                    CompilerBundle.message("chooser.description.select.output.directory.for.0.artifact",
-                                                                         getArtifact().getName()),
-                                                   myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+                                                                          getArtifact().getName()), myProject,
+                                                   FileChooserDescriptorFactory.createSingleFolderDescriptor());
     setOutputPath(outputPath);
     myErrorPanel = new ArtifactErrorPanel(this);
     myValidationManager = new ArtifactValidationManagerImpl();
+    myValidationQueue = new MergingUpdateQueue("ArtifactValidation", 300, false, myMainPanel, this, myMainPanel);
   }
 
   private void setOutputPath(@Nullable String outputPath) {
@@ -136,11 +141,19 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     mySourceItemsTree.rebuildTree();
   }
 
-  public void checkLayout() {
+  private void runValidation() {
     myErrorPanel.clearError();
-    getArtifact().getArtifactType().checkRootElement(getRootElement(), myValidationManager);
+    myLayoutTreeComponent.saveElementProperties();
+    getArtifact().getArtifactType().checkRootElement(getRootElement(), getArtifact(), myValidationManager);
   }
 
+  public void queueValidation() {
+    myValidationQueue.queue(new Update("validate") {
+      public void run() {
+        runValidation();
+      }
+    });
+  }
 
   public JComponent createMainComponent() {
     mySourceItemsTree.initTree();
@@ -286,12 +299,12 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
       return myContext;
     }
 
-    public void registerProblem(@NotNull String messsage) {
-      registerProblem(messsage, null);
+    public void registerProblem(@NotNull String message) {
+      registerProblem(message, null);
     }
 
-    public void registerProblem(@NotNull String messsage, @Nullable ArtifactProblemQuickFix quickFix) {
-      myErrorPanel.showError(messsage, quickFix);
+    public void registerProblem(@NotNull String message, @Nullable ArtifactProblemQuickFix quickFix) {
+      myErrorPanel.showError(message, quickFix);
     }
   }
 }

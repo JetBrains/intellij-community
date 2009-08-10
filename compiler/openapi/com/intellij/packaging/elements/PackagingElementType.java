@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,7 @@ public abstract class PackagingElementType<E extends PackagingElement<?>> {
   }
 
   @Nullable
-  public PackagingElementPropertiesPanel<E> createElementPropertiesPanel(PackagingEditorContext context) {
+  public PackagingElementPropertiesPanel<E> createElementPropertiesPanel(ArtifactEditorContext context) {
     return null;
   }
 }

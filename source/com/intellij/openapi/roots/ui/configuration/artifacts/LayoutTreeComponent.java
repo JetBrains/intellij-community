@@ -11,10 +11,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.artifacts.ModifiableArtifact;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.*;
-import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.artifacts.ModifiableArtifact;
+import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementFactory;
+import com.intellij.packaging.elements.PackagingElementType;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.ui.ScrollPaneFactory;
@@ -42,7 +45,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   private LayoutTree myTree;
   private JPanel myTreePanel;
   private final ComplexElementSubstitutionParameters mySubstitutionParameters;
-  private PackagingEditorContext myContext;
+  private ArtifactEditorContext myContext;
   private CompositePackagingElement<?> myModifiableRoot;
   private final Artifact myOriginalArtifact;
   private SelectedElementInfo<?> mySelectedElementInfo = new SelectedElementInfo<PackagingElement<?>>(null);
@@ -51,7 +54,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   private SimpleTreeBuilder myBuilder;
 
   public LayoutTreeComponent(ArtifactEditorImpl artifactsEditor, ComplexElementSubstitutionParameters substitutionParameters,
-                               PackagingEditorContext context, Artifact originalArtifact) {
+                               ArtifactEditorContext context, Artifact originalArtifact) {
     myArtifactsEditor = artifactsEditor;
     mySubstitutionParameters = substitutionParameters;
     myContext = context;
@@ -89,6 +92,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
         panel.add(type.getId(), propertiesPanel.getComponent());
       }
     }
+    panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     panel.add(EMPTY_CARD, new JPanel());
     return panel;
   }
@@ -111,10 +115,14 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     mySelectedElementInfo.showPropertiesPanel();
   }
 
+  public void saveElementProperties() {
+    mySelectedElementInfo.save();
+  }
+
   public void rebuildTree() {
     myBuilder.updateFromRoot(true);
     updatePropertiesPanel();
-    myArtifactsEditor.checkLayout();
+    myArtifactsEditor.queueValidation();
   }
 
   public LayoutTreeSelection getSelection() {
@@ -168,7 +176,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   }
 
   public void updateAndSelect(PackagingElementNode<?> node, final List<? extends PackagingElement<?>> toSelect) {
-    myArtifactsEditor.checkLayout();
+    myArtifactsEditor.queueValidation();
     final DefaultMutableTreeNode treeNode = TreeUtil.findNodeWithObject(myTree.getRootNode(), node);
     myBuilder.addSubtreeToUpdate(treeNode, new Runnable() {
       public void run() {
@@ -387,7 +395,8 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     }
 
     public void save() {
-      if (myCurrentPanel != null) {
+      if (myCurrentPanel != null && myCurrentPanel.isModified(myElement)) {
+        ensureRootIsWritable();
         myCurrentPanel.saveTo(myElement);
       }
     }

@@ -5,6 +5,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.IncrementalCompilerInstructionCreator;
 import com.intellij.compiler.impl.packagingCompiler.*;
 
+import java.util.List;
+
 /**
  * @author nik
  */
@@ -38,8 +40,8 @@ public class PackIntoArchiveInstructionCreator extends IncrementalCompilerInstru
     return new PackIntoArchiveInstructionCreator(myContext, myJarInfo, childPathInJar(directoryName), myJarDestination);
   }
 
-  public IncrementalCompilerInstructionCreator archive(String archiveFileName) {
-    final JarInfo jarInfo = new JarInfo();
+  public IncrementalCompilerInstructionCreator archive(String archiveFileName, List<String> classpath) {
+    final JarInfo jarInfo = new JarInfo(classpath);
     if (myJarDestination instanceof ExplodedDestinationInfo) {
       myContext.registerJarFile(jarInfo, myJarDestination.getOutputPath());
     }

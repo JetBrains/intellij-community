@@ -24,7 +24,7 @@ public class ArtifactErrorPanel {
       public void actionPerformed(ActionEvent e) {
         if (myCurrentQuickFix != null) {
           myCurrentQuickFix.performFix(artifactEditor);
-          artifactEditor.checkLayout();
+          artifactEditor.queueValidation();
         }
       }
     });

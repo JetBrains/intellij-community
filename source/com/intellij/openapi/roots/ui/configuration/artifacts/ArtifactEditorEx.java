@@ -33,4 +33,6 @@ public interface ArtifactEditorEx extends ArtifactEditor, Disposable {
   JComponent getMainComponent();
 
   ComplexElementSubstitutionParameters getSubstitutionParameters();
+
+  void queueValidation();
 }

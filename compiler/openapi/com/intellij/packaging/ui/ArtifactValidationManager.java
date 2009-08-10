@@ -10,8 +10,7 @@ public interface ArtifactValidationManager {
 
   PackagingEditorContext getContext();
 
+  void registerProblem(@NotNull String message);
 
-  void registerProblem(@NotNull String messsage);
-
-  void registerProblem(@NotNull String messsage, @Nullable ArtifactProblemQuickFix quickFix);
+  void registerProblem(@NotNull String message, @Nullable ArtifactProblemQuickFix quickFix);
 }
