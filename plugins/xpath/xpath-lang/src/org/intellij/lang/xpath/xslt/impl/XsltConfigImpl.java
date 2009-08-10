@@ -92,11 +92,7 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
         return SHOW_LINKED_FILES;
     }
 
-    public UI createConfigUI() {
-        return new UIImpl(this);
-    }
-
-    public static class UIImpl extends JPanel implements UI {
+  public static class UIImpl extends JPanel implements UI {
         private final JCheckBox myShowLinkedFiles;
 
         private final XsltConfigImpl myConfig;
@@ -133,7 +129,7 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
         @Nullable
         @NonNls
         public String getHelpTopic() {
-            return null;
+            return "settings.xslt";
         }
 
         public void disposeUIResources() {

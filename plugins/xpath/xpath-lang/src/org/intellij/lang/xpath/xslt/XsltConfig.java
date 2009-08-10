@@ -23,9 +23,7 @@ public abstract class XsltConfig {
         return ApplicationManager.getApplication().getComponent(XsltConfig.class);
     }
 
-  public abstract UI createConfigUI();
-
-    public abstract boolean isShowLinkedFiles();
+  public abstract boolean isShowLinkedFiles();
 
     public interface UI extends Configurable {
     }
