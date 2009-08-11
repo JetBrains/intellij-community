@@ -57,28 +57,28 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
         chooseAmbiguousTarget(editor, offset);
         return;
       }
+
+
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
+      PsiElement navElement = element.getNavigationElement();
+
+      navElement = TargetElementUtilBase.getInstance().getGotoDeclarationTarget(element, navElement);
+
+      if (navElement instanceof Navigatable) {
+        if (((Navigatable)navElement).canNavigate()) {
+          ((Navigatable)navElement).navigate(true);
+        }
+      }
+      else if (navElement != null) {
+        int navOffset = navElement.getTextOffset();
+        VirtualFile virtualFile = PsiUtilBase.getVirtualFile(navElement);
+        if (virtualFile != null) {
+          new OpenFileDescriptor(project, virtualFile, navOffset).navigate(true);
+        }
+      }
     }
     catch (IndexNotReadyException e) {
       DumbService.getInstance(project).showDumbModeNotification("Navigation is not available here during index update");
-      return;
-    }
-
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
-    PsiElement navElement = element.getNavigationElement();
-
-    navElement = TargetElementUtilBase.getInstance().getGotoDeclarationTarget(element, navElement);
-
-    if (navElement instanceof Navigatable) {
-      if (((Navigatable)navElement).canNavigate()) {
-        ((Navigatable)navElement).navigate(true);
-      }
-    }
-    else if (navElement != null) {
-      int navOffset = navElement.getTextOffset();
-      VirtualFile virtualFile = PsiUtilBase.getVirtualFile(navElement);
-      if (virtualFile != null) {
-        new OpenFileDescriptor(project, virtualFile, navOffset).navigate(true);
-      }
     }
   }
 
