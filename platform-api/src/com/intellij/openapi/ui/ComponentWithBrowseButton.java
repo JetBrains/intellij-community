@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.ui;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -29,8 +31,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.update.LazyUiDisposable;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -196,7 +198,15 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     protected VirtualFile getInitialFile() {
       String directoryName = getComponentText();
       if (directoryName.length() == 0) return null;
-      return LocalFileSystem.getInstance().findFileByPath(directoryName.replace(File.separatorChar, '/'));
+      directoryName = directoryName.replace(File.separatorChar, '/');
+      VirtualFile path = LocalFileSystem.getInstance().findFileByPath(directoryName);
+      while (path == null && directoryName.length() > 0) {
+        int pos = directoryName.lastIndexOf('/');
+        if (pos <= 0) break;
+        directoryName = directoryName.substring(0, pos-1);
+        path = LocalFileSystem.getInstance().findFileByPath(directoryName);
+      }
+      return path;
     }
 
     protected String getComponentText() {
