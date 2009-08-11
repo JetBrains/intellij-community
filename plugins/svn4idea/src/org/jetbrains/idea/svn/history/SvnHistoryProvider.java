@@ -47,10 +47,7 @@ import org.jetbrains.idea.svn.actions.ShowAllSubmittedFilesAction;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNLogClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import javax.swing.*;
@@ -234,6 +231,14 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
                                  final ArrayList<VcsFileRevision> result, final Ref<Boolean> supports15Ref) throws SVNException {
     SVNWCClient wcClient = myVcs.createWCClient();
     SVNInfo info = wcClient.doInfo(new File(file.getIOFile().getAbsolutePath()), SVNRevision.WORKING);
+    wcClient.setEventHandler(new ISVNEventHandler() {
+      public void handleEvent(SVNEvent event, double progress) throws SVNException {
+      }
+
+      public void checkCancelled() throws SVNCancelException {
+        indicator.checkCanceled();
+      }
+    });
     if (info == null || info.getRepositoryRootURL() == null) {
         exception[0] = new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "File ''{0}'' is not under version control", file.getIOFile()));
         return;
