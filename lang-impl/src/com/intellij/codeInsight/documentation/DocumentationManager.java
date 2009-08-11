@@ -515,16 +515,22 @@ public class DocumentationManager {
     DocumentationProvider elementProvider =
       element == null || elementLanguage.is(containingFileLanguage) ? null : LanguageDocumentation.INSTANCE.forLanguage(elementLanguage);
 
-    ContainerUtil.addIfNotNull(originalProvider, result);
-    ContainerUtil.addIfNotNull(elementProvider, result);
+    addProviderToResult(result, elementProvider);
+    addProviderToResult(result, originalProvider);
+
     if (containingFile != null) {
       final Language baseLanguage = containingFile.getViewProvider().getBaseLanguage();
       if (!baseLanguage.is(containingFileLanguage)) {
-        ContainerUtil.addIfNotNull(LanguageDocumentation.INSTANCE.forLanguage(baseLanguage), result);
+        addProviderToResult(result, LanguageDocumentation.INSTANCE.forLanguage(baseLanguage));
       }
     }
     // return extensible documentation provider even if the list is empty
     return new CompositeDocumentationProvider(result);
+  }
+
+  private static void addProviderToResult(final Set<DocumentationProvider> result, final DocumentationProvider t) {
+    if (t instanceof CompositeDocumentationProvider) result.addAll(((CompositeDocumentationProvider)t).getProviders());
+    else ContainerUtil.addIfNotNull(t, result);
   }
 
   @Nullable
