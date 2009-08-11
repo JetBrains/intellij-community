@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -64,7 +66,7 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
     myModuleName = moduleName;
     myModulesProvider = modulesProvider;
     final VirtualFileManagerAdapter fileManagerListener = new VirtualFileManagerAdapter() {
-      public void afterRefreshFinish(boolean asynchonous) {
+      public void afterRefreshFinish(boolean asynchronous) {
         final Module module = getModule();
         if (module == null || module.isDisposed() || module.getProject().isDisposed()) return;
         for (final ContentEntry contentEntry : myEntryToEditorMap.keySet()) {
@@ -119,7 +121,9 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
     final JPanel entriesPanel = new JPanel(new BorderLayout());
 
     final DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new AddContentEntryAction());
+    final AddContentEntryAction action = new AddContentEntryAction();
+    action.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_C, KeyEvent.ALT_DOWN_MASK)), mainPanel);
+    group.add(action);
 
     myEditorsPanel = new ScrollablePanel(new VerticalStackLayout());
     myEditorsPanel.setBackground(BACKGROUND_COLOR);
