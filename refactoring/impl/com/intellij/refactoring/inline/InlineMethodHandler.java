@@ -15,6 +15,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.Processor;
+import com.intellij.lang.StdLanguages;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,7 @@ class InlineMethodHandler extends JavaInlineActionHandler {
   }
 
   public boolean canInlineElement(PsiElement element) {
-    return element instanceof PsiMethod && element.getNavigationElement() instanceof PsiMethod;
+    return element instanceof PsiMethod && element.getNavigationElement() instanceof PsiMethod && element.getLanguage() == StdLanguages.JAVA;
   }
 
   public void inlineElement(final Project project, Editor editor, PsiElement element) {
