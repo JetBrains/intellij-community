@@ -14,6 +14,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,6 +33,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -163,7 +166,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, context, freezeSemaphore);
 
     final Ref<LookupElement[]> data = Ref.create(null);
-
+    final ModalityState modalityState = ModalityState.current();
     final Runnable computeRunnable = new Runnable() {
       public void run() {
         ProgressManager.getInstance().runProcess(new Runnable() {
@@ -196,7 +199,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                     assert completion == null : "2 this=" + indicator + "\ncurrent=" + completion;
                     handleEmptyLookup(context, parameters, indicator);
                   }
-                });
+                }, modalityState);
               }
             }
             catch (ProcessCanceledException ignored) {
@@ -445,7 +448,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   public static final Key<SoftReference<PsiFile>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
 
   protected PsiFile createFileCopy(PsiFile file) {
-    if (file.isPhysical()
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (file.isPhysical() && virtualFile != null && virtualFile.getFileSystem() == LocalFileSystem.getInstance()
         // must not cache injected file copy, since it does not reflect changes in host document
         && !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
       final SoftReference<PsiFile> reference = file.getUserData(FILE_COPY_KEY);
