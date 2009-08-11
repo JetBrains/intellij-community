@@ -24,7 +24,7 @@ public class RemoveInvalidElementsDialog extends DialogWrapper {
   private JLabel myDescriptionLabel;
   private final Map<JCheckBox, ConfigurationErrorDescription> myCheckboxes = new HashMap<JCheckBox, ConfigurationErrorDescription>();
 
-  private RemoveInvalidElementsDialog(final String title, String invalidElements, final Project project, ConfigurationErrorDescription[] errors) {
+  private RemoveInvalidElementsDialog(final String title, String invalidElements, final Project project, List<ConfigurationErrorDescription> errors) {
     super(project, true);
     setTitle(title);
     myDescriptionLabel.setText(ProjectBundle.message("label.text.0.cannot.be.loaded", invalidElements));
@@ -52,9 +52,12 @@ public class RemoveInvalidElementsDialog extends DialogWrapper {
 
 
   public static void showDialog(@NotNull Project project, @NotNull String title, @NotNull String invalidElements,
-                                @NotNull ConfigurationErrorDescription[] errors) {
-    if (errors.length == 1) {
-      ConfigurationErrorDescription error = errors[0];
+                                @NotNull List<ConfigurationErrorDescription> errors) {
+    if (errors.isEmpty()) {
+      return;
+    }
+    if (errors.size() == 1) {
+      ConfigurationErrorDescription error = errors.get(0);
       String message = error.getDescription() + "\n" + error.getRemoveConfirmationMessage();
       String[] options = {CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()};
       final int answer = Messages.showDialog(project, message, title, options, 1, Messages.getErrorIcon());

@@ -1,6 +1,7 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -10,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Condition;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -67,18 +69,24 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
 
     final String invalidElements = getInvalidElementsString(descriptions);
     final String errorText = ProjectBundle.message("error.message.configuration.cannot.load") + " " + invalidElements;
-    myProject.getMessageBus().syncPublisher(Notifications.TOPIC).notify("project-configuration-error", errorText, "",
-                                                                        NotificationType.ERROR, new NotificationListener() {
+    final NotificationListener listener = new NotificationListener() {
       @NotNull
       public Continue perform() {
-        RemoveInvalidElementsDialog.showDialog(myProject, CommonBundle.getErrorTitle(), invalidElements, descriptions);
+        final List<ConfigurationErrorDescription> validDescriptions = ContainerUtil.findAll(descriptions, new Condition<ConfigurationErrorDescription>() {
+          public boolean value(ConfigurationErrorDescription errorDescription) {
+            return errorDescription.isValid();
+          }
+        });
+        RemoveInvalidElementsDialog.showDialog(myProject, CommonBundle.getErrorTitle(), invalidElements, validDescriptions);
         return Continue.REMOVE;
       }
 
-          public Continue onRemove() {
-            return Continue.LEAVE;
-          }
-        });
+      public Continue onRemove() {
+        return Continue.LEAVE;
+      }
+    };
+    myProject.getMessageBus().syncPublisher(Notifications.TOPIC).notify("project-configuration-error", errorText, "",
+                                                                         NotificationType.ERROR, listener);
   }
 
   private static String getInvalidElementsString(ConfigurationErrorDescription[] descriptions) {

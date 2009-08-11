@@ -43,4 +43,9 @@ public class FacetLoadingErrorDescription extends ConfigurationErrorDescription 
     FacetManagerImpl manager = (FacetManagerImpl)FacetManagerImpl.getInstance(myModule);
     manager.removeInvalidFacet(myUnderlyingFacet, myState);
   }
+
+  @Override
+  public boolean isValid() {
+    return !myModule.isDisposed();
+  }
 }

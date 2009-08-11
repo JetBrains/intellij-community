@@ -29,4 +29,8 @@ public abstract class ConfigurationErrorDescription {
   public abstract void removeInvalidElement();
 
   public abstract String getRemoveConfirmationMessage();
+
+  public boolean isValid() {
+    return true;
+  }
 }
