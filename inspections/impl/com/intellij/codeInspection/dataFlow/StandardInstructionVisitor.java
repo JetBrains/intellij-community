@@ -7,11 +7,13 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Set;
@@ -23,6 +25,46 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private final Set<BinopInstruction> myReachable = new THashSet<BinopInstruction>();
   private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<BinopInstruction>();
   private final Set<InstanceofInstruction> myUsefulInstanceofs = new THashSet<InstanceofInstruction>();
+  private final FactoryMap<MethodCallInstruction, boolean[]> myParametersNotNull = new FactoryMap<MethodCallInstruction, boolean[]>() {
+    @Override
+    protected boolean[] create(MethodCallInstruction key) {
+      final PsiCallExpression callExpression = key.getCallExpression();
+      final PsiMethod callee = callExpression == null ? null : callExpression.resolveMethod();
+      if (callee != null) {
+        final PsiParameter[] params = callee.getParameterList().getParameters();
+        boolean[] result = new boolean[params.length];
+        for (int i = 0; i < params.length; i++) {
+          result[i] = AnnotationUtil.isAnnotated(params[i], AnnotationUtil.NOT_NULL, false);
+        }
+        return result;
+      }
+      else {
+        return ArrayUtil.EMPTY_BOOLEAN_ARRAY;
+      }
+    }
+  };
+  private final FactoryMap<MethodCallInstruction, Boolean> myCalleeNullability = new FactoryMap<MethodCallInstruction, Boolean>() {
+    @Override
+    protected Boolean create(MethodCallInstruction key) {
+      final PsiCallExpression callExpression = key.getCallExpression();
+      if (callExpression instanceof PsiNewExpression) {
+        return Boolean.FALSE;
+      }
+
+      if (callExpression != null) {
+        final PsiMethod callee = callExpression.resolveMethod();
+        if (callee != null) {
+          if (AnnotationUtil.isNullable(callee)) {
+            return Boolean.TRUE;
+          }
+          if (AnnotationUtil.isNotNull(callee)) {
+            return Boolean.FALSE;
+          }
+        }
+      }
+      return null;
+    }
+  };
 
   @Override
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
@@ -93,7 +135,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   @Override
   public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     final PsiExpression[] args = instruction.getArgs();
-    final boolean[] parametersNotNull = instruction.getParametersNotNull();
+    final boolean[] parametersNotNull = myParametersNotNull.get(instruction);
     final DfaNotNullValue.Factory factory = runner.getFactory().getNotNullFactory();
     for (int i = 0; i < args.length; i++) {
       final DfaValue arg = memState.pop();
@@ -123,12 +165,50 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       return nextInstruction(instruction, runner, memState);
     }
     finally {
-      instruction.pushResult(memState, qualifier);
+      pushResult(instruction, memState, qualifier, runner.getFactory());
       if (instruction.shouldFlushFields()) {
         memState.flushFields(runner);
       }
     }
   }
+
+  private void pushResult(MethodCallInstruction instruction, DfaMemoryState state, final DfaValue oldValue, DfaValueFactory factory) {
+    final PsiType type = instruction.getResultType();
+    final MethodCallInstruction.MethodType methodType = instruction.getMethodType();
+    DfaValue dfaValue = null;
+    if (type != null && (type instanceof PsiClassType || type.getArrayDimensions() > 0)) {
+      @Nullable final Boolean nullability = myCalleeNullability.get(instruction);
+      dfaValue = nullability == Boolean.FALSE ? factory.getNotNullFactory().create(type) : factory.getTypeFactory().create(type, nullability == Boolean.TRUE);
+    }
+    else if (methodType == MethodCallInstruction.MethodType.UNBOXING) {
+      dfaValue = factory.getBoxedFactory().createUnboxed(oldValue);
+    }
+    else if (methodType == MethodCallInstruction.MethodType.BOXING) {
+      dfaValue = factory.getBoxedFactory().createBoxed(oldValue);
+    }
+    else if (methodType == MethodCallInstruction.MethodType.CAST) {
+      if (oldValue instanceof DfaConstValue) {
+        final DfaConstValue constValue = (DfaConstValue)oldValue;
+        Object o = constValue.getValue();
+        if (o instanceof Double || o instanceof Float) {
+          double dbVal = o instanceof Double ? ((Double)o).doubleValue() : ((Float)o).doubleValue();
+          // 5.0f == 5
+          if (Math.floor(dbVal) == dbVal) o = TypeConversionUtil.computeCastTo(o, PsiType.LONG);
+        }
+        else {
+          o = TypeConversionUtil.computeCastTo(o, PsiType.LONG);
+        }
+
+        dfaValue = factory.getConstFactory().createFromValue(o, type);
+      }
+      else {
+        dfaValue = oldValue;
+      }
+    }
+
+    state.push(dfaValue == null ? DfaUnknownValue.getInstance() : dfaValue);
+  }
+
 
   protected void onInstructionProducesNPE(MethodCallInstruction instruction, DataFlowRunner runner) {}
 

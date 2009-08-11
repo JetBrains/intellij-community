@@ -31,12 +31,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private Stack<CatchDescriptor> myCatchStack;
   private PsiType myRuntimeException;
   private final DfaValueFactory myFactory;
-  private final InstructionFactory myInstructionFactory;
   private boolean myHonorRuntimeExceptions = true;
 
-  ControlFlowAnalyzer(final DfaValueFactory valueFactory, final InstructionFactory instructionFactory) {
+  ControlFlowAnalyzer(final DfaValueFactory valueFactory) {
     myFactory = valueFactory;
-    myInstructionFactory = instructionFactory;
   }
 
   private static class CantAnalyzeException extends RuntimeException {
@@ -53,7 +51,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     myFields = new HashSet<DfaVariableValue>();
     myCatchStack = new Stack<CatchDescriptor>();
     myPassNumber = 1;
-    myPass1Flow = new ControlFlow(myFactory, myInstructionFactory);
+    myPass1Flow = new ControlFlow(myFactory);
     myCurrentFlow = myPass1Flow;
 
     try {
@@ -64,7 +62,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     myPassNumber = 2;
-    final ControlFlow pass2Flow = new ControlFlow(myFactory, myInstructionFactory);
+    final ControlFlow pass2Flow = new ControlFlow(myFactory);
     myCurrentFlow = pass2Flow;
 
     codeFragment.accept(this);
@@ -73,7 +71,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     LOG.assertTrue(myPass1Flow.getInstructionCount() == pass2Flow.getInstructionCount());
 
-    addInstruction(myInstructionFactory.createReturnInstruction());
+    addInstruction(new ReturnInstruction());
 
     return pass2Flow;
   }
@@ -165,7 +163,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         generateDefaultBinop(lExpr, rExpr, type);
       }
 
-      addInstruction(myInstructionFactory.createAssignInstruction(rExpr));
+      addInstruction(new AssignInstruction(rExpr));
     }
     finally {
       finishElement(expression);
@@ -177,7 +175,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     generateBoxingUnboxingInstructionFor(lExpr,exprType);
     rExpr.accept(this);
     generateBoxingUnboxingInstructionFor(rExpr,exprType);
-    addInstruction(myInstructionFactory.createBinopInstruction(null, null,lExpr.getProject()));
+    addInstruction(new BinopInstruction(null, null, lExpr.getProject()));
   }
 
   @Override public void visitAssertStatement(PsiAssertStatement statement) {
@@ -187,11 +185,11 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     if (condition != null) {
       condition.accept(this);
       generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
-      addInstruction(myInstructionFactory.createConditionalGotoInstruction(getEndOffset(statement), false, condition));
+      addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), false, condition));
       if (description != null) {
         description.accept(this);
       }
-      addInstruction(myInstructionFactory.createReturnInstruction());
+      addInstruction(new ReturnInstruction());
     }
     finishElement(statement);
   }
@@ -218,11 +216,11 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void initializeVariable(PsiVariable variable, PsiExpression initializer) {
     DfaVariableValue dfaVariable = myFactory.getVarFactory().create(variable, false);
-    addInstruction(myInstructionFactory.createPushInstruction(dfaVariable, initializer));
+    addInstruction(new PushInstruction(dfaVariable, initializer));
     initializer.accept(this);
     generateBoxingUnboxingInstructionFor(initializer, variable.getType());
-    addInstruction(myInstructionFactory.createAssignInstruction(initializer));
-    addInstruction(myInstructionFactory.createPopInstruction());
+    addInstruction(new AssignInstruction(initializer));
+    addInstruction(new PopInstruction());
   }
 
   @Override public void visitCodeBlock(PsiCodeBlock block) {
@@ -262,7 +260,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     if (exitedStatement != null) {
       int offset = myPass1Flow.getEndOffset(exitedStatement);
       if (offset == -1) offset = myPass1Flow.getInstructionCount();
-      addInstruction(myInstructionFactory.createGotoInstruction(offset));
+      addInstruction(new GotoInstruction(offset));
     }
 
     finishElement(statement);
@@ -305,7 +303,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       if (condition != null) {
         condition.accept(this);
         generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
-        addInstruction(myInstructionFactory.createConditionalGotoInstruction(getStartOffset(statement), false, condition));
+        addInstruction(new ConditionalGotoInstruction(getStartOffset(statement), false, condition));
       }
     }
 
@@ -321,7 +319,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(statement);
     final PsiExpression expr = statement.getExpression();
     expr.accept(this);
-    addInstruction(myInstructionFactory.createPopInstruction());
+    addInstruction(new PopInstruction());
     finishElement(statement);
   }
 
@@ -330,7 +328,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression[] expressions = statement.getExpressionList().getExpressions();
     for (PsiExpression expr : expressions) {
       expr.accept(this);
-      addInstruction(myInstructionFactory.createPopInstruction());
+      addInstruction(new PopInstruction());
     }
     finishElement(statement);
   }
@@ -342,26 +340,26 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (iteratedValue != null) {
       iteratedValue.accept(this);
-      addInstruction(myInstructionFactory.createFieldReferenceInstruction(iteratedValue, "Collection iterator or array.length"));
+      addInstruction(new FieldReferenceInstruction(iteratedValue, "Collection iterator or array.length"));
     }
 
     int offset = myCurrentFlow.getInstructionCount();
     DfaVariableValue dfaVariable = myFactory.getVarFactory().create(parameter, false);
-    addInstruction(myInstructionFactory.createPushInstruction(dfaVariable, null));
+    addInstruction(new PushInstruction(dfaVariable, null));
     pushUnknown();
-    addInstruction(myInstructionFactory.createAssignInstruction(null));
+    addInstruction(new AssignInstruction(null));
 
-    addInstruction(myInstructionFactory.createPopInstruction());
+    addInstruction(new PopInstruction());
 
     pushUnknown();
-    addInstruction(myInstructionFactory.createConditionalGotoInstruction(getEndOffset(statement), true, null));
+    addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), true, null));
 
     final PsiStatement body = statement.getBody();
     if (body != null) {
       body.accept(this);
     }
 
-    addInstruction(myInstructionFactory.createGotoInstruction(offset));
+    addInstruction(new GotoInstruction(offset));
 
     finishElement(statement);
     myCurrentFlow.removeVariable(parameter);
@@ -396,9 +394,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
     }
     else {
-      addInstruction(myInstructionFactory.createPushInstruction(myFactory.getConstFactory().getTrue(), null));
+      addInstruction(new PushInstruction(myFactory.getConstFactory().getTrue(), null));
     }
-    addInstruction(myInstructionFactory.createConditionalGotoInstruction(getEndOffset(statement), true, condition));
+    addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), true, condition));
 
     PsiStatement body = statement.getBody();
     if (body != null) {
@@ -414,7 +412,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
                  ? getEndOffset(initialization)
                  : getStartOffset(statement);
 
-    addInstruction(myInstructionFactory.createGotoInstruction(offset));
+    addInstruction(new GotoInstruction(offset));
     finishElement(statement);
 
     for (PsiElement declaredVariable : declaredVariables) {
@@ -438,7 +436,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     if (condition != null) {
       condition.accept(this);
       generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
-      addInstruction(myInstructionFactory.createConditionalGotoInstruction(offset, true, condition));
+      addInstruction(new ConditionalGotoInstruction(offset, true, condition));
     }
 
     if (thenStatement != null) {
@@ -480,14 +478,14 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       if (method != null) {
         generateBoxingUnboxingInstructionFor(returnValue, method.getReturnType());
       }
-      addInstruction(myInstructionFactory.createCheckReturnValueInstruction(statement));
+      addInstruction(new CheckReturnValueInstruction(statement));
     }
 
     int finallyOffset = getFinallyOffset();
     if (finallyOffset != NOT_FOUND) {
-      addInstruction(myInstructionFactory.createGosubInstruction(finallyOffset));
+      addInstruction(new GosubInstruction(finallyOffset));
     }
-    addInstruction(myInstructionFactory.createReturnInstruction());
+    addInstruction(new ReturnInstruction());
     finishElement(statement);
   }
 
@@ -506,10 +504,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
       generateBoxingUnboxingInstructionFor(caseExpression, PsiType.INT);
       if (TypeConversionUtil.isEnumType(caseExpression.getType())) {
-        addInstruction(myInstructionFactory.createFieldReferenceInstruction(caseExpression, "switch statement expression"));
+        addInstruction(new FieldReferenceInstruction(caseExpression, "switch statement expression"));
       }
 
-      addInstruction(myInstructionFactory.createPopInstruction());
+      addInstruction(new PopInstruction());
     }
 
     PsiCodeBlock body = switchStmt.getBody();
@@ -540,7 +538,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
                 pushUnknown();
               }
 
-              addInstruction(myInstructionFactory.createConditionalGotoInstruction(offset, false, statement));
+              addInstruction(new ConditionalGotoInstruction(offset, false, statement));
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
@@ -550,7 +548,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       }
 
       int offset = defaultLabel != null ? getStartOffset(defaultLabel) : getEndOffset(body);
-      addInstruction(myInstructionFactory.createGotoInstruction(offset));
+      addInstruction(new GotoInstruction(offset));
 
       body.accept(this);
     }
@@ -564,10 +562,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression lock = statement.getLockExpression();
     if (lock != null) {
       lock.accept(this);
-      addInstruction(myInstructionFactory.createPopInstruction());
+      addInstruction(new PopInstruction());
     }
 
-    addInstruction(myInstructionFactory.createFlushVariableInstruction(null));
+    addInstruction(new FlushVariableInstruction(null));
 
     PsiCodeBlock body = statement.getBody();
     if (body != null) {
@@ -597,8 +595,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         pushUnknown();
         final ConditionalGotoInstruction branch = new ConditionalGotoInstruction(-1, false, null);
         addInstruction(branch);
-        addInstruction(myInstructionFactory.createGosubInstruction(cd.getJumpOffset()));
-        addInstruction(myInstructionFactory.createReturnInstruction());
+        addInstruction(new GosubInstruction(cd.getJumpOffset()));
+        addInstruction(new ReturnInstruction());
         branch.setOffset(myCurrentFlow.getInstructionCount());
       }
       else if (cd.getType() instanceof PsiClassType &&
@@ -606,7 +604,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         pushUnknown();
         final ConditionalGotoInstruction branch = new ConditionalGotoInstruction(-1, false, null);
         addInstruction(branch);
-        addInstruction(myInstructionFactory.createPushInstruction(myFactory.getNotNullFactory().create(myRuntimeException), null));
+        addInstruction(new PushInstruction(myFactory.getNotNullFactory().create(myRuntimeException), null));
         addGotoCatch(cd);
         branch.setOffset(myCurrentFlow.getInstructionCount());
         return;
@@ -619,14 +617,14 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     for (int i = myCatchStack.size() - 1; i >= 0; i--) {
       CatchDescriptor cd = myCatchStack.get(i);
       if (cd.isFinally()) {
-        addInstruction(myInstructionFactory.createGosubInstruction(cd.getJumpOffset()));
+        addInstruction(new GosubInstruction(cd.getJumpOffset()));
       }
       else if (cd.getType().isAssignableFrom(exceptionClass)) { // Definite catch.
         addGotoCatch(cd);
         return;
       }
       else if (cd.getType().isConvertibleFrom(exceptionClass)) { // Probable catch
-        addInstruction(myInstructionFactory.createDupInstruction());
+        addInstruction(new DupInstruction());
         pushUnknown();
         final ConditionalGotoInstruction branch = new ConditionalGotoInstruction(-1, false, null);
         addInstruction(branch);
@@ -635,7 +633,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       }
     }
 
-    addInstruction(myInstructionFactory.createReturnInstruction());
+    addInstruction(new ReturnInstruction());
   }
 
   /**
@@ -644,11 +642,11 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
    * @param cd
    */
   private void addGotoCatch(CatchDescriptor cd) {
-    addInstruction(myInstructionFactory.createPushInstruction(myFactory.getVarFactory().create(cd.getParameter(), false), null));
-    addInstruction(myInstructionFactory.createSwapInstruction());
-    addInstruction(myInstructionFactory.createAssignInstruction(null));
-    addInstruction(myInstructionFactory.createPopInstruction());
-    addInstruction(myInstructionFactory.createGotoInstruction(cd.getJumpOffset()));
+    addInstruction(new PushInstruction(myFactory.getVarFactory().create(cd.getParameter(), false), null));
+    addInstruction(new SwapInstruction());
+    addInstruction(new AssignInstruction(null));
+    addInstruction(new PopInstruction());
+    addInstruction(new GotoInstruction(cd.getJumpOffset()));
   }
 
   private int getFinallyOffset() {
@@ -732,19 +730,19 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     for (int i = 0; i < catchesPushCount; i++) myCatchStack.pop();
 
-    addInstruction(myInstructionFactory.createGotoInstruction(endOffset));
+    addInstruction(new GotoInstruction(endOffset));
 
     for (PsiCatchSection section : sections) {
       section.accept(this);
-      addInstruction(myInstructionFactory.createGotoInstruction(endOffset));
+      addInstruction(new GotoInstruction(endOffset));
     }
 
     if (finallyBlock != null) {
       myCatchStack.pop();
-      addInstruction(myInstructionFactory.createGosubInstruction(getStartOffset(finallyBlock)));
-      addInstruction(myInstructionFactory.createGotoInstruction(getEndOffset(statement)));
+      addInstruction(new GosubInstruction(getStartOffset(finallyBlock)));
+      addInstruction(new GotoInstruction(getEndOffset(statement)));
       finallyBlock.accept(this);
-      addInstruction(myInstructionFactory.createReturnFromSubInstruction());
+      addInstruction(new ReturnFromSubInstruction());
     }
 
     finishElement(statement);
@@ -763,7 +761,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     if (condition != null) {
       condition.accept(this);
       generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
-      addInstruction(myInstructionFactory.createConditionalGotoInstruction(getEndOffset(statement), true, condition));
+      addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), true, condition));
     }
 
     PsiStatement body = statement.getBody();
@@ -772,7 +770,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     if (condition != null) {
-      addInstruction(myInstructionFactory.createGotoInstruction(getStartOffset(statement)));
+      addInstruction(new GotoInstruction(getStartOffset(statement)));
     }
 
     finishElement(statement);
@@ -792,7 +790,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitExpression(PsiExpression expression) {
     startElement(expression);
     DfaValue dfaValue = myFactory.create(expression);
-    addInstruction(myInstructionFactory.createPushInstruction(dfaValue, expression));
+    addInstruction(new PushInstruction(dfaValue, expression));
     finishElement(expression);
   }
 
@@ -801,13 +799,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(expression);
     PsiExpression arrayExpression = expression.getArrayExpression();
     arrayExpression.accept(this);
-    addInstruction(myInstructionFactory.createFieldReferenceInstruction(expression, null));
+    addInstruction(new FieldReferenceInstruction(expression, null));
 
     PsiExpression indexExpression = expression.getIndexExpression();
     if (indexExpression != null) {
       indexExpression.accept(this);
       generateBoxingUnboxingInstructionFor(indexExpression, PsiType.INT);
-      addInstruction(myInstructionFactory.createPopInstruction());
+      addInstruction(new PopInstruction());
     }
 
     pushTypeOrUnknown(arrayExpression);
@@ -824,7 +822,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       if (type instanceof PsiArrayType) {
         generateBoxingUnboxingInstructionFor(initializer, ((PsiArrayType)type).getComponentType());
       }
-      addInstruction(myInstructionFactory.createPopInstruction());
+      addInstruction(new PopInstruction());
     }
     pushUnknown();
     finishElement(expression);
@@ -836,7 +834,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     try {
       DfaValue dfaValue = myFactory.create(expression);
       if (dfaValue != null) {
-        addInstruction(myInstructionFactory.createPushInstruction(dfaValue, expression));
+        addInstruction(new PushInstruction(dfaValue, expression));
       }
       else {
         IElementType op = expression.getOperationSign().getTokenType();
@@ -889,8 +887,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
               opSign = null;
             }
           }
-          
-          addInstruction(myInstructionFactory.createBinopInstruction(opSign, expression.isPhysical() ? expression : null, expression.getProject()));
+
+          PsiElement psiAnchor = expression.isPhysical() ? expression : null;
+          addInstruction(new BinopInstruction(opSign, psiAnchor, expression.getProject()));
         }
       }
     }
@@ -903,17 +902,22 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiType exprType = expression.getType();
 
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) && TypeConversionUtil.isPrimitiveWrapper(exprType)) {
-      addInstruction(myInstructionFactory.createMethodCallInstruction(expression, myFactory, MethodCallInstruction.MethodType.UNBOXING));
+      addInstruction(new MethodCallInstruction(expression, MethodCallInstruction.MethodType.UNBOXING));
     }
     else if (TypeConversionUtil.isPrimitiveWrapper(expectedType) && TypeConversionUtil.isPrimitiveAndNotNull(exprType)) {
-      addInstruction(myInstructionFactory.createMethodCallInstruction(expression, myFactory, MethodCallInstruction.MethodType.BOXING));
+      addInstruction(new MethodCallInstruction(expression, MethodCallInstruction.MethodType.BOXING));
     }
     else if (exprType != expectedType &&
              TypeConversionUtil.isPrimitiveAndNotNull(exprType) &&
              TypeConversionUtil.isPrimitiveAndNotNull(expectedType) &&
              TypeConversionUtil.isNumericType(exprType) &&
              TypeConversionUtil.isNumericType(expectedType)) {
-      addInstruction(myInstructionFactory.createCastInstruction(expression, myFactory, expectedType));
+      addInstruction(new MethodCallInstruction(expression, MethodCallInstruction.MethodType.CAST, expectedType) {
+        @Override
+        public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+          return visitor.visitCast(this, runner, stateBefore);
+        }
+      });
     }
   }
 
@@ -922,15 +926,16 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     generateBoxingUnboxingInstructionFor(lExpr,exprType);
     rExpr.accept(this);
     generateBoxingUnboxingInstructionFor(rExpr,exprType);
-    addInstruction(myInstructionFactory.createBinopInstruction("!=", expression.isPhysical() ? expression : null, expression.getProject()));
+    PsiElement psiAnchor = expression.isPhysical() ? expression : null;
+    addInstruction(new BinopInstruction("!=", psiAnchor, expression.getProject()));
   }
 
   private void generateOrExpression(PsiExpression lExpr, PsiExpression rExpr, final PsiType exprType) {
     lExpr.accept(this);
     generateBoxingUnboxingInstructionFor(lExpr,exprType);
-    addInstruction(myInstructionFactory.createConditionalGotoInstruction(getStartOffset(rExpr), true, lExpr));
-    addInstruction(myInstructionFactory.createPushInstruction(myFactory.getConstFactory().getTrue(), null));
-    addInstruction(myInstructionFactory.createGotoInstruction(getEndOffset(rExpr)));
+    addInstruction(new ConditionalGotoInstruction(getStartOffset(rExpr), true, lExpr));
+    addInstruction(new PushInstruction(myFactory.getConstFactory().getTrue(), null));
+    addInstruction(new GotoInstruction(getEndOffset(rExpr)));
     rExpr.accept(this);
     generateBoxingUnboxingInstructionFor(rExpr,exprType);
   }
@@ -990,7 +995,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     DfaValue dfaValue = myFactory.create(expression);
     if (dfaValue != null) {
-      addInstruction(myInstructionFactory.createPushInstruction(dfaValue, expression));
+      addInstruction(new PushInstruction(dfaValue, expression));
     }
     else {
       PsiExpression condition = expression.getCondition();
@@ -1003,11 +1008,11 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         condition.accept(this);
         generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
         PsiType type = expression.getType();
-        addInstruction(myInstructionFactory.createConditionalGotoInstruction(elseOffset, true, condition));
+        addInstruction(new ConditionalGotoInstruction(elseOffset, true, condition));
         thenExpression.accept(this);
         generateBoxingUnboxingInstructionFor(thenExpression,type);
 
-        addInstruction(myInstructionFactory.createGotoInstruction(getEndOffset(expression)));
+        addInstruction(new GotoInstruction(getEndOffset(expression)));
 
         if (elseExpression != null) {
           elseExpression.accept(this);
@@ -1026,7 +1031,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void pushUnknown() {
-    addInstruction(myInstructionFactory.createPushInstruction(DfaUnknownValue.getInstance(), null));
+    addInstruction(new PushInstruction(DfaUnknownValue.getInstance(), null));
   }
 
   @Override public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
@@ -1039,8 +1044,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       if (type instanceof PsiClassType) {
         type = ((PsiClassType)type).rawType();
       }
-      addInstruction(myInstructionFactory.createPushInstruction(myFactory.getTypeFactory().create(type), null));
-      addInstruction(myInstructionFactory.createInstanceofInstruction(expression, operand, type));
+      addInstruction(new PushInstruction(myFactory.getTypeFactory().create(type), null));
+      addInstruction(new InstanceofInstruction(expression, expression.getProject(), operand, type));
     }
     else {
       pushUnknown();
@@ -1056,8 +1061,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         pushUnknown();
         ConditionalGotoInstruction cond = new ConditionalGotoInstruction(NOT_FOUND, false, null);
         addInstruction(cond);
-        addInstruction(myInstructionFactory.createEmptyStackInstruction());
-        addInstruction(myInstructionFactory.createPushInstruction(myFactory.getTypeFactory().create(ref), null));
+        addInstruction(new EmptyStackInstruction());
+        addInstruction(new PushInstruction(myFactory.getTypeFactory().create(ref), null));
         addThrowCode(ref);
         cond.setOffset(myCurrentFlow.getInstructionCount());
       }
@@ -1093,7 +1098,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         }
       }
 
-      addInstruction(myInstructionFactory.createMethodCallInstruction(expression, myFactory));
+      addInstruction(new MethodCallInstruction(expression));
 
       if (!myCatchStack.isEmpty()) {
         addMethodThrows(expression.resolveMethod());
@@ -1121,14 +1126,14 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         if ("java.lang.System".equals(className)) {
           if ("exit".equals(methodName)) {
             pushParameters(params, false);
-            addInstruction(myInstructionFactory.createReturnInstruction());
+            addInstruction(new ReturnInstruction());
             return true;
           }
         }
         else if ("junit.framework.Assert".equals(className) || "org.junit.Assert".equals(className) || "org.testng.Assert".equals(className)) {
           if ("fail".equals(methodName)) {
             pushParameters(params, false);
-            addInstruction(myInstructionFactory.createReturnInstruction());
+            addInstruction(new ReturnInstruction());
             return true;
           }
           else if ("assertTrue".equals(methodName)) {
@@ -1144,16 +1149,16 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
           else if ("assertNull".equals(methodName)) {
             pushParameters(params, true);
 
-            addInstruction(myInstructionFactory.createPushInstruction(myFactory.getConstFactory().getNull(), null));
-            addInstruction(myInstructionFactory.createBinopInstruction("==", null, expression.getProject()));
+            addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
+            addInstruction(new BinopInstruction("==", null, expression.getProject()));
             conditionalExit(exitPoint, false);
             return true;
           }
           else if ("assertNotNull".equals(methodName)) {
             pushParameters(params, true);
 
-            addInstruction(myInstructionFactory.createPushInstruction(myFactory.getConstFactory().getNull(), null));
-            addInstruction(myInstructionFactory.createBinopInstruction("==", null, expression.getProject()));
+            addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
+            addInstruction(new BinopInstruction("==", null, expression.getProject()));
             conditionalExit(exitPoint, true);
             return true;
           }
@@ -1169,16 +1174,16 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
             if ("error".equals(methodName)) {
               for (PsiExpression param : params) {
                 param.accept(this);
-                addInstruction(myInstructionFactory.createPopInstruction());
+                addInstruction(new PopInstruction());
               }
-              addInstruction(myInstructionFactory.createReturnInstruction());
+              addInstruction(new ReturnInstruction());
               return true;
             }
             else if ("assertTrue".equals(methodName)) {
               params[0].accept(this);
               for (int i = 1; i < params.length; i++) {
                 params[i].accept(this);
-                addInstruction(myInstructionFactory.createPopInstruction());
+                addInstruction(new PopInstruction());
               }
               conditionalExit(exitPoint, false);
               return true;
@@ -1192,8 +1197,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void conditionalExit(final int continuePoint, final boolean exitIfTrue) {
-    addInstruction(myInstructionFactory.createConditionalGotoInstruction(continuePoint, exitIfTrue, null));
-    addInstruction(myInstructionFactory.createReturnInstruction());
+    addInstruction(new ConditionalGotoInstruction(continuePoint, exitIfTrue, null));
+    addInstruction(new ReturnInstruction());
     pushUnknown();
   }
 
@@ -1202,7 +1207,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiExpression param = params[i];
       param.accept(this);
       if (!leaveLastOnStack || i < params.length - 1) {
-        addInstruction(myInstructionFactory.createPopInstruction());
+        addInstruction(new PopInstruction());
       }
     }
   }
@@ -1218,7 +1223,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       dfaValue = null;
     }
 
-    addInstruction(myInstructionFactory.createPushInstruction(dfaValue, null));
+    addInstruction(new PushInstruction(dfaValue, null));
   }
 
   @Override public void visitNewExpression(PsiNewExpression expression) {
@@ -1232,16 +1237,16 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         dimension.accept(this);
       }
       for (PsiExpression dimension : dimensions) {
-        addInstruction(myInstructionFactory.createPopInstruction());
+        addInstruction(new PopInstruction());
       }
       final PsiArrayInitializerExpression arrayInitializer = expression.getArrayInitializer();
       if (arrayInitializer != null) {
         for (final PsiExpression initializer : arrayInitializer.getInitializers()) {
           initializer.accept(this);
-          addInstruction(myInstructionFactory.createPopInstruction());
+          addInstruction(new PopInstruction());
         }
       }
-      addInstruction(myInstructionFactory.createMethodCallInstruction(expression, myFactory));
+      addInstruction(new MethodCallInstruction(expression));
     }
     else {
       final PsiExpressionList args = expression.getArgumentList();
@@ -1258,7 +1263,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         }
       }
 
-      addInstruction(myInstructionFactory.createMethodCallInstruction(expression, myFactory));
+      addInstruction(new MethodCallInstruction(expression));
 
       if (!myCatchStack.isEmpty()) {
         addMethodThrows(ctr);
@@ -1288,14 +1293,14 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     operand.accept(this);
     generateBoxingUnboxingInstructionFor(operand, PsiType.INT);
 
-    addInstruction(myInstructionFactory.createPopInstruction());
+    addInstruction(new PopInstruction());
     pushUnknown();
 
     if (operand instanceof PsiReferenceExpression) {
       PsiVariable psiVariable = DfaValueFactory.resolveVariable((PsiReferenceExpression)expression.getOperand());
       if (psiVariable != null) {
         DfaVariableValue dfaVariable = myFactory.getVarFactory().create(psiVariable, false);
-        addInstruction(myInstructionFactory.createFlushVariableInstruction(dfaVariable));
+        addInstruction(new FlushVariableInstruction(dfaVariable));
       }
     }
 
@@ -1318,24 +1323,24 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(type);
         generateBoxingUnboxingInstructionFor(operand, unboxed == null ? type : unboxed);
         if (expression.getOperationSign().getTokenType() == JavaTokenType.EXCL) {
-          addInstruction(myInstructionFactory.createNotInstruction());
+          addInstruction(new NotInstruction());
         }
         else {
-          addInstruction(myInstructionFactory.createPopInstruction());
+          addInstruction(new PopInstruction());
           pushUnknown();
 
           if (operand instanceof PsiReferenceExpression) {
             PsiVariable psiVariable = DfaValueFactory.resolveVariable((PsiReferenceExpression)operand);
             if (psiVariable != null) {
               DfaVariableValue dfaVariable = myFactory.getVarFactory().create(psiVariable, false);
-              addInstruction(myInstructionFactory.createFlushVariableInstruction(dfaVariable));
+              addInstruction(new FlushVariableInstruction(dfaVariable));
             }
           }
         }
       }
     }
     else {
-      addInstruction(myInstructionFactory.createPushInstruction(dfaValue, expression));
+      addInstruction(new PushInstruction(dfaValue, expression));
     }
 
     finishElement(expression);
@@ -1357,14 +1362,14 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     if (qualifierExpression != null) {
       qualifierExpression.accept(this);
       if (expression.resolve() instanceof PsiField) {
-        addInstruction(myInstructionFactory.createFieldReferenceInstruction(expression, null));
+        addInstruction(new FieldReferenceInstruction(expression, null));
       }
       else {
-        addInstruction(myInstructionFactory.createPopInstruction());
+        addInstruction(new PopInstruction());
       }
     }
 
-    addInstruction(myInstructionFactory.createPushInstruction(dfaValue, expression));
+    addInstruction(new PushInstruction(dfaValue, expression));
 
     finishElement(expression);
   }
@@ -1375,13 +1380,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitSuperExpression(PsiSuperExpression expression) {
     startElement(expression);
-    addInstruction(myInstructionFactory.createPushInstruction(myFactory.getNotNullFactory().create(expression.getType()), null));
+    addInstruction(new PushInstruction(myFactory.getNotNullFactory().create(expression.getType()), null));
     finishElement(expression);
   }
 
   @Override public void visitThisExpression(PsiThisExpression expression) {
     startElement(expression);
-    addInstruction(myInstructionFactory.createPushInstruction(myFactory.getNotNullFactory().create(expression.getType()), null));
+    addInstruction(new PushInstruction(myFactory.getNotNullFactory().create(expression.getType()), null));
     finishElement(expression);
   }
 
@@ -1389,7 +1394,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(expression);
 
     DfaValue dfaValue = myFactory.create(expression);
-    addInstruction(myInstructionFactory.createPushInstruction(dfaValue, expression));
+    addInstruction(new PushInstruction(dfaValue, expression));
 
     finishElement(expression);
   }
@@ -1414,16 +1419,28 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @NotNull
-  private Instruction createCastInstruction(PsiTypeCastExpression castExpression) {
+  private static Instruction createCastInstruction(PsiTypeCastExpression castExpression) {
     PsiExpression expr = castExpression.getOperand();
     final PsiTypeElement typeElement = castExpression.getCastType();
     if (typeElement != null && !RedundantCastUtil.isTypeCastSemantical(castExpression)) {
       PsiType castType = typeElement.getType();
       if (expr != null) {
-        return myInstructionFactory.createTypeCastInstruction(castExpression, expr, castType, myFactory);
+        return new TypeCastInstruction(castExpression, expr, castType);
       }
     }
-    return myInstructionFactory.createTypeCastInstruction();
+    return new Instruction() {
+      @Override
+      public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
+        memState.pop();
+        memState.push(DfaUnknownValue.getInstance());
+        return super.apply(runner, memState);
+      }
+
+      @Override
+      public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+        return apply(runner, stateBefore);
+      }
+    };
   }
 
 

@@ -9,6 +9,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.instructions.FlushVariableInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiElement;
@@ -24,11 +25,9 @@ public class ControlFlow {
   private final HashMap<PsiElement,Integer> myElementToEndOffsetMap = new HashMap<PsiElement, Integer>();
   private DfaVariableValue[] myFields;
   private final DfaValueFactory myFactory;
-  private final InstructionFactory myInstructionFactory;
 
-  public ControlFlow(final DfaValueFactory factory, final InstructionFactory instructionFactory) {
+  public ControlFlow(final DfaValueFactory factory) {
     myFactory = factory;
-    myInstructionFactory = instructionFactory;
   }
 
   public Instruction[] getInstructions(){
@@ -54,7 +53,7 @@ public class ControlFlow {
 
   public void removeVariable(PsiVariable variable) {
     DfaVariableValue var = myFactory.getVarFactory().create(variable, false);
-    addInstruction(myInstructionFactory.createFlushVariableInstruction(var));
+    addInstruction(new FlushVariableInstruction(var));
   }
 
   public int getStartOffset(PsiElement element){

@@ -42,7 +42,6 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     return myMap;
   }
   
-  @Nullable
   public V get(Object key) {
     final Map<K, V> map = getMap();
     V value = map.get(getKey(key));

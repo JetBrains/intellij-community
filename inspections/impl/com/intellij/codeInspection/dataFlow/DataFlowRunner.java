@@ -31,7 +31,6 @@ public class DataFlowRunner {
   private Instruction[] myInstructions;
   private DfaVariableValue[] myFields;
   private final DfaValueFactory myValueFactory = new DfaValueFactory();
-  private final InstructionFactory myInstructionFactory = new InstructionFactory();
 
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
   // is executed more than this limit times.
@@ -149,7 +148,7 @@ public class DataFlowRunner {
   }
 
   protected ControlFlowAnalyzer createControlFlowAnalyzer() {
-    return new ControlFlowAnalyzer(myValueFactory, myInstructionFactory);
+    return new ControlFlowAnalyzer(myValueFactory);
   }
 
   protected DfaMemoryState createMemoryState() {
