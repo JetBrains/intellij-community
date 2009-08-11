@@ -33,6 +33,7 @@ public class SystemInfo {
   public static final boolean isWindows2003 = OS_NAME.startsWith("windows 2003");
   public static final boolean isWindowsXP = OS_NAME.startsWith("windows xp");
   public static final boolean isWindowsVista = OS_NAME.startsWith("windows vista");
+  public static final boolean isWindows7 = OS_NAME.startsWith("windows 7");
   public static final boolean isWindows9x = OS_NAME.startsWith("windows 9") || OS_NAME.startsWith("windows me");
   public static final boolean isOS2 = OS_NAME.startsWith("os/2") || OS_NAME.startsWith("os2");
   public static final boolean isMac = OS_NAME.startsWith("mac");
