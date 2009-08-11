@@ -35,9 +35,9 @@ import com.intellij.history.Label;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
@@ -74,7 +74,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -165,7 +164,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_ALL));
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COLLAPSE_ALL));
     final ShowUpdatedDiffAction diffAction = new ShowUpdatedDiffAction();
-    diffAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_DOWN_MASK)), this);
+    diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), this);
     group.add(diffAction);
   }
 
