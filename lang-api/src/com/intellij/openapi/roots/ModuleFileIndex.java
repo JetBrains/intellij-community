@@ -31,7 +31,7 @@ public interface ModuleFileIndex extends FileIndex {
    * Returns the order entry to which the specified file or directory
    * belongs.
    *
-   * @param fileOrDir the file or drirectory to check.
+   * @param fileOrDir the file or directory to check.
    * @return the order entry to which the file or directory belongs, or null if
    * it does not belong to any order entry.
    */
@@ -42,7 +42,7 @@ public interface ModuleFileIndex extends FileIndex {
    * Returns the list of all order entries to which the specified file or directory
    * belongs.
    *
-   * @param fileOrDir the file or drirectory to check.
+   * @param fileOrDir the file or directory to check.
    * @return the list of order entries to which the file or directory belongs.
    */
   @NotNull List<OrderEntry> getOrderEntriesForFile(VirtualFile fileOrDir);
