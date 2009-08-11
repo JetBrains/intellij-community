@@ -202,7 +202,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
             ((XmlAttributeInjection)result).setAttributeNamespace(StringUtil.notNullize(pair1.second));
             if (pair2 != null) {
               result.setTagName(pair2.first);
-              result.setTagNamespace(pair2.second);
+              result.setTagNamespace(StringUtil.notNullize(pair2.second));
             }
           }
           else if (result instanceof XmlTagInjection) {
