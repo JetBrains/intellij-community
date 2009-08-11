@@ -134,6 +134,7 @@ public abstract class ContentEntryTreeEditor {
         return new MyFileTreeBuilder(tree, treeModel, treeStructure, comparator, descriptor, onInitialized);
       }
     };
+    myFileSystemTree.showHiddens(true);
 
 
     Disposer.register(myProject, myFileSystemTree);
