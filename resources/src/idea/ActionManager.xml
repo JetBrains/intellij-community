@@ -151,7 +151,6 @@
 
     <group id="RefactoringMenu3">
       <action id="IntroduceField" class="com.intellij.refactoring.actions.IntroduceFieldAction"/>
-      <action id="IntroduceConstant" class="com.intellij.refactoring.actions.IntroduceConstantAction"/>
       <action id="IntroduceParameter" class="com.intellij.refactoring.actions.IntroduceParameterAction"/>
       <separator/>
       <action id="ExtractInterface" class="com.intellij.refactoring.actions.ExtractInterfaceAction"/>
