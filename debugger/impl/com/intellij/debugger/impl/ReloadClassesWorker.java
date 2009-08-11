@@ -98,9 +98,12 @@ class ReloadClassesWorker {
       return;
     }
 
+    final Project project = getDebugProcess().getProject();
+    final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
+    breakpointManager.disableBreakpoints(getDebugProcess());
+    
     virtualMachineProxy.suspend();
            
-    final Project project = getDebugProcess().getProject();
     try {
       final Map<ReferenceType, byte[]> redefineMap = new java.util.HashMap<ReferenceType,byte[]>();
       int processedClassesCount = 0;
