@@ -8,9 +8,11 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import junit.framework.Assert;
-import org.jetbrains.plugins.grails.fileType.GspFileType;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -140,9 +142,6 @@ public class ParameterToMapEntryTest extends UsefulTestCase {
     mySettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).INDENT_SIZE = 2;
     mySettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).CONTINUATION_INDENT_SIZE = 4;
     mySettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).TAB_SIZE = 2;
-    mySettings.getIndentOptions(GspFileType.GSP_FILE_TYPE).INDENT_SIZE = 2;
-    mySettings.getIndentOptions(GspFileType.GSP_FILE_TYPE).CONTINUATION_INDENT_SIZE = 4;
-    mySettings.getIndentOptions(GspFileType.GSP_FILE_TYPE).TAB_SIZE = 2;
     CodeStyleSettingsManager.getInstance(myProject).setTemporarySettings(mySettings);
   }
 }
