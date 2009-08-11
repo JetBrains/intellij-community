@@ -349,23 +349,51 @@ public class EclipseClasspathWriter {
 
     for (OrderEntry entry : myModel.getOrderEntries()) {
       if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).isModuleLevel()) {
+        final Element element = new Element("lib");
+        element.setAttribute("name", entry.getPresentableName());
         final String[] urls = entry.getUrls(OrderRootType.SOURCES);
         if (urls.length > 1) {
-          final Element element = new Element("lib");
-          element.setAttribute("name", entry.getPresentableName());
           for (int i = 0; i < urls.length - 1; i++) {
             Element srcElement = new Element("srcroot");
             srcElement.setAttribute("url", urls[i]);
             element.addContent(srcElement);
           }
-          root.addContent(element);
         }
+
+        for (String srcUrl : entry.getUrls(OrderRootType.SOURCES)) {
+          appendModuleRelatedRoot(element, srcUrl, "relative-module-src");
+        }
+        for (String classesUrl : entry.getUrls(OrderRootType.CLASSES)) {
+          appendModuleRelatedRoot(element, classesUrl, "relative-module-cls");
+        }
+        if (!element.getChildren().isEmpty()) root.addContent(element);
       }
     }
 
     PathMacroManager.getInstance(myModel.getModule()).collapsePaths(root);
 
     return isModified;
+  }
+
+  private boolean appendModuleRelatedRoot(Element element, String classesUrl, final String rootMame) {
+    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(classesUrl);
+    if (file != null) {
+      if (file.getFileSystem() instanceof JarFileSystem) {
+        file = JarFileSystem.getInstance().getVirtualFileForJar(file);
+        assert file != null;
+      }
+      final Module module = ModuleUtil.findModuleForFile(file, myModel.getProject());
+      if (module != null && module != myModel.getModule()) {
+        final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+        if (contentRoots.length > 0 && VfsUtil.isAncestor(contentRoots[0], file, false)) {
+          final Element clsElement = new Element(rootMame);
+          clsElement.setAttribute("project-related", PathMacroManager.getInstance(module.getProject()).collapsePath(classesUrl));
+          element.addContent(clsElement);
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
 

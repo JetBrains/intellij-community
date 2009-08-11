@@ -49,10 +49,7 @@ import org.jetbrains.idea.eclipse.util.ErrorLog;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class EclipseClasspathReader {
   private final String myRootPath;
@@ -473,7 +470,26 @@ public class EclipseClasspathReader {
         for (Object r : libElement.getChildren("srcroot")) {
           modifiableModel.addRoot(((Element)r).getAttributeValue("url"), OrderRootType.SOURCES);
         }
+        replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.SOURCES, "relative-module-src");
+        replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.CLASSES, "relative-module-cls");
         modifiableModel.commit();
+      }
+    }
+  }
+
+  private static void replaceModuleRelatedRoots(final Project project, final Library.ModifiableModel modifiableModel, final Element libElement,
+                                                final OrderRootType orderRootType, final String relativeModuleName) {
+    final List<String> urls = new ArrayList<String>(Arrays.asList(modifiableModel.getUrls(orderRootType)));
+    for (Object r : libElement.getChildren(relativeModuleName)) {
+      final String root = PathMacroManager.getInstance(project).expandPath(((Element)r).getAttributeValue("project-related"));
+      for (Iterator<String> iterator = urls.iterator(); iterator.hasNext();) {
+        String url = iterator.next();
+        if (root.contains(VfsUtil.urlToPath(url))) {
+          iterator.remove();
+          modifiableModel.removeRoot(url, orderRootType);
+          modifiableModel.addRoot(root, orderRootType);
+          break;
+        }
       }
     }
   }
