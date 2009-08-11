@@ -17,6 +17,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 public class ExpressionParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.ExpressionParsing");
@@ -839,6 +840,7 @@ public class ExpressionParsing extends Parsing {
     return element;
   }
 
+  @NotNull
   public CompositeElement parseArgumentList(Lexer lexer) {
     if (lexer.getTokenType() != JavaTokenType.LPARENTH) {
       // [dsl,ven] used in EnumConstant
