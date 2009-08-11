@@ -58,6 +58,9 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
                                   @NotNull AnalysisUIOptions analysisUIOptions) {
     super(true);
     myAnalysisOptions = analysisUIOptions;
+    if (!analysisUIOptions.ANALYZE_TEST_SOURCES) {
+      myAnalysisOptions.ANALYZE_TEST_SOURCES = scope.isAnalyzeTestsByDefault();
+    }
     myProject = project;
     myFileName = scope.getShortenName();
     myModuleName = moduleName;
@@ -148,7 +151,6 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private void onScopeRadioButtonPressed() {
     myScopeCombo.setEnabled(myCustomScopeButton.isSelected());
     myChangeLists.setEnabled(myUncommitedFilesButton.isSelected());
-    myInspectTestSource.setEnabled(!myFileButton.isSelected() && !myCustomScopeButton.isSelected());
   }
 
   @Nullable

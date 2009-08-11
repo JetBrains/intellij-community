@@ -662,4 +662,34 @@ public class AnalysisScope {
         return GlobalSearchScope.EMPTY_SCOPE;
     }
   }
+
+  public boolean isAnalyzeTestsByDefault() {
+    switch (myType) {
+      case DIRECTORY:
+        return ProjectRootManager.getInstance(myElement.getProject()).getFileIndex()
+          .isInTestSourceContent(((PsiDirectory)myElement).getVirtualFile());
+      case FILE:
+        final PsiFile containingFile = myElement.getContainingFile();
+        return ProjectRootManager.getInstance(myElement.getProject()).getFileIndex().isInTestSourceContent(containingFile.getVirtualFile());
+      case MODULE:
+        return isTestOnly(myModule);
+      case MODULES:
+        for (Module module : myModules) {
+          if (!isTestOnly(module)) return false;
+        }
+        return true;
+
+    }
+    return false;
+  }
+
+  private static boolean isTestOnly(Module module) {
+    final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
+    for (ContentEntry contentEntry : contentEntries) {
+      for (SourceFolder folder : contentEntry.getSourceFolders()) {
+        if (!folder.isTestSource()) return false;
+      }
+    }
+    return true;
+  }
 }
