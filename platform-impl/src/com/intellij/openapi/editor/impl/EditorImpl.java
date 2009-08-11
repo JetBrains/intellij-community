@@ -180,6 +180,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private Color myForcedBackground = null;
   private Dimension myPreferredSize;
   private Runnable myGutterSizeUpdater = null;
+  private boolean myGutterNeedsUpdate = false;
   private Alarm myAppleRepaintAlarm;
   private boolean myEmbeddedIntoDialogWrapper;
   private CachedFontContent myLastCache;
@@ -558,6 +559,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int caretLine = getCaretModel().getLogicalPosition().line;
         repaintLines(caretLine, caretLine);
         fireFocusGained();
+        if (myGutterNeedsUpdate) {
+          updateGutterSize();
+        }
       }
 
       public void focusLost(FocusEvent e) {
@@ -1033,8 +1037,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myGutterSizeUpdater != null) return;
     myGutterSizeUpdater = new Runnable() {
       public void run() {
-        if (!isDisposed() && isShowing()) {
-          myGutterComponent.updateSize();
+        if (!isDisposed()) {
+          if (isShowing()) {
+            myGutterComponent.updateSize();
+            myGutterNeedsUpdate = false;
+          }
+          else {
+            myGutterNeedsUpdate = true;
+          }
         }
         myGutterSizeUpdater = null;
       }
