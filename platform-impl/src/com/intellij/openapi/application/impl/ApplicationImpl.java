@@ -455,6 +455,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       }
       catch (ProcessCanceledException e) {
         // ok to ignore.
+        return false;
       }
       return true;
     }
@@ -485,6 +486,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
                 ProgressManager.getInstance().runProcess(process, progress);
               }
               catch (ProcessCanceledException e) {
+                progress.cancel();
                 // ok to ignore.
               }
               finally {

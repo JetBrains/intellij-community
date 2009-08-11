@@ -376,7 +376,7 @@ public class ProgressManagerImpl extends ProgressManager {
   private static class TaskRunnable extends TaskContainer {
     private final ProgressIndicator myIndicator;
 
-    private TaskRunnable(final Task task, final ProgressIndicator indicator) {
+    private TaskRunnable(@NotNull Task task, @NotNull ProgressIndicator indicator) {
       super(task);
       myIndicator = indicator;
     }
