@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -37,6 +38,21 @@ public class PsiJavaPatterns extends StandardPatterns{
   public static PsiJavaElementPattern.Capture<PsiLiteralExpression> literalExpression() {
     return literalExpression(null);
   }
+
+  public static PsiJavaElementPattern.Capture<PsiNewExpression> psiNewExpression(@NotNull final String fqn) {
+    return new PsiJavaElementPattern.Capture<PsiNewExpression>(new InitialPatternCondition<PsiNewExpression>(PsiNewExpression.class) {
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+        if(o instanceof PsiNewExpression) {
+          PsiJavaCodeReferenceElement reference = ((PsiNewExpression)o).getClassOrAnonymousClassReference();
+          if (reference != null) {
+            return fqn.equals(reference.getQualifiedName());
+          }
+        }
+        return  false;
+      }
+    });
+  }
+
 
   public static PsiJavaElementPattern.Capture<PsiLiteralExpression> literalExpression(final ElementPattern value) {
     return new PsiJavaElementPattern.Capture<PsiLiteralExpression>(new InitialPatternCondition<PsiLiteralExpression>(PsiLiteralExpression.class) {
