@@ -41,7 +41,8 @@ public class FlipSetterCallIntention extends Intention {
       if (element instanceof PsiMethodCallExpression) {
         flipCall((PsiMethodCallExpression)element);
       }
-    } else { // editor not null
+    }
+    else { // editor not null
       final List<PsiMethodCallExpression> methodCalls =
         PsiSelectionSearcher.searchElementsInSelection(editor, element.getProject(), PsiMethodCallExpression.class, false);
       for (PsiMethodCallExpression call : methodCalls) {
@@ -117,12 +118,12 @@ public class FlipSetterCallIntention extends Intention {
   }
 
   @Nullable
-  static Editor getEditorByElementIfItHasSelection(@NotNull PsiElement element) {
+  private static Editor getEditorByElementIfItHasSelection(@NotNull PsiElement element) {
     final Editor editor = FileEditorManager.getInstance(element.getProject()).getSelectedTextEditor();
     return editor != null && editor.getSelectionModel().hasSelection() ? editor : null; 
   }
 
-  static class SetterCallPredicate implements PsiElementPredicate {
+  private static class SetterCallPredicate implements PsiElementPredicate {
     public boolean satisfiedBy(PsiElement element) {
       boolean underCorrectElement = element instanceof PsiMethodCallExpression && isSetGetMethodCall((PsiMethodCallExpression)element);
       final Editor editor = FileEditorManager.getInstance(element.getProject()).getSelectedTextEditor();

@@ -16,18 +16,15 @@
 
 package com.siyeh.ipp.psiutils;
 
-import org.jetbrains.annotations.NotNull;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.JavaRecursiveElementVisitor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Collections;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -55,7 +52,7 @@ public class PsiSelectionSearcher {
 
     final List<T> results = new ArrayList<T>();
 
-    final JavaRecursiveElementVisitor visitor = new JavaRecursiveElementVisitor() {
+    final PsiElementVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
         if (!selection.intersects(element.getTextRange())) return;
@@ -65,7 +62,8 @@ public class PsiSelectionSearcher {
           if (dontStopOnFound) {
             super.visitElement(element);
           }
-        } else {
+        }
+        else {
           super.visitElement(element);
         }
       }
