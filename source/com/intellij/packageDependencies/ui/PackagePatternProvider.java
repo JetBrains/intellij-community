@@ -118,7 +118,7 @@ public class PackagePatternProvider extends PatternDialectProvider {
     return PACKAGES;
   }
 
-  public AnAction[] createActions(final Runnable update) {
+  public AnAction[] createActions(Project project, final Runnable update) {
     return new AnAction[]{new GroupByScopeTypeAction(update)};
   }
 }

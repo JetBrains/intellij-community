@@ -5,6 +5,7 @@
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,6 +17,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.packageDependencies.ui.*;
 import com.intellij.psi.PsiFile;
@@ -252,17 +255,26 @@ public class ScopeEditorPanel {
         rebuild(true);
       }
     };
-    group.add(new FlattenPackagesAction(update));
-    for (PatternDialectProvider provider : Extensions.getExtensions(PatternDialectProvider.EP_NAME)) {
-      for (AnAction action : provider.createActions(update)) {
+    if (ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages()) {
+      group.add(new FlattenPackagesAction(update));
+    }
+    final PatternDialectProvider[] dialectProviders = Extensions.getExtensions(PatternDialectProvider.EP_NAME);
+    for (PatternDialectProvider provider : dialectProviders) {
+      for (AnAction action : provider.createActions(myProject, update)) {
         group.add(action);
       }
     }
     group.add(new ShowFilesAction(update));
-    group.add(new ShowModulesAction(update));
-    group.add(new ShowModuleGroupsAction(update));
+    final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    if (modules.length > 1) {
+      group.add(new ShowModulesAction(update));
+      group.add(new ShowModuleGroupsAction(update));
+    }
     group.add(new FilterLegalsAction(update));
-    group.add(new ChooseScopeTypeAction(update));
+
+    if (dialectProviders.length > 1) {
+      group.add(new ChooseScopeTypeAction(update));
+    }
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     return toolbar.getComponent();

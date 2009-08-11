@@ -38,7 +38,7 @@ public abstract class PatternDialectProvider {
   @NonNls @NotNull
   public abstract String getShortName();
 
-  public abstract AnAction[] createActions(final Runnable update);
+  public abstract AnAction[] createActions(Project project, final Runnable update);
 
   @Nullable
   public abstract PackageSet createPackageSet(final PackageDependenciesNode node, final boolean recursively);

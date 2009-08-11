@@ -13,7 +13,7 @@ public class ShowModuleGroupsAction extends ToggleAction {
   private final Runnable myUpdate;
 
   public ShowModuleGroupsAction(final Runnable update) {
-    super("Show module groups",
+    super("Show Module Groups",
           "Show/hide module groups", IconLoader.getIcon("/nodes/moduleGroupClosed.png"));
     myUpdate = update;
   }
