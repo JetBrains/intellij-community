@@ -645,6 +645,14 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public static enum MyBackgroundableActions {
-    ANNOTATE
+    ANNOTATE,
+    SELECT_AND_COMPARE_WITH_SELECTED_REVISION,
+    COMPARE_WITH_SELECTED_REVISION,
+    COMPARE_WITH_LATEST,
+    COMPARE_WITH_SAME
+  }
+  
+  public static String keyFromVf(final VirtualFile vf) {
+    return vf.getPath();
   }
 }

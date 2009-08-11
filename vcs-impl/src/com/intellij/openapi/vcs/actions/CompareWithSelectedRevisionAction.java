@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.HistoryAsTreeProvider;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -85,7 +86,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
   };
 
   public void update(VcsContext e, Presentation presentation) {
-    AbstractShowDiffAction.updateDiffAction(presentation, e);
+    AbstractShowDiffAction.updateDiffAction(presentation, e, ProjectLevelVcsManagerImpl.MyBackgroundableActions.COMPARE_WITH_SELECTED_REVISION);
   }
 
 
@@ -110,7 +111,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       else {
         showListPopup(revisions, project, new Consumer<VcsFileRevision>() {
           public void consume(final VcsFileRevision revision) {
-            DiffActionExecutor.showDiff(vcs.getDiffProvider(), revision.getRevisionNumber(), file, project);
+            DiffActionExecutor.showDiff(vcs.getDiffProvider(), revision.getRevisionNumber(), file, project, ProjectLevelVcsManagerImpl.MyBackgroundableActions.COMPARE_WITH_SELECTED_REVISION);
           }
         }, true);
       }
@@ -136,7 +137,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
         }
         VcsFileRevision revision = getRevisionAt(treeTable, index);
         if (revision != null) {
-          DiffActionExecutor.showDiff(diffProvider, revision.getRevisionNumber(), file, project);
+          DiffActionExecutor.showDiff(diffProvider, revision.getRevisionNumber(), file, project, ProjectLevelVcsManagerImpl.MyBackgroundableActions.COMPARE_WITH_SELECTED_REVISION);
         }
       }
     };
