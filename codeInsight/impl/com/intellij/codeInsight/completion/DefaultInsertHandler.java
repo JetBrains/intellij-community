@@ -579,6 +579,10 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
   }
 
   private static int addImportForClass(PsiFile file, int startOffset, int endOffset, PsiClass aClass) throws IncorrectOperationException {
+    if (!aClass.isValid()) {
+      return startOffset;
+    }
+
     SmartPsiElementPointer<PsiClass> pointer = SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(aClass);
     LOG.assertTrue(CommandProcessor.getInstance().getCurrentCommand() != null);
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().getCurrentWriteAction(null) != null);
@@ -587,14 +591,13 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
     final Document document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
 
-    int newStartOffset = startOffset;
-
     final PsiReference reference = file.findReferenceAt(startOffset);
     if (reference != null) {
       final PsiElement resolved = reference.resolve();
       if (resolved instanceof PsiClass) {
-        if (((PsiClass)resolved).getQualifiedName() == null || manager.areElementsEquivalent(aClass, resolved)) return newStartOffset;
-
+        if (((PsiClass)resolved).getQualifiedName() == null || manager.areElementsEquivalent(aClass, resolved)) {
+          return startOffset;
+        }
       }
     }
 
@@ -606,6 +609,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
     PsiDocumentManager.getInstance(manager.getProject()).commitAllDocuments();
 
+    int newStartOffset = startOffset;
     PsiElement element = file.findElementAt(startOffset);
     if (element instanceof PsiIdentifier) {
       PsiElement parent = element.getParent();
