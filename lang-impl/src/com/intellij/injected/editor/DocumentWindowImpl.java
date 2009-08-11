@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 
 /**
  * @author Alexey
@@ -384,6 +385,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return myDelegate.getLineSeparatorLength(injectedToHostLine(line));
   }
 
+  @NotNull
   public LineIterator createLineIterator() {
     return myDelegate.createLineIterator();
   }
@@ -392,15 +394,15 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     myDelegate.setModificationStamp(modificationStamp);
   }
 
-  public void addEditReadOnlyListener(final EditReadOnlyListener listener) {
+  public void addEditReadOnlyListener(@NotNull final EditReadOnlyListener listener) {
     myDelegate.addEditReadOnlyListener(listener);
   }
 
-  public void removeEditReadOnlyListener(final EditReadOnlyListener listener) {
+  public void removeEditReadOnlyListener(@NotNull final EditReadOnlyListener listener) {
     myDelegate.removeEditReadOnlyListener(listener);
   }
 
-  public void replaceText(final CharSequence chars, final long newModificationStamp) {
+  public void replaceText(@NotNull final CharSequence chars, final long newModificationStamp) {
     setText(chars);
     myDelegate.setModificationStamp(newModificationStamp);
   }
@@ -424,11 +426,11 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   public void clearLineModificationFlags() {
   }
 
-  public void removeRangeMarker(RangeMarkerEx rangeMarker) {
+  public void removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
     myDelegate.removeRangeMarker(((RangeMarkerWindow)rangeMarker).getDelegate()); 
   }
 
-  public void addRangeMarker(RangeMarkerEx rangeMarker) {
+  public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
     myDelegate.addRangeMarker(((RangeMarkerWindow)rangeMarker).getDelegate());
   }
 
@@ -701,5 +703,10 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   public void setShreds(Place shreds) {
     myShreds = shreds;
+  }
+
+  @NotNull
+  public List<RangeMarker> getGuardedBlocks() {
+    return Collections.emptyList();
   }
 }

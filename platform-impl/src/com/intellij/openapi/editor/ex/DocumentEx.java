@@ -2,20 +2,24 @@ package com.intellij.openapi.editor.ex;
 
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public interface DocumentEx extends Document {
   void stripTrailingSpaces(boolean inChangedLinesOnly);
   void setStripTrailingSpacesEnabled(boolean isEnabled);
 
-  LineIterator createLineIterator();
+  @NotNull LineIterator createLineIterator();
 
   void setModificationStamp(long modificationStamp);
 
-  void addEditReadOnlyListener(EditReadOnlyListener listener);
+  void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener);
 
-  void removeEditReadOnlyListener(EditReadOnlyListener listener);
+  void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener);
 
-  void replaceText(CharSequence chars, long newModificationStamp);
+  void replaceText(@NotNull CharSequence chars, long newModificationStamp);
 
   int getListenersCount();
 
@@ -27,12 +31,15 @@ public interface DocumentEx extends Document {
   void clearLineModificationFlags();
 
 
-  void removeRangeMarker(RangeMarkerEx rangeMarker);
-  void addRangeMarker(RangeMarkerEx rangeMarker);
+  void removeRangeMarker(@NotNull RangeMarkerEx rangeMarker);
+  void addRangeMarker(@NotNull RangeMarkerEx rangeMarker);
 
   boolean isInBulkUpdate();
 
   void setInBulkUpdate(boolean value);
+
+  @NotNull
+  List<RangeMarker> getGuardedBlocks();
 }
 
 

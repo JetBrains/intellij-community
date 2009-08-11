@@ -18,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
 import java.util.Map;
+import java.util.List;
+import java.util.Collections;
 
 public class MockDocument implements DocumentEx {
   private final Map myUserData = new HashMap();
@@ -35,7 +37,7 @@ public class MockDocument implements DocumentEx {
     return myText.toString();
   }
 
-  public void replaceText(CharSequence chars, long newModificationStamp) {
+  public void replaceText(@NotNull CharSequence chars, long newModificationStamp) {
     myText = new StringBuffer();
     myText.append(chars);
     myModStamp = newModificationStamp;
@@ -158,6 +160,7 @@ public class MockDocument implements DocumentEx {
     return 0;
   }
 
+  @NotNull
   public LineIterator createLineIterator() {
     return null;
   }
@@ -191,10 +194,10 @@ public class MockDocument implements DocumentEx {
     return null;
   }
 
-  public void addEditReadOnlyListener(EditReadOnlyListener listener) {
+  public void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
   }
 
-  public void removeEditReadOnlyListener(EditReadOnlyListener listener) {
+  public void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
   }
 
   public void suppressGuardedExceptions() {
@@ -211,9 +214,9 @@ public class MockDocument implements DocumentEx {
   public void clearLineModificationFlags() {
   }
 
-  public void removeRangeMarker(RangeMarkerEx rangeMarker) {}
+  public void removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {}
 
-  public void addRangeMarker(RangeMarkerEx rangeMarker) {}
+  public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker) {}
 
   public boolean isInBulkUpdate() {
     return false;
@@ -233,4 +236,8 @@ public class MockDocument implements DocumentEx {
     return createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
   }
 
+  @NotNull
+  public List<RangeMarker> getGuardedBlocks() {
+    return Collections.emptyList();
+  }
 }

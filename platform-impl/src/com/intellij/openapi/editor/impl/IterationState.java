@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -56,13 +57,13 @@ public final class IterationState {
   private final int myCaretRowStart;
   private final int myCaretRowEnd;
   private final ArrayList<TextAttributes> myCachedAttributesList;
-  private final DocumentImpl myDocument;
+  private final DocumentEx myDocument;
   private final EditorEx myEditor;
   private final Color myReadOnlyColor;
 
   public IterationState(EditorEx editor, int start, boolean useCaretAndSelection) {
     ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(editor.getComponent());
-    myDocument = (DocumentImpl)editor.getDocument();
+    myDocument = (DocumentEx)editor.getDocument();
     myStartOffset = start;
     myEnd = editor.getDocument().getTextLength();
     myEditor = editor;
