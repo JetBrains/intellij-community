@@ -43,6 +43,14 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     return getMethodExpression().advancedResolve(false);
   }
 
+  @Override
+  public void removeChild(@NotNull ASTNode child) {
+    if (child == getArgumentList()) {
+      LOG.error("Cannot delete argument list since it will break contract on argument list notnullity");
+    }
+    super.removeChild(child);
+  }
+
   @NotNull
   public PsiReferenceParameterList getTypeArgumentList() {
     PsiReferenceExpression expression = getMethodExpression();
