@@ -569,6 +569,10 @@ public class Messages {
       return panel;
     }
 
+    @Override
+    protected void doHelpAction() {
+      // do nothing
+    }
   }
 
   protected static class InputDialog extends MessageDialog {
