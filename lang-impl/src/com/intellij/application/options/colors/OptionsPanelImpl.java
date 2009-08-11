@@ -85,6 +85,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
   }
 
   private void fillOptionsList() {
+    int selIndex = myOptionsList.getSelectedIndex();
 
     DefaultListModel listModel = (DefaultListModel)myOptionsList.getModel();
     listModel.removeAllElements();
@@ -95,6 +96,9 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
       if (description.getGroup().equals(myCategoryName)) {
         listModel.addElement(description);
       }
+    }
+    if (selIndex >= 0) {
+      myOptionsList.setSelectedIndex(selIndex);
     }
     ListScrollingUtil.ensureSelectionExists(myOptionsList);
 
