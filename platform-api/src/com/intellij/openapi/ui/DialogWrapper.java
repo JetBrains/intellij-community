@@ -808,6 +808,10 @@ public abstract class DialogWrapper {
     myOKAction.putValue(Action.NAME, text);
   }
 
+  protected final void setOKButtonMnemonic(int c) {
+    myOKAction.putValue(Action.MNEMONIC_KEY, c);
+  }
+
   /**
    * @return the help identifier or null if no help is available.
    */

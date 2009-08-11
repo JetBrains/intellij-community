@@ -85,7 +85,12 @@ public class RollbackChangesDialog extends DialogWrapper {
       AbstractVcs vcs = (AbstractVcs)affectedVcs.toArray()[0];
       final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
       if (rollbackEnvironment != null) {
-        final String rollbackOperationName = rollbackEnvironment.getRollbackOperationName().replace(Character.toString(UIUtil.MNEMONIC), "");
+        String rollbackOperationName = rollbackEnvironment.getRollbackOperationName();
+        int pos = rollbackOperationName.indexOf(UIUtil.MNEMONIC);
+        if (pos >= 0) {
+          setOKButtonMnemonic(Character.toUpperCase(rollbackOperationName.charAt(pos + 1)));
+          rollbackOperationName = rollbackOperationName.replace(Character.toString(UIUtil.MNEMONIC), "");
+        }
         setTitle(VcsBundle.message("changes.action.rollback.custom.title", rollbackOperationName).replace("_", ""));
         setOKButtonText(rollbackOperationName);
       }
