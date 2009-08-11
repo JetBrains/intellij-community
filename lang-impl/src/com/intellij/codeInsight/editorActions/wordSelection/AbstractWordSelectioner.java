@@ -14,7 +14,7 @@ import java.util.ArrayList;
  */
 public abstract class AbstractWordSelectioner extends ExtendWordSelectionHandlerBase {
   public boolean canSelect(final PsiElement e) {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {

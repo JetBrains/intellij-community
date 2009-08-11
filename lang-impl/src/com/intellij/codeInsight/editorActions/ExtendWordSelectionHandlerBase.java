@@ -112,16 +112,4 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
   public static List<TextRange> expandToWholeLine(CharSequence text, TextRange range) {
     return expandToWholeLine(text, range, true);
   }
-
-  protected List<TextRange> extendSelectionToWord(final PsiElement e, final CharSequence editorText, final int cursorOffset, final Editor editor) {
-    List<TextRange> ranges;
-    if (canSelect(e)) {
-      ranges = select(e, editorText, cursorOffset, editor);
-    }
-    else {
-      ranges = new ArrayList<TextRange>();
-    }
-    SelectWordUtil.addWordSelection(editor.getSettings().isCamelWords(), editorText, cursorOffset, ranges);
-    return ranges;
-  }
 }
