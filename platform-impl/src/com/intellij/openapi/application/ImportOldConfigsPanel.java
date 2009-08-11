@@ -106,6 +106,7 @@ public class ImportOldConfigsPanel extends JDialog {
 
     getContentPane().setLayout(new BorderLayout());
     getContentPane().add(myRootPanel);
+    getRootPane().setDefaultButton(myOkButton);
 
     setTitle(ApplicationBundle.message("title.complete.installation"));
 
