@@ -18,7 +18,6 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -57,7 +56,7 @@ import java.util.*;
  * Time: 7:45:12 PM
  * To change this template use File | Settings | File Templates.
  */
-public class JavaDocumentationProvider extends ExtensibleDocumentationProvider implements CodeDocumentationProvider {
+public class JavaDocumentationProvider implements CodeDocumentationProvider {
   private static final String LINE_SEPARATOR = "\n";
 
   @NonNls private static final String PARAM_TAG = "@param";
@@ -85,7 +84,11 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
     else if (element instanceof BeanPropertyElement) {
       return generateMethodInfo(((BeanPropertyElement) element).getMethod());
     }
-    return super.getQuickNavigateInfo(element);
+    return null;
+  }
+
+  public String getUrlFor(final PsiElement element, final PsiElement originalElement) {
+    return null;
   }
 
   private static void newLine(StringBuffer buffer) {
@@ -520,7 +523,6 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
     }
   }
 
-  @Override
   public String generateDoc(final PsiElement element, final PsiElement originalElement) {
     if (element instanceof PsiMethodCallExpression) {
       return getMethodCandidateInfo((PsiMethodCallExpression)element);
@@ -529,6 +531,10 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
 
     //external documentation finder
     return generateExternalJavadoc(element);
+  }
+
+  public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, final Object object, final PsiElement element) {
+    return null;
   }
 
   @Nullable
@@ -599,7 +605,6 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
     sb.append("<br>");
   }
 
-  @Override
   public boolean isExternalDocumentationEnabled(final PsiElement element, final PsiElement originalElement) {
     boolean actionEnabled = element != null && getExternalJavaDocUrl(element) != null;
     if (element instanceof PsiVariable && !(element instanceof PsiField)) {
@@ -608,7 +613,6 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
     return actionEnabled;
   }
 
-  @Override
   public String getExternalDocumentation(@NotNull final String url, final Project project) throws Exception {
     if (JavaDocExternalFilter.isJavaDocURL(url)) {
       String text = new JavaDocExternalFilter(project).getExternalDocInfo(url);
@@ -619,7 +623,6 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
     return null;
   }
 
-  @Override
   public void openExternalDocumentation(final PsiElement element, final PsiElement originalElement) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.javadoc.external");
     List<String> urls = getExternalJavaDocUrl(element);
@@ -812,7 +815,6 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
     return null;
   }
 
-  @Override
   public PsiElement getDocumentationElementForLink(final PsiManager psiManager, final String link, final PsiElement context) {
     return JavaDocUtil.findReferenceTarget(psiManager, link, context);
   }

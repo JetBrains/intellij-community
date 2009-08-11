@@ -16,16 +16,14 @@
 
 package com.intellij.lang.documentation;
 
-import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CompositeDocumentationProvider extends ExtensibleDocumentationProvider{
+public class CompositeDocumentationProvider implements DocumentationProvider{
 
   private final List<DocumentationProvider> myProviders;
 
@@ -45,12 +43,20 @@ public class CompositeDocumentationProvider extends ExtensibleDocumentationProvi
     myProviders.remove ( provider );
   }
 
+  public List<DocumentationProvider> getProviders() {
+    return Collections.unmodifiableList(myProviders);
+  }
+
   public String getQuickNavigateInfo(PsiElement element) {
     for ( DocumentationProvider provider : myProviders ) {
       String result = provider.getQuickNavigateInfo(element);
       if ( result != null ) return result;
     }
-    return super.getQuickNavigateInfo(element);
+    for (DocumentationProvider provider : Extensions.getExtensions(DocumentationProvider.EP_NAME)) {
+      final String result = provider.getQuickNavigateInfo(element);
+      if (result != null) return result;
+    }
+    return null;
   }
 
   public String getUrlFor(PsiElement element, PsiElement originalElement) {
@@ -58,7 +64,11 @@ public class CompositeDocumentationProvider extends ExtensibleDocumentationProvi
       String result = provider.getUrlFor(element,originalElement);
       if ( result != null ) return result;
     }
-    return super.getUrlFor(element, originalElement);
+    for (DocumentationProvider provider : Extensions.getExtensions(DocumentationProvider.EP_NAME)) {
+      final String result = provider.getUrlFor(element, originalElement);
+      if (result != null) return result;
+    }
+    return null;
   }
 
   public String generateDoc(PsiElement element, PsiElement originalElement) {
@@ -66,7 +76,11 @@ public class CompositeDocumentationProvider extends ExtensibleDocumentationProvi
       String result = provider.generateDoc(element,originalElement);
       if ( result != null ) return result;
     }
-    return super.generateDoc(element, originalElement);
+    for (DocumentationProvider provider : Extensions.getExtensions(DocumentationProvider.EP_NAME)) {
+      final String result = provider.generateDoc(element, originalElement);
+      if (result != null) return result;
+    }
+    return null;
   }
 
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
@@ -74,7 +88,11 @@ public class CompositeDocumentationProvider extends ExtensibleDocumentationProvi
       PsiElement result = provider.getDocumentationElementForLookupItem(psiManager,object,element);
       if ( result != null ) return result;
     }
-    return super.getDocumentationElementForLookupItem(psiManager, object, element);
+    for (DocumentationProvider provider : Extensions.getExtensions(DocumentationProvider.EP_NAME)) {
+      final PsiElement result = provider.getDocumentationElementForLookupItem(psiManager, object, element);
+      if (result != null) return result;
+    }
+    return null;
   }
 
   public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
@@ -82,52 +100,13 @@ public class CompositeDocumentationProvider extends ExtensibleDocumentationProvi
       PsiElement result = provider.getDocumentationElementForLink(psiManager,link,context);
       if ( result != null ) return result;
     }
-    return super.getDocumentationElementForLink(psiManager, link, context);
-  }
-
-  @Override
-  public boolean isExternalDocumentationEnabled(final PsiElement element, final PsiElement originalElement) {
-    for (DocumentationProvider provider : myProviders) {
-      if (provider instanceof ExtensibleDocumentationProvider && ((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element,
-                                                                                                                                            originalElement)) return true;
-      final String url = provider.getUrlFor(element, originalElement);
-      if (url != null) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public void openExternalDocumentation(final PsiElement element, final PsiElement originalElement) {
-    for (DocumentationProvider provider : myProviders) {
-      if (provider instanceof ExtensibleDocumentationProvider && ((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element,
-                                                                                                                                            originalElement)) {
-        ((ExtensibleDocumentationProvider)provider).openExternalDocumentation(element, originalElement);
-        return;
-      }
-      final String url = provider.getUrlFor(element, originalElement);
-      if (url != null) {
-        BrowserUtil.launchBrowser(url);
-        return;
-      }
-    }
-  }
-
-  public List<DocumentationProvider> getProviders() {
-    return Collections.unmodifiableList(myProviders);
-  }
-
-  @Override
-  public String getExternalDocumentation(@NotNull final String url, final Project project) throws Exception {
-    for (DocumentationProvider provider : myProviders) {
-      if (provider instanceof ExtensibleDocumentationProvider) {
-        final String externalDocumentation = ((ExtensibleDocumentationProvider)provider).getExternalDocumentation(url, project);
-        if (externalDocumentation != null) return externalDocumentation;
-      }
+    for (DocumentationProvider provider : Extensions.getExtensions(DocumentationProvider.EP_NAME)) {
+      final PsiElement result = provider.getDocumentationElementForLink(psiManager, link, context);
+      if (result != null) return result;
     }
     return null;
   }
+
 
   @Nullable
   public CodeDocumentationProvider getFirstCodeDocumentationProvider() {

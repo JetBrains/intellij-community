@@ -1,9 +1,9 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -41,9 +41,10 @@ public class ExternalJavaDocAction extends AnAction {
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     PsiElement originalElement = getOriginalElement(context, editor);
     DocumentationManager.storeOriginalElement(project, originalElement, element);
-    final ExtensibleDocumentationProvider provider = (ExtensibleDocumentationProvider)DocumentationManager.getProviderFromElement(element);
-    assert provider != null;
-    provider.openExternalDocumentation(element, originalElement);
+    final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
+    final String url = provider.getUrlFor(element, originalElement);
+    assert url != null;
+    BrowserUtil.launchBrowser(url);
   }
 
   @Nullable
@@ -59,7 +60,7 @@ public class ExternalJavaDocAction extends AnAction {
     final PsiElement originalElement = getOriginalElement(LangDataKeys.PSI_FILE.getData(dataContext), editor);
     DocumentationManager.storeOriginalElement(PlatformDataKeys.PROJECT.getData(dataContext), originalElement, element);
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
-    boolean enabled = provider instanceof ExtensibleDocumentationProvider && ((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element, originalElement);
+    boolean enabled = provider.getUrlFor(element, originalElement) != null;
     if (editor != null) {
       presentation.setEnabled(enabled);
       if (event.getPlace().equals(ActionPlaces.MAIN_MENU)) {

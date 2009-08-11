@@ -14,7 +14,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -546,11 +545,9 @@ public class DocumentationManager {
     if (url.startsWith(PSI_ELEMENT_PROTOCOL)) {
       final String refText = url.substring(PSI_ELEMENT_PROTOCOL.length());
       DocumentationProvider provider = getProviderFromElement(psiElement);
-      if (provider!=null) {
-        final PsiElement targetElement = provider.getDocumentationElementForLink(manager, refText, psiElement);
-        if (targetElement != null) {
-          fetchDocInfo(getDefaultCollector(targetElement, null), component);
-        }
+      final PsiElement targetElement = provider.getDocumentationElementForLink(manager, refText, psiElement);
+      if (targetElement != null) {
+        fetchDocInfo(getDefaultCollector(targetElement, null), component);
       }
     }
     else {
@@ -561,15 +558,8 @@ public class DocumentationManager {
           public String getDocumentation() throws Exception {
             if (docUrl.startsWith(DOC_ELEMENT_PROTOCOL)) {
               final DocumentationProvider provider = getProviderFromElement(psiElement);
-              if (provider instanceof ExtensibleDocumentationProvider) {
-                final ExtensibleDocumentationProvider documentationProvider = (ExtensibleDocumentationProvider)provider;
-                final String text = documentationProvider
-                  .getExternalDocumentation(docUrl.substring(DOC_ELEMENT_PROTOCOL.length()), getProject(psiElement));
-                if (text != null) {
-                  return text;
-                }
-                documentationProvider.openExternalDocumentation(psiElement, getOriginalElement(psiElement));
-              }
+              final String url = provider.getUrlFor(psiElement, getOriginalElement(psiElement));
+              BrowserUtil.launchBrowser(url != null? url : docUrl);
             } else {
               BrowserUtil.launchBrowser(docUrl);
             }

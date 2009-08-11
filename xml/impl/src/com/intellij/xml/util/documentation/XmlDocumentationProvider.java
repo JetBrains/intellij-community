@@ -4,7 +4,6 @@ import com.intellij.codeInsight.completion.XmlCompletionData;
 import com.intellij.lang.Language;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.DocumentationUtil;
-import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -17,8 +16,8 @@ import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.usageView.UsageViewShortNameLocation;
+import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -38,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
  * Time: 0:00:05
  * To change this template use File | Settings | File Templates.
  */
-public class XmlDocumentationProvider extends ExtensibleDocumentationProvider implements DocumentationProvider {
+public class XmlDocumentationProvider implements DocumentationProvider {
   private static final Key<XmlElementDescriptor> DESCRIPTOR_KEY = Key.create("Original element");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.documentation.XmlDocumentationProvider");
@@ -79,7 +78,7 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
 
       return processor.url;
     }
-    return super.getUrlFor(element, originalElement);
+    return null;
   }
 
   public String generateDoc(PsiElement element, final PsiElement originalElement) {
@@ -128,10 +127,6 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
         }
       }
       if (processor.result == null) {
-        final String s = super.generateDoc(element, originalElement);
-        if (s != null) {
-          return s;
-        }
         final PsiElement comment = findPreviousComment(element);
         if (comment != null) {
           return formatDocFromComment(comment, ((XmlTag)element).getName());
@@ -169,7 +164,7 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
       return findDocRightAfterElement(element, entityDecl.getName());
     }
 
-    return super.generateDoc(element, originalElement);
+    return null;
   }
 
   private static XmlTag findEnumerationValue(final String text, XmlTag tag) {
@@ -431,7 +426,7 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
     if (object instanceof XmlElementDescriptor) {
       return ((XmlElementDescriptor)object).getDeclaration();
     }
-    return super.getDocumentationElementForLookupItem(psiManager, object, element);
+    return null;
   }
 
   public static PsiElement findDeclWithName(final String name, final @NotNull PsiElement element) {
@@ -471,7 +466,7 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
   }
 
   public PsiElement getDocumentationElementForLink(final PsiManager psiManager, String link, PsiElement context) {
-    return super.getDocumentationElementForLink(psiManager, link, context);
+    return null;
   }
 
   private static class MyPsiElementProcessor implements PsiElementProcessor {

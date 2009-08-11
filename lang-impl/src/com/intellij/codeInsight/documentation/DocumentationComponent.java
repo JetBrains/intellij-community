@@ -2,10 +2,10 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.ElementLocationUtil;
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -359,9 +359,10 @@ public class DocumentationComponent extends JPanel implements Disposable{
         public void actionPerformed(AnActionEvent e) {
             if (myElement != null) {
               final PsiElement element = myElement.getElement();
-              final ExtensibleDocumentationProvider provider = (ExtensibleDocumentationProvider)DocumentationManager.getProviderFromElement(element);
-              assert provider != null;
-              provider.openExternalDocumentation(element, DocumentationManager.getOriginalElement(element));
+              final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
+              final String url = provider.getUrlFor(element, DocumentationManager.getOriginalElement(element));
+              assert url != null;
+              BrowserUtil.launchBrowser(url);
             }
         }
 
@@ -371,11 +372,8 @@ public class DocumentationComponent extends JPanel implements Disposable{
           if (myElement != null) {
             final PsiElement element = myElement.getElement();
             final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
-            if (provider instanceof ExtensibleDocumentationProvider) {
-              presentation.setEnabled(element != null &&
-                                      ((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element,
-                                                                                                                 DocumentationManager.getOriginalElement(element)));
-            }
+            final String url = provider.getUrlFor(element, DocumentationManager.getOriginalElement(element));
+            presentation.setEnabled(element != null && url!= null);
           }
         }
     }
