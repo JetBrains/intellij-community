@@ -1,5 +1,6 @@
 package com.intellij.refactoring.memberPushDown;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -298,13 +299,19 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
       else if (member instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)member;
 
-        if (targetClass.findMethodBySignature(method, false) == null) {
+        final PsiMethod methodBySignature = targetClass.findMethodBySignature(method, false);
+        if (methodBySignature == null) {
           newMember = (PsiMethod)targetClass.add(method);
           if (memberInfo.isToAbstract()) {
             if (newMember.hasModifierProperty(PsiModifier.PRIVATE)) {
               PsiUtil.setModifierProperty(newMember, PsiModifier.PROTECTED, true);
             }
             myJavaDocPolicy.processNewJavaDoc(((PsiMethod)newMember).getDocComment());
+          }
+        } else { //abstract method: remove @Override
+          final PsiAnnotation annotation = AnnotationUtil.findAnnotation(methodBySignature, "java.lang.Override");
+          if (annotation != null) {
+            annotation.delete();
           }
         }
       }

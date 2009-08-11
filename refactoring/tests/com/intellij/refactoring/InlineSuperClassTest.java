@@ -57,6 +57,9 @@ public class InlineSuperClassTest extends MultiFileTestCase {
     }
   }
 
+  public void testAbstractOverrides() throws Exception {
+    doTest();
+  }
 
   public void testSimple() throws Exception {
     doTest();

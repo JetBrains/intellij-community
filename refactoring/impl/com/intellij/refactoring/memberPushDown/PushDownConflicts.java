@@ -91,11 +91,15 @@ public class PushDownConflicts {
       }
     }
     else if (movedMember instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)movedMember;
-      if (targetClass.findMethodBySignature(method, false) != null) {
-        String message = RefactoringBundle.message("0.is.already.overridden.in.1",
-                                              RefactoringUIUtil.getDescription(method, true), RefactoringUIUtil.getDescription(targetClass, false));
-        myConflicts.add(ConflictsUtil.capitalize(message));
+      final PsiModifierList modifierList = movedMember.getModifierList();
+      assert modifierList != null;
+      if (!modifierList.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        PsiMethod method = (PsiMethod)movedMember;
+        if (targetClass.findMethodBySignature(method, false) != null) {
+          String message = RefactoringBundle.message("0.is.already.overridden.in.1",
+                                                     RefactoringUIUtil.getDescription(method, true), RefactoringUIUtil.getDescription(targetClass, false));
+          myConflicts.add(ConflictsUtil.capitalize(message));
+        }
       }
     }
     else if (movedMember instanceof PsiClass) {
