@@ -2,7 +2,6 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -122,7 +121,7 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
 
     final DefaultActionGroup group = new DefaultActionGroup();
     final AddContentEntryAction action = new AddContentEntryAction();
-    action.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_C, KeyEvent.ALT_DOWN_MASK)), mainPanel);
+    action.registerCustomShortcutSet(KeyEvent.VK_C, KeyEvent.ALT_DOWN_MASK, mainPanel);
     group.add(action);
 
     myEditorsPanel = new ScrollablePanel(new VerticalStackLayout());

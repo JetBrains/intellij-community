@@ -140,6 +140,10 @@ public abstract class AnAction {
     }
   }
 
+  public final void registerCustomShortcutSet(int keyCode, int modifiers, JComponent component) {
+    registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(keyCode, modifiers)), component);
+  } 
+
   public final void registerCustomShortcutSet(@NotNull ShortcutSet shortcutSet, @NotNull final JComponent component, @NotNull Disposable parentDisposable) {
     registerCustomShortcutSet(shortcutSet, component);
     Disposer.register(parentDisposable, new Disposable() {
