@@ -89,32 +89,33 @@ public abstract class FindUsagesHandler {
     }
 
     if (options.isSearchForTextOccurences && options.searchScope instanceof GlobalSearchScope) {
-      processUsages(element, processor, options);
+      processUsagesInText(element, processor, (GlobalSearchScope)options.searchScope);
     }
   }
 
-  public void processUsages(@NotNull final PsiElement element, @NotNull Processor<UsageInfo> processor, @NotNull FindUsagesOptions options) {
+  public void processUsagesInText(@NotNull final PsiElement element,
+                                  @NotNull Processor<UsageInfo> processor,
+                                  @NotNull GlobalSearchScope searchScope) {
     String stringToSearch = getStringToSearch(element);
-    if (stringToSearch != null) {
-      final TextRange elementTextRange = ApplicationManager.getApplication().runReadAction(new Computable<TextRange>() {
-        public TextRange compute() {
-          if (!element.isValid()) return null;
-          return element.getTextRange();
+    if (stringToSearch == null) return;
+    final TextRange elementTextRange = ApplicationManager.getApplication().runReadAction(new Computable<TextRange>() {
+      public TextRange compute() {
+        if (!element.isValid()) return null;
+        return element.getTextRange();
+      }
+    });
+    TextOccurrencesUtil.UsageInfoFactory factory = new TextOccurrencesUtil.UsageInfoFactory() {
+      public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
+        if (elementTextRange != null
+            && usage.getContainingFile() == element.getContainingFile()
+            && elementTextRange.contains(startOffset)
+            && elementTextRange.contains(endOffset)) {
+          return null;
         }
-      });
-      TextOccurrencesUtil.UsageInfoFactory factory = new TextOccurrencesUtil.UsageInfoFactory() {
-        public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
-          if (elementTextRange != null
-              && usage.getContainingFile() == element.getContainingFile()
-              && elementTextRange.contains(startOffset)
-              && elementTextRange.contains(endOffset)) {
-            return null;
-          }
-          return new UsageInfo(usage, startOffset, endOffset, true);
-        }
-      };
-      TextOccurrencesUtil.processTextOccurences(element, stringToSearch, (GlobalSearchScope)options.searchScope, processor, factory);
-    }
+        return new UsageInfo(usage, startOffset, endOffset, true);
+      }
+    };
+    TextOccurrencesUtil.processTextOccurences(element, stringToSearch, searchScope, processor, factory);
   }
 
   protected String getStringToSearch(final PsiElement element) {

@@ -50,6 +50,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class FindUsagesManager implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findParameterUsages.FindUsagesManager");
@@ -271,12 +272,12 @@ public class FindUsagesManager implements JDOMExternalizable {
     UsageViewPresentation presentation = createPresentation(element, findUsagesOptions, myToOpenInNewTab);
     final UsageSearcher usageSearcher = createUsageSearcher(descriptor, handler, findUsagesOptions, null);
     final boolean[] canceled = {false};
-    final int[] usageCount = {0};
+    final AtomicInteger usageCount = new AtomicInteger();
     Task task = new Task.Modal(myProject, UsageViewManagerImpl.getProgressTitle(presentation), true) {
       public void run(@NotNull final ProgressIndicator indicator) {
         usageSearcher.generate(new Processor<Usage>() {
           public boolean process(final Usage usage) {
-            usageCount[0]++;
+            usageCount.incrementAndGet();
             return processor.process(usage);
           }
         });
@@ -284,7 +285,7 @@ public class FindUsagesManager implements JDOMExternalizable {
 
       @Nullable
       public NotificationInfo getNotificationInfo() {
-        return new NotificationInfo("Find Usages",  "Find Usages Finished", usageCount[0] + " Usage(s) Found");
+        return new NotificationInfo("Find Usages",  "Find Usages Finished", usageCount.get() + " Usage(s) Found");
       }
 
       public void onCancel() {

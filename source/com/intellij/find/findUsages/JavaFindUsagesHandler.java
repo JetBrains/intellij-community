@@ -327,7 +327,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     }
 
     if (!ThrowSearchUtil.isSearchable(element) && options.isSearchForTextOccurences && options.searchScope instanceof GlobalSearchScope) {
-      processUsages(element, processor, options);
+      processUsagesInText(element, processor, (GlobalSearchScope)options.searchScope);
     }
   }
 
