@@ -377,6 +377,7 @@ public class ClasspathPanel extends JPanel {
           provider = ProjectStructureConfigurable.getInstance(myProject).getContext().createModifiableModelProvider(table.getTableLevel(), false);
         }
         final LibraryTableEditor editor = LibraryTableEditor.editLibrary(provider, library);
+        editor.addFileChooserContext(LangDataKeys.MODULE_CONTEXT, myRootModel.getModule());
         editor.openDialog(ClasspathPanel.this, Collections.singletonList(library), true);
         myEntryTable.repaint();
         ModuleStructureConfigurable.getInstance(myProject).getTree().repaint();
