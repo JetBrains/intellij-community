@@ -24,6 +24,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -38,6 +39,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class ElementCreator {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ElementCreator");
   private final Project myProject;
   private final String myErrorTitle;
 
@@ -92,6 +94,7 @@ public abstract class ElementCreator {
     }.execute();
 
       if (exception[0] != null) {
+        LOG.info(exception[0]);
         String errorMessage = CreateElementActionBase.filterMessage(exception[0].getMessage());
         if (errorMessage == null || errorMessage.length() == 0) {
           errorMessage = exception[0].toString();
