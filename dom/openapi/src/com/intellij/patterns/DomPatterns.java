@@ -6,9 +6,11 @@ package com.intellij.patterns;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
-import com.intellij.util.ProcessingContext;
+import com.intellij.util.xml.DomTarget;
+import com.intellij.pom.PomTargetPsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -55,4 +57,19 @@ public class DomPatterns {
   public static XmlTagPattern.Capture tagWithDom(String tagName, ElementPattern<? extends DomElement> domPattern) {
     return XmlPatterns.xmlTag().withLocalName(tagName).and(withDom(domPattern));
   }
+
+  public static PsiElementPattern.Capture<PomTargetPsiElement> domTargetElement(final ElementPattern<? extends DomElement> pattern) {
+    return PlatformPatterns.pomElement(withDomTarget(pattern));
+  }
+
+  public static ElementPattern<DomTarget> withDomTarget(final ElementPattern<? extends DomElement> pattern) {
+    return new ObjectPattern.Capture<DomTarget>(DomTarget.class).with(new PatternCondition<DomTarget>("withDomTarget") {
+      @Override
+      public boolean accepts(@NotNull final DomTarget target, final ProcessingContext context) {
+        return pattern.accepts(target.getDomElement(), context);
+      }
+    });
+  }
+
+
 }

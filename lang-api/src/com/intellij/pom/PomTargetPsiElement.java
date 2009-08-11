@@ -4,12 +4,13 @@
  */
 package com.intellij.pom;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public interface PomTargetPsiElement {
+public interface PomTargetPsiElement extends PsiElement {
 
   @NotNull PomTarget getTarget();
 
