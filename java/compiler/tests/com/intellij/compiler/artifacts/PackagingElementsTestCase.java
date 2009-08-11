@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -73,7 +74,8 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
   }
 
   protected VirtualFile getJDomJar() {
-    return JarFileSystem.getInstance().findFileByPath(PathManager.getLibPath() + "/jdom.jar" + JarFileSystem.JAR_SEPARATOR);
+    return JarFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(PathManager.getLibPath()) + "/jdom.jar" +
+                                                      JarFileSystem.JAR_SEPARATOR);
   }
 
   protected Library addProjectLibrary(Module module, String name, VirtualFile... jars) {
