@@ -16,13 +16,11 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * A default implementation of {@link ActionGroup}. Provides the ability
@@ -38,11 +36,11 @@ public class DefaultActionGroup extends ActionGroup {
   /**
    * Contains instances of AnAction
    */
-  private final List<AnAction> mySortedChildren;
+  private final List<AnAction> mySortedChildren = new CopyOnWriteArrayList<AnAction>();
   /**
    * Contains instances of Pair
    */
-  private final List<Pair<AnAction,Constraints>> myPairs;
+  private final List<Pair<AnAction,Constraints>> myPairs = new CopyOnWriteArrayList<Pair<AnAction, Constraints>>();
 
   public DefaultActionGroup(){
     this(null, false);
@@ -63,14 +61,13 @@ public class DefaultActionGroup extends ActionGroup {
 
   public DefaultActionGroup(String shortName, boolean popup){
     super(shortName, popup);
-    mySortedChildren = new ArrayList<AnAction>();
-    myPairs = new ArrayList<Pair<AnAction, Constraints>>();
   }
 
   /**
    * Adds the specified action to the tail.
    *
    * @param action Action to be added
+   * @param actionManager ActionManager instance
    */
   public final void add(@NotNull AnAction action, @NotNull ActionManager actionManager){
     add(action, new Constraints(Anchor.LAST, null), actionManager);
@@ -237,51 +234,32 @@ public class DefaultActionGroup extends ActionGroup {
     int sortedSize = mySortedChildren.size();
     AnAction[] children = new AnAction[sortedSize + myPairs.size()];
     for(int i = 0; i < sortedSize; i++){
-      children[i] = mySortedChildren.get(i);
+      AnAction action = mySortedChildren.get(i);
+      if (action instanceof ActionStub) {
+        action = unstub(e, (ActionStub)action);
+        mySortedChildren.set(i, action);
+      }
+
+      children[i] = action;
     }
     for(int i = 0; i < myPairs.size(); i++){
-      children[i + sortedSize] = myPairs.get(i).first;
-    }
-    // Replace ActionStubs with real actions
-    for (int i = 0; i < children.length; i++) {
-      AnAction action = children[i];
-      if (!(action instanceof ActionStub)) {
-        continue;
+      final Pair<AnAction, Constraints> pair = myPairs.get(i);
+      AnAction action = pair.first;
+      if (action instanceof ActionStub) {
+        action = unstub(e, (ActionStub)action);
+        myPairs.set(i, Pair.create(action, pair.second));
       }
-      ActionStub stub = (ActionStub)action;
-      // resolve action
-      ActionManager actionManager = e != null ? e.getActionManager() : ActionManager.getInstance();
-      AnAction actualAction = actionManager.getAction(stub.getId());
-      synchronized (mySortedChildren) {
-        replaceStubWithAction(stub, actualAction);
-      }
-      children[i] = actualAction;
+
+      children[i + sortedSize] = action;
     }
     return children;
   }
 
-  private void replaceStubWithAction(ActionStub stub, AnAction actualAction) {
-    replace(stub, actualAction);
-
-    // Find in sorted children first
-    int index = mySortedChildren.indexOf(stub);
-    if (index != -1) {
-      mySortedChildren.set(index, actualAction);
-      return;
-    }
-    // Try to find action within pairs
-    for (int j = 0; j < myPairs.size(); j++) {
-      Pair<AnAction, Constraints> pair = myPairs.get(j);
-      if (pair.first.equals(stub)) {
-        myPairs.set(j, new Pair<AnAction, Constraints>(actualAction, pair.second));
-        return;
-      }
-    }
-    throw new IllegalStateException("unknown stub: " + stub.getId() + "; actions=" + StringUtil.join(mySortedChildren, new Function<AnAction, String>() {
-      public String fun(AnAction action) {
-        return action.getTemplatePresentation().getText() + " of class " + action.getClass();
-      }
-    }, ","));
+  private AnAction unstub(AnActionEvent e, final ActionStub stub) {
+    ActionManager actionManager = e != null ? e.getActionManager() : ActionManager.getInstance();
+    AnAction action = actionManager.getAction(stub.getId());
+    replace(stub, action);
+    return action;
   }
 
   /**
@@ -294,7 +272,7 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   @NotNull
-  public final AnAction[] getChildActionsOrStubs(@Nullable AnActionEvent e){
+  public final AnAction[] getChildActionsOrStubs(){
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
     AnAction[] children = new AnAction[sortedSize + myPairs.size()];

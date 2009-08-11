@@ -22,7 +22,7 @@ public class VcsKeymapExtension implements KeymapExtension {
     ActionGroup versionControls = (ActionGroup)ActionManager.getInstance().getActionOrStub("VcsGroup");
 
     AnAction[] mainMenuTopGroups = versionControls instanceof DefaultActionGroup
-                                   ? ((DefaultActionGroup)versionControls).getChildActionsOrStubs(null)
+                                   ? ((DefaultActionGroup)versionControls).getChildActionsOrStubs()
                                    : versionControls.getChildren(null);
     for (AnAction action : mainMenuTopGroups) {
       Group subGroup = ActionsTreeUtil.createGroup((ActionGroup)action, false, filtered);

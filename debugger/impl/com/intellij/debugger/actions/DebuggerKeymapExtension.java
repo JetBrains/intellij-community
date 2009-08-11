@@ -18,7 +18,7 @@ public class DebuggerKeymapExtension implements KeymapExtension {
   public KeymapGroup createGroup(final Condition<AnAction> filtered, final Project project) {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup debuggerGroup = (DefaultActionGroup)actionManager.getActionOrStub(IdeActions.GROUP_DEBUGGER);
-    AnAction[] debuggerActions = debuggerGroup.getChildActionsOrStubs(null);
+    AnAction[] debuggerActions = debuggerGroup.getChildActionsOrStubs();
 
     ArrayList<String> ids = new ArrayList<String>();
     for (AnAction debuggerAction : debuggerActions) {

@@ -89,7 +89,7 @@ public class ActionsTreeUtil {
 
   private static void fillGroupIgnorePopupFlag(ActionGroup actionGroup, Group group, Condition<AnAction> filtered) {
     AnAction[] mainMenuTopGroups = actionGroup instanceof DefaultActionGroup
-                                   ? ((DefaultActionGroup)actionGroup).getChildActionsOrStubs(null)
+                                   ? ((DefaultActionGroup)actionGroup).getChildActionsOrStubs()
                                    : actionGroup.getChildren(null);
     for (AnAction action : mainMenuTopGroups) {
       Group subGroup = createGroup((ActionGroup)action, false, filtered);
@@ -123,7 +123,7 @@ public class ActionsTreeUtil {
     ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(groupName, actionManager.getId(actionGroup), icon, openIcon);
     AnAction[] children = actionGroup instanceof DefaultActionGroup
-                          ? ((DefaultActionGroup)actionGroup).getChildActionsOrStubs(null)
+                          ? ((DefaultActionGroup)actionGroup).getChildActionsOrStubs()
                           : actionGroup.getChildren(null);
 
     for (int i = 0; i < children.length; i++) {
@@ -179,7 +179,7 @@ public class ActionsTreeUtil {
   private static void addEditorActions(final Condition<AnAction> filtered,
                                        final DefaultActionGroup editorGroup,
                                        final ArrayList<String> ids) {
-    AnAction[] editorActions = editorGroup.getChildActionsOrStubs(null);
+    AnAction[] editorActions = editorGroup.getChildActionsOrStubs();
     final ActionManager actionManager = ActionManager.getInstance();
     for (AnAction editorAction : editorActions) {
       if (editorAction instanceof DefaultActionGroup) {
@@ -311,7 +311,7 @@ public class ActionsTreeUtil {
     AnAction action = actionManager.getActionOrStub(groupId);
     if (action instanceof DefaultActionGroup) {
       DefaultActionGroup group = (DefaultActionGroup)action;
-      AnAction[] children = group.getChildActionsOrStubs(null);
+      AnAction[] children = group.getChildActionsOrStubs();
       for (AnAction child : children) {
         String childId = child instanceof ActionStub ? ((ActionStub)child).getId() : actionManager.getId(child);
         if (childId == null) {
