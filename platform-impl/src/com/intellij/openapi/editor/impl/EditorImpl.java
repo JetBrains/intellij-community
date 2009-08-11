@@ -3896,7 +3896,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       final EditorDropHandler dropHandler = editor.getDropHandler();
       if (dropHandler != null && dropHandler.canHandleDrop(t.getTransferDataFlavors())) {
-        dropHandler.handleDrop(t, editor);
+        dropHandler.handleDrop(t, editor.getProject());
         return true;
       }
 
