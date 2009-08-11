@@ -54,7 +54,7 @@ class RunConfigurable extends BaseConfigurable {
   private static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
   private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
   @NonNls private static final String EDIT_DEFAULTS_ICON_PATH = "/general/ideOptions.png";
-  private static final Icon EDIT_DEFUALTS_ICON = IconLoader.getIcon(EDIT_DEFAULTS_ICON_PATH);
+  private static final Icon EDIT_DEFAULTS_ICON = IconLoader.getIcon(EDIT_DEFAULTS_ICON_PATH);
   @NonNls private static final String DIVIDER_PROPORTION = "dividerProportion";
 
   private final Project myProject;
@@ -313,6 +313,7 @@ class RunConfigurable extends BaseConfigurable {
     Dimension size = new Dimension(25, myRecentsLimit.getPreferredSize().height);
     myRecentsLimit.setPreferredSize(size);
     myRecentsLimit.setMaximumSize(size);
+    myRecentsLimit.setMinimumSize(size);
     box.add(myRecentsLimit);
     myRecentsLimit.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -340,8 +341,7 @@ class RunConfigurable extends BaseConfigurable {
     group.add(new MyCopyAction());
     group.add(new MySaveAction());
     group.add(new AnAction(ExecutionBundle.message("run.configuration.edit.default.configuration.settings.button"),
-                           ExecutionBundle.message("run.configuration.edit.default.configuration.settings.button"),
-                           EDIT_DEFUALTS_ICON) {
+                           ExecutionBundle.message("run.configuration.edit.default.configuration.settings.button"), EDIT_DEFAULTS_ICON) {
       public void actionPerformed(final AnActionEvent e) {
         editDefaultsConfiguration();
       }
