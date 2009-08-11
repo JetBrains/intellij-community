@@ -53,4 +53,8 @@ public class StartupWizard extends WizardDialog<StartupWizardModel> {
   protected Dimension getWindowPreferredSize() {
     return new Dimension(600, 350);
   }
+
+  public void setCancelText(String text) {
+    myModel.getCurrentNavigationState().CANCEL.setName(text);
+  }
 }

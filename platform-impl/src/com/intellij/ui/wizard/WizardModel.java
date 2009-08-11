@@ -148,7 +148,9 @@ public class WizardModel {
   private void prepareCurrentStep(WizardStep currentStep) {
     myCurrentStep = currentStep;
 
-    myCurrentState = new WizardNavigationState(this);
+    if (myCurrentState == null) {
+      myCurrentState = new WizardNavigationState(this);
+    }
     myCurrentState.NEXT.setEnabled(!isLast(myCurrentStep));
     myCurrentState.PREVIOUS.setEnabled(!isFirst(myCurrentStep));
     myCurrentState.FINISH.setEnabled(isLast(myCurrentStep));

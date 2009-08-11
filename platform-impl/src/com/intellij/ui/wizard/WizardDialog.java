@@ -178,11 +178,15 @@ public class WizardDialog<T extends WizardModel> extends DialogWrapper implement
 
     if (myNext.isEnabled()) {
       getRootPane().setDefaultButton(myNext);
-    } else if (myFinish.isEnabled()) {
+    }
+    else if (myFinish.isEnabled()) {
       getRootPane().setDefaultButton(myFinish);
-    } else if (myCancel.isEnabled()) {
+      myFinish.requestFocusInWindow();
+    }
+    else if (myCancel.isEnabled()) {
       getRootPane().setDefaultButton(myCancel);
-    } else {
+    }
+    else {
       getRootPane().setDefaultButton(null);
     }
   }
