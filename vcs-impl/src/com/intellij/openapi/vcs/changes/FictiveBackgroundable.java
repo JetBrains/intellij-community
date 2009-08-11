@@ -17,7 +17,7 @@ class FictiveBackgroundable extends Task.Backgroundable {
     myWaiter = new Waiter(project, runnable, state);
   }
 
-  public void run(final ProgressIndicator indicator) {
+  public void run(@NotNull final ProgressIndicator indicator) {
     myWaiter.run();
   }
 
