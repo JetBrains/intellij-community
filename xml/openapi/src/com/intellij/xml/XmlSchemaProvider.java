@@ -20,6 +20,8 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.xml.XmlFile;
@@ -39,7 +41,13 @@ public abstract class XmlSchemaProvider {
 
   @Nullable
   public static XmlFile findSchema(@NotNull @NonNls String url, @Nullable Module module, @NotNull PsiFile file) {
+    final boolean dumb = DumbService.getInstance(file.getProject()).isDumb();
+
     for (XmlSchemaProvider provider: Extensions.getExtensions(EP_NAME)) {
+      if (dumb && !(provider instanceof DumbAware)) {
+        continue;
+      }
+
       if (file instanceof XmlFile && !provider.isAvailable((XmlFile)file)) {
         continue;
       }
