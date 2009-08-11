@@ -60,7 +60,7 @@ public class GroovyMoveStatementHandler extends EditorWriteActionHandler {
 
   private boolean executeWriteActionInner(Editor editor, DataContext dataContext) {
     final Project project = editor.getProject();
-    if (project == null || !HandlerUtils.canBeInvoked(editor, dataContext) ||
+    if (project == null || !HandlerUtils.canBeInvoked(editor, project) ||
         PsiUtilBase.getLanguageInEditor(editor, project) != GroovyFileType.GROOVY_FILE_TYPE.getLanguage()) {
       return false;
     }

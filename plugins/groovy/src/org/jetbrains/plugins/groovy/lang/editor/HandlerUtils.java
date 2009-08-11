@@ -57,10 +57,6 @@ public class HandlerUtils {
     return !document.isWritable();
   }
 
-  public static boolean canBeInvoked(final Editor editor, final DataContext dataContext) {
-    return canBeInvoked(editor, getProject(dataContext));
-  }
-
   public static boolean canBeInvoked(final Editor editor, final Project project) {
     if (isReadOnly(editor)) {
       return false;

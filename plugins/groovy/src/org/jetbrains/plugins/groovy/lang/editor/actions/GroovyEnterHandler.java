@@ -78,7 +78,7 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
   }
 
   protected boolean handleEnter(Editor editor, DataContext dataContext, @NotNull Project project) {
-    if (!HandlerUtils.canBeInvoked(editor, dataContext)) {
+    if (!HandlerUtils.canBeInvoked(editor, project)) {
       return false;
     }
     int caretOffset = editor.getCaretModel().getOffset();
