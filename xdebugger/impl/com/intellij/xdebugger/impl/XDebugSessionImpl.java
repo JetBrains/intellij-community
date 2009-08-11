@@ -147,7 +147,7 @@ public class XDebugSessionImpl implements XDebugSession {
     myDependentBreakpointListener = new MyDependentBreakpointListener();
     dependentBreakpointManager.addListener(myDependentBreakpointListener);
 
-    mySessionTab = initSessionTab(sessionData);
+    initSessionTab(sessionData);
     process.sessionInitialized();
 
     return mySessionTab;
@@ -157,12 +157,11 @@ public class XDebugSessionImpl implements XDebugSession {
     return mySessionTab;
   }
 
-  private XDebugSessionTab initSessionTab(@NotNull XDebugSessionData sessionData) {
-    final XDebugSessionTab sessionTab = new XDebugSessionTab(myProject, mySessionName);
-    sessionTab.setEnvironment(myEnvironment);
-    Disposer.register(myProject, sessionTab);
-    sessionTab.attachToSession(this, myRunner, myEnvironment, sessionData);
-    return sessionTab;
+  private void initSessionTab(@NotNull XDebugSessionData sessionData) {
+    mySessionTab = new XDebugSessionTab(myProject, mySessionName);
+    mySessionTab.setEnvironment(myEnvironment);
+    Disposer.register(myProject, mySessionTab);
+    mySessionTab.attachToSession(this, myRunner, myEnvironment, sessionData);
   }
 
   private void disableSlaveBreakpoints(final XDependentBreakpointManager dependentBreakpointManager) {
