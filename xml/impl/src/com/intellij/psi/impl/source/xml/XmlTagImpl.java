@@ -7,6 +7,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -123,33 +125,43 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     final XmlTag parentTag = getParentTag();
 
     if (parentTag == null && namespace.equals(XmlUtil.XHTML_URI)) {
-      PsiFile containingFile = XmlUtil.getContainingFile(this);
-      final XmlDocument document = ((XmlFile)containingFile).getDocument();
-      final XmlProlog prolog = document.getProlog();
-
-      if(prolog != null && prolog.getDoctype() != null) {
-        final String url = prolog.getDoctype().getDtdUri();
-        XmlNSDescriptor nsDescriptor = url != null ? document.getDefaultNSDescriptor(url, true):null;
-        
-        if (nsDescriptor != null) return nsDescriptor;
+      final XmlNSDescriptor descriptor = getDtdDescriptor(XmlUtil.getContainingFile(this));
+      if (descriptor != null) {
+        return descriptor;
       }
     }
 
     Map<String, CachedValue<XmlNSDescriptor>> map = initNSDescriptorsMap();
-
     final CachedValue<XmlNSDescriptor> descriptor = map.get(namespace);
     if(descriptor != null) {
       final XmlNSDescriptor value = descriptor.getValue();
-      if (value != null) return value;
+      if (value != null) {
+        return value;
+      }
     }
 
-    if(parentTag == null){
+    if(parentTag == null) {
       final XmlDocument parentOfType = PsiTreeUtil.getParentOfType(this, XmlDocument.class);
-      if(parentOfType == null) return null;
+      if(parentOfType == null) {
+        return null;
+      }
       return parentOfType.getDefaultNSDescriptor(namespace, strict);
     }
 
     return parentTag.getNSDescriptor(namespace, strict);
+  }
+
+  @Nullable
+  private static XmlNSDescriptor getDtdDescriptor(@NotNull XmlFile containingFile) {
+    final XmlDocument document = containingFile.getDocument();
+    if (document == null) {
+      return null;
+    }
+    final String url = XmlUtil.getDtdUri(document);
+    if (url == null) {
+      return null;
+    }
+    return document.getDefaultNSDescriptor(url, true);
   }
 
   public boolean isEmpty() {
@@ -344,35 +356,38 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return myCachedDescriptor;
   }
 
+  @Nullable
   protected XmlElementDescriptor computeElementDescriptor() {
-    final String namespace = getNamespace();
-    XmlElementDescriptor elementDescriptor;
     for(XmlElementDescriptorProvider provider: Extensions.getExtensions(XmlElementDescriptorProvider.EP_NAME)) {
-      elementDescriptor = provider.getDescriptor(this);
-      if (elementDescriptor != null) return elementDescriptor;
+      XmlElementDescriptor elementDescriptor = provider.getDescriptor(this);
+      if (elementDescriptor != null) {
+        return elementDescriptor;
+      }
     }
 
+    final String namespace = getNamespace();
     if (XmlUtil.EMPTY_URI.equals(namespace)) { //nonqualified items
-      final PsiElement parent = getParent();
-
-      if (parent instanceof XmlTag) {
-        final XmlElementDescriptor descriptor = ((XmlTag)parent).getDescriptor();
-
+      final XmlTag parent = getParentTag();
+      if (parent != null) {
+        final XmlElementDescriptor descriptor = parent.getDescriptor();
         if (descriptor != null) {
-          elementDescriptor = descriptor.getElementDescriptor(this, (XmlTag)parent);
-
-          if (elementDescriptor != null && !(elementDescriptor instanceof AnyXmlElementDescriptor)) {
-            return elementDescriptor;
+          XmlElementDescriptor fromParent = descriptor.getElementDescriptor(this, parent);
+          if (fromParent != null && !(fromParent instanceof AnyXmlElementDescriptor)) {
+            return fromParent;
           }
         }
       }
     }
 
+    XmlElementDescriptor elementDescriptor = null;
     final XmlNSDescriptor nsDescriptor = getNSDescriptor(namespace, false);
-    elementDescriptor = nsDescriptor == null ? null : nsDescriptor.getElementDescriptor(this);
-
+    if (nsDescriptor != null) {
+      if (!DumbService.getInstance(getProject()).isDumb() || nsDescriptor instanceof DumbAware) {
+        elementDescriptor = nsDescriptor.getElementDescriptor(this);
+      }
+    }
     if(elementDescriptor == null){
-      elementDescriptor = XmlUtil.findXmlDescriptorByType(this);
+      return XmlUtil.findXmlDescriptorByType(this);
     }
 
     return elementDescriptor;

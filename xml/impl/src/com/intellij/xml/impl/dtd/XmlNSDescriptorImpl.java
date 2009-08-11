@@ -3,6 +3,7 @@ package com.intellij.xml.impl.dtd;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.lang.dtd.DTDLanguage;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SimpleFieldCache;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ClassFilter;
@@ -23,7 +24,7 @@ import java.util.*;
 /**
  * @author Mike
  */
-public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocument> {
+public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocument>, DumbAware {
   private XmlElement myElement;
   private XmlFile myDescriptorFile;
 

@@ -4,6 +4,7 @@
  */
 package com.intellij.jsp.impl;
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NonNls;
 

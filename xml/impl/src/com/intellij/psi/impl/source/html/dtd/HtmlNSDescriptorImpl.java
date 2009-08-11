@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.html.dtd;
 
 import com.intellij.html.impl.RelaxedHtmlFromSchemaNSDescriptor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SimpleFieldCache;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlDocument;
@@ -17,7 +18,7 @@ import java.util.Map;
 /**
  * @author Maxim.Mossienko
  */
-public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
+public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware {
   private XmlNSDescriptor myDelegate;
   private boolean myRelaxed;
   private boolean myCaseSensitive;

@@ -2,6 +2,7 @@ package com.intellij.xml.impl.schema;
 
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -32,7 +33,7 @@ import java.util.*;
  * @author Mike
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocument> {
+public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocument>, DumbAware {
   @NonNls private static final Set<String> STD_TYPES = new HashSet<String>();
   private static final Set<String> UNDECLARED_STD_TYPES = new HashSet<String>();
   private XmlFile myFile;
