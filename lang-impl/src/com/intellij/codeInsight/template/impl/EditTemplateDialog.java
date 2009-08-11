@@ -532,15 +532,6 @@ public class EditTemplateDialog extends DialogWrapper {
 
   protected void doOKAction() {
     String key = myKeyField.getText().trim();
-    if (!isAllowedTemplateAbbreviation(key)) {
-      Messages.showMessageDialog(
-        getContentPane(),
-        CodeInsightBundle.message("dialog.edit.template.error.malformed.abbreviation"),
-        CodeInsightBundle.message("dialog.edit.template.error.title"),
-        Messages.getErrorIcon()
-      );
-      return;
-    }
 
     for (TemplateGroup templateGroup : myTemplateGroups) {
       for (TemplateImpl template : templateGroup.getElements()) {
@@ -582,14 +573,5 @@ public class EditTemplateDialog extends DialogWrapper {
 
     super.doOKAction();
   }
-
-  private static boolean isAllowedTemplateAbbreviation(final String key) {
-    for (int i = 0; i < key.length(); i++) {
-      final char c = key.charAt(i);
-      if (c != '.' && c != '-' && !Character.isJavaIdentifierPart(c)) return false;
-    }
-    return true;
-  }
-
 }
 

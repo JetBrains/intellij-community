@@ -163,10 +163,10 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     final int caretOffset = editor.getCaretModel().getOffset();
     TemplateImpl template = null;
     int wordStart = 0;
-    for (int i = 1; i <= templateSettings.getMaxKeyLength(); i++) {
+    for (int i = templateSettings.getMaxKeyLength(); i >= 1 ; i--) {
       wordStart = caretOffset - i;
       if (wordStart < 0) {
-        break;
+        continue;
       }
       String key = text.subSequence(wordStart, caretOffset).toString();
       template = templateSettings.getTemplate(key);
@@ -185,18 +185,6 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     }
 
     if (template == null) return false;
-
-    /*    Seems to work so far. TODO: remove
-    if (StdLanguages.JSPX.equals(file.getLanguage())) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          Messages.showInfoMessage(myProject, "Live templates are not supported in JSPX files", "Live Templates");
-        }
-      });
-
-      return false;
-    }
-    */
 
     if (shortcutChar != 0 && getShortcutChar(template) != shortcutChar) {
       return false;
