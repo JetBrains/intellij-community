@@ -137,7 +137,9 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   private void makeFinal() {
     for (PsiVariable var : getVariablesToFix()) {
-      PsiUtil.setModifierProperty(var, PsiModifier.FINAL, true);
+      if (var.isValid()) {
+        PsiUtil.setModifierProperty(var, PsiModifier.FINAL, true);
+      }
     }
   }
 
