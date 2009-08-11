@@ -196,7 +196,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   private void createPanels(final RepositoryLocation location, final Runnable afterRefresh) {
     final Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Subversion: loading working copies data..", false,
                                                                         BackgroundFromStartOption.getInstance()) {
-      public void run(final ProgressIndicator indicator) {
+      public void run(@NotNull final ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         final Map<String, SvnMergeInfoRootPanelManual> panels = new HashMap<String, SvnMergeInfoRootPanelManual>();
         final Map<String, MergeInfoHolder> holders = new HashMap<String, MergeInfoHolder>();
