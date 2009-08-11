@@ -29,6 +29,8 @@ import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
+import java.io.IOException;
+
 /**
  * @author peter
  */
@@ -48,7 +50,7 @@ public abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTes
     super.tearDown();
   }
 
-  private void setSettings(Project project) {
+  protected void setSettings(Project project) {
     Assert.assertNull(myTempSettings);
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
     myTempSettings = settings.clone();
@@ -63,7 +65,7 @@ public abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTes
     CodeStyleSettingsManager.getInstance(project).setTemporarySettings(myTempSettings);
   }
 
-  private void setSettingsBack() {
+  protected void setSettingsBack() {
     final CodeStyleSettingsManager manager = CodeStyleSettingsManager.getInstance(getProject());
     myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).INDENT_SIZE = 200;
     myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).CONTINUATION_INDENT_SIZE = 200;
@@ -76,6 +78,10 @@ public abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTes
 
   protected void checkFormatting(String fileText, String expected) throws Throwable {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
+    checkFormatting(expected);
+  }
+
+  protected void checkFormatting(String expected) throws IOException {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
