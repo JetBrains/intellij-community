@@ -68,15 +68,22 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel {
 
   public void setComponentClass(@NonNls String className) throws ClassNotFoundException, InstantiationException,
                                                                                            IllegalAccessException {
-    Class<Comp> aClass = (Class<Comp>)getClass().getClassLoader().loadClass(className);
-    Comp component = aClass.newInstance();
-    setComponent(component);
+    if (className != null) {
+      Class<Comp> aClass = (Class<Comp>)getClass().getClassLoader().loadClass(className);
+      Comp component = aClass.newInstance();
+      setComponent(component);
+    }
+    else {
+      setComponent(null);
+    }
   }
 
   public void setComponent(Comp component) {
     if (myComponent != null) remove(myComponent);
     myComponent = component;
-    add(myComponent, BorderLayout.CENTER);
+    if (myComponent != null) {
+      add(myComponent, BorderLayout.CENTER);
+    }
     if (myComponent instanceof ComponentWithBrowseButton) {
       myLabel.setLabelFor(((ComponentWithBrowseButton)myComponent).getChildComponent());
     } else myLabel.setLabelFor(myComponent);
