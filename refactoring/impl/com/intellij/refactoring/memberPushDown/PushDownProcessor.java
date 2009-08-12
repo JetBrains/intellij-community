@@ -121,7 +121,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
 
     for (MemberInfo memberInfo : myMemberInfos) {
       final PsiMember member = memberInfo.getMember();
-      member.accept(new JavaRecursiveElementWalkingVisitor() {
+      member.accept(new JavaRecursiveElementVisitor() {
         @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
           encodeRef(expression, movedMembers, expression);
           super.visitReferenceExpression(expression);
