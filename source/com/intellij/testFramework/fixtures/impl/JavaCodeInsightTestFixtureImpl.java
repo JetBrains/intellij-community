@@ -36,8 +36,7 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
     final String qName = aClass.getQualifiedName();
     assert qName != null;
 
-    final PsiFile psiFile = ((HeavyIdeaTestFixtureImpl) myProjectFixture).addFileToProject(rootPath, qName.replace('.', '/') + ".java", classText);
-
+    final PsiFile psiFile = addFileToProject(rootPath, qName.replace('.', '/') + ".java", classText);
     return ((PsiJavaFile)psiFile).getClasses()[0];
   }
 }

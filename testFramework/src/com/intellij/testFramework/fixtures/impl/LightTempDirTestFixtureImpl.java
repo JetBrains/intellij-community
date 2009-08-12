@@ -2,6 +2,7 @@ package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -79,12 +80,35 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
   }
 
   @NotNull
-  public VirtualFile createFile(String name) {
-    throw new UnsupportedOperationException();
+  public VirtualFile createFile(String targetPath) {
+    final String path = StringUtil.getPackageName(targetPath, '/');
+    final String name = StringUtil.getShortName(targetPath, '/');
+    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      public VirtualFile compute() {
+        try {
+          VirtualFile targetDir = findOrCreateTargetDir(path);
+          return targetDir.createChildData(this, name);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   @NotNull
-  public VirtualFile createFile(String name, String text) throws IOException {
-    throw new UnsupportedOperationException();
+  public VirtualFile createFile(String targetPath, final String text) throws IOException {
+    final VirtualFile file = createFile(targetPath);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        try {
+          VfsUtil.saveText(file, text);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+    return file;
   }
 }

@@ -22,6 +22,11 @@ public class JavaTestFixtureFactoryImpl extends JavaTestFixtureFactory {
     return new JavaCodeInsightTestFixtureImpl(projectFixture, new TempDirTestFixtureImpl());
   }
 
+  @Override
+  public JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirFixture) {
+    return new JavaCodeInsightTestFixtureImpl(projectFixture, tempDirFixture);
+  }
+
   public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder() {
     return new LightTestFixtureBuilderImpl<IdeaProjectTestFixture>(new LightIdeaTestFixtureImpl(ourJavaProjectDescriptor));
   }

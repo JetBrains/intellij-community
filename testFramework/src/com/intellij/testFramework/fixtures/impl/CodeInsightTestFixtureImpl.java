@@ -628,7 +628,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public PsiFile addFileToProject(@NonNls final String relativePath, @NonNls final String fileText) throws IOException {
     assertInitialized();
-    return ((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(getTempDirPath(), relativePath, fileText);
+    return addFileToProject(getTempDirPath(), relativePath, fileText);
+  }
+
+  protected PsiFile addFileToProject(String rootPath, String relativePath, String fileText) throws IOException {
+    if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
+      final VirtualFile file = myTempDirFixture.createFile(relativePath, fileText);
+      return PsiManager.getInstance(getProject()).findFile(file);
+    }
+
+    return ((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(rootPath, relativePath, fileText);
   }
 
   public <T> void registerExtension(final ExtensionsArea area, final ExtensionPointName<T> epName, final T extension) {

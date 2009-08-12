@@ -26,6 +26,8 @@ public abstract class JavaTestFixtureFactory {
 
   public abstract JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture);
 
+  public abstract JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirFixture);
+
   //also implicitly initializes ourInstance and registers java module fixture builder
   public static TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder() {
     return IdeaTestFixtureFactoryImpl.getFixtureFactory().createFixtureBuilder();
