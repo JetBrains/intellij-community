@@ -18,7 +18,7 @@ package com.intellij.openapi.vcs;
 /**
  * author: lesya
  */
-public interface TransactionProvider {
+public interface TransactionProvider extends VcsProviderMarker {
   void startTransaction(Object parameters) throws VcsException;
   void commitTransaction(Object parameters) throws VcsException;
   void rollbackTransaction(Object parameters);

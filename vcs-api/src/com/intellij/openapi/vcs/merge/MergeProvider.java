@@ -16,11 +16,12 @@
 package com.intellij.openapi.vcs.merge;
 
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsProviderMarker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 
-public interface MergeProvider {
+public interface MergeProvider extends VcsProviderMarker {
   @NotNull MergeData loadRevisions(final VirtualFile file) throws VcsException;
 
   /**

@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.rollback;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsProviderMarker;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,7 @@ import java.util.List;
  * @author yole
  * @since 7.0
  */
-public interface RollbackEnvironment {
+public interface RollbackEnvironment extends VcsProviderMarker {
   /**
    * Returns the name of operation which is shown in the UI (in menu item name, dialog title and button text).
    *

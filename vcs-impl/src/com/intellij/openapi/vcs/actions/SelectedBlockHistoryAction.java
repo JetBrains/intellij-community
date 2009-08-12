@@ -4,17 +4,19 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
+import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
+import com.intellij.openapi.vcs.history.VcsHistoryProviderBackgroundableProxy;
 import com.intellij.openapi.vcs.history.impl.VcsBlockHistoryDialog;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.vcsUtil.VcsSelection;
 import com.intellij.vcsUtil.VcsSelectionUtil;
+import com.intellij.util.Consumer;
 
 public class SelectedBlockHistoryAction extends AbstractVcsAction {
 
@@ -25,7 +27,11 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
     VirtualFile file = selectedFiles[0];
     Project project = context.getProject();
     if (project == null) return false;
-    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
+    final ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(project);
+    final BackgroundableActionEnabledHandler handler =
+      vcsManager.getBackgroundableActionHandler(VcsBackgroundableActions.HISTORY_FOR_SELECTION);
+    if (handler.isInProgress(VcsBackgroundableActions.keyFrom(file))) return false;
+    AbstractVcs vcs = vcsManager.getVcsFor(file);
     if (vcs == null) return false;
     VcsHistoryProvider vcsHistoryProvider = vcs.getVcsBlockHistoryProvider();
     if (vcsHistoryProvider == null) return false;
@@ -38,31 +44,37 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
     return true;
   }
 
-  public void actionPerformed(VcsContext context) {
+  public void actionPerformed(final VcsContext context) {
     try {
-      VcsSelection selection = VcsSelectionUtil.getSelection(context);
+      final VcsSelection selection = VcsSelectionUtil.getSelection(context);
       VirtualFile file = FileDocumentManager.getInstance().getFile(selection.getDocument());
-      Project project = context.getProject();
-      AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
+      final Project project = context.getProject();
+      if (project == null) return;
+      final AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
       if (activeVcs == null) return;
 
-      VcsHistoryProvider provider = activeVcs.getVcsBlockHistoryProvider();
+      final VcsHistoryProvider provider = activeVcs.getVcsBlockHistoryProvider();
 
-      int selectionStart = selection.getSelectionStartLineNumber();
-      int selectionEnd = selection.getSelectionEndLineNumber();
-      VcsHistorySession session = provider.createSessionFor(new FilePathImpl(file));
-      if (session == null) return;
-      VcsBlockHistoryDialog vcsHistoryDialog =
-        new VcsBlockHistoryDialog(project,
-                                  context.getSelectedFiles()[0],
-                                  activeVcs,
-                                  provider,
-                                  session,
-                                  Math.min(selectionStart, selectionEnd),
-                                  Math.max(selectionStart, selectionEnd),
-                                  selection.getDialogTitle());
+      final int selectionStart = selection.getSelectionStartLineNumber();
+      final int selectionEnd = selection.getSelectionEndLineNumber();
 
-      vcsHistoryDialog.show();
+      new VcsHistoryProviderBackgroundableProxy(project, provider).createSessionFor(new FilePathImpl(file),
+        new Consumer<VcsHistorySession>() {
+          public void consume(VcsHistorySession session) {
+            if (session == null) return;
+            VcsBlockHistoryDialog vcsHistoryDialog =
+              new VcsBlockHistoryDialog(project,
+                                        context.getSelectedFiles()[0],
+                                        activeVcs,
+                                        provider,
+                                        session,
+                                        Math.min(selectionStart, selectionEnd),
+                                        Math.max(selectionStart, selectionEnd),
+                                        selection.getDialogTitle());
+
+            vcsHistoryDialog.show();
+          }
+        }, VcsBackgroundableActions.HISTORY_FOR_SELECTION, false);
     }
     catch (Exception exception) {
       reportError(exception);
@@ -83,7 +95,6 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
   }
 
   protected static void reportError(Exception exception) {
-    exception.printStackTrace();
     Messages.showMessageDialog(exception.getLocalizedMessage(), VcsBundle.message("message.title.could.not.load.file.history"), Messages.getErrorIcon());
   }
 }

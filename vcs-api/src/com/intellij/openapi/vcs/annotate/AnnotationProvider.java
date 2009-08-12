@@ -16,11 +16,11 @@
 package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsProviderMarker;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public interface AnnotationProvider
-{
+public interface AnnotationProvider extends VcsProviderMarker {
   FileAnnotation annotate(VirtualFile file) throws VcsException;
   FileAnnotation annotate(VirtualFile file, VcsFileRevision revision) throws VcsException;
 

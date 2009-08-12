@@ -97,26 +97,29 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     showFileHistory(vcsHistoryProvider, null, path, repositoryPath, vcs);
   }
 
-  public void showFileHistory(VcsHistoryProvider vcsHistoryProvider, AnnotationProvider annotationProvider, FilePath path,
+  public void showFileHistory(final VcsHistoryProvider vcsHistoryProvider, final AnnotationProvider annotationProvider, final FilePath path,
                               final String repositoryPath, final AbstractVcs vcs) {
     try {
-      VcsHistorySession session = vcsHistoryProvider.createSessionFor(path);
-      if (session == null) return;
-      List<VcsFileRevision> revisionsList = session.getRevisionList();
-      if (revisionsList.isEmpty()) return;
+      new VcsHistoryProviderBackgroundableProxy(myProject, vcsHistoryProvider).createSessionFor(path, new Consumer<VcsHistorySession>() {
+        public void consume(VcsHistorySession session) {
+          if (session == null) return;
+          List<VcsFileRevision> revisionsList = session.getRevisionList();
+          if (revisionsList.isEmpty()) return;
 
-      String actionName = VcsBundle.message("action.name.file.history", path.getName());
+          String actionName = VcsBundle.message("action.name.file.history", path.getName());
 
-      ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject).getContentManager();
+          ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject).getContentManager();
 
-      FileHistoryPanelImpl fileHistoryPanel =
-        new FileHistoryPanelImpl(myProject, path, repositoryPath, session, vcsHistoryProvider, annotationProvider, contentManager,
-                                 vcs.getCommittedChangesProvider());
-      Content content = ContentFactory.SERVICE.getInstance().createContent(fileHistoryPanel, actionName, true);
-      ContentsUtil.addOrReplaceContent(contentManager, content, true);
+          FileHistoryPanelImpl fileHistoryPanel =
+            new FileHistoryPanelImpl(myProject, path, repositoryPath, session, vcsHistoryProvider, annotationProvider, contentManager,
+                                     vcs.getCommittedChangesProvider());
+          Content content = ContentFactory.SERVICE.getInstance().createContent(fileHistoryPanel, actionName, true);
+          ContentsUtil.addOrReplaceContent(contentManager, content, true);
 
-      ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
-      toolWindow.activate(null);
+          ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
+          toolWindow.activate(null);
+        }
+      }, null, false);
     }
     catch (Exception exception) {
       reportError(exception);

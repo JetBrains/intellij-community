@@ -16,14 +16,16 @@
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.vcs.CalledInBackground;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsProviderMarker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public interface VcsHistoryProvider {
+public interface VcsHistoryProvider extends VcsProviderMarker {
 
   VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, final JComponent forShortcutRegistration);
 
@@ -48,6 +50,7 @@ public interface VcsHistoryProvider {
    * @throws VcsException if an error occurred when loading the revisions
    */
   @Nullable
+  @CalledInBackground
   VcsHistorySession createSessionFor(FilePath filePath) throws VcsException;
 
   //return null if your revisions cannot be tree

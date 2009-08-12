@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -290,26 +291,23 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
         myUpdateAlarm.addRequest(this, 10000);
 
         if (refresh) {
-          final VcsHistorySession session;
-          try {
-            session = getHistoryProvider().createSessionFor(myFilePath);
-          }
-          catch (VcsException e) {
-            LOG.info(e);
-            return;
-          }
-          if (session != null) {
-            if (myHistorySession.allowAsyncRefresh()) {
-              SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
+          createSession(new Consumer<VcsHistorySession>() {
+            public void consume(final VcsHistorySession session) {
+              if (session != null) {
+                if (myHistorySession.allowAsyncRefresh()) {
+                  SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                      refresh(session);
+                    }
+                  });
+                }
+                else {
                   refresh(session);
                 }
-              });
+              }
             }
-            else {
-              refresh(session);
-            }
-          }
+          });
+
         }
       }
     }, 10000);
@@ -317,6 +315,10 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     init();
 
     chooseView();
+  }
+
+  private void createSession(final Consumer<VcsHistorySession> consumer) {
+    new VcsHistoryProviderBackgroundableProxy(myProject, getHistoryProvider()).createSessionFor(myFilePath, consumer, null, true);
   }
 
   private void replaceTransferable() {
@@ -705,15 +707,12 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   }
 
   public void refresh() {
-    try {
-      final VcsHistorySession session = getHistoryProvider().createSessionFor(myFilePath);
-      if (session == null) return;
-      refresh(session);
-    }
-    catch (VcsException e1) {
-      Messages.showErrorDialog(VcsBundle.message("message.text.cannot.refresh.file.history", e1.getLocalizedMessage()),
-                               VcsBundle.message("message.title.refresh.file.history"));
-    }
+    createSession(new Consumer<VcsHistorySession>() {
+      public void consume(VcsHistorySession session) {
+        if (session == null) return;
+        refresh(session);
+      }
+    });
   }
 
   private boolean supportsTree() {
@@ -999,7 +998,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       if (enabled) {
         final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myProject);
         enabled &= (! (((ProjectLevelVcsManagerImpl) plVcsManager).getBackgroundableActionHandler(
-          ProjectLevelVcsManagerImpl.MyBackgroundableActions.ANNOTATE).isInProgress(key(revVFile, revision))));
+          VcsBackgroundableActions.ANNOTATE).isInProgress(key(revVFile, revision))));
       }
 
       e.getPresentation()
@@ -1015,7 +1014,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       if ((revision == null) || (revisionVirtualFile == null)) return;
 
       final BackgroundableActionEnabledHandler handler = ((ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject)).
-        getBackgroundableActionHandler(ProjectLevelVcsManagerImpl.MyBackgroundableActions.ANNOTATE);
+        getBackgroundableActionHandler(VcsBackgroundableActions.ANNOTATE);
       handler.register(key(revisionVirtualFile, revision));
 
       final Ref<FileAnnotation> fileAnnotationRef = new Ref<FileAnnotation>();

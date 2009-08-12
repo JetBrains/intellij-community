@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -31,7 +31,7 @@ public class SelectAndCompareWithSelectedRevisionAction extends AbstractVcsActio
       final VcsRevisionNumber vcsRevisionNumber = selector.selectNumber(file);
 
       if (vcsRevisionNumber != null) {
-        DiffActionExecutor.showDiff(diffProvider, vcsRevisionNumber, file, project, ProjectLevelVcsManagerImpl.MyBackgroundableActions.SELECT_AND_COMPARE_WITH_SELECTED_REVISION);
+        DiffActionExecutor.showDiff(diffProvider, vcsRevisionNumber, file, project, VcsBackgroundableActions.COMPARE_WITH);
       }
     }
 
@@ -40,7 +40,7 @@ public class SelectAndCompareWithSelectedRevisionAction extends AbstractVcsActio
   
 
   protected void update(VcsContext vcsContext, Presentation presentation) {
-    AbstractShowDiffAction.updateDiffAction(presentation, vcsContext, ProjectLevelVcsManagerImpl.MyBackgroundableActions.SELECT_AND_COMPARE_WITH_SELECTED_REVISION);
+    AbstractShowDiffAction.updateDiffAction(presentation, vcsContext, VcsBackgroundableActions.COMPARE_WITH);
   }
 
   protected boolean forceSyncUpdate(final AnActionEvent e) {

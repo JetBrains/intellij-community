@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.checkin;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsProviderMarker;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -33,7 +34,7 @@ import java.util.List;
  * @author lesya
  * @see com.intellij.openapi.vcs.AbstractVcs#getCheckinEnvironment()
  */
-public interface CheckinEnvironment {
+public interface CheckinEnvironment extends VcsProviderMarker {
   @Nullable
   RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel);
 

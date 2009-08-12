@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
+import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +59,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
     final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(project);
     final BackgroundableActionEnabledHandler handler = ((ProjectLevelVcsManagerImpl)plVcsManager)
-      .getBackgroundableActionHandler(ProjectLevelVcsManagerImpl.MyBackgroundableActions.ANNOTATE);
+      .getBackgroundableActionHandler(VcsBackgroundableActions.ANNOTATE);
     if (handler.isInProgress(file.getPath())) return false;
 
     AbstractVcs vcs = plVcsManager.getVcsFor(file);
@@ -123,7 +124,8 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     final Ref<FileAnnotation> fileAnnotationRef = new Ref<FileAnnotation>();
     final Ref<VcsException> exceptionRef = new Ref<VcsException>();
 
-    final BackgroundableActionEnabledHandler handler = ((ProjectLevelVcsManagerImpl)plVcsManager).getBackgroundableActionHandler(ProjectLevelVcsManagerImpl.MyBackgroundableActions.ANNOTATE);
+    final BackgroundableActionEnabledHandler handler = ((ProjectLevelVcsManagerImpl)plVcsManager).getBackgroundableActionHandler(
+      VcsBackgroundableActions.ANNOTATE);
     handler.register(file.getPath());
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, VcsBundle.message("retrieving.annotations"), true,

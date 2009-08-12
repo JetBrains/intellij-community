@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsProviderMarker;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.List;
@@ -27,7 +28,7 @@ import java.util.List;
  *
  * @author max
  */
-public interface ChangeProvider {
+public interface ChangeProvider extends VcsProviderMarker {
   /**
    * <p>Get changes from point of view of VCS. The vcs plugin should invoke
    * methods on the {@code builder} object to report how changes in dirtyScope

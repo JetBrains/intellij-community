@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public interface CommittedChangesProvider<T extends CommittedChangeList, U extends ChangeBrowserSettings> {
+public interface CommittedChangesProvider<T extends CommittedChangeList, U extends ChangeBrowserSettings> extends VcsProviderMarker {
   U createDefaultSettings();
   ChangesBrowserSettingsEditor<U> createFilterUI(final boolean showDateFilter);
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsProviderMarker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ import java.util.Collection;
  * @see com.intellij.openapi.vcs.AbstractVcs#getIntegrateEnvironment()
  * @see com.intellij.openapi.vcs.AbstractVcs#getStatusEnvironment()
  */
-public interface UpdateEnvironment {
+public interface UpdateEnvironment extends VcsProviderMarker {
   /**
    * Called before the update operation to register file status groups in addition to standard
    * file status groups registered in {@link UpdatedFiles#create}. The implementation can be left

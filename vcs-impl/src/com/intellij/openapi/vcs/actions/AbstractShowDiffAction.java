@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
+import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -18,7 +19,7 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
   }
 
   protected static void updateDiffAction(final Presentation presentation, final VcsContext vcsContext,
-                                         final ProjectLevelVcsManagerImpl.MyBackgroundableActions actionKey) {
+                                         final VcsBackgroundableActions actionKey) {
     presentation.setEnabled(isEnabled(vcsContext, actionKey));
     presentation.setVisible(isVisible(vcsContext));
   }
@@ -27,7 +28,7 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
     return true;
   }
 
-  protected abstract ProjectLevelVcsManagerImpl.MyBackgroundableActions getKey();
+  protected abstract VcsBackgroundableActions getKey();
 
   protected static boolean isVisible(final VcsContext vcsContext) {
     final Project project = vcsContext.getProject();
@@ -41,7 +42,7 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
     return false;
   }
 
-  protected static boolean isEnabled(final VcsContext vcsContext, final ProjectLevelVcsManagerImpl.MyBackgroundableActions actionKey) {
+  protected static boolean isEnabled(final VcsContext vcsContext, final VcsBackgroundableActions actionKey) {
     if (!(isVisible(vcsContext))) return false;
 
     final Project project = vcsContext.getProject();
@@ -55,7 +56,7 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
     if (selectedFile.isDirectory()) return false;
 
     final BackgroundableActionEnabledHandler handler = ((ProjectLevelVcsManagerImpl)vcsManager).getBackgroundableActionHandler(actionKey);
-    if (handler.isInProgress(ProjectLevelVcsManagerImpl.keyFromVf(selectedFile))) return false;
+    if (handler.isInProgress(VcsBackgroundableActions.keyFrom(selectedFile))) return false;
 
     final AbstractVcs vcs = vcsManager.getVcsFor(selectedFile);
     if (vcs == null) return false;

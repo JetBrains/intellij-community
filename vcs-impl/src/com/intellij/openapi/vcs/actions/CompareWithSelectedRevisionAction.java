@@ -1,19 +1,14 @@
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.diff.DiffProvider;
-import com.intellij.openapi.vcs.history.HistoryAsTreeProvider;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsHistoryProvider;
-import com.intellij.openapi.vcs.history.VcsHistorySession;
+import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
@@ -86,7 +81,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
   };
 
   public void update(VcsContext e, Presentation presentation) {
-    AbstractShowDiffAction.updateDiffAction(presentation, e, ProjectLevelVcsManagerImpl.MyBackgroundableActions.COMPARE_WITH_SELECTED_REVISION);
+    AbstractShowDiffAction.updateDiffAction(presentation, e, VcsBackgroundableActions.COMPARE_WITH);
   }
 
 
@@ -100,29 +95,25 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
     final VcsHistoryProvider vcsHistoryProvider = vcs.getVcsHistoryProvider();
 
-    try {
-      final VcsHistorySession session = vcsHistoryProvider.createSessionFor(new FilePathImpl(file));
-      if (session == null) return;
-      final List<VcsFileRevision> revisions = session.getRevisionList();
-      final HistoryAsTreeProvider treeHistoryProvider = vcsHistoryProvider.getTreeHistoryProvider();
-      if (treeHistoryProvider != null) {
-        showTreePopup(treeHistoryProvider.createTreeOn(revisions), file, project, vcs.getDiffProvider());
-      }
-      else {
-        showListPopup(revisions, project, new Consumer<VcsFileRevision>() {
-          public void consume(final VcsFileRevision revision) {
-            DiffActionExecutor.showDiff(vcs.getDiffProvider(), revision.getRevisionNumber(), file, project, ProjectLevelVcsManagerImpl.MyBackgroundableActions.COMPARE_WITH_SELECTED_REVISION);
+    new VcsHistoryProviderBackgroundableProxy(project, vcsHistoryProvider).createSessionFor(new FilePathImpl(file),
+        new Consumer<VcsHistorySession>() {
+          public void consume(VcsHistorySession session) {
+            if (session == null) return;
+            final List<VcsFileRevision> revisions = session.getRevisionList();
+            final HistoryAsTreeProvider treeHistoryProvider = vcsHistoryProvider.getTreeHistoryProvider();
+            if (treeHistoryProvider != null) {
+              showTreePopup(treeHistoryProvider.createTreeOn(revisions), file, project, vcs.getDiffProvider());
+            }
+            else {
+              showListPopup(revisions, project, new Consumer<VcsFileRevision>() {
+                public void consume(final VcsFileRevision revision) {
+                  DiffActionExecutor.showDiff(vcs.getDiffProvider(), revision.getRevisionNumber(), file, project,
+                                              VcsBackgroundableActions.COMPARE_WITH);
+                }
+              }, true);
+            }
           }
-        }, true);
-      }
-
-    }
-    catch (VcsException e1) {
-      Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences", e1.getMessage()),
-                               CommonBundle.message("title.error"));
-    }
-
-
+        }, VcsBackgroundableActions.COMPARE_WITH, false);
   }
 
   private static void showTreePopup(final List<TreeItem<VcsFileRevision>> roots, final VirtualFile file, final Project project, final DiffProvider diffProvider) {
@@ -137,7 +128,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
         }
         VcsFileRevision revision = getRevisionAt(treeTable, index);
         if (revision != null) {
-          DiffActionExecutor.showDiff(diffProvider, revision.getRevisionNumber(), file, project, ProjectLevelVcsManagerImpl.MyBackgroundableActions.COMPARE_WITH_SELECTED_REVISION);
+          DiffActionExecutor.showDiff(diffProvider, revision.getRevisionNumber(), file, project, VcsBackgroundableActions.COMPARE_WITH);
         }
       }
     };

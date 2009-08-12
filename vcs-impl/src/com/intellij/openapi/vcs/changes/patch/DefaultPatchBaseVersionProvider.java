@@ -13,16 +13,16 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
+import com.intellij.vcsUtil.VcsRunnable;
+import com.intellij.vcsUtil.VcsUtil;
 
 import java.io.IOException;
 import java.util.Date;
@@ -55,7 +55,7 @@ public class DefaultPatchBaseVersionProvider {
     myRevisionPattern = null;
   }
 
-  public void getBaseVersionContent(FilePath filePath, Processor<CharSequence> processor) throws VcsException {
+  public void getBaseVersionContent(final FilePath filePath, Processor<CharSequence> processor) throws VcsException {
     if (myVcs == null) {
       return;
     }
@@ -80,8 +80,14 @@ public class DefaultPatchBaseVersionProvider {
       }
     }
     try {
-      final VcsHistorySession session = historyProvider.createSessionFor(filePath);
-      if (session == null) return;
+      final Ref<VcsHistorySession> ref = new Ref<VcsHistorySession>();
+      VcsUtil.runVcsProcessWithProgress(new VcsRunnable() {
+        public void run() throws VcsException {
+          ref.set(historyProvider.createSessionFor(filePath));
+        }
+      }, VcsBundle.message("loading.file.history.progress"), true, myProject);
+      if (ref.isNull()) return;
+      final VcsHistorySession session = ref.get();
       final List<VcsFileRevision> list = session.getRevisionList();
       if (list == null) return;
       for (VcsFileRevision fileRevision : list) {

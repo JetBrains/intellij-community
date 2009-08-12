@@ -1,10 +1,10 @@
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 
 public class CompareWithTheSameVersionAction extends AbstractShowDiffAction{
   @Override
-  protected ProjectLevelVcsManagerImpl.MyBackgroundableActions getKey() {
-    return ProjectLevelVcsManagerImpl.MyBackgroundableActions.COMPARE_WITH_SAME;
+  protected VcsBackgroundableActions getKey() {
+    return VcsBackgroundableActions.COMPARE_WITH;
   }
 }

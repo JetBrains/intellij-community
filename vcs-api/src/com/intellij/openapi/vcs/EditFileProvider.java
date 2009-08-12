@@ -23,7 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
  * @author lesya
  * @see com.intellij.openapi.vcs.AbstractVcs#getEditFileProvider()
  */
-public interface EditFileProvider {
+public interface EditFileProvider extends VcsProviderMarker {
   /**
    * Initiates the edit / checkout operation for the specified files.
    *

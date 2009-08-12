@@ -110,7 +110,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private volatile int myBackgroundOperationCounter = 0;
 
-  private final Map<MyBackgroundableActions, BackgroundableActionEnabledHandler> myBackgroundableActionHandlerMap;
+  private final Map<VcsBackgroundableActions, BackgroundableActionEnabledHandler> myBackgroundableActionHandlerMap;
 
   private List<Pair<String, TextAttributes>> myPendingOutput = new ArrayList<Pair<String, TextAttributes>>();
 
@@ -123,7 +123,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     myMappings = new NewMappings(myProject, myEventDispatcher);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
-    myBackgroundableActionHandlerMap = new HashMap<MyBackgroundableActions, BackgroundableActionEnabledHandler>();
+    myBackgroundableActionHandlerMap = new HashMap<VcsBackgroundableActions, BackgroundableActionEnabledHandler>();
   }
 
   public void initComponent() {
@@ -633,7 +633,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return myMappings.haveDefaultMapping();
   }
 
-  public BackgroundableActionEnabledHandler getBackgroundableActionHandler(final MyBackgroundableActions action) {
+  public BackgroundableActionEnabledHandler getBackgroundableActionHandler(final VcsBackgroundableActions action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     BackgroundableActionEnabledHandler result = myBackgroundableActionHandlerMap.get(action);
@@ -642,17 +642,5 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       myBackgroundableActionHandlerMap.put(action, result);
     }
     return result;
-  }
-
-  public static enum MyBackgroundableActions {
-    ANNOTATE,
-    SELECT_AND_COMPARE_WITH_SELECTED_REVISION,
-    COMPARE_WITH_SELECTED_REVISION,
-    COMPARE_WITH_LATEST,
-    COMPARE_WITH_SAME
-  }
-  
-  public static String keyFromVf(final VirtualFile vf) {
-    return vf.getPath();
   }
 }
