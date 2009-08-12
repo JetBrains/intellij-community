@@ -31,11 +31,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   @NotNull
   @Override
   public String getLookupString() {
-    String qualifierText = myQualifier.getLookupString();
-    if (myQualifier.getObject() instanceof PsiMethod) {
-      qualifierText += "()";
-    }
-    return qualifierText + "." + getDelegate().getLookupString();
+    return maybeAddParentheses(myQualifier.getLookupString()) + "." + getDelegate().getLookupString();
   }
 
   public LookupElement getQualifier() {
@@ -54,11 +50,11 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   @NotNull
   @Override
   public String toString() {
-    String qualifierText = myQualifier.toString();
-    if (myQualifier.getObject() instanceof PsiMethod) {
-      qualifierText += "()";
-    }
-    return qualifierText + "." + getDelegate();
+    return maybeAddParentheses(myQualifier.toString()) + "." + getDelegate();
+  }
+
+  private String maybeAddParentheses(String s) {
+    return myQualifier.getObject() instanceof PsiMethod ? s + "()" : s;
   }
 
 
@@ -66,7 +62,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   public void renderElement(LookupElementPresentation presentation) {
     final MemorizingLookupElementPresentation qualifierPresentation = new MemorizingLookupElementPresentation(presentation);
     myQualifier.renderElement(qualifierPresentation);
-    final String name = qualifierPresentation.getItemText();
+    String name = maybeAddParentheses(qualifierPresentation.getItemText());
     final String qualifierText = myQualifier instanceof CastingLookupElementDecorator ? "(" + name + ")" : name;
 
     super.renderElement(new DecoratingLookupElementPresentation(presentation) {

@@ -57,7 +57,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
       return TrueFilter.INSTANCE;
     }
 
-    if (psiElement().afterLeaf(PsiKeyword.RETURN).inside(PsiReturnStatement.class).accepts(element) && !secondBase && !secondChain) {
+    if (psiElement().afterLeaf(PsiKeyword.RETURN).inside(PsiReturnStatement.class).accepts(element) && !secondChain) {
       return new ElementExtractorFilter(new ExcludeDeclaredFilter(ElementClassFilter.METHOD));
     }
 
@@ -323,7 +323,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
     final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)secondChild;
     final PsiReferenceExpression mockRef = (PsiReferenceExpression) expressionStatement.getExpression();
 
-    final ElementFilter filter = getReferenceFilter(place, true, true);
+    final ElementFilter filter = getReferenceFilter(place, false, true);
     for (final LookupElement item : JavaSmartCompletionContributor.completeReference(place, mockRef, filter, false)) {
       if (shoudChain(place, qualifierType, expectedType, item)) {
         result.addElement(new JavaChainLookupElement(qualifierItem, item));
