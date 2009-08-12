@@ -143,7 +143,6 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   }
 
   private BaseInjection showInjectionUI(final Project project, final MethodParameterInjection methodParameterInjection) {
-    final MethodParameterInjection savedCopy = methodParameterInjection.copy();
     final AbstractInjectionPanel panel = new MethodParameterPanel(methodParameterInjection, project);
     panel.reset();
     final DialogBuilder builder = new DialogBuilder(project);
@@ -159,8 +158,6 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     });
     if (builder.show() == DialogWrapper.OK_EXIT_CODE) {
       methodParameterInjection.initializePlaces(false);
-      savedCopy.initializePlaces(false);
-      methodParameterInjection.mergeOriginalPlacesFrom(savedCopy, false);
       return new BaseInjection(methodParameterInjection.getSupportId()).copyFrom(methodParameterInjection);
     }
     return null;
@@ -433,6 +430,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
         if (injection != null) {
           final BaseInjection newInjection = showInjectionUI(project, injection);
           if (newInjection != null) {
+            newInjection.mergeOriginalPlacesFrom(originalInjection, false);
             originalInjection.copyFrom(newInjection);
             originalInjection.initializePlaces(true);
           }
