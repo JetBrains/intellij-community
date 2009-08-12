@@ -65,7 +65,7 @@ public class ResourceBundleEditorProvider extends FileTypeFactory implements Fil
   }
 
 
-  public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
+  public void createFileTypes(@NotNull final FileTypeConsumer consumer) {
     consumer.consume(RESOURCE_BUNDLE_FILE_TYPE, "");
   }
 }

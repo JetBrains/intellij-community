@@ -79,7 +79,7 @@ public class ResourceBundleAsVirtualFile extends DeprecatedVirtualFile {
   }
 
   public VirtualFile[] getChildren() {
-    return VirtualFile.EMPTY_ARRAY;
+    return EMPTY_ARRAY;
   }
 
   public VirtualFile createChildDirectory(Object requestor, String name) throws IOException {
