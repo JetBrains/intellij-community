@@ -21,7 +21,7 @@ public class Timings {
     for (int i = 0; i < 1000000; i++) {
       k = k.add(new BigInteger("1"));
     }
-    for (int i = 0; i < 15; i++) {
+    for (int i = 0; i < 42; i++) {
       try {
         final File tempFile = File.createTempFile("test", "test" + i);
         final FileWriter writer = new FileWriter(tempFile);
