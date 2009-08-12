@@ -20,11 +20,13 @@
  */
 package org.jetbrains.idea.eclipse.conversion;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -40,7 +42,7 @@ public class DotProjectFileHelper {
   private DotProjectFileHelper() {
   }
 
-  public static boolean saveDotProjectFile(Module module, String storageRoot) throws IOException {
+  public static void saveDotProjectFile(Module module, String storageRoot) throws IOException {
     try {
       final Document doc;
       if (module.getModuleType() instanceof JavaModuleType) {
@@ -53,12 +55,16 @@ public class DotProjectFileHelper {
       nameElement.setText(module.getName());
 
       final File projectFile = new File(storageRoot, EclipseXml.PROJECT_FILE);
-      if (!FileUtil.createIfDoesntExist(projectFile)) return true;
+      if (!FileUtil.createIfDoesntExist(projectFile)) return;
       EclipseJDOMUtil.output(doc, projectFile, module.getProject());
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(projectFile.getPath()));
+        }
+      });
     }
     catch (JDOMException e) {
       LOG.error(e);
     }
-    return false;
   }
 }

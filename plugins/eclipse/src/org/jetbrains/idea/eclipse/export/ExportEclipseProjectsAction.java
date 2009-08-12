@@ -106,7 +106,7 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
               EclipseJDOMUtil.output(new Document(ideaSpecific), emlFile, project);
             }
 
-            if (DotProjectFileHelper.saveDotProjectFile(module, storageRoot)) continue;
+            DotProjectFileHelper.saveDotProjectFile(module, storageRoot);
           }
           catch (ConversionException e1) {
             LOG.error(e1);
