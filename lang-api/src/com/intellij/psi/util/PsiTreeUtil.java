@@ -40,7 +40,7 @@ public class PsiTreeUtil {
   }
 
   /**
-   * Checks wheter one element in the psi tree is under another.
+   * Checks whether one element in the psi tree is under another.
    * @param ancestor parent candidate. <code>false</code> will be returned if ancestor is null.
    * @param element child candidate
    * @param strict whether return true if ancestor and parent are the same.
@@ -58,7 +58,7 @@ public class PsiTreeUtil {
     }
   }
   /**
-   * Checks wheter one element in the psi tree is under another in {@link com.intellij.psi.PsiElement#getContext()}  hierarchy.
+   * Checks whether one element in the psi tree is under another in {@link com.intellij.psi.PsiElement#getContext()}  hierarchy.
    * @param ancestor parent candidate. <code>false</code> will be returned if ancestor is null.
    * @param element child candidate
    * @param strict whether return true if ancestor and parent are the same.
