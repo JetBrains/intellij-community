@@ -193,12 +193,7 @@ public class AddImportAction implements QuestionAction {
     myEditor.getCaretModel().moveToLogicalPosition(pos);
 
     try{
-        if (ref instanceof PsiImportStaticReferenceElement) {
-        ((PsiImportStaticReferenceElement)ref).bindToTargetClass(targetClass);
-      }
-      else {
-        ref.bindToElement(targetClass);
-      }
+      bindReference(ref, targetClass);
       if (CodeStyleSettingsManager.getSettings(myProject).OPTIMIZE_IMPORTS_ON_THE_FLY) {
         Document document = myEditor.getDocument();
         PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
@@ -228,5 +223,9 @@ public class AddImportAction implements QuestionAction {
         }
       }
     });
+  }
+
+  protected void bindReference(PsiReference ref, PsiClass targetClass) {
+    ref.bindToElement(targetClass);
   }
 }
