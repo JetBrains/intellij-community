@@ -282,6 +282,7 @@ public class FileBasedIndex implements ApplicationComponent {
         break;
       }
       catch (IOException e) {
+        LOG.info(e);
         FileUtil.delete(IndexInfrastructure.getIndexRootDir(name));
         IndexInfrastructure.rewriteVersion(versionFile, version);
       }

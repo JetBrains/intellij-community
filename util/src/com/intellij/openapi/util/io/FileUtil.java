@@ -487,6 +487,14 @@ public class FileUtil {
   }
 
   public static void copy(File fromFile, File toFile) throws IOException {
+    performCopy(fromFile, toFile, true);
+  }
+
+  public static void copyContent(File fromFile, File toFile) throws IOException {
+    performCopy(fromFile, toFile, false);
+  }
+
+  private static void performCopy(File fromFile, File toFile, final boolean syncTimestamp) throws IOException {
     FileOutputStream fos;
     try {
       fos = new FileOutputStream(toFile);
@@ -524,7 +532,9 @@ public class FileUtil {
       }
     }
 
-    toFile.setLastModified(fromFile.lastModified());
+    if (syncTimestamp) {
+      toFile.setLastModified(fromFile.lastModified());
+    }
   }
 
   public static void copy(InputStream inputStream, OutputStream outputStream) throws IOException {
