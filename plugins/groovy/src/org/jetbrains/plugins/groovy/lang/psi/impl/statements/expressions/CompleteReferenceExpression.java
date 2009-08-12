@@ -39,10 +39,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ven
@@ -333,7 +330,7 @@ public class CompleteReferenceExpression {
     if (qualifier != null && qualifier.getType() != null) return ArrayUtil.EMPTY_STRING_ARRAY;
 
     final PsiElement scope = PsiTreeUtil.getParentOfType(refExpr, GrMember.class, GroovyFileBase.class);
-    List<String> result = new ArrayList<String>();
+    Set<String> result = new LinkedHashSet<String>();
     addVariantsWithSameQualifier(scope, refExpr, qualifier, result);
     return result.toArray(new String[result.size()]);
   }
@@ -341,19 +338,23 @@ public class CompleteReferenceExpression {
   private static void addVariantsWithSameQualifier(PsiElement element,
                                                    GrReferenceExpression patternExpression,
                                                    GrExpression patternQualifier,
-                                                   List<String> result) {
+                                                   Set<String> result) {
     if (element instanceof GrReferenceExpression && element != patternExpression && !PsiUtil.isLValue((GroovyPsiElement)element)) {
       final GrReferenceExpression refExpr = (GrReferenceExpression)element;
       final String refName = refExpr.getReferenceName();
-      if (refName != null && refExpr.resolve() == null) {
+      if (refName != null && !result.contains(refName)) {
         final GrExpression hisQualifier = refExpr.getQualifierExpression();
         if (hisQualifier != null && patternQualifier != null) {
           if (PsiEquivalenceUtil.areElementsEquivalent(hisQualifier, patternQualifier)) {
-            result.add(refName);
+            if (refExpr.resolve() == null) {
+              result.add(refName);
+            }
           }
         }
         else if (hisQualifier == null && patternQualifier == null) {
-          result.add(refName);
+          if (refExpr.resolve() == null) {
+            result.add(refName);
+          }
         }
       }
     }
