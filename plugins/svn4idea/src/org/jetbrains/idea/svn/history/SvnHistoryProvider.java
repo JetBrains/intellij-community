@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -211,15 +210,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
       }
     };
 
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      boolean success = ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.revisions.history"), true, myVcs.getProject());
-      if (!success) {
-        return null;
-      }
-    }
-    else {
-      command.run();
-    }
+    command.run();
 
     if (exception[0] != null) {
       throw new VcsException(exception[0]);
