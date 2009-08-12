@@ -331,7 +331,7 @@ public class InjectionsSettingsUI implements Configurable {
 
   private class InjectionsTable extends TableView {
     private InjectionsTable(final List<BaseInjection> injections) {
-      super(new ListTableModel<BaseInjection>(createInjectionColumnInfos(), injections, -1));
+      super(new ListTableModel<BaseInjection>(createInjectionColumnInfos(), injections, 1));
       setAutoResizeMode(AUTO_RESIZE_LAST_COLUMN);
       getColumnModel().getColumn(2).setCellRenderer(createLanguageCellRenderer());
       getColumnModel().getColumn(1).setCellRenderer(createDisplayNameCellRenderer());
