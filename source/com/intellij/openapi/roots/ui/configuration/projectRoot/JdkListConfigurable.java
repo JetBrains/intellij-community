@@ -78,7 +78,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
 
   @Nls
   public String getDisplayName() {
-    return "JDKs";
+    return "SDKs";
   }
 
   @Nullable

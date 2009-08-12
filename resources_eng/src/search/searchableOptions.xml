@@ -5966,7 +5966,7 @@
     <option name="tag" hit="Tag name" />
     <option name="url" hit="URL" />
   </configurable>
-  <configurable id="jdk.list" configurable_name="JDKs">
+  <configurable id="jdk.list" configurable_name="SDKs">
     <option name="body" hit="   Select a JDK to view or edit its details here   " />
     <option name="center" hit="   Select a JDK to view or edit its details here   " />
     <option name="details" hit="   Select a JDK to view or edit its details here   " />
