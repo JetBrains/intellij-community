@@ -176,7 +176,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     clearWaiter();
 
     if (myExecuteInDispatchThread) {
-      myWaiterForMerge.addRequest(this, mergingTimeSpan, getMergerModailityState());
+      myWaiterForMerge.addRequest(this, mergingTimeSpan, getMergerModalityState());
     }
     else {
       myWaiterForMerge.addRequest(this, mergingTimeSpan);
@@ -350,10 +350,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    return myName + " active=" + myActive + " sheduled=" + myScheduledUpdates;
+    return myName + " active=" + myActive + " scheduled=" + myScheduledUpdates;
   }
 
-  private ModalityState getMergerModailityState() {
+  private ModalityState getMergerModalityState() {
     return myModalityStateComponent == ANY_COMPONENT ? null : getModalityState();
   }
 
