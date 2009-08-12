@@ -4,30 +4,24 @@
  */
 package org.jetbrains.plugins.groovy.lang;
 
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection;
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection;
 
 import java.io.IOException;
 
 /**
  * @author peter
  */
-public class GroovyHighlightingTest extends JavaCodeInsightFixtureTestCase {
+public class GroovyHighlightingTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
     return "/svnPlugins/groovy/testdata/highlighting/";
-  }
-
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
   }
 
   public void testDuplicateClosurePrivateVariable() throws Throwable {

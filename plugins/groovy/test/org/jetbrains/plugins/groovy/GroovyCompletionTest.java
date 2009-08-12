@@ -17,23 +17,15 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyCompletionTest extends JavaCodeInsightFixtureTestCase {
+public class GroovyCompletionTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
     return "/svnPlugins/groovy/testdata/groovy/completion/";
   }
-
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
-  }
-
 
   public void testFinishMethodWithLParen() throws Throwable {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "getBar", "getClass", "getFoo");
