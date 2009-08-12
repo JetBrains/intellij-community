@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -236,6 +237,9 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
     final Document document = key.getDocument();
     // Sort ranges by end offsets so that we won't need any offset adjustment after reformat or reindent
     if (document == null /*|| documentManager.isUncommited(document) TODO */) return;
+
+    final VirtualFile virtualFile = key.getVirtualFile();
+    if (!virtualFile.isValid()) return;
 
     final TreeMap<RangeMarker, PostponedAction> rangesToProcess = new TreeMap<RangeMarker, PostponedAction>(new Comparator<RangeMarker>() {
       public int compare(final RangeMarker o1, final RangeMarker o2) {
