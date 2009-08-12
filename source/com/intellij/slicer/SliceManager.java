@@ -5,11 +5,15 @@ import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -27,13 +31,22 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
-public class SliceManager {
+@State(
+    name = "SliceManager",
+    storages = {@Storage(id = "other", file = "$WORKSPACE_FILE$")}
+)
+public class SliceManager implements PersistentStateComponent<SliceManager.Bean> {
   private final Project myProject;
   private final ContentManager myBackContentManager;
   private final ContentManager myForthContentManager;
-  private static final String BACKSLICE_TOOLWINDOW_ID = "Dataflow to this";
-  private static final String FORTHSLICE_TOOLWINDOW_ID = "Dataflow from this";
+  private static final String BACKSLICE_ACTION_NAME = ActionManager.getInstance().getAction("SliceBackward").getTemplatePresentation().getText();
+  private static final String FORTHSLICE_ACTION_NAME = ActionManager.getInstance().getAction("SliceForward").getTemplatePresentation().getText();
   private volatile boolean myCanceled;
+  private final Bean myStoredSettings = new Bean();
+
+  public static class Bean {
+    public boolean includeTestSources = true; // to show in dialog
+  }
 
   public static SliceManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, SliceManager.class);
@@ -41,11 +54,11 @@ public class SliceManager {
 
   public SliceManager(@NotNull Project project, @NotNull ToolWindowManager toolWindowManager, @NotNull final Application application) {
     myProject = project;
-    final ToolWindow toolWindow= toolWindowManager.registerToolWindow(BACKSLICE_TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, project);
+    final ToolWindow toolWindow= toolWindowManager.registerToolWindow(BACKSLICE_ACTION_NAME, true, ToolWindowAnchor.BOTTOM, project);
     myBackContentManager = toolWindow.getContentManager();
     new ContentManagerWatcher(toolWindow, myBackContentManager);
 
-    final ToolWindow ftoolWindow= toolWindowManager.registerToolWindow(FORTHSLICE_TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, project);
+    final ToolWindow ftoolWindow= toolWindowManager.registerToolWindow(FORTHSLICE_ACTION_NAME, true, ToolWindowAnchor.BOTTOM, project);
     myForthContentManager = ftoolWindow.getContentManager();
     new ContentManagerWatcher(ftoolWindow, myForthContentManager);
 
@@ -60,10 +73,10 @@ public class SliceManager {
 
   public void slice(@NotNull PsiElement element, boolean dataFlowToThis) {
     if (dataFlowToThis) {
-      doSlice(element, "Dataflow to this", true, myBackContentManager, BACKSLICE_TOOLWINDOW_ID);
+      doSlice(element, BACKSLICE_ACTION_NAME, true, myBackContentManager, BACKSLICE_ACTION_NAME);
     }
     else{
-      doSlice(element, "Dataflow from this", false, myForthContentManager, FORTHSLICE_TOOLWINDOW_ID);
+      doSlice(element, FORTHSLICE_ACTION_NAME, false, myForthContentManager, FORTHSLICE_ACTION_NAME);
     }
   }
 
@@ -72,11 +85,15 @@ public class SliceManager {
     Module module = ModuleUtil.findModuleForPsiElement(element);
     AnalysisUIOptions analysisUIOptions = new AnalysisUIOptions();
     analysisUIOptions.SCOPE_TYPE = AnalysisScope.PROJECT;
-    BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, new AnalysisScope(element.getContainingFile()), module == null ? null : module.getName(), true,
-                                                                   analysisUIOptions);
+    analysisUIOptions.ANALYZE_TEST_SOURCES = myStoredSettings.includeTestSources;
+    AnalysisScope analysisScope = new AnalysisScope(element.getContainingFile());
+    String name = module == null ? null : module.getName();
+    BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, analysisScope, name, true, analysisUIOptions);
     dialog.show();
     if (!dialog.isOK()) return;
+
     AnalysisScope scope = dialog.getScope(analysisUIOptions, new AnalysisScope(myProject), myProject, module);
+    myStoredSettings.includeTestSources = scope.isIncludeTestSource();
 
     final SliceToolwindowSettings sliceToolwindowSettings = SliceToolwindowSettings.getInstance(myProject);
     SliceUsage usage = createRootUsage(element, scope);
@@ -159,5 +176,13 @@ public class SliceManager {
       onCancel.run();
       throw e;
     }
+  }
+
+  public Bean getState() {
+    return myStoredSettings;
+  }
+
+  public void loadState(Bean state) {
+    myStoredSettings.includeTestSources = state.includeTestSources;
   }
 }

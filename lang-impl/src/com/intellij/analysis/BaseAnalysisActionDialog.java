@@ -76,18 +76,16 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    final AnalysisUIOptions uiOptions = myAnalysisOptions;
-
     myTitledSeparator.setText(myAnalysisNoon);
 
     //include test option
-    myInspectTestSource.setSelected(uiOptions.ANALYZE_TEST_SOURCES);
+    myInspectTestSource.setSelected(myAnalysisOptions.ANALYZE_TEST_SOURCES);
 
     //module scope if applicable
     myModuleButton.setText(AnalysisScopeBundle.message("scope.option.module.with.mnemonic", myModuleName));
     boolean useModuleScope = false;
     if (myModuleName != null) {
-      useModuleScope = uiOptions.SCOPE_TYPE == AnalysisScope.MODULE;
+      useModuleScope = myAnalysisOptions.SCOPE_TYPE == AnalysisScope.MODULE;
       myModuleButton.setSelected(myRememberScope && useModuleScope);
     }
 
@@ -97,7 +95,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     final boolean hasVCS = !changeListManager.getAffectedFiles().isEmpty();
     if (hasVCS){
-      useUncommitedFiles = uiOptions.SCOPE_TYPE == AnalysisScope.UNCOMMITED_FILES;
+      useUncommitedFiles = myAnalysisOptions.SCOPE_TYPE == AnalysisScope.UNCOMMITED_FILES;
       myUncommitedFilesButton.setSelected(myRememberScope && useUncommitedFiles);
     }
     myUncommitedFilesButton.setVisible(hasVCS);
@@ -117,14 +115,14 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     myFileButton.setMnemonic(myFileName.charAt(0));
 
     //custom scope
-    myCustomScopeButton.setSelected(myRememberScope && uiOptions.SCOPE_TYPE == AnalysisScope.CUSTOM);
+    myCustomScopeButton.setSelected(myRememberScope && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.CUSTOM);
 
-    myScopeCombo.init(myProject, uiOptions.CUSTOM_SCOPE_NAME.length() > 0 ? uiOptions.CUSTOM_SCOPE_NAME : FindSettings.getInstance().getDefaultScopeName());
+    myScopeCombo.init(myProject, myAnalysisOptions.CUSTOM_SCOPE_NAME.length() > 0 ? myAnalysisOptions.CUSTOM_SCOPE_NAME : FindSettings.getInstance().getDefaultScopeName());
 
     //correct selection
-    myProjectButton.setSelected(myRememberScope && uiOptions.SCOPE_TYPE == AnalysisScope.PROJECT);
+    myProjectButton.setSelected(myRememberScope && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.PROJECT);
     myFileButton.setSelected(!myRememberScope ||
-                             uiOptions.SCOPE_TYPE != AnalysisScope.PROJECT && !useModuleScope && uiOptions.SCOPE_TYPE != AnalysisScope.CUSTOM && !useUncommitedFiles);
+                             myAnalysisOptions.SCOPE_TYPE != AnalysisScope.PROJECT && !useModuleScope && myAnalysisOptions.SCOPE_TYPE != AnalysisScope.CUSTOM && !useUncommitedFiles);
 
     myScopeCombo.setEnabled(myCustomScopeButton.isSelected());
 

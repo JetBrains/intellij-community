@@ -692,4 +692,8 @@ public class AnalysisScope {
     }
     return true;
   }
+
+  public boolean isIncludeTestSource() {
+    return myIncludeTestSource;
+  }
 }
