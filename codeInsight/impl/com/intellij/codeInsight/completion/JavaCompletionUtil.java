@@ -3,17 +3,18 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
-import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.editor.Document;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
@@ -38,6 +39,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -874,27 +876,81 @@ public class JavaCompletionUtil {
     javaReference.processVariants(processor);
 
     for (CompletionElement completionElement : processor.getResults()) {
-      addLookupItem(set, completionElement.getElement(), completionElement.getSubstitutor(), completionElement.getQualifier());
+      ContainerUtil.addIfNotNull(createLookupElement(completionElement), set);
     }
+
+    if (javaReference instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression refExpr = (PsiReferenceExpression)javaReference;
+      final PsiExpression qualifier = refExpr.getQualifierExpression();
+      if (qualifier != null) {
+        final Project project = qualifier.getProject();
+        final PsiType type = GuessManager.getInstance(project).getDataFlowCastedExpressionType(qualifier);
+        if (type != null) {
+          processor.clear();
+
+          final String newText = "((" + type.getCanonicalText() + ") " + qualifier.getText() + ")." + refExpr.getReferenceName();
+          final PsiExpression newRef = JavaPsiFacade.getElementFactory(project).createExpressionFromText(newText, refExpr);
+          ((PsiReferenceExpression)newRef).processVariants(processor);
+
+          final LookupElement castItem = PsiTypeLookupItem.createLookupItem(type);
+
+          for (CompletionElement completionElement : processor.getResults()) {
+            final LookupElement item = createLookupElement(completionElement);
+            if (item != null) {
+              set.add(LookupElementDecorator.delegate(item, new InsertHandlerDecorator<LookupElement>() {
+                public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
+                  final Document document = context.getEditor().getDocument();
+                  PsiDocumentManager.getInstance(project).commitDocument(document);
+                  final PsiFile file = context.getFile();
+                  final PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset(), PsiReferenceExpression.class, false);
+                  if (ref != null) {
+                    final PsiElement qualifier = ref.getQualifier();
+                    if (qualifier != null) {
+                      final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+
+                      final String parenSpace = settings.SPACE_WITHIN_PARENTHESES ? " " : "";
+                      document.insertString(qualifier.getTextRange().getEndOffset(), parenSpace + ")");
+
+                      final String spaceWithin = settings.SPACE_WITHIN_CAST_PARENTHESES ? " " : "";
+                      final String prefix = "(" + parenSpace + "(" + spaceWithin;
+                      final String spaceAfter = settings.SPACE_AFTER_TYPE_CAST ? " " : "";
+                      final int exprStart = qualifier.getTextRange().getStartOffset();
+                      document.insertString(exprStart, prefix + spaceWithin + ")" + spaceAfter);
+
+                      CompletionUtil.emulateInsertion(context, exprStart + prefix.length(), castItem, (char)0);
+                    }
+                  }
+
+                  item.getDelegate().handleInsert(context);
+                }
+              }));
+            }
+          }
+        }
+      }
+    }
+
     return set;
   }
 
-  static void addLookupItem(Set<LookupElement> set, @NotNull Object completion, @Nullable PsiSubstitutor substitutor,
-                                    @Nullable PsiType qualifier) {
+  private static LookupItem<?> createLookupElement(CompletionElement completionElement) {
+    Object completion = completionElement.getElement();
     assert !(completion instanceof LookupElement);
 
-    LookupItem<?> ret = LookupItemUtil.objectToLookupItem(completion);
-    if(ret == null) return;
 
+    LookupItem<?> ret = LookupItemUtil.objectToLookupItem(completion);
+    if (ret == null) return null;
+
+    final PsiSubstitutor substitutor = completionElement.getSubstitutor();
     if (substitutor != null) {
       ret.setAttribute(LookupItem.SUBSTITUTOR, substitutor);
     }
 
+    final PsiType qualifier = completionElement.getQualifier();
     if (qualifier != null) {
       ret.setAttribute(QUALIFIER_TYPE_ATTR, qualifier);
     }
-
-    set.add(ret);
+    return ret;
   }
 
   public static boolean hasAccessibleConstructor(PsiType type) {

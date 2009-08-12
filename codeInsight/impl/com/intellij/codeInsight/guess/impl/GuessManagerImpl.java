@@ -110,19 +110,8 @@ public class GuessManagerImpl extends GuessManager {
 
   @NotNull
   @Override
-  public LinkedHashMap<PsiExpression, PsiType> getDataFlowExpressionTypes(@NotNull final PsiExpression forPlace) {
-    final Map<PsiExpression, PsiType> map = _getDataFlowExpressionTypes(forPlace);
-    List<PsiExpression> exprs = new ArrayList<PsiExpression>(map.keySet());
-    Collections.sort(exprs, new Comparator<PsiExpression>() {
-      public int compare(PsiExpression o1, PsiExpression o2) {
-        return o1.getTextRange().getStartOffset() - o2.getTextRange().getStartOffset();
-      }
-    });
-    final LinkedHashMap<PsiExpression, PsiType> result = new LinkedHashMap<PsiExpression, PsiType>();
-    for (final PsiExpression expression : exprs) {
-      result.put(expression, map.get(expression));
-    }
-    return result;
+  public Map<PsiExpression, PsiType> getDataFlowExpressionTypes(@NotNull final PsiExpression forPlace) {
+    return _getDataFlowExpressionTypes(forPlace);
   }
 
   @NotNull

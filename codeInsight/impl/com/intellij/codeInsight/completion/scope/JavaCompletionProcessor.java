@@ -152,6 +152,10 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     return myResults;
   }
 
+  public void clear() {
+    myResults.clear();
+  }
+
   public boolean shouldProcess(DeclaractionKind kind) {
     switch (kind) {
       case CLASS:
