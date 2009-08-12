@@ -29,6 +29,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
 import com.intellij.util.Alarm;
+import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -49,7 +50,8 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   public AbstractTreeUpdater(AbstractTreeBuilder treeBuilder) {
     myTreeBuilder = treeBuilder;
     final JTree tree = myTreeBuilder.getTree();
-    myUpdateQueue = new MergingUpdateQueue("UpdateQueue", 300, tree.isShowing(), tree) {
+    final JComponent component = tree instanceof TreeTableTree? ((TreeTableTree)tree).getTreeTable() : tree;
+    myUpdateQueue = new MergingUpdateQueue("UpdateQueue", 300, component.isShowing(), component) {
       @Override
       protected Alarm createAlarm(Alarm.ThreadToUse thread, Disposable parent) {
         return new Alarm(thread, parent) {
@@ -60,7 +62,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
         };
       }
     };
-    final UiNotifyConnector uiNotifyConnector = new UiNotifyConnector(tree, myUpdateQueue);
+    final UiNotifyConnector uiNotifyConnector = new UiNotifyConnector(component, myUpdateQueue);
     Disposer.register(this, myUpdateQueue);
     Disposer.register(this, uiNotifyConnector);
   }

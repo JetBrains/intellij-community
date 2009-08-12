@@ -42,6 +42,10 @@ public class TreeTableTree extends Tree {
     setCellRenderer(getCellRenderer());
   }
 
+  public TreeTable getTreeTable() {
+    return myTreeTable;
+  }
+
   public void updateUI() {
     super.updateUI();
     TreeCellRenderer tcr = super.getCellRenderer();
