@@ -16,7 +16,6 @@
 package com.intellij.util.ui.update;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
@@ -36,7 +35,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   private volatile boolean myActive;
   private volatile boolean mySuspended;
 
-  private final Map<Update, Update> mySheduledUpdates = new TreeMap<Update, Update>();
+  private final Map<Update, Update> myScheduledUpdates = new TreeMap<Update, Update>();
 
   private final Alarm myWaiterForMerge;
 
@@ -116,8 +115,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   public void cancelAllUpdates() {
-    synchronized (mySheduledUpdates) {
-      mySheduledUpdates.clear();
+    synchronized (myScheduledUpdates) {
+      myScheduledUpdates.clear();
     }
   }
 
@@ -190,8 +189,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   public void flush() {
-    synchronized (mySheduledUpdates) {
-      if (mySheduledUpdates.isEmpty()) return;
+    synchronized (myScheduledUpdates) {
+      if (myScheduledUpdates.isEmpty()) return;
     }
     flush(true);
   }
@@ -210,9 +209,9 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
         try {
           final Update[] all;
 
-          synchronized (mySheduledUpdates) {
-            all = mySheduledUpdates.keySet().toArray(new Update[mySheduledUpdates.size()]);
-            mySheduledUpdates.clear();
+          synchronized (myScheduledUpdates) {
+            all = myScheduledUpdates.keySet().toArray(new Update[myScheduledUpdates.size()]);
+            myScheduledUpdates.clear();
           }
 
           for (Update each : all) {
@@ -282,8 +281,6 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   public void queue(final Update update) {
-    final Application app = ApplicationManager.getApplication();
-
     if (myPassThrough) {
       if (myDisposed) return;
       update.run();
@@ -291,12 +288,12 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
 
     final boolean active = myActive;
-    synchronized (mySheduledUpdates) {
+    synchronized (myScheduledUpdates) {
       if (eatThisOrOthers(update)) {
         return;
       }
 
-      if (active && mySheduledUpdates.isEmpty()) {
+      if (active && myScheduledUpdates.isEmpty()) {
         restartTimer();
       }
       put(update);
@@ -308,17 +305,17 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   private boolean eatThisOrOthers(Update update) {
-    if (mySheduledUpdates.containsKey(update)) {
+    if (myScheduledUpdates.containsKey(update)) {
       return false;
     }
 
-    final Update[] updates = mySheduledUpdates.keySet().toArray(new Update[mySheduledUpdates.size()]);
+    final Update[] updates = myScheduledUpdates.keySet().toArray(new Update[myScheduledUpdates.size()]);
     for (Update eachInQueue : updates) {
       if (eachInQueue.canEat(update)) {
         return true;
       }
       if (update.canEat(eachInQueue)) {
-        mySheduledUpdates.remove(eachInQueue);
+        myScheduledUpdates.remove(eachInQueue);
       }
     }
     return false;
@@ -329,12 +326,12 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   private void put(Update update) {
-    final Update existing = mySheduledUpdates.remove(update);
+    final Update existing = myScheduledUpdates.remove(update);
     if (existing != null && existing != update) {
       existing.setProcessed();
       existing.setRejected();
     }
-    mySheduledUpdates.put(update, update);
+    myScheduledUpdates.put(update, update);
   }
 
   public boolean isActive() {
@@ -353,7 +350,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    return myName + " active=" + myActive + " sheduled=" + mySheduledUpdates;
+    return myName + " active=" + myActive + " sheduled=" + myScheduledUpdates;
   }
 
   private ModalityState getMergerModailityState() {
@@ -383,8 +380,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   public boolean isEmpty() {
-    synchronized (mySheduledUpdates) {
-      return mySheduledUpdates.size() == 0;
+    synchronized (myScheduledUpdates) {
+      return myScheduledUpdates.size() == 0;
     }
   }
 
