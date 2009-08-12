@@ -62,7 +62,7 @@ public class DomElementsToggleAction extends ToggleAction {
 
   public void setSelected(AnActionEvent e, boolean state) {
     getHiders().put(myClass, state);
-    myTreeView.getBuilder().updateFromRoot(true);
+    myTreeView.getBuilder().updateFromRoot();
   }
 }
 

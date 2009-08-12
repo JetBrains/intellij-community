@@ -32,6 +32,7 @@ import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +51,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
   @NonNls public static String DOM_MODEL_TREE_VIEW_POPUP = "DOM_MODEL_TREE_VIEW_POPUP";
 
   private final SimpleTree myTree;
-  private final LazySimpleTreeBuilder myBuilder;
+  private final AbstractTreeBuilder myBuilder;
   private DomManager myDomManager;
   @Nullable private DomElement myRootElement;
 
@@ -69,12 +70,12 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     ToolTipManager.sharedInstance().registerComponent(myTree);
     TreeUtil.installActions(myTree);
 
-    myBuilder = new LazySimpleTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE);
+    myBuilder = new AbstractTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE);
     Disposer.register(this, myBuilder);
 
     myBuilder.setNodeDescriptorComparator(null);
 
-    myBuilder.initRoot();
+    myBuilder.initRootNode();
 
     add(myTree, BorderLayout.CENTER);
 
@@ -132,7 +133,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
       public void run() {
         if (getProject().isDisposed()) return;
         if (!file.isValid() || isRightFile(file)) {
-          myBuilder.queueUpdate();
+          myBuilder.updateFromRoot();
         }
       }
     });
@@ -154,7 +155,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     return myDomManager.getProject();
   }
 
-  public LazySimpleTreeBuilder getBuilder() {
+  public AbstractTreeBuilder getBuilder() {
     return myBuilder;
   }
 
@@ -209,8 +210,6 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
 
   @Nullable
   private SimpleNode getNodeFor(final DomElement domElement) {
-    myBuilder.setWaiting(false);
-
     return visit((SimpleNode)myBuilder.getTreeStructure().getRootElement(), domElement);
   }
 
