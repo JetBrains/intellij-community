@@ -473,6 +473,14 @@ public class EclipseClasspathReader {
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.SOURCES, "relative-module-src");
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.CLASSES, "relative-module-cls");
         modifiableModel.commit();
+      } else { //try to replace everywhere
+        final Library[] libraries = model.getModuleLibraryTable().getLibraries();
+        for (Library library : libraries) {
+          final Library.ModifiableModel modifiableModel = library.getModifiableModel();
+          replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.SOURCES, "relative-module-src");
+          replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.CLASSES, "relative-module-cls");
+          modifiableModel.commit();
+        }
       }
     }
   }
