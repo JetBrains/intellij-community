@@ -20,6 +20,8 @@ public interface TemplateBuilder {
    */
   void replaceElement(PsiElement element, String replacementText);
 
+  void replaceElement(PsiElement element, TextRange rangeWithinElement, String replacementText);
+
   /**
    * Creates a replacement box for the specified element with the specified expression.
    *

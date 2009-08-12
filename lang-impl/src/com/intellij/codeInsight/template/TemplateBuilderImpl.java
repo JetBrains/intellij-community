@@ -210,6 +210,12 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     replaceElement(element, new ConstantNode(replacementText));
   }
 
+  public void replaceElement(PsiElement element, TextRange rangeWithinElement, String replacementText) {
+    final RangeMarker key = myDocument.createRangeMarker(rangeWithinElement.shiftRight(element.getTextRange().getStartOffset()));
+    myExpressions.put(key, new ConstantNode(replacementText));
+    myElements.add(key);
+  }
+
   public void run() {
     final Project project = myFile.getProject();
     VirtualFile file = myFile.getVirtualFile();
