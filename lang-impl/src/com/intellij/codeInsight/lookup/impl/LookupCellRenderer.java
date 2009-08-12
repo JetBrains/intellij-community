@@ -7,8 +7,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.SimpleColoredComponent;
@@ -83,8 +81,6 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     final LookupElement[] items = lookup.getItems();
     //if (items.length > 0) lookup.getList().setPrototypeCellValue(items[0]);
-
-    myLookupElementPresentation.setItems(items);
 
     UIUtil.removeQuaquaVisualMarginsIn(myPanel);
   }
@@ -221,7 +217,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   }
 
   public int updateMaximumWidth(final LookupElement item){
-    WidthCalculatingPresentation p = new WidthCalculatingPresentation(myLookupElementPresentation);
+    WidthCalculatingPresentation p = new WidthCalculatingPresentation();
     item.renderElement(p);
     int maxWidth = p.myTotalWidth;
     if (p.myIconWidth > myEmptyIcon.getIconWidth()) {
@@ -235,13 +231,12 @@ public class LookupCellRenderer implements ListCellRenderer {
     return myNameComponent.getIconTextGap() + myEmptyIcon.getIconWidth();
   }
 
-  private class LookupElementPresentationImpl extends UserDataHolderBase implements LookupElementPresentation {
+  private class LookupElementPresentationImpl extends LookupElementPresentation {
     private LookupElement myItem;
     private Color myBackground;
     private Color myForeground;
     private JList myList;
     private boolean mySelected;
-    private LookupElement[] myItems;
 
     public boolean isSelected() {
       return mySelected;
@@ -251,16 +246,8 @@ public class LookupCellRenderer implements ListCellRenderer {
       myNameComponent.setIcon(getIcon(icon));
     }
 
-    public void setItemText(final String text) {
-      setItemText(text, false, false);
-    }
-
     public void setItemText(@Nullable final String text, final boolean strikeout, final boolean bold) {
       setItemTextLabels(myItem, myBackground, myForeground, mySelected, text, strikeout, bold);
-    }
-
-    public void setTailText(final String text) {
-      setTailText(text, null, false, false);
     }
 
     public void setTailText(@Nullable final String text, final boolean grayed, final boolean bold, final boolean strikeout) {
@@ -279,10 +266,6 @@ public class LookupCellRenderer implements ListCellRenderer {
       setTailTextLabel(myBackground, fg, text, bold ? BOLD_FONT : NORMAL_FONT, strikeout);
     }
 
-    public void setTypeText(final String text) {
-      setTypeTextLabel(myItem, myBackground, myForeground, myList, text, null);
-    }
-
     public void setTypeText(final String text, final Icon icon) {
       setTypeTextLabel(myItem, myBackground, myForeground, myList, text, icon);
     }
@@ -299,28 +282,11 @@ public class LookupCellRenderer implements ListCellRenderer {
       mySelected = selected;
     }
 
-    public void setItems(final LookupElement[] items) {
-      myItems = items;
-    }
-
-    public LookupElement[] getItems() {
-      return myItems;
-    }
-
-    public int getMaxLength() {
-      return MAX_LENGTH;
-    }
-
   }
 
-  private class WidthCalculatingPresentation extends LookupElementPresentationImpl {
-    private final LookupElementPresentationImpl myBasePresentation;
+  private class WidthCalculatingPresentation extends LookupElementPresentation {
     private int myTotalWidth = 2;
     private int myIconWidth = 0;
-
-    private WidthCalculatingPresentation(final LookupElementPresentationImpl basePresentation) {
-      myBasePresentation = basePresentation;
-    }
 
     @Override
     public boolean isReal() {
@@ -334,10 +300,6 @@ public class LookupCellRenderer implements ListCellRenderer {
       }
     }
 
-    public void setItemText(final String text) {
-      addWidth(text);
-    }
-
     @Override
     public void setItemText(@Nullable final String text, final boolean strikeout, final boolean bold) {
       addWidth(text);
@@ -348,28 +310,16 @@ public class LookupCellRenderer implements ListCellRenderer {
       addWidth(text);
     }
 
-    public void setTailText(final String text) {
-      addWidth(text);
-    }
-
     @Override
     public void setTailText(final String text, final Color foreground, final boolean bold, final boolean strikeout) {
       addWidth(text);
     }
 
-    public void setTypeText(final String text) {
-      addWidth(text + "XXX");
-    }
-
     public void setTypeText(@Nullable final String text, @Nullable final Icon icon) {
-      setTypeText(text);
+      addWidth(text + "XXX");
       if (icon != null) {
         myTotalWidth += icon.getIconWidth()+2;
       }
-    }
-
-    public boolean trimText() {
-      return true;
     }
 
     private void addWidth(@Nullable final String text) {
@@ -378,17 +328,6 @@ public class LookupCellRenderer implements ListCellRenderer {
       }
     }
 
-    public LookupElement[] getItems() {
-      return myBasePresentation.getItems();
-    }
-
-    public <T> T getUserData(final Key<T> key) {
-      return myBasePresentation.getUserData(key);
-    }
-
-    public <T> void putUserData(final Key<T> key, final T value) {
-      myBasePresentation.putUserData(key, value);
-    }
   }
 
   private static class MySimpleColoredComponent extends SimpleColoredComponent {

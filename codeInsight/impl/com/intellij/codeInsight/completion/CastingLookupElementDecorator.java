@@ -38,11 +38,6 @@ public class CastingLookupElementDecorator extends LookupElementDecorator<Lookup
 
     super.renderElement(new DecoratingLookupElementPresentation(presentation) {
       @Override
-      public void setItemText(@Nullable String text) {
-        super.setItemText("(" + castPresentation.getItemText() + ")" + text);
-      }
-
-      @Override
       public void setItemText(@Nullable String text, boolean strikeout, boolean bold) {
         super.setItemText("(" + castPresentation.getItemText() + ")" + text, strikeout, bold);
       }

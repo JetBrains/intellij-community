@@ -67,11 +67,6 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
 
     super.renderElement(new DecoratingLookupElementPresentation(presentation) {
       @Override
-      public void setItemText(@Nullable String text) {
-        super.setItemText(qualifierText + "." + text);
-      }
-
-      @Override
       public void setItemText(@Nullable String text, boolean strikeout, boolean bold) {
         super.setItemText(qualifierText + "." + text, strikeout, bold);
       }

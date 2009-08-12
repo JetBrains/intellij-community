@@ -12,26 +12,32 @@ import java.awt.*;
 /**
  * @author peter
  */
-public interface LookupElementPresentation {
-  void setIcon(@Nullable Icon icon);
+public abstract class LookupElementPresentation {
+  public abstract void setIcon(@Nullable Icon icon);
 
-  void setItemText(@Nullable String text);
+  public final void setItemText(@Nullable String text) {
+    setItemText(text, false, false);
+  }
 
-  void setItemText(@Nullable String text, boolean strikeout, final boolean bold);
+  public abstract void setItemText(@Nullable String text, boolean strikeout, final boolean bold);
 
-  void setTailText(@Nullable String text);
+  public final void setTailText(@Nullable String text) {
+    setTailText(text, false, false, false);
+  }
 
-  void setTailText(@Nullable String text, boolean grayed, boolean bold, boolean strikeout);
+  public abstract void setTailText(@Nullable String text, boolean grayed, boolean bold, boolean strikeout);
 
-  void setTailText(@Nullable String text, @Nullable Color foreground, boolean bold, boolean strikeout);
+  public abstract void setTailText(@Nullable String text, @Nullable Color foreground, boolean bold, boolean strikeout);
 
-  void setTypeText(@Nullable String text);
+  public final void setTypeText(@Nullable String text) {
+    setTypeText(text, null);
+  }
 
-  void setTypeText(@Nullable String text, @Nullable Icon icon);
+  public abstract void setTypeText(@Nullable String text, @Nullable Icon icon);
 
   /**
    * @return whether the presentation is requested to actually render lookup element on screen, or just to estimate its width.
    * In the second, 'non-real' case, some heavy operations (e.g. getIcon()) can be omitted (only icon width is important)
    */
-  boolean isReal();
+  public abstract boolean isReal();
 }
