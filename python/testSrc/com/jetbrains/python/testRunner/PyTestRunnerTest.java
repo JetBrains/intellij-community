@@ -31,7 +31,7 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     final File testDir = new File(PathManager.getHomePath(), "plugins/python/testData/testRunner/tests");
     File testFile = new File(testDir, "unittest1.py");
     String[] result = runUTRunner(testDir.getPath(), testFile.getPath());
-    assertEquals(6, result.length);
+    assertEquals(StringUtil.join(result, "\n"), 6, result.length);
     assertEquals("##teamcity[testCount count='2']", result [0]);
     assertEquals("##teamcity[testStarted location='python_uttestid://unittest1.BadTest.test_fails' name='test_fails (unittest1.BadTest)']", result[1]);
     assertTrue(result [2], result[2].startsWith("##teamcity[testFailed") && result [2].contains("name='test_fails (unittest1.BadTest)'"));
@@ -41,26 +41,26 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     final File testDir = new File(PathManager.getHomePath(), "plugins/python/testData/testRunner/tests");
     File testFile = new File(testDir, "unittest1.py");
     String[] result = runUTRunner(testDir.getPath(), testFile.getPath() + "::GoodTest");
-    assertEquals(3, result.length);
+    assertEquals(StringUtil.join(result, "\n"), 3, result.length);
   }
 
   public void testMethod() throws ExecutionException {
     final File testDir = new File(PathManager.getHomePath(), "plugins/python/testData/testRunner/tests");
     File testFile = new File(testDir, "unittest1.py");
     String[] result = runUTRunner(testDir.getPath(), testFile.getPath() + "::GoodTest::test_passes");
-    assertEquals(3, result.length);
+    assertEquals(StringUtil.join(result, "\n"), 3, result.length);
   }
 
   public void testFolder() throws ExecutionException {
     final File testDir = new File(PathManager.getHomePath(), "plugins/python/testData/testRunner/tests");
     String[] result = runUTRunner(testDir.getPath(), testDir.getPath() + "/");
-    assertEquals(8, result.length);
+    assertEquals(StringUtil.join(result, "\n"), 8, result.length);
   }
 
   public void testDependent() throws ExecutionException {
     final File testDir = new File(PathManager.getHomePath(), "plugins/python/testData/testRunner");
     String[] result = runUTRunner(testDir.getPath(), new File(testDir, "dependentTests/my_class_test.py").getPath());
-    assertEquals(3, result.length);
+    assertEquals(StringUtil.join(result, "\n"), 3, result.length);
   }
 
   private static String[] runUTRunner(String workDir, String... args) throws ExecutionException {
