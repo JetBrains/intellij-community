@@ -1023,6 +1023,11 @@ public class UIUtil {
     }
 
     @Override
+    protected boolean isToggleSelectionEvent(MouseEvent e) {
+      return SwingUtilities.isLeftMouseButton(e) && (SystemInfo.isMac ? e.isMetaDown() : e.isControlDown()) && !e.isPopupTrigger();
+    }
+
+    @Override
     protected void paintVerticalPartOfLeg(final Graphics g, final Rectangle clipBounds, final Insets insets, final TreePath path) {
     }
   }
