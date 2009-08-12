@@ -3,6 +3,7 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -24,7 +25,7 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
            element instanceof PsiTypeElement || element instanceof BeanPropertyElement;
   }
 
-  public void renderElement(final LookupItem item, final Object element, final LookupElementPresentationEx presentation) {
+  public void renderElement(final LookupItem item, final Object element, final LookupElementPresentation presentation) {
     presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(item, presentation.isReal()));
 
     final boolean bold = item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null;

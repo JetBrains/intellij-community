@@ -1,8 +1,8 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.impl.ElementLookupRenderer;
-import com.intellij.codeInsight.lookup.impl.LookupElementPresentationEx;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -17,7 +17,7 @@ public class PropertyLookupRenderer implements ElementLookupRenderer<Property> {
     return element instanceof Property;
   }
 
-  public void renderElement(final LookupItem item, final Property property, final LookupElementPresentationEx presentation) {
+  public void renderElement(final LookupItem item, final Property property, final LookupElementPresentation presentation) {
     presentation.setIcon(Icons.PROPERTY_ICON);
     presentation.setItemText(property.getUnescapedKey());
 
@@ -33,7 +33,7 @@ public class PropertyLookupRenderer implements ElementLookupRenderer<Property> {
       }
     }
 
-    if (presentation.trimText() && value != null && value.length() > 10) value = value.substring(0, 10) + "...";
+    if (presentation.isReal() && value != null && value.length() > 10) value = value.substring(0, 10) + "...";
 
     TextAttributes attrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_VALUE);
     presentation.setTailText("="+ value, attrs.getForegroundColor(), true, false);

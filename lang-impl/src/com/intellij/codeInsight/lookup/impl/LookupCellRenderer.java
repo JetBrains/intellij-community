@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -234,7 +235,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     return myNameComponent.getIconTextGap() + myEmptyIcon.getIconWidth();
   }
 
-  private class LookupElementPresentationImpl extends UserDataHolderBase implements LookupElementPresentationEx {
+  private class LookupElementPresentationImpl extends UserDataHolderBase implements LookupElementPresentation {
     private LookupElement myItem;
     private Color myBackground;
     private Color myForeground;
@@ -310,9 +311,6 @@ public class LookupCellRenderer implements ListCellRenderer {
       return MAX_LENGTH;
     }
 
-    public boolean trimText() {
-      return false;
-    }
   }
 
   private class WidthCalculatingPresentation extends LookupElementPresentationImpl {

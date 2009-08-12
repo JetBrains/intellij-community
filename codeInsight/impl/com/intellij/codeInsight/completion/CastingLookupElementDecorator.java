@@ -5,8 +5,8 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInsight.lookup.impl.DecoratingLookupElementPresentation;
-import com.intellij.codeInsight.lookup.impl.MemorizingLookupElementPresentation;
+import com.intellij.codeInsight.lookup.DecoratingLookupElementPresentation;
+import com.intellij.codeInsight.lookup.MemorizingLookupElementPresentation;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;

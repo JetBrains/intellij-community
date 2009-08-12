@@ -4,12 +4,8 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.codeInsight.lookup.TypedLookupItem;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.impl.MemorizingLookupElementPresentation;
-import com.intellij.codeInsight.lookup.impl.DecoratingLookupElementPresentation;
+import com.intellij.codeInsight.lookup.MemorizingLookupElementPresentation;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;

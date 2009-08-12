@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.impl.ElementLookupRenderer;
-import com.intellij.codeInsight.lookup.impl.LookupElementPresentationEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
@@ -63,7 +62,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   private String myPresentable;
   private AutoCompletionPolicy myAutoCompletionPolicy = AutoCompletionPolicy.SETTINGS_DEPENDENT;
 
-  public LookupItem(T o, @NotNull @NonNls String lookupString){
+  public LookupItem(T o, @NotNull @NonNls String lookupString) {
     setObject(o);
     setLookupString(lookupString);
   }
@@ -240,7 +239,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     for (final ElementLookupRenderer renderer : Extensions.getExtensions(ElementLookupRenderer.EP_NAME)) {
       if (renderer.handlesItem(getObject())) return new LookupElementRenderer<LookupItem>() {
         public void renderElement(final LookupItem element, final LookupElementPresentation presentation) {
-          renderer.renderElement(element, element.getObject(), (LookupElementPresentationEx)presentation);
+          renderer.renderElement(element, element.getObject(), presentation);
         }
       };
     }
