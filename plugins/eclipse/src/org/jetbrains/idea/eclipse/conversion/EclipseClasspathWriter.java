@@ -104,17 +104,27 @@ public class EclipseClasspathWriter {
         else {
           final String[] files = libraryOrderEntry.getUrls(OrderRootType.CLASSES);
           if (files.length > 0) {
+            final Project project = myModel.getModule().getProject();
             final String[] kind = new String[]{EclipseXml.LIB_KIND};
-            final String relativeClassPath = getRelativePath(files[0], kind);
-            final Element orderEntry = addOrderEntry(kind[0], relativeClassPath, classpathRoot, oldRoot);
+            String relativeClassPath = getRelativePath(files[0], kind);
 
             final String[] srcFiles = libraryOrderEntry.getUrls(OrderRootType.SOURCES);
-            setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, srcFiles.length == 0
-                                                                         ? null
-                                                                         : getRelativePath(srcFiles[srcFiles.length - 1], new String[1],
-                                                                                           Comparing.strEqual(kind[0], EclipseXml.VAR_KIND),
-                                                                                           myModel.getModule().getProject(),
-                                                                                           getContentRoot()));
+            final String relativePath;
+            if (srcFiles.length == 0) {
+              relativePath = null;
+            }
+            else {
+              final String[] srcKind = new String[1];
+              final boolean replaceVarsInSrc = Comparing.strEqual(kind[0], EclipseXml.VAR_KIND);
+              relativePath = getRelativePath(srcFiles[srcFiles.length - 1], srcKind, replaceVarsInSrc, project, getContentRoot());
+              if (replaceVarsInSrc && srcKind[0] == null) {
+                kind[0] = EclipseXml.LIB_KIND;
+                relativeClassPath = getRelativePath(files[0], kind, false, project, getContentRoot());
+              }
+            }
+
+            final Element orderEntry = addOrderEntry(kind[0], relativeClassPath, classpathRoot, oldRoot);
+            setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, relativePath);
 
             //clear javadocs before write new
             final List children = new ArrayList(orderEntry.getChildren(EclipseXml.ATTRIBUTES_TAG));
@@ -195,8 +205,10 @@ public class EclipseClasspathWriter {
           final Module module = ModuleUtil.findModuleForFile(file, project);
           if (module != null) {
             final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-            if (contentRoots.length > 0 && VfsUtil.isAncestor(contentRoots[0], file, false)) {
-              return "/" + module.getName() + "/" + VfsUtil.getRelativePath(file, contentRoots[0], '/');
+            for (VirtualFile otherRoot : contentRoots) {
+              if (VfsUtil.isAncestor(otherRoot, file, false)) {
+                return "/" + module.getName() + "/" + VfsUtil.getRelativePath(file, otherRoot, '/');
+              }
             }
           }
         }

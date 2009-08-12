@@ -169,7 +169,7 @@ public class EclipseClasspathReader {
         modifiableModel.addRoot(getUrl(sourcePath), OrderRootType.SOURCES);
       }
 
-      final List<String> docPaths = getClasspathEntryAttribute(element);
+      final List<String> docPaths = getJavadocAttribute(element);
       if (docPaths != null) {
         for (String docPath : docPaths) {
           modifiableModel.addRoot(docPath, JavadocOrderRootType.getInstance());
@@ -225,7 +225,7 @@ public class EclipseClasspathReader {
         modifiableModel.addRoot(getUrl(srcUrl), OrderRootType.SOURCES);
       }
 
-      final List<String> docPaths = getClasspathEntryAttribute(element);
+      final List<String> docPaths = getJavadocAttribute(element);
       if (docPaths != null) {
         for (String docPath : docPaths) {
           modifiableModel.addRoot(docPath, JavadocOrderRootType.getInstance());
@@ -340,12 +340,14 @@ public class EclipseClasspathReader {
         final Module otherModule = ModuleManager.getInstance(myProject).findModuleByName(path.substring(1, path.indexOf('/', 1)));
         if (otherModule != null) {
           final VirtualFile[] contentRoots = ModuleRootManager.getInstance(otherModule).getContentRoots();
-          if (contentRoots.length > 0) {
-            final File relativeToOtherModuleFile = new File(contentRoots[0].getPath(), relativeToOtherModule);
+          for (VirtualFile contentRoot : contentRoots) {
+            final File relativeToOtherModuleFile = new File(contentRoot.getPath(), relativeToOtherModule);
             if (relativeToOtherModuleFile.exists()) {
               url = VfsUtil.pathToUrl(relativeToOtherModuleFile.getPath());
+              break;
             }
           }
+
         } else if (myCurrentRoots != null) {
           for (String currentRoot : myCurrentRoots) {
             final File relativeToOtherModuleFile = new File(currentRoot, relativeToOtherModule);
@@ -377,7 +379,7 @@ public class EclipseClasspathReader {
   }
 
   @Nullable
-  private List<String> getClasspathEntryAttribute(Element element) {
+  private List<String> getJavadocAttribute(Element element) {
     Element attributes = element.getChild("attributes");
     if (attributes == null) {
       return null;
