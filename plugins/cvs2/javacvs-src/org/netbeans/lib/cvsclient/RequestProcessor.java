@@ -12,6 +12,9 @@
  */
 package org.netbeans.lib.cvsclient;
 
+import com.intellij.openapi.util.Ref;
+import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.CommandAbortedException;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.IGlobalOptions;
@@ -28,12 +31,13 @@ import org.netbeans.lib.cvsclient.response.IResponseHandler;
 import org.netbeans.lib.cvsclient.response.ResponseParser;
 import org.netbeans.lib.cvsclient.response.ValidRequestsResponseHandler;
 import org.netbeans.lib.cvsclient.util.BugLog;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * @author Thomas Singer
@@ -157,23 +161,53 @@ public final class RequestProcessor implements IRequestProcessor {
     }
   }
 
-  private boolean processRequests(Requests requests,
-                                  IConnectionStreams connectionStreams,
-                                  IRequestsProgressHandler communicationProgressHandler)
+  private boolean processRequests(final Requests requests,
+                                  final IConnectionStreams connectionStreams,
+                                  final IRequestsProgressHandler communicationProgressHandler)
     throws CommandException, IOCommandException {
+
     BugLog.getInstance().assertNotNull(requests);
 
-    try {
-      sendRequests(requests, connectionStreams, communicationProgressHandler);
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
 
-      sendRequest(requests.getResponseExpectingRequest(), connectionStreams);
-      connectionStreams.flushForReading();
+    final Ref<IOException> ioExceptionRef = new Ref<IOException>();
+    final Ref<CommandException> commandExceptionRef = new Ref<CommandException>();
+    final Ref<Boolean> result = new Ref<Boolean>();
 
-      return handleResponses(connectionStreams, new DefaultResponseHandler());
+    final Future<?> future = Executors.newSingleThreadExecutor().submit(new Runnable() {
+      public void run() {
+        try {
+          sendRequests(requests, connectionStreams, communicationProgressHandler);
+
+          sendRequest(requests.getResponseExpectingRequest(), connectionStreams);
+          connectionStreams.flushForReading();
+
+          result.set(handleResponses(connectionStreams, new DefaultResponseHandler()));
+        }
+        catch (IOException e) {
+          ioExceptionRef.set(e);
+        }
+        catch (CommandException e) {
+          commandExceptionRef.set(e);
+        }
+        finally {
+          semaphore.up();
+        }
+      }
+    });
+
+    semaphore.waitFor((long) (1.2 * myTimeout));
+
+    if (! ioExceptionRef.isNull()) throw new IOCommandException(ioExceptionRef.get());
+    if (! commandExceptionRef.isNull()) throw commandExceptionRef.get();
+
+    if ((! future.isDone() && (! future.isCancelled()))) {
+      future.cancel(true);
+      throw new CommandException(new CommandAbortedException(), "Command execution timed out");
     }
-    catch (IOException ex) {
-      throw new IOCommandException(ex);
-    }
+
+    return result.isNull() ? false : result.get();
   }
 
   private void sendRequests(Requests requests, IConnectionStreams connectionStreams, IRequestsProgressHandler communicationProgressHandler)

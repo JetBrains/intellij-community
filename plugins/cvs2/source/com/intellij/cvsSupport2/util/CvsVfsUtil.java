@@ -1,7 +1,5 @@
 package com.intellij.cvsSupport2.util;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,30 +50,7 @@ public class CvsVfsUtil {
   }
 
   public static VirtualFile refreshAndFindFileByIoFile(final File file) {
-    if (file == null) return null;
-    final VirtualFile[] result = new VirtualFile[1];
-    Runnable action = new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            result[0] = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-          }
-        });
-
-      }
-    };
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      action.run();
-    }
-    else {
-      try {
-        ApplicationManager.getApplication().invokeAndWait(action, ModalityState.defaultModalityState());
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-    return result[0];
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
 
   public static VirtualFile[] getChildrenOf(final VirtualFile directory) {
