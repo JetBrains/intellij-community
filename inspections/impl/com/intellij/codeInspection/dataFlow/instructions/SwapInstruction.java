@@ -10,18 +10,15 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
  * @author max
  */
 public class SwapInstruction extends Instruction {
-  public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
-    final DfaValue a = memState.pop();
-    final DfaValue b = memState.pop();
-    memState.push(a);
-    memState.push(b);
-    Instruction nextInstruction = runner.getInstruction(getIndex() + 1);
-    return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, memState)};
-  }
 
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return apply(runner, stateBefore);
+    final DfaValue a = stateBefore.pop();
+    final DfaValue b = stateBefore.pop();
+    stateBefore.push(a);
+    stateBefore.push(b);
+    Instruction nextInstruction = runner.getInstruction(getIndex() + 1);
+    return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, stateBefore)};
   }
 
   public String toString() {

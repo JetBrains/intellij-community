@@ -9,14 +9,11 @@ import com.intellij.codeInspection.dataFlow.InstructionVisitor;
  * @author max
  */
 public class ReturnFromSubInstruction extends Instruction{
-  public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
-    int offset = memState.popOffset();
-    return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(offset), memState)};
-  }
 
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return apply(runner, stateBefore);
+  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState memState, InstructionVisitor visitor) {
+    int offset = memState.popOffset();
+    return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(offset), memState)};
   }
 
   public String toString() {

@@ -12,14 +12,6 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 
 public class NotInstruction extends Instruction {
-  public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
-    DfaValue dfaValue = memState.pop();
-
-    dfaValue = dfaValue.createNegated();
-    memState.push(dfaValue);
-
-    return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(getIndex() + 1), memState)};
-  }
 
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {

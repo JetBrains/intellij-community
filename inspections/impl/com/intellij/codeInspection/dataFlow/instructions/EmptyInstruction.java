@@ -12,15 +12,11 @@ import com.intellij.codeInspection.dataFlow.*;
 
 
 public class EmptyInstruction extends Instruction {
-  public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
-    Instruction nextInstruction = runner.getInstruction(getIndex() + 1);
-    DfaMemoryState nextState = memState; //.createCopy();
-    return new DfaInstructionState[] {new DfaInstructionState(nextInstruction, nextState)};
-  }
 
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return apply(runner, stateBefore);
+    Instruction nextInstruction = runner.getInstruction(getIndex() + 1);
+    return new DfaInstructionState[] {new DfaInstructionState(nextInstruction, stateBefore)};
   }
 
   public String toString() {

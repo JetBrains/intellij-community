@@ -10,17 +10,14 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
  * @author max
  */
 public class DupInstruction extends Instruction {
-  public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
+
+  @Override
+  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState memState, InstructionVisitor visitor) {
     final DfaValue a = memState.pop();
     memState.push(a);
     memState.push(a);
     Instruction nextInstruction = runner.getInstruction(getIndex() + 1);
     return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, memState)};
-  }
-
-  @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return apply(runner, stateBefore);
   }
 
   public String toString() {

@@ -18,14 +18,8 @@ public class FlushVariableInstruction extends Instruction {
     myVariable = expr;
   }
 
-  public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
-    Instruction nextInstruction = runner.getInstruction(getIndex() + 1);
-    if (myVariable != null) {
-      memState.flushVariable(myVariable);
-    } else {
-      memState.flushFields(runner);
-    }
-    return new DfaInstructionState[] {new DfaInstructionState(nextInstruction, memState)};
+  public DfaVariableValue getVariable() {
+    return myVariable;
   }
 
   @Override

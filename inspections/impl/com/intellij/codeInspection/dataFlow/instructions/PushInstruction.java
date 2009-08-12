@@ -15,6 +15,7 @@ import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiExpression;
+import org.jetbrains.annotations.NotNull;
 
 public class PushInstruction extends Instruction {
   private final DfaValue myValue;
@@ -25,13 +26,13 @@ public class PushInstruction extends Instruction {
     myPlace = place;
   }
 
-  public PsiExpression getPlace() {
-    return myPlace;
+  @NotNull
+  public DfaValue getValue() {
+    return myValue;
   }
 
-  public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
-    memState.push(myValue);
-    return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(getIndex() + 1),memState)};
+  public PsiExpression getPlace() {
+    return myPlace;
   }
 
   @Override

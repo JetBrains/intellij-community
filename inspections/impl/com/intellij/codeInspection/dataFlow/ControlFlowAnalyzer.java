@@ -1429,16 +1429,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       }
     }
     return new Instruction() {
-      @Override
-      public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
-        memState.pop();
-        memState.push(DfaUnknownValue.getInstance());
-        return super.apply(runner, memState);
-      }
 
       @Override
       public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-        return apply(runner, stateBefore);
+        stateBefore.pop();
+        stateBefore.push(DfaUnknownValue.getInstance());
+        return nextInstruction(runner, stateBefore);
       }
     };
   }

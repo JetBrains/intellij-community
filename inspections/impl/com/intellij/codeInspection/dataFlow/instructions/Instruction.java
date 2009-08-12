@@ -24,10 +24,10 @@ public abstract class Instruction {
     myProcessedStates = new ArrayList<DfaMemoryState>();
   }
 
-  public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState stateBefore) {
+  protected final DfaInstructionState[] nextInstruction(DataFlowRunner runner, DfaMemoryState stateBefore) {
     return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(getIndex() + 1), stateBefore)};
   }
-  
+
   public abstract DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor);
 
   public boolean isMemoryStateProcessed(DfaMemoryState dfaMemState) {

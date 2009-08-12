@@ -21,14 +21,10 @@ public class GotoInstruction extends Instruction {
     this.myOffset = myOffset;
   }
 
-  public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
-    Instruction nextInstruction = runner.getInstruction(myOffset);
-    return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, memState)};
-  }
-
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return apply(runner, stateBefore);
+    Instruction nextInstruction = runner.getInstruction(myOffset);
+    return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, stateBefore)};
   }
 
   public String toString() {

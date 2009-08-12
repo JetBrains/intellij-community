@@ -11,13 +11,10 @@ package com.intellij.codeInspection.dataFlow.instructions;
 import com.intellij.codeInspection.dataFlow.*;
 
 public class ReturnInstruction extends Instruction {
-  public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
-    return DfaInstructionState.EMPTY_ARRAY;
-  }
 
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return apply(runner, stateBefore);
+    return DfaInstructionState.EMPTY_ARRAY;
   }
 
   public String toString() {

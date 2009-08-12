@@ -11,14 +11,11 @@ package com.intellij.codeInspection.dataFlow.instructions;
 import com.intellij.codeInspection.dataFlow.*;
 
 public class PopInstruction extends Instruction {
-  public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
-    memState.pop();
-    return super.apply(runner, memState);
-  }
 
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return apply(runner, stateBefore);
+    stateBefore.pop();
+    return nextInstruction(runner, stateBefore);
   }
 
   public String toString() {

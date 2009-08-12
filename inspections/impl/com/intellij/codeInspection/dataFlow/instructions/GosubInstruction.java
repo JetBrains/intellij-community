@@ -15,16 +15,12 @@ public class GosubInstruction extends Instruction {
     mySubprogramOffset = subprogramOffset;
   }
 
-  public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
-    final int returnIndex = getIndex() + 1;
-    memState.pushOffset(returnIndex);
-    Instruction nextInstruction = runner.getInstruction(mySubprogramOffset);
-    return new DfaInstructionState[] {new DfaInstructionState(nextInstruction, memState)};
-  }
-
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return apply(runner, stateBefore);
+    final int returnIndex = getIndex() + 1;
+    stateBefore.pushOffset(returnIndex);
+    Instruction nextInstruction = runner.getInstruction(mySubprogramOffset);
+    return new DfaInstructionState[] {new DfaInstructionState(nextInstruction, stateBefore)};
   }
 
   public String toString() {
