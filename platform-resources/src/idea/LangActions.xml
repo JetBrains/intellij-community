@@ -285,6 +285,8 @@
       <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction"/>
       <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction"/>
       <action id="IntroduceConstant" class="com.intellij.refactoring.actions.IntroduceConstantAction"/>
+      <action id="IntroduceField" class="com.intellij.refactoring.actions.IntroduceFieldAction"/>
+      <action id="IntroduceParameter" class="com.intellij.refactoring.actions.IntroduceParameterAction"/>
       <action id="Inline" class="com.intellij.refactoring.actions.InlineAction"/>
       <separator/>
       <action id="MembersPullUp" class="com.intellij.refactoring.actions.PullUpAction"/>

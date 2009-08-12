@@ -150,8 +150,6 @@
     </group>
 
     <group id="RefactoringMenu3">
-      <action id="IntroduceField" class="com.intellij.refactoring.actions.IntroduceFieldAction"/>
-      <action id="IntroduceParameter" class="com.intellij.refactoring.actions.IntroduceParameterAction"/>
       <separator/>
       <action id="ExtractInterface" class="com.intellij.refactoring.actions.ExtractInterfaceAction"/>
       <action id="ExtractSuperclass" class="com.intellij.refactoring.actions.ExtractSuperclassAction"/>
