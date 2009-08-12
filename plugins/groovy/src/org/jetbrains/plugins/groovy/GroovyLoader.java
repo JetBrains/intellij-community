@@ -28,16 +28,15 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
-import org.jetbrains.plugins.groovy.lang.GroovyChangeUtilSupport;
 import com.intellij.refactoring.rename.RenameInputValidator;
 import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
 import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.local.GroovyAddImportsPassFactory;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 import org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry;
+import org.jetbrains.plugins.groovy.lang.GroovyChangeUtilSupport;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManager;
 import org.jetbrains.plugins.groovy.lang.groovydoc.completion.GroovyDocCompletionData;
@@ -65,8 +64,6 @@ public class GroovyLoader implements ApplicationComponent {
         final TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(project);
         GroovyUnusedImportsPassFactory unusedImportsPassFactory = project.getComponent(GroovyUnusedImportsPassFactory.class);
         registrar.registerTextEditorHighlightingPass(unusedImportsPassFactory, new int[]{Pass.UPDATE_ALL}, null, true, -1);
-        GroovyAddImportsPassFactory addImportsPassFactory = project.getComponent(GroovyAddImportsPassFactory.class);
-        registrar.registerTextEditorHighlightingPass(addImportsPassFactory, new int[]{Pass.POPUP_HINTS}, null, true, -1);
 
         DebuggerManager.getInstance(project).registerPositionManagerFactory(new Function<DebugProcess, PositionManager>() {
           public PositionManager fun(DebugProcess debugProcess) {

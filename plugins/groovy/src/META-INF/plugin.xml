@@ -431,9 +431,6 @@
       <interface-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager</interface-class>
       <implementation-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManagerImpl</implementation-class>
     </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyAddImportsPassFactory</implementation-class>
-    </component>
   </project-components>
 
 </idea-plugin>

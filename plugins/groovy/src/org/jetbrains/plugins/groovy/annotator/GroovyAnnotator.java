@@ -15,7 +15,6 @@
 
 package org.jetbrains.plugins.groovy.annotator;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
@@ -941,11 +940,7 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private static void registerAddImportFixes(GrReferenceElement refElement, Annotation annotation) {
-    final IntentionAction[] actions = OuterImportsActionCreator.getOuterImportFixes(refElement, refElement.getProject());
-    for (IntentionAction action : actions) {
-      annotation.registerFix(action);
-    }
-//    OuterImportsActionCreator.createOuterImportFixesAction(refElement);
+    annotation.registerFix(new GroovyAddImportAction(refElement));
   }
 
   private static void registerCreateClassByTypeFix(GrReferenceElement refElement, Annotation annotation) {
