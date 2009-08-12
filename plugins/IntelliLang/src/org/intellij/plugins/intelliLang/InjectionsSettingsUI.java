@@ -250,6 +250,10 @@ public class InjectionsSettingsUI implements Configurable {
 
   public void apply() {
     myConfiguration.replaceInjections(myInjections, myOriginalInjections);
+    myOriginalInjections.clear();
+    myOriginalInjections.addAll(myInjections);
+    sortInjections(myOriginalInjections);    
+    reset();
   }
 
   public boolean isModified() {
