@@ -254,7 +254,8 @@ public class NewMappings {
 
   public List<VcsDirectoryMapping> getDirectoryMappings(String vcsName) {
     synchronized (myLock) {
-      return new ArrayList<VcsDirectoryMapping>(myVcsToPaths.get(vcsName));
+      final List<VcsDirectoryMapping> mappings = myVcsToPaths.get(vcsName);
+      return mappings == null ? new ArrayList<VcsDirectoryMapping>() : new ArrayList<VcsDirectoryMapping>(mappings);
     }
   }
 
