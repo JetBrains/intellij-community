@@ -166,19 +166,9 @@ public class LookupCellRenderer implements ListCellRenderer {
     label.setText(text);
     label.setFont(NORMAL_FONT);
 
-    if (maxWidth > 0) {
-      while (label.getPreferredSize().width > maxWidth) {
-        String repl = text.replaceFirst("<((<\\.\\.\\.>)|[^<>])*>", "<...>");
-        if (repl.equals(text)) {
-          text = "...";
-          label.setText(text);
-          break;
-        }
-        text = repl;
-        label.setText(text);
-      }
+    if (maxWidth > 0 && label.getPreferredSize().width > maxWidth) {
+      label.setText("...");
     }
-
 
     Color sampleBackground = background;
 

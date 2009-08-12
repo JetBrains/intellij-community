@@ -2,12 +2,10 @@ package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -29,13 +27,24 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
     presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(item, presentation.isReal()));
 
     final boolean bold = item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null;
-    final boolean grayed = item.getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null;
-
     boolean strikeout = isToStrikeout(item);
     presentation.setItemText(getName(element, item), strikeout, bold);
 
-    final String tailText = getTailText(element, item);
-    presentation.setTailText(tailText != null ? tailText : "", grayed, false, strikeout);
+    String tailText = StringUtil.notNullize(getTailText(element, item));
+    boolean grayed = item.getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null;
+    PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
+    if (element instanceof PsiClass) {
+      final PsiClass psiClass = (PsiClass)element;
+      if (item.getAttribute(LookupItem.INDICATE_ANONYMOUS) != null &&
+          (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT))) {
+        tailText = "{...}" + tailText;
+      }
+      if (substitutor != null && psiClass.getTypeParameters().length > 0) {
+        tailText = "<...>" + tailText;
+      }
+      grayed = true;
+    }
+    presentation.setTailText(tailText, grayed, false, strikeout);
 
     final String typeText = getTypeText(element, item);
     presentation.setTypeText(typeText != null ? typeText : "");
@@ -51,22 +60,10 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
     if (o instanceof PsiElement) {
       final PsiElement element = (PsiElement)o;
       if (element.isValid()) {
-        name = PsiUtilBase.getName(element);
-
-        if (element instanceof PsiClass) {
-          PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
-          if (substitutor != null && !substitutor.isValid()) {
-            PsiType type = (PsiType)item.getAttribute(LookupItem.TYPE);
-            if (type != null) {
-              name = type.getPresentableText();
-            }
-          }
-          else {
-            name = formatTypeName((PsiClass)element, substitutor);
-          }
-        }
-        else if (element instanceof PsiKeyword || element instanceof PsiExpression || element instanceof PsiTypeElement) {
+        if (element instanceof PsiKeyword || element instanceof PsiExpression || element instanceof PsiTypeElement) {
           name = element.getText();
+        } else {
+          name = PsiUtilBase.getName(element);
         }
       }
     }
@@ -108,14 +105,6 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
       }
       else{
         text += tailText;
-      }
-    }
-    if(item.getAttribute(LookupItem.INDICATE_ANONYMOUS) != null){
-      if(o instanceof PsiClass){
-        final PsiClass psiClass = (PsiClass) o;
-        if(psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)){
-          text += "{...}";
-        }
       }
     }
     return text;
@@ -167,35 +156,6 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
       return substitutor.substitute(returnType).getPresentableText();
     }
     return returnType.getPresentableText();
-  }
-
-  @Nullable
-  private static String formatTypeName(final PsiClass element, final PsiSubstitutor substitutor) {
-    final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(element.getProject());
-    String name = element.getName();
-    if(substitutor != null){
-      final PsiTypeParameter[] params = element.getTypeParameters();
-      if(params.length > 0){
-        StringBuffer buffer = new StringBuffer();
-        buffer.append("<");
-        boolean flag = true;
-        for(int i = 0; i < params.length; i++){
-          final PsiTypeParameter param = params[i];
-          final PsiType type = substitutor.substitute(param);
-          if(type == null){
-            flag = false;
-            break;
-          }
-          buffer.append(type.getPresentableText());
-          if(i < params.length - 1){ buffer.append(",");
-            if(styleSettings.SPACE_AFTER_COMMA) buffer.append(" ");
-          }
-        }
-        buffer.append(">");
-        if(flag) name += buffer;
-      }
-    }
-    return name;
   }
 
   private static boolean isToStrikeout(LookupItem<?> item) {
