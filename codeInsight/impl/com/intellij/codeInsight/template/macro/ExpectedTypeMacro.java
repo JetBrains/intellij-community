@@ -75,7 +75,7 @@ public class ExpectedTypeMacro implements Macro{
     PsiElement element = fileCopy.findElementAt(offset);
 
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiExpression) {
-      ExpectedTypeInfo[] infos = ExpectedTypesProvider.getInstance(project).getExpectedTypes((PsiExpression)element.getParent(), false);
+      ExpectedTypeInfo[] infos = ExpectedTypesProvider.getInstance(project).getExpectedTypes((PsiExpression)element.getParent(), true);
       if (infos.length > 0){
         types = new PsiType[infos.length];
         for(int i = 0; i < infos.length; i++) {
