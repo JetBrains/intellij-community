@@ -131,9 +131,9 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
   }
 
-  private void setTailTextLabel(final Color background, Color foreground, final String text, final boolean bold, final boolean strikeout) {
-    if (StringUtil.isEmpty(text)) {
-      return;
+  private void setTailTextLabel(final Color background, Color foreground, String text, final boolean bold, final boolean strikeout) {
+    if (text == null) {
+      text = "";
     }
 
     myTailComponent.setFont(bold ? BOLD_FONT : NORMAL_FONT);
