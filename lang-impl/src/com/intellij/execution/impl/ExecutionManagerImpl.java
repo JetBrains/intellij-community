@@ -20,10 +20,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author dyoma
@@ -85,7 +82,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
           final RunConfiguration runConfiguration = (RunConfiguration)configuration;
           final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
 
-          final Map<BeforeRunTaskProvider<BeforeRunTask>, BeforeRunTask> activeProviders = new HashMap<BeforeRunTaskProvider<BeforeRunTask>, BeforeRunTask>();
+          final Map<BeforeRunTaskProvider<BeforeRunTask>, BeforeRunTask> activeProviders = new LinkedHashMap<BeforeRunTaskProvider<BeforeRunTask>, BeforeRunTask>();
           for (final BeforeRunTaskProvider<BeforeRunTask> provider : Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, myProject)) {
             final BeforeRunTask task = runManager.getBeforeRunTask(runConfiguration, provider.getId());
             if (task != null && task.isEnabled()) {

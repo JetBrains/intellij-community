@@ -1,6 +1,7 @@
 package com.intellij.packaging.impl.compiler;
 
 import com.intellij.compiler.impl.ModuleCompileScope;
+import com.intellij.compiler.impl.ProjectCompileScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Collection;
 
 /**
  * @author nik
@@ -43,6 +45,12 @@ public class ArtifactCompileScope {
 
     final ModuleCompileScope scope = new ModuleCompileScope(project, modules.toArray(new Module[modules.size()]), true);
     scope.putUserData(ARTIFACTS_KEY, new Artifact[]{artifact});
+    return scope;
+  }
+
+  public static ProjectCompileScope create(@NotNull Project project, @NotNull Collection<Artifact> artifacts) {
+    final ProjectCompileScope scope = new ProjectCompileScope(project);
+    scope.putUserData(ARTIFACTS_KEY, artifacts.toArray(new Artifact[artifacts.size()]));
     return scope;
   }
 

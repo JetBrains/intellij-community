@@ -1,10 +1,9 @@
 package com.intellij.packaging.impl.compiler;
 
-import com.intellij.packaging.elements.IncrementalCompilerInstructionCreator;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.compiler.impl.packagingCompiler.PackagingProcessingItem;
 import com.intellij.compiler.impl.packagingCompiler.ExplodedDestinationInfo;
 import com.intellij.compiler.impl.packagingCompiler.JarInfo;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.elements.IncrementalCompilerInstructionCreator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,9 +24,8 @@ public class CopyToDirectoryInstructionCreator extends IncrementalCompilerInstru
   }
 
   public void addFileCopyInstruction(@NotNull VirtualFile file) {
-    final PackagingProcessingItem item = myContext.getOrCreateProcessingItem(file);
     final String fileName = file.getName();
-    item.addDestination(new ExplodedDestinationInfo(myOutputPath + "/" + fileName, outputChild(fileName)));
+    myContext.addDestination(file, new ExplodedDestinationInfo(myOutputPath + "/" + fileName, outputChild(fileName)));
   }
 
   public IncrementalCompilerInstructionCreator subFolder(String directoryName) {

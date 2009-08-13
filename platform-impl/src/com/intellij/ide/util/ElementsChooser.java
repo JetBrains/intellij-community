@@ -241,6 +241,10 @@ public class ElementsChooser<T> extends JPanel {
     myTable.requestFocus();
   }
 
+  public void setElementProperties(T element, ElementProperties properties) {
+    myElementToPropertiesMap.put(element, properties);
+  }
+
   public void setElements(List<T> elements, boolean marked) {
     myTableModel.clear();
     myTableModel.addElements(elements, marked);

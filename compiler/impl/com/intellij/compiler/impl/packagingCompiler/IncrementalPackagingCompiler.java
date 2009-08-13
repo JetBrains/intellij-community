@@ -27,7 +27,7 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class IncrementalPackagingCompiler extends PackagingCompilerBase<OldProcessingItemsBuilderContext> {
+public class IncrementalPackagingCompiler extends PackagingCompilerBase {
   public static final Key<Set<BuildParticipant>> AFFECTED_PARTICIPANTS_KEY = Key.create("AFFECTED_PARTICIPANTS");
   private static final Key<List<String>> FILES_TO_DELETE_KEY = Key.create("files_to_delete");
   private static final Key<OldProcessingItemsBuilderContext> BUILDER_CONTEXT_KEY = Key.create("processing_items_builder");

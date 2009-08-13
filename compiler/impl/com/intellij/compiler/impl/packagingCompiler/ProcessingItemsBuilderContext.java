@@ -5,6 +5,7 @@
 package com.intellij.compiler.impl.packagingCompiler;
 
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.FileProcessingCompiler;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -15,8 +16,8 @@ import java.util.*;
 /**
  * @author nik
  */
-public class ProcessingItemsBuilderContext {
-  private final Map<VirtualFile, PackagingProcessingItem> myItemsBySource;
+public abstract class ProcessingItemsBuilderContext<Item extends FileProcessingCompiler.ProcessingItem> {
+  protected final Map<VirtualFile, Item> myItemsBySource;
   private final Map<String, VirtualFile> mySourceByOutput;
   private final Map<VirtualFile, JarInfo> myCachedJarForDir;
   private final MultiValuesMap<String, JarInfo> myJarsByPath;
@@ -26,7 +27,7 @@ public class ProcessingItemsBuilderContext {
   public ProcessingItemsBuilderContext(final CompileContext compileContext) {
     myCompileContext = compileContext;
     myManifestFiles = new ArrayList<ManifestFileInfo>();
-    myItemsBySource = new HashMap<VirtualFile, PackagingProcessingItem>();
+    myItemsBySource = new HashMap<VirtualFile, Item>();
     mySourceByOutput = new HashMap<String, VirtualFile>();
     myCachedJarForDir = new HashMap<VirtualFile, JarInfo>();
     myJarsByPath = new MultiValuesMap<String, JarInfo>();
@@ -36,10 +37,7 @@ public class ProcessingItemsBuilderContext {
     return myManifestFiles;
   }
 
-  public PackagingProcessingItem[] getProcessingItems() {
-    final Collection<PackagingProcessingItem> processingItems = myItemsBySource.values();
-    return processingItems.toArray(new PackagingProcessingItem[processingItems.size()]);
-  }
+  public abstract Item[] getProcessingItems();
 
   public boolean checkOutputPath(final String outputPath, final VirtualFile sourceFile) {
     VirtualFile old = mySourceByOutput.get(outputPath);
@@ -51,7 +49,7 @@ public class ProcessingItemsBuilderContext {
     return false;
   }
 
-  public PackagingProcessingItem getItemBySource(VirtualFile source) {
+  public Item getItemBySource(VirtualFile source) {
     return myItemsBySource.get(source);
   }
 
@@ -85,12 +83,14 @@ public class ProcessingItemsBuilderContext {
     myManifestFiles.add(manifestFileInfo);
   }
 
-  public PackagingProcessingItem getOrCreateProcessingItem(VirtualFile sourceFile) {
-    PackagingProcessingItem item = myItemsBySource.get(sourceFile);
+  public Item getOrCreateProcessingItem(VirtualFile sourceFile) {
+    Item item = myItemsBySource.get(sourceFile);
     if (item == null) {
-      item = new PackagingProcessingItem(sourceFile);
+      item = createProcessingItem(sourceFile);
       myItemsBySource.put(sourceFile, item);
     }
     return item;
   }
+
+  protected abstract Item createProcessingItem(VirtualFile sourceFile);
 }

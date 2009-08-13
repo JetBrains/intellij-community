@@ -5,6 +5,7 @@ import com.intellij.compiler.impl.javaCompiler.JavaCompiler;
 import com.intellij.compiler.impl.packagingCompiler.IncrementalPackagingCompiler;
 import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
 import com.intellij.compiler.impl.rmiCompiler.RmicCompiler;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
@@ -54,7 +55,7 @@ public class CompilerManagerImpl extends CompilerManager {
     addCompiler(new ResourceCompiler(myProject, compilerConfiguration));
     addCompiler(new RmicCompiler());
     addCompiler(new IncrementalPackagingCompiler());
-    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+    if (ApplicationManagerEx.getApplicationEx().isInternal() || ApplicationManager.getApplication().isUnitTestMode()) {
       addCompiler(new IncrementalArtifactsCompiler());
     }
 

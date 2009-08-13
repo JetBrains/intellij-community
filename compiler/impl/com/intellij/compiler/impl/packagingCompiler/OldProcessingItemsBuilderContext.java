@@ -8,13 +8,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.deployment.DeploymentUtilImpl;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.packaging.impl.compiler.ArtifactPackagingProcessingItem;
 
 import java.util.*;
 
 /**
  * @author nik
  */
-public class OldProcessingItemsBuilderContext extends ProcessingItemsBuilderContext {
+public class OldProcessingItemsBuilderContext extends ProcessingItemsBuilderContext<PackagingProcessingItem> {
   private final Map<BuildConfiguration, JarInfo> myCachedJarForConfiguration;
   private final Map<ExplodedDestinationInfo, BuildParticipant> myDestinationOwners;
   private final MultiValuesMap<Module, PackagingProcessingItem> myItemsByModule;
@@ -73,5 +74,14 @@ public class OldProcessingItemsBuilderContext extends ProcessingItemsBuilderCont
 
   public BuildParticipant getDestinationOwner(ExplodedDestinationInfo destination) {
     return myDestinationOwners.get(destination);
+  }
+
+  protected PackagingProcessingItem createProcessingItem(VirtualFile sourceFile) {
+    return new PackagingProcessingItem(sourceFile);
+  }
+
+  public PackagingProcessingItem[] getProcessingItems() {
+    final Collection<PackagingProcessingItem> processingItems = myItemsBySource.values();
+    return processingItems.toArray(new PackagingProcessingItem[processingItems.size()]);
   }
 }

@@ -33,13 +33,13 @@ import java.util.jar.Manifest;
 /**
  * @author nik
  */
-public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderContext> implements PackagingCompiler {
+public abstract class PackagingCompilerBase implements PackagingCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.packagingCompiler.PackagingCompilerBase");
   private final Key<List<String>> myFilesToDeleteKey;
-  private final Key<C> myBuilderContextKey;
+  private final Key<OldProcessingItemsBuilderContext> myBuilderContextKey;
   @Nullable private PackagingCompilerCache myOutputItemsCache;
 
-  protected PackagingCompilerBase(final Key<List<String>> filesToDeleteKey, final Key<C> builderContextKey) {
+  protected PackagingCompilerBase(final Key<List<String>> filesToDeleteKey, final Key<OldProcessingItemsBuilderContext> builderContextKey) {
     myFilesToDeleteKey = filesToDeleteKey;
     myBuilderContextKey = builderContextKey;
   }
@@ -55,7 +55,7 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
 
   protected abstract String getOutputCacheId();
 
-  protected abstract PackagingProcessingItem[] collectItems(C builderContext, final Project project);
+  protected abstract PackagingProcessingItem[] collectItems(OldProcessingItemsBuilderContext builderContext, final Project project);
 
   public void processOutdatedItem(final CompileContext context, final String url, @Nullable final ValidityState state) {
   }
@@ -164,7 +164,7 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
     }
     final DeploymentUtil deploymentUtil = DeploymentUtil.getInstance();
     final FileFilter fileFilter = new IgnoredFileFilter();
-    final C builderContext = context.getUserData(myBuilderContextKey);
+    final OldProcessingItemsBuilderContext builderContext = context.getUserData(myBuilderContextKey);
     final Set<JarInfo> changedJars = new THashSet<JarInfo>();
     for (String deletedJar : deletedJars) {
       final Collection<JarInfo> infos = builderContext.getJarInfos(deletedJar);
@@ -251,7 +251,7 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
     return true;
   }
 
-  protected void onBuildFinished(C context, JarsBuilder builder, final Project project) throws Exception {
+  protected void onBuildFinished(OldProcessingItemsBuilderContext context, JarsBuilder builder, final Project project) throws Exception {
   }
 
   private static void createManifestFiles(final List<ManifestFileInfo> manifestFileInfos) throws IOException {
@@ -379,13 +379,13 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
   public ProcessingItem[] getProcessingItems(final CompileContext context) {
     return new ReadAction<ProcessingItem[]>() {
       protected void run(final Result<ProcessingItem[]> result) {
-        final boolean shouldStartBuild = doNotStartBuild(context);
-        if (shouldStartBuild) {
+        final boolean doNotStartBuild = doNotStartBuild(context);
+        if (doNotStartBuild) {
           result.setResult(ProcessingItem.EMPTY_ARRAY);
           return;
         }
 
-        C builderContext = createContext(context);
+        OldProcessingItemsBuilderContext builderContext = createContext(context);
         context.putUserData(myBuilderContextKey, builderContext);
         PackagingProcessingItem[] allProcessingItems = collectItems(builderContext, context.getProject());
 
@@ -411,12 +411,12 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
 
   protected abstract boolean doNotStartBuild(CompileContext context);
 
-  protected abstract C createContext(CompileContext context);
+  protected abstract OldProcessingItemsBuilderContext createContext(CompileContext context);
 
-  protected void onFileCopied(C builderContext, ExplodedDestinationInfo explodedDestination) {
+  protected void onFileCopied(OldProcessingItemsBuilderContext builderContext, ExplodedDestinationInfo explodedDestination) {
   }
 
-  protected void beforeBuildStarted(C context) {
+  protected void beforeBuildStarted(OldProcessingItemsBuilderContext context) {
   }
 
   private static class MockProcessingItem implements ProcessingItem {

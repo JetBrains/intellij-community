@@ -44,7 +44,9 @@ public class CompileStepBeforeRun implements BeforeRunTaskProvider<CompileStepBe
   }
 
   public MakeBeforeRunTask createTask(RunConfiguration runConfiguration) {
-    return runConfiguration instanceof RemoteConfiguration? null : new MakeBeforeRunTask();
+    return !(runConfiguration instanceof RemoteConfiguration) && runConfiguration instanceof RunProfileWithCompileBeforeLaunchOption
+           ? new MakeBeforeRunTask()
+           : null;
   }
 
   public void configureTask(RunConfiguration runConfiguration, MakeBeforeRunTask task) {
