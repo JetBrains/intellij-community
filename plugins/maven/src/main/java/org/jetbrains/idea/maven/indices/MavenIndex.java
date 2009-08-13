@@ -19,6 +19,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.project.TransferListenerAdapter;
 import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.sonatype.nexus.index.*;
 import org.sonatype.nexus.index.context.IndexUtils;
 import org.sonatype.nexus.index.context.IndexingContext;
@@ -331,7 +332,7 @@ public class MavenIndex {
       request.setResourceFetcher(new MavenIndexFetcher(myRepositoryId,
                                                        getRepositoryUrl(),
                                                        embedder.<WagonManager>getComponent(WagonManager.class),
-                                                       new TransferListenerAdapter(progress)));
+                                                       new TransferListenerAdapter(new MavenProgressIndicator(progress))));
       updater.fetchAndUpdateIndex(request);
     }
   }

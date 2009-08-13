@@ -172,7 +172,7 @@ public class MavenEmbedderWrapper {
                                                              final MavenProgressIndicator p) throws MavenProcessCanceledException {
     return doExecute(new Executor<Pair<MavenExecutionResult, Set<MavenId>>>() {
       public Pair<MavenExecutionResult, Set<MavenId>> execute() throws Exception {
-        request.setTransferListener(new TransferListenerAdapter(p.getIndicator()));
+        request.setTransferListener(new TransferListenerAdapter(p));
         MavenExecutionResult executionResult = executor.execute(request);
         return Pair.create(executionResult, retrieveUnresolvedArtifactIds());
       }
@@ -260,10 +260,10 @@ public class MavenEmbedderWrapper {
     ((MavenConsoleLogger)myEmbedder.getLogger()).setConsole(console);
 
     myEmbedder.getDefaultRequest().setTransferListener(
-      process == null ? null : new TransferListenerAdapter(process.getIndicator()));
+      process == null ? null : new TransferListenerAdapter(process));
 
     WagonManager wagon = getComponent(WagonManager.class);
-    wagon.setDownloadMonitor(process == null ? null : new TransferListenerAdapter(process.getIndicator()));
+    wagon.setDownloadMonitor(process == null ? null : new TransferListenerAdapter(process));
   }
 
   public void reset() {

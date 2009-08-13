@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -84,5 +85,9 @@ public class MavenProgressIndicator {
 
   public void checkCanceled() throws MavenProcessCanceledException {
     if (isCanceled()) throw new MavenProcessCanceledException();
+  }
+
+  public void checkCanceledNative() {
+    if (isCanceled()) throw new ProcessCanceledException();
   }
 }

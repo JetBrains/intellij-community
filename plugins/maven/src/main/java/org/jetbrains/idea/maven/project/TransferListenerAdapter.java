@@ -1,12 +1,12 @@
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.progress.ProgressIndicator;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 public class TransferListenerAdapter implements TransferListener {
-  private final ProgressIndicator myIndicator;
+  private final MavenProgressIndicator myIndicator;
 
   private String myRepository;
   private String myResource;
@@ -16,13 +16,12 @@ public class TransferListenerAdapter implements TransferListener {
   //private static long total;
   //private long started;
 
-  public TransferListenerAdapter(ProgressIndicator indicator) {
+  public TransferListenerAdapter(MavenProgressIndicator indicator) {
     myIndicator = indicator;
   }
 
   public void transferInitiated(TransferEvent event) {
-    myIndicator.checkCanceled();
-    //updateProgress();
+    myIndicator.checkCanceledNative();
   }
 
   public void transferStarted(TransferEvent event) {
@@ -32,9 +31,6 @@ public class TransferListenerAdapter implements TransferListener {
     myProgress = 0;
 
     updateProgress();
-
-    //System.out.print("Downloading " + event.getResource().getName() + " from [" + event.getWagon().getRepository().getId() + "]...");
-    //started = System.currentTimeMillis();
   }
 
   private void updateProgress() {
@@ -46,24 +42,24 @@ public class TransferListenerAdapter implements TransferListener {
   }
 
   public void transferProgress(TransferEvent event, byte[] bytes, int i) {
-    myIndicator.checkCanceled();
+    myIndicator.checkCanceledNative();
     myProgress += i;
     updateProgress();
   }
 
   public void transferCompleted(TransferEvent event) {
     addArtifactToIndex(event);
-    myIndicator.checkCanceled();
+    myIndicator.checkCanceledNative();
     updateTiming(true);
   }
 
   public void transferError(TransferEvent event) {
-    myIndicator.checkCanceled();
+    myIndicator.checkCanceledNative();
     updateTiming(false);
   }
 
   public void debug(String s) {
-    myIndicator.checkCanceled();
+    myIndicator.checkCanceledNative();
   }
 
   private void updateTiming(boolean ok) {
