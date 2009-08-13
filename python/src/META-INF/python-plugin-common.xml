@@ -52,6 +52,8 @@
     <definitionsSearch implementation="com.jetbrains.python.psi.search.PyDefinitionsSearch"/>
     <gotoTargetRendererProvider implementation="com.jetbrains.python.codeInsight.PyGotoTargetRendererProvider"/>
 
+    <typeHierarchyProvider language="Python" implementationClass="com.jetbrains.python.hierarchy.PyTypeHierachyProvider"/>
+
     <intentionAction factoryClass="com.jetbrains.python.PyExtensionFactory"
                      factoryArgument="intentions/PyDemorganIntention.py">
       <className>PyDemorganIntention</className>
@@ -81,13 +83,43 @@
     <runnableScriptFilter implementation="com.jetbrains.python.testing.pytest.PyTestRunnableScriptFilter"/>
     <runnableScriptFilter implementation="com.jetbrains.python.testing.PythonUnitTestRunnableScriptFilter"/>
   </extensions>
+
   <actions>
-    <action 
-      id="Devmode.DumpPsi" 
-      class="com.jetbrains.python.devmode.DumpPsiToClipboardAction" 
-      text="Dump PSI to clipboard"
-    >
+    <action
+        id="Devmode.DumpPsi"
+        class="com.jetbrains.python.devmode.DumpPsiToClipboardAction"
+        text="Dump PSI to clipboard"
+        >
       <add-to-group group-id="EditMenu" anchor="before" relative-to-action="Undo"/>
     </action>
+
+    <group id="PyTypeHierarchyPopupMenu">
+      <action id="TypeHierarchy.BaseOnThisType" class="com.intellij.ide.hierarchy.type.TypeHierarchyBrowser$BaseOnThisTypeAction"/>
+      <action id="TypeHierarchy.Class" class="com.intellij.ide.hierarchy.ViewClassHierarchyAction"/>
+      <action id="TypeHierarchy.Subtypes" class="com.intellij.ide.hierarchy.ViewSubtypesHierarchyAction"/>
+      <action id="TypeHierarchy.Supertypes" class="com.intellij.ide.hierarchy.ViewSupertypesHierarchyAction"/>
+      <separator/>
+      <reference ref="EditSource"/>
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="RefactoringMenu"/>
+      <separator/>
+      <reference ref="AddToFavorites"/>
+      <reference ref="MoveToChangeList"/>
+      <separator/>
+      <reference ref="RunContextPopupGroup"/>
+      <separator/>
+      <reference ref="ReformatCode"/>
+      <reference ref="OptimizeImports"/>
+      <reference ref="$Delete"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+      <separator/>
+      <reference ref="CompareTwoFiles"/>
+      <reference ref="CompareFileWithEditor"/>
+    </group>
+
   </actions>
 </idea-plugin>
