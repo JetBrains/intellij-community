@@ -9,6 +9,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.facet.impl.DefaultFacetsProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,10 +31,14 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     }
   }
 
-  protected void deleteArtifact(Artifact artifact) {
-    final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
-    model.removeArtifact(artifact);
-    model.commit();
+  protected void deleteArtifact(final Artifact artifact) {
+    new WriteAction() {
+      protected void run(final Result result) {
+        final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+        model.removeArtifact(artifact);
+        model.commit();
+      }
+    }.execute();
   }
 
   protected Artifact rename(Artifact artifact, String newName) {
@@ -46,14 +52,18 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     return addArtifact(name, PlainArtifactType.getInstance(), null);
   }
 
-  protected Artifact addArtifact(String name, final ArtifactType type, CompositePackagingElement<?> root) {
-    final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
-    final ModifiableArtifact artifact = model.addArtifact(name, type);
-    if (root != null) {
-      artifact.setRootElement(root);
-    }
-    model.commit();
-    return artifact;
+  protected Artifact addArtifact(final String name, final ArtifactType type, final CompositePackagingElement<?> root) {
+    return new WriteAction<Artifact>() {
+      protected void run(final Result<Artifact> result) {
+        final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+        final ModifiableArtifact artifact = model.addArtifact(name, type);
+        if (root != null) {
+          artifact.setRootElement(root);
+        }
+        model.commit();
+        result.setResult(artifact);
+      }
+    }.execute().getResultObject();
   }
 
   protected class MockPackagingEditorContext implements PackagingEditorContext {

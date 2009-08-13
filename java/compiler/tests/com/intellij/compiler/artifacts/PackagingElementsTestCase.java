@@ -1,6 +1,8 @@
 package com.intellij.compiler.artifacts;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -18,6 +20,7 @@ import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.impl.elements.*;
 
 import java.util.Arrays;
+import java.io.IOException;
 
 /**
  * @author nik
@@ -73,6 +76,19 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
     return new PackagingElementBuilder(getFactory().createDirectory(name), null);
   }
 
+  protected VirtualFile createFile(final String name) throws IOException {
+    return new WriteAction<VirtualFile>() {
+      protected void run(final Result<VirtualFile> result) {
+        try {
+          result.setResult(myProject.getBaseDir().createChildData(this, name));
+        }
+        catch (IOException e) {
+          throw new AssertionError(e);
+        }
+      }
+    }.execute().getResultObject();
+  }
+
   protected VirtualFile getJDomJar() {
     return JarFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(PathManager.getLibPath()) + "/jdom.jar" +
                                                       JarFileSystem.JAR_SEPARATOR);
@@ -103,7 +119,7 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
     return library;
   }
 
-  protected static class PackagingElementBuilder {
+  protected class PackagingElementBuilder {
     private CompositePackagingElement<?> myElement;
     private final PackagingElementBuilder myParent;
 
