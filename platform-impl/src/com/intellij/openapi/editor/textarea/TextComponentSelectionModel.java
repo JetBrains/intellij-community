@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.event.SelectionListener;
@@ -127,5 +128,9 @@ public class TextComponentSelectionModel implements SelectionModel {
   @Nullable
   public RangeMarker getBlockSelectionGuard() {
     throw new UnsupportedOperationException("Not implemented");
+  }
+
+  public TextAttributes getTextAttributes() {
+    return null;
   }
 }

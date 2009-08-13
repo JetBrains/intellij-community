@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.event.SelectionListener;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -199,4 +200,6 @@ public interface SelectionModel {
    */
   @Nullable
   RangeMarker getBlockSelectionGuard();
+
+  TextAttributes getTextAttributes();
 }

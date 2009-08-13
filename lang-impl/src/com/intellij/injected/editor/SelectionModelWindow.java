@@ -3,6 +3,7 @@ package com.intellij.injected.editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.TextRange;
@@ -118,4 +119,7 @@ public class SelectionModelWindow implements SelectionModel {
     return myHostModel.getBlockSelectionGuard();
   }
 
+  public TextAttributes getTextAttributes() {
+    return myHostModel.getTextAttributes();
+  }
 }

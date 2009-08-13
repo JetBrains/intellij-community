@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.textarea;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.event.CaretListener;
 
 import javax.swing.*;
@@ -75,5 +76,17 @@ public class TextComponentCaretModel implements CaretModel {
 
   public void removeCaretListener(final CaretListener listener) {
     throw new UnsupportedOperationException("Not implemented");
+  }
+
+  public int getVisualLineStart() {
+    return 0;
+  }
+
+  public int getVisualLineEnd() {
+    return 0;
+  }
+
+  public TextAttributes getTextAttributes() {
+    return null;
   }
 }

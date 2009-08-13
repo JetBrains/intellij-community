@@ -3,6 +3,7 @@ package com.intellij.injected.editor;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -82,5 +83,17 @@ public class CaretModelWindow implements CaretModel {
       myDelegate.removeCaretListener(wrapper);
     }
     myCaretListeners.clear();
+  }
+
+  public int getVisualLineStart() {
+    return myEditorWindow.getDocument().hostToInjected(myDelegate.getVisualLineStart());
+  }
+
+  public int getVisualLineEnd() {
+    return myEditorWindow.getDocument().hostToInjected(myDelegate.getVisualLineEnd());
+  }
+
+  public TextAttributes getTextAttributes() {
+    return myDelegate.getTextAttributes();
   }
 }

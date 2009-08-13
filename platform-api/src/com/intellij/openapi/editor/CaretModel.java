@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.markup.TextAttributes;
 
 /**
  * Provides services for moving the caret and retrieving information about caret position.
@@ -94,4 +95,10 @@ public interface CaretModel {
    * @param listener the listener instance.
    */
   void removeCaretListener(CaretListener listener);
+
+  int getVisualLineStart();
+
+  int getVisualLineEnd();
+
+  TextAttributes getTextAttributes();
 }

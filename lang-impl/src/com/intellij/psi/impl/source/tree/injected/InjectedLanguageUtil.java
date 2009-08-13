@@ -209,7 +209,7 @@ public class InjectedLanguageUtil {
         for (Place place : places) {
           for (PsiLanguageInjectionHost.Shred shred : place) {
             if (shred.host.getTextRange().intersects(elementRange)) {
-              assert places.isValid();
+              if (places.isValid())
               return places;
             }
           }

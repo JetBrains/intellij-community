@@ -1,6 +1,7 @@
 package com.intellij.injected.editor;
 
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import org.jetbrains.annotations.NotNull;
@@ -74,5 +75,21 @@ public class FoldingModelWindow implements FoldingModelEx{
 
   public void runBatchFoldingOperationDoNotCollapseCaret(@NotNull Runnable operation) {
     myDelegate.runBatchFoldingOperationDoNotCollapseCaret(operation);
+  }
+
+  public FoldRegion fetchOutermost(int offset) {
+    return null;
+  }
+
+  public int getLastCollapsedRegionBefore(int offset) {
+    return -1;
+  }
+
+  public TextAttributes getPlaceholderAttributes() {
+    return myDelegate.getPlaceholderAttributes();
+  }
+
+  public FoldRegion[] fetchTopLevel() {
+    return FoldRegion.EMPTY_ARRAY;
   }
 }

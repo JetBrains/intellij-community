@@ -2,11 +2,13 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -45,7 +47,7 @@ public final class IterationState {
   private RangeHighlighterImpl myNextViewHighlighter = null;
   private RangeHighlighterImpl myNextDocumentHighlighter = null;
 
-  private final FoldingModelImpl myFoldingModel;
+  private final FoldingModelEx myFoldingModel;
 
   private final boolean hasSelection;
   private FoldRegion myCurrentFold = null;
@@ -91,13 +93,13 @@ public final class IterationState {
     mySelectionStart = hasSelection ? editor.getSelectionModel().getSelectionStart() : -1;
     mySelectionEnd = hasSelection ? editor.getSelectionModel().getSelectionEnd() : -1;
 
-    myFoldingModel = (FoldingModelImpl)editor.getFoldingModel();
+    myFoldingModel = (FoldingModelEx)editor.getFoldingModel();
     myFoldTextAttributes = myFoldingModel.getPlaceholderAttributes();
-    mySelectionAttributes = ((SelectionModelImpl)editor.getSelectionModel()).getTextAttributes();
+    mySelectionAttributes = editor.getSelectionModel().getTextAttributes();
 
     myReadOnlyColor = myEditor.getColorsScheme().getColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR);
 
-    CaretModelImpl caretModel = (CaretModelImpl)editor.getCaretModel();
+    CaretModel caretModel = editor.getCaretModel();
     myCaretRowAttributes = editor.isRendererMode() ? null : caretModel.getTextAttributes();
     myDefaultBackground = editor.getColorsScheme().getDefaultBackground();
     myDefaultForeground = editor.getColorsScheme().getDefaultForeground();

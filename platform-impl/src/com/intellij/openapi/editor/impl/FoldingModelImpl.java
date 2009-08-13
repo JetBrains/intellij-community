@@ -108,12 +108,15 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   public boolean isOffsetCollapsed(int offset) {
-    assertIsDispatchThread();
+    assertReadAccess();
     return getCollapsedRegionAtOffset(offset) != null;
   }
 
   private void assertIsDispatchThread() {
     ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(myEditor.getComponent());
+  }
+  private static void assertReadAccess() {
+    ApplicationManagerEx.getApplicationEx().assertReadAccessAllowed();
   }
 
   public void setFoldingEnabled(boolean isEnabled) {
@@ -185,7 +188,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
   @NotNull
   public FoldRegion[] getAllFoldRegions() {
-    assertIsDispatchThread();
+    assertReadAccess();
     return myFoldTree.fetchAllRegions();
   }
 
@@ -198,7 +201,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   public FoldRegion getFoldingPlaceholderAt(Point p) {
-    assertIsDispatchThread();
+    assertReadAccess();
     LogicalPosition pos = myEditor.xyToLogicalPosition(p);
     int line = pos.line;
 
@@ -213,7 +216,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   public FoldRegion[] getAllFoldRegionsIncludingInvalid() {
-    assertIsDispatchThread();
+    assertReadAccess();
     return myFoldTree.fetchAllRegionsIncludingInvalid();
   }
 
@@ -354,11 +357,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return myFoldTree.getFoldedLinesCountBefore(offset);
   }
 
-  FoldRegion[] fetchTopLevel() {
+  public FoldRegion[] fetchTopLevel() {
     return myFoldTree.fetchTopLevel();
   }
 
-  FoldRegion fetchOutermost(int offset) {
+  public FoldRegion fetchOutermost(int offset) {
     return myFoldTree.fetchOutermost(offset);
   }
 
