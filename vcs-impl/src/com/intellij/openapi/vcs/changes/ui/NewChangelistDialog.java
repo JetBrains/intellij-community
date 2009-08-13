@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.Consumer;
 
@@ -18,6 +19,7 @@ public class NewChangelistDialog extends DialogWrapper {
   private JPanel myTopPanel;
   private JLabel myErrorLabel;
   private JCheckBox myMakeActiveCheckBox;
+  private JPanel myBottomPanel;
   private final Project myProject;
 
   public NewChangelistDialog(Project project) {
@@ -30,6 +32,11 @@ public class NewChangelistDialog extends DialogWrapper {
         updateControls();
       }
     });
+    myPanel.installSupport(project);
+    for (EditChangelistSupport support : Extensions.getExtensions(EditChangelistSupport.EP_NAME, project)) {
+      support.addControls(myBottomPanel);
+    }
+
   }
 
   private void updateControls() {

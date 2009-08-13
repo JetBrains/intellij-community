@@ -29,6 +29,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -381,7 +382,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
     myPathTextField.setFocusTraversalKeysEnabled(false);
 
-    myCurrentPopup.showInScreenCoordinates(getField(), getLocationForCaret());
+    myCurrentPopup.showInScreenCoordinates(getField(), getLocationForCaret(myPathTextField));
   }
 
   private void showNoSuggestions(boolean isExplicit) {
@@ -393,7 +394,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(message, message);
     builder.setRequestFocus(false).setResizable(false).setAlpha(0.1f).setFocusOwners(new Component[] {myPathTextField});
     myNoSuggestionsPopup = builder.createPopup();
-    myNoSuggestionsPopup.showInScreenCoordinates(getField(), getLocationForCaret());
+    myNoSuggestionsPopup.showInScreenCoordinates(getField(), getLocationForCaret(myPathTextField));
   }
 
   private void hideCurrentPopup() {
@@ -408,18 +409,18 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     }
   }
 
-  private Point getLocationForCaret() {
+  public static Point getLocationForCaret(JTextComponent pathTextField) {
     Point point;
 
     try {
-      final Rectangle rec = myPathTextField.modelToView(myPathTextField.getCaretPosition());
+      final Rectangle rec = pathTextField.modelToView(pathTextField.getCaretPosition());
       point = new Point((int)rec.getMaxX(), (int)rec.getMaxY());
     }
     catch (BadLocationException e) {
-      return myPathTextField.getCaret().getMagicCaretPosition();
+      point = pathTextField.getCaret().getMagicCaretPosition();
     }
 
-    SwingUtilities.convertPointToScreen(point, myPathTextField);
+    SwingUtilities.convertPointToScreen(point, pathTextField);
 
     point.y += 2;
 

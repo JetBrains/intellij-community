@@ -1,6 +1,8 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -63,6 +65,12 @@ public class EditChangelistPanel {
         public void caretPositionChanged(final InputMethodEvent event) {
         }
       });
+    }
+  }
+
+  void installSupport(Project project) {
+    for (EditChangelistSupport support : Extensions.getExtensions(EditChangelistSupport.EP_NAME, project)) {
+      support.installSearch(myNameTextField, myDescriptionTextArea);
     }
   }
 

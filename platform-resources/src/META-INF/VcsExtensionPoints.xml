@@ -18,6 +18,10 @@
                   beanClass="com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP"
                   area="IDEA_PROJECT"/>
 
+  <extensionPoint name="editChangelistSupport"
+                  interface="com.intellij.openapi.vcs.changes.ui.EditChangelistSupport"
+                  area="IDEA_PROJECT"/>
+
   <extensionPoint name="vcsSelectionProvider"
                   interface="com.intellij.vcsUtil.VcsSelectionProvider"/>
 </extensionPoints>

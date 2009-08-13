@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -336,6 +337,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     
     updateOnListSelection();
     myCommitMessageArea.requestFocusInMessage();
+    
+    for (EditChangelistSupport support : Extensions.getExtensions(EditChangelistSupport.EP_NAME, project)) {
+      support.installSearch(myCommitMessageArea.getTextField(), myCommitMessageArea.getTextField());
+    }
+
   }
 
   private void updateOnListSelection() {

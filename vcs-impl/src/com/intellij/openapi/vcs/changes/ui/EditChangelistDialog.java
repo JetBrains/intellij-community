@@ -33,7 +33,7 @@ public class EditChangelistDialog extends DialogWrapper {
                                       });
     myPanel.setName(list.getName());
     myPanel.setDescription(list.getComment());
-
+    myPanel.installSupport(project);
     setTitle(VcsBundle.message("changes.dialog.editchangelist.title"));
     init();
   }

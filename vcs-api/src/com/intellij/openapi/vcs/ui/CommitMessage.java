@@ -25,6 +25,7 @@ import com.intellij.ui.TextComponentUndoProvider;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 
 public class CommitMessage extends JPanel implements Disposable {
@@ -46,7 +47,7 @@ public class CommitMessage extends JPanel implements Disposable {
     return (ActionGroup)ActionManager.getInstance().getAction("Vcs.MessageActionGroup");
   }
 
-  public JComponent getTextField() {
+  public JTextComponent getTextField() {
     return myCommentArea;
   }
 
