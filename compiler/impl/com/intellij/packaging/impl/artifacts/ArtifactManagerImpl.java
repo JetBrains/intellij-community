@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.Collection;
 
 /**
  * @author nik
@@ -54,6 +55,10 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   @NotNull
   public Artifact getArtifactByOriginal(@NotNull Artifact artifact) {
     return myModel.getArtifactByOriginal(artifact);
+  }
+
+  public Collection<? extends Artifact> getArtifactsByType(@NotNull ArtifactType type) {
+    return myModel.getArtifactsByType(type);
   }
 
   public ArtifactManagerState getState() {

@@ -85,12 +85,16 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
 
   protected void onBuildFinished(ArtifactsProcessingItemsBuilderContext context, JarsBuilder builder, final Project project)
       throws Exception {
-    final Set<Artifact> artifacts = context.getCompileContext().getUserData(AFFECTED_ARTIFACTS);
+    final Set<Artifact> artifacts = getAffectedArtifacts(context.getCompileContext());
     for (Artifact artifact : artifacts) {
       for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
         artifact.getProperties(provider).onBuildFinished(project, artifact);
       }
     }
+  }
+
+  public static Set<Artifact> getAffectedArtifacts(final CompileContext compileContext) {
+    return compileContext.getUserData(AFFECTED_ARTIFACTS);
   }
 
   private static void collectItems(@NotNull ArtifactsProcessingItemsBuilderContext builderContext,

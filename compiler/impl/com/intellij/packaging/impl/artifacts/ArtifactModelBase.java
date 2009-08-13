@@ -2,11 +2,10 @@ package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactModel;
+import com.intellij.packaging.artifacts.ArtifactType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author nik
@@ -39,6 +38,16 @@ public abstract class ArtifactModelBase implements ArtifactModel {
   @NotNull
   public Artifact getArtifactByOriginal(@NotNull Artifact artifact) {
     return artifact;
+  }
+
+  public Collection<? extends Artifact> getArtifactsByType(@NotNull ArtifactType type) {
+    final List<Artifact> result = new ArrayList<Artifact>();
+    for (Artifact artifact : getArtifacts()) {
+      if (artifact.getArtifactType().equals(type)) {
+        result.add(artifact);
+      }
+    }
+    return result;
   }
 
   protected void artifactsChanged() {

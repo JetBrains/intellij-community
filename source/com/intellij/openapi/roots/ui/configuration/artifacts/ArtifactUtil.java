@@ -203,9 +203,14 @@ public class ArtifactUtil {
     final List<PackagingElement<?>> children = new SmartList<PackagingElement<?>>();
     processElements(parent.getChildren(), context, artifactType, new Processor<PackagingElement<?>>() {
       public boolean process(PackagingElement<?> element) {
-        if (element instanceof CompositePackagingElement && firstName.equals(((CompositePackagingElement<?>)element).getName()) ||
-            element instanceof FileCopyPackagingElement && firstName.equals(((FileCopyPackagingElement)element).getFileName())) {
+        if (element instanceof CompositePackagingElement && firstName.equals(((CompositePackagingElement<?>)element).getName())) {
           children.add(element);
+        }
+        else if (element instanceof FileCopyPackagingElement) {
+          final FileCopyPackagingElement fileCopy = (FileCopyPackagingElement)element;
+          if (!fileCopy.isDirectory() && firstName.equals(fileCopy.getFileName())) {
+            children.add(element);
+          }
         }
         return true;
       }

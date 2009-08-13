@@ -75,6 +75,12 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
     }
   }
 
+  public boolean isDirectory() {
+    final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(myFilePath);
+    return file != null && file.isDirectory();
+  }
+
+
   @Override
   public boolean isEqualTo(@NotNull PackagingElement<?> element) {
     return element instanceof FileCopyPackagingElement && myFilePath != null
