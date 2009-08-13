@@ -16,58 +16,18 @@
 
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.fixtures.*;
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public abstract class LightGroovyTestCase extends UsefulTestCase {
-  public static final LightProjectDescriptor GROOVY_DESCRIPTOR = new LightProjectDescriptor() {
-    public ModuleType getModuleType() {
-      return StdModuleTypes.JAVA;
-    }
+public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
+  public static final LightProjectDescriptor GROOVY_DESCRIPTOR = LightCodeInsightFixtureTestCase.JAVA_1_5;
 
-    public Sdk getSdk() {
-      return JavaSdkImpl.getMockJdk15("java 1.5");
-    }
-
-    public void configureModule(Module module, ModifiableRootModel model) {
-
-    }
-  };
-
-  protected JavaCodeInsightTestFixture myFixture;
-  protected Module myModule;
-
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
-    final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl());
-
-    myFixture.setUp();
-    myFixture.setTestDataPath(getTestDataPath());
-    myModule = myFixture.getModule();
-  }
-
-  @Nullable
+  @NotNull
   protected LightProjectDescriptor getProjectDescriptor() {
     return GROOVY_DESCRIPTOR;
   }
@@ -80,22 +40,5 @@ public abstract class LightGroovyTestCase extends UsefulTestCase {
    */
   @NonNls
   protected abstract String getBasePath();
-
-  @NonNls
-  protected final String getTestDataPath() {
-    return PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    myFixture.tearDown();
-    myFixture = null;
-
-    super.tearDown();
-  }
-
-  protected Project getProject() {
-    return myFixture.getProject();
-  }
 
 }
