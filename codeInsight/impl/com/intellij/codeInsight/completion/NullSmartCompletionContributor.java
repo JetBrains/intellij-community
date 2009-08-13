@@ -42,7 +42,7 @@ public class NullSmartCompletionContributor extends CompletionContributor{
             if (!(info.getType() instanceof PsiPrimitiveType)) {
               final LookupItem item = BasicExpressionCompletionContributor.createKeywordLookupItem(parameters.getPosition(), PsiKeyword.NULL);
               item.setAttribute(LookupItem.TYPE, PsiType.NULL);
-              result.addElement(item);
+              result.addElement(JavaSmartCompletionContributor.decorate(item, infos));
               return;
             }
           }

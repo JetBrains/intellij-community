@@ -5,12 +5,11 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInsight.lookup.DecoratingLookupElementPresentation;
-import com.intellij.codeInsight.lookup.MemorizingLookupElementPresentation;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -19,8 +18,20 @@ import org.jetbrains.annotations.Nullable;
 public class CastingLookupElementDecorator extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
   private final LookupItem myCastItem;
   private final PsiType myCastType;
+  private static final LookupElementVisagiste<CastingLookupElementDecorator> CASTING_VISAGISTE = new LookupElementVisagiste<CastingLookupElementDecorator>() {
+    @Override
+    public void setItemText(@NotNull CastingLookupElementDecorator item,
+                            @NotNull LookupElementPresentation base,
+                            @Nullable String text,
+                            boolean strikeout,
+                            boolean bold) {
+      final MemorizingLookupElementPresentation castPresentation = new MemorizingLookupElementPresentation(base);
+      item.getCastItem().renderElement(castPresentation);
+      base.setItemText("(" + castPresentation.getItemText() + ")" + text, strikeout, bold);
+    }
+  };
 
-  public CastingLookupElementDecorator(LookupElement delegate, PsiType castType) {
+  private CastingLookupElementDecorator(LookupElement delegate, PsiType castType) {
     super(delegate);
     myCastType = castType;
     myCastItem = PsiTypeLookupItem.createLookupItem(castType);
@@ -28,22 +39,6 @@ public class CastingLookupElementDecorator extends LookupElementDecorator<Lookup
 
   public PsiType getType() {
     return myCastType;
-  }
-
-  @Override
-  public void renderElement(LookupElementPresentation presentation) {
-    final MemorizingLookupElementPresentation castPresentation = new MemorizingLookupElementPresentation(presentation);
-    myCastItem.renderElement(castPresentation);
-
-
-    super.renderElement(new DecoratingLookupElementPresentation(presentation) {
-      @Override
-      public void setItemText(@Nullable String text, boolean strikeout, boolean bold) {
-        super.setItemText("(" + castPresentation.getItemText() + ")" + text, strikeout, bold);
-      }
-    });
-
-    presentation.setTypeText(myCastItem.getLookupString());
   }
 
   @Override
@@ -63,4 +58,11 @@ public class CastingLookupElementDecorator extends LookupElementDecorator<Lookup
     CompletionUtil.emulateInsertion(getDelegate(), context.getTailOffset(), context);
   }
 
+  public LookupElement getCastItem() {
+    return myCastItem;
+  }
+
+  static LookupElement createCastingElement(final LookupElement delegate, PsiType castTo) {
+    return decorate(new CastingLookupElementDecorator(delegate, castTo), CASTING_VISAGISTE);
+  }
 }

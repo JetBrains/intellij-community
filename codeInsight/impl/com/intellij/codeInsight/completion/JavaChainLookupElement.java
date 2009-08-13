@@ -22,8 +22,19 @@ import java.util.Set;
  */
 public class JavaChainLookupElement extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
   private final LookupElement myQualifier;
+  private static final LookupElementVisagiste<JavaChainLookupElement> CHAINING_VISAGISTE = new LookupElementVisagiste<JavaChainLookupElement>() {
+    @Override
+    public void setItemText(@NotNull JavaChainLookupElement item, @NotNull LookupElementPresentation base, @Nullable String text, boolean strikeout,
+                            boolean bold) {
+      final MemorizingLookupElementPresentation qualifierPresentation = new MemorizingLookupElementPresentation(base);
+      item.myQualifier.renderElement(qualifierPresentation);
+      String name = item.maybeAddParentheses(qualifierPresentation.getItemText());
+      final String qualifierText = item.myQualifier.as(CastingLookupElementDecorator.class) != null ? "(" + name + ")" : name;
+      base.setItemText(qualifierText + "." + text, strikeout, bold);
+    }
+  };
 
-  public JavaChainLookupElement(LookupElement qualifier, LookupElement main) {
+  private JavaChainLookupElement(LookupElement qualifier, LookupElement main) {
     super(main);
     myQualifier = qualifier;
   }
@@ -56,22 +67,6 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   private String maybeAddParentheses(String s) {
     return myQualifier.getObject() instanceof PsiMethod ? s + "()" : s;
   }
-
-
-  @Override
-  public void renderElement(LookupElementPresentation presentation) {
-    final MemorizingLookupElementPresentation qualifierPresentation = new MemorizingLookupElementPresentation(presentation);
-    myQualifier.renderElement(qualifierPresentation);
-    String name = maybeAddParentheses(qualifierPresentation.getItemText());
-    final String qualifierText = myQualifier instanceof CastingLookupElementDecorator ? "(" + name + ")" : name;
-
-    super.renderElement(new DecoratingLookupElementPresentation(presentation) {
-      @Override
-      public void setItemText(@Nullable String text, boolean strikeout, boolean bold) {
-        super.setItemText(qualifierText + "." + text, strikeout, bold);
-      }
-    });
- }
 
   @Override
   public void handleInsert(InsertionContext context) {
@@ -145,4 +140,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     return ((PsiVariable) object).getType();
   }
 
+  public static LookupElement chainElements(LookupElement qualifier, LookupElement main) {
+    return decorate(new JavaChainLookupElement(qualifier, main), CHAINING_VISAGISTE);
+  }
 }

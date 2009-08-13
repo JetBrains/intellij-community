@@ -15,13 +15,13 @@ import java.awt.*;
 public abstract class LookupElementPresentation {
   public abstract void setIcon(@Nullable Icon icon);
 
-  public final void setItemText(@Nullable String text) {
+  public void setItemText(@Nullable String text) {
     setItemText(text, false, false);
   }
 
   public abstract void setItemText(@Nullable String text, boolean strikeout, final boolean bold);
 
-  public final void setTailText(@Nullable String text) {
+  public void setTailText(@Nullable String text) {
     setTailText(text, false, false, false);
   }
 
@@ -29,7 +29,7 @@ public abstract class LookupElementPresentation {
 
   public abstract void setTailText(@Nullable String text, @Nullable Color foreground, boolean bold, boolean strikeout);
 
-  public final void setTypeText(@Nullable String text) {
+  public void setTypeText(@Nullable String text) {
     setTypeText(text, null);
   }
 

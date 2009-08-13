@@ -210,12 +210,6 @@ public class JavaCompletionUtil {
     item.setAttribute(QUALIFIER_TYPE_ATTR, type);
   }
 
-  static void highlightMembersOfContainer(Set<LookupItem> set) {
-    for (final LookupItem item : set) {
-      highlightMemberOfContainer(item);
-    }
-  }
-
   public static void highlightMemberOfContainer(@Nullable final LookupItem item) {
     if (item == null) {
       return;
@@ -798,8 +792,9 @@ public class JavaCompletionUtil {
   @Nullable
   public static PsiType getLookupElementType(final LookupElement element) {
     PsiType qualifierType = null;
-    if (element instanceof TypedLookupItem) {
-      return ((TypedLookupItem)element).getType();
+    final TypedLookupItem typed = element.as(TypedLookupItem.class);
+    if (typed != null) {
+      return typed.getType();
     }
 
     final Object o = element.getObject();

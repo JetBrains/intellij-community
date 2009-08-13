@@ -109,7 +109,7 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
 
   private static void insertExplicitTypeParams(final LookupItem<PsiMethod> item, final Document document, final int offset, PsiFile file) {
     final PsiMethod method = item.getObject();
-    if (!AnalyzingJavaSmartCompletionContributor.hasUnboundTypeParams(method)) {
+    if (!SmartCompletionDecorator.hasUnboundTypeParams(method)) {
       return;
     }
 
@@ -178,7 +178,7 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
 
   @Nullable
   private static String getTypeParamsText(final PsiMethod method, PsiType expectedType) {
-    final PsiSubstitutor substitutor = AnalyzingJavaSmartCompletionContributor.calculateMethodReturnTypeSubstitutor(method, expectedType);
+    final PsiSubstitutor substitutor = SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, expectedType);
     assert substitutor != null;
     final PsiTypeParameter[] parameters = method.getTypeParameters();
     assert parameters.length > 0;

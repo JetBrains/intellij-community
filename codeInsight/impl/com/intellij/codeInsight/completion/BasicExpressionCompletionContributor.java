@@ -137,9 +137,9 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
           }
         }
 
-        processDataflowExpressionTypes(position, expectedType, new Consumer<CastingLookupElementDecorator>() {
-          public void consume(CastingLookupElementDecorator castingLookupElementDecorator) {
-            result.addElement(castingLookupElementDecorator);
+        processDataflowExpressionTypes(position, expectedType, new Consumer<LookupElement>() {
+          public void consume(LookupElement decorator) {
+            result.addElement(decorator);
           }
         });
       }
@@ -154,7 +154,7 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
 
   }
 
-  public static void processDataflowExpressionTypes(PsiElement position, @Nullable PsiType expectedType, Consumer<CastingLookupElementDecorator> consumer) {
+  public static void processDataflowExpressionTypes(PsiElement position, @Nullable PsiType expectedType, Consumer<LookupElement> consumer) {
     final PsiExpression context = PsiTreeUtil.getParentOfType(position, PsiExpression.class);
     if (context == null) return;
 
@@ -163,7 +163,7 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
       final PsiType castType = map.get(expression);
       final PsiType baseType = expression.getType();
       if (expectedType == null || (expectedType.isAssignableFrom(castType) && (baseType == null || !expectedType.isAssignableFrom(baseType)))) {
-        consumer.consume(new CastingLookupElementDecorator(expressionToLookupElement(expression), castType));
+        consumer.consume(CastingLookupElementDecorator.createCastingElement(expressionToLookupElement(expression), castType));
       }
     }
   }

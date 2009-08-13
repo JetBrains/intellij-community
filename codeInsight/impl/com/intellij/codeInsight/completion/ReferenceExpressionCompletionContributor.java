@@ -107,8 +107,8 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
             }
 
             if (!psiElement().afterLeaf(".").accepts(element)) {
-              BasicExpressionCompletionContributor.processDataflowExpressionTypes(element, null, new Consumer<CastingLookupElementDecorator>() {
-                public void consume(CastingLookupElementDecorator baseItem) {
+              BasicExpressionCompletionContributor.processDataflowExpressionTypes(element, null, new Consumer<LookupElement>() {
+                public void consume(LookupElement baseItem) {
                   addSecondCompletionVariants(element, reference, baseItem, parameters, result);
                 }
               });
@@ -318,7 +318,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
     final JavaCodeFragment block = elementFactory.createCodeBlockCodeFragment(typeText + " xxx;xxx.xxx;", place, false);
     final PsiElement secondChild = block.getChildren()[1];
     if (!(secondChild instanceof PsiExpressionStatement)) {
-      LOG.error(typeText);;
+      LOG.error(typeText);
     }
     final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)secondChild;
     final PsiReferenceExpression mockRef = (PsiReferenceExpression) expressionStatement.getExpression();
@@ -326,7 +326,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
     final ElementFilter filter = getReferenceFilter(place, false, true);
     for (final LookupElement item : JavaSmartCompletionContributor.completeReference(place, mockRef, filter, false)) {
       if (shoudChain(place, qualifierType, expectedType, item)) {
-        result.addElement(new JavaChainLookupElement(qualifierItem, item));
+        result.addElement(JavaChainLookupElement.chainElements(qualifierItem, item));
       }
     }
   }
