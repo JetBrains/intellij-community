@@ -18,8 +18,17 @@ import java.util.regex.Pattern;
  */
 public class SuppressionUtil {
   @NonNls public static final String SUPPRESS_INSPECTIONS_TAG_NAME = "noinspection";
+
+  /**
+   * Common part of regexp for suppressing in line comments for different languages.
+   * Comment start prefix isn't included, e.g. add '//' for Java/C/JS or '#' for Ruby
+   */
+  public static final String COMMON_SUPPRESS_REGEXP = "\\s*"
+                                                       + SUPPRESS_INSPECTIONS_TAG_NAME
+                                                       + "\\s+(\\w+(\\s*,\\w+)*\\s*\\w*)";
+
   @NonNls public static final Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN =
-    Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(\\s*,\\w+)*\\s*\\w*)");
+    Pattern.compile("//" + COMMON_SUPPRESS_REGEXP);  // for Java, C, JS line comments
 
   private SuppressionUtil() {
   }
@@ -37,12 +46,20 @@ public class SuppressionUtil {
   public static PsiElement getStatementToolSuppressedIn(final PsiElement place,
                                                         final String toolId,
                                                         final Class<? extends PsiElement> statementClass) {
+    return getStatementToolSuppressedIn(place, toolId, statementClass, SUPPRESS_IN_LINE_COMMENT_PATTERN);
+  }
+
+  @Nullable
+  public static PsiElement getStatementToolSuppressedIn(final PsiElement place,
+                                                        final String toolId,
+                                                        final Class<? extends PsiElement> statementClass,
+                                                        final Pattern suppressInLineCommentPattern) {
     PsiElement statement = PsiTreeUtil.getNonStrictParentOfType(place, statementClass);
     if (statement != null) {
       PsiElement prev = PsiTreeUtil.skipSiblingsBackward(statement, PsiWhiteSpace.class);
       if (prev instanceof PsiComment) {
         String text = prev.getText();
-        Matcher matcher = SUPPRESS_IN_LINE_COMMENT_PATTERN.matcher(text);
+        Matcher matcher = suppressInLineCommentPattern.matcher(text);
         if (matcher.matches() && isInspectionToolIdMentioned(matcher.group(1), toolId)) {
           return prev;
         }
