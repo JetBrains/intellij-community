@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -118,11 +119,13 @@ public abstract class VcsVFSListener {
       }
     } else {
       final VcsDeleteType type = needConfirmDeletion(file);
+      final FilePath filePath =
+        VcsContextFactory.SERVICE.getInstance().createFilePathOnDeleted(new File(file.getPath()), file.isDirectory());
       if (type == VcsDeleteType.CONFIRM) {
-        myDeletedFiles.add(VcsContextFactory.SERVICE.getInstance().createFilePathOn(file));
+        myDeletedFiles.add(filePath);
       }
       else if (type == VcsDeleteType.SILENT) {
-        myDeletedWithoutConfirmFiles.add(VcsContextFactory.SERVICE.getInstance().createFilePathOn(file));
+        myDeletedWithoutConfirmFiles.add(filePath);
       }
     }
   }

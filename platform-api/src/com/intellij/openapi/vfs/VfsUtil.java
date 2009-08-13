@@ -23,10 +23,11 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashSet;
@@ -647,6 +648,19 @@ public class VfsUtil {
         if (!Comparing.equal(actual, charsetBefore)) {
           EncodingManager.getInstance().setEncoding(fileAfter, charsetBefore);
         }
+      }
+    }
+  }
+
+  public static void processFilesRecursively(final VirtualFile root, final Processor<VirtualFile> processor,
+                                             final Convertor<VirtualFile, Boolean> directoryFilter) {
+    final LinkedList<VirtualFile> queue = new LinkedList<VirtualFile>();
+    queue.add(root);
+    while (!queue.isEmpty()) {
+      final VirtualFile file = queue.removeFirst();
+      if (!processor.process(file)) return;
+      if (file.isDirectory() && directoryFilter.convert(file)) {
+        queue.addAll(Arrays.asList(file.getChildren()));
       }
     }
   }
