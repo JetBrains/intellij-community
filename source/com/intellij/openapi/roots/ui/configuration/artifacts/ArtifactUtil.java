@@ -5,12 +5,15 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.elements.*;
-import com.intellij.packaging.impl.elements.FileCopyPackagingElement;
 import com.intellij.packaging.impl.elements.DirectoryPackagingElement;
+import com.intellij.packaging.impl.elements.FileCopyPackagingElement;
+import com.intellij.packaging.impl.elements.PackagingElementFactoryImpl;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FList;
@@ -18,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -161,13 +165,17 @@ public class ArtifactUtil {
   }
 
   public static <S> void copyProperties(ArtifactProperties<?> from, ArtifactProperties<S> to) {
+    //noinspection unchecked
     to.loadState((S)from.getState());
   }
 
   @Nullable
   public static String getDefaultArtifactOutputPath(@NotNull String artifactName, final @NotNull Project project) {
-    final String outputUrl = CompilerProjectExtension.getInstance(project).getCompilerOutputUrl();
-    return outputUrl != null ? VfsUtil.urlToPath(outputUrl) + "/artifacts/" + FileUtil.sanitizeFileName(artifactName) : null;
+    final CompilerProjectExtension extension = CompilerProjectExtension.getInstance(project);
+    if (extension == null) return null;
+    final String outputUrl = extension.getCompilerOutputUrl();
+    if (outputUrl == null) return null;
+    return VfsUtil.urlToPath(outputUrl) + "/artifacts/" + FileUtil.sanitizeFileName(artifactName);
   }
 
   public static boolean processElements(@NotNull List<? extends PackagingElement<?>> elements,
@@ -244,5 +252,22 @@ public class ArtifactUtil {
       }
     }
     return true;
+  }
+
+  public static Collection<? extends Artifact> findArtifactsByFile(@NotNull final VirtualFile file, @NotNull Project project) {
+    final List<Artifact> artifacts = new ArrayList<Artifact>();
+    for (final Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
+      processPackagingElements(artifact, PackagingElementFactoryImpl.FILE_COPY_ELEMENT_TYPE, new Processor<FileCopyPackagingElement>() {
+        public boolean process(FileCopyPackagingElement fileCopyPackagingElement) {
+          final VirtualFile root = fileCopyPackagingElement.findFile();
+          if (VfsUtil.isAncestor(root, file, false)) {
+            artifacts.add(artifact);
+            return false;
+          }
+          return true;
+        }
+      }, ArtifactManager.getInstance(project).getResolvingContext(), true);
+    }
+    return artifacts;
   }
 }

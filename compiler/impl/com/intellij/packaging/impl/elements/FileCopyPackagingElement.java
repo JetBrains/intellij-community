@@ -63,7 +63,7 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
   public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
                                                      @NotNull PackagingElementResolvingContext resolvingContext,
                                                      @NotNull ArtifactIncrementalCompilerContext compilerContext, @NotNull ArtifactType artifactType) {
-    final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(myFilePath);
+    final VirtualFile file = findFile();
     if (file == null || !file.isValid()) {
       return;
     }
@@ -75,8 +75,12 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
     }
   }
 
+  public VirtualFile findFile() {
+    return LocalFileSystem.getInstance().findFileByPath(myFilePath);
+  }
+
   public boolean isDirectory() {
-    final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(myFilePath);
+    final VirtualFile file = findFile();
     return file != null && file.isDirectory();
   }
 

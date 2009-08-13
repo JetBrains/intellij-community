@@ -5,6 +5,8 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
@@ -19,6 +21,7 @@ import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.packaging.impl.compiler.IncrementalArtifactsCompiler;
+import com.intellij.packaging.impl.compiler.ArtifactAwareCompiler;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -87,6 +90,15 @@ public class BuildArtifactsBeforeRun implements BeforeRunTaskProvider<BuildArtif
     final Ref<Boolean> result = Ref.create(false);
     final Semaphore finished = new Semaphore();
 
+    final List<Artifact> artifacts = new ArrayList<Artifact>();
+    new ReadAction() {
+      protected void run(final Result result) {
+        for (ArtifactPointer pointer : task.getArtifactPointers()) {
+          ContainerUtil.addIfNotNull(pointer.getArtifact(), artifacts);
+        }
+      }
+    }.execute();
+    
     final CompileStatusNotification callback = new CompileStatusNotification() {
       public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
         result.set(!aborted && errors == 0);
@@ -95,7 +107,8 @@ public class BuildArtifactsBeforeRun implements BeforeRunTaskProvider<BuildArtif
     };
     final CompilerFilter compilerFilter = new CompilerFilter() {
       public boolean acceptCompiler(Compiler compiler) {
-        return compiler instanceof IncrementalArtifactsCompiler;
+        return compiler instanceof IncrementalArtifactsCompiler
+               || compiler instanceof ArtifactAwareCompiler && ((ArtifactAwareCompiler)compiler).shouldRun(artifacts);
       }
     };
 
@@ -103,10 +116,6 @@ public class BuildArtifactsBeforeRun implements BeforeRunTaskProvider<BuildArtif
       public void run() {
         final CompilerManager manager = CompilerManager.getInstance(myProject);
         finished.down();
-        List<Artifact> artifacts = new ArrayList<Artifact>();
-        for (ArtifactPointer pointer : task.getArtifactPointers()) {
-          ContainerUtil.addIfNotNull(pointer.getArtifact(), artifacts);
-        }
         manager.make(ArtifactCompileScope.create(myProject, artifacts), compilerFilter, callback);
       }
     }, ModalityState.NON_MODAL);
