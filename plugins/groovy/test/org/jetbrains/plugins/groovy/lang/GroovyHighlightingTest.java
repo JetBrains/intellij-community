@@ -114,5 +114,6 @@ public class GroovyHighlightingTest extends LightGroovyTestCase {
   public void testMissingReturnWithLastLoop() throws Throwable { doTest(new MissingReturnInspection()); }
   public void testMissingReturnWithUnknownCall() throws Throwable { doTest(new MissingReturnInspection()); }
   public void testMissingReturnWithIf() throws Throwable { doTest(new MissingReturnInspection()); }
+  public void testMissingReturnWithAssertion() throws Throwable { doTest(new MissingReturnInspection()); }
 
 }

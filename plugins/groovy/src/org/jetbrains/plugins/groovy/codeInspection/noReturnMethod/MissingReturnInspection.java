@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruction;
@@ -126,7 +127,7 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
     }
 
     final PsiElement element = last.getElement();
-    if (element instanceof GrReturnStatement || element instanceof GrThrowStatement) {
+    if (element instanceof GrReturnStatement || element instanceof GrThrowStatement || element instanceof GrAssertStatement) {
       return true;
     }
 
