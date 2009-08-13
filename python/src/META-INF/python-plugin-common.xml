@@ -94,7 +94,7 @@
     </action>
 
     <group id="PyTypeHierarchyPopupMenu">
-      <reference ref="TypeHierarchy.BaseOnThisType"/>
+      <reference ref="TypeHierarchyBase.BaseOnThisType"/>
       <reference ref="TypeHierarchy.Class"/>
       <reference ref="TypeHierarchy.Subtypes"/>
       <reference ref="TypeHierarchy.Supertypes"/>
