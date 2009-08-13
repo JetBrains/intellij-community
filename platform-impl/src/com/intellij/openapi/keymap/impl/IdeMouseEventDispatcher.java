@@ -137,6 +137,11 @@ public final class IdeMouseEventDispatcher{
       return false;
     }
 
+    // avoid "cyclic component initialization error" in case of dialogs shown because of component initialization failure
+    if (!KeymapManagerImpl.ourKeymapManagerInitialized) {
+      return false;
+    }
+
     MouseShortcut shortcut=new MouseShortcut(e.getButton(),e.getModifiersEx(),e.getClickCount());
     fillActionsList(component,shortcut,IdeKeyEventDispatcher.isModalContext(component));
     ActionManagerEx actionManager=ActionManagerEx.getInstanceEx();

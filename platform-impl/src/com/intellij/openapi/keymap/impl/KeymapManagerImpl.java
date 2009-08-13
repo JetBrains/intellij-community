@@ -53,7 +53,10 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   private static final String NAME_ATTRIBUTE = "name";
   private final SchemesManager<Keymap, KeymapImpl> mySchemesManager;
 
+  public static boolean ourKeymapManagerInitialized = false;
+
   KeymapManagerImpl(DefaultKeymap defaultKeymap, SchemesManagerFactory factory) {
+    ourKeymapManagerInitialized = true;
     mySchemesManager = factory.createSchemesManager(
         "$ROOT_CONFIG$/keymaps",
         new SchemeProcessor<KeymapImpl>(){
