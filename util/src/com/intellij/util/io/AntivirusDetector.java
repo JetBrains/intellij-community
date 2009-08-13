@@ -43,7 +43,10 @@ public class AntivirusDetector {
   }
 
   public void execute(Runnable r) {
-    if (!myEnabled) r.run();
+    if (!myEnabled) {
+      r.run();
+      return;
+    }
 
     long now = System.currentTimeMillis();
     r.run();
