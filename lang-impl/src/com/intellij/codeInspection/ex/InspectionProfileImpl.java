@@ -162,7 +162,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public boolean isProperSetting(HighlightDisplayKey key) {
     final Map<String, Boolean> diffMap = getDisplayLevelMap();
     if (diffMap != null) {
-      final ToolsImpl tools = myBaseProfile.myTools.get(key.toString());
+      final ToolsImpl tools = myBaseProfile.getTools(key.toString());
       final ToolsImpl currentTools = myTools.get(key.toString());
       if (tools != null && currentTools != null) {
         diffMap.put(key.toString(), tools.equalTo(currentTools));
@@ -187,7 +187,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey, PsiElement element) {
-    final ToolsImpl tools = myTools.get(inspectionToolKey.toString());
+    final ToolsImpl tools = getTools(inspectionToolKey.toString());
     HighlightDisplayLevel level = tools != null ? tools.getLevel(element) : HighlightDisplayLevel.WARNING;
     if (!((SeverityProvider)getProfileManager()).getOwnSeverityRegistrar().isSeverityValid(level.getSeverity().toString())) {
       level = HighlightDisplayLevel.WARNING;
@@ -264,14 +264,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public InspectionProfileEntry getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
-    initInspectionTools();
-    final Tools toolList = myTools.get(shortName);
+    final Tools toolList = getTools(shortName);
     return toolList != null ? toolList.getInspectionTool(element) : null;
   }
 
   public InspectionProfileEntry getInspectionTool(@NotNull String shortName) {
-    initInspectionTools();
-    return myTools.get(shortName).getTool();
+    return getTools(shortName).getTool();
   }
 
   public InspectionProfileEntry getToolById(String id, PsiElement element) {
@@ -380,15 +378,15 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public void disableTool(String toolId, PsiElement element) {
-    myTools.get(toolId).disableTool(element);
+    getTools(toolId).disableTool(element);
   }
 
   public void disableToolByDefault(String toolId) {
-    myTools.get(toolId).getDefaultState().setEnabled(false);
+    getTools(toolId).getDefaultState().setEnabled(false);
   }
 
   public void enableToolByDefault(String toolId) {
-    myTools.get(toolId).getDefaultState().setEnabled(true);
+    getTools(toolId).getDefaultState().setEnabled(true);
   }
 
   public boolean wasInitialized() {
@@ -448,7 +446,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   private HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key) {
-    final ToolsImpl tools = myTools.get(key.toString());
+    final ToolsImpl tools = getTools(key.toString());
     LOG.assertTrue(tools != null, "profile name: " + myName +  " base profile: " + (myBaseProfile != null ? myBaseProfile.getName() : "-") + " key: " + key);
     return tools != null ? tools.getLevel() : HighlightDisplayLevel.WARNING;
   }
@@ -520,7 +518,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public void enableTool(String inspectionTool) {
-    final ToolsImpl tools = myTools.get(inspectionTool);
+    final ToolsImpl tools = getTools(inspectionTool);
     tools.setEnabled(true);
     if (tools.getNonDefaultTools() == null) {
       tools.getDefaultState().setEnabled(true);
@@ -528,16 +526,16 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public void enableTool(String inspectionTool, NamedScope namedScope) {
-    myTools.get(inspectionTool).enableTool(namedScope);
+    getTools(inspectionTool).enableTool(namedScope);
   }
 
   public void disableTool(String inspectionTool, NamedScope namedScope) {
-    myTools.get(inspectionTool).disableTool(namedScope);
+    getTools(inspectionTool).disableTool(namedScope);
   }
 
 
   public void disableTool(String inspectionTool) {
-    final ToolsImpl tools = myTools.get(inspectionTool);
+    final ToolsImpl tools = getTools(inspectionTool);
     tools.setEnabled(false);
     if (tools.getNonDefaultTools() == null) {
       tools.getDefaultState().setEnabled(false);
@@ -545,19 +543,19 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public void setErrorLevel(HighlightDisplayKey key, HighlightDisplayLevel level) {
-    myTools.get(key.toString()).setLevel(level);
+    getTools(key.toString()).setLevel(level);
   }
 
   public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
     if (key == null) {
       return false;
     }
-    final Tools toolState = myTools.get(key.toString());
+    final Tools toolState = getTools(key.toString());
     return toolState != null && toolState.isEnabled(element);
   }
 
   public boolean isToolEnabled(HighlightDisplayKey key) {
-    final Tools toolState = myTools.get(key.toString());
+    final Tools toolState = getTools(key.toString());
     return toolState != null && toolState.isEnabled();
   }
 
@@ -640,7 +638,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
                 for (InspectionProfileEntry entry : inspectionProfile.getInspectionTools(null)) {
                   final HighlightDisplayKey key = HighlightDisplayKey.find(entry.getShortName());
                   try {
-                    myTools.get(entry.getShortName())
+                    getTools(entry.getShortName())
                       .addTool(scope, copyToolSettings((InspectionTool)entry), inspectionProfile.isToolEnabled(key), inspectionProfile.getErrorLevel(key, (NamedScope)null));
                   }
                   catch (Exception e) {
@@ -683,6 +681,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public List<ScopeToolState> getAllTools() {
+    initInspectionTools();
     final List<ScopeToolState> result = new ArrayList<ScopeToolState>();
     for (Tools tools : myTools.values()) {
       result.addAll(tools.getTools());
@@ -691,6 +690,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public List<ScopeToolState> getDefaultStates() {
+    initInspectionTools();
     final List<ScopeToolState> result = new ArrayList<ScopeToolState>();
     for (Tools tools : myTools.values()) {
       result.add(tools.getDefaultState());
@@ -700,7 +700,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public List<ScopeToolState> getNonDefaultTools(String shortName) {
     final List<ScopeToolState> result = new ArrayList<ScopeToolState>();
-    final List<ScopeToolState> nonDefaultTools = myTools.get(shortName).getNonDefaultTools();
+    final List<ScopeToolState> nonDefaultTools = getTools(shortName).getNonDefaultTools();
     if (nonDefaultTools != null) {
       result.addAll(nonDefaultTools);
     }
@@ -708,33 +708,30 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public boolean isToolEnabled(HighlightDisplayKey key, NamedScope namedScope) {
-    return myTools.get(key.toString()).isEnabled(namedScope);
-  }
-
-  public List<ScopeToolState> getStates(String toolId) {
-    return myTools.get(toolId).getTools();
+    return getTools(key.toString()).isEnabled(namedScope);
   }
 
   public void removeScope(String toolId, int scopeIdx) {
-    myTools.get(toolId).removeScope(scopeIdx);
+    getTools(toolId).removeScope(scopeIdx);
   }
 
   public void removeAllScopes(String toolId) {
-    myTools.get(toolId).removeAllScopes();
+    getTools(toolId).removeAllScopes();
   }
 
   public void setScope(String toolId, int idx, NamedScope namedScope) {
-    myTools.get(toolId).setScope(idx, namedScope);
+    getTools(toolId).setScope(idx, namedScope);
   }
 
   public void moveScope(String toolId, int idx, int dir) {
-    myTools.get(toolId).moveScope(idx, dir);
+    getTools(toolId).moveScope(idx, dir);
   }
 
   @Nullable
   private Map<String, Boolean> getDisplayLevelMap() {
     if (myBaseProfile == null) return null;
     if (myDisplayLevelMap == null) {
+      initInspectionTools();
       myDisplayLevelMap = new TreeMap<String, Boolean>();
       for (String toolId : myTools.keySet()) {
         myDisplayLevelMap.put(toolId, toolSettingsAreEqual(toolId, myBaseProfile, this));
@@ -744,16 +741,21 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey key, NamedScope scope) {
-    final ToolsImpl tools = myTools.get(key.toString());
+    final ToolsImpl tools = getTools(key.toString());
     return tools != null ? tools.getLevel(scope) : HighlightDisplayLevel.WARNING;
   }
 
   public ScopeToolState addScope(InspectionProfileEntry tool, NamedScope scope, HighlightDisplayLevel level, boolean enabled) {
-    return myTools.get(tool.getShortName()).prependTool(scope, tool, enabled, level);
+    return getTools(tool.getShortName()).prependTool(scope, tool, enabled, level);
   }
 
 
   public void setErrorLevel(HighlightDisplayKey key, HighlightDisplayLevel level, int scopeIdx) {
-    myTools.get(key.toString()).setLevel(level, scopeIdx);
+    getTools(key.toString()).setLevel(level, scopeIdx);
+  }
+
+  private ToolsImpl getTools(String toolId) {
+    initInspectionTools();
+    return myTools.get(toolId);
   }
 }
