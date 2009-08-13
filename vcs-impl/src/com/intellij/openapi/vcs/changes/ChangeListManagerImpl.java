@@ -904,16 +904,18 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private static class MyChangesDeltaForwarder implements PlusMinus<Pair<String, AbstractVcs>> {
     private SlowlyClosingAlarm myAlarm;
     private RemoteRevisionsCache myRevisionsCache;
+    private final ProjectLevelVcsManager myVcsManager;
 
     public MyChangesDeltaForwarder(final Project project, final ExecutorService service) {
       myAlarm = ControlledAlarmFactory.createOnSharedThread(project, "changes delta consumer forwarder", service);
       myRevisionsCache = RemoteRevisionsCache.getInstance(project);
+      myVcsManager = ProjectLevelVcsManager.getInstance(project);
     }
 
     public void plus(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
       myAlarm.addRequest(new Runnable() {
         public void run() {
-          myRevisionsCache.plus(stringAbstractVcsPair);
+          myRevisionsCache.plus(getCorrectedPair(stringAbstractVcsPair));
         }
       });
     }
@@ -921,9 +923,25 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     public void minus(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
       myAlarm.addRequest(new Runnable() {
         public void run() {
-          myRevisionsCache.minus(stringAbstractVcsPair);
+          myRevisionsCache.minus(getCorrectedPair(stringAbstractVcsPair));
         }
       });
+    }
+
+    private Pair<String, AbstractVcs> getCorrectedPair(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
+      Pair<String, AbstractVcs> correctedPair = stringAbstractVcsPair;
+      if (stringAbstractVcsPair.getSecond() == null) {
+        final String path = stringAbstractVcsPair.getFirst();
+        correctedPair = new Pair<String, AbstractVcs>(path, myVcsManager.findVcsByName(findVcs(path).getName()));
+      }
+      return correctedPair;
+    }
+
+    @Nullable
+    private VcsKey findVcs(final String path) {
+      // does not matter directory or not
+      final AbstractVcs vcs = myVcsManager.getVcsFor(FilePathImpl.create(new File(path), false));
+      return vcs == null ? null : vcs.getKeyInstanceMethod();
     }
   }
 }
