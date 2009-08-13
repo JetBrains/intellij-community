@@ -35,6 +35,10 @@ public class LookupElementBuilder {
   private Icon myIcon;
   private String myTypeText;
   private String myPresentableText;
+  private boolean myBold;
+  private boolean myStrikeout;
+  private boolean myGrayedTail;
+  private String myTailText;
 
   LookupElementBuilder(String lookupString) {
     this(lookupString, lookupString);
@@ -75,6 +79,26 @@ public class LookupElementBuilder {
     return this;
   }
 
+  public LookupElementBuilder bold(boolean bold) {
+    myBold = bold;
+    return this;
+  }
+
+  public LookupElementBuilder strikeout(boolean strikeout) {
+    myStrikeout = strikeout;
+    return this;
+  }
+
+  public LookupElementBuilder withTailText(String tailText) {
+    return withTailText(tailText, false);
+  }
+
+  public LookupElementBuilder withTailText(String tailText, boolean grayed) {
+    myTailText = tailText;
+    myGrayedTail = grayed;
+    return this;
+  }
+
   public LookupElement createLookupElement() {
     return new BuiltLookupElement(this);
   }
@@ -88,6 +112,10 @@ public class LookupElementBuilder {
     private LookupElementRenderer<LookupElement> myRenderer;
     private AutoCompletionPolicy myAutoCompletionPolicy;
     private String myTypeText;
+    private boolean myBold;
+    private boolean myStrikeout;
+    private boolean myGrayedTail;
+    private String myTailText;
 
     public BuiltLookupElement(LookupElementBuilder builder) {
       myIcon = builder.myIcon;
@@ -98,6 +126,10 @@ public class LookupElementBuilder {
       myRenderer = builder.myRenderer;
       myAutoCompletionPolicy = builder.myAutoCompletionPolicy;
       myTypeText = builder.myTypeText;
+      myBold = builder.myBold;
+      myStrikeout = builder.myStrikeout;
+      myGrayedTail = builder.myGrayedTail;
+      myTailText = builder.myTailText;
     }
 
     public AutoCompletionPolicy getAutoCompletionPolicy() {
@@ -135,8 +167,11 @@ public class LookupElementBuilder {
       }
       else {
         presentation.setIcon(myIcon);
-        presentation.setItemText(myPresentableText);
+        presentation.setItemText(myPresentableText, myStrikeout, myBold);
         presentation.setTypeText(myTypeText);
+        if (myTailText != null) {
+          presentation.setTailText(myTailText, myGrayedTail, false, myStrikeout);
+        }
       }
     }
 
