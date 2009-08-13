@@ -365,6 +365,7 @@
   <executor implementation="com.intellij.execution.executors.DefaultRunExecutor" order="first" id="run"/>
 
   <findUsagesHandlerFactory implementation="com.intellij.find.findUsages.DefaultFindUsagesHandlerFactory" id="default" order="last"/>
+  <usageTargetProvider implementation="com.intellij.find.findUsages.DefaultUsageTargetProvider" id="default" order="last"/>
 
   <cutElementMarker implementation="com.intellij.ide.PsiCutElementMarker"/>
 
@@ -427,6 +428,7 @@
   <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.lookup.impl.HomeHandler"/>
   <editorActionHandler action="EditorLineEnd" implementationClass="com.intellij.codeInsight.lookup.impl.EndHandler"/>
   <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.codeInsight.lookup.impl.BackspaceHandler"/>
+  <editorActionHandler action="EditorDeleteToWordStart" implementationClass="com.intellij.codeInsight.lookup.impl.DeleteToWordStartHandler"/>
   <editorActionHandler action="EditorRight" implementationClass="com.intellij.codeInsight.lookup.impl.ShowLookupActionsHandler"/>
   <editorTypedHandler implementationClass="com.intellij.codeInsight.lookup.impl.TypedHandler"/>
 
