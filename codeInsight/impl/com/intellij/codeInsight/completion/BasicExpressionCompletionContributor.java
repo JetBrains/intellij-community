@@ -96,7 +96,7 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
             isClassType(defaultType, baseClassName) || isClassType(defaultType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
           final PsiMethod[] methods = collectionsClass.findMethodsByName(method, false);
           if (methods.length != 0) {
-            result.addElement(JavaAwareCompletionData.qualify(
+            result.addElement(JavaCompletionUtil.qualify(
                 LookupItemUtil.objectToLookupItem(methods[0]).setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE).setTailType(
                     TailType.NONE)));
           }

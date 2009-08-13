@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -129,6 +128,11 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     return true;
   }
 
+  @Nullable
+  public PsiType getQualifierType() {
+    return myQualifierType;
+  }
+
   private boolean isAccessible(final PsiElement element) {
     if (!myCheckAccess) return true;
     if (!(element instanceof PsiMember)) return true;
@@ -148,8 +152,8 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     }
   }
 
-  public Collection<CompletionElement> getResults(){
-    return myResults;
+  public Set<CompletionElement> getResults(){
+    return new THashSet<CompletionElement>(myResults);
   }
 
   public void clear() {

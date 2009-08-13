@@ -374,7 +374,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
   }
 
   protected void removeEndOfIdentifier(boolean needParenth){
-    JavaCompletionUtil.initOffsets(myContext.getFile(), myContext.getProject(), myContext.getOffsetMap(), CompletionType.BASIC);
+    JavaCompletionUtil.initOffsets(myContext.getFile(), myContext.getProject(), myContext.getOffsetMap());
     myDocument.deleteString(myContext.getSelectionEndOffset(), myContext.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
     if(myContext.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET) > 0 && !needParenth){
       myDocument.deleteString(myContext.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET),
@@ -528,7 +528,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
   @Override
   protected void populateInsertMap(@NotNull final PsiFile file, @NotNull final OffsetMap offsetMap) {
-    JavaCompletionUtil.initOffsets(file, file.getProject(), offsetMap, CompletionType.BASIC);
+    JavaCompletionUtil.initOffsets(file, file.getProject(), offsetMap);
   }
 
   public static void addImportForItem(PsiFile file, int startOffset, LookupElement item) throws IncorrectOperationException {

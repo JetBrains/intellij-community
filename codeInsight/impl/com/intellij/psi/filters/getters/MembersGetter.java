@@ -1,8 +1,8 @@
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.completion.JavaAwareCompletionData;
 import com.intellij.codeInsight.completion.SmartCompletionDecorator;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
@@ -95,7 +95,7 @@ public class MembersGetter {
           if (result instanceof PsiMethod && acceptMethods) continue;
           final LookupItem item = LookupItemUtil.objectToLookupItem(result);
           item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-          JavaAwareCompletionData.qualify(item);
+          JavaCompletionUtil.qualify(item);
           if (member instanceof PsiMethod) {
             item.setAttribute(LookupItem.SUBSTITUTOR, SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor((PsiMethod) member, expectedType));
           }

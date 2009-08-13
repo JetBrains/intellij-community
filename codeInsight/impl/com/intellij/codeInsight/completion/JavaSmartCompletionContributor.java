@@ -193,7 +193,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
               if (AFTER_THROW_NEW.accepts(element)) {
                 ((LookupItem)item).setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
                 if (item.getObject() instanceof PsiClass) {
-                  JavaAwareCompletionData.setShowFQN((LookupItem)item);
+                  JavaCompletionUtil.setShowFQN((LookupItem)item);
                 }
               } else {
                 ((LookupItem)item).setAttribute(LookupItem.NEW_OBJECT_ATTR, "");
@@ -243,9 +243,9 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
           final Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
             public void consume(final LookupElement lookupElement) {
-              final TypedLookupItem item = lookupElement.as(TypedLookupItem.class);
-              if (item != null) {
-                final PsiType psiType = item.getType();
+              final TypedLookupItem typed = lookupElement.as(TypedLookupItem.class);
+              if (typed != null) {
+                final PsiType psiType = typed.getType();
                 if (psiType != null && type.isAssignableFrom(psiType)) {
                   result.addElement(decorate(lookupElement, _infos));
                 }
@@ -256,8 +256,9 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
               if (!filter.isClassAcceptable(object.getClass())) return;
 
               final PsiSubstitutor substitutor;
-              if (lookupElement instanceof LookupItem) {
-                substitutor = (PsiSubstitutor)((LookupItem)lookupElement).getAttribute(LookupItem.SUBSTITUTOR);
+              final LookupItem item = lookupElement.as(LookupItem.class);
+              if (item != null) {
+                substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
               }
               else {
                 substitutor = null;
@@ -288,7 +289,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           final PsiClass psiClass = PsiUtil.resolveClassInType(type);
           if (psiClass != null && psiClass.isAnnotationType()) {
             final LookupItem item = new JavaPsiClassReferenceElement(psiClass).setTailType(TailType.NONE);
-            if (needQualify) JavaAwareCompletionData.qualify(item);
+            if (needQualify) JavaCompletionUtil.qualify(item);
             result.addElement(item);
           }
         }
@@ -429,7 +430,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
               final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type));
               item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
               if (item.getObject() instanceof PsiClass) {
-                JavaAwareCompletionData.setShowFQN(item);
+                JavaCompletionUtil.setShowFQN(item);
               }
               item.setInsertHandler(new DefaultInsertHandler()); //braces & shortening
               result.addElement(decorate(item, infos));
@@ -449,7 +450,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   public static SmartCompletionDecorator decorate(LookupElement lookupElement, Collection<ExpectedTypeInfo> infos) {
     if (lookupElement instanceof LookupItem) {
       final LookupItem lookupItem = (LookupItem)lookupElement;
-      JavaCompletionUtil.highlightMemberOfContainer(lookupItem);
       if (lookupItem.getInsertHandler() == null) {
         lookupItem.setInsertHandler(new DefaultInsertHandler(){
           @Override
@@ -460,8 +460,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       }
     }
 
-    final SmartCompletionDecorator decorator = new SmartCompletionDecorator(lookupElement, infos);
-    return decorator;
+    return new SmartCompletionDecorator(lookupElement, infos);
   }
 
   private static LookupElement createInstanceofLookupElement(PsiClass psiClass, Set<PsiClass> toWildcardInheritors) {
@@ -615,7 +614,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
     final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type));
     item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
-    JavaAwareCompletionData.setShowFQN(item);
+    JavaCompletionUtil.setShowFQN(item);
     item.setAttribute(LookupItem.NEW_OBJECT_ATTR, "");
 
     if (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
