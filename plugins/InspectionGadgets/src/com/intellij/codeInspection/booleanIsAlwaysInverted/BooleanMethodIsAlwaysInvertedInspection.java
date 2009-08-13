@@ -6,6 +6,7 @@ package com.intellij.codeInspection.booleanIsAlwaysInverted;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
@@ -176,7 +177,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaInspectio
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       assert psiMethod != null;
       final RefactoringActionHandler invertBooleanHandler = JavaRefactoringActionHandlerFactory.getInstance().createInvertBooleanHandler();
-      invertBooleanHandler.invoke(project, new PsiElement[]{psiMethod}, null);
+      invertBooleanHandler.invoke(project, new PsiElement[]{psiMethod}, DataManager.getInstance().getDataContext());
     }
   }
 }
