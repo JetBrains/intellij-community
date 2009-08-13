@@ -6,8 +6,8 @@ import com.intellij.ide.macro.MacroManager;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -334,7 +334,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   private void registerPropertiesInPsi(final AntFile antFile) {
-    final DataContext context = MapDataContext.singleData(DataConstants.PROJECT, getProject());
+    final DataContext context = SimpleDataContext.getProjectContext(myProject);
     final MacroManager macroManager = MacroManager.getInstance();
     Iterator<BuildFileProperty> properties = ANT_PROPERTIES.getIterator(myAllOptions);
     antFile.clearExternalProperties();

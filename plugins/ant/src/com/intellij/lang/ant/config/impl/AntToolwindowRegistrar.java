@@ -9,9 +9,9 @@ import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.actions.TargetActionStub;
 import com.intellij.lang.ant.config.explorer.AntExplorer;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -60,7 +60,7 @@ public class AntToolwindowRegistrar implements ProjectComponent {
     }
     
     final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-    final DataContext dataContext = MapDataContext.singleData(DataConstants.PROJECT, myProject);
+    final DataContext dataContext = SimpleDataContext.getProjectContext(myProject);
     compilerManager.addBeforeTask(new CompileTask() {
       public boolean execute(CompileContext context) {
         final AntConfiguration config = AntConfiguration.getInstance(myProject);

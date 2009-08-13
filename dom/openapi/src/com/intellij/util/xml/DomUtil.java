@@ -372,9 +372,14 @@ public class DomUtil {
 
   @Nullable
   public static <T extends DomElement> T findDomElement(@Nullable final PsiElement element, final Class<T> beanClass) {
+    return findDomElement(element, beanClass, true);
+  }
+
+  @Nullable
+  public static <T extends DomElement> T findDomElement(@Nullable final PsiElement element, final Class<T> beanClass, boolean strict) {
     if (element == null) return null;
 
-    XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+    XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, strict);
     DomElement domElement;
 
     while (tag != null) {

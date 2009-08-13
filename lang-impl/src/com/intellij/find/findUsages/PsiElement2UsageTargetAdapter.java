@@ -1,22 +1,26 @@
 package com.intellij.find.findUsages;
 
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.find.FindManager;
+import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.PsiElementUsageTarget;
@@ -24,6 +28,8 @@ import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author max
@@ -87,6 +93,34 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
   public void findUsagesInEditor(@NotNull FileEditor editor) {
     PsiElement element = getElement();
     FindManager.getInstance(element.getProject()).findUsagesInEditor(element, editor);
+  }
+
+  public void highlightUsages(PsiFile file, Editor editor, boolean clearHighlights) {
+    PsiElement target = getElement();
+
+    if (file instanceof PsiCompiledElement) file = (PsiFile)((PsiCompiledElement)file).getMirror();
+    if (target instanceof PsiCompiledElement) target = ((PsiCompiledElement)target).getMirror();
+
+    final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(target.getProject())).getFindUsagesManager();
+    final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(target, true);
+    Collection<PsiReference> refs;
+
+    // in case of injected file, use host file to highlight all occurences of the target in each injected file
+    PsiFile context = InjectedLanguageUtil.getTopLevelFile(file);
+    SearchScope searchScope = new LocalSearchScope(context);
+    if (handler != null) {
+      refs = handler.findReferencesToHighlight(target, searchScope);
+    }
+    else {
+      refs = ReferencesSearch.search(target, searchScope, false).findAll();
+    }
+
+    new HighlightUsagesHandler.DoHighlightRunnable(new ArrayList<PsiReference>(refs),
+                                                   target.getProject(),
+                                                   target,
+                                                   editor,
+                                                   context,
+                                                   clearHighlights).run();
   }
 
   public boolean isValid() {
@@ -154,7 +188,8 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
               if (myIconOpen == null) myIconOpen = psiPresentableMetaData.getIcon();
               if (myIconClosed == null) myIconClosed = psiPresentableMetaData.getIcon();
             }
-          } else if (element instanceof PsiFile) {
+          }
+          else if (element instanceof PsiFile) {
             final PsiFile psiFile = (PsiFile)element;
             final VirtualFile virtualFile = psiFile.getVirtualFile();
             if (virtualFile != null) {

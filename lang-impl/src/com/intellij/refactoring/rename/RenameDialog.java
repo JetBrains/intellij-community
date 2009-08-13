@@ -256,7 +256,7 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   @TestOnly
-  void performRename(final String newName) {
+  public void performRename(final String newName) {
     final RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(myPsiElement);
     elementProcessor.setToSearchInComments(myPsiElement, isSearchInComments());
     if (myCbSearchTextOccurences.isEnabled()) {

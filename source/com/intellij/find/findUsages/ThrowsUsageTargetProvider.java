@@ -4,8 +4,6 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -17,10 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ThrowsUsageTargetProvider implements UsageTargetProvider {
   @Nullable
-  public UsageTarget[] getTargetsAtContext(final DataProvider context) {
-    Editor editor = (Editor)context.getData(DataConstants.EDITOR);
-    PsiFile file = (PsiFile)context.getData(DataConstants.PSI_FILE);
-
+  public UsageTarget[] getTargets(Editor editor, final PsiFile file) {
     if (editor == null || file == null) return null;
 
     PsiElement element = file.findElementAt(TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset()));
@@ -35,6 +30,10 @@ public class ThrowsUsageTargetProvider implements UsageTargetProvider {
       return new UsageTarget[] {new PsiElement2UsageTargetAdapter(parent)};
     }
 
+    return null;
+  }
+
+  public UsageTarget[] getTargets(PsiElement psiElement) {
     return null;
   }
 }

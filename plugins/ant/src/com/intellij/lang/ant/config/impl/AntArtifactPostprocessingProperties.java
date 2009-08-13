@@ -1,17 +1,17 @@
 package com.intellij.lang.ant.config.impl;
 
+import com.intellij.lang.ant.config.*;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.packaging.ui.PackagingEditorContext;
-import com.intellij.util.xmlb.annotations.Tag;
-import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.lang.ant.config.*;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +38,7 @@ public class AntArtifactPostprocessingProperties extends ArtifactProperties<AntA
       if (target != null) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            target.run(MapDataContext.singleData(DataKeys.PROJECT.getName(), project), AntBuildListener.NULL);
+            target.run(SimpleDataContext.getProjectContext(project), AntBuildListener.NULL);
           }
         });
       }

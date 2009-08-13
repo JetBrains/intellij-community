@@ -184,7 +184,7 @@ public class FindInProjectUtil {
     try {
       final SearchScope customScope = findModel.getCustomScope();
       final Set<PsiFile> largeFiles = new THashSet<PsiFile>();
-      
+
       int i = 0;
       long totalFilesSize = 0;
       int count = 0;
@@ -677,6 +677,7 @@ public class FindInProjectUtil {
 
     public void findUsages() {}
     public void findUsagesInEditor(@NotNull FileEditor editor) {}
+    public void highlightUsages(PsiFile file, Editor editor, boolean clearHighlights) {}
 
     public boolean isValid() {
       return true;

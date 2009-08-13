@@ -18,8 +18,10 @@ package com.intellij.usages;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -36,6 +38,8 @@ public interface UsageTarget extends NavigationItem {
    * result in usage view display.
    */
   void findUsagesInEditor(@NotNull FileEditor editor);
+
+  void highlightUsages(PsiFile file, Editor editor, boolean clearHighlights);
 
   boolean isValid();
   boolean isReadOnly();

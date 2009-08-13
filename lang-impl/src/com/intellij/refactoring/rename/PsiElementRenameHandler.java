@@ -116,14 +116,15 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   public boolean isAvailableOnDataContext(DataContext dataContext) {
-    final PsiElement element = getElement(dataContext);
+    return !isVetoed(getElement(dataContext));
+  }
 
-    if (element == null || element instanceof SyntheticElement) return false;
+  public static boolean isVetoed(PsiElement element) {
+    if (element == null || element instanceof SyntheticElement) return true;
     for(Condition<PsiElement> condition: Extensions.getExtensions(VETO_RENAME_CONDITION_EP)) {
-      if (condition.value(element)) return false;
+      if (condition.value(element)) return true;
     }
-
-    return true;
+    return false;
   }
 
   @Nullable
