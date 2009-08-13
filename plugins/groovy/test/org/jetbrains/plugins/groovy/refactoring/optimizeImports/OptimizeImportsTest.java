@@ -128,6 +128,15 @@ public class OptimizeImportsTest extends LightGroovyTestCase {
   public void testRemoveImplicitlyDemandImported() throws Throwable { doTest(); }
   public void testDontRemoveRedImports() throws Throwable { doTest(); }
 
+  public void testRemoveSamePackaged() throws Throwable { 
+    myFixture.addClass("package foo.bar; public class Aaaa {}");
+    myFixture.addClass("package foo.bar; public class Bbbb {}");
+    myFixture.addClass("package foo.bar; public class Zzzz {}");
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".groovy", "foo/Foo.groovy"));
+    doOptimizeImports();
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+  }
+
   private void doTest() throws Throwable {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
