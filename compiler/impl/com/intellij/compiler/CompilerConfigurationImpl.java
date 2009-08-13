@@ -57,7 +57,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private final List<Pattern> myRegexpResourcePaterns = new ArrayList<Pattern>(getDefaultRegexpPatterns());
   // extensions of the files considered as resource files. If present, Overrides patterns in old regexp format stored in myRegexpResourcePaterns
   private final List<String> myWildcardPatterns = new ArrayList<String>();
-  private final List<Pattern> myWildcardCompiledPatterns = new ArrayList<Pattern>();
+  private final List<Pattern> myCompiledPatterns = new ArrayList<Pattern>();
+  private final List<Pattern> myNegatedCompiledPatterns = new ArrayList<Pattern>();
   private boolean myWildcardPatternsInitialized = false;
   private final Project myProject;
   private final ExcludedEntriesConfiguration myExcludedEntriesConfiguration;
@@ -144,19 +145,13 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   private static Pattern compilePattern(@NonNls String s) throws MalformedPatternException {
-    final PatternCompiler compiler = new Perl5Compiler();
-    final Pattern pattern;
     try {
-      if (SystemInfo.isFileSystemCaseSensitive) {
-        pattern = compiler.compile(s);
-      }
-      else {
-        pattern = compiler.compile(s, Perl5Compiler.CASE_INSENSITIVE_MASK);
-      }
-    } catch (org.apache.oro.text.regex.MalformedPatternException ex) {
+      final PatternCompiler compiler = new Perl5Compiler();
+      return SystemInfo.isFileSystemCaseSensitive? compiler.compile(s) : compiler.compile(s, Perl5Compiler.CASE_INSENSITIVE_MASK);
+    }
+    catch (org.apache.oro.text.regex.MalformedPatternException ex) {
       throw new MalformedPatternException(ex);
     }
-    return pattern;
   }
 
   public void disposeComponent() {
@@ -269,7 +264,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     final Pattern pattern = compilePattern(convertToRegexp(wildcardPattern));
     if (pattern != null) {
       myWildcardPatterns.add(wildcardPattern);
-      myWildcardCompiledPatterns.add(pattern);
+      if (isPatternNegated(wildcardPattern)) {
+        myNegatedCompiledPatterns.add(pattern);
+      }
+      else {
+        myCompiledPatterns.add(pattern);
+      }
     }
   }
 
@@ -283,7 +283,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   private void removeWildcardPatterns() {
     myWildcardPatterns.clear();
-    myWildcardCompiledPatterns.clear();
+    myCompiledPatterns.clear();
+    myNegatedCompiledPatterns.clear();
   }
 
   private static String convertToRegexp(String wildcardPattern) {
@@ -307,23 +308,38 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   public boolean isResourceFile(String name) {
-    for (int i = 0; i < myWildcardCompiledPatterns.size(); i++) {
-      Pattern pattern = myWildcardCompiledPatterns.get(i);
-      final String wildcard = myWildcardPatterns.get(i);
+    for (int i = 0; i < myCompiledPatterns.size(); i++) {
+      final Pattern pattern = myCompiledPatterns.get(i);
       try {
-        final boolean matches;
         synchronized (myPatternMatcher) {
-          matches = myPatternMatcher.matches(name, pattern);
-        }
-        if (isPatternNegated(wildcard) ? !matches : matches) {
-          return true;
+          if (myPatternMatcher.matches(name, pattern)) {
+            return true;
+          }
         }
       }
       catch (Exception e) {
         LOG.error("Exception matching file name \"" + name + "\" against the pattern \"" + pattern.getPattern() + "\"", e);
       }
     }
-    return false;
+
+    if (myNegatedCompiledPatterns.isEmpty()) {
+      return false;
+    }
+
+    for (int i = 0; i < myNegatedCompiledPatterns.size(); i++) {
+      final Pattern pattern = myNegatedCompiledPatterns.get(i);
+      try {
+        synchronized (myPatternMatcher) {
+          if (myPatternMatcher.matches(name, pattern)) {
+            return false;
+          }
+        }
+      }
+      catch (Exception e) {
+        LOG.error("Exception matching file name \"" + name + "\" against the pattern \"" + pattern.getPattern() + "\"", e);
+      }
+    }
+    return true;
   }
 
   // property names

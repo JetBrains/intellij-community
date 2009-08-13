@@ -27,6 +27,7 @@ public class CompilerUIConfigurable implements Configurable {
   private JRadioButton myDeploy;
   private JRadioButton myShowDialog;
   private JCheckBox myCbAssertNotNull;
+  private JLabel myPatternLegendLabel;
 
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
