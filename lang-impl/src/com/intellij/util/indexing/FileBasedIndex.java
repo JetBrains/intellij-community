@@ -364,21 +364,27 @@ public class FileBasedIndex implements ApplicationComponent {
     myFileDocumentManager.saveAllDocuments();
     
     LOG.info("START INDEX SHUTDOWN");
-    myChangedFilesUpdater.forceUpdate();
+    try {
+      myChangedFilesUpdater.forceUpdate();
 
-    for (ID<?, ?> indexId : myIndices.keySet()) {
-      final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
-      assert index != null;
-      checkRebuild(indexId, true); // if the index was scheduled for rebuild, only clean it
-      //LOG.info("DISPOSING " + indexId);
-      index.dispose();
+      for (ID<?, ?> indexId : myIndices.keySet()) {
+        final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+        assert index != null;
+        checkRebuild(indexId, true); // if the index was scheduled for rebuild, only clean it
+        //LOG.info("DISPOSING " + indexId);
+        index.dispose();
+      }
+
+      myVfManager.removeVirtualFileListener(myChangedFilesUpdater);
+      myVfManager.unregisterRefreshUpdater(myChangedFilesUpdater);
+      myFileContentAttic.dispose();
+
+      FileUtil.delete(getMarkerFile());
     }
-
-    myVfManager.removeVirtualFileListener(myChangedFilesUpdater);
-    myVfManager.unregisterRefreshUpdater(myChangedFilesUpdater);
-    myFileContentAttic.dispose();
-
-    FileUtil.delete(getMarkerFile());
+    catch (Throwable e) {
+      LOG.info("Problems during index shutdown", e);
+      throw new RuntimeException(e);
+    }
     LOG.info("END INDEX SHUTDOWN");
   }
 
