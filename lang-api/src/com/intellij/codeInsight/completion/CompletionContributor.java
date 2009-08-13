@@ -135,8 +135,6 @@ public abstract class CompletionContributor extends AbstractCompletionContributo
    *
    * @param parameters
    * @param result
-   * @return true if completion process should continue invoking other contributors, and false otherwise. Don't ever return false unless you
-   * know precisely what you're doing!!!
    */
   public void fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
     for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(parameters.getCompletionType())) {
