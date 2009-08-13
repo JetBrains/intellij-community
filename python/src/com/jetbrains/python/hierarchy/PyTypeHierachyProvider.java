@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +31,8 @@ public class PyTypeHierachyProvider implements HierarchyProvider {
         element = file.findElementAt(editor.getCaretModel().getOffset());
       }
     }
-    while (element != null && !(element instanceof PyClass)) {
-      element = element.getParent();
+    if (!(element instanceof PyClass)) {
+      element = PsiTreeUtil.getParentOfType(element, PyClass.class);
     }
     return element;
   }
