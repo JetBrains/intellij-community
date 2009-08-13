@@ -11,7 +11,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.StrikeoutLabel;
 import com.intellij.ui.popup.PopupIcons;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -44,9 +43,9 @@ public class LookupCellRenderer implements ListCellRenderer {
   private final LookupImpl myLookup;
 
   private final SimpleColoredComponent myNameComponent;
-  private final StrikeoutLabel myLabel2; // type
-  private final JLabel myLabel3; // type
-  private final JLabel myLabel4; // actions' substep
+  private final SimpleColoredComponent myTailComponent;
+  private final JLabel myTypeLabel;
+  private final JLabel myArrowLabel; // actions' substep
   private final JPanel myPanel;
 
   private final LookupElementPresentationImpl myLookupElementPresentation = new LookupElementPresentationImpl();
@@ -60,27 +59,24 @@ public class LookupCellRenderer implements ListCellRenderer {
     myLookup = lookup;
     myNameComponent = new MySimpleColoredComponent();
     myNameComponent.setIpad(new Insets(0, 0, 0, 0));
-    myLabel2 = new StrikeoutLabel("", SwingConstants.LEFT);
-    myLabel2.setOpaque(true);
-    myLabel3 = new JLabel("", SwingConstants.LEFT);
-    myLabel3.setOpaque(true);
-    myLabel4 = new JLabel("");
-    myLabel4.setOpaque(true);
+    myTailComponent = new MySimpleColoredComponent();
+    myTailComponent.setIpad(new Insets(0, 0, 0, 0));
+    myTypeLabel = new JLabel("", SwingConstants.LEFT);
+    myTypeLabel.setOpaque(true);
+    myArrowLabel = new JLabel("");
+    myArrowLabel.setOpaque(true);
 
     myPanel = new LookupPanel();
     myPanel.add(myNameComponent, BorderLayout.WEST);
-    myPanel.add(myLabel2, BorderLayout.CENTER);
-    myLabel2.setBorder(new EmptyBorder(0, 0, 0, 10));
+    myPanel.add(myTailComponent, BorderLayout.CENTER);
+    myTailComponent.setBorder(new EmptyBorder(0, 0, 0, 10));
 
     LookupPanel eastPanel = new LookupPanel();
-    eastPanel.add(myLabel3, BorderLayout.WEST);
-    eastPanel.add(myLabel4, BorderLayout.EAST);
+    eastPanel.add(myTypeLabel, BorderLayout.WEST);
+    eastPanel.add(myArrowLabel, BorderLayout.EAST);
     myPanel.add(eastPanel, BorderLayout.EAST);
 
     myFontWidth = myLookup.getEditor().getComponent().getFontMetrics(BOLD_FONT).charWidth('W');
-
-    final LookupElement[] items = lookup.getItems();
-    //if (items.length > 0) lookup.getList().setPrototypeCellValue(items[0]);
 
     UIUtil.removeQuaquaVisualMarginsIn(myPanel);
   }
@@ -103,12 +99,11 @@ public class LookupCellRenderer implements ListCellRenderer {
     myLookupElementPresentation.setContext(item, background, foreground, list, isSelected);
 
     myNameComponent.clear();
-    myLabel2.setBackground(background);
-    myLabel2.setText(null);
-    myLabel3.setText(null);
-    myLabel4.setIcon(myLookup.getActionsFor(item).isEmpty() ? PopupIcons.EMPTY_ICON : PopupIcons.HAS_NEXT_ICON_GRAYED);
-    myLabel4.setBackground(background);
-    myLabel4.setForeground(foreground);
+    myTailComponent.clear();
+    myTypeLabel.setText(null);
+    myArrowLabel.setIcon(myLookup.getActionsFor(item).isEmpty() ? PopupIcons.EMPTY_ICON : PopupIcons.HAS_NEXT_ICON_GRAYED);
+    myArrowLabel.setBackground(background);
+    myArrowLabel.setForeground(foreground);
 
     myNameComponent.setIcon(myEmptyIcon);
     item.renderElement(myLookupElementPresentation);
@@ -136,31 +131,32 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
   }
 
-  private void setTailTextLabel(final Color background, Color foreground, final String text, final Font font, final boolean strikeout) {
-    StrikeoutLabel label = myLabel2;
-    if (text != null){
-      label.setText(text);
+  private void setTailTextLabel(final Color background, Color foreground, final String text, final boolean bold, final boolean strikeout) {
+    if (StringUtil.isEmpty(text)) {
+      return;
     }
-    else{
-      label.setText("");
-    }
-    label.setStrikeout(strikeout);
 
-    label.setBackground(background);
-    label.setForeground(foreground);
-    label.setFont(font);
+    myTailComponent.setFont(bold ? BOLD_FONT : NORMAL_FONT);
+    myTailComponent.setBackground(background);
+
+    int style = bold ? SimpleTextAttributes.STYLE_BOLD : SimpleTextAttributes.STYLE_PLAIN;
+    if (strikeout) {
+      style |= SimpleTextAttributes.STYLE_STRIKEOUT;
+    }
+
+    myTailComponent.append(text, new SimpleTextAttributes(style, foreground));
   }
 
   private void setTypeTextLabel(LookupElement item, final Color background, Color foreground, JList list, final String text3, final Icon icon){
-    myLabel3.setHorizontalTextPosition(SwingConstants.RIGHT);
-    myLabel3.setIcon(icon);
+    myTypeLabel.setHorizontalTextPosition(SwingConstants.RIGHT);
+    myTypeLabel.setIcon(icon);
 
     String text = text3;
 
     final int listWidth = Math.max(list.getFixedCellWidth(), list.getWidth());
     final int maxWidth = listWidth - myNameComponent.getPreferredSize().width - 3 * myFontWidth;
 
-    JLabel label = myLabel3;
+    JLabel label = myTypeLabel;
     if (text == null) text = "";
 
     label.setText(text);
@@ -253,7 +249,7 @@ public class LookupCellRenderer implements ListCellRenderer {
                        : foreground == null
                          ? myForeground
                          : foreground;
-      setTailTextLabel(myBackground, fg, text, bold ? BOLD_FONT : NORMAL_FONT, strikeout);
+      setTailTextLabel(myBackground, fg, text, bold, strikeout);
     }
 
     public void setTypeText(final String text, final Icon icon) {
