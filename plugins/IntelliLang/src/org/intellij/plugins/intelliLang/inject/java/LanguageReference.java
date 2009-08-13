@@ -17,7 +17,6 @@ package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
-import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiElement;
@@ -25,8 +24,8 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
-import org.intellij.plugins.intelliLang.util.StringLiteralReference;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
+import org.intellij.plugins.intelliLang.util.StringLiteralReference;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -57,12 +56,12 @@ final class LanguageReference extends StringLiteralReference {
 
         final FileType ft = l.getAssociatedFileType();
         if (ft != null) {
-          return LookupElementFactoryImpl.getInstance().createLookupElement(s).setIcon(ft.getIcon()).setTypeText(ft.getDescription());
+          return LookupElementFactory.builder(s).setIcon(ft.getIcon()).setTypeText(ft.getDescription()).createLookupElement();
 //                } else if (l == StdLanguages.EL) {
 //                    // IDEA-10012
 //                    return new LanguageLookupValue(s, StdFileTypes.JSP.getIcon(), "Expression Language");
         }
-        return LookupElementFactory.getInstance().createLookupElement(s).setIcon(new EmptyIcon(16));
+        return LookupElementFactory.builder(s).setIcon(new EmptyIcon(16)).createLookupElement();
       }
     });
   }
