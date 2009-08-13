@@ -75,6 +75,16 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
     return getXmlName().getNamespace(getFile(), getFile());
   }
 
+  @Override
+  public boolean isValid() {
+    final XmlTag tag = (XmlTag)getXmlElement();
+    if (tag != null && !tag.isValid()) {
+      return false;
+    }
+
+    return myParent.isValid();
+  }
+
   @NotNull
   public DomFileElementImpl getParent() {
     checkIsValid();

@@ -213,6 +213,10 @@ public final class DomManagerImpl extends DomManager {
     processFileOrDirectoryChange(file);
   }
 
+  public long getPsiModificationCount() {
+    return PsiManager.getInstance(getProject()).getModificationTracker().getModificationCount();
+  }
+
   public <T extends DomInvocationHandler> void cacheHandler(SemKey<T> key, XmlElement element, T handler) {
     mySemService.setCachedSemElement(key, element, handler);
 

@@ -87,6 +87,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   }
 
   public DomElement addValue(@NotNull DomElement element) {
+    assert element.getGenericInfo().getCollectionChildrenDescriptions().contains(this);
     return addChild(element, getType(), Integer.MAX_VALUE);
   }
 

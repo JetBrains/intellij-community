@@ -17,14 +17,11 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.text.CharSequenceReader;
 import net.n3.nanoxml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,20 +43,7 @@ public class NanoXmlUtil {
   }
 
   private static MyXMLReader createReader(PsiFile psiFile) throws IOException {
-    final VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (virtualFile == null) {
-      return new MyXMLReader(new StringReader(psiFile.getText()));
-    }
-
-    final Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
-
-    if (document != null) {
-      return new MyXMLReader(new CharSequenceReader(document.getCharsSequence()));
-    }
-    else {
-      return new MyXMLReader(virtualFile.getInputStream());
-    }
-
+    return new MyXMLReader(new StringReader(psiFile.getText()));
   }
 
   public static void parseFile(PsiFile psiFile, final IXMLBuilder builder) {

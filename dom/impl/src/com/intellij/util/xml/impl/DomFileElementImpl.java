@@ -144,6 +144,10 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   @Nullable
   public XmlTag getRootTag() {
+    if (!myFile.isValid()) {
+      return null;
+    }
+
     final XmlDocument document = myFile.getDocument();
     if (document != null) {
       final XmlTag tag = document.getRootTag();
