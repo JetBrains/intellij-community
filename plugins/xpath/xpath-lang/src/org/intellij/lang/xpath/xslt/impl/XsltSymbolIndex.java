@@ -17,7 +17,6 @@
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,14 +40,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /*
 * Created by IntelliJ IDEA.
 * User: sweinreuter
 * Date: 15.12.2008
 */
-public class XsltSymbolIndex implements FileBasedIndexExtension<String, XsltSymbolIndex.Kind> {
+public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolIndex.Kind> {
     @NonNls
     public static final ID<String, Kind> NAME = ID.create("XsltSymbolIndex");
 
@@ -83,11 +85,6 @@ public class XsltSymbolIndex implements FileBasedIndexExtension<String, XsltSymb
     public ID<String, Kind> getName() {
         return NAME;
     }
-
-  @NotNull
-  public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
-    return Collections.emptyList();
-  }
 
     public DataIndexer<String, Kind, FileContent> getIndexer() {
         return new DataIndexer<String, Kind, FileContent>() {
@@ -133,10 +130,6 @@ public class XsltSymbolIndex implements FileBasedIndexExtension<String, XsltSymb
 
     public DataExternalizer<Kind> getValueExternalizer() {
         return new EnumDataDescriptor<Kind>(Kind.class);
-    }
-
-    public int getCacheSize() {
-        return DEFAULT_CACHE_SIZE;
     }
 
     public KeyDescriptor<String> getKeyDescriptor() {
