@@ -49,6 +49,10 @@ public class LogOperation extends CvsOperationOnFiles implements BranchesProvide
     return null;
   }
 
+  public List<LogInformation> getLogInformationList() {
+    return myLogInformationList;
+  }
+
   protected String getOperationName() {
     return "log";
   }

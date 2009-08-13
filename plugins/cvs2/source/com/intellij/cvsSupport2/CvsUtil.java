@@ -310,7 +310,12 @@ public class CvsUtil {
 
   @Nullable
   public static String getStickyTagForDirectory(VirtualFile parentFile) {
-    String tag = loadFrom(CvsVfsUtil.getFileFor(parentFile), TAG, true);
+    return getStickyTagForDirectory(CvsVfsUtil.getFileFor(parentFile));
+  }
+
+  @Nullable
+  public static String getStickyTagForDirectory(File ioFile) {
+    String tag = loadFrom(ioFile, TAG, true);
     if (tag == null) return null;
     if (tag.length() == 0) return null;
     if (tag.startsWith(STICKY_DATE_PREFIX)) return null;

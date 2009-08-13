@@ -186,7 +186,7 @@ public class CvsChangeProvider implements ChangeProvider {
 
     final Entry entry = myEntriesManager.getEntryFor(dir, filePath.getName());
     final FileStatus status = CvsStatusProvider.getStatus(filePath.getVirtualFile(), entry);
-    VcsRevisionNumber number = entry != null ? new CvsRevisionNumber(entry.getRevision()) : VcsRevisionNumber.NULL;
+    VcsRevisionNumber number = entry != null ? createRevisionNumber(entry.getRevision(), status) : VcsRevisionNumber.NULL;
     processStatus(filePath, dir.findChild(filePath.getName()), status, number, entry != null && entry.isBinary(), builder);
     checkSwitchedFile(filePath, builder, dir, entry);
   }
@@ -194,9 +194,20 @@ public class CvsChangeProvider implements ChangeProvider {
   private void processFile(final VirtualFile dir, @Nullable VirtualFile file, Entry entry, final ChangelistBuilder builder) {
     final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(dir, entry.getFileName());
     final FileStatus status = CvsStatusProvider.getStatus(file, entry);
-    final VcsRevisionNumber number = new CvsRevisionNumber(entry.getRevision());
+    final VcsRevisionNumber number = createRevisionNumber(entry.getRevision(), status);
     processStatus(filePath, file, status, number, entry.isBinary(), builder);
     checkSwitchedFile(filePath, builder, dir, entry);
+  }
+
+  private CvsRevisionNumber createRevisionNumber(final String revision, final FileStatus status) {
+    final String correctedRevision;
+    if (FileStatus.DELETED.equals(status)) {
+      final int idx = revision.indexOf('-');
+      correctedRevision = (idx != -1) ? revision.substring(idx + 1) : revision;
+    } else {
+      correctedRevision = revision;
+    }
+    return new CvsRevisionNumber(correctedRevision);
   }
 
   private void checkSwitchedDir(final VirtualFile dir, final ChangelistBuilder builder, final VcsDirtyScope scope) {

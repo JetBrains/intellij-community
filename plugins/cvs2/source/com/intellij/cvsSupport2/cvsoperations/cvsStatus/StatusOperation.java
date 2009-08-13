@@ -12,8 +12,12 @@ import java.io.File;
 import java.util.Collection;
 
 public class StatusOperation extends CvsOperationOnFiles {
+  private static final String ourNoneTag = "(none)";
+
   private String myRepositoryRevision;
   private FileStatus myStatus;
+  private String myStickyDate;
+  private String myStickyTag;
 
   public StatusOperation(Collection<File> files) {
     for (final File file : files) {
@@ -38,6 +42,10 @@ public class StatusOperation extends CvsOperationOnFiles {
       final StatusInformation statusInformation = (StatusInformation) info;
       myRepositoryRevision = statusInformation.getRepositoryRevision();
       myStatus = statusInformation.getStatus();
+      myStickyDate = statusInformation.getStickyDate();
+      myStickyDate = ourNoneTag.equals(myStickyDate) ? null : myStickyDate;
+      myStickyTag = statusInformation.getStickyTag();
+      myStickyTag = ourNoneTag.equals(myStickyTag) ? null : myStickyTag;
     }
   }
 
@@ -47,5 +55,13 @@ public class StatusOperation extends CvsOperationOnFiles {
 
   public FileStatus getStatus() {
     return myStatus;
+  }
+
+  public String getStickyDate() {
+    return myStickyDate;
+  }
+
+  public String getStickyTag() {
+    return myStickyTag;
   }
 }
