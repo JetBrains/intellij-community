@@ -111,6 +111,11 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     return myDelegate.hashCode();
   }
 
+  @Override
+  public int getGrouping() {
+    return myDelegate.getGrouping();
+  }
+
   @NotNull
   public static <T extends LookupElement> LookupElementDecorator<T> delegate(@NotNull T element, @NotNull final InsertHandlerDecorator<T> insertHandler) {
     return new InsertingDecorator<T>(element, insertHandler);
