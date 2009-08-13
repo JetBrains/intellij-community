@@ -1,6 +1,5 @@
 package b;
 
-import b.Script
 
 class B {
   def fooB(int i) {

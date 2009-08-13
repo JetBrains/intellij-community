@@ -17,83 +17,78 @@ package org.jetbrains.plugins.groovy.refactoring.optimizeImports;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
-import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author ilyas
  */
-public class OptimizeImportsTest extends JavaCodeInsightFixtureTestCase {
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.addJdk(TestUtils.getMockJdkHome());
-  }
+public class OptimizeImportsTest extends LightGroovyTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/optimizeImports/" + getTestName(true);
+    return "/svnPlugins/groovy/testdata/optimizeImports/";
   }
 
   public void testNewline() throws Throwable {
-    doTest("A.groovy");
+    doTest();
   }
 
   public void testAliased() throws Throwable {
-    doTest("A.groovy");
+    doTest();
   }
 
   public void testSimpleOptimize() throws Throwable {
-    doTest("A.groovy");
+    doTest();
   }
 
   public void testCommented() throws Throwable {
-    doTest("A.groovy");
+    doTest();
   }
 
   public void testOptimizeExists() throws Throwable {
-    doTest("A.groovy");
+    doTest();
   }
 
   public void testOptimizeAlias() throws Throwable {
-    doTest("A.groovy");
+    doTest();
   }
 
   public void testFoldImports() throws Throwable {
-    doTest("A.groovy");
+    doTest();
   }
 
   public void testFoldImports2() throws Throwable {
-    doTest("A.groovy");
+    doTest();
   }
 
   public void testUntypedCall() throws Throwable {
-    doTest("A.groovy");
+    doTest();
   }
 
   public void testFoldImports3() throws Throwable {
-    doTest("A.groovy");
+    doTest();
   }
 
   public void testFoldImports4() throws Throwable {
-    doTest("A.groovy");
+    doTest();
   }
 
   public void testFoldImports5() throws Throwable {
-    doTest("A.groovy");
+    doTest();
   }
 
   public void testFixPoint() throws Throwable {
-    doTest("A.groovy");
+    doTest();
   }
 
   public void testUtilListMasked() throws Throwable {
     myFixture.addClass("package java.awt; public class List {}");
-    doTest(getTestName(false) + ".groovy");
+    doTest();
   }
 
   public void testExtraLineFeed() throws Throwable {
@@ -106,39 +101,44 @@ public class OptimizeImportsTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testSemicolons() throws Throwable {
-    doTest("A.groovy");
+    doTest();
   }
 
   public void testSameFile() throws Throwable {
-    doTest("A.groovy");
+    doTest();
   }
 
   public void testSamePackage() throws Throwable {
     myFixture.addClass("package foo; public class Bar {}");
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".groovy", "foo/Foo.groovy"));
     doOptimizeImports();
-    myFixture.checkResultByFile("result.test");
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
   public void testQualifiedUsage() throws Throwable {
     myFixture.addClass("package foo; public class Bar {}");
-    doTest(getTestName(false) + ".groovy");
+    doTest();
   }
 
   public void testFileHeader() throws Throwable {
-    doTest(getTestName(false) + ".groovy");
+    doTest();
   }
 
-  private void doTest(@NonNls String filePath) throws Throwable {
+  public void testRemoveImplicitlyImported() throws Throwable { doTest(); }
+  public void testRemoveImplicitlyDemandImported() throws Throwable { doTest(); }
+  public void testDontRemoveRedImports() throws Throwable { doTest(); }
+
+  private void doTest() throws Throwable {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
     settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
     try {
-      myFixture.configureByFile(filePath);
+      myFixture.configureByFile(getTestName(false) + ".groovy");
 
       doOptimizeImports();
-
-      myFixture.checkResultByFile("result.test");
+      PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+      ((DocumentEx)myFixture.getEditor().getDocument()).stripTrailingSpaces(false);
+      myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
 
     }
     finally {

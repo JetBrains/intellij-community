@@ -173,6 +173,11 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       myFile.removeImport(myFile.addImport(factory.createImportStatementFromText("import xxxx"))); //to remove trailing whitespaces
 
       for (GrImportStatement importStatement : oldImports) {
+        final GrCodeReferenceElement reference = importStatement.getImportReference();
+        if (reference == null || reference.getCanonicalText() == null) {
+          continue;
+        }
+
         myFile.removeImport(importStatement);
       }
     }
@@ -196,6 +201,10 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       TObjectIntHashMap<String> classCountMap = new TObjectIntHashMap<String>();
 
       for (String importedClass : importedClasses) {
+        if (implicitlyImported.contains(importedClass)) {
+          continue;
+        }
+
         final String packageName = StringUtil.getPackageName(importedClass);
 
         if (!packageCountMap.containsKey(packageName)) packageCountMap.put(packageName, 0);
