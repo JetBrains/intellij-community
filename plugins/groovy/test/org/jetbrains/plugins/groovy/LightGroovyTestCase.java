@@ -20,6 +20,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -91,6 +92,10 @@ public abstract class LightGroovyTestCase extends UsefulTestCase {
     myFixture = null;
 
     super.tearDown();
+  }
+
+  protected Project getProject() {
+    return myFixture.getProject();
   }
 
 }
