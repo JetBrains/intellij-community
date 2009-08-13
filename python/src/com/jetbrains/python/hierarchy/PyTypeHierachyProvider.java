@@ -43,9 +43,6 @@ public class PyTypeHierachyProvider implements HierarchyProvider {
   }
 
   public void browserActivated(HierarchyBrowser hierarchyBrowser) {
-    final PyTypeHierarchyBrowser browser = (PyTypeHierarchyBrowser)hierarchyBrowser;
-    final String typeName =
-      browser.isInterface() ? TypeHierarchyBrowserBase.SUBTYPES_HIERARCHY_TYPE : TypeHierarchyBrowserBase.TYPE_HIERARCHY_TYPE;
-    browser.changeView(typeName);
+    ((PyTypeHierarchyBrowser)hierarchyBrowser).changeView(TypeHierarchyBrowserBase.TYPE_HIERARCHY_TYPE);
   }
 }
