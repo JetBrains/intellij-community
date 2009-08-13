@@ -35,7 +35,17 @@ public class NativeFileIconProvider implements FileIconProvider {
     }
     return new DeferredIconImpl<VirtualFile>(file.getFileType().getIcon(), file, false, new Function<VirtualFile, Icon>() {
       public Icon fun(VirtualFile virtualFile) {
-        Icon icon = myFileChooser.getIcon(new File(virtualFile.getPath()));
+        final File f = new File(virtualFile.getPath());
+        if (!f.exists()) {
+          return null;
+        }
+        Icon icon;
+        try {
+          icon = myFileChooser.getIcon(f);
+        }
+        catch (Exception e) {      // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4854174
+          return null;
+        }
         if (ext != null) {
           synchronized (myIconCache) {
             myIconCache.put(ext, icon);
