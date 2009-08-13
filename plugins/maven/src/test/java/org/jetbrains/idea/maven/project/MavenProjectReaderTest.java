@@ -121,7 +121,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
   public void testInvalidXmlWithWrongClosingTag() throws Exception {
     if (ignore()) return;
-    
+
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</vers>" +
@@ -414,6 +414,41 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
     assertEquals("${prop1}", p.getName());
     assertEquals("${prop2}", p.getPackaging());
+  }
+
+  public void testHandlingRecursionProprietlyAndDoNotForgetCoClearRecursionGuard() throws Exception {
+    File repositoryPath = new File(myDir, "repository");
+    setRepositoryPath(repositoryPath.getPath());
+
+    File parentFile = new File(repositoryPath, "test/parent/1/parent-1.pom");
+    parentFile.getParentFile().mkdirs();
+    FileUtil.writeToFile(parentFile, createPomXml("<groupId>test</groupId>" +
+                                                  "<artifactId>parent</artifactId>" +
+                                                  "<version>1</version>").getBytes());
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>not-a-project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     " <groupId>test</groupId>" +
+                     " <artifactId>parent</artifactId>" +
+                     " <version>1</version>" +
+                     "</parent>");
+
+    VirtualFile child = createModulePom("child",
+                                        "<groupId>test</groupId>" +
+                                        "<artifactId>child</artifactId>" +
+                                        "<version>1</version>" +
+
+                                        "<parent>" +
+                                        " <groupId>test</groupId>" +
+                                        " <artifactId>parent</artifactId>" +
+                                        " <version>1</version>" +
+                                        "</parent>");
+
+    MavenProjectReaderResult readResult = readProject(child, new NullProjectLocator());
+    assertTrue(readResult.isValid);
   }
 
   public void testExpandingSystemAndEnvProperties() throws Exception {
@@ -793,7 +828,6 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("foo", mavenProject.getName());
   }
 
-
   public void testDoNoInheritParentFinalNameIfUnspecified() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -813,6 +847,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     org.apache.maven.project.MavenProject p = readProject(module, "one");
     assertEquals("module-2", p.getBuild().getFinalName());
   }
+
   public void testDoInheritingParentFinalNameIfSpecified() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +

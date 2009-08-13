@@ -101,7 +101,7 @@ public class MavenProjectReader {
     List<Profile> activatedProfiles = applyProfiles(model, getBaseDir(file), activeProfiles);
     repairModelHeader(model);
     if (!resolveInheritance(generalSettings, model, file, activeProfiles, recursionGuard, locator)) {
-      modelWithValidity.validity = false;
+      modelWithValidity.validity = false; // todo ????????? changing cached value
     }
     repairModelBody(model);
 
@@ -113,7 +113,9 @@ public class MavenProjectReader {
 
     Pair<Element, Boolean> readXmlResult = readXml(file);
     Element xmlProject = readXmlResult.first.getChild("project");
-    if (xmlProject == null) return new ModelWithValidity(result, false);
+    if (xmlProject == null) {
+      return new ModelWithValidity(result, false);
+    }
 
     result.setModelVersion(findChildValueByPath(xmlProject, "modelVersion"));
     result.setGroupId(findChildValueByPath(xmlProject, "groupId"));
@@ -432,54 +434,59 @@ public class MavenProjectReader {
     if (recursionGuard.contains(file)) return false;
     recursionGuard.add(file);
 
-    Parent parent = model.getParent();
-    final MavenParentDesc[] parentDesc = new MavenParentDesc[1];
-    if (parent != null) {
-      parentDesc[0] = new MavenParentDesc(new MavenId(parent.getGroupId(),
-                                                      parent.getArtifactId(),
-                                                      parent.getVersion()),
-                                          parent.getRelativePath());
-    }
-
-    ModelWithValidity parentModelWithValidity = new MavenParentProjectFileProcessor<ModelWithValidity>() {
-      @Nullable
-      protected VirtualFile findManagedFile(@NotNull MavenId id) {
-        return locator.findProjectFile(id);
+    try {
+      Parent parent = model.getParent();
+      final MavenParentDesc[] parentDesc = new MavenParentDesc[1];
+      if (parent != null) {
+        parentDesc[0] = new MavenParentDesc(new MavenId(parent.getGroupId(),
+                                                        parent.getArtifactId(),
+                                                        parent.getVersion()),
+                                            parent.getRelativePath());
       }
 
-      @Override
-      @Nullable
-      protected ModelWithValidity processRelativeParent(VirtualFile parentFile) {
-        ModelWithValidity result = super.processRelativeParent(parentFile);
-        if (result == null) return null;
-
-        MavenId parentId = parentDesc[0].getParentId();
-        Model model = result.model;
-        if (!(parentId.equals(model.getGroupId(), model.getArtifactId(), model.getVersion()))) {
-          return null;
+      ModelWithValidity parentModelWithValidity = new MavenParentProjectFileProcessor<ModelWithValidity>() {
+        @Nullable
+        protected VirtualFile findManagedFile(@NotNull MavenId id) {
+          return locator.findProjectFile(id);
         }
-        return result;
-      }
 
-      @Override
-      protected ModelWithValidity processSuperParent(VirtualFile parentFile) {
-        return null; // do not process superPom
-      }
+        @Override
+        @Nullable
+        protected ModelWithValidity processRelativeParent(VirtualFile parentFile) {
+          ModelWithValidity result = super.processRelativeParent(parentFile);
+          if (result == null) return null;
 
-      @Override
-      protected ModelWithValidity doProcessParent(VirtualFile parentFile) {
-        return doReadProjectModel(generalSettings,
-                                  parentFile,
-                                  activeProfiles,
-                                  recursionGuard,
-                                  locator).first;
-      }
-    }.process(generalSettings, file, parentDesc[0]);
+          MavenId parentId = parentDesc[0].getParentId();
+          Model model = result.model;
+          if (!(parentId.equals(model.getGroupId(), model.getArtifactId(), model.getVersion()))) {
+            return null;
+          }
+          return result;
+        }
 
-    if (parentModelWithValidity == null) return true; // no parent or parent not found;
+        @Override
+        protected ModelWithValidity processSuperParent(VirtualFile parentFile) {
+          return null; // do not process superPom
+        }
 
-    new DefaultModelInheritanceAssembler().assembleModelInheritance(model, parentModelWithValidity.model);
-    return parentModelWithValidity.validity;
+        @Override
+        protected ModelWithValidity doProcessParent(VirtualFile parentFile) {
+          return doReadProjectModel(generalSettings,
+                                    parentFile,
+                                    activeProfiles,
+                                    recursionGuard,
+                                    locator).first;
+        }
+      }.process(generalSettings, file, parentDesc[0]);
+
+      if (parentModelWithValidity == null) return true; // no parent or parent not found;
+
+      new DefaultModelInheritanceAssembler().assembleModelInheritance(model, parentModelWithValidity.model);
+      return parentModelWithValidity.validity;
+    }
+    finally {
+      recursionGuard.remove(file);
+    }
   }
 
   private Model expandProperties(Model model, File basedir) {
