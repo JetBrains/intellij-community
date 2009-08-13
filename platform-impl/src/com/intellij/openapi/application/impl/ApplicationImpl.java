@@ -143,7 +143,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     CommonBundle.assertKeyIsFound = isUnitTestMode;
 
-    if (isInternal || isUnitTestMode) {
+    if ((isInternal || isUnitTestMode) && !Comparing.equal("off", System.getProperty("idea.disposer.debug"))) {
       Disposer.setDebugMode(true);
     }
     myStartTime = System.currentTimeMillis();
