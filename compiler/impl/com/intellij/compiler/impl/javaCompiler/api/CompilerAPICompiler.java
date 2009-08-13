@@ -17,6 +17,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -60,8 +61,9 @@ public class CompilerAPICompiler implements BackendCompiler {
     if (projectJdk != null) checkedJdks.add(projectJdk);
 
     for (Sdk sdk : checkedJdks) {
-      if (!CompilerUtil.isOfVersion(sdk.getVersionString(), "1.6")) {
-        Messages.showErrorDialog(myProject, "Compiler API supports JDK of version 6 only: "+sdk.getVersionString(), "Incompatible JDK");
+      String versionString = sdk.getVersionString();
+      if (sdk.getSdkType() instanceof JavaSdk && !CompilerUtil.isOfVersion(versionString, "1.6") && !CompilerUtil.isOfVersion(versionString, "1.7")) {
+        Messages.showErrorDialog(myProject, "Compiler API requires JDK version 6 or later: "+ versionString, "Incompatible JDK");
         return false;
       }
     }
