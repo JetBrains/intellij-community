@@ -2,6 +2,7 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
@@ -11,6 +12,7 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -112,6 +114,10 @@ public class UsageViewContext {
     }
 
     public void findUsagesInEditor(@NotNull FileEditor editor) {
+      throw new UnsupportedOperationException();
+    }
+
+    public void highlightUsages(PsiFile file, Editor editor, boolean clearHighlights) {
       throw new UnsupportedOperationException();
     }
 
