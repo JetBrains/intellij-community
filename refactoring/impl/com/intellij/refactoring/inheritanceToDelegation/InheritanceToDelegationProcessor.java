@@ -1183,11 +1183,11 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     }
 
     private void processTypedUsage(PsiType type, PsiExpression instanceRef) {
-      PsiClass aClass = PsiUtil.resolveClassInType(type);
+      final PsiClass aClass = PsiUtil.resolveClassInType(type);
       if (aClass == null) return;
       String qName = aClass.getQualifiedName();
       if (qName != null && "java.lang.Object".equals(qName)) {
-        myUsageInfoStorage.add(new ObjectUpcastedUsageInfo(instanceRef, getFieldAccessibility(instanceRef)));
+        myUsageInfoStorage.add(new ObjectUpcastedUsageInfo(instanceRef, aClass, getFieldAccessibility(instanceRef)));
       } else {
         if (myBaseClassBases.contains(aClass)
             && !myImplementedInterfaces.contains(aClass) && !myDelegatedInterfaces.contains(aClass)) {
