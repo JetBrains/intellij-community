@@ -74,7 +74,7 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
 
   @NotNull @NonNls String getNamespacePrefix();
   @NotNull @NonNls String getNamespaceByPrefix(@NonNls String prefix);
-  String getPrefixByNamespace(@NonNls String namespace);
+  @Nullable String getPrefixByNamespace(@NonNls String namespace);
   String[] knownNamespaces();
 
   boolean hasNamespaceDeclarations();
