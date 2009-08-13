@@ -99,7 +99,7 @@ public class ProjectRootsTraversing {
       return true;
     }
 
-    public void addAll(VirtualFile[] items) {
+    public void addAll(VirtualFile... items) {
       for (VirtualFile item : items) {
         add(item);
       }
@@ -121,7 +121,7 @@ public class ProjectRootsTraversing {
       return myCurrentModuleManager;
     }
 
-    public void restorCurrentModuleManager(ModuleRootManager restored) {
+    public void restoreCurrentModuleManager(ModuleRootManager restored) {
       myCurrentModuleManager = restored;
     }
 
@@ -201,7 +201,7 @@ public class ProjectRootsTraversing {
         if (module == null) return;
         ModuleRootManager moduleRootManager = state.getCurrentModuleManager();
         traverseOrder(module, policy, state);
-        state.restorCurrentModuleManager(moduleRootManager);
+        state.restoreCurrentModuleManager(moduleRootManager);
       }
     };
 
