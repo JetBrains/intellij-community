@@ -75,7 +75,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
               final LookupItem item = LookupItemUtil.objectToLookupItem(JavaCompletionUtil.eliminateWildcards(type));
               item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
               if (item.getObject() instanceof PsiClass) {
-                JavaAwareCompletionData.setShowFQN(item);
+                JavaCompletionUtil.setShowFQN(item);
               }
               item.setInsertHandler(new ArrayInsertHandler());
               result.addElement(item);
@@ -102,7 +102,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
     final LookupItem item = LookupItemUtil.objectToLookupItem(JavaCompletionUtil.eliminateWildcards(type));
     item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
-    JavaAwareCompletionData.setShowFQN(item);
+    JavaCompletionUtil.setShowFQN(item);
     item.setInsertHandler(new AfterNewClassInsertHandler((PsiClassType)type, place));
     result.addElement(item);
   }
