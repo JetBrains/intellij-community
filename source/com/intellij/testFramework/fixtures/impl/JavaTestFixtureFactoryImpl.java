@@ -1,11 +1,5 @@
 package com.intellij.testFramework.fixtures.impl;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
@@ -41,16 +35,5 @@ public class JavaTestFixtureFactoryImpl extends JavaTestFixtureFactory {
     }
   }
 
-  private static final LightProjectDescriptor ourJavaProjectDescriptor = new LightProjectDescriptor() {
-    public ModuleType getModuleType() {
-      return StdModuleTypes.JAVA;
-    }
-
-    public Sdk getSdk() {
-      return JavaSdkImpl.getMockJdk("java 1.4");
-    }
-
-    public void configureModule(Module module, ModifiableRootModel model) {
-    }
-  };
+  private static final LightProjectDescriptor ourJavaProjectDescriptor = LightCodeInsightFixtureTestCase.JAVA_1_4;
 }
