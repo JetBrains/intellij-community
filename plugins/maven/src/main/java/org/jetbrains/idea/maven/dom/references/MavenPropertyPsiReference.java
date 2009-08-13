@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.dom.converters;
+package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -9,17 +9,21 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.*;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomUtil;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagChild;
 import com.intellij.util.Icons;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.pom.Navigatable;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,14 +41,13 @@ import java.util.List;
 import java.util.Set;
 
 public class MavenPropertyPsiReference extends MavenPsiReference {
-  private MavenDomProjectModel myProjectDom;
+  protected final MavenDomProjectModel myProjectDom;
+  protected final MavenProject myMavenProject;
 
-  public MavenPropertyPsiReference(PsiElement element, String text, TextRange range) {
+  public MavenPropertyPsiReference(MavenProject mavenProject, PsiElement element, String text, TextRange range) {
     super(element, text, range);
-
-    DomElement domElement = DomUtil.getDomElement(myElement);
-    DomFileElement<DomElement> fileElement = DomUtil.getFileElement(domElement);
-    myProjectDom = (MavenDomProjectModel)fileElement.getRootElement(); // todo hard-coded for now
+    myMavenProject = mavenProject;
+    myProjectDom = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
   }
 
   @Nullable
@@ -55,7 +58,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     if (result instanceof XmlTag) {
       XmlTagChild[] children = ((XmlTag)result).getValue().getChildren();
       if (children.length != 1 || !(children[0] instanceof Navigatable)) return result;
-      return new PsiElementWrapper(result, (Navigatable)children[0]);
+      return new MavenPsiElementWrapper(result, (Navigatable)children[0]);
     }
 
     return result;
@@ -72,7 +75,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   // 8. parent pom.xml
   // 9. model
   @Nullable
-  private PsiElement doResolve() {
+  protected PsiElement doResolve() {
     if (myText.startsWith("env.")) {
       return resolveEnvPropety();
     }
@@ -122,7 +125,11 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
   @Nullable
   private PsiElement resolveBasedir() {
-    return PsiManager.getInstance(myProject).findDirectory(myVirtualFile.getParent());
+    return getBaseDir();
+  }
+
+  private PsiDirectory getBaseDir() {
+    return PsiManager.getInstance(myProject).findDirectory(myMavenProject.getDirectoryFile());
   }
 
   @Nullable
@@ -263,20 +270,29 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     }) != null;
   }
 
+  @Override
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    return ElementManipulators.getManipulator(myElement).handleContentChange(myElement, myRange, newElementName);
+  }
+
   @NotNull
   public Object[] getVariants() {
     List<Object> result = new ArrayList<Object>();
+    collectVariants(result);
+    return result.toArray(new Object[result.size()]);
+  }
+
+  protected void collectVariants(List<Object> result) {
     collectBasedirVariants(result);
     collectProjectSchemaVariants(result);
     collectSettingsXmlSchemaVariants(result);
     collectPropertiesVariants(result);
     collectSystemEnvProperties(MavenPropertiesVirtualFileSystem.SYSTEM_PROPERTIES_FILE, null, result);
     collectSystemEnvProperties(MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE, "env.", result);
-    return result.toArray(new Object[result.size()]);
   }
 
   private void collectBasedirVariants(List<Object> result) {
-    PsiDirectory basedir = PsiManager.getInstance(myProject).findDirectory(myVirtualFile.getParent());
+    PsiDirectory basedir = getBaseDir();
     result.add(createLookupElement(basedir, "basedir", MavenIcons.MAVEN_ICON));
     result.add(createLookupElement(basedir, "pom.basedir", MavenIcons.MAVEN_ICON));
     result.add(createLookupElement(basedir, "project.basedir", MavenIcons.MAVEN_ICON));
@@ -313,8 +329,10 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
   private void collectSystemEnvProperties(String propertiesFileName, String prefix, List<Object> result) {
     PropertiesFile file = MavenDomUtil.getPropertiesFile(myProject, propertiesFileName);
-    if (file == null) return;
+    collectPropertiesFileVariants(file, prefix, result);
+  }
 
+  protected void collectPropertiesFileVariants(PropertiesFile file, String prefix, List<Object> result) {
     for (Property each : file.getProperties()) {
       String name = each.getKey();
       if (prefix != null) name = prefix + name;
@@ -322,7 +340,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     }
   }
 
-  private LookupElement createLookupElement(Object element, String name) {
+  private  LookupElement createLookupElement(Object element, String name) {
     return createLookupElement(element, name, Icons.PROPERTY_ICON);
   }
 

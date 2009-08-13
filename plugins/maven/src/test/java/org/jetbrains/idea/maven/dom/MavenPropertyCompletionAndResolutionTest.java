@@ -611,7 +611,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                       "</profiles>");
 
     List<String> variants = getCompletionVariants(myProjectPom);
-    assertInclude(variants, "pomProp", "pomProfilesProp", "pomProfilesPropInactive", "profilesXmlProp");
+    assertInclude(variants, "pomProp", "pomProfilesProp", "profilesXmlProp");
     assertInclude(variants,
                   "parentPomProp",
                   "parentPomProfilesProp",

@@ -1,7 +1,7 @@
 package org.jetbrains.idea.maven.dom;
 
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.dom.converters.MavenPropertyPsiReferenceInjector;
+import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReferenceInjector;
 
 public class MavenDomProjectModelDescription extends MavenDomFileDescription<MavenDomProjectModel> {
   public MavenDomProjectModelDescription() {

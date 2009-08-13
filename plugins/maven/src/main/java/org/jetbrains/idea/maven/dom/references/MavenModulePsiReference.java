@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.dom.converters;
+package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.codeInsight.lookup.MutableLookupElement;

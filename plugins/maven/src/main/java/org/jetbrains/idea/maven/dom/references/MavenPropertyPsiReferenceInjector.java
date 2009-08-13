@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.dom.converters;
+package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -20,6 +20,6 @@ public class MavenPropertyPsiReferenceInjector implements DomReferenceInjector {
 
   @NotNull
   public PsiReference[] inject(@Nullable String unresolvedText, @NotNull PsiElement element, @NotNull ConvertContext context) {
-    return MavenPropertyPsiReferenceProvider.injectReferences(element);
+    return MavenPropertyPsiReferenceProvider.getReferences(element);
   }
 }

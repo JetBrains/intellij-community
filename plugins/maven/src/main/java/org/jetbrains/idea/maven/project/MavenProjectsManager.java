@@ -19,6 +19,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.EventDispatcher;
@@ -484,8 +486,22 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   public MavenProject findProject(Module module) {
-    VirtualFile f = findPomFile(module, new MavenDefaultModelsProvider(myProject));
+    VirtualFile f = findPomFile(module, new MavenModelsProvider() {
+      public Module[] getModules() {
+        throw new UnsupportedOperationException();
+      }
+
+      public VirtualFile[] getContentRoots(Module module) {
+        return ModuleRootManager.getInstance(module).getContentRoots();
+      }
+    });
     return f == null ? null : findProject(f);
+  }
+
+  public MavenProject findContainingProject(VirtualFile file) {
+    if (!isInitialized()) return null;
+    Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(file);
+    return module == null ? null : findProject(module);
   }
 
   private VirtualFile findPomFile(Module module, MavenModelsProvider modelsProvider) {

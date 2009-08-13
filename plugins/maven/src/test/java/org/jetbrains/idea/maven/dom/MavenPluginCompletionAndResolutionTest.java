@@ -92,7 +92,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     String pluginPath = "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.pom";
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
     VirtualFile f = LocalFileSystem.getInstance().findFileByPath(filePath);
-    assertResolved(myProjectPom, getPsiFile(f));
+    assertResolved(myProjectPom, findPsiFile(f));
   }
 
   public void testResolvingAbsentPlugins() throws Exception {
@@ -240,7 +240,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
-    assertEquals(getPsiFile(f), resolved.getContainingFile());
+    assertEquals(findPsiFile(f), resolved.getContainingFile());
     assertTrue(resolved instanceof XmlTag);
     assertEquals("parameter", ((XmlTag)resolved).getName());
     assertEquals("includes", ((XmlTag)resolved).findFirstSubTag("name").getValue().getText());
@@ -274,7 +274,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
-    assertEquals(getPsiFile(f), resolved.getContainingFile());
+    assertEquals(findPsiFile(f), resolved.getContainingFile());
     assertTrue(resolved instanceof XmlTag);
     assertEquals("parameter", ((XmlTag)resolved).getName());
     assertEquals("includes", ((XmlTag)resolved).findFirstSubTag("name").getValue().getText());
@@ -354,7 +354,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
-    assertEquals(getPsiFile(f), resolved.getContainingFile());
+    assertEquals(findPsiFile(f), resolved.getContainingFile());
     assertTrue(resolved instanceof XmlTag);
     assertEquals("mojo", ((XmlTag)resolved).getName());
     assertEquals("compile", ((XmlTag)resolved).findFirstSubTag("goal").getValue().getText());

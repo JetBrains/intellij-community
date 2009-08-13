@@ -60,10 +60,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * <p>This class implements the core action to enter, evaluate and display the results of an XPath expression.</p>
@@ -415,7 +412,11 @@ public class XPathEvalAction extends XPathAction {
             throw new IllegalArgumentException();
         }
 
-        public boolean isValid() {
+      public void highlightUsages(PsiFile file, Editor editor, boolean clearHighlights) {
+        throw new UnsupportedOperationException();
+      }
+
+      public boolean isValid() {
             // re-run will become unavailable if the context node is invalid
             return myContextNode == null || myContextNode.isValid();
         }

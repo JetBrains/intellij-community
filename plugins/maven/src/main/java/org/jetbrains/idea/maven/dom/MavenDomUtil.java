@@ -8,10 +8,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -61,6 +61,11 @@ public class MavenDomUtil {
     return name.equals(MavenConstants.SETTINGS_XML);
   }
 
+  public static boolean isMavenElement(PsiElement element) {
+    if (!isMavenFile(element.getContainingFile())) return false;
+    return DomUtil.findDomElement(element, MavenDomElement.class, false) != null;
+  }
+
   public static String calcRelativePath(VirtualFile parent, VirtualFile child) {
     String result = FileUtil.getRelativePath(new File(parent.getPath()),
                                              new File(child.getPath()));
@@ -91,15 +96,30 @@ public class MavenDomUtil {
   }
 
   @Nullable
+  public static VirtualFile getVirtualFile(PsiElement element) {
+    PsiFile psiFile = element.getContainingFile();
+    if (psiFile == null) return null;
+    psiFile = psiFile.getOriginalFile();
+    return psiFile.getVirtualFile();
+  }
+
+  @Nullable
   public static MavenProject findProject(@NotNull MavenDomProjectModel projectDom) {
     XmlElement element = projectDom.getXmlElement();
     if (element == null) return null;
 
-    VirtualFile file = PsiUtil.getVirtualFile(element);
+    VirtualFile file = getVirtualFile(element);
     if (file == null) return null;
-
     MavenProjectsManager manager = MavenProjectsManager.getInstance(element.getProject());
     return manager.findProject(file);
+  }
+
+  @Nullable
+  public static MavenProject findContainingProject(@NotNull PsiElement element) {
+    VirtualFile file = getVirtualFile(element);
+    if (file == null) return null;
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(element.getProject());
+    return manager.findContainingProject(file);
   }
 
   @Nullable
@@ -193,16 +213,25 @@ public class MavenDomUtil {
     VirtualFileSystem fs = MavenPropertiesVirtualFileSystem.getInstance();
     VirtualFile file = fs.findFileByPath(fileName);
     if (file == null) return null;
+    return getPropertiesFile(project, file);
+  }
 
+  @Nullable
+  public static PropertiesFile getPropertiesFile(@NotNull Project project, @NotNull VirtualFile file) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (!(psiFile instanceof PropertiesFile)) return null;
-
     return (PropertiesFile)psiFile;
   }
 
   @Nullable
   public static Property findProperty(@NotNull Project project, @NotNull String fileName, @NotNull String propName) {
     PropertiesFile propertiesFile = getPropertiesFile(project, fileName);
+    return propertiesFile == null ? null : propertiesFile.findPropertyByKey(propName);
+  }
+
+  @Nullable
+  public static Property findProperty(@NotNull Project project, @NotNull VirtualFile file, @NotNull String propName) {
+    PropertiesFile propertiesFile = getPropertiesFile(project, file);
     return propertiesFile == null ? null : propertiesFile.findPropertyByKey(propName);
   }
 

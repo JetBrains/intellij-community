@@ -149,7 +149,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>m2</module>" +
                      "</modules>");
 
-    assertResolved(myProjectPom, getPsiFile(m1), "m1");
+    assertResolved(myProjectPom, findPsiFile(m1), "m1");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -161,7 +161,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>m<caret>2</module>" +
                      "</modules>");
 
-    assertResolved(myProjectPom, getPsiFile(m2), "m2");
+    assertResolved(myProjectPom, findPsiFile(m2), "m2");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -202,7 +202,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>./m<caret></module>" +
                      "</modules>");
 
-    assertResolved(myProjectPom, getPsiFile(m), "./m");
+    assertResolved(myProjectPom, findPsiFile(m), "./m");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -213,7 +213,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>.\\m<caret></module>" +
                      "</modules>");
 
-    assertResolved(myProjectPom, getPsiFile(m), ".\\m");
+    assertResolved(myProjectPom, findPsiFile(m), ".\\m");
   }
 
   public void testResolutionWithProperties() throws Exception {
@@ -250,7 +250,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module><caret>${dirName}/m</module>" +
                      "</modules>");
 
-    assertResolved(myProjectPom, getPsiFile(m), "subDir/m");
+    assertResolved(myProjectPom, findPsiFile(m), "subDir/m");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

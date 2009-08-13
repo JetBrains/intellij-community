@@ -389,7 +389,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
     VirtualFile f = LocalFileSystem.getInstance().findFileByPath(filePath);
-    assertResolved(myProjectPom, getPsiFile(f));
+    assertResolved(myProjectPom, findPsiFile(f));
   }
 
   public void testResolutionIsTypeBased() throws Exception {
@@ -408,7 +408,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
     VirtualFile f = LocalFileSystem.getInstance().findFileByPath(filePath);
-    assertResolved(myProjectPom, getPsiFile(f));
+    assertResolved(myProjectPom, findPsiFile(f));
   }
 
   public void testResolutionInsideTheProject() throws Exception {
@@ -437,7 +437,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                     "  </dependency>" +
                     "</dependencies>");
 
-    assertResolved(m1, getPsiFile(m2));
+    assertResolved(m1, findPsiFile(m2));
   }
 
   public void testResolvingSystemScopeDependencies() throws Throwable {
@@ -457,7 +457,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertResolved(myProjectPom, getPsiFile(LocalFileSystem.getInstance().findFileByPath(libPath)));
+    assertResolved(myProjectPom, findPsiFile(LocalFileSystem.getInstance().findFileByPath(libPath)));
     checkHighlighting();
   }
 
@@ -518,7 +518,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertResolved(myProjectPom, getPsiFile(LocalFileSystem.getInstance().findFileByPath(libPath)));
+    assertResolved(myProjectPom, findPsiFile(LocalFileSystem.getInstance().findFileByPath(libPath)));
     checkHighlighting();
   }
 
@@ -539,7 +539,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertResolved(myProjectPom, getPsiFile(LocalFileSystem.getInstance().findFileByPath(libPath)));
+    assertResolved(myProjectPom, findPsiFile(LocalFileSystem.getInstance().findFileByPath(libPath)));
     checkHighlighting();
   }
 
@@ -580,7 +580,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(myProject, myProjectPom);
     MavenDomDependency dep = model.getDependencies().getDependencies().get(0);
 
-    assertEquals(getPsiFile(libFile), dep.getSystemPath().getValue());
+    assertEquals(findPsiFile(libFile), dep.getSystemPath().getValue());
   }
 
   public void testNoChooseFileIntentionForNonSystemDependency() throws Throwable {

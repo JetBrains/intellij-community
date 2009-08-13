@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.dom.converters;
+package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -8,11 +8,11 @@ import org.jetbrains.idea.maven.utils.MavenIcons;
 
 import javax.swing.*;
 
-public class PsiElementWrapper extends RenameableFakePsiElement {
+public class MavenPsiElementWrapper extends RenameableFakePsiElement {
   private final PsiElement myWrappee;
   private final Navigatable myNavigatable;
 
-  public PsiElementWrapper(PsiElement wrappeeElement, Navigatable navigatable) {
+  public MavenPsiElementWrapper(PsiElement wrappeeElement, Navigatable navigatable) {
     super(wrappeeElement.getParent());
     myWrappee = wrappeeElement;
     myNavigatable = navigatable;
@@ -46,8 +46,8 @@ public class PsiElementWrapper extends RenameableFakePsiElement {
 
   @Override
   public boolean isEquivalentTo(PsiElement other) {
-    if (other instanceof PsiElementWrapper) {
-      return myWrappee == ((PsiElementWrapper)other).myWrappee;
+    if (other instanceof MavenPsiElementWrapper) {
+      return myWrappee == ((MavenPsiElementWrapper)other).myWrappee;
     }
     return myWrappee == other;
   }

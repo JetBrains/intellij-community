@@ -8,6 +8,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.references.MavenModulePsiReference;
 
 public class MavenModuleConverter extends MavenReferenceConverter<PsiFile> {
   @Override

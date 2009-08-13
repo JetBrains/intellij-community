@@ -89,7 +89,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
     String pluginPath = "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.pom";
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
     VirtualFile f = LocalFileSystem.getInstance().findFileByPath(filePath);
-    assertResolved(myProjectPom, getPsiFile(f));
+    assertResolved(myProjectPom, findPsiFile(f));
   }
 
   public void testResolvingAbsentPlugins() throws Exception {

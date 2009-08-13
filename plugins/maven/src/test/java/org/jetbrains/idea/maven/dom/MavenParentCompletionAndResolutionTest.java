@@ -67,7 +67,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          "  <version>1</version>" +
                          "</parent>");
 
-    assertResolved(m, getPsiFile(myProjectPom));
+    assertResolved(m, findPsiFile(myProjectPom));
   }
 
   public void testResolutionOutsideOfTheProject() throws Exception {
@@ -87,7 +87,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
     VirtualFile f = LocalFileSystem.getInstance().findFileByPath(filePath);
-    assertResolved(myProjectPom, getPsiFile(f));
+    assertResolved(myProjectPom, findPsiFile(f));
   }
 
   public void testResolvingByRelativePath() throws Throwable {
@@ -111,7 +111,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                                          "<artifactId>parent</artifactId>" +
                                          "<version>1</version>");
 
-    assertResolved(myProjectPom, getPsiFile(parent));
+    assertResolved(myProjectPom, findPsiFile(parent));
   }
 
   public void testResolvingByRelativePathWithProperties() throws Throwable {
@@ -139,7 +139,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                                          "<artifactId>parent</artifactId>" +
                                          "<version>1</version>");
 
-    assertResolved(myProjectPom, getPsiFile(parent));
+    assertResolved(myProjectPom, findPsiFile(parent));
   }
 
   public void testResolvingByRelativePathWhenOutsideOfTheProject() throws Throwable {
@@ -163,7 +163,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <relativePath>../pom.xml</relativePath>" +
                      "</parent>");
 
-    assertResolved(myProjectPom, getPsiFile(parent));
+    assertResolved(myProjectPom, findPsiFile(parent));
   }
 
   public void testResolvingByRelativePathWithoutPomXmlAtTheEnd() throws Throwable {
@@ -187,7 +187,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                                          "<artifactId>parent</artifactId>" +
                                          "<version>1</version>");
 
-    assertResolved(myProjectPom, getPsiFile(parent));
+    assertResolved(myProjectPom, findPsiFile(parent));
   }
 
   public void testDoNotHighlightResolvedParentByRelativePathWhenOutsideOfTheProject() throws Throwable {
@@ -334,9 +334,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertNotNull(i);
 
     myCodeInsightFixture.launchAction(i);
-
-    int offset = myCodeInsightFixture.getEditor().getCaretModel().getOffset();
-    PsiElement el = myCodeInsightFixture.getFile().findElementAt(offset);
+    PsiElement el = getElementAtCaret(myProjectPom);
 
     assertEquals("bar/pom.xml", ElementManipulators.getValueText(el));
   }

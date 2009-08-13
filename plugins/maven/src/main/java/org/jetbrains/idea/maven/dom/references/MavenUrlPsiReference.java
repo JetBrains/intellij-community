@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.dom.converters;
+package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.util.TextRange;
