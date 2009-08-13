@@ -23,21 +23,33 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.NewChangelistDialog;
+import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport;
+import com.intellij.openapi.extensions.Extensions;
 
 public class AddChangeListAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    NewChangelistDialog dlg = new NewChangelistDialog(project);
-    dlg.show();
-    if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-      String name = dlg.getName();
-      if (name.length() == 0) {
-        name = getUniqueName(project);
-      }
+    try {
+      NewChangelistDialog dlg = new NewChangelistDialog(project);
+      dlg.show();
+      if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+        String name = dlg.getName();
+        if (name.length() == 0) {
+          name = getUniqueName(project);
+        }
 
-      final LocalChangeList list = ChangeListManager.getInstance(project).addChangeList(name, dlg.getDescription());
-      if (dlg.isNewChangelistActive()) {
-        ChangeListManager.getInstance(project).setDefaultChangeList(list);
+        final LocalChangeList list = ChangeListManager.getInstance(project).addChangeList(name, dlg.getDescription());
+        if (dlg.isNewChangelistActive()) {
+          ChangeListManager.getInstance(project).setDefaultChangeList(list);
+        }
+        for (EditChangelistSupport support : Extensions.getExtensions(EditChangelistSupport.EP_NAME, project)) {
+          support.changelistCreated(list);
+        }              
+      }
+    }
+    finally {
+      for (EditChangelistSupport support : Extensions.getExtensions(EditChangelistSupport.EP_NAME, project)) {
+        support.disposeControls();
       }
     }
   }
