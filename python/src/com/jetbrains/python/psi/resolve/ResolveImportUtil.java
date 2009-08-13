@@ -186,6 +186,7 @@ public class ResolveImportUtil {
         if (elt_vfile != null) { // reality
           for (OrderEntry entry: ProjectRootManager.getInstance(elt.getProject()).getFileIndex().getOrderEntriesForFile(elt_vfile)) {
             if (!visitGivenRoots(entry.getFiles(OrderRootType.SOURCES), visitor)) break;
+            if (!visitGivenRoots(entry.getFiles(OrderRootType.CLASSES), visitor)) break;
           }
         }
       }
@@ -632,6 +633,7 @@ public class ResolveImportUtil {
     public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
       if (value != null) return value;  // for chaining in processOrder()
       visitGivenRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), myVisitor);
+      visitGivenRoots(jdkOrderEntry.getRootFiles(OrderRootType.CLASSES), myVisitor);
       return null;
     }
 
@@ -640,6 +642,7 @@ public class ResolveImportUtil {
     public PsiElement visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, PsiElement value) {
       if (value != null) return value;  // for chaining in processOrder()
       visitGivenRoots(libraryOrderEntry.getRootFiles(OrderRootType.SOURCES), myVisitor);
+      visitGivenRoots(libraryOrderEntry.getRootFiles(OrderRootType.CLASSES), myVisitor);
       return null;
     }
   }
