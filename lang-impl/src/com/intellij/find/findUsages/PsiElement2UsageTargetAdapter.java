@@ -99,7 +99,6 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
     PsiElement target = getElement();
 
     if (file instanceof PsiCompiledElement) file = (PsiFile)((PsiCompiledElement)file).getMirror();
-    if (target instanceof PsiCompiledElement) target = ((PsiCompiledElement)target).getMirror();
 
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(target.getProject())).getFindUsagesManager();
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(target, true);
