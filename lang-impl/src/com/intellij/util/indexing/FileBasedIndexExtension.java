@@ -7,34 +7,37 @@ import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Dec 26, 2007
  * V class MUST have equals / hashcode properly defined!!!
  */
-public interface FileBasedIndexExtension<K, V> {
-  ExtensionPointName<FileBasedIndexExtension> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.fileBasedIndex");
-  int DEFAULT_CACHE_SIZE = 1024;
+public abstract class FileBasedIndexExtension<K, V> {
+  public static final ExtensionPointName<FileBasedIndexExtension> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.fileBasedIndex");
+  public static final int DEFAULT_CACHE_SIZE = 1024;
 
-  ID<K, V> getName();
+  public abstract ID<K, V> getName();
   
-  DataIndexer<K, V, FileContent> getIndexer();
+  public abstract DataIndexer<K, V, FileContent> getIndexer();
   
-  KeyDescriptor<K> getKeyDescriptor();
+  public abstract KeyDescriptor<K> getKeyDescriptor();
   
-  DataExternalizer<V> getValueExternalizer();
+  public abstract DataExternalizer<V> getValueExternalizer();
   
-  FileBasedIndex.InputFilter getInputFilter();
+  public abstract FileBasedIndex.InputFilter getInputFilter();
   
-  boolean dependsOnFileContent();
+  public abstract boolean dependsOnFileContent();
   
-  int getVersion();
+  public abstract int getVersion();
 
   /**
    * @see FileBasedIndexExtension#DEFAULT_CACHE_SIZE
    */
-  int getCacheSize();
+  public int getCacheSize() {
+    return DEFAULT_CACHE_SIZE;
+  }
 
   /**
    * For most indices the method should return an empty collection.
@@ -46,5 +49,7 @@ public interface FileBasedIndexExtension<K, V> {
    * @see com.intellij.psi.impl.file.impl.FileManagerImpl#MAX_INTELLISENSE_FILESIZE
    */
   @NotNull
-  Collection<FileType> getFileTypesWithSizeLimitNotApplicable();
+  public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
+    return Collections.emptyList();
+  }
 }

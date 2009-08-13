@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 
-public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree, FileContent> {
+public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree, FileContent> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
 
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
@@ -97,11 +97,6 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
       return in.readInt();
     }
   };
-
-  @NotNull
-  public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
-    return Collections.emptyList();
-  }
 
   public ID<Integer, SerializedStubTree> getName() {
     return INDEX_ID;

@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
@@ -24,7 +23,7 @@ import java.util.Map;
  * @author Eugene Zhuravlev
  *         Date: Jan 16, 2008
  */
-public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
+public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   @NonNls public static final ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
   
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
@@ -74,15 +73,6 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
       return Collections.emptyMap();
     }
   };
-
-  @NotNull
-  public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
-    return Collections.emptyList();
-  }
-
-  public int getCacheSize() {
-    return DEFAULT_CACHE_SIZE;
-  }
 
   public int getVersion() {
     return 8;

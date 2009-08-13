@@ -1,6 +1,5 @@
 package com.intellij.xml.index;
 
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -16,14 +15,12 @@ import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
-public abstract class XmlIndex<V> implements FileBasedIndexExtension<String, V> {
+public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
 
   protected static final EnumeratorStringDescriptor KEY_DESCRIPTOR = new EnumeratorStringDescriptor();
 
@@ -90,11 +87,6 @@ public abstract class XmlIndex<V> implements FileBasedIndexExtension<String, V> 
     };
   }
 
-  @NotNull
-  public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
-    return Collections.emptyList();
-  }
-
   public KeyDescriptor<String> getKeyDescriptor() {
     return KEY_DESCRIPTOR;
   }
@@ -109,9 +101,5 @@ public abstract class XmlIndex<V> implements FileBasedIndexExtension<String, V> 
 
   public int getVersion() {
     return 0;
-  }
-
-  public int getCacheSize() {
-    return DEFAULT_CACHE_SIZE;
   }
 }

@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.include;
 
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.FactoryMap;
@@ -14,12 +13,14 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
  */
-public class FileIncludeIndex implements FileBasedIndexExtension<FileIncludeIndex.Key, List<FileIncludeInfoImpl>> {
+public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.Key, List<FileIncludeInfoImpl>> {
 
   private final FileIncludeProvider[] myProviders = Extensions.getExtensions(FileIncludeProvider.EP_NAME);
 
@@ -137,21 +138,12 @@ public class FileIncludeIndex implements FileBasedIndexExtension<FileIncludeInde
     };
   }
 
-  @NotNull
-  public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
-    return Collections.emptyList();
-  }
-
   public boolean dependsOnFileContent() {
     return true;
   }
 
   public int getVersion() {
     return 0;
-  }
-
-  public int getCacheSize() {
-    return DEFAULT_CACHE_SIZE;
   }
 
   interface Key {

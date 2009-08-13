@@ -1,13 +1,10 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -18,7 +15,7 @@ import java.util.concurrent.locks.Lock;
  * @author Eugene Zhuravlev
  *         Date: Feb 18, 2009
  */
-public abstract class SingleEntryFileBasedIndexExtension<V> implements CustomImplementationFileBasedIndexExtension<Integer, V, FileContent>{
+public abstract class SingleEntryFileBasedIndexExtension<V> extends CustomImplementationFileBasedIndexExtension<Integer, V, FileContent>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.SingleEntryFileBasedIndexExtension");
 
   public final KeyDescriptor<Integer> getKeyDescriptor() {
@@ -27,15 +24,6 @@ public abstract class SingleEntryFileBasedIndexExtension<V> implements CustomImp
 
   public boolean dependsOnFileContent() {
     return true;
-  }
-
-  public int getCacheSize() {
-    return DEFAULT_CACHE_SIZE;
-  }
-
-  @NotNull
-  public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
-    return Collections.emptyList();
   }
 
   public abstract SingleEntryIndexer<V> getIndexer();
