@@ -167,7 +167,7 @@ public class InputVariables {
     if (myFoldingAvailable) {
       buffer.append(myFolding.getGeneratedCallArgument(data));
     } else {
-      buffer.append(data.name);
+      buffer.append(data.variable.getName());
     }
   }
 

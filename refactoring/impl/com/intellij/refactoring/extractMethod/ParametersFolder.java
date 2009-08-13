@@ -197,7 +197,7 @@ public class ParametersFolder {
 
   @NotNull
   public String getGeneratedCallArgument(@NotNull ParameterTablePanel.VariableData data) {
-    return myExpressions.containsKey(data.variable) ? myExpressions.get(data.variable).getText() : data.name;
+    return myExpressions.containsKey(data.variable) ? myExpressions.get(data.variable).getText() : data.variable.getName();
   }
 
   public boolean annotateWithParameter(@NotNull ParameterTablePanel.VariableData data, @NotNull PsiElement element) {
