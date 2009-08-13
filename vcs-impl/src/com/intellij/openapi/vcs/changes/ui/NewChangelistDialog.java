@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.ui.DocumentAdapter;
@@ -36,7 +37,7 @@ public class NewChangelistDialog extends DialogWrapper {
     for (EditChangelistSupport support : Extensions.getExtensions(EditChangelistSupport.EP_NAME, project)) {
       support.addControls(myBottomPanel);
     }
-
+    myMakeActiveCheckBox.setSelected(VcsConfiguration.getInstance(myProject).MAKE_NEW_CHANGELIST_ACTIVE);
   }
 
   private void updateControls() {
@@ -48,6 +49,12 @@ public class NewChangelistDialog extends DialogWrapper {
       setOKActionEnabled(true);
       myErrorLabel.setText(" ");
     }
+  }
+
+  @Override
+  protected void doOKAction() {
+    super.doOKAction();
+    VcsConfiguration.getInstance(myProject).MAKE_NEW_CHANGELIST_ACTIVE = myMakeActiveCheckBox.isSelected();
   }
 
   protected JComponent createCenterPanel() {
