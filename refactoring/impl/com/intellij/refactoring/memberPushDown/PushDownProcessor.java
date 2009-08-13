@@ -282,7 +282,10 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
         if (member != null) {
           for (MemberInfo memberInfo : myMemberInfos) {
             if (PsiTreeUtil.isAncestor(memberInfo.getMember(), member, false)) {
-              element.getParent().replace(factory.createTypeElement(substitutor.substitute(parameter)));
+              final PsiType substitutedType = substitutor.substitute(parameter);
+              if (substitutedType != null) {
+                element.getParent().replace(factory.createTypeElement(substitutedType));
+              }
               break;
             }
           }
