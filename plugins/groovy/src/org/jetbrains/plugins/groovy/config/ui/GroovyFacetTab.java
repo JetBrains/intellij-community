@@ -59,7 +59,7 @@ public class GroovyFacetTab extends FacetEditorTab {
         final VirtualFile[] files = editorContext.getLibraryFiles(libraryManager, OrderRootType.CLASSES);
         return StringUtil.isNotEmpty(LibrariesUtil.getGroovyLibraryHome(files));
       }
-    }, "No Groovy-containing library is not configured yet");
+    }, "Groovy-containing libraries are missing");
   }
 
   @Nls
