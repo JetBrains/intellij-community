@@ -4,6 +4,7 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
@@ -318,7 +319,17 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   }
 
   private void createSession(final Consumer<VcsHistorySession> consumer) {
-    new VcsHistoryProviderBackgroundableProxy(myProject, getHistoryProvider()).createSessionFor(myFilePath, consumer, null, true);
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        new VcsHistoryProviderBackgroundableProxy(myProject, getHistoryProvider()).createSessionFor(myFilePath, consumer, null, true);
+      }
+    };
+    final Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
+      runnable.run();
+    } else {
+      application.invokeLater(runnable);
+    }
   }
 
   private void replaceTransferable() {
