@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -506,12 +507,14 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return inspectionTool;
   }
 
-  public void cleanup() {
-    for (Map.Entry<String, ToolsImpl> entry : myTools.entrySet()) {
-      final ToolsImpl toolList = entry.getValue();
-      for (final InspectionProfileEntry tool : toolList.getAllTools()) {
-        if (((InspectionTool)tool).getContext() != null) {
-          ((InspectionTool)tool).cleanup();
+  public void cleanup(Project project) {
+    for (final ToolsImpl toolList : myTools.values()) {
+      if (toolList.isEnabled()) {
+        for (InspectionProfileEntry tool : toolList.getAllTools()) {
+          tool.projectClosed(project);
+          if (((InspectionTool)tool).getContext() != null) {
+            ((InspectionTool)tool).cleanup();
+          }
         }
       }
     }

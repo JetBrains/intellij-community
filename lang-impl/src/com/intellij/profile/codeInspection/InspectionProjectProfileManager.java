@@ -182,8 +182,20 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
 
   public void projectClosed() {
     myStatusBar.removeFileStatusComponent(myTogglePopupHintsPanel);
-    for (InspectionProfileWrapper wrapper : myName2Profile.values()) {
-      wrapper.cleanup(myProject);
+
+    final Application app = ApplicationManager.getApplication();
+    Runnable cleanupInspectionProfilesRunnable = new Runnable() {
+      public void run() {
+        for (InspectionProfileWrapper wrapper : myName2Profile.values()) {
+          wrapper.cleanup(myProject);
+        }
+      }
+    };
+    if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+      cleanupInspectionProfilesRunnable.run();
+    }
+    else {
+      app.executeOnPooledThread(cleanupInspectionProfilesRunnable);
     }
     HighlightingSettingsPerFile.getInstance(myProject).cleanProfileSettings();
   }

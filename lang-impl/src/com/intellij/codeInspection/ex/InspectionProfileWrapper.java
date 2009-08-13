@@ -67,13 +67,8 @@ public class InspectionProfileWrapper {
   }
 
   public void cleanup(final Project project){
-    final List<ToolsImpl> profileEntries = myProfile.getAllEnabledInspectionTools();
-    for (Tools profileEntry : profileEntries) {
-      for (ScopeToolState toolState : profileEntry.getTools()) {
-        toolState.getTool().projectClosed(project);
-      }
-    }
-    myProfile.cleanup();
+
+    myProfile.cleanup(project);
   }
 
   public InspectionProfile getInspectionProfile() {
