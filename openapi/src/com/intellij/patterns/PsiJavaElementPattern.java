@@ -86,7 +86,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
 
           final PsiElement element = psiExpressionList.getParent();
           if (element instanceof PsiMethodCallExpression) {
-            final JavaResolveResult[] results = ((PsiMethodCallExpression)element).getMethodExpression().multiResolve(true);
+            final JavaResolveResult[] results = ((PsiMethodCallExpression)element).getMethodExpression().multiResolve(false);
             for (JavaResolveResult result : results) {
               final PsiElement psiElement = result.getElement();
               if (methodPattern.getCondition().accepts(psiElement, context)) {
