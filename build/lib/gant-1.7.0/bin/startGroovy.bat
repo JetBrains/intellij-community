@@ -418,7 +418,7 @@ if "%STARTER_CONF%" == "" set STARTER_CONF=%GROOVY_HOME%\conf\groovy-starter.con
 
 
 
-if "%JAVA_OPTS%" == "" set JAVA_OPTS="-Xmx128m"
+if "%JAVA_OPTS%" == "" set JAVA_OPTS="-Xmx512m"
 
 set JAVA_OPTS=%JAVA_OPTS% -Dprogram.name="%PROGNAME%"
 
