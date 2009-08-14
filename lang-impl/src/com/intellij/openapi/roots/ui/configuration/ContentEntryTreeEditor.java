@@ -7,6 +7,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileSystemTree;
@@ -17,6 +18,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
+import com.intellij.openapi.roots.ui.configuration.actions.ToggleSourcesStateAction;
+import com.intellij.openapi.roots.ui.configuration.actions.ToggleExcludedStateAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.Comparator;
 
@@ -242,4 +246,17 @@ public abstract class ContentEntryTreeEditor {
       return null;
     }
   }
+
+  protected void setupTestsAction() {
+    ToggleSourcesStateAction markTestsAction = new ToggleSourcesStateAction(myTree, this, true);
+    markTestsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_T, KeyEvent.ALT_MASK)), myTree);
+    myEditingActionsGroup.add(markTestsAction);
+  }
+
+  protected void setupExcludedAction() {
+    ToggleExcludedStateAction toggleExcludedAction = new ToggleExcludedStateAction(myTree, this);
+    myEditingActionsGroup.add(toggleExcludedAction);
+    toggleExcludedAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_E, KeyEvent.ALT_MASK)), myTree);
+  }
+
 }

@@ -18,14 +18,9 @@ public class JavaContentEntryTreeEditor extends ContentEntryTreeEditor {
     ToggleSourcesStateAction markSourcesAction = new ToggleSourcesStateAction(myTree, this, false);
     markSourcesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.ALT_MASK)), myTree);
 
-    ToggleExcludedStateAction toggleExcludedAction = new ToggleExcludedStateAction(myTree, this);
-    toggleExcludedAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_E, KeyEvent.ALT_MASK)), myTree);
+    setupExcludedAction();
+    setupTestsAction();
 
-    ToggleSourcesStateAction markTestsAction = new ToggleSourcesStateAction(myTree, this, true);
-    markTestsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_T, KeyEvent.ALT_MASK)), myTree);
-
-    myEditingActionsGroup.add(toggleExcludedAction);
     myEditingActionsGroup.add(markSourcesAction);
-    myEditingActionsGroup.add(markTestsAction);
   }
 }
