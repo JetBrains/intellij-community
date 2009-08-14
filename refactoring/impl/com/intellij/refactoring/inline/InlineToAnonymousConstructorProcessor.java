@@ -135,6 +135,9 @@ class InlineToAnonymousConstructorProcessor {
         }
       }
     }
+    if (PsiTreeUtil.getChildrenOfType(anonymousClass, PsiMember.class) == null) {
+      anonymousClass.deleteChildRange(anonymousClass.getLBrace(), anonymousClass.getRBrace());
+    }
     ChangeContextUtil.decodeContextInfo(anonymousClass, anonymousClass, null);
     final PsiNewExpression superNewExpression = (PsiNewExpression) myNewExpression.replace(superNewExpressionTemplate);
     JavaCodeStyleManager.getInstance(superNewExpression.getProject()).shortenClassReferences(superNewExpression);

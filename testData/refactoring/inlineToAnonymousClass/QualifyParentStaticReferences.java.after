@@ -7,7 +7,6 @@ class ParentCtor {
 
 class Usage {
     public void test() {
-        new ParentCtor(ParentCtor.PARENT_CONST) {
-        };
+        new ParentCtor(ParentCtor.PARENT_CONST);
     }
 }
