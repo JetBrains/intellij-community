@@ -30,6 +30,7 @@ import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpElement;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.intellij.lang.regexp.psi.RegExpBackref;
+import org.jetbrains.annotations.NotNull;
 
 public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackref {
     public RegExpBackrefImpl(ASTNode astNode) {
@@ -87,7 +88,7 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
                 throw new IncorrectOperationException();
             }
 
-            public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+            public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
                 throw new IncorrectOperationException();
             }
 

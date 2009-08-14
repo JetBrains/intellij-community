@@ -25,6 +25,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
@@ -108,7 +109,7 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
             throw new IncorrectOperationException();
         }
 
-        public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+        public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
             throw new IncorrectOperationException();
         }
 
