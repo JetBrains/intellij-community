@@ -48,6 +48,11 @@ public class AfterNewClassInsertHandler implements InsertHandler<LookupItem<PsiC
 
   public void handleInsert(InsertionContext context, LookupItem<PsiClassType> item) {
     final PsiClass psiClass = PsiUtil.resolveClassInType(myClassType);
+    if (psiClass == null || !psiClass.isValid()) {
+      return;
+    }
+
+
     PsiMethod[] constructors = psiClass.getConstructors();
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper();
     boolean hasParams = ContainerUtil.or(constructors, new Condition<PsiMethod>() {
