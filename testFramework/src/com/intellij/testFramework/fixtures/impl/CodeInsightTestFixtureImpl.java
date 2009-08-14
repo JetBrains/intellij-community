@@ -711,6 +711,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public void checkResult(final String text) throws IOException {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    EditorUtil.fillVirtualSpaceUntilCaret(myEditor);
     checkResult("TEXT", false, SelectionAndCaretMarkupLoader.fromText(text, getProject()), myFile.getText());
   }
 
