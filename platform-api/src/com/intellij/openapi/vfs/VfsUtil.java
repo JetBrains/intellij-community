@@ -652,6 +652,15 @@ public class VfsUtil {
     }
   }
 
+  public static void processFileRecursivelyWithoutIgnored(final VirtualFile root, final Processor<VirtualFile> processor) {
+    final FileTypeManager ftm = FileTypeManager.getInstance();
+    processFilesRecursively(root, processor, new Convertor<VirtualFile, Boolean>() {
+      public Boolean convert(final VirtualFile vf) {
+        return ! ftm.isFileIgnored(vf.getName());
+      }
+    });
+  }
+
   public static void processFilesRecursively(final VirtualFile root, final Processor<VirtualFile> processor,
                                              final Convertor<VirtualFile, Boolean> directoryFilter) {
     final LinkedList<VirtualFile> queue = new LinkedList<VirtualFile>();
