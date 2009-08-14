@@ -327,7 +327,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
               buf.append(' ');
             }
           }
-          else if (c == 'r') { // remove occurances of '\r'
+          else if (c == 'r') { // remove occurrences of '\r'
           }
           else if (c == 'n') {
             buf.append('\n');
