@@ -47,6 +47,8 @@ public class ProjectScope {
           private final ProjectFileIndex myFileIndex = projectRootManager.getFileIndex();
 
           public boolean contains(VirtualFile file) {
+            if (myFileIndex.isInLibraryClasses(file)) return false;
+
             return file instanceof VirtualFileWindow || myFileIndex.isInContent(file);
           }
 
