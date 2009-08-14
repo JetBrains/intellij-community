@@ -38,22 +38,22 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface FacetEditorContext extends UserDataHolder {
 
-  @Nullable
+  @NotNull
   Project getProject();
 
   @Nullable
   Library findLibrary(@NotNull String name);
 
-
+  @Deprecated
   @Nullable
   ModuleBuilder getModuleBuilder();
 
   boolean isNewFacet();
 
-  @Nullable
+  @NotNull
   Facet getFacet();
 
-  @Nullable
+  @NotNull
   Module getModule();
 
   @Nullable
@@ -65,14 +65,15 @@ public interface FacetEditorContext extends UserDataHolder {
   @NotNull
   ModulesProvider getModulesProvider();
 
-  @Nullable
+  @NotNull
   ModifiableRootModel getModifiableRootModel();
 
-  @Nullable
+  @NotNull
   ModuleRootModel getRootModel();
 
   Library[] getLibraries();
 
+  @Deprecated
   @Nullable
   WizardContext getWizardContext();
 

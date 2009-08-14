@@ -6,7 +6,6 @@ package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.ui.FacetEditorContext;
-import com.intellij.facet.ui.ProjectSettingsContext;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.Module;
@@ -24,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author nik
  */
-public abstract class ProjectConfigurableContext extends FacetEditorContextBase implements ProjectSettingsContext {
+public abstract class ProjectConfigurableContext extends FacetEditorContextBase {
   private final Module myModule;
   private final boolean myNewFacet;
   private final ModuleConfigurationState myModuleConfigurationState;

@@ -8,7 +8,6 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderRootType;
@@ -50,12 +49,7 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
   }
 
   public Library[] getLibraries() {
-    final Project project = getProject();
-    if (project == null) {
-      return new Library[0];
-    }
-
-    return LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries();
+    return LibraryTablesRegistrar.getInstance().getLibraryTable(getProject()).getLibraries();
   }
 
   @NotNull
@@ -106,7 +100,7 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
     return myModulesProvider;
   }
 
-  @Nullable
+  @NotNull
   public ModuleRootModel getRootModel() {
     return getModifiableRootModel();
   }
