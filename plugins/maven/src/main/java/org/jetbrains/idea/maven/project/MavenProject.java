@@ -165,9 +165,9 @@ public class MavenProject {
 
     newUnresolvedArtifacts.addAll(readerResult.unresolvedArtifactIds);
     newRepositories.addAll(convertRepositories(model.getRepositories()));
-    newDependencies.addAll(convertArtifacts(nativeMavenProject.getArtifacts()));
+    newDependencies.addAll(convertArtifacts(nativeMavenProject.getArtifacts(), state.myLocalRepository));
     newPlugins.addAll(collectPlugins(model, state.myActiveProfilesIds));
-    newExtensions.addAll(convertArtifacts(nativeMavenProject.getExtensionArtifacts()));
+    newExtensions.addAll(convertArtifacts(nativeMavenProject.getExtensionArtifacts(), state.myLocalRepository));
 
     state.myUnresolvedArtifactIds = newUnresolvedArtifacts;
     state.myRemoteRepositories = new ArrayList<MavenRemoteRepository>(newRepositories);
@@ -212,12 +212,12 @@ public class MavenProject {
     return result;
   }
 
-  private static List<MavenArtifact> convertArtifacts(Collection<Artifact> artifacts) {
+  private static List<MavenArtifact> convertArtifacts(Collection<Artifact> artifacts, File localRepository) {
     if (artifacts == null) return new ArrayList<MavenArtifact>();
 
     List<MavenArtifact> result = new ArrayList<MavenArtifact>(artifacts.size());
     for (Artifact each : artifacts) {
-      result.add(new MavenArtifact(each));
+      result.add(new MavenArtifact(each, localRepository));
     }
     return result;
   }

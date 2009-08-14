@@ -54,7 +54,7 @@ public class MavenArtifact implements Serializable {
   protected MavenArtifact() {
   }
 
-  public MavenArtifact(Artifact artifact) {
+  public MavenArtifact(Artifact artifact, File localRepository) {
     myGroupId = artifact.getGroupId();
     myArtifactId = artifact.getArtifactId();
     myVersion = artifact.getVersion();
@@ -68,6 +68,10 @@ public class MavenArtifact implements Serializable {
     myExtension = getExtension(artifact);
 
     myFile = artifact.getFile();
+    if (myFile == null) {
+      myFile = new File(localRepository, getRelativePath());
+    }
+
     myResolved = artifact.isResolved();
     myStubbed = artifact instanceof CustomArtifact && ((CustomArtifact)artifact).isStub();
 
@@ -167,7 +171,6 @@ public class MavenArtifact implements Serializable {
       result.append(".");
       result.append(myExtension);
     }
-    result.append("!/");
     return result.toString();
   }
 

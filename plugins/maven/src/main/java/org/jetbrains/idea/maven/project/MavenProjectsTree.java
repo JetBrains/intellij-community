@@ -1017,7 +1017,7 @@ public class MavenProjectsTree {
                                                   null);
       artifact.setScope(Artifact.SCOPE_COMPILE);
       embedder.resolve(artifact, mavenProject.getRemoteRepositories(), process);
-      return new MavenArtifact(artifact);
+      return new MavenArtifact(artifact, mavenProject.getLocalRepository());
     }
     finally {
       embeddersManager.release(embedder);

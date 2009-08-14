@@ -230,7 +230,7 @@ public class MavenRootModelAdapter {
   }
 
   private boolean isRepositoryUrl(MavenArtifact artifact, String url, String classifier) {
-    return url.endsWith(artifact.getRelativePathForClassifier(classifier));
+    return url.endsWith(artifact.getRelativePathForClassifier(classifier) + JarFileSystem.JAR_SEPARATOR);
   }
 
   public static boolean isChangedByUser(Library library) {

@@ -1612,4 +1612,50 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     importProject(); // should not fail;
   }
+
+  public void testDoNotFailToConfigureUnresolvedVersionRangeDependencies() throws Exception {
+    // should not throw NPE when accessing CustomArtifact.getPath();
+    MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "local1");
+    String repoPath = getRepositoryPath();
+    updateSettingsXmlFully("<settings>" +
+                           "<mirrors>" +
+                           "  <mirror>" +
+                           "    <id>name</id>" +
+                           "    <url>http://fooooooooo</url>" +
+                           "    <mirrorOf>*</mirrorOf>" +
+                           "  </mirror>" +
+                           "</mirrors>" +
+                           "</settings>");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>[3.8.1,3.8.2]</version>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>org.apache.maven.errortest</groupId>" +
+                  "    <artifactId>dep</artifactId>" +
+                  "    <version>1</version>" +
+                  "    <type>pom</type>" +
+                  "  </dependency>" +
+                  "</dependencies>" +
+
+                  "<repositories>" +
+                  "  <repository>" +
+                  "    <id>repo</id>" +
+                  "    <url>file://localhost/${basedir}/local-repo</url>" +
+                  "  </repository>" +
+                  "</repositories>");
+
+    assertModuleLibDeps("project",
+                        "Maven: junit:junit:3.8.2",
+                        "Maven: junit:junit:4.1" /* for some reason maven adds 4.1 dependency, let me know if it is fixed someday*/);
+    assertModuleLibDep("project", "Maven: junit:junit:3.8.2",
+                       "jar://" + repoPath + "/junit/junit/3.8.2/junit-3.8.2.jar!/");
+  }
 }
