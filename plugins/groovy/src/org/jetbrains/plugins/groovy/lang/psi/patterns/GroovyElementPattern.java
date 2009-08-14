@@ -52,7 +52,7 @@ public class GroovyElementPattern<T extends GroovyPsiElement,Self extends Groovy
           if (element instanceof GrMethodCallExpression) {
             final GrExpression expression = ((GrMethodCallExpression)element).getInvokedExpression();
             final GroovyResolveResult[] results =
-              expression instanceof GrReferenceElement? ((GrReferenceElement)expression).multiResolve(true) : GroovyResolveResult.EMPTY_ARRAY;
+              expression instanceof GrReferenceElement? ((GrReferenceElement)expression).multiResolve(false) : GroovyResolveResult.EMPTY_ARRAY;
             for (GroovyResolveResult result : results) {
               final PsiElement psiElement = result.getElement();
               if (methodPattern.getCondition().accepts(psiElement, context)) {
