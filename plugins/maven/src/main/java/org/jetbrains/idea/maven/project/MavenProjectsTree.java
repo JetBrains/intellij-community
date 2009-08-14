@@ -454,7 +454,7 @@ public class MavenProjectsTree {
     MavenProjectTimestamp timestamp = calculateTimestamp(mavenProject, activeProfiles, generalSettings);
     boolean isChanged = force || !timestamp.equals(myTimestamps.get(mavenProject));
 
-    MavenProjectChanges changes = MavenProjectChanges.NONE;
+    MavenProjectChanges changes = force ? MavenProjectChanges.ALL : MavenProjectChanges.NONE;
     if (isChanged) {
       writeLock();
       try {
@@ -466,7 +466,7 @@ public class MavenProjectsTree {
         writeUnlock();
       }
       MavenId oldParentId = mavenProject.getParentId();
-      changes = mavenProject.read(generalSettings, activeProfiles, reader, myProjectLocator);
+      changes = changes.mergedWith(mavenProject.read(generalSettings, activeProfiles, reader, myProjectLocator));
 
       writeLock();
       try {

@@ -3,7 +3,12 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 
 import java.io.File;
 import java.util.Arrays;
@@ -691,7 +696,8 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     final boolean[] called = new boolean[1];
     myProjectsManager.addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
       @Override
-      public void projectResolved(Pair<MavenProject,MavenProjectChanges> projectWithChanges, org.apache.maven.project.MavenProject nativeMavenProject) {
+      public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                  org.apache.maven.project.MavenProject nativeMavenProject) {
         called[0] = true;
       }
     });
@@ -755,33 +761,37 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
   public void testForceReimport() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
-                     "<version>1</version>");
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <version>4.0</version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
     importProject();
     assertModules("project");
 
-    final StringBuilder builder = new StringBuilder();
+    createProjectSubDir("src/main/java");
 
-    myProjectsManager.addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
-      @Override
-      public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
-        builder.append("updated: ");
-        for (Pair<MavenProject, MavenProjectChanges> each : updated) {
-          builder.append(each.first.getMavenId().getArtifactId() + " ");
-        }
+    ModifiableRootModel model = ModuleRootManager.getInstance(getModule("project")).getModifiableModel();
+    for (OrderEntry each : model.getOrderEntries()) {
+      if (each instanceof LibraryOrderEntry && MavenRootModelAdapter.isMavenLibrary(((LibraryOrderEntry)each).getLibrary())) {
+        model.removeOrderEntry(each);
       }
+    }
+    model.commit();
 
-      @Override
-      public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                  org.apache.maven.project.MavenProject nativeMavenProject) {
-        builder.append("resolved: " + projectWithChanges.first.getMavenId().getArtifactId() + " ");
-      }
-    });
-
+    assertSources("project");
+    assertModuleLibDeps("project");
 
     myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
     waitForReadingCompletion();
     myProjectsManager.waitForResolvingCompletion();
+    myProjectsManager.flushPendingImportRequestsInTests();
 
-    assertEquals("updated: project resolved: project ", builder.toString());
+    assertSources("project", "src/main/java");
+    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
   }
 }
