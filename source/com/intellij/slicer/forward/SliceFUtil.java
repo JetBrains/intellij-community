@@ -5,9 +5,9 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.slicer.SliceUsage;
 import com.intellij.slicer.SliceManager;
-import com.intellij.usageView.UsageInfo;
+import com.intellij.slicer.SliceUsage;
+import com.intellij.slicer.SliceUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
@@ -25,7 +25,7 @@ public class SliceFUtil {
   public static boolean processUsagesFlownFromThe(@NotNull PsiElement element, @NotNull Processor<SliceUsage> processor, @NotNull SliceUsage parent) {
     PsiElement target = getAssignmentTarget(element);
     if (target != null) {
-      SliceUsage usage = new SliceUsage(new UsageInfo(target), parent);
+      SliceUsage usage = SliceUtil.createSliceUsage(target, parent);
       return processor.process(usage);
     }
 
@@ -150,7 +150,7 @@ public class SliceFUtil {
   private static boolean processAssignmentTarget(PsiElement element, SliceUsage pa, Processor<SliceUsage> processor) {
     PsiElement target = getAssignmentTarget(element);
     if (target != null) {
-      SliceUsage usage = new SliceUsage(new UsageInfo(element), pa);
+      SliceUsage usage = SliceUtil.createSliceUsage(element, pa);
       return processor.process(usage);
     }
     return true;

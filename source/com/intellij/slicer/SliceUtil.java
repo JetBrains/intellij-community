@@ -38,7 +38,9 @@ public class SliceUtil {
       final Set<PsiExpression> expressions = new THashSet<PsiExpression>(DfaUtil.getCachedVariableValues(variable, original));
       PsiExpression initializer = variable.getInitializer();
       if (initializer != null && expressions.isEmpty()) expressions.add(initializer);
-      if (!handToProcessor(expressions, processor, parent)) return false;
+      for (PsiExpression exp : expressions) {
+        if (!handToProcessor(exp, processor, parent)) return false;
+      }
       if (variable instanceof PsiField) {
         return processFieldUsages((PsiField)variable, processor, parent);
       }
@@ -69,19 +71,12 @@ public class SliceUtil {
     return expression;
   }
 
-  private static boolean handToProcessor(@NotNull Collection<PsiExpression> expressions, @NotNull Processor<SliceUsage> processor, @NotNull SliceUsage parent) {
-    for (PsiExpression exp : expressions) {
-      if (!handToProcessor(exp, processor, parent)) return false;
-    }
-    return true;
-  }
-
   public static boolean handToProcessor(@NotNull PsiExpression exp, @NotNull Processor<SliceUsage> processor, @NotNull SliceUsage parent) {
     final PsiExpression realExpression =
       exp.getParent() instanceof DummyHolder ? (PsiExpression)((DummyHolder)exp.getParent()).getContext() : exp;
     assert realExpression != null;
     if (!(realExpression instanceof PsiCompiledElement)) {
-      SliceUsage usage = new SliceUsage(createUsageInfo(realExpression), parent);
+      SliceUsage usage = createSliceUsage(realExpression, parent);
       if (!processor.process(usage)) return false;
     }
     return true;
@@ -106,8 +101,7 @@ public class SliceUtil {
       public void visitReturnStatement(final PsiReturnStatement statement) {
         PsiExpression returnValue = statement.getReturnValue();
         if (returnValue == null) return;
-        UsageInfo usageInfo = createUsageInfo(returnValue);
-        SliceUsage usage = new SliceUsage(usageInfo, parent);
+        SliceUsage usage = createSliceUsage(returnValue, parent);
         if (!processor.process(usage)) {
           stopWalking();
           result[0] = false;
@@ -118,15 +112,11 @@ public class SliceUtil {
     return result[0];
   }
 
-  private static UsageInfo createUsageInfo(PsiExpression returnValue) {
-    return new UsageInfo(simplify(returnValue));
-  }
-
   static boolean processFieldUsages(final PsiField field, final Processor<SliceUsage> processor, final SliceUsage parent) {
     if (field.hasInitializer()) {
       PsiExpression initializer = field.getInitializer();
       if (initializer != null && !(field instanceof PsiCompiledElement)) {
-        SliceFieldUsage usage = new SliceFieldUsage(createUsageInfo(initializer), field, parent);
+        SliceUsage usage = createSliceUsage(initializer, parent);
         if (!processor.process(usage)) return false;
       }
     }
@@ -140,20 +130,24 @@ public class SliceUtil {
         PsiElement parentExpr = referenceExpression.getParent();
         if (PsiUtil.isOnAssignmentLeftHand(referenceExpression)) {
           PsiExpression rExpression = ((PsiAssignmentExpression)parentExpr).getRExpression();
-          SliceFieldUsage usage = new SliceFieldUsage(createUsageInfo(rExpression), field, parent);
+          SliceUsage usage = createSliceUsage(rExpression, parent);
           return processor.process(usage);
         }
         if (parentExpr instanceof PsiPrefixExpression && ((PsiPrefixExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiPrefixExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiPrefixExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
-          SliceFieldUsage usage = new SliceFieldUsage(createUsageInfo((PsiExpression)parentExpr), field, parent);
+          SliceUsage usage = createSliceUsage((PsiExpression)parentExpr, parent);
           return processor.process(usage);
         }
         if (parentExpr instanceof PsiPostfixExpression && ((PsiPostfixExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiPostfixExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiPostfixExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
-          SliceFieldUsage usage = new SliceFieldUsage(createUsageInfo((PsiExpression)parentExpr), field, parent);
+          SliceUsage usage = createSliceUsage((PsiExpression)parentExpr, parent);
           return processor.process(usage);
         }
         return true;
       }
     });
+  }
+
+  public static SliceUsage createSliceUsage(PsiElement element, SliceUsage parent) {
+    return new SliceUsage(new UsageInfo(simplify(element)), parent);
   }
 
   static boolean processParameterUsages(final PsiParameter parameter, final Processor<SliceUsage> processor, final SliceUsage parent) {
@@ -194,7 +188,7 @@ public class SliceUtil {
           PsiExpression[] expressions = argumentList.getExpressions();
           if (paramSeqNo < expressions.length) {
             PsiExpression passExpression = expressions[paramSeqNo];
-            SliceParameterUsage usage = new SliceParameterUsage(createUsageInfo(passExpression), parameter, parent);
+            SliceUsage usage = createSliceUsage(passExpression, parent);
             return processor.process(usage);
           }
           return true;

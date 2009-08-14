@@ -138,17 +138,7 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Bean>
 
   public static SliceUsage createRootUsage(@NotNull PsiElement element, @NotNull AnalysisScope scope) {
     UsageInfo usageInfo = new UsageInfo(element);
-    SliceUsage usage;
-    if (element instanceof PsiField) {
-      usage = new SliceFieldUsage(usageInfo, (PsiField)element, scope);
-    }
-    else if (element instanceof PsiParameter) {
-      usage = new SliceParameterUsage(usageInfo, (PsiParameter)element, scope);
-    }
-    else {
-      usage = new SliceUsage(usageInfo, scope);
-    }
-    return usage;
+    return new SliceUsage(usageInfo, scope);
   }
 
   private class MyApplicationListener extends ApplicationAdapter {
