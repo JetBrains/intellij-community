@@ -66,7 +66,6 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
   private JPanel myRoot;
   private JPanel myClassPanel;
-  private JCheckBox myHierarchy;
 
   private TreeTableView myParamsTable;
 
@@ -262,7 +261,6 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
         return getClassType() != null;
       }
     }).booleanValue();
-    other.setApplyInHierarchy(myHierarchy.isSelected());
     if (applyMethods) {
       other.setMethodInfos(ContainerUtil.findAll(myData.values(), new Condition<MethodParameterInjection.MethodInfo>() {
         public boolean value(final MethodParameterInjection.MethodInfo methodInfo) {
@@ -274,7 +272,6 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
   protected void resetImpl() {
     setPsiClass(myOrigInjection.getClassName());
-    myHierarchy.setSelected(myOrigInjection.isApplyInHierarchy());
 
     rebuildTreeModel();
     final THashMap<String, PsiMethod> map = new THashMap<String, PsiMethod>();

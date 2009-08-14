@@ -212,9 +212,11 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
                                   ElementManipulators.getManipulator(curHost).getRangeInElement(curHost)));
         }
         else {
-          for (TextRange textRange : injection.getInjectedArea(((PsiLiteralExpression)curHost))) {
-            result.add(Trinity.create(curHost, InjectedLanguage.create(injection.getInjectedLanguageId(), curPrefix, curSuffix, true),
-                                    textRange));
+          final List<TextRange> injectedArea = injection.getInjectedArea(curHost);
+          for (int j = 0, injectedAreaSize = injectedArea.size(); j < injectedAreaSize; j++) {
+            final TextRange textRange = injectedArea.get(j);
+            result.add(Trinity.create(curHost, InjectedLanguage.create(
+              injection.getInjectedLanguageId(), j == 0? curPrefix: "", j == injectedAreaSize -1? curSuffix : "", true), textRange));
           }
         }
       }

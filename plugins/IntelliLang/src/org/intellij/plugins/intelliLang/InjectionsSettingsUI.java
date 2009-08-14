@@ -165,8 +165,11 @@ public class InjectionsSettingsUI implements Configurable {
 
       @Override
       public void actionPerformed(final AnActionEvent e) {
+        final int row = myInjectionsTable.getSelectedRow();
         final AnAction action = getEditAction();
         action.actionPerformed(e);
+        ((ListTableModel)myInjectionsTable.getModel()).fireTableDataChanged();
+        myInjectionsTable.getSelectionModel().setSelectionInterval(row, row);
       }
     };
     group.add(addAction);

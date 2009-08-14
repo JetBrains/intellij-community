@@ -38,8 +38,6 @@ public class MethodParameterInjection extends BaseInjection {
   @NotNull
   private final Map<String, MethodInfo> myParameterMap = new THashMap<String, MethodInfo>();
 
-  private boolean myApplyInHierarchy = true;
-
   public MethodParameterInjection() {
     super(LanguageInjectionSupport.JAVA_SUPPORT_ID);
   }
@@ -64,14 +62,6 @@ public class MethodParameterInjection extends BaseInjection {
     return myParameterMap.values();
   }
 
-  public boolean isApplyInHierarchy() {
-    return myApplyInHierarchy;
-  }
-
-  public void setApplyInHierarchy(boolean applyInHierarchy) {
-    myApplyInHierarchy = applyInHierarchy;
-  }
-
   public MethodParameterInjection copyFrom(@NotNull BaseInjection o) {
     super.copyFrom(o);
     if (o instanceof MethodParameterInjection) {
@@ -81,7 +71,6 @@ public class MethodParameterInjection extends BaseInjection {
       for (MethodInfo info : other.myParameterMap.values()) {
         myParameterMap.put(info.methodSignature, info.copy());
       }
-      myApplyInHierarchy = other.isApplyInHierarchy();
     }
     return this;
   }
@@ -89,7 +78,7 @@ public class MethodParameterInjection extends BaseInjection {
   protected void readExternalImpl(Element e) {
     if (e.getAttribute("injector-id") == null) {
       setClassName(JDOMExternalizer.readString(e, "CLASS"));
-      setApplyInHierarchy(JDOMExternalizer.readBoolean(e, "APPLY_IN_HIERARCHY"));
+      //setApplyInHierarchy(JDOMExternalizer.readBoolean(e, "APPLY_IN_HIERARCHY"));
       readOldFormat(e);
       final THashMap<String, String> map = new THashMap<String, String>();
       JDOMExternalizer.readMap(e, map, null, "SIGNATURES");
@@ -141,7 +130,6 @@ public class MethodParameterInjection extends BaseInjection {
 
     if (!myClassName.equals(that.myClassName)) return false;
     if (!myParameterMap.equals(that.myParameterMap)) return false;
-    if (myApplyInHierarchy != that.myApplyInHierarchy) return false;
 
     return true;
   }
@@ -150,7 +138,6 @@ public class MethodParameterInjection extends BaseInjection {
     int result = super.hashCode();
     result = 31 * result + myClassName.hashCode();
     result = 31 * result + myParameterMap.hashCode();
-    result = 31 * result + (myApplyInHierarchy ? 0 : 1);
     return result;
   }
 

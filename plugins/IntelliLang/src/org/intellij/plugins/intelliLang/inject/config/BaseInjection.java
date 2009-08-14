@@ -121,7 +121,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
               ((PsiLanguageInjectionHost)element).createLiteralTextEscaper();
       final StringBuilder sb = new StringBuilder();
       textEscaper.decode(textRange, sb);
-      final List<TextRange> ranges = getMatchingRanges(myCompiledValuePattern.matcher(sb.toString()));
+      final List<TextRange> ranges = getMatchingRanges(myCompiledValuePattern.matcher(sb), sb.length());
       return ranges.size() > 0 ? ContainerUtil.map(ranges, new Function<TextRange, TextRange>() {
         public TextRange fun(TextRange s) {
           return new TextRange(textEscaper.getOffsetInHost(s.getStartOffset(), textRange), textEscaper.getOffsetInHost(s.getEndOffset(), textRange));
@@ -349,19 +349,21 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
 
 
-  private static List<TextRange> getMatchingRanges(Matcher matcher) {
+  private static List<TextRange> getMatchingRanges(Matcher matcher, final int length) {
     final List<TextRange> list = new SmartList<TextRange>();
     int start = 0;
-    while (matcher.find(start)) {
-      final String group = matcher.group(1);
-      if (group != null) {
-        start = matcher.start(1);
-        final int length = group.length();
-        list.add(TextRange.from(start, length));
-        start += length;
+    while (start < length && matcher.find(start)) {
+      final int groupCount = matcher.groupCount();
+      if (groupCount == 0) {
+        start = matcher.end();
       }
       else {
-        break;
+        for (int i=1; i<=groupCount; i++) {
+          start = matcher.start(i);
+          if (start == -1) continue;
+          list.add(new TextRange(start, matcher.end(i)));
+        }
+        start = matcher.end();
       }
     }
     return list;
