@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.facet.ui.ProjectSettingsContext;
+import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,7 +48,7 @@ public abstract class LibraryManager {
   public abstract @NotNull String getSDKVersion(String path);
 
   @Nullable
-  public abstract Library createLibrary(@NotNull ProjectSettingsContext context);
+  public abstract Library createLibrary(@NotNull FacetEditorContext context);
 
   @NotNull @Nls public abstract String getLibraryCategoryName();
 

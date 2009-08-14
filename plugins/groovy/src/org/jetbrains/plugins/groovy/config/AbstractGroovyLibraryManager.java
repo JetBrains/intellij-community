@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.facet.impl.ui.ProjectConfigurableContext;
-import com.intellij.facet.ui.ProjectSettingsContext;
+import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -73,7 +73,7 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
                                   final boolean inProject);
 
   @Override
-  public Library createLibrary(@NotNull ProjectSettingsContext context) {
+  public Library createLibrary(@NotNull FacetEditorContext context) {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       public boolean isFileSelectable(VirtualFile file) {
         return super.isFileSelectable(file) && isSDKHome(file);

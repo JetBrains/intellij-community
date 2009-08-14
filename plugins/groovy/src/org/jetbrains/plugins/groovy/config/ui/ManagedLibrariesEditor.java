@@ -72,7 +72,7 @@ public class ManagedLibrariesEditor {
   private JButton myModuleDeps;
   private JPanel myComponent;
 
-  private final ProjectSettingsContext myEditorContext;
+  private final FacetEditorContext myEditorContext;
   private final FacetValidatorsManager myValidatorsManager;
   private final DefaultListModel myListModel;
   private final LibrariesContainer myLibrariesContainer;
@@ -80,7 +80,7 @@ public class ManagedLibrariesEditor {
   private final Module myModule;
 
   public ManagedLibrariesEditor(final FacetEditorContext editorContext, FacetValidatorsManager validatorsManager, final ExtensionPointName<? extends LibraryManager> epName) {
-    myEditorContext = (ProjectSettingsContext)editorContext;
+    myEditorContext = editorContext;
     myValidatorsManager = validatorsManager;
     myModule = myEditorContext.getModule();
     myLibrariesContainer = getFacetEditorContext().getContainer();
