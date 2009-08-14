@@ -1,9 +1,6 @@
 package org.jetbrains.idea.maven.dom.references;
 
-import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementRenderer;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.TextRange;
@@ -345,16 +342,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   }
 
   private LookupElement createLookupElement(Object element, String name, Icon icon) {
-    LookupItem lookup = new LookupItem(element, name) {
-      @NotNull
-      @Override
-      protected LookupElementRenderer getRenderer() {
-        return DefaultLookupItemRenderer.INSTANCE;
-      }
-    };
-    lookup.setIcon(icon);
-    lookup.setPresentableText(name);
-    return lookup;
+    return LookupElementFactory.builder(name, element).setIcon(icon).setPresentableText(name).createLookupElement();
   }
 
   @Nullable
