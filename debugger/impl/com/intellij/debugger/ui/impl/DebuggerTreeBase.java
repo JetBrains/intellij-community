@@ -10,13 +10,14 @@ import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.text.StringTokenizer;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.GeometryUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,8 +26,8 @@ import javax.swing.border.Border;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 
 public class DebuggerTreeBase extends DnDAwareTree {
@@ -355,7 +356,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
   }
 
   public void dispose() {
-    myTipManager.dispose();
+    Disposer.dispose(myTipManager);
   }
 
 }
