@@ -33,6 +33,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
 import java.util.*;
 
 /**
@@ -62,7 +64,35 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected void tearDown() throws Exception {
     Disposer.dispose(myTestRootDisposable);
+    cleanupSwingDataStructures();
     super.tearDown();
+  }
+
+  private static void cleanupSwingDataStructures() throws Exception {
+    Class<?> aClass = Class.forName("javax.swing.KeyboardManager");
+
+    Method get = aClass.getMethod("getCurrentManager");
+    get.setAccessible(true);
+    Object manager = get.invoke(null);
+    {
+      Field mapF = aClass.getDeclaredField("componentKeyStrokeMap");
+      mapF.setAccessible(true);
+      Object map = mapF.get(manager);
+      ((Map)map).clear();
+    }
+    {
+      Field mapF = aClass.getDeclaredField("containerMap");
+      mapF.setAccessible(true);
+      Object map = mapF.get(manager);
+      ((Map)map).clear();
+    }
+
+    //Constructor<?> ctr = aClass.getDeclaredConstructor();
+    //ctr.setAccessible(true);
+    //Object newManager = ctr.newInstance();
+    //Method setter = aClass.getDeclaredMethod("setCurrentManager", aClass);
+    //setter.setAccessible(true);
+    //setter.invoke(null, newManager);
   }
 
   protected void checkForSettingsDamage() throws Exception {
