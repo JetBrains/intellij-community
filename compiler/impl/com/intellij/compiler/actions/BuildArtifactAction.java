@@ -26,7 +26,7 @@ public class BuildArtifactAction extends AnAction {
   private Artifact myArtifact;
 
   public BuildArtifactAction(Project project, Artifact artifact) {
-    super(artifact.getName());
+    super(artifact.getName(), "Build Artifact '" + artifact.getName() + "'", artifact.getArtifactType().getIcon());
     myProject = project;
     myArtifact = artifact;
   }

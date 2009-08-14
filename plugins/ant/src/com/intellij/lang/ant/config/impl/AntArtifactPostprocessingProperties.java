@@ -3,6 +3,7 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.lang.ant.config.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
@@ -32,8 +33,9 @@ public class AntArtifactPostprocessingProperties extends ArtifactProperties<AntA
   }
 
   @Override
-  public void onBuildFinished(@NotNull final Project project, @NotNull Artifact artifact) {
+  public void onBuildFinished(@NotNull Artifact artifact, @NotNull final CompileContext compileContext) {
     if (myEnabled) {
+      final Project project = compileContext.getProject();
       final AntBuildTarget target = findTarget(AntConfiguration.getInstance(project));
       if (target != null) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
