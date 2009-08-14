@@ -430,7 +430,7 @@ public final class Configuration implements PersistentStateComponent<Element> {
         return psiAnnotation instanceof PsiCompiledElement ? null : psiAnnotation.getContainingFile();
       }
     });
-    new WriteCommandAction.Simple(project, psiFiles.toArray(new PsiFile[psiFiles.size()])) {
+    new WriteCommandAction.Simple(project, "Language Injection Configuration Update", psiFiles.toArray(new PsiFile[psiFiles.size()])) {
       public void run() {
         for (PsiElement annotation : psiElementsToRemove) {
           annotation.delete();

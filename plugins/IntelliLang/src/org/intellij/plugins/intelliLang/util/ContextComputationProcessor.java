@@ -107,6 +107,10 @@ public class ContextComputationProcessor {
       if (parent instanceof PsiBinaryExpression) continue;
       if (parent instanceof PsiParenthesizedExpression) continue;
       if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != target) continue;
+      if (parent instanceof PsiArrayInitializerMemberValue) continue;
+      if (parent instanceof PsiArrayInitializerExpression) {
+        parent = parent.getParent(); continue;
+      }
       break;
     }
     return target;
