@@ -12,6 +12,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author peter
  */
@@ -25,11 +27,24 @@ public class CastingLookupElementDecorator extends LookupElementDecorator<Lookup
                             @Nullable String text,
                             boolean strikeout,
                             boolean bold) {
-      final MemorizingLookupElementPresentation castPresentation = new MemorizingLookupElementPresentation(base);
-      item.getCastItem().renderElement(castPresentation);
-      base.setItemText("(" + castPresentation.getItemText() + ")" + text, strikeout, bold);
+      base.setItemText("(" + getItemText(base, item.getCastItem()) + ")" + text, strikeout, bold);
+    }
+
+    @Override
+    public void setTypeText(@NotNull CastingLookupElementDecorator item,
+                            @NotNull LookupElementPresentation base,
+                            @Nullable String text,
+                            @Nullable Icon icon) {
+      base.setTypeText(getItemText(base, item.getCastItem()));
     }
   };
+
+  private static String getItemText(LookupElementPresentation base, LookupElement castItem) {
+    final MemorizingLookupElementPresentation castPresentation = new MemorizingLookupElementPresentation(base);
+    castItem.renderElement(castPresentation);
+    final String type = castPresentation.getItemText();
+    return type;
+  }
 
   private CastingLookupElementDecorator(LookupElement delegate, PsiType castType) {
     super(delegate);
