@@ -50,8 +50,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.*;
 
 public class OverrideImplementUtil {
@@ -172,6 +172,8 @@ public class OverrideImplementUtil {
 
   private static boolean preferLeftForImplement(PsiMethod left, PsiMethod right) {
     if (PsiUtil.getAccessLevel(left.getModifierList()) > PsiUtil.getAccessLevel(right.getModifierList())) return true;
+    if (!left.getContainingClass().isInterface()) return true;
+    if (!right.getContainingClass().isInterface()) return false;
     // implement annotated method
     PsiAnnotation[] leftAnnotations = left.getModifierList().getAnnotations();
     PsiAnnotation[] rightAnnotations = right.getModifierList().getAnnotations();
