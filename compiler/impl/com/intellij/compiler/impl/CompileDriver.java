@@ -2040,10 +2040,22 @@ public class CompileDriver {
               addItemToMap(updateNow, outputRoot, item);
             }
           }
-          for (Map.Entry<String, Collection<TranslatingCompiler.OutputItem>> entry : updateNow.entrySet()) {
+
+          if (updateNow.size() == 1) {
+            final Map.Entry<String, Collection<TranslatingCompiler.OutputItem>> entry = updateNow.entrySet().iterator().next();
             final String outputDir = entry.getKey();
             final Collection<TranslatingCompiler.OutputItem> itemsToUpdate = entry.getValue();
             TranslatingCompilerFilesMonitor.getInstance().update(myContext, outputDir, itemsToUpdate, filesToRecompile);
+          }
+          else {
+            for (Map.Entry<String, Collection<TranslatingCompiler.OutputItem>> entry : updateNow.entrySet()) {
+              final String outputDir = entry.getKey();
+              final Collection<TranslatingCompiler.OutputItem> itemsToUpdate = entry.getValue();
+              TranslatingCompilerFilesMonitor.getInstance().update(myContext, outputDir, itemsToUpdate, VirtualFile.EMPTY_ARRAY);
+            }
+            if (filesToRecompile.length > 0) {
+              TranslatingCompilerFilesMonitor.getInstance().update(myContext, null, Collections.<TranslatingCompiler.OutputItem>emptyList(), filesToRecompile);
+            }
           }
         }
         else {
