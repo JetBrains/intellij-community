@@ -243,8 +243,8 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
         renderer.renderElement(this, getObject(), presentation);
         return;
       }
-      DefaultLookupItemRenderer.INSTANCE.renderElement(this, presentation);
     }
+    DefaultLookupItemRenderer.INSTANCE.renderElement(this, presentation);
   }
 
   public LookupItem<T> setBold() {

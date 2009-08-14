@@ -113,6 +113,9 @@ public class LookupCellRenderer implements ListCellRenderer {
 
   private void setItemTextLabels(LookupElement item, final Color background, final Color foreground, final boolean selected, final String name,
                                  final boolean toStrikeout, boolean bold) {
+    final Icon icon = myNameComponent.getIcon();
+    myNameComponent.clear();
+    myNameComponent.setIcon(icon);
     myNameComponent.setFont(bold ? BOLD_FONT : NORMAL_FONT);
     myNameComponent.setBackground(background);
 
@@ -135,6 +138,8 @@ public class LookupCellRenderer implements ListCellRenderer {
     if (text == null) {
       text = "";
     }
+
+    myTailComponent.clear();
 
     myTailComponent.setFont(bold ? BOLD_FONT : NORMAL_FONT);
     myTailComponent.setBackground(background);
