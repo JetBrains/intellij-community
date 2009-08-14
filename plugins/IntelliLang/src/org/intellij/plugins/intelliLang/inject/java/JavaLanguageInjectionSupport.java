@@ -129,7 +129,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     if (injectionsMap.isEmpty() || !annotations.isEmpty()) return false;
 
     final BaseInjection originalInjection = injectionsMap.keySet().iterator().next();
-    final MethodParameterInjection methodParameterInjection = createMethodParameterInjection(psiElement.getProject(), originalInjection, injectionsMap.get(originalInjection).method, false);
+    final MethodParameterInjection methodParameterInjection = createFrom(psiElement.getProject(), originalInjection, injectionsMap.get(originalInjection).method, false);
     final MethodParameterInjection copy = methodParameterInjection.copy();
     final BaseInjection newInjection = showInjectionUI(project, methodParameterInjection);
     if (newInjection != null) {
@@ -302,7 +302,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     final Configuration configuration = Configuration.getInstance();
     template.initializePlaces(false);
     final BaseInjection baseTemplate = new BaseInjection(template.getSupportId()).copyFrom(template);
-    final MethodParameterInjection allMethodParameterInjection = createMethodParameterInjection(project, baseTemplate, contextMethod, true);
+    final MethodParameterInjection allMethodParameterInjection = createFrom(project, baseTemplate, contextMethod, true);
     allMethodParameterInjection.initializePlaces(false);
     // find existing injection for this class.
     final BaseInjection originalInjection = configuration.findExistingInjection(allMethodParameterInjection);
@@ -315,7 +315,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       final InjectionPlace currentPlace = template.getInjectionPlaces().get(0);
       final String text = currentPlace.getText();
       originalCopy.setPlaceEnabled(text, true);
-      methodParameterInjection = createMethodParameterInjection(project, originalCopy, contextMethod, false);
+      methodParameterInjection = createFrom(project, originalCopy, contextMethod, false);
     }
     if (InjectLanguageAction.doEditConfigurable(project, new MethodParameterInjectionConfigurable(methodParameterInjection, null, project))) {
       methodParameterInjection.initializePlaces(false);
@@ -345,7 +345,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     }, host);
   }
 
-  private static MethodParameterInjection createMethodParameterInjection(final Project project,
+  private static MethodParameterInjection createFrom(final Project project,
                                                                          final BaseInjection injection,
                                                                          final PsiMethod contextMethod,
                                                                          final boolean includeAllPlaces) {
@@ -362,6 +362,14 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
         final Matcher matcher = pattern.matcher(place.getText());
         if (matcher.matches()) {
           found = matcher.group(1);
+        }
+      }
+      if (found == null) {
+        // hack to guess at least the class name
+        final Matcher matcher = ourPresentationPattern.matcher(injection.getDisplayName());
+        if (matcher.matches()) {
+          final String pkg = matcher.group(2);
+          found = pkg.substring(1, pkg.length()-1)+"." + matcher.group(1);
         }
       }
       containingClass = found != null? JavaPsiFacade.getInstance(project).findClass(found, GlobalSearchScope.allScope(project)) : null;
@@ -437,7 +445,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       @Override
       public void actionPerformed(final AnActionEvent e) {
         final BaseInjection originalInjection = producer.create();
-        final MethodParameterInjection injection = createMethodParameterInjection(project, originalInjection, null, false);
+        final MethodParameterInjection injection = createFrom(project, originalInjection, null, false);
         if (injection != null) {
           final boolean mergeEnabled =
             JavaPsiFacade.getInstance(project).findClass(injection.getClassName(), GlobalSearchScope.allScope(project)) == null;
@@ -452,10 +460,10 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     };
   }
 
-  private final Pattern myPattern = Pattern.compile("(.+)(\\(\\S+(?:\\.\\S+)+\\))");
+  private final static Pattern ourPresentationPattern = Pattern.compile("(.+)(\\(\\S+(?:\\.\\S+)+\\))");
   @Override
   public void setupPresentation(final BaseInjection injection, final SimpleColoredText presentation, final boolean isSelected) {
-    final Matcher matcher = myPattern.matcher(injection.getDisplayName());
+    final Matcher matcher = ourPresentationPattern.matcher(injection.getDisplayName());
     if (matcher.matches()) {
       presentation.append(matcher.group(1), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       presentation.append(matcher.group(2), isSelected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
