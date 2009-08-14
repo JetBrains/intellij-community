@@ -86,10 +86,12 @@ public class ConfigurationContext {
     if (myRuntimeConfiguration != null) {
       types.add(myRuntimeConfiguration.getType());
     } else {
-      final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferedProducers(myLocation, this);
-      if (producers == null) return null;
-      for (RuntimeConfigurationProducer producer : producers) {
-        types.add(producer.createProducer(myLocation, this).getConfigurationType());
+      if (myLocation != null) {
+        final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferedProducers(myLocation, this);
+        if (producers == null) return null;
+        for (RuntimeConfigurationProducer producer : producers) {
+          types.add(producer.createProducer(myLocation, this).getConfigurationType());
+        }
       }
     }
     for (ConfigurationType type : types) {

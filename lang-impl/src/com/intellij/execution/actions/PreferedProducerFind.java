@@ -30,6 +30,10 @@ class PreferedProducerFind {
 
   @Nullable
   public static List<RuntimeConfigurationProducer> findPreferedProducers(final Location location, final ConfigurationContext context) {
+    if (location == null) {
+      return null;
+    }
+    
     final RuntimeConfigurationProducer[] configurationProducers =
       ApplicationManager.getApplication().getExtensions(RuntimeConfigurationProducer.RUNTIME_CONFIGURATION_PRODUCER);
     final ArrayList<RuntimeConfigurationProducer> producers = new ArrayList<RuntimeConfigurationProducer>();

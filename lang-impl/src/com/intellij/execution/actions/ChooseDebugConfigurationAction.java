@@ -13,6 +13,11 @@ public class ChooseDebugConfigurationAction extends ChooseRunConfigurationAction
   }
 
   @Override
+  protected String getAdKey() {
+    return "debug.configuration.alternate.action.ad";
+  }
+
+  @Override
   protected Executor getAlternateExecutor() {
     return super.getDefaultExecutor();
   }

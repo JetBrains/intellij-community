@@ -7,8 +7,9 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
+import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class HintUtil {
@@ -101,11 +102,15 @@ public class HintUtil {
   }
 
   public static JLabel createAdComponent(final String bottomText) {
+    return createAdComponent(bottomText, new EmptyBorder(1, 2, 1, 2));
+  }
+
+  public static JLabel createAdComponent(final String bottomText, final Border border) {
     JLabel label = new JLabel();
     label.setText(bottomText);
     label.setFont(label.getFont().deriveFont((float)(label.getFont().getSize() - 2)));
     if (bottomText != null) {
-      label.setBorder(new EmptyBorder(1, 2, 1, 2));
+      label.setBorder(border);
     }
     return label;
   }
