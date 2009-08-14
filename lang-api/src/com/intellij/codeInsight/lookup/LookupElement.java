@@ -15,11 +15,9 @@
  */
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,12 +29,6 @@ import java.util.Set;
  */
 public abstract class LookupElement extends UserDataHolderBase {
   public static final LookupElement[] EMPTY_ARRAY = new LookupElement[0];
-  private final NotNullLazyValue<LookupElementRenderer> myRenderer = new NotNullLazyValue<LookupElementRenderer>() {
-    @NotNull
-    protected LookupElementRenderer compute() {
-      return getRenderer();
-    }
-  };
   private PrefixMatcher myPrefixMatcher = PrefixMatcher.FALSE_MATCHER;
 
   @NotNull
@@ -65,14 +57,7 @@ public abstract class LookupElement extends UserDataHolderBase {
     return this;
   }
 
-  public abstract InsertHandler<? extends LookupElement> getInsertHandler();
-
   public void handleInsert(InsertionContext context) {
-    final InsertHandler<? extends LookupElement> handler = getInsertHandler();
-    if (handler != null) {
-      //noinspection unchecked
-      ((InsertHandler)handler).handleInsert(context, this);
-    }
   }
 
   public AutoCompletionPolicy getAutoCompletionPolicy() {
@@ -84,12 +69,8 @@ public abstract class LookupElement extends UserDataHolderBase {
     return getLookupString();
   }
 
-  @NotNull
-  protected abstract LookupElementRenderer<? extends LookupElement> getRenderer();
-
   public void renderElement(LookupElementPresentation presentation) {
-    //noinspection unchecked
-    myRenderer.getValue().renderElement(this, presentation);
+    presentation.setItemText(getLookupString());
   }
 
   public int getGrouping() {

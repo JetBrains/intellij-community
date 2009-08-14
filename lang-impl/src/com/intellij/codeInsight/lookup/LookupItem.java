@@ -170,7 +170,11 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
 
   @Override
   public void handleInsert(final InsertionContext context) {
-    super.handleInsert(context);
+    final InsertHandler<? extends LookupElement> handler = getInsertHandler();
+    if (handler != null) {
+      //noinspection unchecked
+      ((InsertHandler)handler).handleInsert(context, this);
+    }
     if (getTailType() != TailType.UNKNOWN && myInsertHandler == null) {
       context.setAddCompletionChar(false);
       final TailType type = handleCompletionChar(context.getEditor(), this, context.getCompletionChar());
@@ -232,16 +236,15 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return this;
   }
 
-  @NotNull
-  protected LookupElementRenderer<? extends LookupItem> getRenderer() {
+  @Override
+  public void renderElement(LookupElementPresentation presentation) {
     for (final ElementLookupRenderer renderer : Extensions.getExtensions(ElementLookupRenderer.EP_NAME)) {
-      if (renderer.handlesItem(getObject())) return new LookupElementRenderer<LookupItem>() {
-        public void renderElement(final LookupItem element, final LookupElementPresentation presentation) {
-          renderer.renderElement(element, element.getObject(), presentation);
-        }
-      };
+      if (renderer.handlesItem(getObject())) {
+        renderer.renderElement(this, getObject(), presentation);
+        return;
+      }
+      DefaultLookupItemRenderer.INSTANCE.renderElement(this, presentation);
     }
-    return DefaultLookupItemRenderer.INSTANCE;
   }
 
   public LookupItem<T> setBold() {

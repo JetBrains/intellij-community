@@ -4,11 +4,9 @@
  */
 package com.intellij.codeInsight.completion.util;
 
-import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPrimitiveType;
@@ -28,17 +26,6 @@ import javax.swing.*;
 public class PsiTypeCanonicalLookupElement extends LookupElement {
   private static final Icon EMPTY_ICON = new EmptyIcon(Icons.CLASS_ICON.getIconWidth() * 2, Icons.CLASS_ICON.getIconHeight());
 
-  private static final LookupElementRenderer<PsiTypeCanonicalLookupElement> RENDERER = new LookupElementRenderer<PsiTypeCanonicalLookupElement>() {
-    public void renderElement(final PsiTypeCanonicalLookupElement element, final LookupElementPresentation presentation) {
-      final PsiClass psiClass = element.getPsiClass();
-      if (psiClass != null) {
-        presentation.setIcon(presentation.isReal() ? psiClass.getIcon(Iconable.ICON_FLAG_VISIBILITY) : EMPTY_ICON);
-        presentation.setTailText(" (" + PsiFormatUtil.getPackageDisplayName(psiClass) + ")", true, false, false);
-      }
-      final PsiType type = element.getPsiType();
-      presentation.setItemText(type.getPresentableText(), false, type instanceof PsiPrimitiveType);
-    }
-  };
   private final PsiType myType;
   private final String myPresentableText;
 
@@ -71,12 +58,9 @@ public class PsiTypeCanonicalLookupElement extends LookupElement {
     return myPresentableText;
   }
 
-  public InsertHandler<PsiTypeCanonicalLookupElement> getInsertHandler() {
-    return new InsertHandler<PsiTypeCanonicalLookupElement>() {
-      public void handleInsert(final InsertionContext context, final PsiTypeCanonicalLookupElement item) {
-        context.getEditor().getDocument().replaceString(context.getStartOffset(), context.getStartOffset() + item.getLookupString().length(), item.getPsiType().getCanonicalText());
-      }
-    };
+  @Override
+  public void handleInsert(InsertionContext context) {
+    context.getEditor().getDocument().replaceString(context.getStartOffset(), context.getStartOffset() + getLookupString().length(), getPsiType().getCanonicalText());
   }
 
   @Override
@@ -96,8 +80,15 @@ public class PsiTypeCanonicalLookupElement extends LookupElement {
     return myType.hashCode();
   }
 
-  @NotNull
-  protected LookupElementRenderer<PsiTypeCanonicalLookupElement> getRenderer() {
-    return RENDERER;
+  @Override
+  public void renderElement(LookupElementPresentation presentation) {
+    final PsiClass psiClass = getPsiClass();
+    if (psiClass != null) {
+      presentation.setIcon(presentation.isReal() ? psiClass.getIcon(Iconable.ICON_FLAG_VISIBILITY) : EMPTY_ICON);
+      presentation.setTailText(" (" + PsiFormatUtil.getPackageDisplayName(psiClass) + ")", true, false, false);
+    }
+    final PsiType type = getPsiType();
+    presentation.setItemText(type.getPresentableText(), false, type instanceof PsiPrimitiveType);
   }
+
 }

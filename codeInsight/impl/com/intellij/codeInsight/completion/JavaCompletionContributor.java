@@ -238,7 +238,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     });
 
     for (final LookupElement item : lookupSet) {
-      if (item.getInsertHandler() == null) {
+      if (item instanceof LookupItem && ((LookupItem)item).getInsertHandler() == null) {
         ((LookupItem)item).setInsertHandler(new InsertHandler() {
           public void handleInsert(final InsertionContext context, final LookupElement item) {
             analyzeItem((LookupItem)item, item.getObject(), parameters.getPosition());

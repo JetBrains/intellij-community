@@ -3,7 +3,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -243,63 +242,47 @@ public class FilePathCompletionContributor extends CompletionContributor {
       return myName;
     }
 
-    public InsertHandler<? extends LookupElement> getInsertHandler() {
-      return new InsertHandler<LookupElement>() {
-        public void handleInsert(InsertionContext context, LookupElement item) {
-          if (!(item instanceof FilePathLookupItem)) {
-            return;
-          }
+    @Override
+    public void handleInsert(InsertionContext context) {
+      if (myFile.isValid()) {
+        final PsiReference psiReference = context.getFile().findReferenceAt(context.getStartOffset());
+        final PsiReference fileReference = getReference(psiReference);
+        LOG.assertTrue(fileReference != null);
 
-          final FilePathLookupItem _item = (FilePathLookupItem)item;
-
-          final PsiFile psiFile = _item.myFile;
-          if (psiFile.isValid()) {
-            final PsiReference psiReference = context.getFile().findReferenceAt(context.getStartOffset());
-            final PsiReference fileReference = getReference(psiReference);
-            LOG.assertTrue(fileReference != null);
-
-            fileReference.bindToElement(psiFile);
-          }
-        }
-      };
+        fileReference.bindToElement(myFile);
+      }
     }
 
-    @NotNull
-    protected LookupElementRenderer<? extends LookupElement> getRenderer() {
-      return new LookupElementRenderer<LookupElement>() {
-        @Override
-        public void renderElement(LookupElement element, LookupElementPresentation presentation) {
-          final StringBuilder sb = new StringBuilder();
-          if (myInfo != null) {
-            sb.append(" (").append(myInfo);
-          }
+    @Override
+    public void renderElement(LookupElementPresentation presentation) {
+      final StringBuilder sb = new StringBuilder();
+      if (myInfo != null) {
+        sb.append(" (").append(myInfo);
+      }
 
-          if (myRelativePath != null) {
-            if (myInfo != null) {
-              sb.append(", ");
-            }
-            else {
-              sb.append(" (");
-            }
-
-            sb.append(myRelativePath);
-          }
-
-          if (sb.length() > 0) {
-            sb.append(')');
-          }
-
-          presentation.setItemText(myName);
-
-          if (sb.length() > 0) {
-            presentation.setTailText(sb.toString(), true, false, false);
-          }
-
-          presentation.setIcon(myIcon);
+      if (myRelativePath != null) {
+        if (myInfo != null) {
+          sb.append(", ");
         }
-      };
-    }
+        else {
+          sb.append(" (");
+        }
 
+        sb.append(myRelativePath);
+      }
+
+      if (sb.length() > 0) {
+        sb.append(')');
+      }
+
+      presentation.setItemText(myName);
+
+      if (sb.length() > 0) {
+        presentation.setTailText(sb.toString(), true, false, false);
+      }
+
+      presentation.setIcon(myIcon);
+    }
 
     @Override
     public boolean equals(Object o) {

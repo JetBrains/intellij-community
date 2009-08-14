@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.CompletionService;
@@ -52,15 +51,6 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   @NotNull
   public String getLookupString() {
     return myDelegate.getLookupString();
-  }
-
-  public InsertHandler<? extends LookupElement> getInsertHandler() {
-    return myDelegate.getInsertHandler();
-  }
-
-  @NotNull
-  protected LookupElementRenderer<? extends LookupElement> getRenderer() {
-    return myDelegate.getRenderer();
   }
 
   @Override

@@ -1,6 +1,5 @@
 package com.intellij.psi.filters.getters;
 
-import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.psi.*;
@@ -50,17 +49,6 @@ public class ClassLiteralLookupElement extends LookupElement implements TypedLoo
   @Override
   public Object getObject() {
     return myExpr;
-  }
-
-  @Override
-  public InsertHandler<? extends LookupElement> getInsertHandler() {
-    throw new UnsupportedOperationException("Method getInsertHandler is not yet implemented in " + getClass().getName());
-  }
-
-  @NotNull
-  @Override
-  protected LookupElementRenderer<? extends LookupElement> getRenderer() {
-    throw new UnsupportedOperationException("Method getRenderer is not yet implemented in " + getClass().getName());
   }
 
   public PsiType getType() {

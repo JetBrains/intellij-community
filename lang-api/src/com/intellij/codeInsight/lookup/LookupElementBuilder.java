@@ -157,11 +157,6 @@ public class LookupElementBuilder {
     }
 
     @Override
-    public InsertHandler<? extends LookupElement> getInsertHandler() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
     public void handleInsert(InsertionContext context) {
       if (myInsertHandler != null) {
         myInsertHandler.handleInsert(context, this);
@@ -181,12 +176,6 @@ public class LookupElementBuilder {
           presentation.setTailText(myTailText, myGrayedTail, false, myStrikeout);
         }
       }
-    }
-
-    @NotNull
-    @Override
-    protected LookupElementRenderer<? extends LookupElement> getRenderer() {
-      throw new UnsupportedOperationException("Method getRenderer is not yet implemented in " + getClass().getName());
     }
 
     @Override

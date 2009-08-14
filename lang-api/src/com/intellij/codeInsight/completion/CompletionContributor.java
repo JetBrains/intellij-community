@@ -71,10 +71,10 @@ import java.util.List;
  * Don't forget to check whether you are in correct place (see {@link CompletionParameters}).<p>
  *
  * Q: How do I affect lookup element's appearance (icon, text attributes, etc.)?<br>
- * A: See {@link LookupElement#renderElement(LookupElementPresentation)} and {@link LookupElement#getRenderer()}.<p>
+ * A: See {@link LookupElement#renderElement(LookupElementPresentation)}.<p>
  *
  * Q: I'm not satisfied that completion just inserts the item's lookup string on item selection. How make IDEA write something else?<br>
- * A: See {@link LookupElement#handleInsert(InsertionContext)} and {@link LookupElement#getInsertHandler()}.<p>
+ * A: See {@link LookupElement#handleInsert(InsertionContext)}.<p>
  *
  * Q: What if I select item with a Tab key?<br>
  * A: Semantics is, that the identifier that you're stanging inside gets removed completely, and then the lookup string is inserted. You can change
