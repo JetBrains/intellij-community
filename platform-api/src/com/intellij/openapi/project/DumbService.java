@@ -4,17 +4,19 @@
  */
 package com.intellij.openapi.project;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.ui.popup.BalloonHandler;
+import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -110,7 +112,28 @@ public abstract class DumbService {
     return new ArrayList<T>(collection);
   }
 
+  public DumbUnawareHider wrapGently(@NotNull JComponent dumbUnawareContent, @NotNull Disposable parentDisposable) {
+    final DumbUnawareHider wrapper = new DumbUnawareHider(dumbUnawareContent);
+    wrapper.setContentVisible(!isDumb());
+    getProject().getMessageBus().connect(parentDisposable).subscribe(DUMB_MODE, new DumbModeListener() {
+      public void beforeEnteringDumbMode() {
+        wrapper.setContentVisible(false);
+      }
+
+      public void enteredDumbMode() {
+      }
+
+      public void exitDumbMode() {
+        wrapper.setContentVisible(true);
+      }
+    });
+
+    return wrapper;
+  }
+
   public abstract BalloonHandler showDumbModeNotification(String message);
+
+  public abstract Project getProject();
 
 
   public interface DumbModeListener {

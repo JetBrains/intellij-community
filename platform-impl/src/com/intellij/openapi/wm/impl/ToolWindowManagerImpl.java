@@ -15,7 +15,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
@@ -32,12 +31,10 @@ import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,8 +49,10 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -70,7 +69,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final HashMap<String, FloatingDecorator> myId2FloatingDecorator;
   private final HashMap<String, StripeButton> myId2StripeButton;
   private final HashMap<String, FocusWatcher> myId2FocusWatcher;
-  private final Set<String> myDumbAwareIds = Collections.synchronizedSet(CollectionFactory.<String>newTroveSet());
 
   private final EditorComponentFocusWatcher myEditorComponentFocusWatcher;
   private final MyToolWindowPropertyChangeListener myToolWindowPropertyChangeListener;
@@ -186,6 +184,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }, myProject);
   }
 
+  @Nullable
   private Component getLastFocusedProjectComponent() {
     return myLastFocusedProjectComponent != null ? myLastFocusedProjectComponent.get() : null;
   }
@@ -225,42 +224,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
     execute(commandsList);
 
-    final DumbService.DumbModeListener dumbModeListener = new DumbService.DumbModeListener() {
-      private final Set<String> hiddenIds = new THashSet<String>();
-
-      public void enteredDumbMode() {
-      }
-
-      public void beforeEnteringDumbMode() {
-        for (final String id : getToolWindowIds()) {
-          if (!myDumbAwareIds.contains(id)) {
-            if (isToolWindowVisible(id)) {
-              hiddenIds.add(id);
-              hideToolWindow(id, true);
-            }
-            getStripeButton(id).setEnabled(false);
-          }
-        }
-      }
-
-      public void exitDumbMode() {
-        for (final String id : getToolWindowIds()) {
-          getStripeButton(id).setEnabled(true);
-        }
-        for (final String id : hiddenIds) {
-          showToolWindow(id);
-        }
-        hiddenIds.clear();
-      }
-    };
-    myProject.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, dumbModeListener);
-
     StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
         registerToolWindowsFromBeans();
-        if (DumbService.getInstance(myProject).isDumb()) {
-          dumbModeListener.beforeEnteringDumbMode();
-        }
       }
     });
   }
@@ -481,9 +447,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
     checkId(id);
-    if (DumbService.getInstance(myProject).isDumb() && !myDumbAwareIds.contains(id)) {
-      return;
-    }
 
     final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
     activateToolWindowImpl(id, commandList, forced, autoFocusContents);
@@ -722,10 +685,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       return;
     }
 
-    if (DumbService.getInstance(myProject).isDumb() && !myDumbAwareIds.contains(id)) {
-      return;
-    }
-
     toBeShownInfo.setVisible(true);
     final InternalDecorator decorator = getInternalDecorator(id);
 
@@ -843,7 +802,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     // Create decorator
 
-    final ToolWindowImpl toolWindow = new ToolWindowImpl(this, id, canCloseContent, component);
+    final ToolWindowImpl toolWindow = new ToolWindowImpl(this, id, canCloseContent, component, canWorkInDumbMode);
     final InternalDecorator decorator = new InternalDecorator(myProject, info.copy(), toolWindow);
     myId2InternalDecorator.put(id, decorator);
     decorator.addInternalDecoratorListener(myInternalDecoratorListener);
@@ -856,12 +815,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myId2StripeButton.put(id, button);
     final ArrayList<FinalizableCommand> commandsList = new ArrayList<FinalizableCommand>();
     appendAddButtonCmd(button, info, commandsList);
-
-    if (canWorkInDumbMode) {
-      myDumbAwareIds.add(id);
-    } else if (DumbService.getInstance(getProject()).isDumb()) {
-      button.setEnabled(false);
-    }
 
     // If preloaded info is visible or active then we have to show/activate the installed
     // tool window. This step has sense only for windows which are not in the autohide
@@ -2096,7 +2049,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myFocusRequests.remove(cmd);
   }
 
-  private boolean canExecuteOnInactiveApplication(FocusCommand cmd) {
+  private static boolean canExecuteOnInactiveApplication(FocusCommand cmd) {
     return !Patches.REQUEST_FOCUS_MAY_ACTIVATE_APP || cmd.canExecuteOnInactiveApp();
   }
 
@@ -2170,10 +2123,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     public EdtAlarm(Disposable parent) {
       myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, parent);
-    }
-
-    public int getActiveRequestCount() {
-      return myAlarm.getActiveRequestCount();
     }
 
     public void cancelAllRequests() {

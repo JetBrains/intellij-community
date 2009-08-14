@@ -107,26 +107,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     myVirtualFileListener = new MyVirtualFileListener();
     myUISettingsListener = new MyUISettingsListener();
     myListenerList = new MessageListenerList<FileEditorManagerListener>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
+  }
 
-    project.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-      public void beforeEnteringDumbMode() {
-        Set<VirtualFile> toClose = new HashSet<VirtualFile>();
-        for (FileEditor editor : getAllEditors()) {
-          if (!Boolean.TRUE.equals(editor.getUserData(DUMB_AWARE))) {
-            ContainerUtil.addIfNotNull(getFile(editor), toClose);
-          }
-        }
-        for (final VirtualFile file : toClose) {
-          closeFile(file);
-        }
-      }
-
-      public void enteredDumbMode() {
-      }
-
-      public void exitDumbMode() {
-      }
-    });
+  public static boolean isDumbAware(FileEditor editor) {
+    return Boolean.TRUE.equals(editor.getUserData(DUMB_AWARE));
   }
 
   //-------------------------------------------------------------------------------

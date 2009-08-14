@@ -12,10 +12,14 @@ public class ContentFactoryImpl implements ContentFactory {
   }
 
   public ContentManagerImpl createContentManager(ContentUI contentUI, boolean canCloseContents, Project project) {
-    return new ContentManagerImpl(contentUI, canCloseContents, project);
+    return createContentManager(contentUI, canCloseContents, project, false);
+  }
+
+  public ContentManagerImpl createContentManager(ContentUI contentUI, boolean canCloseContents, Project project, boolean dumbAware) {
+    return new ContentManagerImpl(contentUI, canCloseContents, project, dumbAware);
   }
 
   public ContentManager createContentManager(boolean canCloseContents, Project project) {
-    return new ContentManagerImpl(new TabbedPaneContentUI(), canCloseContents, project);
+    return new ContentManagerImpl(new TabbedPaneContentUI(), canCloseContents, project, false);
   }
 }

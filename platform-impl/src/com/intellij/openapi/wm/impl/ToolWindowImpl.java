@@ -45,7 +45,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   private ActionCallback myActivation = new ActionCallback.Done();
 
-  ToolWindowImpl(final ToolWindowManagerImpl toolWindowManager, final String id, boolean canCloseContent, @Nullable final JComponent component) {
+  ToolWindowImpl(final ToolWindowManagerImpl toolWindowManager, final String id, boolean canCloseContent, @Nullable final JComponent component, boolean dumbAware) {
     myToolWindowManager = toolWindowManager;
     myChangeSupport = new PropertyChangeSupport(this);
     myId = id;
@@ -54,7 +54,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     final ContentFactory contentFactory = ServiceManager.getService(ContentFactory.class);
     myContentUI = new ToolWindowContentUi(this);
     myContentManager =
-      contentFactory.createContentManager(myContentUI, canCloseContent, toolWindowManager.getProject());
+      contentFactory.createContentManager(myContentUI, canCloseContent, toolWindowManager.getProject(), dumbAware);
 
     if (component != null) {
       final Content content = contentFactory.createContent(component, "", false);

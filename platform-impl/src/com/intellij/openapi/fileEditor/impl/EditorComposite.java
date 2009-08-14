@@ -1,6 +1,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -175,7 +176,12 @@ public abstract class EditorComposite implements Disposable {
 
   private JComponent createEditorComponent(final FileEditor editor) {
     JPanel component = new JPanel(new BorderLayout());
-    component.add(editor.getComponent(), BorderLayout.CENTER);
+    JComponent comp = editor.getComponent();
+    if (!FileEditorManagerImpl.isDumbAware(editor)) {
+      comp = DumbService.getInstance(myFileEditorManager.getProject()).wrapGently(comp, editor);
+    }
+
+    component.add(comp, BorderLayout.CENTER);
 
     final JPanel topPanel = new JPanel();
     topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));

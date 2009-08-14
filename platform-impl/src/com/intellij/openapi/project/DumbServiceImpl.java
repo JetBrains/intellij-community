@@ -57,6 +57,11 @@ public class DumbServiceImpl extends DumbService {
   }
 
   @Override
+  public Project getProject() {
+    return myProject;
+  }
+
+  @Override
   public void runWhenSmart(Runnable runnable) {
     if (!isDumb()) {
       runnable.run();
