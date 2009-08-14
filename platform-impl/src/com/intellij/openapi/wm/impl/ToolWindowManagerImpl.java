@@ -226,8 +226,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     execute(commandsList);
 
     final DumbService.DumbModeListener dumbModeListener = new DumbService.DumbModeListener() {
-      private final Set<String> hiddenIds = new THashSet<String>();
-
       public void enteredDumbMode() {
       }
 
@@ -235,7 +233,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         for (final String id : getToolWindowIds()) {
           if (!myDumbAwareIds.contains(id)) {
             if (isToolWindowVisible(id)) {
-              hiddenIds.add(id);
               hideToolWindow(id, true);
             }
             getStripeButton(id).setEnabled(false);
@@ -247,10 +244,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         for (final String id : getToolWindowIds()) {
           getStripeButton(id).setEnabled(true);
         }
-        for (final String id : hiddenIds) {
-          showToolWindow(id);
-        }
-        hiddenIds.clear();
       }
     };
     myProject.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, dumbModeListener);
