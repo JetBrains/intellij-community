@@ -17,12 +17,15 @@
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 /**
 * @author peter
@@ -67,6 +70,17 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
 
   @Override
   protected boolean hasUnresolvedImportWhichCanImport(PsiFile psiFile, String name) {
+    if (!(psiFile instanceof GroovyFile)) return false;
+    final GrImportStatement[] importStatements = ((GroovyFile)psiFile).getImportStatements();
+    for (GrImportStatement importStatement : importStatements) {
+      final GrCodeReferenceElement importReference = importStatement.getImportReference();
+      if (importReference == null || importReference.resolve() != null) {
+        continue;
+      }
+      if (importStatement.isOnDemand() || Comparing.strEqual(importStatement.getImportedName(), name)) {
+        return true;
+      }
+    }
     return false;
   }
 
