@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -136,16 +135,16 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   public void addContent(@NotNull final Content content, final Object constraints) {
     if (myContents.contains(content)) return;
 
-    if (!myDumbAware) {
-      wrapContentComponent(content, content.getComponent());
-      content.addPropertyChangeListener(new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent evt) {
-          if (evt.getPropertyName() == Content.PROP_COMPONENT) {
-            wrapContentComponent(content, (JComponent)evt.getNewValue());
-          }
-        }
-      });
-    }
+    //if (!myDumbAware) {
+    //  wrapContentComponent(content, content.getComponent());
+    //  content.addPropertyChangeListener(new PropertyChangeListener() {
+    //    public void propertyChange(PropertyChangeEvent evt) {
+    //      if (evt.getPropertyName() == Content.PROP_COMPONENT) {
+    //        wrapContentComponent(content, (JComponent)evt.getNewValue());
+    //      }
+    //    }
+    //  });
+    //}
 
     ((ContentImpl)content).setManager(this);
     myContents.add(content);
@@ -163,12 +162,12 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     Disposer.register(this, content);
   }
 
-  private void wrapContentComponent(Content content, JComponent comp) {
-    final DumbService dumbService = DumbService.getInstance(myProject);
-    if (comp != null) {
-      ((ContentImpl)content)._setComponent(dumbService.wrapGently(comp, content));
-    }
-  }
+  //private void wrapContentComponent(Content content, JComponent comp) {
+  //  final DumbService dumbService = DumbService.getInstance(myProject);
+  //  if (comp != null) {
+  //    ((ContentImpl)content)._setComponent(dumbService.wrapGently(comp, content));
+  //  }
+  //}
 
   public boolean removeContent(@NotNull Content content, final boolean dispose) {
     return removeContent(content, true, dispose);
