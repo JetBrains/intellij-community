@@ -919,7 +919,7 @@ public class MavenProjectsTree {
 
     try {
       process.checkCanceled();
-      process.setText(ProjectBundle.message("maven.resolving.pom", FileUtil.toSystemDependentName(mavenProject.getPath())));
+      process.setText(ProjectBundle.message("maven.resolving.pom", mavenProject.getDisplayName()));
       process.setText2("");
       Pair<MavenProjectChanges, org.apache.maven.project.MavenProject> resolveResult
         = mavenProject.resolve(generalSettings,
@@ -947,7 +947,7 @@ public class MavenProjectsTree {
     try {
       for (MavenPlugin each : mavenProject.getPlugins()) {
         process.checkCanceled();
-        process.setText(ProjectBundle.message("maven.downloading.pom.plugins", mavenProject));
+        process.setText(ProjectBundle.message("maven.downloading.pom.plugins", mavenProject.getDisplayName()));
         embedder.resolvePlugin(each, nativeMavenProject, process);
       }
       firePluginsResolved(mavenProject);
@@ -968,7 +968,7 @@ public class MavenProjectsTree {
 
     try {
       process.checkCanceled();
-      process.setText(ProjectBundle.message("maven.updating.folders.pom", FileUtil.toSystemDependentName(mavenProject.getPath())));
+      process.setText(ProjectBundle.message("maven.updating.folders.pom", mavenProject.getDisplayName()));
       process.setText2("");
 
       Pair<Boolean, MavenProjectChanges> resolveResult = mavenProject.resolveFolders(embedder,
