@@ -16,6 +16,7 @@ import org.netbeans.lib.cvsclient.admin.Entries;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -135,8 +136,9 @@ public class CvsInfo {
     return new HashSet<Entry>(getCvsEntries().getEntries());
   }
 
+  @Nullable
   private File getParentFile() {
-    return new File(myParent.getPath());
+    return myParent == null ? null : new File(myParent.getPath());
   }
 
   private static Entries createEntriesFor(File parent) {
