@@ -184,5 +184,6 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testWith$with1() throws Throwable { doTest(); }
   public void testWith$with2() throws Throwable { doTest(); }
   public void testAfterAs() throws Throwable { doTest(); }
+  public void testUnnamedField() throws Throwable { doTest(); }
 
 }

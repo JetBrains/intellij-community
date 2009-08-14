@@ -169,4 +169,6 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testAtHang() throws Throwable { doTest(); }
   public void testDollar() throws Throwable { doTest(); }
 
+  public void testNoArrowClosure() throws Throwable { doTest(); }
+
 }

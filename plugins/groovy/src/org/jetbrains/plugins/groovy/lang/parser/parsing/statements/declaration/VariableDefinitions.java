@@ -202,6 +202,7 @@ public class VariableDefinitions implements GroovyElementTypes {
       }
     } else {
       varAssMarker.drop();
+      builder.error("Identifier expected");
       return WRONGWAY;
     }
   }

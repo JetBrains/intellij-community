@@ -80,8 +80,8 @@ public class Declaration implements GroovyElementTypes {
         IElementType varDecl = VariableDefinitions.parse(builder, isInClass, modifiersParsed, parser);
 
         if (WRONGWAY.equals(varDecl)) {
-          builder.error(GroovyBundle.message("variable.definitions.expected"));
           declMarker.rollbackTo();
+          builder.error(GroovyBundle.message("variable.definitions.expected"));
           return false;
         } else {
           declMarker.done(varDecl);
@@ -129,17 +129,6 @@ public class Declaration implements GroovyElementTypes {
         //call expression
         declMarker.rollbackTo();
         return false;
-      }
-
-      if (modifiersParsed && builder.getTokenType() == mLPAREN) {
-        IElementType tupleDef = VariableDefinitions.parse(builder, isInClass, modifiersParsed, true, parser);
-        if (tupleDef == WRONGWAY) {
-          declMarker.rollbackTo();
-          return false;
-        } else {
-          declMarker.done(tupleDef);
-          return true;
-        }
       }
 
       boolean typeParsed = false;

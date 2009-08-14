@@ -35,15 +35,6 @@ public class ClassMember implements GroovyElementTypes {
 
     if (ConstructorDefinition.parse(builder, className, parser)) return true;
 
-    //declaration
-    PsiBuilder.Marker declMarker = builder.mark();
-    if (Declaration.parse(builder, true, parser)) {
-      declMarker.drop();
-      return true;
-    } else {
-      declMarker.rollbackTo();
-    }
-
     //type definition
     PsiBuilder.Marker typeDeclStartMarker = builder.mark();
     if (TypeDeclarationStart.parse(builder, parser)) {
@@ -57,31 +48,21 @@ public class ClassMember implements GroovyElementTypes {
     }
     typeDeclStartMarker.rollbackTo();
 
-    //static compound statement
+    // static/instance initializer
     PsiBuilder.Marker initMarker = builder.mark();
-    if (kSTATIC == builder.getTokenType()) {
-      PsiBuilder.Marker modMarker = builder.mark();
-      ParserUtils.getToken(builder, kSTATIC);
+    PsiBuilder.Marker modMarker = builder.mark();
+    ParserUtils.getToken(builder, kSTATIC);
+    if (mLCURLY == builder.getTokenType()) {
       modMarker.done(MODIFIERS);
       if (OpenOrClosableBlock.parseOpenBlock(builder, parser)) {
         initMarker.done(CLASS_INITIALIZER);
         return true;
-      } else {
-        initMarker.rollbackTo();
-        ParserUtils.getToken(builder, kSTATIC);
-        builder.error(GroovyBundle.message("compound.statemenet.expected"));
-        return false;
       }
     }
 
-    builder.mark().done(MODIFIERS);
-    if (OpenOrClosableBlock.parseOpenBlock(builder, parser)) {
-      initMarker.done(CLASS_INITIALIZER);
-      return true;
-    }
-
+    modMarker.drop();
     initMarker.rollbackTo();
 
-    return false;
+    return Declaration.parse(builder, true, parser);
   }
 }
