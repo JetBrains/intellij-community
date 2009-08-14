@@ -205,11 +205,12 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
         list.setCellRenderer(new FQNameCellRenderer());
         Runnable runnable = new Runnable() {
           public void run() {
-            int index = list.getSelectedIndex();
+            if (!element.isValid()) return;
+            final int index = list.getSelectedIndex();
             if (index < 0) return;
             new WriteCommandAction(project, element.getContainingFile()){
               protected void run(final Result result) throws Throwable {
-                final PsiClass psiClass = myClassesToImport.get(0);
+                final PsiClass psiClass = myClassesToImport.get(index);
                 if (psiClass.isValid()) {
                   PsiDocumentManager.getInstance(project).commitAllDocuments();
                   referenceElement.bindToElement(psiClass);
