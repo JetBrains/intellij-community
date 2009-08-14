@@ -3,10 +3,10 @@ package com.intellij.ui.content.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.Computable;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.AlertIcon;
 import com.intellij.ui.content.Content;
@@ -45,7 +45,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private Computable<JComponent> myFocusRequest;
 
   public ContentImpl(JComponent component, String displayName, boolean isPinnable) {
-    _setComponent(component);
+    myComponent = component;
     myDisplayName = displayName;
     myPinnable = isPinnable;
   }
@@ -56,12 +56,8 @@ public class ContentImpl extends UserDataHolderBase implements Content {
 
   public void setComponent(JComponent component) {
     Component oldComponent = myComponent;
-    _setComponent(component);
-    myChangeSupport.firePropertyChange(PROP_COMPONENT, oldComponent, myComponent);
-  }
-
-  public void _setComponent(JComponent component) {
     myComponent = component;
+    myChangeSupport.firePropertyChange(PROP_COMPONENT, oldComponent, myComponent);
   }
 
   public JComponent getPreferredFocusableComponent() {

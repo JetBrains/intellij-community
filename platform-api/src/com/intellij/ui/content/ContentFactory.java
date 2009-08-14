@@ -25,8 +25,6 @@ public interface ContentFactory {
 
   ContentManager createContentManager(ContentUI contentUI, boolean canCloseContents, Project project);
 
-  ContentManager createContentManager(ContentUI contentUI, boolean canCloseContents, Project project, boolean availableInDumbMode);
-
   ContentManager createContentManager(boolean canCloseContents, Project project);
 
   class SERVICE {
