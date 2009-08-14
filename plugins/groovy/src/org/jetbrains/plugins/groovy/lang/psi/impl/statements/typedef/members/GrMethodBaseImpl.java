@@ -49,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterL
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 import javax.swing.*;
 import java.util.*;
@@ -190,7 +191,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
 
   @NotNull
   public GrParameterList getParameterList() {
-    GrParameterList parameterList = findChildByClass(GrParameterList.class);
+    GrParameterList parameterList = (GrParameterList)findChildByType(GroovyElementTypes.PARAMETERS_LIST);
     assert parameterList != null;
     return parameterList;
   }
