@@ -36,7 +36,6 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -213,64 +212,30 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     }
   }
 
-  /*private static class MyMoveThatIsAddProcessor implements Processor<VirtualFile> {
-    private final VirtualFile myTarget;
-    private final VirtualFile mySource;
-
-    public boolean process(VirtualFile virtualFile) {
-      return false;
-    }
-  }*/
-
-  // todo : rewrite recursion into a queue
-  /*private boolean moveThatIsAdd(VirtualFile file, VirtualFile toDir) throws IOException {
-    final FileTypeManager ftm = FileTypeManager.getInstance();
-    if (ftm.isFileIgnored(file.getName())) return false;
-
-    final boolean result = createItem(toDir, file.getName(), file.isDirectory());
-    final VirtualFile createdInNewPlace = toDir.findChild(file.getName());
-    if (createdInNewPlace == null) return false;
-
-    for (VirtualFile child : file.getChildren()) {
-      moveThatIsAdd(child, createdInNewPlace);
-    }
-    return result;
-  } */
-
   public boolean move(VirtualFile file, VirtualFile toDir) throws IOException {
     File srcFile = getIOFile(file);
     File dstFile = new File(getIOFile(toDir), file.getName());
 
-    SvnVcs vcs = getVCS(toDir);
-    if (vcs == null) {
-/*      vcs = getVCS(file);
-      if (vcs == null) {*/
-        return false;
-      //}
-      // todo maybe call deletion
-    }
-
+    final SvnVcs vcs = getVCS(toDir);
     final SvnVcs sourceVcs = getVCS(file);
+    if (vcs == null && sourceVcs == null) return false;
+
+    if (vcs == null) {
+      return false;
+    }
     if (sourceVcs == null) {
       return createItem(toDir, file.getName(), file.isDirectory(), true);
-      //return moveThatIsAdd(file, toDir);
-      /*VfsUtil.processFileRecursivelyWithoutIgnored(file, new Processor<VirtualFile>() {
-        public boolean process(final VirtualFile virtualFile) {
-          createItem();
-          return false;
-        }
-      });*/
     }
 
     if (isPendingAdd(toDir)) {
-      myMovedFiles.add(new MovedFileInfo(vcs.getProject(), srcFile, dstFile));
+      myMovedFiles.add(new MovedFileInfo(sourceVcs.getProject(), srcFile, dstFile));
       return true; 
     }
     else {
       final VirtualFile oldParent = file.getParent();
       myFilesToRefresh.add(oldParent);
       myFilesToRefresh.add(toDir);
-      return doMove(vcs, srcFile, dstFile);
+      return doMove(sourceVcs, srcFile, dstFile);
     }
   }
 
@@ -303,6 +268,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
                 srcStatus.getContentsStatus() == SVNStatusType.STATUS_OBSTRUCTED) {
             return false;
         }
+        // todo move back?
         mover.doMove(src, dst);
       }
       dst.setLastModified(srcTime);
@@ -665,6 +631,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     SvnVcs vcs = SvnVcs.getInstance(project);
     List<VirtualFile> addedVFiles = new ArrayList<VirtualFile>();
     Map<VirtualFile, File> copyFromMap = new HashMap<VirtualFile, File>();
+    final Set<VirtualFile> recursiveItems = new HashSet<VirtualFile>();
     for (Iterator<AddedFileInfo> it = myAddedFiles.iterator(); it.hasNext();) {
       AddedFileInfo addedFileInfo = it.next();
       if (addedFileInfo.myProject == project) {
@@ -677,6 +644,9 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
             if (!isIgnored) {
               addedVFiles.add(addedFile);
               copyFromMap.put(addedFile, addedFileInfo.myCopyFrom);
+              if (addedFileInfo.myRecursive) {
+                recursiveItems.add(addedFile);
+              }
             }
           }
         }
@@ -732,7 +702,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
               }
             }
             else {
-              wcClient.doAdd(ioFile, true, false, false, false);
+              wcClient.doAdd(ioFile, true, false, false, recursiveItems.contains(file));
             }
             VcsDirtyScopeManager.getInstance(project).fileDirty(file);
           }
