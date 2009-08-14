@@ -71,6 +71,26 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray {
     System.arraycopy(myChars, myStart, dst, dstOffset, length());
   }
 
+  @Override
+  public boolean equals(Object anObject) {
+    if (this == anObject) {
+      return true;
+    }
+    if (anObject instanceof CharSequence) {
+      CharSequence anotherString = (CharSequence)anObject;
+      int n = myEnd - myStart;
+      if (n == anotherString.length()) {
+        for (int i = 0; i < n; i++) {
+          if (myChars[myStart + i] != anotherString.charAt(i)) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
   /**
    * See {@link java.io.Reader#read(char[], int, int)};
    */

@@ -39,7 +39,7 @@ public class CompilerIOUtil {
       }
     }
 
-    return StringFactory.createStringFromConstantArray(chars);
+    return new String(chars);
   }
 
   public static void writeString(String s, DataOutput stream) throws IOException {

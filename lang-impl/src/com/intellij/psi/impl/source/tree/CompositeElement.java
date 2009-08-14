@@ -139,7 +139,7 @@ public class CompositeElement extends TreeElement {
   public String getText() {
     char[] buffer = new char[getTextLength()];
     AstBufferUtil.toBuffer(this, buffer, 0);
-    return StringFactory.createStringFromConstantArray(buffer);    
+    return new String(buffer);
   }
 
   public CharSequence getChars() {

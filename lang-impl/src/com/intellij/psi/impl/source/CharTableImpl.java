@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.util.CharTable;
+import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceHashingStrategy;
 import gnu.trove.THashSet;
@@ -52,7 +53,7 @@ public class CharTableImpl implements CharTable {
   private static CharSequence createSequence(final CharSequence text) {
     final char[] buf = new char[text.length()];
     CharArrayUtil.getChars(text, buf, 0);
-    return StringFactory.createStringFromConstantArray(buf);
+    return new CharArrayCharSequence(buf);
   }
 
   public static void staticIntern(final String text) {
