@@ -36,6 +36,7 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -50,9 +51,8 @@ import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
-import com.intellij.vcsUtil.ActionWithTempFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.vcsUtil.ActionWithTempFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.dialogs.SelectIgnorePatternsToRemoveOnDeleteDialog;
@@ -75,12 +75,14 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     private final VirtualFile myDir;
     private final String myName;
     @Nullable private final File myCopyFrom;
+    private final boolean myRecursive;
 
-    public AddedFileInfo(final Project project, final VirtualFile dir, final String name, @Nullable final File copyFrom) {
+    public AddedFileInfo(final Project project, final VirtualFile dir, final String name, @Nullable final File copyFrom, boolean recursive) {
       myProject = project;
       myDir = dir;
       myName = name;
       myCopyFrom = copyFrom;
+      myRecursive = recursive;
     }
   }
 
@@ -151,22 +153,22 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     }
 
     if (!SVNWCUtil.isVersionedDirectory(srcFile.getParentFile())) {
-      myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName, null));
+      myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName, null, false));
       return null;
     }
 
     final SVNStatus fileStatus = getFileStatus(vcs, srcFile);
     if (fileStatus != null && fileStatus.getContentsStatus() == SVNStatusType.STATUS_ADDED) {
-      myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName, null));
+      myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName, null, false));
       return null;
     }
 
     if (sameRoot(vcs, file.getParent(), toDir)) {
-      myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName, srcFile));
+      myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName, srcFile, false));
       return null;
     }
 
-    myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName, null));
+    myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName, null, false));
     return null;
   }
 
@@ -211,17 +213,55 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     }
   }
 
+  /*private static class MyMoveThatIsAddProcessor implements Processor<VirtualFile> {
+    private final VirtualFile myTarget;
+    private final VirtualFile mySource;
+
+    public boolean process(VirtualFile virtualFile) {
+      return false;
+    }
+  }*/
+
+  // todo : rewrite recursion into a queue
+  /*private boolean moveThatIsAdd(VirtualFile file, VirtualFile toDir) throws IOException {
+    final FileTypeManager ftm = FileTypeManager.getInstance();
+    if (ftm.isFileIgnored(file.getName())) return false;
+
+    final boolean result = createItem(toDir, file.getName(), file.isDirectory());
+    final VirtualFile createdInNewPlace = toDir.findChild(file.getName());
+    if (createdInNewPlace == null) return false;
+
+    for (VirtualFile child : file.getChildren()) {
+      moveThatIsAdd(child, createdInNewPlace);
+    }
+    return result;
+  } */
+
   public boolean move(VirtualFile file, VirtualFile toDir) throws IOException {
     File srcFile = getIOFile(file);
     File dstFile = new File(getIOFile(toDir), file.getName());
 
     SvnVcs vcs = getVCS(toDir);
     if (vcs == null) {
-      vcs = getVCS(file);
+/*      vcs = getVCS(file);
+      if (vcs == null) {*/
+        return false;
+      //}
+      // todo maybe call deletion
     }
-    if (vcs == null) {
-      return false;
+
+    final SvnVcs sourceVcs = getVCS(file);
+    if (sourceVcs == null) {
+      return createItem(toDir, file.getName(), file.isDirectory(), true);
+      //return moveThatIsAdd(file, toDir);
+      /*VfsUtil.processFileRecursivelyWithoutIgnored(file, new Processor<VirtualFile>() {
+        public boolean process(final VirtualFile virtualFile) {
+          createItem();
+          return false;
+        }
+      });*/
     }
+
     if (isPendingAdd(toDir)) {
       myMovedFiles.add(new MovedFileInfo(vcs.getProject(), srcFile, dstFile));
       return true; 
@@ -303,11 +343,11 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
 
 
   public boolean createFile(VirtualFile dir, String name) throws IOException {
-    return createItem(dir, name, false);
+    return createItem(dir, name, false, false);
   }
 
   public boolean createDirectory(VirtualFile dir, String name) throws IOException {
-    return createItem(dir, name, true);
+    return createItem(dir, name, true, false);
   }
 
   /**
@@ -437,7 +477,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
    * deleted: 'undo' mode: try to revert non-recursively, if kind is the same, otherwise do nothing, return false.
    * anything else: return false.
    */
-  private boolean createItem(VirtualFile dir, String name, boolean directory) throws IOException {
+  private boolean createItem(VirtualFile dir, String name, boolean directory, final boolean recursive) throws IOException {
     SvnVcs vcs = getVCS(dir);
     if (vcs == null) {
       return false;
@@ -455,7 +495,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     SVNStatus status = getFileStatus(vcs, targetFile);
 
     if (status == null || status.getContentsStatus() == SVNStatusType.STATUS_NONE) {
-      myAddedFiles.add(new AddedFileInfo(vcs.getProject(), dir, name, null));
+      myAddedFiles.add(new AddedFileInfo(vcs.getProject(), dir, name, null, recursive));
       return false;
     }
     else if (status.getContentsStatus() == SVNStatusType.STATUS_MISSING) {
@@ -472,7 +512,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
           wcClient.doRevert(targetFile, false);
           return true;
         }
-        myAddedFiles.add(new AddedFileInfo(vcs.getProject(), dir, name, null));
+        myAddedFiles.add(new AddedFileInfo(vcs.getProject(), dir, name, null, recursive));
         return false;
       }
       catch (SVNException e) {
@@ -676,6 +716,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
                 new ActionWithTempFile(ioFile) {
                   protected void executeInternal() throws VcsException {
                     try {
+                      // not recursive
                       final SVNCopySource[] copySource = new SVNCopySource[]
                           {new SVNCopySource(SVNRevision.WORKING, SVNRevision.WORKING, copyFrom)};
                       copyClient.doCopy(copySource, ioFile, false, true, true);
