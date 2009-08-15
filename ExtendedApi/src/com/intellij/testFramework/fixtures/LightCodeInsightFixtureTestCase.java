@@ -47,7 +47,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
     }
 
     public Sdk getSdk() {
-      return JavaSdkImpl.getMockJdk15("java 1.4");
+      return JavaSdkImpl.getMockJdk15("java 1.5");
     }
 
     public void configureModule(Module module, ModifiableRootModel model) {
@@ -81,7 +81,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
 
   @NotNull
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_1_4;
+    return JAVA_1_5;
   }
 
 
