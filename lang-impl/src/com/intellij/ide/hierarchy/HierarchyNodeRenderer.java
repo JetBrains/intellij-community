@@ -1,9 +1,13 @@
 package com.intellij.ide.hierarchy;
 
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.FileColorManager;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import java.awt.*;
 
 public final class HierarchyNodeRenderer extends ColoredTreeCellRenderer {
   public void customizeCellRenderer(final JTree tree, final Object value, final boolean selected, final boolean expanded, final boolean leaf,
@@ -20,7 +24,25 @@ public final class HierarchyNodeRenderer extends ColoredTreeCellRenderer {
         else{
           setIcon(descriptor.getClosedIcon());
         }
+        if (!selected)  {
+          final Color color = getBackgroundColor(descriptor);
+          if (color != null) {
+            setBackground(color);
+          }
+        }
       }
     }
+  }
+
+  @Nullable
+  private static Color getBackgroundColor(final HierarchyNodeDescriptor descriptor) {
+    final PsiFile psiFile = descriptor.getContainingFile();
+    if (psiFile != null && psiFile.isValid()) {
+      final FileColorManager colorManager = FileColorManager.getInstance(descriptor.getProject());
+      if (colorManager.isEnabled()) {
+        return colorManager.getFileColor(psiFile);
+      }
+    }
+    return null;
   }
 }

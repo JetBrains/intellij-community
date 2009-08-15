@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 
@@ -27,6 +28,10 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
 
   public final Object getElement() {
     return this;
+  }
+
+  public PsiFile getContainingFile() {
+    return myElement.getContainingFile();
   }
 
   public abstract boolean isValid();
