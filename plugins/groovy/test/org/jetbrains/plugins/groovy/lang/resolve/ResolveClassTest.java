@@ -18,14 +18,14 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author ven
  */
 public class ResolveClassTest extends GroovyResolveTestCase {
-  protected String getTestDataPath() {
-    return TestUtils.getTestDataPath() + "/resolve/class/";
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/resolve/class/";
   }
 
   public void testInnerJavaClass() throws Exception {
@@ -53,7 +53,7 @@ public class ResolveClassTest extends GroovyResolveTestCase {
   }
 
   public void testImportAlias() throws Exception {
-    doTest("qualifiedName/B.groovy");
+    doTest("importAlias/B.groovy");
   }
 
   public void testQualifiedRefExpr() throws Exception {

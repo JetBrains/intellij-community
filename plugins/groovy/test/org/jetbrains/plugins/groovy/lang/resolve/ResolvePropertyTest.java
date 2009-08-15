@@ -31,14 +31,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
-import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author ven
  */
 public class ResolvePropertyTest extends GroovyResolveTestCase {
-  protected String getTestDataPath() {
-    return TestUtils.getTestDataPath() + "/resolve/property/";
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/resolve/property/";
   }
 
   public void testParameter1() throws Exception {
@@ -82,7 +82,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   }
 
   public void testFromSetter() throws Exception {
-    PsiReference ref = configureByFile("fromGetter/A.groovy");
+    PsiReference ref = configureByFile("fromSetter/A.groovy");
     assertTrue(ref.resolve() instanceof GrAccessorMethod);
   }
 

@@ -24,15 +24,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptMethod;
-import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author ven
  */
 public class JavaToGroovyResolveTest extends GroovyResolveTestCase {
-
-  protected String getTestDataPath() {
-    return TestUtils.getTestDataPath() + "/resolve/javaToGroovy/";
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/resolve/javaToGroovy/";
   }
 
   public void testField1() throws Exception {

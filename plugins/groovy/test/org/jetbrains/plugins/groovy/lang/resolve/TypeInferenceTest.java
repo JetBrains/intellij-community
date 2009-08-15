@@ -24,8 +24,9 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
  * @author ven
  */
 public class TypeInferenceTest extends GroovyResolveTestCase {
-  protected String getTestDataPath() {
-    return TestUtils.getTestDataPath() + "/resolve/inference/";
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/resolve/inference/";
   }
 
   public void testTryFinallyFlow() throws Exception {
