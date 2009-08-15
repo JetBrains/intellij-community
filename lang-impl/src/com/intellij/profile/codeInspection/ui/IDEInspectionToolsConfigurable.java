@@ -10,8 +10,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 
-import javax.swing.*;
-
 public class IDEInspectionToolsConfigurable extends InspectionToolsConfigurable {
   public IDEInspectionToolsConfigurable(InspectionProjectProfileManager projectProfileManager, InspectionProfileManager profileManager) {
     super(projectProfileManager, profileManager);
@@ -24,18 +22,12 @@ public class IDEInspectionToolsConfigurable extends InspectionToolsConfigurable 
   @Override
   public void apply() throws ConfigurationException {
     super.apply();
-    myProfileManager.setRootProfile(getSelectedPanel().getSelectedProfile().getName());
+    myProfileManager.setRootProfile(getSelectedObject().getName());
   }
 
   @Override
   public boolean isModified() {
-    if (!Comparing.strEqual(((InspectionProfileImpl)myProfiles.getSelectedItem()).getName(), getCurrentProfile().getName())) return true;    
+    if (!Comparing.strEqual(getSelectedObject().getName(), getCurrentProfile().getName())) return true;
     return super.isModified();
-  }
-
-  @Override
-  public JComponent createComponent() {
-    myActivateButton.setVisible(false);
-    return super.createComponent();
   }
 }

@@ -60,14 +60,11 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   private JButton myDeleteButton;
   private JButton myImportButton;
   private JButton myExportButton;
-  protected JButton myActivateButton;
-  private InspectionProfileImpl myActiveProfile = null;
 
   private ArrayList<String> myDeletedProfiles = new ArrayList<String>();
   protected final InspectionProfileManager myProfileManager;
   protected final InspectionProjectProfileManager myProjectProfileManager;
   private static final Logger LOG = Logger.getInstance("#" + InspectionToolsConfigurable.class.getName());
-  private static final Icon DEFAULT_PROJECT_PROFILE = IconLoader.getIcon("/ide/defaultProjectProfile.png");
 
 
   public InspectionToolsConfigurable(InspectionProjectProfileManager projectProfileManager, InspectionProfileManager profileManager) {
@@ -153,17 +150,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       }
     });
 
-    myActivateButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myActiveProfile = (InspectionProfileImpl)myProfiles.getSelectedItem();
-        myActivateButton.setEnabled(false);
-        final SingleInspectionProfilePanel panel = getSelectedPanel();
-        if (panel != null) {
-          panel.setSharedEnabled(false);
-        }
-      }
-    });
-
     myProjectProfileManager = projectProfileManager;
     myProfileManager = profileManager;
   }
@@ -201,12 +187,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
         setText(profileName);
         final SingleInspectionProfilePanel panel = myPanels.get(profileName);
         if (panel != null && panel.isProfileShared()) {
-          if (value == myActiveProfile) {
-            setIcon(DEFAULT_PROJECT_PROFILE);
-          }
-          else {
-            setIcon(Profile.PROJECT_PROFILE);
-          }
+          setIcon(Profile.PROJECT_PROFILE);
         } else {
           setIcon(Profile.LOCAL_PROFILE);
         }
@@ -217,11 +198,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       public void actionPerformed(ActionEvent e) {
         final InspectionProfileImpl profile = (InspectionProfileImpl)myProfiles.getSelectedItem();
         final SingleInspectionProfilePanel panel = getSelectedPanel();
-        myDeleteButton.setEnabled(profile != myActiveProfile);
-        if (panel != null) {
-          myActivateButton.setEnabled(profile != myActiveProfile);
-          panel.setSharedEnabled(profile != myActiveProfile);
-        }
+        myDeleteButton.setEnabled(myProfiles.getModel().getSize() > 1);
         myLayout.show(myPanel, profile.getName());
       }
     });
@@ -259,10 +236,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     }
   }
 
-  protected InspectionProfileImpl getActiveProfile() {
-    return myActiveProfile;
-  }
-
   public void reset() {
     myDeletedProfiles.clear();
     myPanels.clear();
@@ -281,15 +254,11 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     myProfiles.setSelectedItem(inspectionProfile);
     myLayout.show(myPanel, inspectionProfile.getName());
     myDeleteButton.setEnabled(getProfiles().size() > 1 && inspectionProfile.getProfileManager() == myProfileManager);
-    myActiveProfile = inspectionProfile;
-    myActivateButton.setEnabled(false);
-    getSelectedPanel().setSharedEnabled(inspectionProfile.getProfileManager() == myProfileManager);
   }
 
   private void addSharedProfileListener(final SingleInspectionProfilePanel panel) {
     panel.addSharedProfileListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        myActivateButton.setEnabled(myActiveProfile != panel.getSelectedProfile() && panel.isProfileShared());
         myProfiles.repaint();
       }
     });
@@ -307,7 +276,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       panel.disposeUI();
     }
     myPanels.clear();
-    myActiveProfile = null;
   }
 
   public void selectProfile(String name) {
@@ -324,7 +292,9 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   }
 
   protected SingleInspectionProfilePanel getSelectedPanel() {
-    return myPanels.get(((Profile)myProfiles.getSelectedItem()).getName());
+    final InspectionProfileImpl inspectionProfile = getSelectedObject();
+    assert inspectionProfile != null;
+    return myPanels.get(inspectionProfile.getName());
   }
 
   public InspectionProfileImpl getSelectedObject() {
