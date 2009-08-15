@@ -238,7 +238,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   public int compare(final HighlightSeverity s1, final HighlightSeverity s2) {
-    return s1.compareTo(s2);
+    return getOrder().indexOf(s1.myName) - getOrder().indexOf(s2.myName);
   }
 
   private JDOMExternalizableStringList getOrder() {
