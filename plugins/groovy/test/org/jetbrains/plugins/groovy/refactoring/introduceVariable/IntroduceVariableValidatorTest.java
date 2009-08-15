@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -35,7 +35,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class IntroduceVariableValidatorTest extends JavaCodeInsightFixtureTestCase {
+public class IntroduceVariableValidatorTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

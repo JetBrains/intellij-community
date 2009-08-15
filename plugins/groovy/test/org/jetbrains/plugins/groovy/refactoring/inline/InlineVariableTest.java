@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 
 import java.io.IOException;
@@ -24,7 +24,7 @@ import java.io.IOException;
 /**
  * @author ilyas
  */
-public class InlineVariableTest extends JavaCodeInsightFixtureTestCase {
+public class InlineVariableTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return "/svnPlugins/groovy/testdata/groovy/refactoring/inlineLocal/";

@@ -6,13 +6,13 @@ package org.jetbrains.plugins.groovy.lang.actions.generate;
 
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.actions.generate.constructors.ConstructorGenerateHandler;
 
 /**
  * @author peter
  */
-public class GroovyGenerateMembersTest extends JavaCodeInsightFixtureTestCase {
+public class GroovyGenerateMembersTest extends LightCodeInsightFixtureTestCase {
 
   public void testConstructorAtOffset() throws Throwable {
     doTest();

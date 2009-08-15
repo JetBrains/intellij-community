@@ -15,12 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.dsl;
 
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 /**
  * @author peter
  */
-public class GroovyDslTest extends JavaCodeInsightFixtureTestCase {
+public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

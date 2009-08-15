@@ -6,7 +6,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 
@@ -16,7 +16,7 @@ import java.util.List;
  * User: Dmitry.Krasilschikov
  * Date: 05.08.2008
  */
-public class SmartEnterTest extends JavaCodeInsightFixtureTestCase {
+public class SmartEnterTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

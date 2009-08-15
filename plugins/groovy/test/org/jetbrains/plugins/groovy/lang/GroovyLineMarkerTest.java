@@ -24,14 +24,14 @@ import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 import java.util.List;
 
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyLineMarkerTest extends JavaCodeInsightFixtureTestCase {
+public class GroovyLineMarkerTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return "/svnPlugins/groovy/testdata/lineMarker/";

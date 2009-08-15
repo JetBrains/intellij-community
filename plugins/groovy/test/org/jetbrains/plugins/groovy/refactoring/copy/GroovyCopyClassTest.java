@@ -15,16 +15,16 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.copy;
 
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.copy.CopyClassesHandler;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.application.Result;
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 
 /**
  * @author peter
  */
-public class GroovyCopyClassTest extends JavaCodeInsightFixtureTestCase {
+public class GroovyCopyClassTest extends LightGroovyTestCase {
 
   protected String getBasePath() {
     return "/svnPlugins/groovy/testdata/refactoring/copy/";
@@ -32,7 +32,7 @@ public class GroovyCopyClassTest extends JavaCodeInsightFixtureTestCase {
 
   public void testBetweenPackages() throws Throwable {
     final String testName = getTestName(false);
-    myFixture.copyFileToProject(testName + ".groovy", "/foo/" + testName + ".groovy");
+    myFixture.copyFileToProject(testName + ".groovy", "foo/" + testName + ".groovy");
     myFixture.addClass("package foo; public class Bar {}");
     myFixture.addClass("package bar; public class Bar {}");
 
@@ -44,7 +44,7 @@ public class GroovyCopyClassTest extends JavaCodeInsightFixtureTestCase {
       }
     }.execute();
 
-    myFixture.checkResultByFile("/bar/" + testName + "_after.groovy", testName + "_after.groovy", true);
+    myFixture.checkResultByFile("bar/" + testName + "_after.groovy", testName + "_after.groovy", true);
   }
 
   public void testCopyScript() throws Throwable {

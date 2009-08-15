@@ -15,17 +15,17 @@
  */
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.ide.DataManager;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 /**
  * @author peter
  */
-public class GroovyActionsTest extends JavaCodeInsightFixtureTestCase {
+public class GroovyActionsTest extends LightCodeInsightFixtureTestCase {
 
   protected String getBasePath() {
     return "/svnPlugins/groovy/testdata/groovy/actions/";
