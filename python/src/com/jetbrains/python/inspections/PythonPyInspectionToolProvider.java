@@ -13,6 +13,9 @@ import org.jetbrains.annotations.Nullable;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * @author yole
  */
@@ -22,6 +25,8 @@ public class PythonPyInspectionToolProvider implements InspectionToolsFactory {
   }
 
   private final InspectionToolRegistrar myRegistrar;
+
+  private Set<String> myShortNames = new HashSet<String>();
 
   public PythonPyInspectionToolProvider(final InspectionToolRegistrar registrar) {
     myRegistrar = registrar;
@@ -43,7 +48,7 @@ public class PythonPyInspectionToolProvider implements InspectionToolsFactory {
     myRegistrar.registerInspectionToolProvider(new Function<String, InspectionTool>() {
       @Nullable
       public InspectionTool fun(String shortName) {
-        final LocalInspectionTool tool = createLocalInspectionTool(shortName);
+        final LocalInspectionTool tool = myShortNames.contains(shortName) ? createLocalInspectionTool(shortName) : null;
         return tool != null ? new LocalInspectionToolWrapper(tool) : null;
       }
     });
@@ -57,6 +62,7 @@ public class PythonPyInspectionToolProvider implements InspectionToolsFactory {
     for(int i=0; i<len; i++) {
       final String inspectionToolName = pyList.__getitem__(i).toString();
       profileEntries[i] = createLocalInspectionTool(inspectionToolName);
+      myShortNames.add(inspectionToolName);
     }
     return profileEntries;
   }
