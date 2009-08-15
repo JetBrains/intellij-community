@@ -99,17 +99,15 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
         descriptor.setDescription("Choose profile file");
         final VirtualFile[] files = FileChooser.chooseFiles(myWholePanel, descriptor);
         if (files.length == 0) return;
-        InspectionProfileImpl inspectionProfile =
+        InspectionProfileImpl profile =
         new InspectionProfileImpl("TempProfile", InspectionToolRegistrar.getInstance(), myProfileManager);
-        inspectionProfile.initInspectionTools();
-        final InspectionProfileImpl profile = (InspectionProfileImpl)inspectionProfile.getModifiableModel();
         try {
           profile.readExternal(JDOMUtil.loadDocument(VfsUtil.virtualToIoFile(files[0])).getRootElement());
-
+          profile.initInspectionTools();
           if (myProfileManager.getProfile(profile.getName(), false) != null) {
             if (Messages.showOkCancelDialog(myWholePanel, "Profile with name \'" + profile.getName() + "\' already exists. Do you want to overwrite it?", "Warning", Messages.getInformationIcon()) != DialogWrapper.OK_EXIT_CODE) return;
           }
-          addProfile(profile);
+          addProfile((InspectionProfileImpl)profile.getModifiableModel());
           myDeletedProfiles.remove(profile.getName());
           myDeleteButton.setEnabled(true);
         }
