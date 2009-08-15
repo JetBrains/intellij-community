@@ -91,6 +91,9 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
         name = XmlUtil.findLocalNameByQualifiedName(name);
 
         if (!name.equals(text)) {
+          if (tag instanceof HtmlTag) {
+            return; // it is legal to have html / head / body omitted
+          }
           final LocalQuickFix localQuickFix = new LocalQuickFix() {
             @NotNull
             public String getName() {
