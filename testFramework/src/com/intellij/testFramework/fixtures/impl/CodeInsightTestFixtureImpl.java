@@ -735,9 +735,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
       protected void run() throws Throwable {
-        String fullPath = getTempDirPath() + "/" + filePath;
-        final VirtualFile copy = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath.replace(File.separatorChar, '/'));
-        assert copy != null : "file not found: " + fullPath;
+        final VirtualFile copy = findFileInTempDir(filePath.replace(File.separatorChar, '/'));
         final PsiFile psiFile = myPsiManager.findFile(copy);
         assert psiFile != null;
         checkResultByFile(expectedFile, psiFile, ignoreWhitespaces);

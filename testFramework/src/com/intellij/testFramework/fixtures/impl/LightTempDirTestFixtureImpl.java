@@ -32,6 +32,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
   private VirtualFile findOrCreateTargetDir(String path) throws IOException {
     VirtualFile root = LightPlatformTestCase.getSourceRoot();
     if (path.length() == 0) return root;
+    path = StringUtil.trimStart(path, "/");
     final String[] dirs = path.split("/");
     for (String dirName : dirs) {
       VirtualFile dir = root.findChild(dirName);

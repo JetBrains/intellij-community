@@ -4,6 +4,7 @@
 package com.intellij.openapi.vfs.ex.temp;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
@@ -49,7 +50,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
 
   public VirtualFile copyFile(final Object requestor, final VirtualFile file, final VirtualFile newParent, final String copyName)
       throws IOException {
-    throw new UnsupportedOperationException("copyFile is not implemented"); // TODO
+    return VfsUtil.copyFile(requestor, file, newParent, copyName);
   }
 
   public VirtualFile createChildDirectory(final Object requestor, final VirtualFile parent, final String dir) throws IOException {
