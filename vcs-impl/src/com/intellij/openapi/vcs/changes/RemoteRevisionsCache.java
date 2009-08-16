@@ -138,19 +138,22 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
 
   public void directoryMappingChanged() {
     synchronized (myLock) {
-      for (Map.Entry<String, Pair<VcsRoot, VcsRevisionNumber>> entry : myData.entrySet()) {
-        final String key = entry.getKey();
-        final VcsRoot storedVcsRoot = entry.getValue().getFirst();
+      final HashSet<String> keys = new HashSet<String>(myData.keySet());
+      for (String key : keys) {
+        final Pair<VcsRoot, VcsRevisionNumber> value = myData.get(key);
+        final VcsRoot storedVcsRoot = value.getFirst();
         final VirtualFile vf = myLfs.refreshAndFindFileByIoFile(new File(key));
         final AbstractVcs newVcs = (vf == null) ? null : myVcsManager.getVcsFor(vf);
-        final VirtualFile newRoot = getRootForPath(key);
-        final VcsRoot newVcsRoot = new VcsRoot(newVcs, newRoot);
 
         if (newVcs == null) {
           myData.remove(key);
           getQueue(storedVcsRoot).forceRemove(key);
-        } else if (! storedVcsRoot.equals(newVcsRoot)) {
-          switchVcs(storedVcsRoot, newVcsRoot, key);
+        } else {
+          final VirtualFile newRoot = myVcsManager.getVcsRootFor(vf);
+          final VcsRoot newVcsRoot = new VcsRoot(newVcs, newRoot);
+          if (! storedVcsRoot.equals(newVcsRoot)) {
+            switchVcs(storedVcsRoot, newVcsRoot, key);
+          }
         }
       }
     }
