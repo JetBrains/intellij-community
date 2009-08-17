@@ -565,13 +565,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public boolean isExecutable() {
     initInspectionTools();
     for (ToolsImpl tools : myTools.values()) {
-      if (tools.getDefaultState().isEnabled()) return true;
-      final List<ScopeToolState> nonDefaultTools = tools.getNonDefaultTools();
-      if (nonDefaultTools != null) {
-        for (ScopeToolState state : nonDefaultTools) {
-          if (state.isEnabled()) return true;
-        }
-      }
+      if (tools.isEnabled()) return true;
     }
     return false;
   }

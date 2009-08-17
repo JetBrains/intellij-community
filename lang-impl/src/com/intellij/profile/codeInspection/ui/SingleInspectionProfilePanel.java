@@ -593,7 +593,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           } else {
             mySelectedProfile.disableTool(toolShortName, toolNode.getScope());
           }
-        } else {
+        } else if (!toolNode.isEnabled()){
           mySelectedProfile.disableTool(toolShortName);
         }
       }

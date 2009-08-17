@@ -54,6 +54,7 @@ public class ToolsImpl implements Tools {
   private ScopeToolState insertTool(NamedScope scope, InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level, int idx) {
     if (myTools == null) {
       myTools = new ArrayList<ScopeToolState>();
+      setEnabled(true);
     }
     final ScopeToolState scopeToolState = new ScopeToolState(scope, tool, enabled, level);
     myTools.add(idx, scopeToolState);
@@ -164,8 +165,9 @@ public class ToolsImpl implements Tools {
   }
 
   public ScopeToolState addTool(String scopeName, InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
-     if (myTools == null) {
+    if (myTools == null) {
       myTools = new ArrayList<ScopeToolState>();
+      setEnabled(true);
     }
     final ScopeToolState scopeToolState = new ScopeToolState(scopeName, tool, enabled, level);
     myTools.add(scopeToolState);
@@ -208,6 +210,7 @@ public class ToolsImpl implements Tools {
       myTools.remove(scopeIdx);
       if (myTools.isEmpty()) {
         myTools = null;
+        setEnabled(myDefaultState.isEnabled());
       }
     }
   }
@@ -234,6 +237,7 @@ public class ToolsImpl implements Tools {
   }
 
   public boolean isEnabled(NamedScope namedScope) {
+    if (!myEnabled) return false;
     if (namedScope != null && myTools != null) {
       for (ScopeToolState state : myTools) {
         if (Comparing.equal(namedScope, state.getScope())) return state.isEnabled();
@@ -267,6 +271,7 @@ public class ToolsImpl implements Tools {
 
 
   public boolean isEnabled(PsiElement element) {
+    if (!myEnabled) return false;
     if (myTools == null || element == null) return myDefaultState.isEnabled();
     final DependencyValidationManager manager = DependencyValidationManager.getInstance(element.getProject());
     for (ScopeToolState state : myTools) {
@@ -310,6 +315,7 @@ public class ToolsImpl implements Tools {
         }
       }
     }
+    setEnabled(true);
   }
 
   public void disableTool(NamedScope namedScope) {
@@ -326,6 +332,7 @@ public class ToolsImpl implements Tools {
   public void disableTool(PsiElement element) {
     if (element == null){
       myDefaultState.setEnabled(false);
+      setEnabled(false);
       return;
     }
     final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(element.getProject());
