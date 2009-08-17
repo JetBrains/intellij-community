@@ -10,7 +10,7 @@ class X {
   def getK() {}
 }
 
-def x = new X(a: 4 , b: 5, f: 7, <error descr="Property 'k' does not exist">k</error>:8)
+def x = new X(a: 4 , b: 5, f: 7, <warning descr="Property 'k' does not exist">k</warning>:8)
 print x.k;
 
 

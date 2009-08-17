@@ -902,7 +902,7 @@ public class GroovyAnnotator implements Annotator {
         if (label == null) continue;
         final PsiElement resolved = label.resolve();
         if (resolved == null) {
-          holder.createErrorAnnotation(label, GroovyBundle.message("no.such.property", label.getName()));
+          holder.createWarningAnnotation(label, GroovyBundle.message("no.such.property", label.getName()));
         }
       }
     }

@@ -9,5 +9,5 @@ class Y extends X {
   def getB(){}
 }
 
-print new Y(x: 5, <error descr="Property 'f' does not exist">f</error>:6, y: new Object(), a: 5.8, <error descr="Property 'b' does not exist">b</error>:9);
+print new Y(x: 5, <warning descr="Property 'f' does not exist">f</warning>:6, y: new Object(), a: 5.8, <warning descr="Property 'b' does not exist">b</warning>:9);
 
