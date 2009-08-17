@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.roots;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,15 +33,6 @@ public abstract class ModuleRootManager implements ModuleRootModel {
    */
   public static ModuleRootManager getInstance(Module module) {
     return module.getComponent(ModuleRootManager.class);
-  }
-
-  public static ModuleRootManager getInstanceChecked(final Module module) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<ModuleRootManager>() {
-      public ModuleRootManager compute() {
-        if (module.getProject().isDisposed()) throw new ProcessCanceledException();
-        return module.getComponent(ModuleRootManager.class);
-      }
-    });
   }
 
   /**

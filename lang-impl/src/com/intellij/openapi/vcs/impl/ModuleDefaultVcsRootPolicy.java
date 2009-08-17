@@ -56,7 +56,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
       }
     });
     for(Module module: modules) {
-      final VirtualFile[] files = ModuleRootManager.getInstanceChecked(module).getContentRoots();
+      final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
       for(VirtualFile file: files) {
         // if we're currently processing moduleAdded notification, getModuleForFile() will return null, so we pass the module
         // explicitly (we know it anyway)
@@ -120,7 +120,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     }
 
     for(Module module: modules) {
-      final VirtualFile[] files = ModuleRootManager.getInstanceChecked(module).getContentRoots();
+      final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
       for(VirtualFile file: files) {
         final AbstractVcs vcs = vcsGuess.getVcsForDirty(file);
         if (vcs != null) {
