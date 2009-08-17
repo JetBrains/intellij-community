@@ -59,7 +59,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     new ComboboxSpeedSearch(myKindCombo) {
       @Override
       protected String getElementText(Object element) {
-        return ((Trinity<String, Icon, String>)element).third;
+        return ((Trinity<String, Icon, String>)element).first;
       }
     };
 
