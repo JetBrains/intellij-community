@@ -1,16 +1,17 @@
 package com.intellij.slicer;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.analysis.AnalysisScope;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author cdr
@@ -19,7 +20,7 @@ public class SliceRootNode extends SliceNode {
   protected SliceRootNode(@NotNull Project project, @NotNull SliceUsage rootUsage, @NotNull DuplicateMap targetEqualUsages,
                           SliceTreeBuilder treeBuilder,
                           AnalysisScope scope) {
-    super(project, new SliceUsage(new UsageInfo(rootUsage.getElement().getContainingFile()), scope), targetEqualUsages, treeBuilder, Collections.<PsiElement>emptyList());
+    super(project, new SliceUsage(rootUsage.getElement().getContainingFile(), scope), targetEqualUsages, treeBuilder, Collections.<PsiElement>emptyList());
 
     switchToAllLeavesTogether(rootUsage);
   }

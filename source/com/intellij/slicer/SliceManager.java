@@ -4,10 +4,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.ide.impl.ContentManagerWatcher;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -19,7 +16,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -28,7 +24,6 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.util.RefactoringDescriptionLocation;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
 @State(
@@ -52,23 +47,51 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Bean>
     return ServiceManager.getService(project, SliceManager.class);
   }
 
-  public SliceManager(@NotNull Project project, @NotNull ToolWindowManager toolWindowManager, @NotNull final Application application) {
+  public SliceManager(@NotNull Project project, @NotNull ToolWindowManager toolWindowManager, final PsiManager psiManager) {
     myProject = project;
-    final ToolWindow toolWindow= toolWindowManager.registerToolWindow(BACKSLICE_ACTION_NAME, true, ToolWindowAnchor.BOTTOM, project);
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(BACKSLICE_ACTION_NAME, true, ToolWindowAnchor.BOTTOM, project);
     myBackContentManager = toolWindow.getContentManager();
     new ContentManagerWatcher(toolWindow, myBackContentManager);
 
-    final ToolWindow ftoolWindow= toolWindowManager.registerToolWindow(FORTHSLICE_ACTION_NAME, true, ToolWindowAnchor.BOTTOM, project);
+    ToolWindow ftoolWindow = toolWindowManager.registerToolWindow(FORTHSLICE_ACTION_NAME, true, ToolWindowAnchor.BOTTOM, project);
     myForthContentManager = ftoolWindow.getContentManager();
     new ContentManagerWatcher(ftoolWindow, myForthContentManager);
 
-    final MyApplicationListener myApplicationListener = new MyApplicationListener();
-    application.addApplicationListener(myApplicationListener);
-    Disposer.register(project, new Disposable() {
-      public void dispose() {
-        application.removeApplicationListener(myApplicationListener);
+    psiManager.addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
+      @Override
+      public void beforeChildAddition(PsiTreeChangeEvent event) {
+        cancel();
       }
-    });
+
+      @Override
+      public void beforeChildRemoval(PsiTreeChangeEvent event) {
+        cancel();
+      }
+
+      @Override
+      public void beforeChildReplacement(PsiTreeChangeEvent event) {
+        cancel();
+      }
+
+      @Override
+      public void beforeChildMovement(PsiTreeChangeEvent event) {
+        cancel();
+      }
+
+      @Override
+      public void beforeChildrenChange(PsiTreeChangeEvent event) {
+        cancel();
+      }
+
+      @Override
+      public void beforePropertyChange(PsiTreeChangeEvent event) {
+        cancel();
+      }
+    }, project);
+  }
+
+  private void cancel() {
+    myCanceled = true;
   }
 
   public void slice(@NotNull PsiElement element, boolean dataFlowToThis) {
@@ -137,14 +160,7 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Bean>
   }
 
   public static SliceUsage createRootUsage(@NotNull PsiElement element, @NotNull AnalysisScope scope) {
-    UsageInfo usageInfo = new UsageInfo(element);
-    return new SliceUsage(usageInfo, scope);
-  }
-
-  private class MyApplicationListener extends ApplicationAdapter {
-    public void beforeWriteActionStart(Object action) {
-      myCanceled = true;
-    }
+    return new SliceUsage(element, scope);
   }
 
   public void checkCanceled() throws ProcessCanceledException {
@@ -160,7 +176,7 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Bean>
       ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(runnable, progress);
     }
     catch (ProcessCanceledException e) {
-      myCanceled = true;
+      cancel();
       progress.cancel();
       //reschedule for later
       onCancel.run();

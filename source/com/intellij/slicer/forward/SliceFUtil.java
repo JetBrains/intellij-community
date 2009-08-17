@@ -25,7 +25,7 @@ public class SliceFUtil {
   public static boolean processUsagesFlownFromThe(@NotNull PsiElement element, @NotNull Processor<SliceUsage> processor, @NotNull SliceUsage parent) {
     PsiElement target = getAssignmentTarget(element);
     if (target != null) {
-      SliceUsage usage = SliceUtil.createSliceUsage(target, parent);
+      SliceUsage usage = SliceUtil.createSliceUsage(target, parent, parent.getSubstitutor());
       return processor.process(usage);
     }
 
@@ -147,10 +147,10 @@ public class SliceFUtil {
     return true;
   }
 
-  private static boolean processAssignmentTarget(PsiElement element, SliceUsage pa, Processor<SliceUsage> processor) {
+  private static boolean processAssignmentTarget(PsiElement element, SliceUsage parent, Processor<SliceUsage> processor) {
     PsiElement target = getAssignmentTarget(element);
     if (target != null) {
-      SliceUsage usage = SliceUtil.createSliceUsage(element, pa);
+      SliceUsage usage = SliceUtil.createSliceUsage(element, parent, parent.getSubstitutor());
       return processor.process(usage);
     }
     return true;

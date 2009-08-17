@@ -100,6 +100,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
         changed = true;
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
+            if (myTreeBuilder.isDisposed()) return;
             DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(getValue());
             //myTreeBuilder.getUi().queueBackgroundUpdate(node, (NodeDescriptor)node.getUserObject(), new TreeUpdatePass(node));
             if (node == null) node = myTreeBuilder.getRootNode();

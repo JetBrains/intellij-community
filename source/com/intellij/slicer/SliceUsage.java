@@ -4,6 +4,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.slicer.forward.SliceFUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageInfo2UsageAdapter;
@@ -18,17 +19,20 @@ import org.jetbrains.annotations.NotNull;
 public class SliceUsage extends UsageInfo2UsageAdapter {
   private final SliceUsage myParent;
   private final AnalysisScope myScope;
+  private final PsiSubstitutor mySubstitutor;
 
-  public SliceUsage(@NotNull UsageInfo usageInfo, @NotNull SliceUsage parent) {
-    super(usageInfo);
+  public SliceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
+    super(new UsageInfo(element));
     myParent = parent;
+    mySubstitutor = substitutor;
     myScope = parent.myScope;
     assert myScope != null;
   }
-  public SliceUsage(@NotNull UsageInfo usageInfo, @NotNull AnalysisScope scope) {
-    super(usageInfo);
+  public SliceUsage(@NotNull PsiElement element, @NotNull AnalysisScope scope) {
+    super(new UsageInfo(element));
     myParent = null;
     myScope = scope;
+    mySubstitutor = PsiSubstitutor.EMPTY;
   }
 
   public void processChildren(Processor<SliceUsage> processor, boolean dataFlowToThis) {
@@ -49,7 +53,7 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
       });
 
     if (dataFlowToThis) {
-      SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, this);
+      SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, this, mySubstitutor);
     }
     else {
       SliceFUtil.processUsagesFlownFromThe(element, uniqueProcessor, this);
@@ -66,6 +70,11 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
   }
 
   SliceUsage copy() {
-    return getParent() == null ? new SliceUsage(getUsageInfo(), getScope()) : new SliceUsage(getUsageInfo(), getParent());
+    PsiElement element = getUsageInfo().getElement();
+    return getParent() == null ? new SliceUsage(element, getScope()) : new SliceUsage(element, getParent(),mySubstitutor);
+  }
+
+  public PsiSubstitutor getSubstitutor() {
+    return mySubstitutor;
   }
 }
