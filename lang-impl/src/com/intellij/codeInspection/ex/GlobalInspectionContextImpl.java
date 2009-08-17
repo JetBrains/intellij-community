@@ -494,41 +494,38 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
     if (RUN_GLOBAL_TOOLS_ONLY) return;
 
-    if (true || !localTools.isEmpty()) {
-      final PsiManager psiManager = PsiManager.getInstance(myProject);
-      final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
-      scope.accept(new PsiRecursiveElementVisitor() {
-        @Override
-        public void visitFile(PsiFile file) {
+    final PsiManager psiManager = PsiManager.getInstance(myProject);
+    scope.accept(new PsiRecursiveElementVisitor() {
+      @Override
+      public void visitFile(PsiFile file) {
 
-          final VirtualFile virtualFile = file.getVirtualFile();
-          if (virtualFile != null) {
-            incrementJobDoneAmount(LOCAL_ANALYSIS, ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject));
-          }
-
-          final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
-          final com.intellij.openapi.editor.Document document = viewProvider != null ? viewProvider.getDocument() : null;
-          if (document == null) return; //do not inspect binary files
-          final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, 0, file.getTextLength());
-          try {
-            final List<InspectionProfileEntry> lTools = new ArrayList<InspectionProfileEntry>();
-            for (Tools tool : localTools) {
-              final InspectionTool enabledTool = (InspectionTool)tool.getEnabledTool(file);
-              if (enabledTool != null) {
-                lTools.add(enabledTool);
-              }
-            }
-            pass.doInspectInBatch((InspectionManagerEx)manager, lTools.toArray(new InspectionProfileEntry[lTools.size()]), myProgressIndicator,true);
-          }
-          catch (ProcessCanceledException e) {
-            throw e;
-          }
-          catch (Exception e) {
-            LOG.error(e);
-          }
+        final VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile != null) {
+          incrementJobDoneAmount(LOCAL_ANALYSIS, ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject));
         }
-      });
-    }
+
+        final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
+        final com.intellij.openapi.editor.Document document = viewProvider != null ? viewProvider.getDocument() : null;
+        if (document == null) return; //do not inspect binary files
+        final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, 0, file.getTextLength());
+        try {
+          final List<InspectionProfileEntry> lTools = new ArrayList<InspectionProfileEntry>();
+          for (Tools tool : localTools) {
+            final InspectionTool enabledTool = (InspectionTool)tool.getEnabledTool(file);
+            if (enabledTool != null) {
+              lTools.add(enabledTool);
+            }
+          }
+          pass.doInspectInBatch((InspectionManagerEx)manager, lTools.toArray(new InspectionProfileEntry[lTools.size()]), myProgressIndicator,true);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
+    });
   }
 
   public void initializeTools(List<Tools> tools, List<Tools> localTools) {
