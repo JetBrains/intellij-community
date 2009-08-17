@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.PopupHandler;
 
@@ -69,7 +70,7 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
 
   public void dispose() {
     super.dispose();
-    myTree.dispose();
+    Disposer.dispose(myTree);
   }
 
 

@@ -8,6 +8,7 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -30,7 +31,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 
-public class DebuggerTreeBase extends DnDAwareTree {
+public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
   private final Project myProject;
   private DebuggerTreeNodeImpl myCurrentTooltipNode;
 

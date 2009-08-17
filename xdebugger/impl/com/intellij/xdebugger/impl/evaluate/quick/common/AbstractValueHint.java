@@ -1,5 +1,8 @@
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
+import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -8,21 +11,20 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.codeInsight.hint.HintManagerImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
@@ -213,8 +215,15 @@ public abstract class AbstractValueHint {
       .setDimensionServiceKey(getProject(), DIMENSION_SERVICE_KEY, false)
       .createPopup();
 
+    if (tree instanceof Disposable) {
+      Disposer.register(myPopup, (Disposable)tree);
+    }
+    
     //Editor may be disposed before later invokator process this action
-    if (getEditor().getComponent().getRootPane() == null) return;
+    if (getEditor().getComponent().getRootPane() == null) {
+      myPopup.cancel();
+      return;
+    }
     myPopup.show(new RelativePoint(getEditor().getContentComponent(), myPoint));
 
     updateInitialBounds(tree);
