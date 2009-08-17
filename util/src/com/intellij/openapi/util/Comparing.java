@@ -17,10 +17,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class Comparing {
   private Comparing() { }
@@ -98,7 +95,7 @@ public class Comparing {
     return equal(arg1 == null ? "" : arg1, arg2 == null ? "" : arg2, caseSensitive);
   }
 
-  public static <T> boolean haveEqualElements(List<T> a, List<T> b) {
+  public static <T> boolean haveEqualElements(Collection<T> a, Collection<T> b) {
     if (a.size() != b.size()) {
       return false;
     }
