@@ -438,10 +438,14 @@ public class MavenProjectReader {
       Parent parent = model.getParent();
       final MavenParentDesc[] parentDesc = new MavenParentDesc[1];
       if (parent != null) {
-        parentDesc[0] = new MavenParentDesc(new MavenId(parent.getGroupId(),
-                                                        parent.getArtifactId(),
-                                                        parent.getVersion()),
-                                            parent.getRelativePath());
+        MavenId parentId = new MavenId(parent.getGroupId(),
+                                       parent.getArtifactId(),
+                                       parent.getVersion());
+        if (parentId.equals(model.getGroupId(), model.getArtifactId(), model.getVersion())) {
+          // self-inheritance protection
+          return false;
+        }
+        parentDesc[0] = new MavenParentDesc(parentId, parent.getRelativePath());
       }
 
       ModelWithValidity parentModelWithValidity = new MavenParentProjectFileProcessor<ModelWithValidity>() {

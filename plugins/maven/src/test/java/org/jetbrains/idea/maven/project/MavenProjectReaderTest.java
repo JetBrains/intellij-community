@@ -80,6 +80,18 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertTrue(readProject(myProjectPom, new NullProjectLocator()).isValid);
   }
 
+  public void testProjectWithSelfParentIsInvalid() throws Exception {
+    createProjectPom("<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>project</artifactId>" +
+                     "  <version>1</version>" +
+                     "</parent>" +
+
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>");
+    assertFalse(readProject(myProjectPom, new NullProjectLocator()).isValid);
+  }
+
   public void testInvalidProfilesXml() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

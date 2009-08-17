@@ -236,6 +236,18 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals("m2", modules.get(1).getMavenId().getArtifactId());
   }
 
+  public void testRecursiveParent() throws Exception {
+    importProject("<parent>" +
+                  "  <groupId>org.apache.maven.archetype.test</groupId>" +
+                  "  <artifactId>test-create-2</artifactId>" +
+                  "  <version>1.0-SNAPSHOT</version>" +
+                  "</parent>" +
+
+                  "<artifactId>test-create-2</artifactId>" +
+                  "<name>Maven archetype Test create-2-subModule</name>" +
+                  "<packaging>pom</packaging>");
+  }
+
   public void testParentWithoutARelativePath() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
