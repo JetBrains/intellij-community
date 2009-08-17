@@ -228,6 +228,9 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myGroupIdField.setText(myParent == null ? myBuilder.getName() : myParent.getMavenId().getGroupId());
     myVersionField.setText(myParent == null ? "1.0" : myParent.getMavenId().getVersion());
 
+    myInheritGroupIdCheckBox.setSelected(myBuilder.isInheritGroupId());
+    myInheritVersionCheckBox.setSelected(myBuilder.isInheritVersion());
+
     ArchetypeInfo selectedArch = getSelectedArchetype();
     if (selectedArch == null) {
       selectedArch = myBuilder.getArchetype();
@@ -379,6 +382,8 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myBuilder.setProjectId(new MavenId(myGroupIdField.getText(),
                                        myArtifactIdField.getText(),
                                        myVersionField.getText()));
+    myBuilder.setInheritedOptions(myInheritGroupIdCheckBox.isSelected(),
+                                  myInheritVersionCheckBox.isSelected());
 
     myBuilder.setArchetype(getSelectedArchetype());
   }

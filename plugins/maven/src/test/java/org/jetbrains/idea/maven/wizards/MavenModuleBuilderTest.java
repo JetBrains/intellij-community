@@ -49,7 +49,8 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
 
   public void testInheritJdkFromProject() throws Exception {
     createNewModule(new MavenId("org.foo", "module", "1.0"));
-    assertTrue(ModuleRootManager.getInstance(getModule("module")).isSdkInherited());
+    ModuleRootManager manager = ModuleRootManager.getInstance(getModule("module"));
+    assertTrue(manager.isSdkInherited());
   }
 
   public void testCreatingFromArchetype() throws Exception {
@@ -87,6 +88,36 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
                                   "        <module>module</module>\r\n" +
                                   "    </modules>\r\n"),
                  VfsUtil.loadText(myProjectPom));
+  }
+
+  public void testAddingManagedProjectIfNoArrgerator() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertEquals(1, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
+
+    setModuleNameAndRoot("module", getProjectPath() + "/module");
+    setAggregatorProject(null);
+    createNewModule(new MavenId("org.foo", "module", "1.0"));
+    myProjectRoot.findFileByRelativePath("module/pom.xml");
+
+    assertEquals(2, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
+  }
+
+  public void testDoNotAddManagedProjectIfAddingAsModuleToAggregator() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertEquals(1, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
+
+    setModuleNameAndRoot("module", getProjectPath() + "/module");
+    setAggregatorProject(myProjectPom);
+    createNewModule(new MavenId("org.foo", "module", "1.0"));
+    myProjectRoot.findFileByRelativePath("module/pom.xml");
+
+    assertEquals(1, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
   }
 
   public void testAddingParent() throws Exception {

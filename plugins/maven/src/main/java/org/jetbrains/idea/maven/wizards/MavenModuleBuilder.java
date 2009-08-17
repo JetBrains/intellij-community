@@ -56,6 +56,8 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     final VirtualFile root = createAndGetContentEntry();
     rootModel.addContentEntry(root);
 
+    rootModel.inheritSdk();
+
     final VirtualFile pom;
     try {
       pom = root.createChildData(this, MavenConstants.POM_XML);
@@ -84,8 +86,10 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
     MavenUtil.runWhenInitialized(project, new DumbAwareRunnable() {
       public void run() {
-        MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-        manager.addManagedFiles(Collections.singletonList(pom));
+        if (myAggregatorProject == null) {
+          MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+          manager.addManagedFiles(Collections.singletonList(pom));
+        }
 
         if (myArchetype == null) {
           try {
