@@ -752,6 +752,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   // made public for tests
   public void scanSourceContent(final Project project, final Collection<VirtualFile> roots, final int totalRootCount, final boolean isNewRoots) {
+    if (roots.size() == 0) {
+      return;
+    }
     final int projectId = getProjectId(project);
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
