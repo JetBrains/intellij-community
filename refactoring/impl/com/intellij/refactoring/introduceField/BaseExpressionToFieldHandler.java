@@ -12,6 +12,8 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.TestUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.ide.util.DirectoryChooserUtil;
+import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,11 +24,13 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceHandlerBase;
@@ -41,8 +45,10 @@ import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase implements RefactoringActionHandler {
@@ -533,7 +539,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     private final InitializationPlace myInitializerPlace;
     @Modifier private final String myVisibility;
     private final boolean myDeleteLocalVariable;
-    private final PsiClass myTargetClass;
+    private final TargetDestination myTargetClass;
     private final boolean myAnnotateAsNonNls;
     private final boolean myIntroduceEnumConstant;
 
@@ -568,7 +574,10 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return myVisibility;
     }
 
-    public PsiClass getDestinationClass() { return myTargetClass; }
+    @Nullable
+    public PsiClass getDestinationClass() {
+      return myTargetClass != null ? myTargetClass.getTargetClass() : null;
+    }
 
     public PsiType getForcedType() {
       return myForcedType;
@@ -590,7 +599,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                     boolean declareStatic, boolean declareFinal,
                     InitializationPlace initializerPlace, @Modifier String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
                     boolean deleteLocalVariable,
-                    PsiClass targetClass,
+                    TargetDestination targetDestination,
                     final boolean annotateAsNonNls,
                     final boolean introduceEnumConstant) {
 
@@ -603,11 +612,58 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       myLocalVariable = localVariableToRemove;
       myDeleteLocalVariable = deleteLocalVariable;
       myForcedType = forcedType;
-      myTargetClass = targetClass;
+      myTargetClass = targetDestination;
       myAnnotateAsNonNls = annotateAsNonNls;
       myIntroduceEnumConstant = introduceEnumConstant;
     }
 
+    public Settings(String fieldName, boolean replaceAll,
+                    boolean declareStatic, boolean declareFinal,
+                    InitializationPlace initializerPlace, @Modifier String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
+                    boolean deleteLocalVariable,
+                    PsiClass targetClass,
+                    final boolean annotateAsNonNls,
+                    final boolean introduceEnumConstant) {
 
+      this(fieldName, replaceAll, declareStatic, declareFinal, initializerPlace, visibility, localVariableToRemove, forcedType, deleteLocalVariable, new TargetDestination(targetClass), annotateAsNonNls, introduceEnumConstant);
+    }
+
+  }
+
+  public static class TargetDestination {
+    private final String myQualifiedName;
+    private final Project myProject;
+
+    private PsiClass myParentClass;
+    private PsiClass myTargetClass;
+
+    public TargetDestination(String qualifiedName, PsiClass parentClass) {
+      myQualifiedName = qualifiedName;
+      myParentClass = parentClass;
+      myProject = parentClass.getProject();
+    }
+
+    public TargetDestination(@NotNull PsiClass targetClass) {
+      myTargetClass = targetClass;
+      myQualifiedName = targetClass.getQualifiedName();
+      myProject = targetClass.getProject();
+    }
+
+    @Nullable
+    public PsiClass getTargetClass() {
+      if (myTargetClass != null) return myTargetClass;
+      final String packageName = StringUtil.getPackageName(myQualifiedName);
+      PsiPackage psiPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
+      final PsiDirectory psiDirectory;
+      if (psiPackage != null) {
+        final PsiDirectory[] directories = psiPackage.getDirectories(GlobalSearchScope.allScope(myProject));
+        psiDirectory = directories.length > 1 ? DirectoryChooserUtil.chooseDirectory(directories, null, myProject, new HashMap<PsiDirectory, String>()) : directories[0];
+      } else {
+        psiDirectory = PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, myParentClass.getContainingFile().getContainingDirectory(), false);
+      }
+      final String shortName = StringUtil.getShortName(myQualifiedName);
+      myTargetClass = psiDirectory != null ? JavaDirectoryService.getInstance().createClass(psiDirectory, shortName) : null;
+      return myTargetClass;
+    }
   }
 }

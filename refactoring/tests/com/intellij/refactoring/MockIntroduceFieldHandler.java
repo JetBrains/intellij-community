@@ -1,7 +1,7 @@
 package com.intellij.refactoring;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -26,7 +26,6 @@ public class MockIntroduceFieldHandler extends IntroduceFieldHandler {
     return new Settings(name.names[0], true, myDeclareStatic, true, myInitializationPlace,
             PsiModifier.PUBLIC,
             null,
-            type, true,
-            null, false, false);
+            type, true, (TargetDestination)null, false, false);
   }
 }

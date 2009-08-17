@@ -100,7 +100,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
                         declareStatic, dialog.isDeclareFinal(),
                         dialog.getInitializerPlace(), dialog.getFieldVisibility(),
                         localVariable,
-                        dialog.getFieldType(), localVariable != null, null, false, false);
+                        dialog.getFieldType(), localVariable != null, (TargetDestination)null, false, false);
   }
 
   private static boolean isInSuperOrThis(PsiExpression occurence) {

@@ -71,7 +71,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   private StateRestoringCheckBox myCbDeleteVariable;
   private final JavaCodeStyleManager myCodeStyleManager;
   private ReferenceEditorComboWithBrowseButton myTfTargetClassName;
-  private PsiClass myDestinationClass;
+  private BaseExpressionToFieldHandler.TargetDestination myDestinationClass;
   private JPanel myTypePanel;
   private JPanel myTargetClassNamePanel;
   private JPanel myPanel;
@@ -130,7 +130,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     return myTfTargetClassName.getText().trim();
   }
 
-  public PsiClass getDestinationClass () {
+  public BaseExpressionToFieldHandler.TargetDestination getDestinationClass () {
     return myDestinationClass;
   }
 
@@ -396,14 +396,13 @@ class IntroduceConstantDialog extends DialogWrapper {
     if (!"".equals (targetClassName) && !Comparing.strEqual(targetClassName, myParentClass.getQualifiedName())) {
       newClass = JavaPsiFacade.getInstance(myProject).findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
       if (newClass == null) {
-        CommonRefactoringUtil.showErrorMessage(
-                IntroduceConstantHandler.REFACTORING_NAME,
-                RefactoringBundle.message("class.does.not.exist.in.the.project"),
-                HelpID.INTRODUCE_FIELD,
-                myProject);
-        return;
+        if (Messages.showOkCancelDialog(myProject, RefactoringBundle.message("class.does.not.exist.in.the.project"), IntroduceConstantHandler.REFACTORING_NAME, Messages.getErrorIcon()) != OK_EXIT_CODE) {
+          return;
+        }
+        myDestinationClass = new BaseExpressionToFieldHandler.TargetDestination(targetClassName, myParentClass);
+      } else {
+        myDestinationClass = new BaseExpressionToFieldHandler.TargetDestination(newClass);
       }
-      myDestinationClass = newClass;
     }
 
     String fieldName = getEnteredName();
@@ -421,17 +420,19 @@ class IntroduceConstantDialog extends DialogWrapper {
               myProject);
       return;
     }
-    PsiField oldField = newClass.findFieldByName(fieldName, true);
+    if (newClass != null) {
+      PsiField oldField = newClass.findFieldByName(fieldName, true);
 
-    if (oldField != null) {
-      int answer = Messages.showYesNoDialog(
-              myProject,
-              RefactoringBundle.message("field.exists", fieldName, oldField.getContainingClass().getQualifiedName()),
-              IntroduceFieldHandler.REFACTORING_NAME,
-              Messages.getWarningIcon()
-      );
-      if (answer != 0) {
-        return;
+      if (oldField != null) {
+        int answer = Messages.showYesNoDialog(
+                myProject,
+                RefactoringBundle.message("field.exists", fieldName, oldField.getContainingClass().getQualifiedName()),
+                IntroduceFieldHandler.REFACTORING_NAME,
+                Messages.getWarningIcon()
+        );
+        if (answer != 0) {
+          return;
+        }
       }
     }
 

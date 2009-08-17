@@ -83,7 +83,7 @@ public class LocalToFieldHandler {
       introduceEnumConstant = false;
     }
 
-    return new BaseExpressionToFieldHandler.Settings(fieldName, true, isStatic, declareFinal, initializerPlace, fieldVisibility, local, null, true, aClass, annotateAsNonNls,
+    return new BaseExpressionToFieldHandler.Settings(fieldName, true, isStatic, declareFinal, initializerPlace, fieldVisibility, local, null, true, new BaseExpressionToFieldHandler.TargetDestination(aClass), annotateAsNonNls,
                                                      introduceEnumConstant);
   }
 
