@@ -357,7 +357,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private TreeModel buildTreeModel(Set<PsiFile> deps, Marker marker) {
-    return PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createTreeModel(myProject, deps, marker,
+    return PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE).createTreeModel(myProject, deps, marker,
                                                                                                              mySettings);
   }
 
@@ -390,13 +390,13 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     tree.expandPath(new TreePath(node.getPath()));
   }
 
-  private static Set<PsiFile> getSelectedScope(final Tree tree) {
+  private Set<PsiFile> getSelectedScope(final Tree tree) {
     TreePath[] paths = tree.getSelectionPaths();
     if (paths == null ) return EMPTY_FILE_SET;
     Set<PsiFile> result = new HashSet<PsiFile>();
     for (TreePath path : paths) {
       PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
-      node.fillFiles(result, !DependencyUISettings.getInstance().UI_FLATTEN_PACKAGES);
+      node.fillFiles(result, !mySettings.UI_FLATTEN_PACKAGES);
     }
     return result;
   }
@@ -779,7 +779,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     private AnalysisScope getScope() {
       final Set<PsiFile> selectedScope = getSelectedScope(myRightTree);
       Set<PsiFile> result = new HashSet<PsiFile>();
-      ((PackageDependenciesNode)myLeftTree.getModel().getRoot()).fillFiles(result, !DependencyUISettings.getInstance().UI_FLATTEN_PACKAGES);
+      ((PackageDependenciesNode)myLeftTree.getModel().getRoot()).fillFiles(result, !mySettings.UI_FLATTEN_PACKAGES);
       selectedScope.removeAll(result);
       if (selectedScope.isEmpty()) return null;
       List<VirtualFile> files = new ArrayList<VirtualFile>();
@@ -867,7 +867,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
             }
           }
         }
-        final PatternDialectProvider provider = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE);
+        final PatternDialectProvider provider = PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE);
         PackageSet leftPackageSet = provider.createPackageSet(leftNode, true);
         if (leftPackageSet == null) {
           leftPackageSet = provider.createPackageSet(leftNode, false);
@@ -896,7 +896,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       final PackageDependenciesNode leftNode = myLeftTree.getSelectedNode();
       final PackageDependenciesNode rightNode = myRightTree.getSelectedNode();
       if (leftNode != null && rightNode != null) {
-        final PatternDialectProvider provider = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE);
+        final PatternDialectProvider provider = PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE);
         presentation.setEnabled((provider.createPackageSet(leftNode, true) != null || provider.createPackageSet(leftNode, false) != null) &&
                                 (provider.createPackageSet(rightNode, true) != null || provider.createPackageSet(rightNode, false) != null));
       }
@@ -911,6 +911,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
         group.add(new AnAction(provider.getDisplayName()) {
           public void actionPerformed(final AnActionEvent e) {
             mySettings.SCOPE_TYPE = provider.getShortName();
+            rebuild();
           }
         });
       }
