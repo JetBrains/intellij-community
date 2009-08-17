@@ -10,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 public interface Notifications {
   Topic<Notifications> TOPIC = Topic.create("Notifications", Notifications.class);
 
+  public static final String SYSTEM_MESSAGES_ID = "System Messages";
+
   void register(@NonNls @NotNull String id, @NotNull NotificationDisplayType defaultDisplayType,
                 boolean canDisable);
 
