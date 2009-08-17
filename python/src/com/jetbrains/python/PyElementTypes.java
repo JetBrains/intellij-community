@@ -13,7 +13,6 @@ public interface PyElementTypes {
   PyStubElementType<PyClassStub, PyClass> CLASS_DECLARATION = new PyClassElementType();
   PyStubElementType<PyParameterListStub, PyParameterList> PARAMETER_LIST = new PyParameterListElementType();
 
-  //PyElementType DECORATOR_LIST = new PyElementType("DECORATOR", PyDecoratorListImpl.class);
   PyStubElementType<PyDecoratorListStub, PyDecoratorList> DECORATOR_LIST = new PyDecoratorListElementType();
 
   TokenSet PARAMETER_LIST_SET = TokenSet.create(PARAMETER_LIST);  
@@ -27,7 +26,6 @@ public interface PyElementTypes {
 
   TokenSet FORMAL_PARAMETER_SET = TokenSet.create(NAMED_PARAMETER);
 
-  // Deprecated PyElementType DECORATED_FUNCTION_DECLARATION = new PyElementType("DECORATED_FUNCTION_DECLARATION", PyDecoratedFunctionImpl.class);
   PyElementType ARGUMENT_LIST = new PyElementType("ARGUMENT_LIST", PyArgumentListImpl.class);
   PyElementType IMPORT_ELEMENT = new PyElementType("IMPORT_ELEMENT", PyImportElementImpl.class);
   PyElementType STAR_IMPORT_ELEMENT = new PyElementType("STAR_IMPORT_ELEMENT", PyStarImportElementImpl.class);
