@@ -9,6 +9,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.event.KeyEvent;
+import java.awt.*;
 import java.util.Map;
 
 public class MavenArtifactSearchDialog extends DialogWrapper {
@@ -74,6 +75,8 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
     myTabbedPane.setDisplayedMnemonicIndexAt(0, myTabbedPane.getTitleAt(0).indexOf("artifact"));
     myTabbedPane.setMnemonicAt(1, KeyEvent.VK_C);
     myTabbedPane.setDisplayedMnemonicIndexAt(1, myTabbedPane.getTitleAt(1).indexOf("class"));
+
+    myTabbedPane.setPreferredSize(new Dimension(600, 400));
 
     myTabbedPane.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
