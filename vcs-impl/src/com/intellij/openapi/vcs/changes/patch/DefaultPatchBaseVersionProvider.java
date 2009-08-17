@@ -96,7 +96,8 @@ public class DefaultPatchBaseVersionProvider {
           found = fileRevision.getRevisionNumber().compareTo(revision) <= 0;
         }
         else {
-          found = fileRevision.getRevisionDate().before(versionDate);
+          final Date date = fileRevision.getRevisionDate();
+          found = (date != null) && date.before(versionDate);
         }
 
         if (found) {
