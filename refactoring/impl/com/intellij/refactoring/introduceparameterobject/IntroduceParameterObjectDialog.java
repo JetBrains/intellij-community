@@ -6,6 +6,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
@@ -91,6 +92,14 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
 
       public void actionPerformed(ActionEvent actionEvent) {
         toggleRadioEnablement();
+        final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
+        if (useExistingClass()) {
+          focusManager.requestFocus(existingClassField, true);
+        } else if (myCreateInnerClassRadioButton.isSelected()) {
+          focusManager.requestFocus(myInnerClassNameTextField, true);
+        } else {
+          focusManager.requestFocus(classNameField, true);
+        }
       }
     };
     useExistingClassButton.addActionListener(listener);
