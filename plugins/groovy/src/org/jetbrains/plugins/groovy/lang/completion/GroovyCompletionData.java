@@ -21,12 +21,9 @@ import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.completion.CompletionVariant;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.LeftNeighbour;
@@ -54,7 +51,6 @@ import org.jetbrains.plugins.groovy.lang.completion.getters.ClassesGetter;
 import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
-import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -95,7 +91,6 @@ public class GroovyCompletionData extends CompletionData {
   private void registerParameterTypeCompletion() {
     CompletionVariant variant = new CompletionVariant(new ParameterTypeFilter());
     variant.includeScopeClass(LeafPsiElement.class);
-    variant.addCompletionFilter(TrueFilter.INSTANCE);
     variant.addCompletion(new ClassesGetter(), TailType.NONE);
     registerVariant(variant);
   }
@@ -103,7 +98,6 @@ public class GroovyCompletionData extends CompletionData {
   private void registerSuggestVariableNameCompletion() {
     CompletionVariant variant = new CompletionVariant(new ParentElementFilter(new ClassFilter(GrVariable.class)));
     variant.includeScopeClass(LeafPsiElement.class);
-    variant.addCompletionFilter(TrueFilter.INSTANCE);
     variant.addCompletion(new SuggestedVariableNamesGetter(), TailType.NONE);
     registerVariant(variant);
   }
@@ -137,19 +131,13 @@ public class GroovyCompletionData extends CompletionData {
 
   private void registerBuiltInTypesAsArgumentCompletion() {
     AndFilter filter = new AndFilter(new BuiltInTypeAsArgumentFilter(), new NotFilter(new ThrowsFilter()));
-    CompletionVariant variant = setUpFilter(filter);
+    LeftNeighbour afterDotFilter = new LeftNeighbour(new TextFilter("."));
+    CompletionVariant variant = new CompletionVariant(new AndFilter(new NotFilter(afterDotFilter), filter));
+    variant.includeScopeClass(LeafPsiElement.class);
     for (String completion : BUILT_IN_TYPES) {
       variant.addCompletion(completion, TailType.SPACE);
     }
     registerVariant(variant);
-  }
-
-  private static CompletionVariant setUpFilter(ElementFilter filter) {
-    LeftNeighbour afterDotFilter = new LeftNeighbour(new TextFilter("."));
-    CompletionVariant variant = new CompletionVariant(new AndFilter(new NotFilter(afterDotFilter), filter));
-    variant.includeScopeClass(LeafPsiElement.class);
-    variant.addCompletionFilter(TrueFilter.INSTANCE);
-    return variant;
   }
 
   private void registerSimpleExprsCompletion() {
@@ -189,60 +177,16 @@ public class GroovyCompletionData extends CompletionData {
   }
 
 
-  private final CompletionVariant ourReferenceVariant;
-
-  {
-    ourReferenceVariant = new CompletionVariant() {
-      public void addReferenceCompletions(PsiReference reference,
-                                          PsiElement position,
-                                          Set<LookupElement> set,
-                                          final PsiFile file,
-                                          final CompletionData completionData) {
-        //checkForEmptyPackage(reference);
-        completeReference(reference, position, set, TailType.NONE, file, TrueFilter.INSTANCE, this);
-      }
-    };
-    ourReferenceVariant.setInsertHandler(new GroovyInsertHandlerAdapter());
-  }
-
-  private static void checkForEmptyPackage(final PsiReference reference) {
-    for (Object o : reference.getVariants()) {
-      if (o instanceof PsiPackage) {
-        PsiPackage aPackage = (PsiPackage)o;
-        if (StringUtil.isEmpty(aPackage.getName())) {
-          LOG.assertTrue(false, "Empty package name:\n" +
-                                reference.toString() +
-                                "\n" +
-                                reference.getElement().getText() +
-                                "\n" +
-                                Arrays.toString(reference.getVariants()));
-        }
-      }
-    }
-  }
-
   @Override
   public void completeReference(final PsiReference reference,
                                 final Set<LookupElement> set,
                                 @NotNull final PsiElement position,
                                 final PsiFile file,
                                 final int offset) {
-    final CompletionVariant[] variants = findVariants(position, file);
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        boolean hasApplicableVariants = false;
-        for (CompletionVariant variant : variants) {
-          if (variant.hasReferenceFilter()) {
-            variant.addReferenceCompletions(reference, position, set, file, GroovyCompletionData.this);
-            hasApplicableVariants = true;
-          }
-        }
-
-        if (!hasApplicableVariants) {
-          ourReferenceVariant.addReferenceCompletions(reference, position, set, file, GroovyCompletionData.this);
-        }
-      }
-    });
+    super.completeReference(reference, set, position, file, offset);
+    for (final LookupElement element : set) {
+      ((LookupItem)element).setInsertHandler(new GroovyInsertHandlerAdapter());
+    }
   }
 
 
