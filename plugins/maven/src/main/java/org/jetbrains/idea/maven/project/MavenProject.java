@@ -326,6 +326,10 @@ public class MavenProject {
     return MavenUtil.findProfilesXmlFile(myFile);
   }
 
+  public File getProfilesXmlIoFile() {
+    return MavenUtil.getProfilesXmlIoFile(myFile);
+  }
+
   public boolean hasErrors() {
     return !myState.myValid;
   }

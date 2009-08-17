@@ -11,10 +11,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class MavenActionUtil {
   public static Project getProject(AnActionEvent e) {
@@ -53,7 +50,7 @@ public class MavenActionUtil {
   }
 
   public static List<MavenProject> getMavenProjects(AnActionEvent e) {
-    List<MavenProject> result = new ArrayList<MavenProject>();
+    Set<MavenProject> result = new LinkedHashSet<MavenProject>();
     for (VirtualFile each : getFiles(e)) {
       MavenProject project = getProjectsManager(e).findProject(each);
       if (project != null) result.add(project);
@@ -62,7 +59,7 @@ public class MavenActionUtil {
       MavenProject project = getProjectsManager(e).findProject(each);
       if (project != null) result.add(project);
     }
-    return result;
+    return new ArrayList<MavenProject>(result);
   }
 
   public static List<VirtualFile> getMavenProjectsFiles(AnActionEvent e) {

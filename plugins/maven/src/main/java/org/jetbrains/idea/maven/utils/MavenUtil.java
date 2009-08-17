@@ -157,6 +157,10 @@ public class MavenUtil {
     return pomFile.getParent().findChild(MavenConstants.PROFILES_XML);
   }
 
+  public static File getProfilesXmlIoFile(VirtualFile pomFile) {
+    return new File(pomFile.getParent().getPath(), MavenConstants.PROFILES_XML);
+  }
+
   public static <T, U> List<T> collectFirsts(List<Pair<T, U>> pairs) {
     List<T> result = new ArrayList<T>(pairs.size());
     for (Pair<T, ?> each : pairs) {

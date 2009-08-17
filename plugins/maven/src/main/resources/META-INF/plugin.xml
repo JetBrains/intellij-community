@@ -169,12 +169,12 @@
     </action>
 
     <action id="Maven.OpenProfilesXml"
-            class="org.jetbrains.idea.maven.project.actions.OpenProfilesXmlAction"
+            class="org.jetbrains.idea.maven.project.actions.OpenOrCreateProfilesXmlAction"
             text="Open profiles.xml"
             description="Open profiles.xml for selected projects"/>
 
     <action id="Maven.OpenSettingsXml"
-            class="org.jetbrains.idea.maven.project.actions.OpenSettingsXmlAction"
+            class="org.jetbrains.idea.maven.project.actions.OpenOrCreateSettingsXmlAction"
             text="Open settings.xml"
             description="Open Maven settings.xml"/>
 
