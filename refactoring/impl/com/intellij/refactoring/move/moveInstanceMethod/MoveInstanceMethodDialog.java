@@ -35,7 +35,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
 
   public MoveInstanceMethodDialog(final PsiMethod method,
                                   final PsiVariable[] variables) {
-    super(method, variables, MoveInstanceMethodHandler.REFACTORING_NAME, false);
+    super(method, variables, MoveInstanceMethodHandler.REFACTORING_NAME);
     init();
   }
 

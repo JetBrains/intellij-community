@@ -5,9 +5,9 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiVariable;
-import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodDialogBase;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodDialogBase;
 
 import javax.swing.*;
 
@@ -17,7 +17,7 @@ import javax.swing.*;
 public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodDialog");
   public ConvertToInstanceMethodDialog(final PsiMethod method, final PsiParameter[] variables) {
-    super(method, variables, ConvertToInstanceMethodHandler.REFACTORING_NAME, true);
+    super(method, variables, ConvertToInstanceMethodHandler.REFACTORING_NAME);
     init();
   }
 

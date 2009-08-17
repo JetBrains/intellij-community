@@ -33,17 +33,12 @@ public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
   protected JList myList;
   protected VisibilityPanel myVisibilityPanel;
   protected final String myRefactoringName;
-  protected final boolean myAllowEscalateVisibility;
 
-  public MoveInstanceMethodDialogBase(PsiMethod method,
-                                      PsiVariable[] variables,
-                                      String refactoringName,
-                                      boolean allowEscalateVisibility) {
+  public MoveInstanceMethodDialogBase(PsiMethod method, PsiVariable[] variables, String refactoringName) {
     super(method.getProject(), true);
     myMethod = method;
     myVariables = variables;
     myRefactoringName = refactoringName;
-    myAllowEscalateVisibility = allowEscalateVisibility;
     setTitle(myRefactoringName);
   }
 
@@ -83,8 +78,8 @@ public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
     return list;
   }
 
-  protected VisibilityPanel createVisibilityPanel() {
-    final VisibilityPanel visibilityPanel = new VisibilityPanel(false, myAllowEscalateVisibility);
+  protected static VisibilityPanel createVisibilityPanel() {
+    final VisibilityPanel visibilityPanel = new VisibilityPanel(false, true);
     visibilityPanel.setVisibility(null);
     return visibilityPanel;
   }
