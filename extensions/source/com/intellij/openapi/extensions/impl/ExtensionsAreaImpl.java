@@ -17,8 +17,7 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
 import com.intellij.util.containers.ConcurrentHashMap;
-import org.apache.commons.collections.MultiHashMap;
-import org.apache.commons.collections.MultiMap;
+import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.jdom.output.Format;
@@ -51,7 +50,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private Throwable myCreationTrace = null;
   private final Map<String,ExtensionPointImpl> myExtensionPoints = new ConcurrentHashMap<String, ExtensionPointImpl>();
   private final Map<String,Throwable> myEPTraces = new HashMap<String, Throwable>();
-  private final MultiMap myAvailabilityListeners = new MultiHashMap();
+  private final MultiMap<String, ExtensionPointAvailabilityListener> myAvailabilityListeners = new MultiMap<String, ExtensionPointAvailabilityListener>();
   private final List<Runnable> mySuspendedListenerActions = new ArrayList<Runnable>();
   private boolean myAvailabilityNotificationsActive = true;
 
@@ -216,9 +215,9 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
       @SuppressWarnings({"unchecked"})
       public void extensionRemoved(Object extension, final PluginDescriptor pluginDescriptor) {
         EPAvailabilityListenerExtension epListenerExtension = (EPAvailabilityListenerExtension) extension;
-        List<Object> listeners = (List<Object>) myAvailabilityListeners.get(epListenerExtension.getExtensionPointName());
-        for (Iterator<Object> iterator = listeners.iterator(); iterator.hasNext();) {
-          Object listener = iterator.next();
+        Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(epListenerExtension.getExtensionPointName());
+        for (Iterator<ExtensionPointAvailabilityListener> iterator = listeners.iterator(); iterator.hasNext();) {
+          ExtensionPointAvailabilityListener listener = iterator.next();
           if (listener.getClass().getName().equals(epListenerExtension.getListenerClass())) {
             iterator.remove();
             return;
@@ -255,7 +254,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   public void addAvailabilityListener(String epName, ExtensionPointAvailabilityListener listener) {
-    myAvailabilityListeners.put(epName, listener);
+    myAvailabilityListeners.putValue(epName, listener);
     if (hasExtensionPoint(epName)) {
       notifyAvailableListener(listener, myExtensionPoints.get(epName));
     }
@@ -318,11 +317,9 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   @SuppressWarnings({"unchecked"})
   private void notifyEPRegistered(final ExtensionPoint extensionPoint) {
-    List<ExtensionPointAvailabilityListener> listeners = (List<ExtensionPointAvailabilityListener>) myAvailabilityListeners.get(extensionPoint.getName());
-    if (listeners != null) {
-      for (final ExtensionPointAvailabilityListener listener : listeners) {
-        notifyAvailableListener(listener, extensionPoint);
-      }
+    Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(extensionPoint.getName());
+    for (final ExtensionPointAvailabilityListener listener : listeners) {
+      notifyAvailableListener(listener, extensionPoint);
     }
   }
 
@@ -372,11 +369,9 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   @SuppressWarnings({"unchecked"})
   private void notifyEPRemoved(final ExtensionPoint extensionPoint) {
-    List<ExtensionPointAvailabilityListener> listeners = (List<ExtensionPointAvailabilityListener>) myAvailabilityListeners.get(extensionPoint.getName());
-    if (listeners != null) {
-      for (final ExtensionPointAvailabilityListener listener : listeners) {
-        notifyUnavailableListener(extensionPoint, listener);
-      }
+    Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(extensionPoint.getName());
+    for (final ExtensionPointAvailabilityListener listener : listeners) {
+      notifyUnavailableListener(extensionPoint, listener);
     }
   }
 

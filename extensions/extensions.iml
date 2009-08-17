@@ -10,7 +10,6 @@
     <orderEntry type="library" exported="" name="XStream" level="project" />
     <orderEntry type="library" exported="" name="JDOM" level="project" />
     <orderEntry type="library" name="picocontainer" level="project" />
-    <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="Annotations" />
     <orderEntry type="module" module-name="util" />
   </component>
