@@ -593,6 +593,10 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   public String getHelpTopic() {
+    final ConfigurationType type = getSelectedConfigurationType();
+    if (type != null) {
+      return "reference.dialogs.rundebug." + type.getId();
+    }
     return "reference.dialogs.rundebug";
   }
 
