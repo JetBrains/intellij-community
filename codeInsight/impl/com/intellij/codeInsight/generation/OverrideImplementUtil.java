@@ -29,6 +29,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -462,7 +463,7 @@ public class OverrideImplementUtil {
         super.fillToolbarActions(group);
         if (toImplement) return;
 
-        final ToggleAction mergeAction = new ToggleAction("Show methods to implement") {
+        final ToggleAction mergeAction = new ToggleAction("Show methods to implement", "Show methods to implement", IconLoader.findIcon("/general/show_to_implement.png")) {
           @Override
           public boolean isSelected(AnActionEvent e) {
             return merge.get().booleanValue();
