@@ -6,10 +6,10 @@ package com.intellij.psi;
 
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PsiDeclaredTarget;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
