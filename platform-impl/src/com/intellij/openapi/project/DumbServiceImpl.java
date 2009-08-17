@@ -5,10 +5,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -16,7 +13,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.BalloonHandler;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.util.Consumer;
@@ -104,22 +100,17 @@ public class DumbServiceImpl extends DumbService {
       public void run() {
         if (myProject.isDisposed()) return;
 
-        myPublisher.beforeEnteringDumbMode();
-
-        final boolean wasDumb = ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
-          public Boolean compute() {
-            final boolean wasDumb = myDumb.getAndSet(true);
-            if (!wasDumb) {
+        final boolean wasDumb = myDumb.getAndSet(true);
+        if (!wasDumb) {
+          myPublisher.beforeEnteringDumbMode();
+          new WriteAction() {
+            protected void run(Result result) throws Throwable {
               myPublisher.enteredDumbMode();
             }
-            return wasDumb;
-          }
-        }).booleanValue();
-
-        if (wasDumb) {
-          myUpdateQueue.addLast(update);
-        } else {
+          }.execute();
           update.run();
+        } else {
+          myUpdateQueue.addLast(update);
         }
       }
     });
