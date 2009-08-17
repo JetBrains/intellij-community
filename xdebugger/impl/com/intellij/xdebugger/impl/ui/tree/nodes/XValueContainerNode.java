@@ -37,7 +37,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
 
   public void startComputingChildren() {
     myCachedAllChildren = null;
-    myMessageChildren = Collections.singletonList(createLoadingMessageNode());
+    setMessageNode(createLoadingMessageNode());
     myValueContainer.computeChildren(this);
   }
 
@@ -91,6 +91,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     myCachedAllChildren = null;
     myMessageChildren = null;
     myValueChildren = null;
+    fireNodeChildrenChanged();
   }
 
   public void setErrorMessage(final @NotNull String errorMessage) {
@@ -108,6 +109,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     myMessageChildren = Collections.emptyList();
     fireNodesRemoved(indices, nodes);
     myMessageChildren = Collections.singletonList(messageNode);
+    myCachedAllChildren = null;
     fireNodesInserted(myMessageChildren);
   }
 
