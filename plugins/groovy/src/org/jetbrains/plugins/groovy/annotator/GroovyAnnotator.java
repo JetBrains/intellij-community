@@ -56,7 +56,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -673,10 +672,10 @@ public class GroovyAnnotator implements Annotator {
       PsiElement elt = refNameElement == null ? refExpr : refNameElement;
       Annotation annotation = holder.createInfoAnnotation(elt, null);
       if (refExpr.getQualifierExpression() == null) {
-        if (!(parent instanceof GrCallExpression)) {
+        if (!(parent instanceof GrCall)) {
           registerCreateClassByTypeFix(refExpr, annotation);
+          registerAddImportFixes(refExpr, annotation);
         }
-        registerAddImportFixes(refExpr, annotation);
       }
       registerReferenceFixes(refExpr, annotation);
       annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
