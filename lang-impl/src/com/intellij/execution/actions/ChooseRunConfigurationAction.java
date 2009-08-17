@@ -13,11 +13,15 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +40,11 @@ public class ChooseRunConfigurationAction extends AnAction {
   private static final Icon EDIT_ICON = IconLoader.getIcon("/actions/editSource.png");
   private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
 
+  private static final Icon _00_ICON = IconLoader.getIcon("/ide/numbers/00.png");
+  private static final Icon _01_ICON = IconLoader.getIcon("/ide/numbers/01.png");
+  private static final Icon _02_ICON = IconLoader.getIcon("/ide/numbers/02.png");
+  private static final Icon _03_ICON = IconLoader.getIcon("/ide/numbers/03.png");
+
   private Executor myCurrentExecutor;
   private boolean myEditConfiguration;
   private boolean myDeleteConfiguration;
@@ -48,15 +57,16 @@ public class ChooseRunConfigurationAction extends AnAction {
     final Executor executor = getDefaultExecutor();
     assert executor != null;
 
-    final ListPopupImpl popup =
-      new ListPopupImpl(new ConfigurationListPopupStep(this, project, String.format("%s", executor.getActionName()))) {
-        {
-          registerActions(this, getInputMap(), getActionMap());
-        }};
+    final ListPopup popup = JBPopupFactory.getInstance()
+      .createListPopup(new ConfigurationListPopupStep(this, project, String.format("%s", executor.getActionName())));
+
+    if (popup instanceof ListPopupImpl) {
+      registerActions((ListPopupImpl)popup);
+    }
 
     final String adText = getAdText(getAlternateExecutor());
     if (adText != null) {
-      popup.setAdText(adText);
+      ((AbstractPopup)popup).setAdText(adText);
     }
 
     popup.showCenteredInCurrentWindow(project);
@@ -80,18 +90,61 @@ public class ChooseRunConfigurationAction extends AnAction {
     return null;
   }
 
-  private void registerActions(final ListPopupImpl listPopup, @NotNull final InputMap inputMap, @NotNull final ActionMap actionMap) {
-    inputMap.put(KeyStroke.getKeyStroke("shift pressed SHIFT"), "alternateExecutor");
-    inputMap.put(KeyStroke.getKeyStroke("released SHIFT"), "restoreDefaultExecutor");
-    inputMap.put(KeyStroke.getKeyStroke("shift ENTER"), "invokeAction");
-    inputMap.put(KeyStroke.getKeyStroke("F4"), "editConfiguration");
-    inputMap.put(KeyStroke.getKeyStroke("DELETE"), "deleteConfiguration");
+  private static Icon getNumberIcon(final Icon base, final int number) {
+    switch (number) {
+      case 0:
+        return LayeredIcon.create(base, _00_ICON);
+      case 1:
+        return LayeredIcon.create(base, _01_ICON);
+      case 2:
+        return LayeredIcon.create(base, _02_ICON);
+      case 3:
+        return LayeredIcon.create(base, _03_ICON);
+      default:
+        return base;
+    }
+  }
 
-    actionMap.put("deleteConfiguration", new AbstractAction() {
+  private void registerActions(final ListPopupImpl popup) {
+    popup.registerAction("alternateExecutor", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        myCurrentExecutor = getAlternateExecutor();
+        updatePresentation(popup);
+      }
+    });
+
+    popup.registerAction("restoreDefaultExecutor", KeyStroke.getKeyStroke("released SHIFT"), new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        myCurrentExecutor = getDefaultExecutor();
+        updatePresentation(popup);
+      }
+    });
+
+
+    popup.registerAction("invokeAction", KeyStroke.getKeyStroke("shift ENTER"), new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        popup.handleSelect(true);
+      }
+    });
+
+    popup.registerAction("editConfiguration", KeyStroke.getKeyStroke("F4"), new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        myEditConfiguration = true;
+        try {
+          popup.handleSelect(true);
+        }
+        finally {
+          myEditConfiguration = false;
+        }
+      }
+    });
+
+
+    popup.registerAction("deleteConfiguration", KeyStroke.getKeyStroke("DELETE"), new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         myDeleteConfiguration = true;
         try {
-          listPopup.handleSelect(true);
+          popup.handleSelect(true);
         }
         finally {
           myDeleteConfiguration = false;
@@ -99,44 +152,36 @@ public class ChooseRunConfigurationAction extends AnAction {
       }
     });
 
-    actionMap.put("editConfiguration", new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        myEditConfiguration = true;
-        try {
-          listPopup.handleSelect(true);
-        }
-        finally {
-          myEditConfiguration = false;
-        }
-
-      }
-    });
-
-    actionMap.put("invokeAction", new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        listPopup.handleSelect(true);
-      }
-    });
-
-    actionMap.put("alternateExecutor", new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        myCurrentExecutor = getAlternateExecutor();
-        updatePresentation(listPopup);
-      }
-    });
-
-    actionMap.put("restoreDefaultExecutor", new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        myCurrentExecutor = getDefaultExecutor();
-        updatePresentation(listPopup);
-      }
-    });
+    popup.registerAction("0Action", KeyStroke.getKeyStroke("0"), createNumberAction(0, popup, getDefaultExecutor()));
+    popup.registerAction("0Action_", KeyStroke.getKeyStroke("shift pressed 0"), createNumberAction(0, popup, getAlternateExecutor()));
+    popup.registerAction("1Action", KeyStroke.getKeyStroke("1"), createNumberAction(1, popup, getDefaultExecutor()));
+    popup.registerAction("1Action_", KeyStroke.getKeyStroke("shift pressed 1"), createNumberAction(1, popup, getAlternateExecutor()));
+    popup.registerAction("2Action", KeyStroke.getKeyStroke("2"), createNumberAction(2, popup, getDefaultExecutor()));
+    popup.registerAction("2Action_", KeyStroke.getKeyStroke("shift pressed 2"), createNumberAction(2, popup, getAlternateExecutor()));
+    popup.registerAction("3Action", KeyStroke.getKeyStroke("3"), createNumberAction(3, popup, getDefaultExecutor()));
+    popup.registerAction("3Action_", KeyStroke.getKeyStroke("shift pressed 3"), createNumberAction(3, popup, getAlternateExecutor()));
   }
 
   private void updatePresentation(ListPopupImpl listPopup) {
     final Executor executor = getCurrentExecutor();
     if (executor != null) {
       listPopup.setCaption(executor.getActionName());
+    }
+  }
+
+  static void execute(final ItemWrapper itemWrapper, final Executor executor) {
+    if (executor == null) {
+      return;
+    }
+
+    final DataContext dataContext = DataManager.getInstance().getDataContext();
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (project != null) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          itemWrapper.perform(project, executor, dataContext);
+        }
+      });
     }
   }
 
@@ -192,6 +237,19 @@ public class ChooseRunConfigurationAction extends AnAction {
     presentation.setVisible(true);
   }
 
+  private static Action createNumberAction(final int number, final ListPopupImpl listPopup, final Executor executor) {
+    return new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        for (Object item : listPopup.getListStep().getValues()) {
+          if (item instanceof ItemWrapper && ((ItemWrapper)item).getMnemonic() == number) {
+            listPopup.cancel();
+            execute((ItemWrapper)item, executor);
+          }
+        }
+      }
+    };
+  }
+
   private abstract static class ItemWrapper<T> {
     private T myValue;
     private boolean myDynamic = false;
@@ -219,6 +277,23 @@ public class ChooseRunConfigurationAction extends AnAction {
 
     public void setDynamic(final boolean b) {
       myDynamic = b;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ItemWrapper that = (ItemWrapper)o;
+
+      if (myValue != null ? !myValue.equals(that.myValue) : that.myValue != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myValue != null ? myValue.hashCode() : 0;
     }
 
     public abstract Icon getIcon();
@@ -267,13 +342,18 @@ public class ChooseRunConfigurationAction extends AnAction {
 
         @Override
         public Icon getIcon() {
-          return ExecutionUtil.getConfigurationIcon(project, getValue());
+          final Icon result = ExecutionUtil.getConfigurationIcon(project, getValue());
+          if (getMnemonic() != -1) {
+            return getNumberIcon(result, getMnemonic());
+          }
+
+          return result;
         }
 
         @Override
         public String getText() {
           if (getMnemonic() != -1) {
-            return String.format("&%s. %s", Integer.valueOf(getMnemonic()), getValue().getName());
+            return String.format("%s", getValue().getName());
           }
 
           return getValue().getName();
@@ -301,6 +381,7 @@ public class ChooseRunConfigurationAction extends AnAction {
   private static final class ConfigurationListPopupStep extends BaseListPopupStep<ItemWrapper> {
     private Project myProject;
     private ChooseRunConfigurationAction myAction;
+    private int myDefaultConfiguration = -1;
 
     private ConfigurationListPopupStep(@NotNull final ChooseRunConfigurationAction action,
                                        @NotNull final Project project,
@@ -308,6 +389,22 @@ public class ChooseRunConfigurationAction extends AnAction {
       super(title, createSettingsList(project));
       myProject = project;
       myAction = action;
+
+      if (-1 == getDefaultOptionIndex()) {
+        myDefaultConfiguration = getDynamicIndex();
+      }
+    }
+
+    private int getDynamicIndex() {
+      int i = 0;
+      for (final ItemWrapper wrapper : getValues()) {
+        if (wrapper.isDynamic()) {
+          return i;
+        }
+        i++;
+      }
+
+      return -1;
     }
 
     @Override
@@ -320,11 +417,29 @@ public class ChooseRunConfigurationAction extends AnAction {
 
       final List<ItemWrapper> result = new ArrayList<ItemWrapper>();
 
+      final RunnerAndConfigurationSettingsImpl selectedConfiguration = manager.getSelectedConfiguration();
+      final RunnerAndConfigurationSettingsImpl context = populateWithDynamicRunners(result, project, manager, selectedConfiguration);
+
+      final ConfigurationType[] factories = manager.getConfigurationFactories();
+      for (final ConfigurationType factory : factories) {
+        final RunnerAndConfigurationSettingsImpl[] configurations = manager.getConfigurationSettings(factory);
+        for (final RunnerAndConfigurationSettingsImpl configuration : configurations) {
+          if (configuration != context) { // exclude context configuration
+            final ItemWrapper wrapped = ItemWrapper.wrap(project, configuration);
+            if (configuration == selectedConfiguration) {
+              wrapped.setMnemonic(1);
+            }
+
+            result.add(wrapped);
+          }
+        }
+      }
+
       //noinspection unchecked
-      result.add(new ItemWrapper(null) {
+      final ItemWrapper edit = new ItemWrapper(null) {
         @Override
         public Icon getIcon() {
-          return EDIT_ICON;
+          return getNumberIcon(EDIT_ICON, 0);
         }
 
         @Override
@@ -336,19 +451,10 @@ public class ChooseRunConfigurationAction extends AnAction {
         public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
           new EditConfigurationsDialog(project).show();
         }
-      });
+      };
 
-      final RunnerAndConfigurationSettingsImpl context = populateWithDynamicRunners(result, project, manager);
-
-      final ConfigurationType[] factories = manager.getConfigurationFactories();
-      for (final ConfigurationType factory : factories) {
-        final RunnerAndConfigurationSettingsImpl[] configurations = manager.getConfigurationSettings(factory);
-        for (final RunnerAndConfigurationSettingsImpl configuration : configurations) {
-          if (configuration != context) { // exclude context configuration
-            result.add(ItemWrapper.wrap(project, configuration));
-          }
-        }
-      }
+      edit.setMnemonic(0);
+      result.add(0, edit);
 
       return result.toArray(new ItemWrapper[result.size()]);
     }
@@ -356,10 +462,15 @@ public class ChooseRunConfigurationAction extends AnAction {
     @Nullable
     private static RunnerAndConfigurationSettingsImpl populateWithDynamicRunners(final List<ItemWrapper> result,
                                                                                  final Project project,
-                                                                                 final RunManagerEx manager) {
+                                                                                 final RunManagerEx manager,
+                                                                                 final RunnerAndConfigurationSettingsImpl selectedConfiguration) {
       final DataContext dataContext = DataManager.getInstance().getDataContext();
       final ConfigurationContext context = new ConfigurationContext(dataContext);
       final RunnerAndConfigurationSettingsImpl existing = context.findExisting();
+      if (existing != null && existing == selectedConfiguration) {
+        return null;
+      }
+
       if (existing == null) {
         final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferedProducers(context.getLocation(), context);
         if (producers == null) return null;
@@ -370,24 +481,34 @@ public class ChooseRunConfigurationAction extends AnAction {
           }
         });
 
-        int i = 1;
+        final RunnerAndConfigurationSettingsImpl[] preferred = {null};
+
+        int i = 2; // selectedConfiguration == null ? 1 : 2;
         for (final RuntimeConfigurationProducer producer : producers) {
           final RunnerAndConfigurationSettingsImpl configuration = producer.getConfiguration();
           if (configuration != null) {
+
+            if (preferred[0] == null) {
+              preferred[0] = configuration;
+            }
 
             //noinspection unchecked
             final ItemWrapper wrapper = new ItemWrapper(null) {
               @Override
               public Icon getIcon() {
-                return IconLoader.getTransparentIcon(ExecutionUtil.getConfigurationIcon(project, configuration), 0.3f);
+                Icon result = IconLoader.getTransparentIcon(ExecutionUtil.getConfigurationIcon(project, configuration), 0.3f);
+                if (getMnemonic() != -1) {
+                  result = getNumberIcon(result, getMnemonic());
+                }
+
+                return result;
               }
 
               @Override
               public String getText() {
                 return producers.size() == 1
-                       ? String.format("&%s. %s", Integer.toString(getMnemonic()), configuration.getName())
-                       : String.format("&%s. %s (%s)", Integer.toString(getMnemonic()), configuration.getName(),
-                                       producer.getConfigurationType().getDisplayName());
+                       ? String.format("%s", configuration.getName())
+                       : String.format("%s (%s)", configuration.getName(), producer.getConfigurationType().getDisplayName());
               }
 
               @Override
@@ -414,10 +535,12 @@ public class ChooseRunConfigurationAction extends AnAction {
             i++;
           }
         }
+
+        return preferred[0];
       }
       else {
         final ItemWrapper wrapper = ItemWrapper.wrap(project, existing, true);
-        wrapper.setMnemonic(1);
+        wrapper.setMnemonic(2); // selectedConfiguration == null ? 1 : 2);
         result.add(wrapper);
       }
 
@@ -453,22 +576,12 @@ public class ChooseRunConfigurationAction extends AnAction {
     @Override
     public int getDefaultOptionIndex() {
       final RunnerAndConfigurationSettings currentConfiguration = RunManager.getInstance(myProject).getSelectedConfiguration();
-
-      final List<ItemWrapper> list = getValues();
-      int i = 0;
-      for (final ItemWrapper wrapper : list) {
-        if (wrapper.getValue() == currentConfiguration) {
-          return i;
-        }
-        i++;
+      if (currentConfiguration == null && myDefaultConfiguration != -1) {
+        return myDefaultConfiguration;
       }
 
-      return super.getDefaultOptionIndex();
-    }
-
-    @Override
-    public boolean isMnemonicsNavigationEnabled() {
-      return true;
+      return currentConfiguration instanceof RunnerAndConfigurationSettingsImpl ? getValues()
+        .indexOf(ItemWrapper.wrap(myProject, (RunnerAndConfigurationSettingsImpl)currentConfiguration)) : -1;
     }
 
     @Override

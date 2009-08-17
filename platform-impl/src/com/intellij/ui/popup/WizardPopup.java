@@ -50,6 +50,9 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   private Window myOwnerWindow;
   private MyComponentAdapter myOwnerListener;
 
+  private ActionMap myActionMap = new ActionMap();
+  private InputMap myInputMap = new InputMap();
+
   public WizardPopup(PopupStep aStep) {
     this(null, aStep);
   }
@@ -230,13 +233,13 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   public final void registerAction(@NonNls String aActionName, int aKeyCode, int aModifier, Action aAction) {
-    getInputMap().put(KeyStroke.getKeyStroke(aKeyCode, aModifier), aActionName);
-    getActionMap().put(aActionName, aAction);
+    myInputMap.put(KeyStroke.getKeyStroke(aKeyCode, aModifier), aActionName);
+    myActionMap.put(aActionName, aAction);
   }
 
   public final void registerAction(@NonNls String aActionName, KeyStroke keyStroke, Action aAction) {
-    getInputMap().put(keyStroke, aActionName);
-    getActionMap().put(aActionName, aAction);
+    myInputMap.put(keyStroke, aActionName);
+    myActionMap.put(aActionName, aAction);
   }
 
   protected abstract InputMap getInputMap();
@@ -290,7 +293,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     }
 
     if (event.getID() == KeyEvent.KEY_PRESSED) {
-      final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyChar(), event.getModifiers(), false);
+      final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyCode(), event.getModifiers(), false);
       if (proceedKeyEvent(event, stroke)) return;
     }
 
@@ -308,8 +311,8 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   private boolean proceedKeyEvent(KeyEvent event, KeyStroke stroke) {
-    if (getInputMap().get(stroke) != null) {
-      final Action action = getActionMap().get(getInputMap().get(stroke));
+    if (myInputMap.get(stroke) != null) {
+      final Action action = myActionMap.get(myInputMap.get(stroke));
       if (action != null && action.isEnabled()) {
         action.actionPerformed(new ActionEvent(getContent(), event.getID(), "", event.getWhen(), event.getModifiers()));
         return true;
