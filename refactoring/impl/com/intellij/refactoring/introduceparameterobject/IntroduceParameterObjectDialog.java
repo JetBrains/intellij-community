@@ -1,19 +1,21 @@
 package com.intellij.refactoring.introduceparameterobject;
 
-import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.TreeClassChooserDialog;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,12 +36,11 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
   private JTextField sourceMethodTextField;
 
   private JRadioButton useExistingClassButton;
-  private TextFieldWithBrowseButton existingClassField;
   private JPanel myUseExistingPanel;
 
   private JRadioButton createNewClassButton;
   private JTextField classNameField;
-  private TextFieldWithBrowseButton packageTextField;
+
   private JPanel myCreateNewClassPanel;
 
   private JRadioButton myCreateInnerClassRadioButton;
@@ -49,6 +50,9 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
   private JPanel myWholePanel;
   private JPanel myParamsPanel;
   private JCheckBox keepMethodAsDelegate;
+  private ReferenceEditorComboWithBrowseButton packageTextField;
+  private ReferenceEditorComboWithBrowseButton existingClassField;
+  private static final String RECENTS_KEY = "IntroduceParameterObject.RECENTS_KEY";
 
   public IntroduceParameterObjectDialog(PsiMethod sourceMethod) {
     super(sourceMethod.getProject(), true);
@@ -59,8 +63,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
         validateButtons();
       }
     };
-    packageTextField.getTextField().getDocument().addDocumentListener(docListener);
-    existingClassField.getTextField().getDocument().addDocumentListener(docListener);
+
     classNameField.getDocument().addDocumentListener(docListener);
     myInnerClassNameTextField.getDocument().addDocumentListener(docListener);
     final PsiParameterList parameterList = sourceMethod.getParameterList();
@@ -208,43 +211,6 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
 
   protected JComponent createCenterPanel() {
     sourceMethodTextField.setEditable(false);
-
-    existingClassField.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final Project project = sourceMethod.getProject();
-        final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-        final TreeClassChooserDialog chooser =
-          new TreeClassChooserDialog(RefactorJBundle.message("select.wrapper.class"), project, scope, null, null);
-        final String classText = existingClassField.getText();
-        final PsiClass currentClass = JavaPsiFacade.getInstance(project).findClass(classText, GlobalSearchScope.allScope(project));
-        if (currentClass != null) {
-          chooser.selectClass(currentClass);
-        }
-        chooser.show();
-        final PsiClass selectedClass = chooser.getSelectedClass();
-        if (selectedClass != null) {
-          final String className = selectedClass.getQualifiedName();
-          existingClassField.setText(className);
-        }
-      }
-    });
-
-    packageTextField.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final Project project = sourceMethod.getProject();
-        final PackageChooserDialog chooser = new PackageChooserDialog(RefactorJBundle.message("choose.destination.package.label"), project);
-        final String packageText = packageTextField.getText();
-        chooser.selectPackage(packageText);
-        chooser.show();
-        final PsiPackage aPackage = chooser.getSelectedPackage();
-        if (aPackage != null) {
-          final String packageName = aPackage.getQualifiedName();
-          packageTextField.setText(packageName);
-        }
-      }
-    });
-
-
     final ParameterTablePanel paramsPanel = new ParameterTablePanel(myProject, parameterInfo, sourceMethod) {
       protected void updateSignature() {}
 
@@ -273,5 +239,40 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
 
   public boolean keepMethodAsDelegate() {
     return keepMethodAsDelegate.isSelected();
+  }
+
+  private void createUIComponents() {
+    packageTextField =
+          new PackageNameReferenceEditorCombo("", myProject, RECENTS_KEY, RefactoringBundle.message("choose.destination.package"));
+        final Document document = packageTextField.getChildComponent().getDocument();
+    final com.intellij.openapi.editor.event.DocumentAdapter adapter = new com.intellij.openapi.editor.event.DocumentAdapter() {
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+        validateButtons();
+      }
+    };
+    document.addDocumentListener(adapter);
+
+    existingClassField = new ReferenceEditorComboWithBrowseButton(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final Project project = sourceMethod.getProject();
+        final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+        final TreeClassChooserDialog chooser =
+          new TreeClassChooserDialog(RefactorJBundle.message("select.wrapper.class"), project, scope, null, null);
+        final String classText = existingClassField.getText();
+        final PsiClass currentClass = JavaPsiFacade.getInstance(project).findClass(classText, GlobalSearchScope.allScope(project));
+        if (currentClass != null) {
+          chooser.selectClass(currentClass);
+        }
+        chooser.show();
+        final PsiClass selectedClass = chooser.getSelectedClass();
+        if (selectedClass != null) {
+          final String className = selectedClass.getQualifiedName();
+          existingClassField.setText(className);
+        }
+      }
+    }, "", PsiManager.getInstance(myProject), true, RECENTS_KEY);
+
+    existingClassField.getChildComponent().getDocument().addDocumentListener(adapter);
+
   }
 }
