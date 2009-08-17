@@ -493,7 +493,7 @@ public class ChooseRunConfigurationAction extends AnAction {
             }
 
             //noinspection unchecked
-            final ItemWrapper wrapper = new ItemWrapper(null) {
+            final ItemWrapper wrapper = new ItemWrapper(configuration) {
               @Override
               public Icon getIcon() {
                 Icon result = IconLoader.getTransparentIcon(ExecutionUtil.getConfigurationIcon(project, configuration), 0.3f);
