@@ -130,6 +130,11 @@ public class InjectionsSettingsUI implements Configurable {
       ContainerUtil.putIfNotNull(support.getId(), support.createEditAction(myProject, producer), myEditActions);
       mySupports.put(support.getId(), support);
     }
+    Collections.sort(myAddActions, new Comparator<AnAction>() {
+      public int compare(final AnAction o1, final AnAction o2) {
+        return Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText());
+      }
+    });
 
     final DefaultActionGroup group = new DefaultActionGroup();
     final AnAction addAction = new AnAction("Add", "Add", Icons.ADD_ICON) {
