@@ -456,6 +456,12 @@ public class Tree extends JTree implements Autoscroll, TestableUi {
 
     myBusy = paintBusy;
     updateBusy();
+    if (paintBusy) {
+      setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+    }
+    else {
+      setCursor(Cursor.getDefaultCursor());
+    }
   }
 
   @Override
