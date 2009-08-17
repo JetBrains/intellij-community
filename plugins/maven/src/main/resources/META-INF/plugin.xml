@@ -149,14 +149,21 @@
     <action id="Maven.AddManagedFiles"
             class="org.jetbrains.idea.maven.project.actions.AddManagedFilesAction"
             text="Add Maven Projects"
-            description="Add and import Maven projects to projects tree"
+            description="Add and import Maven projects to the projects tree"
+            icon="/general/add.png">
+    </action>
+
+    <action id="Maven.AddFileAsMavenProject"
+            class="org.jetbrains.idea.maven.project.actions.AddFileAsMavenProjectAction"
+            text="Add As Maven Project"
+            description="Add and import Maven project to the projects tree"
             icon="/general/add.png">
     </action>
 
     <action id="Maven.RemoveManagedFiles"
             class="org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction"
             text="Remove Projects"
-            description="Remove selected Maven projects from project tree"
+            description="Remove selected Maven projects from the project tree"
             icon="/general/remove.png">
       <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
     </action>
@@ -285,6 +292,7 @@
       <reference id="Maven.UpdateFoldersForProject"/>
       <reference id="Maven.DownloadArtifactsForProject"/>
       <separator/>
+      <reference id="Maven.AddFileAsMavenProject"/>
       <reference id="Maven.IgnoreProjects"/>
       <reference id="Maven.RemoveManagedFiles"/>
       <separator/>

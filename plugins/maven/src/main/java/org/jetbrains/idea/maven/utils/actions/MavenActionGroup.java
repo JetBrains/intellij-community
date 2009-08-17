@@ -2,6 +2,8 @@ package org.jetbrains.idea.maven.utils.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.vfs.VirtualFile;
 
 public class MavenActionGroup extends DefaultActionGroup {
   @Override
@@ -13,6 +15,12 @@ public class MavenActionGroup extends DefaultActionGroup {
   }
 
   protected boolean isAvailable(AnActionEvent e) {
-    return MavenActionUtil.getProject(e) != null && !MavenActionUtil.getMavenProjects(e).isEmpty();
+    if (MavenActionUtil.getProject(e) == null) return false;
+    return !MavenActionUtil.getMavenProjects(e).isEmpty()
+           || MavenActionUtil.isMavenProjectFile(getSelectedFile(e));
+  }
+
+  private VirtualFile getSelectedFile(AnActionEvent e) {
+    return e.getData(PlatformDataKeys.VIRTUAL_FILE);
   }
 }
