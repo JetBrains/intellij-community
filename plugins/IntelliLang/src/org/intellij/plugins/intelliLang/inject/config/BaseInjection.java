@@ -363,6 +363,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
           if (start == -1) continue;
           list.add(new TextRange(start, matcher.end(i)));
         }
+        if (start >= matcher.end()) break;
         start = matcher.end();
       }
     }
