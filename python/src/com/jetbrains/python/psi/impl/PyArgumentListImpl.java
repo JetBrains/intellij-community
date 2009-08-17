@@ -230,20 +230,18 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     return PsiTreeUtil.getParentOfType(this, PyCallExpression.class);
   }
 
-  @SuppressWarnings({"SuspiciousMethodCalls"})
-  protected void deletePyChild(PyBaseElementImpl element) throws IncorrectOperationException {
-    if (Arrays.asList(getArguments()).contains(element)) {
-      ASTNode node = element.getNode();
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode node) {
+    if (Arrays.asList(getArguments()).contains(node.getPsi())) {
       ASTNode next = PyPsiUtils.getNextComma(node);
       if (next == null) {
         next = PyPsiUtils.getPrevComma(node);
       }
-      ASTNode me = getNode();
       if (next != null) {
-        me.removeChild(next);
+        deleteChildInternal(next);
       }
-      me.removeChild(node);
     }
+    super.deleteChildInternal(node);
   }
 
   public AnalysisResult analyzeCall() {

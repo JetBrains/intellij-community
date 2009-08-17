@@ -69,24 +69,24 @@ public class PyListLiteralExpressionImpl extends PyElementImpl implements PyList
     return getLanguage().getElementGenerator().insertItemIntoList(getProject(), this, null, (PyExpression)psiElement);
   }
 
-  protected void deletePyChild(PyBaseElementImpl element) throws IncorrectOperationException {
-    PyUtil.ensureWritable(this);
-    if (element instanceof PyExpression) {
-      PyExpression expression = (PyExpression)element;
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    if (child.getPsi() instanceof PyExpression) {
+      PyExpression expression = (PyExpression)child.getPsi();
       ASTNode node = getNode();
       ASTNode exprNode = expression.getNode();
       ASTNode next = PyPsiUtils.getNextComma(exprNode);
       ASTNode prev = PyPsiUtils.getPrevComma(exprNode);
-      node.removeChild(exprNode);
+      super.deleteChildInternal(child);
       if (next != null) {
-        node.removeChild(next);
+        deleteChildInternal(next);
       }
       else if (prev != null) {
-        node.removeChild(prev);
+        deleteChildInternal(prev);
       }
     }
     else {
-      super.deletePyChild(element);
+      super.deleteChildInternal(child);
     }
   }
 

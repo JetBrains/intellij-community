@@ -158,17 +158,6 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     return null;
   }
 
-  public void delete() throws IncorrectOperationException {
-    PsiElement parent = getParent();
-    if (parent instanceof PyBaseElementImpl) {
-      PyBaseElementImpl pyElement = (PyBaseElementImpl)parent;
-      pyElement.deletePyChild(this);
-    }
-    else {
-      super.delete();
-    }
-  }
-
   public PsiElement replace(@NotNull PsiElement element) throws IncorrectOperationException {
     PsiElement parent = getParent();
     if (parent instanceof PyBaseElementImpl) {
@@ -178,10 +167,6 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     else {
       return super.replace(element);
     }
-  }
-
-  protected void deletePyChild(PyBaseElementImpl element) throws IncorrectOperationException {
-    throw new IncorrectOperationException("Delete not implemented in " + this);
   }
 
   protected PsiElement replacePyChild(PyElement oldel, PsiElement newel) throws IncorrectOperationException {

@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -88,17 +89,18 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     throw new IllegalArgumentException("expression " + expression + " is neither left exp or right exp");
   }
 
-  protected void deletePyChild(PyBaseElementImpl element) throws IncorrectOperationException {
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
     PyExpression left = getLeftExpression();
     PyExpression right = getRightExpression();
-    if (left == element) {
+    if (left == child.getPsi()) {
       replace(right);
     }
-    else if (right == element) {
+    else if (right == child.getPsi()) {
       replace(left);
     }
     else {
-      throw new IncorrectOperationException("Element " + element + " is neither left expression or right expression");
+      throw new IncorrectOperationException("Element " + child.getPsi() + " is neither left expression or right expression");
     }
   }
 
