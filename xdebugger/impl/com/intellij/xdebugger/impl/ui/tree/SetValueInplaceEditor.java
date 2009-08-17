@@ -32,6 +32,8 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
     myEditorPanel.add(nameLabel);
 
     myEditorPanel.add(myExpressionEditor.getComponent());
+    final String value = myModifier != null ? myModifier.getInitialValueEditorText() : null;
+    myExpressionEditor.setText(value != null ? value : "");
     myExpressionEditor.selectAll();
   }
 
@@ -54,7 +56,7 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
         });
       }
 
-      public void errorOccured(@NotNull final String errorMessage) {
+      public void errorOccurred(@NotNull final String errorMessage) {
         DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
           public void run() {
             myTree.rebuildAndRestore(treeState);
@@ -62,6 +64,10 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
             Messages.showErrorDialog(myTree, errorMessage);
           }
         });
+      }
+
+      public void errorOccured(@NotNull final String errorMessage) {
+        errorOccurred(errorMessage);
       }
     });
     super.doOKAction();
