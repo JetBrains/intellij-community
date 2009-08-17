@@ -161,18 +161,19 @@ class ParameterObjectBuilder {
         for (Iterator<ParameterSpec> iterator = fields.iterator(); iterator.hasNext();) {
             final ParameterSpec field = iterator.next();
             final PsiParameter parameter = field.getParameter();
+            outputAnnotationString(parameter, out);
+            out.append(CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS ? " final " : "");
+
             final PsiType type = field.getType();
             final String typeText;
             if (parameter.isVarArgs()) {
-                typeText = ((PsiArrayType) type).getComponentType().getCanonicalText() + "...";
+              typeText = ((PsiArrayType) type).getComponentType().getCanonicalText() + "...";
             } else {
-                typeText = type.getCanonicalText();
+              typeText = type.getCanonicalText();
             }
             final String name = calculateStrippedName(field.getName());
             final String parameterName =
-                     myJavaCodeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
-            outputAnnotationString(parameter, out);
-            out.append(CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS ? "final " : "");
+              myJavaCodeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
             out.append(' ' +typeText + ' ' + parameterName);
             if (iterator.hasNext()) {
                 out.append(", ");
