@@ -264,15 +264,6 @@
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="GoToMenu"/>
     </group>
 
-    <!-- Analyze -->
-    <group id="AnalyzeMenu" popup="true">
-      <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
-      <separator/>
-      <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction"/>
-      <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction"/>
-      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
-    </group>
-
     <!-- Refactor -->
     <group id="RefactoringMenu" popup="true">
       <action id="RenameElement" class="com.intellij.refactoring.actions.RenameElementAction"/>
@@ -293,7 +284,7 @@
       <action id="MemberPushDown" class="com.intellij.refactoring.actions.PushDownAction"/>
       <separator/>
       <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
-      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="AnalyzeMenu"/>
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
     </group>
 
     <!-- Run -->
@@ -411,7 +402,6 @@
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>
       <reference ref="ReplaceInPath"/>
-      <reference ref="AnalyzeMenu"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
       <separator/>
@@ -443,7 +433,6 @@
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>
       <reference ref="ReplaceInPath"/>
-      <reference ref="AnalyzeMenu"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
       <separator/>
@@ -475,7 +464,6 @@
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>
       <reference ref="ReplaceInPath"/>
-      <reference ref="AnalyzeMenu"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
       <separator/>
@@ -527,7 +515,6 @@
     <group id="EditorPopupMenu1">
       <separator/>
       <reference ref="FindUsages"/>
-      <reference ref="AnalyzeMenu"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>

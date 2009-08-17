@@ -105,6 +105,13 @@
     </reference>
 
     <!-- Analyze -->
+    <group id="AnalyzeMenu" popup="true">
+      <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
+      <separator/>
+      <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction"/>
+      <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction"/>
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
+    </group>
 
     <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction">
       <add-to-group group-id="AnalyzeMenu" anchor="after" relative-to-action="InspectCode"/>
@@ -349,6 +356,13 @@
     </group>
 
     <action id="ModuleSettings" class="com.intellij.ide.actions.ShowModulePropertiesAction"/>
+
+    <reference ref="AnalyzeMenu">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
+      <add-to-group group-id="NavbarPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
+      <add-to-group group-id="FavoritesViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
+      <add-to-group group-id="EditorPopupMenu1" anchor="after" relative-to-action="FindUsages"/>
+    </reference>
 
     <group id="ProjectViewAnalysisGroup">
       <reference ref="TypeHierarchy"/>

@@ -40,7 +40,14 @@
       <separator/>
       <action id="Unscramble" class="com.intellij.unscramble.AnalyzeStacktraceAction"/>
 
-      <add-to-group group-id="AnalyzeMenu" anchor="last"/>
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </group>
+
+    <group id="InspectCodePlatformMenu">
+      <separator/>
+      <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
+
+      <add-to-group group-id="CodeMenu" anchor="last"/>
     </group>
   </actions>
 
