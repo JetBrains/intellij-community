@@ -63,13 +63,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.regex.Pattern;
 
-public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
-  private final GroovyScriptConfigurationFactory factory;
-  public String vmParams;
+public class GroovyScriptRunConfiguration extends AbstractGroovyScriptRunConfiguration {
   public boolean isDebugEnabled;
   public String scriptParams;
   public String scriptPath;
-  public String workDir;
   public final String GROOVY_STARTER = "org.codehaus.groovy.tools.GroovyStarter";
   public final String GROOVY_MAIN = "groovy.ui.GroovyMain";
 
@@ -80,10 +77,8 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   @NonNls public static final String DTOOLS_JAR = "-Dtools.jar=";
   @NonNls public static final String DGROOVY_HOME = "-Dgroovy.home=";
 
-  public GroovyScriptRunConfiguration(GroovyScriptConfigurationFactory factory, Project project, String name) {
-    super(name, new RunConfigurationModule(project), factory);
-    workDir = PathUtil.getLocalPath(project.getBaseDir());
-    this.factory = factory;
+  public GroovyScriptRunConfiguration(ConfigurationFactory factory, Project project, String name) {
+    super(name, project, factory);
   }
 
   public Collection<Module> getValidModules() {
@@ -93,21 +88,6 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
       if (FacetManager.getInstance(module).getFacetsByType(GroovyFacet.ID).size() > 0) res.add(module);
     }
     return res;
-  }
-
-  public void setWorkDir(String dir) {
-    workDir = dir;
-  }
-
-  public String getWorkDir() {
-    return workDir;
-  }
-
-  public String getAbsoluteWorkDir() {
-    if (!new File(workDir).isAbsolute()) {
-      return new File(getProject().getLocation(), workDir).getAbsolutePath();
-    }
-    return workDir;
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -134,7 +114,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   }
 
   protected ModuleBasedConfiguration createInstance() {
-    return new GroovyScriptRunConfiguration(factory, getConfigurationModule().getProject(), getName());
+    return new GroovyScriptRunConfiguration(getFactory(), getConfigurationModule().getProject(), getName());
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
@@ -255,10 +235,6 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
 
     // add script parameters
     params.getProgramParametersList().addParametersString(scriptParams);
-  }
-
-  public Module getModule() {
-    return getConfigurationModule().getModule();
   }
 
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {

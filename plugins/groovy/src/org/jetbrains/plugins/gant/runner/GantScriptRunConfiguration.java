@@ -21,7 +21,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +28,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gant.GantBundle;
 import org.jetbrains.plugins.gant.GantIcons;
 import org.jetbrains.plugins.gant.config.GantConfigUtils;
-import org.jetbrains.plugins.groovy.runner.RunnerUtil;
+import org.jetbrains.plugins.groovy.runner.AbstractGroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
+import org.jetbrains.plugins.groovy.runner.RunnerUtil;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
@@ -40,24 +40,19 @@ import java.util.Collection;
 /**
  * @author ilyas
  */
-public class GantScriptRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule> {
-  private final GantScriptConfigurationFactory factory;
-  public String vmParams;
+public class GantScriptRunConfiguration extends AbstractGroovyScriptRunConfiguration {
   public boolean isDebugEnabled;
   public String scriptParams;
   public String targets;
   public String scriptPath;
-  public String workDir;
   public String antHome = "";
 
   @NonNls public static final String GANT_STARTER = "org.codehaus.groovy.tools.GroovyStarter";
   @NonNls public static final String GANT_MAIN = "gant.Gant";
   @NonNls private static final String GANT_STARTER_CONF = "/conf/gant-starter.conf";
 
-  public GantScriptRunConfiguration(GantScriptConfigurationFactory factory, Project project, String name) {
-    super(name, new RunConfigurationModule(project), factory);
-    workDir = PathUtil.getLocalPath(project.getBaseDir());
-    this.factory = factory;
+  public GantScriptRunConfiguration(ConfigurationFactory factory, Project project, String name) {
+    super(name, project, factory);
   }
 
   public Collection<Module> getValidModules() {
@@ -69,21 +64,6 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration<RunConf
       }
     }
     return res;
-  }
-
-  public void setWorkDir(String dir) {
-    workDir = dir;
-  }
-
-  public String getWorkDir() {
-    return workDir;
-  }
-
-  public String getAbsoluteWorkDir() {
-    if (!new File(workDir).isAbsolute()) {
-      return new File(getProject().getLocation(), workDir).getAbsolutePath();
-    }
-    return workDir;
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -114,7 +94,7 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration<RunConf
   }
 
   protected ModuleBasedConfiguration createInstance() {
-    return new GantScriptRunConfiguration(factory, getConfigurationModule().getProject(), getName());
+    return new GantScriptRunConfiguration(getFactory(), getConfigurationModule().getProject(), getName());
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
@@ -187,11 +167,6 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration<RunConf
         params.getProgramParametersList().addParametersString(" " + target);
       }
     }
-  }
-
-  @Nullable
-  public Module getModule() {
-    return getConfigurationModule().getModule();
   }
 
   @Nullable
