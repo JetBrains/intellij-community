@@ -41,21 +41,11 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
     public void configureModule(Module module, ModifiableRootModel model) {
     }
   };
-  public static final LightProjectDescriptor JAVA_1_5 = new LightProjectDescriptor() {
-    public ModuleType getModuleType() {
-      return StdModuleTypes.JAVA;
-    }
-
-    public Sdk getSdk() {
-      return JavaSdkImpl.getMockJdk15("java 1.5");
-    }
-
-    public void configureModule(Module module, ModifiableRootModel model) {
-    }
-  };
+  public static final LightProjectDescriptor JAVA_1_5 = new DefaultLightProjectDescriptor();
 
 
   protected JavaCodeInsightTestFixture myFixture;
+  protected Module myModule;
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -67,6 +57,8 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
 
     myFixture.setUp();
     myFixture.setTestDataPath(getTestDataPath());
+
+    myModule = myFixture.getModule();
   }
 
   /**
@@ -98,6 +90,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
   protected void tearDown() throws Exception {
     myFixture.tearDown();
     myFixture = null;
+    myModule = null;
     super.tearDown();
   }
 
