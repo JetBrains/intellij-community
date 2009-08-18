@@ -28,8 +28,12 @@ public class ManifestBuilder {
   }
 
   public static void setGlobalAttributes(Attributes mainAttributes) {
-    setIfNone(mainAttributes, Attributes.Name.MANIFEST_VERSION, "1.0");
+    setVersionAttribute(mainAttributes);
     setIfNone(mainAttributes, CREATED_BY, ApplicationNamesInfo.getInstance().getFullProductName());
+  }
+
+  public static void setVersionAttribute(Attributes mainAttributes) {
+    setIfNone(mainAttributes, Attributes.Name.MANIFEST_VERSION, "1.0");
   }
 
   private static void setIfNone(Attributes mainAttributes, Attributes.Name attrName, String value) {

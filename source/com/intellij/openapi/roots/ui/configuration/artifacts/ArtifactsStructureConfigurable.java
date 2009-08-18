@@ -9,12 +9,9 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.packaging.artifacts.*;
-import com.intellij.packaging.impl.artifacts.ArtifactModelImpl;
-import com.intellij.packaging.ui.PackagingEditorContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,13 +27,23 @@ import javax.swing.*;
     storages = {@Storage(id = "other", file = "$WORKSPACE_FILE$")}
 )
 public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
-  private ModifiableArtifactModel myModifiableModel;
-  private final ArtifactsStructureConfigurable.MyPackagingEditorContext myPackagingEditorContext;
+  private ArtifactsStructureConfigurableContextImpl myPackagingEditorContext;
   @NonNls private static final String DEFAULT_ARTIFACT_NAME = "unnamed";
 
   public ArtifactsStructureConfigurable(@NotNull Project project) {
     super(project);
-    myPackagingEditorContext = new MyPackagingEditorContext();
+  }
+
+  @Override
+  public void init(StructureConfigurableContext context) {
+    super.init(context);
+    myPackagingEditorContext = new ArtifactsStructureConfigurableContextImpl(myContext, myProject, new ArtifactAdapter() {
+      @Override
+      public void artifactAdded(@NotNull Artifact artifact) {
+        final MyNode node = addArtifactNode(artifact);
+        selectNodeInTree(node);
+      }
+    });
   }
 
   @Nls
@@ -60,16 +67,17 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
 
   @Override
   public void reset() {
-    myModifiableModel = null;
+    myPackagingEditorContext.resetModifiableModel();
     super.reset();
   }
 
   @Override
   public boolean isModified() {
-    if (myModifiableModel != null && myModifiableModel.isModified()) {
+    final ModifiableArtifactModel modifiableModel = myPackagingEditorContext.getActualModifiableModel();
+    if (modifiableModel != null && modifiableModel.isModified()) {
       return true;
     }
-    return super.isModified();
+    return myPackagingEditorContext.getManifestFilesInfo().isManifestFilesModified() || super.isModified();
   }
 
   protected AbstractAddGroup createAddAction() {
@@ -101,14 +109,22 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   @Override
   public void apply() throws ConfigurationException {
     super.apply();
-    if (myModifiableModel != null) {
+    myPackagingEditorContext.getManifestFilesInfo().saveManifestFiles();
+    final ModifiableArtifactModel modifiableModel = myPackagingEditorContext.getActualModifiableModel();
+    if (modifiableModel != null) {
       new WriteAction() {
         protected void run(final Result result) {
-          myModifiableModel.commit();
+          modifiableModel.commit();
         }
       }.execute();
-      myModifiableModel = null;
+      myPackagingEditorContext.resetModifiableModel();
     }
+  }
+
+  @Override
+  public void disposeUIResources() {
+    super.disposeUIResources();
+    myPackagingEditorContext.disposeUIResources();
   }
 
   @Override
@@ -138,46 +154,6 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     return null;
   }
 
-
-  private class MyPackagingEditorContext implements PackagingEditorContext {
-    @NotNull
-    public Project getProject() {
-      return myProject;
-    }
-
-    @NotNull
-    public ArtifactModel getArtifactModel() {
-      if (myModifiableModel != null) {
-        return myModifiableModel;
-      }
-      return ArtifactManager.getInstance(myProject);
-    }
-
-    @NotNull
-    public ModifiableArtifactModel getModifiableArtifactModel() {
-      if (myModifiableModel == null) {
-        myModifiableModel = ArtifactManager.getInstance(myProject).createModifiableModel();
-        ((ArtifactModelImpl)myModifiableModel).addListener(new ArtifactAdapter() {
-          @Override
-          public void artifactAdded(@NotNull Artifact artifact) {
-            final MyNode node = addArtifactNode(artifact);
-            selectNodeInTree(node);
-          }
-        });
-      }
-      return myModifiableModel;
-    }
-
-    @NotNull
-    public ModulesProvider getModulesProvider() {
-      return myContext.getModulesConfigurator();
-    }
-
-    @NotNull
-    public FacetsProvider getFacetsProvider() {
-      return myContext.getModulesConfigurator().getFacetsConfigurator();
-    }
-  }
 
   private class AddArtifactAction extends AnAction {
     private final ArtifactType myType;

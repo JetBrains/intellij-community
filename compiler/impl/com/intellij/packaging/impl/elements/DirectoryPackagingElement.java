@@ -7,7 +7,9 @@ import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +19,7 @@ import java.util.List;
  *
  * classpath is used for exploded WAR and EJB directories under exploded EAR
  */
-public class DirectoryPackagingElement extends CompositeElementWithClasspath<DirectoryPackagingElement> {
+public class DirectoryPackagingElement extends CompositeElementWithManifest<DirectoryPackagingElement> {
   private String myDirectoryName;
 
   public DirectoryPackagingElement() {
@@ -58,6 +60,11 @@ public class DirectoryPackagingElement extends CompositeElementWithClasspath<Dir
     return this;
   }
 
+  @NonNls @Override
+  public String toString() {
+    return "dir:" + myDirectoryName;
+  }
+
   @Attribute("name")
   public String getDirectoryName() {
     return myDirectoryName;
@@ -79,5 +86,9 @@ public class DirectoryPackagingElement extends CompositeElementWithClasspath<Dir
   @Override
   public boolean isEqualTo(@NotNull PackagingElement<?> element) {
     return element instanceof DirectoryPackagingElement && ((DirectoryPackagingElement)element).getDirectoryName().equals(myDirectoryName);
+  }
+
+  public void loadState(DirectoryPackagingElement state) {
+    XmlSerializerUtil.copyBean(state, this);
   }
 }

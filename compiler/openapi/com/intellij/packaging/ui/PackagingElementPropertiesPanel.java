@@ -1,25 +1,14 @@
 package com.intellij.packaging.ui;
 
-import com.intellij.packaging.elements.PackagingElement;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
+import com.intellij.openapi.options.UnnamedConfigurable;
 
 /**
  * @author nik
  */
-public abstract class PackagingElementPropertiesPanel<E extends PackagingElement<?>> {
+public abstract class PackagingElementPropertiesPanel implements UnnamedConfigurable {
 
-  @NotNull
-  public abstract JComponent getComponent();
+  public abstract void apply();
 
-  public boolean isAvailable(@NotNull E element) {
-    return true;
+  public void disposeUIResources() {
   }
-
-  public abstract void loadFrom(@NotNull E element);
-
-  public abstract boolean isModified(@NotNull E original);
-
-  public abstract void saveTo(@NotNull E element);
 }

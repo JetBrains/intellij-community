@@ -5,6 +5,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.packaging.artifacts.Artifact;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -17,10 +18,33 @@ public abstract class PackagingElementFactory {
     return ServiceManager.getService(PackagingElementFactory.class);
   }
 
-  public abstract PackagingElementType<?>[] getNonCompositeElementTypes();
-
   @NotNull
   public abstract ArtifactRootElement<?> createArtifactRootElement();
+
+  @NotNull
+  public abstract CompositePackagingElement<?> createDirectory(@NotNull @NonNls String directoryName);
+
+  @NotNull
+  public abstract CompositePackagingElement<?> createArchive(@NotNull @NonNls String archiveFileName);
+
+  @NotNull
+  public abstract PackagingElement<?> createModuleOutput(@NotNull String moduleName);
+
+  @NotNull
+  public abstract List<? extends PackagingElement<?>> createLibraryElements(@NotNull Library library);
+
+  @NotNull
+  public abstract PackagingElement<?> createArtifactElement(@NotNull Artifact artifact);
+
+  @NotNull
+  public abstract PackagingElement<?> createLibraryFiles(@NotNull String level, @NotNull String name);
+
+  @NotNull
+  public abstract PackagingElement<?> createFileCopy(@NotNull String filePath);
+
+
+  @NotNull
+  public abstract PackagingElement<?> createFileCopyWithParentDirectories(@NotNull String filePath, @NotNull String relativeOutputPath);
 
   @NotNull
   public abstract CompositePackagingElement<?> getOrCreateDirectory(@NotNull CompositePackagingElement<?> parent, @NotNull String relativePath);
@@ -28,25 +52,22 @@ public abstract class PackagingElementFactory {
   @NotNull
   public abstract CompositePackagingElement<?> getOrCreateArchive(@NotNull CompositePackagingElement<?> parent, @NotNull String relativePath);
 
-  public abstract CompositePackagingElement<?> createDirectory(@NotNull @NonNls String directoryName);
+  public abstract void addFileCopy(@NotNull CompositePackagingElement<?> root, @NotNull String outputDirectoryPath, @NotNull String sourceFilePath);
 
-  public abstract CompositePackagingElement<?> createArchive(@NotNull @NonNls String archiveFileName);
+  @NotNull
+  public abstract PackagingElement<?> createParentDirectories(@NotNull String relativeOutputPath, @NotNull PackagingElement<?> element);
 
-  public abstract PackagingElement<?> createFileCopy(@NotNull String filePath, @NotNull String relativeOutputPath);
 
-  public abstract PackagingElement<?> createModuleOutput(@NotNull String moduleName);
-
-  public abstract List<? extends PackagingElement<?>> createLibraryElements(@NotNull Library library);
-
-  public abstract PackagingElement<?> createLibraryFiles(@NotNull String level, @NotNull String name);
-
+  @NotNull
   public abstract CompositePackagingElementType<?>[] getCompositeElementTypes();
 
+  @Nullable
   public abstract PackagingElementType<?> findElementType(String id);
 
+  @NotNull
+  public abstract PackagingElementType<?>[] getNonCompositeElementTypes();
+
+  @NotNull
   public abstract PackagingElementType[] getAllElementTypes();
 
-  public abstract PackagingElement<?> createArtifactElement(@NotNull Artifact artifact);
-
-  public abstract PackagingElement<?> createParentDirectories(@NotNull String relativeOutputPath, @NotNull PackagingElement<?> element);
 }

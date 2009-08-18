@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface ArtifactValidationManager {
 
-  PackagingEditorContext getContext();
+  ArtifactEditorContext getContext();
 
   void registerProblem(@NotNull String message);
 

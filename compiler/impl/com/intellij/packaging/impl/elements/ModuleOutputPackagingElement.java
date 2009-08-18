@@ -14,6 +14,7 @@ import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Collections;
 import java.util.List;
@@ -76,6 +77,11 @@ public class ModuleOutputPackagingElement extends PackagingElement<ModuleOutputP
 
   public void loadState(ModuleOutputPackagingElement state) {
     myModuleName = state.getModuleName();
+  }
+
+  @NonNls @Override
+  public String toString() {
+    return "module:" + myModuleName;
   }
 
   @Attribute("name")

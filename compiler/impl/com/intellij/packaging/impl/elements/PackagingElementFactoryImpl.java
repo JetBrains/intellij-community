@@ -47,6 +47,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
       ArtifactElementType.ARTIFACT_ELEMENT_TYPE, FILE_COPY_ELEMENT_TYPE,
   };
 
+  @NotNull
   @Override
   public PackagingElementType<?>[] getNonCompositeElementTypes() {
     final List<PackagingElementType> elementTypes = new ArrayList<PackagingElementType>();
@@ -58,6 +59,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     return elementTypes.toArray(new PackagingElementType[elementTypes.size()]);
   }
 
+  @NotNull
   @Override
   public CompositePackagingElementType<?>[] getCompositeElementTypes() {
     final List<CompositePackagingElementType> elementTypes = new ArrayList<CompositePackagingElementType>();
@@ -82,17 +84,20 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     throw new AssertionError(id + " not registered");
   }
 
+  @NotNull
   @Override
   public PackagingElementType[] getAllElementTypes() {
     final PackagingElementType[] types = Extensions.getExtensions(PackagingElementType.EP_NAME);
     return ArrayUtil.mergeArrays(STANDARD_TYPES, types, PackagingElementType.class);
   }
 
+  @NotNull
   @Override
   public PackagingElement<?> createArtifactElement(@NotNull Artifact artifact) {
     return new ArtifactPackagingElement(artifact.getName());
   }
 
+  @NotNull
   public DirectoryPackagingElement createDirectory(@NotNull @NonNls String directoryName) {
     return new DirectoryPackagingElement(directoryName);
   }
@@ -115,6 +120,11 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     return getOrCreateDirectoryOrArchive(parent, relativePath, false);
   }
 
+  @Override
+  public void addFileCopy(@NotNull CompositePackagingElement<?> root, @NotNull String outputDirectoryPath, @NotNull String sourceFilePath) {
+    getOrCreateDirectory(root, outputDirectoryPath).addOrFindChild(new FileCopyPackagingElement(sourceFilePath));
+  }
+
   @NotNull
   private CompositePackagingElement<?> getOrCreateDirectoryOrArchive(@NotNull CompositePackagingElement<?> root,
                                                                      @NotNull @NonNls String path, final boolean directory) {
@@ -131,10 +141,12 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     return parent.addOrFindChild(last);
   }
 
+  @NotNull
   public PackagingElement<?> createModuleOutput(@NotNull String moduleName) {
     return new ModuleOutputPackagingElement(moduleName);
   }
 
+  @NotNull
   @Override
   public List<? extends PackagingElement<?>> createLibraryElements(@NotNull Library library) {
     final LibraryTable table = library.getTable();
@@ -148,11 +160,13 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     return elements;
   }
 
+  @NotNull
   @Override
   public PackagingElement<?> createLibraryFiles(@NotNull String level, @NotNull String name) {
     return new LibraryPackagingElement(level, name);
   }
 
+  @NotNull
   public CompositePackagingElement<?> createArchive(@NotNull @NonNls String archiveFileName) {
     return new ArchivePackagingElement(archiveFileName);
   }
@@ -179,11 +193,19 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   }
 
   @Override
-  public PackagingElement<?> createFileCopy(@NotNull String filePath, @NotNull String relativeOutputPath) {
-    final FileCopyPackagingElement file = new FileCopyPackagingElement(filePath);
+  @NotNull
+  public FileCopyPackagingElement createFileCopy(@NotNull String filePath) {
+    return new FileCopyPackagingElement(filePath);
+  }
+
+  @NotNull
+  @Override
+  public PackagingElement<?> createFileCopyWithParentDirectories(@NotNull String filePath, @NotNull String relativeOutputPath) {
+    final FileCopyPackagingElement file = createFileCopy(filePath);
     return createParentDirectories(relativeOutputPath, file);
   }
 
+  @NotNull
   @Override
   public PackagingElement<?> createParentDirectories(@NotNull String relativeOutputPath, @NotNull PackagingElement<?> element) {
     relativeOutputPath = StringUtil.trimStart(relativeOutputPath, "/");
@@ -218,8 +240,13 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     }
 
     @Override
-    public PackagingElementPropertiesPanel<DirectoryPackagingElement> createElementPropertiesPanel(ArtifactEditorContext context) {
-      return new DirectoryElementPropertiesPanel(context);
+    public PackagingElementPropertiesPanel createElementPropertiesPanel(@NotNull DirectoryPackagingElement element,
+                                                                                                   @NotNull ArtifactEditorContext context) {
+      final String name = element.getDirectoryName();
+      if (name.length() >= 4 && name.charAt(name.length() - 4) == '.' && StringUtil.endsWithIgnoreCase(name, "ar")) {
+        return new DirectoryElementPropertiesPanel(element, context);
+      }
+      return null;
     }
 
     public DirectoryPackagingElement createComposite(@NotNull PackagingEditorContext context, CompositePackagingElement<?> parent) {
@@ -247,8 +274,13 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     }
 
     @Override
-    public PackagingElementPropertiesPanel<ArchivePackagingElement> createElementPropertiesPanel(ArtifactEditorContext context) {
-      return new ArchiveElementPropertiesPanel(context);
+    public PackagingElementPropertiesPanel createElementPropertiesPanel(@NotNull ArchivePackagingElement element,
+                                                                                                 @NotNull ArtifactEditorContext context) {
+      final String name = element.getArchiveFileName();
+      if (name.length() >= 4 && name.charAt(name.length() - 4) == '.' && StringUtil.endsWithIgnoreCase(name, "ar")) {
+        return new ArchiveElementPropertiesPanel(element, context);
+      }
+      return null;
     }
 
     public ArchivePackagingElement createComposite(@NotNull PackagingEditorContext context, CompositePackagingElement<?> parent) {

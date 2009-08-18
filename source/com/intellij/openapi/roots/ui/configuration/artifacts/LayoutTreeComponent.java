@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.artifacts.ModifiableArtifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
@@ -41,15 +40,15 @@ import java.util.List;
 
 public class LayoutTreeComponent implements DnDTarget, Disposable {
   @NonNls private static final String EMPTY_CARD = "<empty>";
+  @NonNls private static final String PROPERTIES_CARD = "properties";
   private final ArtifactEditorImpl myArtifactsEditor;
   private LayoutTree myTree;
   private JPanel myTreePanel;
   private final ComplexElementSubstitutionParameters mySubstitutionParameters;
   private ArtifactEditorContext myContext;
-  private CompositePackagingElement<?> myModifiableRoot;
   private final Artifact myOriginalArtifact;
   private SelectedElementInfo<?> mySelectedElementInfo = new SelectedElementInfo<PackagingElement<?>>(null);
-  private Map<String, PackagingElementPropertiesPanel<?>> myPropertiesPanels = new HashMap<String, PackagingElementPropertiesPanel<?>>();
+  private JPanel myPropertiesPanelWrapper;
   private JPanel myPropertiesPanel;
   private SimpleTreeBuilder myBuilder;
 
@@ -69,10 +68,10 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
         updatePropertiesPanel();
       }
     });
-    myPropertiesPanel = createPropertiesPanel();
+    createPropertiesPanel();
     myTreePanel = new JPanel(new BorderLayout());
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
-    myTreePanel.add(myPropertiesPanel, BorderLayout.SOUTH);
+    myTreePanel.add(myPropertiesPanelWrapper, BorderLayout.SOUTH);
     DnDManager.getInstance().registerTarget(this, myTree);
   }
 
@@ -83,18 +82,14 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     return userObject instanceof PackagingElementNode ? (PackagingElementNode)userObject : null;
   }
 
-  private JPanel createPropertiesPanel() {
-    final JPanel panel = new JPanel(new CardLayout());
-    for (PackagingElementType<?> type : PackagingElementFactory.getInstance().getAllElementTypes()) {
-      final PackagingElementPropertiesPanel<? extends PackagingElement<?>> propertiesPanel = type.createElementPropertiesPanel(myContext);
-      if (propertiesPanel != null) {
-        myPropertiesPanels.put(type.getId(), propertiesPanel);
-        panel.add(type.getId(), propertiesPanel.getComponent());
-      }
-    }
-    panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    panel.add(EMPTY_CARD, new JPanel());
-    return panel;
+  private void createPropertiesPanel() {
+    myPropertiesPanel = new JPanel(new BorderLayout());
+    final JPanel emptyPanel = new JPanel();
+
+    myPropertiesPanelWrapper = new JPanel(new CardLayout());
+    myPropertiesPanelWrapper.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    myPropertiesPanelWrapper.add(EMPTY_CARD, emptyPanel);
+    myPropertiesPanelWrapper.add(PROPERTIES_CARD, myPropertiesPanel);
   }
 
   public Artifact getArtifact() {
@@ -187,10 +182,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   }
 
   public void ensureRootIsWritable() {
-    final ModifiableArtifact artifact = myContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact);
-    if (artifact.getRootElement() == myOriginalArtifact.getRootElement()) {
-      artifact.setRootElement(getRootElement());
-    }
+    myContext.ensureRootIsWritable(myOriginalArtifact);
   }
 
   public void removeSelectedElements() {
@@ -340,17 +332,13 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   }
 
   public void setRootElement(CompositePackagingElement<?> rootElement) {
-    myModifiableRoot = rootElement;
     myContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setRootElement(rootElement);
     rebuildTree();
     myArtifactsEditor.getSourceItemsTree().rebuildTree();
   }
 
   public CompositePackagingElement<?> getRootElement() {
-    if (myModifiableRoot == null) {
-      myModifiableRoot = ArtifactUtil.copyFromRoot(myOriginalArtifact.getRootElement(), myOriginalArtifact.getArtifactType());
-    }
-    return myModifiableRoot;
+    return myContext.getRootElement(myOriginalArtifact);
   }
 
   public void initTree() {
@@ -376,38 +364,49 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     updateAndSelect(myTree.getRootPackagingNode(), toSelect);
   }
 
+  public boolean isPropertiesModified() {
+    final PackagingElementPropertiesPanel panel = mySelectedElementInfo.myCurrentPanel;
+    return panel != null && panel.isModified();
+  }
+
+  public void resetElementProperties() {
+    final PackagingElementPropertiesPanel panel = mySelectedElementInfo.myCurrentPanel;
+    if (panel != null) {
+      panel.reset();
+    }
+  }
+
   private class SelectedElementInfo<E extends PackagingElement<?>> {
     private final E myElement;
-    private PackagingElementPropertiesPanel<E> myCurrentPanel;
+    private PackagingElementPropertiesPanel myCurrentPanel;
 
     private SelectedElementInfo(@Nullable E element) {
       myElement = element;
       if (myElement != null) {
         //noinspection unchecked
-        myCurrentPanel = (PackagingElementPropertiesPanel<E>)myPropertiesPanels.get(element.getType().getId());
-        if (myCurrentPanel != null && !myCurrentPanel.isAvailable(element)) {
-          myCurrentPanel = null;
-        }
+        myCurrentPanel = element.getType().createElementPropertiesPanel(myElement, myContext);
+        myPropertiesPanel.removeAll();
         if (myCurrentPanel != null) {
-          myCurrentPanel.loadFrom(element);
+          myPropertiesPanel.add(BorderLayout.CENTER, myCurrentPanel.createComponent());
+          myCurrentPanel.reset();
         }
       }
     }
 
     public void save() {
-      if (myCurrentPanel != null && myCurrentPanel.isModified(myElement)) {
+      if (myCurrentPanel != null && myCurrentPanel.isModified()) {
         ensureRootIsWritable();
-        myCurrentPanel.saveTo(myElement);
+        myCurrentPanel.apply();
       }
     }
 
     public void showPropertiesPanel() {
-      final CardLayout cardLayout = (CardLayout)myPropertiesPanel.getLayout();
+      final CardLayout cardLayout = (CardLayout)myPropertiesPanelWrapper.getLayout();
       if (myCurrentPanel != null) {
-        cardLayout.show(myPropertiesPanel, myElement.getType().getId());
+        cardLayout.show(myPropertiesPanelWrapper, PROPERTIES_CARD);
       }
       else {
-        cardLayout.show(myPropertiesPanel, EMPTY_CARD);
+        cardLayout.show(myPropertiesPanelWrapper, EMPTY_CARD);
       }
     }
   }

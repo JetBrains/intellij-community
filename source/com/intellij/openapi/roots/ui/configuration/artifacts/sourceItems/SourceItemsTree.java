@@ -56,6 +56,7 @@ public class SourceItemsTree implements DnDSource, Disposable{
   private ActionGroup createPopupGroup() {
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new PutSourceItemIntoDefaultLocationAction(this, myArtifactsEditor));
+    group.add(new PutSourceItemIntoParentAndLinkViaManifestAction(this, myArtifactsEditor));
 
     DefaultTreeExpander expander = new DefaultTreeExpander(myTree);
     final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();

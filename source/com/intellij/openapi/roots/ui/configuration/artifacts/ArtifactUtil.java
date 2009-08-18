@@ -2,27 +2,25 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerProjectExtension;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.elements.*;
-import com.intellij.packaging.impl.elements.DirectoryPackagingElement;
-import com.intellij.packaging.impl.elements.FileCopyPackagingElement;
-import com.intellij.packaging.impl.elements.PackagingElementFactoryImpl;
+import com.intellij.packaging.impl.elements.*;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -31,7 +29,7 @@ public class ArtifactUtil {
   private ArtifactUtil() {
   }
 
-  public static CompositePackagingElement<?> copyFromRoot(@NotNull CompositePackagingElement<?> oldRoot, ArtifactType artifactType) {
+  public static CompositePackagingElement<?> copyFromRoot(@NotNull CompositePackagingElement<?> oldRoot) {
     final CompositePackagingElement<?> newRoot = (CompositePackagingElement<?>)copyElement(oldRoot);
     copyChildren(oldRoot, newRoot);
     return newRoot;
@@ -270,4 +268,140 @@ public class ArtifactUtil {
     }
     return artifacts;
   }
+
+  @Nullable
+  public static VirtualFile findSourceFileByOutputPath(Artifact artifact, String outputPath, PackagingElementResolvingContext context) {
+    final List<VirtualFile> files = findSourceFilesByOutputPath(artifact.getRootElement(), outputPath, context, artifact.getArtifactType());
+    return files.isEmpty() ? null : files.get(0);
+  }
+
+  @Nullable
+  public static VirtualFile findSourceFileByOutputPath(CompositePackagingElement<?> parent, String outputPath,
+                                                 PackagingElementResolvingContext context, ArtifactType artifactType) {
+    final List<VirtualFile> files = findSourceFilesByOutputPath(parent, outputPath, context, artifactType);
+    return files.isEmpty() ? null : files.get(0);
+  }
+
+  public static List<VirtualFile> findSourceFilesByOutputPath(CompositePackagingElement<?> parent, String outputPath,
+                                                 PackagingElementResolvingContext context, ArtifactType artifactType) {
+    outputPath = StringUtil.trimStart(outputPath, "/");
+    if (outputPath.length() == 0) {
+      return Collections.emptyList();
+    }
+
+    int i = outputPath.indexOf('/');
+    final String firstName = i != -1 ? outputPath.substring(0, i) : outputPath;
+    String tail = i != -1 ? outputPath.substring(i+1) : "";
+
+    final List<CompositePackagingElement<?>> compositeChildren = new SmartList<CompositePackagingElement<?>>();
+    final List<FileCopyPackagingElement> fileCopies = new SmartList<FileCopyPackagingElement>();
+    final List<FileCopyPackagingElement> dirCopies = new SmartList<FileCopyPackagingElement>();
+    ArtifactUtil.processElements(parent.getChildren(), context, artifactType, new Processor<PackagingElement<?>>() {
+      public boolean process(PackagingElement<?> element) {
+        if (element instanceof CompositePackagingElement) {
+          final CompositePackagingElement<?> compositeElement = (CompositePackagingElement<?>)element;
+          if (firstName.equals(compositeElement.getName())) {
+            compositeChildren.add(compositeElement);
+          }
+        }
+        else if (element instanceof FileCopyPackagingElement) {
+          final FileCopyPackagingElement fileCopyElement = (FileCopyPackagingElement)element;
+          if (fileCopyElement.isDirectory()) {
+            dirCopies.add(fileCopyElement);
+          }
+          else if (firstName.equals(fileCopyElement.getFileName())) {
+            fileCopies.add(fileCopyElement);
+          }
+        }
+        return true;
+      }
+    });
+
+    List<VirtualFile> result = new SmartList<VirtualFile>();
+    for (CompositePackagingElement<?> child : compositeChildren) {
+      result.addAll(findSourceFilesByOutputPath(child, tail, context, artifactType));
+    }
+    if (tail.length() == 0) {
+      for (FileCopyPackagingElement fileCopy : fileCopies) {
+        ContainerUtil.addIfNotNull(fileCopy.findFile(), result);
+      }
+    }
+    for (FileCopyPackagingElement dirCopy : dirCopies) {
+      final VirtualFile sourceRoot = dirCopy.findFile();
+      if (sourceRoot != null) {
+        ContainerUtil.addIfNotNull(sourceRoot.findFileByRelativePath(outputPath), result);
+      }
+    }
+    return result;
+  }
+
+  public static boolean processParents(@NotNull Artifact artifact,
+                                       @NotNull PackagingElementResolvingContext context,
+                                       @NotNull ParentElementProcessor processor,
+                                       int maxLevel) {
+    return processParents(artifact, context, processor, FList.<Pair<Artifact, CompositePackagingElement<?>>>emptyList(), maxLevel,
+                          new HashSet<Artifact>());
+  }
+
+  private static boolean processParents(@NotNull final Artifact artifact, @NotNull final PackagingElementResolvingContext context,
+                                        @NotNull final ParentElementProcessor processor, FList<Pair<Artifact, CompositePackagingElement<?>>> pathToElement,
+                                        final int maxLevel, final Set<Artifact> processed) {
+    if (!processed.add(artifact)) return true;
+
+    final FList<Pair<Artifact, CompositePackagingElement<?>>> pathFromRoot;
+    final CompositePackagingElement<?> rootElement = artifact.getRootElement();
+    if (rootElement instanceof ArtifactRootElement<?>) {
+      pathFromRoot = pathToElement;
+    }
+    else {
+      if (!processor.process(rootElement, pathToElement, artifact)) {
+        return false;
+      }
+      pathFromRoot = pathToElement.prepend(new Pair<Artifact, CompositePackagingElement<?>>(artifact, rootElement));
+    }
+    if (pathFromRoot.size() > maxLevel) return true;
+
+    for (final Artifact anArtifact : context.getArtifactModel().getArtifacts()) {
+      if (processed.contains(anArtifact)) continue;
+
+      final PackagingElementProcessor<ArtifactPackagingElement> elementProcessor =
+          new PackagingElementProcessor<ArtifactPackagingElement>() {
+            @Override
+            public boolean shouldProcessSubstitution(ComplexPackagingElement<?> element) {
+              return !(element instanceof ArtifactPackagingElement);
+            }
+
+            @Override
+            public boolean process(@NotNull List<CompositePackagingElement<?>> parents, @NotNull ArtifactPackagingElement element) {
+              if (element.getArtifactName().equals(artifact.getName())) {
+                FList<Pair<Artifact, CompositePackagingElement<?>>> currentPath = pathFromRoot;
+                for (int i = 0, parentsSize = parents.size(); i < parentsSize - 1; i++) {
+                  CompositePackagingElement<?> parent = parents.get(i);
+                  if (!processor.process(parent, currentPath, anArtifact)) {
+                    return false;
+                  }
+                  currentPath = currentPath.prepend(new Pair<Artifact, CompositePackagingElement<?>>(anArtifact, parent));
+                  if (currentPath.size() > maxLevel) {
+                    return true;
+                  }
+                }
+
+                if (!parents.isEmpty()) {
+                  CompositePackagingElement<?> lastParent = parents.get(parents.size() - 1);
+                  if (lastParent instanceof ArtifactRootElement<?> && !processor.process(lastParent, currentPath, anArtifact)) {
+                    return false;
+                  }
+                }
+                return processParents(anArtifact, context, processor, currentPath, maxLevel, processed);
+              }
+              return true;
+            }
+          };
+      if (!processPackagingElements(anArtifact, ArtifactElementType.ARTIFACT_ELEMENT_TYPE, elementProcessor, context, true)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
 }

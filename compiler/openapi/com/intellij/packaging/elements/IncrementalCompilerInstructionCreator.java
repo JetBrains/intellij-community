@@ -16,5 +16,5 @@ public interface IncrementalCompilerInstructionCreator {
 
   IncrementalCompilerInstructionCreator subFolder(String directoryName);
 
-  IncrementalCompilerInstructionCreator archive(String archiveFileName, List<String> classpath);
+  IncrementalCompilerInstructionCreator archive(String archiveFileName);
 }

@@ -10,8 +10,9 @@ import com.intellij.packaging.impl.ui.ArchiveElementPresentation;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,9 +20,8 @@ import java.util.List;
 /**
  * @author nik
  */
-public class ArchivePackagingElement extends CompositeElementWithClasspath<ArchivePackagingElement> {
+public class ArchivePackagingElement extends CompositeElementWithManifest<ArchivePackagingElement> {
   private String myArchiveFileName;
-  private String myMainClass;
 
   public ArchivePackagingElement() {
     super(PackagingElementFactoryImpl.ARCHIVE_ELEMENT_TYPE);
@@ -54,12 +54,17 @@ public class ArchivePackagingElement extends CompositeElementWithClasspath<Archi
   public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
                                                      @NotNull PackagingElementResolvingContext resolvingContext,
                                                      @NotNull ArtifactIncrementalCompilerContext compilerContext, @NotNull ArtifactType artifactType) {
-    computeChildrenInstructions(creator.archive(myArchiveFileName, getClasspath()), resolvingContext, compilerContext, artifactType);
+    computeChildrenInstructions(creator.archive(myArchiveFileName), resolvingContext, compilerContext, artifactType);
   }
 
   @Attribute("name")
   public String getArchiveFileName() {
     return myArchiveFileName;
+  }
+
+  @NonNls @Override
+  public String toString() {
+    return "archive:" + myArchiveFileName;
   }
 
   public ArchivePackagingElement getState() {
@@ -68,15 +73,6 @@ public class ArchivePackagingElement extends CompositeElementWithClasspath<Archi
 
   public void setArchiveFileName(String archiveFileName) {
     myArchiveFileName = archiveFileName;
-  }
-
-  @Tag("main-class")
-  public String getMainClass() {
-    return myMainClass;
-  }
-
-  public void setMainClass(String mainClass) {
-    myMainClass = mainClass;
   }
 
   @Override
@@ -92,5 +88,9 @@ public class ArchivePackagingElement extends CompositeElementWithClasspath<Archi
   @Override
   public boolean isEqualTo(@NotNull PackagingElement<?> element) {
     return element instanceof ArchivePackagingElement && ((ArchivePackagingElement)element).getArchiveFileName().equals(myArchiveFileName);
+  }
+
+  public void loadState(ArchivePackagingElement state) {
+    XmlSerializerUtil.copyBean(state, this);
   }
 }

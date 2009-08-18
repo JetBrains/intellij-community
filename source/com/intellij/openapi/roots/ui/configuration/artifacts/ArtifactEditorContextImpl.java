@@ -4,9 +4,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.packaging.artifacts.ArtifactModel;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.ManifestFileConfiguration;
 import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.ArtifactEditor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,8 +32,25 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
   @NotNull
+  public ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType) {
+    return myParent.getManifestFile(element, artifactType);
+  }
+
+  @NotNull
   public Project getProject() {
     return myParent.getProject();
+  }
+
+  public CompositePackagingElement<?> getRootElement(@NotNull Artifact originalArtifact) {
+    return myParent.getRootElement(originalArtifact);
+  }
+
+  public void ensureRootIsWritable(@NotNull Artifact originalArtifact) {
+    myParent.ensureRootIsWritable(originalArtifact);
+  }
+
+  public ArtifactEditor getOrCreateEditor(Artifact artifact) {
+    return myParent.getOrCreateEditor(artifact);
   }
 
   @NotNull
@@ -48,5 +70,10 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
 
   public void queueValidation() {
     myEditor.queueValidation();
+  }
+
+  @NotNull
+  public ArtifactType getArtifactType() {
+    return myEditor.getArtifact().getArtifactType();
   }
 }

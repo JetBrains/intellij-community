@@ -15,6 +15,7 @@ import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.Collections;
@@ -77,6 +78,11 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
 
   public VirtualFile findFile() {
     return LocalFileSystem.getInstance().findFileByPath(myFilePath);
+  }
+
+  @NonNls @Override
+  public String toString() {
+    return "file:" + myFilePath;
   }
 
   public boolean isDirectory() {

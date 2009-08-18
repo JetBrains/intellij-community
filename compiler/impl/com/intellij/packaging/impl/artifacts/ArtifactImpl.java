@@ -6,6 +6,7 @@ import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -88,6 +89,11 @@ public class ArtifactImpl implements ModifiableArtifact {
 
   public void setName(@NotNull String name) {
     myName = name;
+  }
+
+  @NonNls @Override
+  public String toString() {
+    return "artifact:" + myName;
   }
 
   public void setRootElement(CompositePackagingElement<?> root) {

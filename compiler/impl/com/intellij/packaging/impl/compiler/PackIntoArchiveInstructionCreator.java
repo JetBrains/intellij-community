@@ -1,11 +1,12 @@
 package com.intellij.packaging.impl.compiler;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.compiler.impl.packagingCompiler.DestinationInfo;
+import com.intellij.compiler.impl.packagingCompiler.ExplodedDestinationInfo;
+import com.intellij.compiler.impl.packagingCompiler.JarDestinationInfo;
+import com.intellij.compiler.impl.packagingCompiler.JarInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.IncrementalCompilerInstructionCreator;
-import com.intellij.compiler.impl.packagingCompiler.*;
-
-import java.util.List;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
@@ -39,8 +40,8 @@ public class PackIntoArchiveInstructionCreator extends IncrementalCompilerInstru
     return new PackIntoArchiveInstructionCreator(myContext, myJarInfo, childPathInJar(directoryName), myJarDestination);
   }
 
-  public IncrementalCompilerInstructionCreator archive(String archiveFileName, List<String> classpath) {
-    final JarInfo jarInfo = new JarInfo(classpath);
+  public IncrementalCompilerInstructionCreator archive(String archiveFileName) {
+    final JarInfo jarInfo = new JarInfo();
     if (myJarDestination instanceof ExplodedDestinationInfo) {
       myContext.registerJarFile(jarInfo, myJarDestination.getOutputPath());
     }

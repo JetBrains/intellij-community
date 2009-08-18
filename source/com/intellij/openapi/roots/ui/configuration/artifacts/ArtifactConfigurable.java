@@ -5,7 +5,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -26,11 +25,11 @@ public class ArtifactConfigurable extends NamedConfigurable<Artifact> {
   private final ArtifactEditorImpl myEditor;
   private boolean myIsInUpdateName;
 
-  public ArtifactConfigurable(Artifact originalArtifact, PackagingEditorContext packagingEditorContext, final Runnable updateTree) {
+  public ArtifactConfigurable(Artifact originalArtifact, ArtifactsStructureConfigurableContextImpl packagingEditorContext, final Runnable updateTree) {
     super(true, updateTree);
     myOriginalArtifact = originalArtifact;
     myPackagingEditorContext = packagingEditorContext;
-    myEditor = new ArtifactEditorImpl(packagingEditorContext, originalArtifact);
+    myEditor = packagingEditorContext.getOrCreateEditor(originalArtifact);
   }
 
   public void setDisplayName(String name) {
@@ -133,6 +132,5 @@ public class ArtifactConfigurable extends NamedConfigurable<Artifact> {
   }
 
   public void disposeUIResources() {
-    Disposer.dispose(myEditor);
   }
 }

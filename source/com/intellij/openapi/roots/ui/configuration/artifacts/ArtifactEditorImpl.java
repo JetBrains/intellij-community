@@ -21,10 +21,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
-import com.intellij.packaging.ui.ArtifactEditorContext;
-import com.intellij.packaging.ui.ArtifactProblemQuickFix;
-import com.intellij.packaging.ui.ArtifactValidationManager;
-import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.*;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -59,7 +56,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private final Project myProject;
   private final ComplexElementSubstitutionParameters mySubstitutionParameters = new ComplexElementSubstitutionParameters();
   private final EventDispatcher<ArtifactEditorListener> myDispatcher = EventDispatcher.create(ArtifactEditorListener.class);
-  private final ArtifactEditorContext myContext;
+  private final ArtifactEditorContextImpl myContext;
   private SourceItemsTree mySourceItemsTree;
   private final Artifact myOriginalArtifact;
   private final LayoutTreeComponent myLayoutTreeComponent;
@@ -101,6 +98,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     modifiableArtifact.setClearOutputDirectoryOnRebuild(myClearOnRebuildCheckBox.isSelected());
     modifiableArtifact.setOutputPath(getConfiguredOutputPath());
     myPropertiesEditors.applyProperties();
+    myLayoutTreeComponent.saveElementProperties();
   }
 
   @Nullable
@@ -217,7 +215,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     }
     popupActionGroup.add(createAddAction(true));
     final RemovePackagingElementAction removeAction = new RemovePackagingElementAction(this);
-    removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myLayoutTreeComponent.getTreePanel());
+    removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myLayoutTreeComponent.getLayoutTree());
     popupActionGroup.add(removeAction);
     popupActionGroup.add(new ExtractArtifactAction(this));
     popupActionGroup.add(new InlineArtifactAction(this));
@@ -265,7 +263,8 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return myBuildOnMakeCheckBox.isSelected() != myOriginalArtifact.isBuildOnMake()
         || !Comparing.equal(getConfiguredOutputPath(), myOriginalArtifact.getOutputPath())
         || myClearOnRebuildCheckBox.isSelected() != myOriginalArtifact.isClearOutputDirectoryOnRebuild()
-        || myPropertiesEditors.isModified();
+        || myPropertiesEditors.isModified()
+        || myLayoutTreeComponent.isPropertiesModified();
   }
 
   public void dispose() {
@@ -286,6 +285,13 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myLayoutTreeComponent.putIntoDefaultLocations(Collections.singletonList(new LibrarySourceItem(library)));
   }
 
+  public void addToClasspath(CompositePackagingElement<?> element, List<String> classpath) {
+    myLayoutTreeComponent.saveElementProperties();
+    final ManifestFileConfiguration manifest = myContext.getManifestFile(element, getArtifact().getArtifactType());
+    manifest.addToClasspath(classpath);
+    myLayoutTreeComponent.resetElementProperties();
+  }
+
   private class MyDataProvider implements TypeSafeDataProvider {
     public void calcData(DataKey key, DataSink sink) {
       if (ARTIFACTS_EDITOR_KEY.equals(key)) {
@@ -295,7 +301,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   private class ArtifactValidationManagerImpl implements ArtifactValidationManager {
-    public PackagingEditorContext getContext() {
+    public ArtifactEditorContext getContext() {
       return myContext;
     }
 
