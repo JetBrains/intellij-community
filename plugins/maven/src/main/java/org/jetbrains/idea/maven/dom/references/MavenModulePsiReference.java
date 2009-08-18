@@ -88,13 +88,19 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
 
   public LocalQuickFix[] getQuickFixes() {
     if (myText.length() == 0 || resolve() != null) return LocalQuickFix.EMPTY_ARRAY;
-    return new LocalQuickFix[]{new CreateModulePomFix()};
+    return new LocalQuickFix[]{new CreateModuleFix(true), new CreateModuleFix(false)};
   }
 
-  private class CreateModulePomFix implements LocalQuickFix {
+  private class CreateModuleFix implements LocalQuickFix {
+    private final boolean myWithParent;
+
+    private CreateModuleFix(boolean withParent) {
+      myWithParent = withParent;
+    }
+
     @NotNull
     public String getName() {
-      return MavenDomBundle.message("fix.create.module.pom");
+      return myWithParent ? MavenDomBundle.message("fix.create.module.with.parent") : MavenDomBundle.message("fix.create.module");
     }
 
     @NotNull
@@ -110,7 +116,11 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
         String groupId = id.getGroupId() == null ? "groupId" : id.getGroupId();
         String artifactId = modulePom.getParent().getName();
         String version = id.getVersion() == null ? "version" : id.getVersion();
-        MavenUtil.runMavenProjectFileTemplate(project, modulePom, new MavenId(groupId, artifactId, version), true);
+        MavenUtil.runMavenProjectWithParentFileTemplate(project,
+                                                        modulePom,
+                                                        new MavenId(groupId, artifactId, version),
+                                                        myWithParent ? id : null,
+                                                        true);
       }
       catch (IOException e) {
         NotificationsManager.getNotificationsManager()

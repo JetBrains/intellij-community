@@ -4,6 +4,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+#if (${HAS_PARENT} != "")
+    <parent>
+        <groupId>${PARENT_GROUP_ID}</groupId>
+        <artifactId>${PARENT_ARTIFACT_ID}</artifactId>
+        <version>${PARENT_VERSION}</version>
+    </parent>
+
+#end
     <groupId>${GROUP_ID}</groupId>
     <artifactId>${ARTIFACT_ID}</artifactId>
     <version>${VERSION}</version>

@@ -8,7 +8,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
-  private static final String INTENTION_NAME = MavenDomBundle.message("fix.create.module.pom");
+  private static final String CREATE_MODULE_INTENTION = MavenDomBundle.message("fix.create.module");
+  private static final String CREATE_MODULE_WITH_PARENT_INTENTION = MavenDomBundle.message("fix.create.module.with.parent");
 
   public void testCompleteFromAllAvailableModules() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
@@ -285,12 +286,12 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>subDir/new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret(INTENTION_NAME);
+    IntentionAction i = getIntentionAtCaret(CREATE_MODULE_INTENTION);
     assertNotNull(i);
 
     myCodeInsightFixture.launchAction(i);
 
-    assertCreatePomFixResult(
+    assertCreateModuleFixResult(
       "subDir/newModule/pom.xml",
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
       "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
@@ -326,12 +327,12 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret(INTENTION_NAME);
+    IntentionAction i = getIntentionAtCaret(CREATE_MODULE_INTENTION);
     assertNotNull(i);
 
     myCodeInsightFixture.launchAction(i);
 
-    assertCreatePomFixResult(
+    assertCreateModuleFixResult(
       "newModule/pom.xml",
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
       "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
@@ -366,7 +367,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>${dirName}/new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret(INTENTION_NAME);
+    IntentionAction i = getIntentionAtCaret(CREATE_MODULE_INTENTION);
     assertNotNull(i);
 
     myCodeInsightFixture.launchAction(i);
@@ -389,11 +390,11 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret(INTENTION_NAME);
+    IntentionAction i = getIntentionAtCaret(CREATE_MODULE_INTENTION);
     assertNotNull(i);
     myCodeInsightFixture.launchAction(i);
 
-    assertCreatePomFixResult(
+    assertCreateModuleFixResult(
       "newModule/pom.xml",
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
       "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
@@ -404,6 +405,48 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
       "    <groupId>groupId</groupId>\n" +
       "    <artifactId>newModule</artifactId>\n" +
       "    <version>version</version>\n" +
+      "\n" +
+      "    \n" +
+      "</project>");
+  }
+
+  public void testCreateModuleWithParentQuickFix() throws Throwable {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>");
+    importProject();
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>new<caret>Module</module>" +
+                     "</modules>");
+
+    IntentionAction i = getIntentionAtCaret(CREATE_MODULE_WITH_PARENT_INTENTION);
+    assertNotNull(i);
+    myCodeInsightFixture.launchAction(i);
+
+    assertCreateModuleFixResult(
+      "newModule/pom.xml",
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+      "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
+      "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+      "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
+      "    <modelVersion>4.0.0</modelVersion>\n" +
+      "\n" +
+      "    <parent>\n" +
+      "        <groupId>test</groupId>\n" +
+      "        <artifactId>project</artifactId>\n" +
+      "        <version>1</version>\n" +
+      "    </parent>\n" +
+      "\n" +
+      "    <groupId>test</groupId>\n" +
+      "    <artifactId>newModule</artifactId>\n" +
+      "    <version>1</version>\n" +
       "\n" +
       "    \n" +
       "</project>");
@@ -425,7 +468,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module><caret></module>" +
                      "</modules>");
 
-    assertNull(getIntentionAtCaret(INTENTION_NAME));
+    assertNull(getIntentionAtCaret(CREATE_MODULE_INTENTION));
   }
 
   public void testDoesNotShowCreatePomQuickFixExistingModule() throws Throwable {
@@ -453,10 +496,10 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>m<caret>odule</module>" +
                      "</modules>");
 
-    assertNull(getIntentionAtCaret(INTENTION_NAME));
+    assertNull(getIntentionAtCaret(CREATE_MODULE_INTENTION));
   }
 
-  private void assertCreatePomFixResult(String relativePath, String expectedText) {
+  private void assertCreateModuleFixResult(String relativePath, String expectedText) {
     VirtualFile pom = myProjectRoot.findFileByRelativePath(relativePath);
     assertNotNull(pom);
 

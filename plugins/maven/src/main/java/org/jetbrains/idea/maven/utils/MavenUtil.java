@@ -226,17 +226,40 @@ public class MavenUtil {
                                                  VirtualFile file,
                                                  MavenId projectId,
                                                  boolean interactive) throws IOException {
+    runMavenProjectWithParentFileTemplate(project, file, projectId, null, interactive);
+  }
+
+  public static void runMavenProjectWithParentFileTemplate(Project project,
+                                                           VirtualFile file,
+                                                           MavenId projectId,
+                                                           MavenId parentId,
+                                                           boolean interactive) throws IOException {
     Properties properties = new Properties();
+    Properties conditions = new Properties();
     properties.setProperty("GROUP_ID", projectId.getGroupId());
     properties.setProperty("ARTIFACT_ID", projectId.getArtifactId());
     properties.setProperty("VERSION", projectId.getVersion());
-    runFileTemplate(project, file, MavenFileTemplateGroupFactory.MAVEN_PROJECT_XML_TEMPLATE, properties, interactive);
+    if (parentId != null) {
+      conditions.setProperty("HAS_PARENT", "true");
+      properties.setProperty("PARENT_GROUP_ID", parentId.getGroupId());
+      properties.setProperty("PARENT_ARTIFACT_ID", parentId.getArtifactId());
+      properties.setProperty("PARENT_VERSION", parentId.getVersion());
+    }
+    runFileTemplate(project, file, MavenFileTemplateGroupFactory.MAVEN_PROJECT_XML_TEMPLATE, properties, conditions, interactive);
+  }
+
+  public static void runFileTemplate(Project project,
+                                     VirtualFile file,
+                                     String templateName,
+                                     boolean interactive) throws IOException {
+    runFileTemplate(project, file, templateName, new Properties(), new Properties(), interactive);
   }
 
   public static void runFileTemplate(Project project,
                                      VirtualFile file,
                                      String templateName,
                                      Properties properties,
+                                     Properties conditions,
                                      boolean interactive) throws IOException {
     FileTemplateManager manager = FileTemplateManager.getInstance();
     FileTemplate fileTemplate = manager.getJ2eeTemplate(templateName);
@@ -244,11 +267,12 @@ public class MavenUtil {
     if (!interactive) {
       allProperties.putAll(properties);
     }
+    allProperties.putAll(conditions);
     String text = fileTemplate.getText(allProperties);
     Pattern pattern = Pattern.compile("\\$\\{(.*)\\}");
     Matcher matcher = pattern.matcher(text);
     StringBuffer builder = new StringBuffer();
-    while(matcher.find()) {
+    while (matcher.find()) {
       matcher.appendReplacement(builder, "\\$" + matcher.group(1).toUpperCase() + "\\$");
     }
     matcher.appendTail(builder);

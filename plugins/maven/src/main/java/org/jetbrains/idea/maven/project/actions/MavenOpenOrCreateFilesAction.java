@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
   @Override
@@ -63,7 +62,7 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
           try {
             VirtualFile newFile = VfsUtil.createDirectoryIfMissing(file.getParent()).createChildData(this, file.getName());
             virtualFiles.add(newFile);
-            MavenUtil.runFileTemplate(project, newFile, getFileTemplate(), new Properties(), true);
+            MavenUtil.runFileTemplate(project, newFile, getFileTemplate(), true);
           }
           catch (IOException ex) {
             NotificationsManager.getNotificationsManager()
