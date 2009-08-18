@@ -25,8 +25,8 @@
 "%(name)d" % {'a': 4, "name": 5} #ok
 '%% name %(name)c' % {'a': 4} #One of keys has no following argument
 '%d %u %f %F %s %r' % (2, 3, 4.1, 4.0, "name", "str") #ok
-'%d %s %f' % (4, 5, 6) #Unexpected type
-'%d %s %f' % (4, 5, 6.1) #Unexpected type
+'%d %d %d' % (4, "a", "b") #Unexpected type
+'%f %f %f' % (4, 5, "test") #Unexpected type
 '%d' % "name" #Unexpected type
 m = {'language': "Python", "#": 2}
 '#%(language)s has %(#)03d quote types.' % m  #ok
@@ -34,3 +34,6 @@ i = "test"
 '%(name)s' % {'name': i}  #ok
 '%s' % i  #ok
 '%f' % i  #Unexpected type
+s = "%s" % "a".upper() # ok
+x = ['a', 'b', 'c']
+print "%d: %s" % (len(x), ", ".join(x)) # ok

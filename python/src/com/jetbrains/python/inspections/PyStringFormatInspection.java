@@ -87,7 +87,9 @@ public class PyStringFormatInspection extends LocalInspectionTool {
       }
 
       private int inspectArguments(@Nullable final PyExpression rightExpression) {
-        if (rightExpression instanceof PyLiteralExpression || rightExpression instanceof PyReferenceExpression) {
+        if (rightExpression instanceof PyLiteralExpression ||
+            rightExpression instanceof PyReferenceExpression ||
+            rightExpression instanceof PyCallExpression) {
           if (myFormatSpec.get("1") != null) {
             checkType(rightExpression, myFormatSpec.get("1"));
           }
@@ -145,7 +147,11 @@ public class PyStringFormatInspection extends LocalInspectionTool {
       private void checkType(@NotNull final PyExpression expression, @NotNull final String expextedTypeName) {
         final PyType type = expression.getType();
         if (type != null) {
-          if (!expextedTypeName.equals(type.getName())) {
+          final String typeName = type.getName();
+          if (!"str".equals(typeName)) {
+            return;
+          }
+          if (!expextedTypeName.equals(typeName)) {
             registerProblem(expression, "Unexpected type");
           }
         }
