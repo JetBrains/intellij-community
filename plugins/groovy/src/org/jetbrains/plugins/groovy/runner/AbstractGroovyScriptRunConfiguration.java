@@ -25,6 +25,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -246,5 +247,9 @@ public abstract class AbstractGroovyScriptRunConfiguration extends ModuleBasedCo
     StringBuffer buffer = RunnerUtil.getClearClassPathString(tmp, module);
 
     return buffer.toString();
+  }
+
+  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+    return new GroovyRunConfigurationEditor();
   }
 }

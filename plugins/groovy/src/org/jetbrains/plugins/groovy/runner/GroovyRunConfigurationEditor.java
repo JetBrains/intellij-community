@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import javax.swing.*;
 import java.awt.*;
 
-public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRunConfiguration> {
+public class GroovyRunConfigurationEditor extends SettingsEditor<AbstractGroovyScriptRunConfiguration> {
   private DefaultComboBoxModel myModulesModel;
   private JComboBox myModulesBox;
   private JPanel myMainPanel;
@@ -66,7 +66,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     workDirPanel.add(workDirFieldPanel, BorderLayout.CENTER);
   }
 
-  public void resetEditorFrom(GroovyScriptRunConfiguration configuration) {
+  public void resetEditorFrom(AbstractGroovyScriptRunConfiguration configuration) {
     myVMParameters.setDialogCaption("VM Parameters");
     myVMParameters.setText(configuration.vmParams);
 
@@ -86,7 +86,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     myModulesModel.setSelectedItem(configuration.getModule());
   }
 
-  public void applyEditorTo(GroovyScriptRunConfiguration configuration) throws ConfigurationException {
+  public void applyEditorTo(AbstractGroovyScriptRunConfiguration configuration) throws ConfigurationException {
     configuration.setModule((Module) myModulesBox.getSelectedItem());
     configuration.vmParams = myVMParameters.getText();
     configuration.isDebugEnabled = myDebugCB.isSelected();

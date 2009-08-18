@@ -4,20 +4,14 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizer;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gant.GantBundle;
 import org.jetbrains.plugins.gant.GantIcons;
@@ -31,8 +25,6 @@ import java.io.File;
  * @author ilyas
  */
 public class GantScriptRunConfiguration extends AbstractGroovyScriptRunConfiguration {
-  public String targets;
-  public String antHome = "";
 
   public GantScriptRunConfiguration(ConfigurationFactory factory, Project project, String name) {
     super(name, project, factory);
@@ -43,24 +35,8 @@ public class GantScriptRunConfiguration extends AbstractGroovyScriptRunConfigura
     return GantConfigUtils.getInstance().isSDKConfiguredToRun(module);
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    super.readExternal(element);
-    targets = JDOMExternalizer.readString(element, "targets");
-    antHome  = JDOMExternalizer.readString(element, "antHome");
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    super.writeExternal(element);
-    JDOMExternalizer.write(element, "targets", targets);
-    JDOMExternalizer.write(element, "antHome", antHome);
-  }
-
   protected ModuleBasedConfiguration createInstance() {
     return new GantScriptRunConfiguration(getFactory(), getConfigurationModule().getProject(), getName());
-  }
-
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new GantRunConfigurationEditor();
   }
 
   @Override
@@ -123,12 +99,6 @@ public class GantScriptRunConfiguration extends AbstractGroovyScriptRunConfigura
     params.getProgramParametersList().add(FileUtil.toSystemDependentName(scriptPath));
 
     params.getProgramParametersList().addParametersString(scriptParams);
-
-    if (StringUtil.isNotEmpty(targets)) {
-      for (String target : StringUtil.tokenize(targets, "")) {
-        params.getProgramParametersList().add(target);
-      }
-    }
   }
 
 }

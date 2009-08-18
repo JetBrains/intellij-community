@@ -19,9 +19,7 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -47,10 +45,6 @@ public class GroovyScriptRunConfiguration extends AbstractGroovyScriptRunConfigu
 
   protected ModuleBasedConfiguration createInstance() {
     return new GroovyScriptRunConfiguration(getFactory(), getConfigurationModule().getProject(), getName());
-  }
-
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new GroovyRunConfigurationEditor();
   }
 
   @Override
