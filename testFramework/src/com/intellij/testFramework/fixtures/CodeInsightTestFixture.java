@@ -130,7 +130,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   long checkHighlighting() throws Exception;
 
   /**
-   * Runs highliting test for the given files.
+   * Runs highlighting test for the given files.
    * The same as {@link #testHighlighting(boolean, boolean, boolean, String...)} with all options set.
    *
    * @param filePaths the first file is tested only; the others are just copied along with the first.
