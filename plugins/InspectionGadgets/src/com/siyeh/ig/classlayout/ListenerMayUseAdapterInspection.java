@@ -161,8 +161,8 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
         }
 
         private void checkReference(
-                PsiClass aClass,
-                PsiJavaCodeReferenceElement implementsReference) {
+                @NotNull PsiClass aClass,
+                @NotNull PsiJavaCodeReferenceElement implementsReference) {
             final PsiElement target = implementsReference.resolve();
             if (!(target instanceof PsiClass)) {
                 return;
@@ -181,6 +181,9 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
             final PsiClass adapterClass = psiFacade.findClass(adapterName,
                     scope);
             if (adapterClass == null) {
+                return;
+            }
+            if (aClass.equals(adapterClass)) {
                 return;
             }
             if (!adapterClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
