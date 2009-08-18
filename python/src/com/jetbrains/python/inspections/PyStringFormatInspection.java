@@ -88,7 +88,8 @@ public class PyStringFormatInspection extends LocalInspectionTool {
 
       private int inspectArguments(@Nullable final PyExpression rightExpression) {
         final Class[] SIMPLE_RHS_EXPRESSIONS = {
-          PyLiteralExpression.class, PyReferenceExpression.class, PyCallExpression.class, PySubscriptionExpression.class
+          PyLiteralExpression.class, PyReferenceExpression.class, PyCallExpression.class, 
+          PySubscriptionExpression.class, PySliceExpression.class
         };
 
         if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS))
