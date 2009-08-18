@@ -42,23 +42,18 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.regex.Pattern;
 
 public class GroovyScriptRunConfiguration extends AbstractGroovyScriptRunConfiguration {
-  public final String GROOVY_STARTER = "org.codehaus.groovy.tools.GroovyStarter";
-  public final String GROOVY_MAIN = "groovy.ui.GroovyMain";
-
-  @NonNls public static final String GROOVY_STARTER_CONF = "/conf/groovy-starter.conf";
+  private static final String GROOVY_STARTER = "org.codehaus.groovy.tools.GroovyStarter";
+  private static final String GROOVY_MAIN = "groovy.ui.GroovyMain";
 
   // JVM parameters
   @NonNls public static final String DGROOVY_STARTER_CONF = "-Dgroovy.starter.conf=";
@@ -82,7 +77,7 @@ public class GroovyScriptRunConfiguration extends AbstractGroovyScriptRunConfigu
     return new GroovyRunConfigurationEditor();
   }
 
-  private void configureJavaParams(JavaParameters params, Module module) throws CantRunException {
+  private void configureJavaParams(JavaParameters params, Module module, final String groovyHome) throws CantRunException {
     params.setCharset(null);
     params.setJdk(ModuleRootManager.getInstance(module).getSdk());
 
@@ -100,7 +95,6 @@ public class GroovyScriptRunConfiguration extends AbstractGroovyScriptRunConfigu
     }
 
     //add starter configuration parameters
-    String groovyHome = getGroovyHome(module);
     params.getVMParametersList().addParametersString(DGROOVY_HOME + "\"" + groovyHome + "\"");
 
     // -Dgroovy.starter.conf
@@ -125,37 +119,13 @@ public class GroovyScriptRunConfiguration extends AbstractGroovyScriptRunConfigu
     params.setMainClass(GROOVY_STARTER);
   }
 
-  private static String getGroovyHome(Module module) {
-    return StringUtil.notNullize(LibrariesUtil.getGroovyHomePath(module));
-  }
-
-  public static String getConfPath(String groovyHome) {
-    String confpath = FileUtil.toSystemDependentName(groovyHome + GROOVY_STARTER_CONF);
-    if (new File(confpath).exists()) {
-      return confpath;
-    }
-
-    try {
-      final String jarPath = PathUtil.getJarPathForClass(GroovyScriptRunConfiguration.class);
-      if (new File(jarPath).isFile()) { //jar; distribution mode
-        return new File(jarPath, "../groovy-starter.conf").getCanonicalPath();
-      }
-
-      //else, it's directory in out, development mode
-      return new File(jarPath, "conf/groovy-starter.conf").getCanonicalPath();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private void configureGroovyStarter(JavaParameters params, final Module module, boolean isTests, final VirtualFile scriptFile) throws CantRunException {
+  private void configureGroovyStarter(JavaParameters params, final Module module, boolean isTests, final VirtualFile scriptFile,
+                                      final String groovyHome) throws CantRunException {
     // add GroovyStarter parameters
     params.getProgramParametersList().add("--main");
     params.getProgramParametersList().add(GROOVY_MAIN);
 
     params.getProgramParametersList().add("--conf");
-    String groovyHome = getGroovyHome(module);
     String confpath = getConfPath(groovyHome);
     params.getProgramParametersList().add(confpath);
 
@@ -220,8 +190,9 @@ public class GroovyScriptRunConfiguration extends AbstractGroovyScriptRunConfigu
       protected JavaParameters createJavaParameters() throws ExecutionException {
         JavaParameters params = new JavaParameters();
 
-        configureJavaParams(params, module);
-        configureGroovyStarter(params, module, isTests, script);
+        final String groovyHome = StringUtil.notNullize(LibrariesUtil.getGroovyHomePath(module));
+        configureJavaParams(params, module, groovyHome);
+        configureGroovyStarter(params, module, isTests, script, groovyHome);
 
         params.getProgramParametersList().add(scriptPath);
         params.getProgramParametersList().addParametersString(scriptParams);
