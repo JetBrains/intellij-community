@@ -87,9 +87,12 @@ public class PyStringFormatInspection extends LocalInspectionTool {
       }
 
       private int inspectArguments(@Nullable final PyExpression rightExpression) {
-        if (rightExpression instanceof PyLiteralExpression ||
-            rightExpression instanceof PyReferenceExpression ||
-            rightExpression instanceof PyCallExpression) {
+        final Class[] SIMPLE_RHS_EXPRESSIONS = {
+          PyLiteralExpression.class, PyReferenceExpression.class, PyCallExpression.class, PySubscriptionExpression.class
+        };
+
+        if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS))
+        {
           if (myFormatSpec.get("1") != null) {
             checkType(rightExpression, myFormatSpec.get("1"));
           }
