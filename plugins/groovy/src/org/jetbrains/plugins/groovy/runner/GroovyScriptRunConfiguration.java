@@ -22,9 +22,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.facet.FacetManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -43,15 +41,14 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
@@ -59,8 +56,6 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.regex.Pattern;
 
 public class GroovyScriptRunConfiguration extends AbstractGroovyScriptRunConfiguration {
@@ -81,13 +76,9 @@ public class GroovyScriptRunConfiguration extends AbstractGroovyScriptRunConfigu
     super(name, project, factory);
   }
 
-  public Collection<Module> getValidModules() {
-    Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-    ArrayList<Module> res = new ArrayList<Module>();
-    for (Module module : modules) {
-      if (FacetManager.getInstance(module).getFacetsByType(GroovyFacet.ID).size() > 0) res.add(module);
-    }
-    return res;
+  @Override
+  protected boolean isValidModule(Module module) {
+    return GroovyFacet.getInstance(module) != null;
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -188,7 +179,7 @@ public class GroovyScriptRunConfiguration extends AbstractGroovyScriptRunConfigu
     }
   }
 
-  private void configureGroovyStarter(JavaParameters params, final Module module, boolean isTests) throws CantRunException {
+  private void configureGroovyStarter(JavaParameters params, final Module module, boolean isTests, final VirtualFile scriptFile) throws CantRunException {
     // add GroovyStarter parameters
     params.getProgramParametersList().add("--main");
     params.getProgramParametersList().add(GROOVY_MAIN);
@@ -209,15 +200,13 @@ public class GroovyScriptRunConfiguration extends AbstractGroovyScriptRunConfigu
     if (isDebugEnabled) {
       params.getProgramParametersList().add("--debug");
     }
-    addScriptEncodingSettings(params);
+    addScriptEncodingSettings(params, scriptFile);
   }
 
-  private void addScriptEncodingSettings(final JavaParameters params) {
+  private void addScriptEncodingSettings(final JavaParameters params, final VirtualFile scriptFile) {
     //Setting up script charset
     // MUST be last parameter
-    Charset charset;
-    final VirtualFile fileByUrl = findScriptFile();
-    charset = EncodingProjectManager.getInstance(getProject()).getEncoding(fileByUrl, true);
+    Charset charset = EncodingProjectManager.getInstance(getProject()).getEncoding(scriptFile, true);
     if (charset == null) {
       charset = EncodingManager.getInstance().getDefaultCharset();
       if (!Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), charset)) {
@@ -229,22 +218,19 @@ public class GroovyScriptRunConfiguration extends AbstractGroovyScriptRunConfigu
     }
   }
 
-  private void configureScript(JavaParameters params) {
-    // add script
-    params.getProgramParametersList().add(scriptPath);
-
-    // add script parameters
-    params.getProgramParametersList().addParametersString(scriptParams);
-  }
-
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
     final Module module = getModule();
     if (module == null) {
       throw new ExecutionException("Module is not specified");
     }
 
-    if (!GroovyConfigUtils.getInstance().isSDKConfigured(module)) {
-      //throw new ExecutionException("Groovy is not configured");
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+    final Sdk sdk = rootManager.getSdk();
+    if (sdk == null || !(sdk.getSdkType() instanceof JavaSdkType)) {
+      throw CantRunException.noJdkForModule(module);
+    }
+
+    if (!GroovyConfigUtils.isSDKConfigured(module)) {
       Messages.showErrorDialog(module.getProject(),
                                ExecutionBundle.message("error.running.configuration.with.error.error.message", getName(),
                                                        "Groovy is not configured"), ExecutionBundle.message("run.error.message.title"));
@@ -253,22 +239,22 @@ public class GroovyScriptRunConfiguration extends AbstractGroovyScriptRunConfigu
       return null;
     }
 
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    final Sdk sdk = rootManager.getSdk();
-    if (sdk == null || !(sdk.getSdkType() instanceof JavaSdkType)) {
-      throw CantRunException.noJdkForModule(getModule());
+    final VirtualFile script = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(scriptPath));
+    if (script == null) {
+      throw new CantRunException("Cannot find script " + scriptPath);
     }
 
-    final VirtualFile script = findScriptFile();
-    final boolean isTests = script != null && ProjectRootManager.getInstance(getProject()).getFileIndex().isInTestSourceContent(script);
+    final boolean isTests = ProjectRootManager.getInstance(getProject()).getFileIndex().isInTestSourceContent(script);
 
     final JavaCommandLineState state = new JavaCommandLineState(environment) {
       protected JavaParameters createJavaParameters() throws ExecutionException {
         JavaParameters params = new JavaParameters();
 
         configureJavaParams(params, module);
-        configureGroovyStarter(params, module, isTests);
-        configureScript(params);
+        configureGroovyStarter(params, module, isTests, script);
+
+        params.getProgramParametersList().add(scriptPath);
+        params.getProgramParametersList().addParametersString(scriptParams);
 
         return params;
       }
@@ -279,8 +265,4 @@ public class GroovyScriptRunConfiguration extends AbstractGroovyScriptRunConfigu
 
   }
 
-  @Nullable
-  private VirtualFile findScriptFile() {
-    return VirtualFileManager.getInstance().findFileByUrl("file://" + scriptPath);
-  }
 }

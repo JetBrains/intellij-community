@@ -8,7 +8,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -34,8 +33,6 @@ import org.jetbrains.plugins.groovy.runner.RunnerUtil;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * @author ilyas
@@ -55,15 +52,9 @@ public class GantScriptRunConfiguration extends AbstractGroovyScriptRunConfigura
     super(name, project, factory);
   }
 
-  public Collection<Module> getValidModules() {
-    Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-    ArrayList<Module> res = new ArrayList<Module>();
-    for (Module module : modules) {
-      if (GantConfigUtils.getInstance().isSDKConfiguredToRun(module)) {
-        res.add(module);
-      }
-    }
-    return res;
+  @Override
+  protected boolean isValidModule(Module module) {
+    return GantConfigUtils.getInstance().isSDKConfiguredToRun(module);
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -186,14 +177,14 @@ public class GantScriptRunConfiguration extends AbstractGroovyScriptRunConfigura
       return null;
     }
 
-    if (!GantConfigUtils.getInstance().isSDKConfiguredToRun(module)) {
+    if (!isValidModule(module)) {
       int result = Messages
         .showOkCancelDialog(GantBundle.message("gant.configure.facet.question.text"), GantBundle.message("gant.configure.facet.question"),
                             GantIcons.GANT_ICON_16x16);
       if (result == 0) {
         ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
       }
-      if (!GantConfigUtils.getInstance().isSDKConfiguredToRun(module)) {
+      if (!isValidModule(module)) {
         return null;
       }
     }
