@@ -1,11 +1,8 @@
 package org.jetbrains.plugins.gant.runner;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
@@ -14,9 +11,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gant.GantBundle;
+import org.jetbrains.plugins.gant.GantFileType;
 import org.jetbrains.plugins.gant.GantIcons;
 import org.jetbrains.plugins.gant.config.GantConfigUtils;
 import org.jetbrains.plugins.groovy.runner.AbstractGroovyScriptRunConfiguration;
+import org.jetbrains.plugins.groovy.runner.GroovyConfiguration;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import java.io.File;
@@ -24,27 +23,19 @@ import java.io.File;
 /**
  * @author ilyas
  */
-public class GantScriptRunConfiguration extends AbstractGroovyScriptRunConfiguration {
-
-  public GantScriptRunConfiguration(ConfigurationFactory factory, Project project, String name) {
-    super(name, project, factory);
+public class GantScriptRunConfiguration extends GroovyConfiguration {
+  @Override
+  public boolean runsScript(@NotNull VirtualFile scriptFile) {
+    return GantFileType.DEFAULT_EXTENSION.equals(scriptFile.getExtension());
   }
 
   @Override
-  protected boolean isValidModule(Module module) {
+  public boolean isValidModule(Module module) {
     return GantConfigUtils.getInstance().isSDKConfiguredToRun(module);
   }
 
-  protected ModuleBasedConfiguration createInstance() {
-    return new GantScriptRunConfiguration(getFactory(), getConfigurationModule().getProject(), getName());
-  }
-
   @Override
-  protected boolean ensureRunnerConfigured(Module module, final String groovyHomePath) {
-    if (!super.ensureRunnerConfigured(module, groovyHomePath)) {
-      return false;
-    }
-
+  public boolean ensureRunnerConfigured(Module module, final String groovyHomePath) {
     if (!isValidModule(module)) {
       int result = Messages
         .showOkCancelDialog(GantBundle.message("gant.configure.facet.question.text"), GantBundle.message("gant.configure.facet.question"),
@@ -61,7 +52,7 @@ public class GantScriptRunConfiguration extends AbstractGroovyScriptRunConfigura
   }
 
   @Override
-  protected String getConfPath(@NotNull Module module) {
+  public String getConfPath(@NotNull Module module) {
     String gantHome = GantConfigUtils.getInstance().getSDKInstallPath(module);
     String confPath = FileUtil.toSystemDependentName(gantHome + "/conf/gant-starter.conf");
     if (new File(confPath).exists()) {
@@ -72,9 +63,9 @@ public class GantScriptRunConfiguration extends AbstractGroovyScriptRunConfigura
   }
 
   @Override
-  protected void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script, String confPath,
-                                      final String groovyHome) throws CantRunException {
-    defaultGroovyStarter(params, module, confPath, tests, groovyHome);
+  public void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script, String confPath,
+                                      final String groovyHome, AbstractGroovyScriptRunConfiguration configuration) throws CantRunException {
+    defaultGroovyStarter(params, module, confPath, tests, groovyHome, configuration);
 
     if (groovyHome.contains("grails")) {
       params.getClassPath().addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(groovyHome + "/lib", ".*\\.jar"));
@@ -96,9 +87,9 @@ public class GantScriptRunConfiguration extends AbstractGroovyScriptRunConfigura
     params.getProgramParametersList().add("gant.Gant");
 
     params.getProgramParametersList().add("--file");
-    params.getProgramParametersList().add(FileUtil.toSystemDependentName(scriptPath));
+    params.getProgramParametersList().add(FileUtil.toSystemDependentName(configuration.scriptPath));
 
-    params.getProgramParametersList().addParametersString(scriptParams);
+    params.getProgramParametersList().addParametersString(configuration.scriptParams);
   }
 
 }

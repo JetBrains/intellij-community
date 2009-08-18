@@ -9,13 +9,12 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
@@ -25,24 +24,21 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.regex.Pattern;
 
 /**
  * @author peter
  */
-public abstract class AbstractGroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule> {
+public class AbstractGroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule> {
   public String vmParams;
   public String workDir;
   public boolean isDebugEnabled;
@@ -52,6 +48,11 @@ public abstract class AbstractGroovyScriptRunConfiguration extends ModuleBasedCo
   public AbstractGroovyScriptRunConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
     super(name, new RunConfigurationModule(project), factory);
     workDir = PathUtil.getLocalPath(project.getBaseDir());
+  }
+
+  @Override
+  protected ModuleBasedConfiguration createInstance() {
+    return new AbstractGroovyScriptRunConfiguration(getName(), getProject(), getFactory());
   }
 
   public void setWorkDir(String dir) {
@@ -76,16 +77,30 @@ public abstract class AbstractGroovyScriptRunConfiguration extends ModuleBasedCo
 
   public Collection<Module> getValidModules() {
     Module[] modules = ModuleManager.getInstance(getProject()).getModules();
+    final GroovyConfiguration configuration = findConfiguration();
+    if (configuration == null) {
+      return Arrays.asList(modules);
+    }
+
+
     ArrayList<Module> res = new ArrayList<Module>();
     for (Module module : modules) {
-      if (isValidModule(module)) {
+      if (configuration.isValidModule(module)) {
         res.add(module);
       }
     }
     return res;
   }
 
-  protected abstract boolean isValidModule(Module module);
+  @Nullable
+  private GroovyConfiguration findConfiguration() {
+    final VirtualFile scriptFile = getScriptFile();
+    if (scriptFile == null) {
+      return null;
+    }
+
+    return GroovyConfiguration.findConfiguration(scriptFile);
+  }
 
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
@@ -132,17 +147,21 @@ public abstract class AbstractGroovyScriptRunConfiguration extends ModuleBasedCo
       return null;
     }
 
-
-    if (!ensureRunnerConfigured(module, groovyHomePath)) {
-      return null;
-    }
-
-    final VirtualFile script = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(scriptPath));
+    final VirtualFile script = getScriptFile();
     if (script == null) {
       throw new CantRunException("Cannot find script " + scriptPath);
     }
 
-    final boolean isTests = ProjectRootManager.getInstance(getProject()).getFileIndex().isInTestSourceContent(script);
+    final GroovyConfiguration configuration = findConfiguration();
+    if (configuration == null) {
+      throw new CantRunException("Unknown script type " + scriptPath);
+    }
+
+    if (!configuration.ensureRunnerConfigured(module, groovyHomePath)) {
+      return null;
+    }
+
+    final boolean tests = ProjectRootManager.getInstance(getProject()).getFileIndex().isInTestSourceContent(script);
 
     final JavaCommandLineState state = new JavaCommandLineState(environment) {
       protected JavaParameters createJavaParameters() throws ExecutionException {
@@ -152,7 +171,9 @@ public abstract class AbstractGroovyScriptRunConfiguration extends ModuleBasedCo
         params.setJdk(ModuleRootManager.getInstance(module).getSdk());
         params.setWorkingDirectory(getAbsoluteWorkDir());
 
-        configureCommandLine(params, module, isTests, script, getConfPath(module), FileUtil.toSystemDependentName(groovyHomePath));
+        final String confPath = configuration.getConfPath(module);
+        final String groovyHome = FileUtil.toSystemDependentName(groovyHomePath);
+        configuration.configureCommandLine(params, module, tests, script, confPath, groovyHome, AbstractGroovyScriptRunConfiguration.this);
 
         if (isDebugEnabled) {
           params.getProgramParametersList().add("--debug");
@@ -167,87 +188,11 @@ public abstract class AbstractGroovyScriptRunConfiguration extends ModuleBasedCo
 
   }
 
-  protected String getConfPath(@NotNull Module module) {
-    String confpath = FileUtil.toSystemDependentName(LibrariesUtil.getGroovyHomePath(module) + "/conf/groovy-starter.conf");
-    if (new File(confpath).exists()) {
-      return confpath;
-    }
-
-    try {
-      final String jarPath = PathUtil.getJarPathForClass(GroovyScriptRunConfiguration.class);
-      if (new File(jarPath).isFile()) { //jar; distribution mode
-        return new File(jarPath, "../groovy-starter.conf").getCanonicalPath();
-      }
-
-      //else, it's directory in out, development mode
-      return new File(jarPath, "conf/groovy-starter.conf").getCanonicalPath();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  @Nullable
+  private VirtualFile getScriptFile() {
+    return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(scriptPath));
   }
 
-
-  protected abstract void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script, String confPath,
-                                               final String groovyHome) throws CantRunException;
-
-  protected boolean ensureRunnerConfigured(Module module, final String groovyHomePath) {
-    return true;
-  }
-
-  protected void defaultGroovyStarter(JavaParameters params, Module module, String confPath, boolean tests, final String groovyHome) throws CantRunException {
-    addGroovyJar(params, module);
-
-    params.getVMParametersList().addParametersString("-Dgroovy.home=" + "\"" + groovyHome + "\"");
-    if (groovyHome.contains("grails")) { //a bit of a hack
-      params.getVMParametersList().addParametersString("-Dgrails.home=" + "\"" + groovyHome + "\"");
-    }
-    if (groovyHome.contains("griffon")) { //a bit of a hack
-      params.getVMParametersList().addParametersString("-Dgriffon.home=" + "\"" + groovyHome + "\"");
-    }
-    params.getVMParametersList().add("-Dgroovy.starter.conf=" + confPath);
-
-    setToolsJar(params);
-
-    params.getVMParametersList().addParametersString(vmParams);
-    params.setMainClass("org.codehaus.groovy.tools.GroovyStarter");
-
-    params.getProgramParametersList().add("--conf");
-    params.getProgramParametersList().add(confPath);
-
-    params.getProgramParametersList().add("--classpath");
-    params.getProgramParametersList().add(getClearClasspath(module, tests));
-  }
-
-  private static void setToolsJar(JavaParameters params) {
-    Sdk jdk = params.getJdk();
-    if (jdk != null && jdk.getSdkType() instanceof JavaSdkType) {
-      String toolsPath = ((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk);
-      if (toolsPath != null) {
-        params.getVMParametersList().add("-Dtools.jar=" + toolsPath);
-      }
-    }
-  }
-
-  private static void addGroovyJar(JavaParameters params, Module module) {
-    final Pattern pattern = Pattern.compile(".*[\\\\/]groovy[^\\\\/]*jar");
-    for (Library library : GroovyConfigUtils.getInstance().getSDKLibrariesByModule(module)) {
-      for (VirtualFile root : library.getFiles(OrderRootType.CLASSES)) {
-        if (pattern.matcher(root.getPresentableUrl()).matches()) {
-          params.getClassPath().add(root);
-          return;
-        }
-      }
-    }
-  }
-
-  protected static String getClearClasspath(Module module, boolean isTests) throws CantRunException {
-    final JavaParameters tmp = new JavaParameters();
-    tmp.configureByModule(module, isTests ? JavaParameters.JDK_AND_CLASSES_AND_TESTS : JavaParameters.JDK_AND_CLASSES);
-    StringBuffer buffer = RunnerUtil.getClearClassPathString(tmp, module);
-
-    return buffer.toString();
-  }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new GroovyRunConfigurationEditor();

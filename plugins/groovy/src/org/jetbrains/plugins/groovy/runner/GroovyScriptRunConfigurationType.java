@@ -21,22 +21,22 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import javax.swing.*;
 
 public class GroovyScriptRunConfigurationType implements LocatableConfigurationType {
-  private final GroovyScriptConfigurationFactory myConfigurationFactory;
+  private final GroovyFactory myConfigurationFactory;
 
   public GroovyScriptRunConfigurationType() {
-    myConfigurationFactory = new GroovyScriptConfigurationFactory(this);
+    myConfigurationFactory = new GroovyFactory(this);
   }
 
   public String getDisplayName() {
@@ -75,7 +75,7 @@ public class GroovyScriptRunConfigurationType implements LocatableConfigurationT
   private RunnerAndConfigurationSettings createConfiguration(final PsiClass aClass) {
     final Project project = aClass.getProject();
     RunnerAndConfigurationSettings settings = RunManagerEx.getInstanceEx(project).createConfiguration("", myConfigurationFactory);
-    final GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration) settings.getConfiguration();
+    final AbstractGroovyScriptRunConfiguration configuration = (AbstractGroovyScriptRunConfiguration) settings.getConfiguration();
     final PsiFile file = aClass.getContainingFile();
     final PsiDirectory dir = file.getContainingDirectory();
     assert dir != null;
@@ -110,7 +110,8 @@ public class GroovyScriptRunConfigurationType implements LocatableConfigurationT
     return module.getModuleName();
   }
 
-  private PsiClass getScriptClass(PsiElement element) {
+  @Nullable
+  private static PsiClass getScriptClass(PsiElement element) {
     final PsiFile file = element.getContainingFile();
     if (!(file instanceof GroovyFile)) return null;
     return ((GroovyFile) file).getScriptClass();
@@ -120,4 +121,14 @@ public class GroovyScriptRunConfigurationType implements LocatableConfigurationT
     return ConfigurationTypeUtil.findConfigurationType(GroovyScriptRunConfigurationType.class);
   }
 
+  public static class GroovyFactory extends ConfigurationFactory {
+    public GroovyFactory(LocatableConfigurationType type) {
+      super(type);
+    }
+
+    public RunConfiguration createTemplateConfiguration(Project project) {
+      return new AbstractGroovyScriptRunConfiguration("Groovy Script", project, this);
+    }
+
+  }
 }

@@ -16,11 +16,8 @@
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -28,41 +25,38 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 
-public class GroovyScriptRunConfiguration extends AbstractGroovyScriptRunConfiguration {
-  private static final String GROOVY_MAIN = "groovy.ui.GroovyMain";
-
-  public GroovyScriptRunConfiguration(ConfigurationFactory factory, Project project, String name) {
-    super(name, project, factory);
+public class GroovyScriptRunConfiguration extends GroovyConfiguration {
+  @Override
+  public boolean runsScript(@NotNull VirtualFile scriptFile) {
+    return scriptFile.getFileType() == GroovyFileType.GROOVY_FILE_TYPE;
   }
 
   @Override
-  protected boolean isValidModule(Module module) {
+  public boolean isValidModule(Module module) {
     return GroovyFacet.getInstance(module) != null;
   }
 
-  protected ModuleBasedConfiguration createInstance() {
-    return new GroovyScriptRunConfiguration(getFactory(), getConfigurationModule().getProject(), getName());
-  }
-
   @Override
-  protected void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script, String confPath,
-                                      final String groovyHome) throws CantRunException {
-    defaultGroovyStarter(params, module, confPath, tests, groovyHome);
+  public void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script, String confPath,
+                                      final String groovyHome, AbstractGroovyScriptRunConfiguration configuration) throws CantRunException {
+    defaultGroovyStarter(params, module, confPath, tests, groovyHome, configuration);
 
     params.getProgramParametersList().add("--main");
-    params.getProgramParametersList().add(GROOVY_MAIN);
+    params.getProgramParametersList().add("groovy.ui.GroovyMain");
 
-    params.getProgramParametersList().add(FileUtil.toSystemDependentName(scriptPath));
-    params.getProgramParametersList().addParametersString(scriptParams);
+    params.getProgramParametersList().add(FileUtil.toSystemDependentName(configuration.scriptPath));
+    params.getProgramParametersList().addParametersString(configuration.scriptParams);
 
-    addScriptEncodingSettings(params, script);
+    addScriptEncodingSettings(params, script, module);
   }
 
-  private void addScriptEncodingSettings(final JavaParameters params, final VirtualFile scriptFile) {
-    Charset charset = EncodingProjectManager.getInstance(getProject()).getEncoding(scriptFile, true);
+  private static void addScriptEncodingSettings(final JavaParameters params, final VirtualFile scriptFile, Module module) {
+    Charset charset = EncodingProjectManager.getInstance(module.getProject()).getEncoding(scriptFile, true);
     if (charset == null) {
       charset = EncodingManager.getInstance().getDefaultCharset();
       if (!Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), charset)) {
