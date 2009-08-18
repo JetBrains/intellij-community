@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
  * @author max
  */
 public class ComplementaryFontsRegistry {
+  private static final Object lock = new String("common lock");
   private static final ArrayList<String> ourFontNames;
   private static final LinkedHashMap<FontKey, FontInfo> ourUsedFonts;
   private static FontKey ourSharedKeyInstance = new FontKey(null, 0, 0);
@@ -66,55 +67,57 @@ public class ComplementaryFontsRegistry {
   }
 
   public static FontInfo getFontAbleToDisplay(char c, int size, int style, String defaultFontFamily) {
-    if (ourSharedKeyInstance.mySize == size &&
-        ourSharedKeyInstance.myStyle == style &&
-        ourSharedKeyInstance.myFamilyName != null &&
-        ourSharedKeyInstance.myFamilyName.equals(defaultFontFamily) &&
-        ourSharedDefaultFont != null &&
-        ( c < 128 ||
-          ourSharedDefaultFont.canDisplay(c)
-        )
-       ) {
-      return ourSharedDefaultFont;
-    }
+    synchronized (lock) {
+      if (ourSharedKeyInstance.mySize == size &&
+          ourSharedKeyInstance.myStyle == style &&
+          ourSharedKeyInstance.myFamilyName != null &&
+          ourSharedKeyInstance.myFamilyName.equals(defaultFontFamily) &&
+          ourSharedDefaultFont != null &&
+          ( c < 128 ||
+            ourSharedDefaultFont.canDisplay(c)
+          )
+         ) {
+        return ourSharedDefaultFont;
+      }
 
-    ourSharedKeyInstance.myFamilyName = defaultFontFamily;
-    ourSharedKeyInstance.mySize = size;
-    ourSharedKeyInstance.myStyle = style;
+      ourSharedKeyInstance.myFamilyName = defaultFontFamily;
+      ourSharedKeyInstance.mySize = size;
+      ourSharedKeyInstance.myStyle = style;
 
-    FontInfo defaultFont = ourUsedFonts.get(ourSharedKeyInstance);
-    if (defaultFont == null) {
-      defaultFont = new FontInfo(defaultFontFamily, size, style);
-      ourUsedFonts.put(ourSharedKeyInstance, defaultFont);
-      ourSharedKeyInstance = new FontKey(null, 0, 0);
-    }
+      FontInfo defaultFont = ourUsedFonts.get(ourSharedKeyInstance);
+      if (defaultFont == null) {
+        defaultFont = new FontInfo(defaultFontFamily, size, style);
+        ourUsedFonts.put(ourSharedKeyInstance, defaultFont);
+        ourSharedKeyInstance = new FontKey(null, 0, 0);
+      }
 
-    ourSharedDefaultFont = defaultFont;
-    if (c < 128 || defaultFont.canDisplay(c)) {
+      ourSharedDefaultFont = defaultFont;
+      if (c < 128 || defaultFont.canDisplay(c)) {
+        return defaultFont;
+      }
+
+      if (ourUndisplayableChars.contains(c)) return defaultFont;
+
+      final Collection<FontInfo> descriptors = ourUsedFonts.values();
+      for (FontInfo font : descriptors) {
+        if (font.getSize() == size && font.getStyle() == style && font.canDisplay(c)) {
+          return font;
+        }
+      }
+
+      for (int i = 0; i < ourFontNames.size(); i++) {
+        String name = ourFontNames.get(i);
+        FontInfo font = new FontInfo(name, size, style);
+        if (font.canDisplay(c)) {
+          ourUsedFonts.put(new FontKey(name, size, style), font);
+          ourFontNames.remove(i);
+          return font;
+        }
+      }
+
+      ourUndisplayableChars.add(c);
+
       return defaultFont;
     }
-
-    if (ourUndisplayableChars.contains(c)) return defaultFont;
-
-    final Collection<FontInfo> descriptors = ourUsedFonts.values();
-    for (FontInfo font : descriptors) {
-      if (font.getSize() == size && font.getStyle() == style && font.canDisplay(c)) {
-        return font;
-      }
-    }
-
-    for (int i = 0; i < ourFontNames.size(); i++) {
-      String name = ourFontNames.get(i);
-      FontInfo font = new FontInfo(name, size, style);
-      if (font.canDisplay(c)) {
-        ourUsedFonts.put(new FontKey(name, size, style), font);
-        ourFontNames.remove(i);
-        return font;
-      }
-    }
-
-    ourUndisplayableChars.add(c);
-
-    return defaultFont;
   }
 }
