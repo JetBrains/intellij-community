@@ -45,6 +45,7 @@ import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -154,7 +155,6 @@ public class VariableInplaceRenamer {
             int offset = myEditor.getCaretModel().getOffset();
             Template template = builder.buildInlineTemplate();
             template.setToShortenLongNames(false);
-            assert scope1 != null;
             TextRange range = scope1.getTextRange();
             assert range != null;
             myHighlighters = new ArrayList<RangeHighlighter>();
@@ -211,7 +211,17 @@ public class VariableInplaceRenamer {
     return file;
   }
 
-  private void finish() {
+  @TestOnly
+  public static void checkCleared(){
+    try {
+      assert ourRenamersStack.isEmpty() : ourRenamersStack;
+    }
+    finally {
+      ourRenamersStack.clear();
+    }
+  }
+
+  public void finish() {
     if (!ourRenamersStack.isEmpty() && ourRenamersStack.peek() == this) {
       ourRenamersStack.pop();
     }
@@ -315,7 +325,7 @@ public class VariableInplaceRenamer {
       myLookupItems = new LookupItem[names.size()];
       for (int i = 0; i < myLookupItems.length; i++) {
         String suggestedName = names.get(i);
-        myLookupItems[i] = new LookupItem(suggestedName, suggestedName);
+        myLookupItems[i] = new LookupItem<Object>(suggestedName, suggestedName);
       }
     }
 

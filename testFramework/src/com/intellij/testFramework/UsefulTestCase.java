@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import gnu.trove.THashSet;
 import junit.framework.Assert;
 import junit.framework.AssertionFailedError;
@@ -32,9 +33,8 @@ import org.jetbrains.annotations.NonNls;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.Method;
-import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
 import java.util.*;
 
 /**
@@ -96,19 +96,22 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected void checkForSettingsDamage() throws Exception {
-    if (!isPerformanceTest() && ApplicationManager.getApplication() != null) {
-      final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-      Element newS = new Element("temp");
-      settings.writeExternal(newS);
-      Assert.assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS, "\n"));
-
-
-      CodeStyleSettings codeStyleSettings = getCurrentCodeStyleSettings();
-      codeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
-      checkSettingsEqual(myOldCodeStyleSettings, codeStyleSettings, "Code style settings damaged");
-      codeStyleSettings.clearCodeStyleSettings();
-      myOldCodeStyleSettings = null;
+    if (isPerformanceTest() || ApplicationManager.getApplication() == null) {
+      return;
     }
+    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    Element newS = new Element("temp");
+    settings.writeExternal(newS);
+    Assert.assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS, "\n"));
+
+
+    CodeStyleSettings codeStyleSettings = getCurrentCodeStyleSettings();
+    codeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
+    checkSettingsEqual(myOldCodeStyleSettings, codeStyleSettings, "Code style settings damaged");
+    codeStyleSettings.clearCodeStyleSettings();
+    myOldCodeStyleSettings = null;
+
+    VariableInplaceRenamer.checkCleared();
   }
 
   protected void storeSettings() {
