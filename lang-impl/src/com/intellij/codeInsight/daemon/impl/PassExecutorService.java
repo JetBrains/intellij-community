@@ -282,6 +282,10 @@ public abstract class PassExecutorService {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               try {
+                if (DumbService.getInstance(myProject).isDumb() && !(myPass instanceof DumbAware)) {
+                  return;
+                }
+
                 if (!myUpdateProgress.isCanceled()) {
                   myPass.collectInformation(myUpdateProgress);
                 }
