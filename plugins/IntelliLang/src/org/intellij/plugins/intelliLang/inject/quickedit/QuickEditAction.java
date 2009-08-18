@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * "Quick Edit Language" intention action that provides a popup which shows an injected language
@@ -107,12 +108,16 @@ public class QuickEditAction implements IntentionAction {
 
     final Map<PsiLanguageInjectionHost.Shred, RangeMarker> markers = ContainerUtil.assignValues(shreds.iterator(), new Convertor<PsiLanguageInjectionHost.Shred, RangeMarker>() {
       public RangeMarker convert(final PsiLanguageInjectionHost.Shred shred) {
-        final RangeMarker marker = document.createRangeMarker(shred.range.getStartOffset() + shred.prefix.length(), shred.range.getEndOffset() - shred.suffix.length());
-        marker.setGreedyToLeft(true);
-        marker.setGreedyToRight(true);
-        return marker;
+        return document.createRangeMarker(shred.range.getStartOffset() + shred.prefix.length(), shred.range.getEndOffset() - shred.suffix.length());
       }
     });
+    boolean first = true;
+    for (PsiLanguageInjectionHost.Shred shred : shreds) {
+      final RangeMarker marker = markers.get(shred);
+      if (first) marker.setGreedyToLeft(true);
+      marker.setGreedyToRight(true); 
+      first = false;
+    }
     int curOffset = 0;
     for (PsiLanguageInjectionHost.Shred shred : shreds) {
       final RangeMarker marker = markers.get(shred);
@@ -130,10 +135,27 @@ public class QuickEditAction implements IntentionAction {
 
     final QuickEditEditor e = new QuickEditEditor(document, project, fileType, new QuickEditEditor.QuickEditSaver() {
       public void save(final String text) {
-        for (PsiLanguageInjectionHost.Shred shred : shreds) {
-          final PsiLanguageInjectionHost host = shred.host;
-          final TextRange range = new TextRange(markers.get(shred).getStartOffset(), markers.get(shred).getEndOffset());
-          ElementManipulators.getManipulator(host).handleContentChange(host, shred.getRangeInsideHost(), range.substring(text));
+        final Map<PsiLanguageInjectionHost, Set<PsiLanguageInjectionHost.Shred>> map = ContainerUtil.classify(shreds.iterator(), new Convertor<PsiLanguageInjectionHost.Shred, PsiLanguageInjectionHost>() {
+          public PsiLanguageInjectionHost convert(final PsiLanguageInjectionHost.Shred o) {
+            return o.host;
+          }
+        });
+        for (PsiLanguageInjectionHost host : map.keySet()) {
+          final String hostText = host.getText();
+          TextRange insideHost = null;
+          final StringBuilder sb = new StringBuilder();
+          for (PsiLanguageInjectionHost.Shred shred : map.get(host)) {
+            final TextRange localInsideHost = shred.getRangeInsideHost();
+            final TextRange localInsideFile = new TextRange(markers.get(shred).getStartOffset(), markers.get(shred).getEndOffset());
+            if (insideHost != null) {
+              sb.append(hostText.substring(insideHost.getEndOffset(), localInsideHost.getStartOffset()));
+            }
+            sb.append(localInsideFile.substring(text));
+
+            insideHost = insideHost == null? localInsideHost : insideHost.union(localInsideHost);
+          }
+          assert insideHost != null;
+          ElementManipulators.getManipulator(host).handleContentChange(host, insideHost, sb.toString());
         }
       }
     });
