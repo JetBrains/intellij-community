@@ -38,7 +38,7 @@ public class ExtractClassTest extends MultiFileTestCase{
         final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>();
         methods.add(aClass.findMethodsByName(methodName, false)[0]);
         
-        doTest(aClass, methods, new ArrayList<PsiField>(), conflicts);
+        doTest(aClass, methods, new ArrayList<PsiField>(), conflicts, false);
       }
     });
   }
@@ -84,12 +84,16 @@ public class ExtractClassTest extends MultiFileTestCase{
         final ArrayList<PsiField> fields = new ArrayList<PsiField>();
         fields.add(aClass.findFieldByName("myT", false));
 
-        doTest(aClass, methods, fields, null);
+        doTest(aClass, methods, fields, null, false);
       }
     });
   }
 
   private void doTestField(final String conflicts) throws Exception {
+    doTestField(conflicts, false);
+  }
+
+  private void doTestField(final String conflicts, final boolean generateGettersSetters) throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("Test");
@@ -101,14 +105,15 @@ public class ExtractClassTest extends MultiFileTestCase{
         final ArrayList<PsiField> fields = new ArrayList<PsiField>();
         fields.add(aClass.findFieldByName("myT", false));
 
-        doTest(aClass, methods, fields, conflicts);
+        doTest(aClass, methods, fields, conflicts, generateGettersSetters);
       }
     });
   }
 
-  private void doTest(final PsiClass aClass, final ArrayList<PsiMethod> methods, final ArrayList<PsiField> fields, final String conflicts) {
+  private void doTest(final PsiClass aClass, final ArrayList<PsiMethod> methods, final ArrayList<PsiField> fields, final String conflicts,
+                      boolean generateGettersSetters) {
     try {
-      ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), "", "Extracted");
+      ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), "", "Extracted", generateGettersSetters);
       processor.run();
       LocalFileSystem.getInstance().refresh(false);
       FileDocumentManager.getInstance().saveAllDocuments();
@@ -124,6 +129,10 @@ public class ExtractClassTest extends MultiFileTestCase{
     if (conflicts != null) {
       fail("Conflicts were not detected: " + conflicts);
     }
+  }
+
+  public void testGenerateGetters() throws Exception {
+    doTestField(null, true);
   }
 
 

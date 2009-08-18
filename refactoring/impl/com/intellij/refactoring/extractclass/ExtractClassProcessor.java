@@ -47,6 +47,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   private final Set<PsiClass> innerClassesToMakePublic = new HashSet<PsiClass>();
   private final List<PsiTypeParameter> typeParams = new ArrayList<PsiTypeParameter>();
   private final String newPackageName;
+  private final boolean myGenerateAccessors;
   private final String newClassName;
   private final String delegateFieldName;
   private final boolean requiresBackpointer;
@@ -58,12 +59,23 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
                                List<PsiClass> innerClasses,
                                String newPackageName,
                                String newClassName) {
+    this(sourceClass, fields, methods, innerClasses, newPackageName, newClassName, false);
+  }
+
+  public ExtractClassProcessor(PsiClass sourceClass,
+                               List<PsiField> fields,
+                               List<PsiMethod> methods,
+                               List<PsiClass> classes,
+                               String packageName,
+                               String newClassName,
+                               boolean generateAccessors) {
     super(sourceClass.getProject());
     this.sourceClass = sourceClass;
-    this.newPackageName = newPackageName;
+    this.newPackageName = packageName;
+    myGenerateAccessors = generateAccessors;
     this.fields = new ArrayList<PsiField>(fields);
     this.methods = new ArrayList<PsiMethod>(methods);
-    this.innerClasses = new ArrayList<PsiClass>(innerClasses);
+    this.innerClasses = new ArrayList<PsiClass>(classes);
     this.newClassName = newClassName;
     delegateFieldName = calculateDelegateFieldName();
     requiresBackpointer = new BackpointerUsageVisitor(fields, innerClasses, methods, sourceClass).backpointerRequired();
@@ -94,22 +106,28 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       conflicts.add(RefactorJBundle.message("cannot.perform.the.refactoring") +
                     RefactorJBundle.message("there.already.exists.a.class.with.the.chosen.name"));
     }
-    conflicts.addAll(calculateInitializersConflicts());
-    final NecessaryAccessorsVisitor visitor = new NecessaryAccessorsVisitor();
-    for (PsiMethod method : methods) {
-      method.accept(visitor);
-    }
-    for (PsiClass innerClass : innerClasses) {
-      innerClass.accept(visitor);
-    }
 
-    final Set<PsiField> fieldsNeedingGetter = visitor.getFieldsNeedingGetter();
-    for (PsiField field : fieldsNeedingGetter) {
-      conflicts.add("Field \'" + field.getName() + "\' needs getter");
-    }
-    final Set<PsiField> fieldsNeedingSetter = visitor.getFieldsNeedingSetter();
-    for (PsiField field : fieldsNeedingSetter) {
-      conflicts.add("Field \'" + field.getName() + "\' needs getter");
+    if (!myGenerateAccessors) {
+      conflicts.addAll(calculateInitializersConflicts());
+      final NecessaryAccessorsVisitor visitor = new NecessaryAccessorsVisitor();
+      for (PsiField field : fields) {
+        field.accept(visitor);
+      }
+      for (PsiMethod method : methods) {
+        method.accept(visitor);
+      }
+      for (PsiClass innerClass : innerClasses) {
+        innerClass.accept(visitor);
+      }
+
+      final Set<PsiField> fieldsNeedingGetter = visitor.getFieldsNeedingGetter();
+      for (PsiField field : fieldsNeedingGetter) {
+        conflicts.add("Field \'" + field.getName() + "\' needs getter");
+      }
+      final Set<PsiField> fieldsNeedingSetter = visitor.getFieldsNeedingSetter();
+      for (PsiField field : fieldsNeedingSetter) {
+        conflicts.add("Field \'" + field.getName() + "\' needs getter");
+      }
     }
     return showConflicts(conflicts);
   }
@@ -481,6 +499,24 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final List<PsiClass> interfaces = calculateInterfacesSupported();
     extractedClassBuilder.setInterfaces(interfaces);
 
+    if (myGenerateAccessors) {
+      final NecessaryAccessorsVisitor visitor = new NecessaryAccessorsVisitor() {
+        @Override
+        protected boolean isProhibitedReference(PsiField field) {
+          if (fields.contains(field)) {
+            return true;
+          }
+          if (innerClasses.contains(field.getContainingClass())) {
+            return true;
+          }
+          return false;
+        }
+      };
+      sourceClass.accept(visitor);
+      extractedClassBuilder.setFieldsNeedingGetters(visitor.getFieldsNeedingGetter());
+      extractedClassBuilder.setFieldsNeedingSetters(visitor.getFieldsNeedingSetter());
+    }
+
     final String classString = extractedClassBuilder.buildBeanClass();
 
     try {
@@ -608,7 +644,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
-      if (isBackpointerReference(expression)) {
+      if (isProhibitedReference(expression)) {
         final PsiField field = getReferencedField(expression);
         if (!hasGetter(field)) {
           fieldsNeedingGetter.add(field);
@@ -620,7 +656,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       super.visitAssignmentExpression(expression);
 
       final PsiExpression lhs = expression.getLExpression();
-      if (isBackpointerReference(lhs)) {
+      if (isProhibitedReference(lhs)) {
         final PsiField field = getReferencedField(lhs);
         if (!hasGetter(field)) {
           fieldsNeedingSetter.add(field);
@@ -643,7 +679,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       if (!tokenType.equals(JavaTokenType.PLUSPLUS) && !tokenType.equals(JavaTokenType.MINUSMINUS)) {
         return;
       }
-      if (isBackpointerReference(operand)) {
+      if (isProhibitedReference(operand)) {
         final PsiField field = getReferencedField(operand);
         if (!hasSetter(field)) {
           fieldsNeedingSetter.add(field);
@@ -660,18 +696,22 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     }
 
 
-    private boolean isBackpointerReference(PsiExpression expression) {
+    protected boolean isProhibitedReference(PsiExpression expression) {
       return BackpointerUtil.isBackpointerReference(expression, new Condition<PsiField>() {
         public boolean value(final PsiField field) {
-          if (fields.contains(field)) {
-            return false;
-          }
-          if (innerClasses.contains(field.getContainingClass())) {
-            return false;
-          }
-          return true;
+          return NecessaryAccessorsVisitor.this.isProhibitedReference(field);
         }
       });
+    }
+
+    protected boolean isProhibitedReference(PsiField field) {
+      if (fields.contains(field)) {
+        return false;
+      }
+      if (innerClasses.contains(field.getContainingClass())) {
+        return false;
+      }
+      return true;
     }
 
     private PsiField getReferencedField(PsiExpression expression) {

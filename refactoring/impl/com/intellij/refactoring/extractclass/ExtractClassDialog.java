@@ -39,6 +39,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   private final JTextField classNameField;
   private final ReferenceEditorComboWithBrowseButton packageTextField;
   private final JTextField sourceClassTextField;
+  private JCheckBox myGenerateAccessorsCb;
 
   ExtractClassDialog(PsiClass sourceClass, PsiMember selectedMember) {
     super(sourceClass.getProject(), true);
@@ -95,7 +96,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     final String newClassName = getClassName();
     final String packageName = getPackageName();
 
-    final ExtractClassProcessor processor = new ExtractClassProcessor(sourceClass, fields, methods, classes, packageName, newClassName);
+    final ExtractClassProcessor processor = new ExtractClassProcessor(sourceClass, fields, methods, classes, packageName, newClassName, isGenerateAccessors());
     invokeRefactoring(processor);
   }
 
@@ -158,6 +159,10 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
 
   public List<PsiClassInitializer> getClassInitializersToExtract() {
     return getMembersToExtract(true, PsiClassInitializer.class);
+  }
+
+  public boolean isGenerateAccessors() {
+    return myGenerateAccessorsCb.isSelected();
   }
 
   protected String getDimensionServiceKey() {
@@ -254,6 +259,10 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     });
     panel.add(memberSelectionPanel, BorderLayout.CENTER);
     table.addMemberInfoChangeListener(this);
+
+    myGenerateAccessorsCb = new JCheckBox("Generate accessors");
+    myGenerateAccessorsCb.setMnemonic('G');
+    panel.add(myGenerateAccessorsCb, BorderLayout.SOUTH);
     return panel;
   }
 

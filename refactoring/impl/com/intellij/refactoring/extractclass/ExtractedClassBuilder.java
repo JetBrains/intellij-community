@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NonNls;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 class ExtractedClassBuilder {
   private static final Logger LOGGER = Logger.getInstance("com.siyeh.rpp.extractclass.ExtractedClassBuilder");
@@ -37,6 +38,8 @@ class ExtractedClassBuilder {
   private String backPointerName = null;
   private Project myProject;
   private JavaCodeStyleManager myJavaCodeStyleManager;
+  private Set<PsiField> myFieldsNeedingSetters;
+  private Set<PsiField> myFieldsNeedingGetter;
 
   public void setClassName(String className) {
     this.className = className;
@@ -252,6 +255,16 @@ class ExtractedClassBuilder {
       }
 
       outputField(field, out);
+
+      if (myFieldsNeedingGetter != null && myFieldsNeedingGetter.contains(field)) {
+        out.append(PropertyUtil.generateGetterPrototype(field).getText());
+        out.append("\n");
+      }
+
+      if (myFieldsNeedingSetters != null && myFieldsNeedingSetters.contains(field)) {
+        out.append(PropertyUtil.generateSetterPrototype(field).getText());
+        out.append("\n");
+      }
     }
     for (PsiClassInitializer initializer : remainingInitializers) {
       outputMutatedInitializer(out, initializer);
@@ -371,7 +384,7 @@ class ExtractedClassBuilder {
     if (field.hasModifierProperty(PsiModifier.STATIC)) {
       modifierString += "static ";
     }
-    if (field.hasModifierProperty(PsiModifier.FINAL)) {
+    if (field.hasModifierProperty(PsiModifier.FINAL) && (myFieldsNeedingSetters == null || !myFieldsNeedingSetters.contains(field))) {
       modifierString += "final ";
     }
     if (field.hasModifierProperty(PsiModifier.TRANSIENT)) {
@@ -416,6 +429,14 @@ class ExtractedClassBuilder {
   public void setProject(final Project project) {
     myProject = project;
     myJavaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
+  }
+
+  public void setFieldsNeedingGetters(Set<PsiField> fieldsNeedingGetter) {
+    myFieldsNeedingGetter = fieldsNeedingGetter;
+  }
+
+  public void setFieldsNeedingSetters(Set<PsiField> fieldsNeedingSetters) {
+    myFieldsNeedingSetters = fieldsNeedingSetters;
   }
 
   private class Mutator extends JavaElementVisitor {
