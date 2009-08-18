@@ -35,9 +35,6 @@ import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizer;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -46,7 +43,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.PathUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -59,9 +55,6 @@ import java.nio.charset.Charset;
 import java.util.regex.Pattern;
 
 public class GroovyScriptRunConfiguration extends AbstractGroovyScriptRunConfiguration {
-  public boolean isDebugEnabled;
-  public String scriptParams;
-  public String scriptPath;
   public final String GROOVY_STARTER = "org.codehaus.groovy.tools.GroovyStarter";
   public final String GROOVY_MAIN = "groovy.ui.GroovyMain";
 
@@ -79,29 +72,6 @@ public class GroovyScriptRunConfiguration extends AbstractGroovyScriptRunConfigu
   @Override
   protected boolean isValidModule(Module module) {
     return GroovyFacet.getInstance(module) != null;
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    super.readExternal(element);
-    readModule(element);
-    scriptPath = JDOMExternalizer.readString(element, "path");
-    vmParams = JDOMExternalizer.readString(element, "vmparams");
-    scriptParams = JDOMExternalizer.readString(element, "params");
-    final String wrk = JDOMExternalizer.readString(element, "workDir");
-    if (!".".equals(wrk)) {
-      workDir = wrk;
-    }
-    isDebugEnabled = Boolean.parseBoolean(JDOMExternalizer.readString(element, "debug"));
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    super.writeExternal(element);
-    writeModule(element);
-    JDOMExternalizer.write(element, "path", scriptPath);
-    JDOMExternalizer.write(element, "vmparams", vmParams);
-    JDOMExternalizer.write(element, "params", scriptParams);
-    JDOMExternalizer.write(element, "workDir", workDir);
-    JDOMExternalizer.write(element, "debug", isDebugEnabled);
   }
 
   protected ModuleBasedConfiguration createInstance() {

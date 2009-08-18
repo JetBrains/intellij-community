@@ -38,10 +38,7 @@ import java.io.File;
  * @author ilyas
  */
 public class GantScriptRunConfiguration extends AbstractGroovyScriptRunConfiguration {
-  public boolean isDebugEnabled;
-  public String scriptParams;
   public String targets;
-  public String scriptPath;
   public String antHome = "";
 
   @NonNls public static final String GANT_STARTER = "org.codehaus.groovy.tools.GroovyStarter";
@@ -59,28 +56,13 @@ public class GantScriptRunConfiguration extends AbstractGroovyScriptRunConfigura
 
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
-    readModule(element);
-    scriptPath = JDOMExternalizer.readString(element, "path");
-    vmParams = JDOMExternalizer.readString(element, "vmparams");
-    scriptParams = JDOMExternalizer.readString(element, "params");
     targets = JDOMExternalizer.readString(element, "targets");
-    final String wrk = JDOMExternalizer.readString(element, "workDir");
-    if (!".".equals(wrk)) {
-      workDir = wrk;
-    }
     antHome  = JDOMExternalizer.readString(element, "antHome");
-    isDebugEnabled = Boolean.parseBoolean(JDOMExternalizer.readString(element, "debug"));
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    writeModule(element);
-    JDOMExternalizer.write(element, "path", scriptPath);
-    JDOMExternalizer.write(element, "vmparams", vmParams);
-    JDOMExternalizer.write(element, "params", scriptParams);
     JDOMExternalizer.write(element, "targets", targets);
-    JDOMExternalizer.write(element, "workDir", workDir);
-    JDOMExternalizer.write(element, "debug", isDebugEnabled);
     JDOMExternalizer.write(element, "antHome", antHome);
   }
 
