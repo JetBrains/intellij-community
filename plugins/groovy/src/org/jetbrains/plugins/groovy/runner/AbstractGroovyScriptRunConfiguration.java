@@ -1,8 +1,12 @@
 package org.jetbrains.plugins.groovy.runner;
 
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.configurations.RunConfigurationModule;
+import com.intellij.execution.configurations.*;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -10,9 +14,20 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 import org.jdom.Element;
 
 import java.io.File;
@@ -110,5 +125,55 @@ public abstract class AbstractGroovyScriptRunConfiguration extends ModuleBasedCo
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+    final Module module = getModule();
+    if (module == null) {
+      throw new ExecutionException("Module is not specified");
+    }
+
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+    final Sdk sdk = rootManager.getSdk();
+    if (sdk == null || !(sdk.getSdkType() instanceof JavaSdkType)) {
+      throw CantRunException.noJdkForModule(module);
+    }
+
+    if (!ensureRunnerConfigured(module)) {
+      return null;
+    }
+
+    final VirtualFile script = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(scriptPath));
+    if (script == null) {
+      throw new CantRunException("Cannot find script " + scriptPath);
+    }
+
+    final boolean isTests = ProjectRootManager.getInstance(getProject()).getFileIndex().isInTestSourceContent(script);
+
+    final JavaCommandLineState state = new JavaCommandLineState(environment) {
+      protected JavaParameters createJavaParameters() throws ExecutionException {
+        JavaParameters params = new JavaParameters();
+        configureCommandLine(params, module, isTests, script);
+        return params;
+      }
+    };
+
+    state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
+    return state;
+
+  }
+
+  protected abstract void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script) throws CantRunException;
+
+  protected boolean ensureRunnerConfigured(Module module) {
+    if (LibrariesUtil.getGroovyHomePath(module) == null) {
+      Messages.showErrorDialog(module.getProject(),
+                               ExecutionBundle.message("error.running.configuration.with.error.error.message", getName(),
+                                                       "Groovy is not configured"), ExecutionBundle.message("run.error.message.title"));
+
+      ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
+      return false;
+    }
+    return true;
   }
 }

@@ -1,12 +1,10 @@
 package org.jetbrains.plugins.gant.runner;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -20,10 +18,9 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gant.GantBundle;
 import org.jetbrains.plugins.gant.GantIcons;
 import org.jetbrains.plugins.gant.config.GantConfigUtils;
@@ -142,21 +139,10 @@ public class GantScriptRunConfiguration extends AbstractGroovyScriptRunConfigura
     }
   }
 
-  @Nullable
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
-    final Module module = getModule();
-    if (module == null) {
-      throw new ExecutionException("Module is not specified");
-    }
-
-    if (LibrariesUtil.getGroovyHomePath(module) == null) {
-      //throw new ExecutionException("Gant is not configured");
-      Messages.showErrorDialog(module.getProject(),
-                               ExecutionBundle.message("error.running.configuration.with.error.error.message", getName(),
-                                                       "Groovy is not configured"), ExecutionBundle.message("run.error.message.title"));
-
-      ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
-      return null;
+  @Override
+  protected boolean ensureRunnerConfigured(Module module) {
+    if (!super.ensureRunnerConfigured(module)) {
+      return false;
     }
 
     if (!isValidModule(module)) {
@@ -167,36 +153,24 @@ public class GantScriptRunConfiguration extends AbstractGroovyScriptRunConfigura
         ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
       }
       if (!isValidModule(module)) {
-        return null;
+        return false;
       }
     }
 
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    final Sdk sdk = rootManager.getSdk();
-    if (sdk == null || !(sdk.getSdkType() instanceof JavaSdkType)) {
-      throw CantRunException.noJdkForModule(module);
-    }
-
-    final JavaCommandLineState state = new JavaCommandLineState(environment) {
-      protected JavaParameters createJavaParameters() throws ExecutionException {
-        JavaParameters params = new JavaParameters();
-
-        String gantHome = GantConfigUtils.getInstance().getSDKInstallPath(module);
-        String confpath = gantHome + GANT_STARTER_CONF;
-        if (!new File(confpath).exists()) {
-          confpath = GroovyScriptRunConfiguration.getConfPath(gantHome);
-        }
-
-        configureJavaParams(params, module, confpath);
-        configureGantStarter(params, module, confpath);
-        configureScript(params);
-
-        return params;
-      }
-    };
-
-    state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
-    return state;
-
+    return true;
   }
+
+  @Override
+  protected void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script) throws CantRunException {
+    String gantHome = GantConfigUtils.getInstance().getSDKInstallPath(module);
+    String confpath = gantHome + GANT_STARTER_CONF;
+    if (!new File(confpath).exists()) {
+      confpath = GroovyScriptRunConfiguration.getConfPath(gantHome);
+    }
+
+    configureJavaParams(params, module, confpath);
+    configureGantStarter(params, module, confpath);
+    configureScript(params);
+  }
+
 }

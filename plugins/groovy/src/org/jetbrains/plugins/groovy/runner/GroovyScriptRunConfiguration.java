@@ -16,12 +16,10 @@
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -29,21 +27,14 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
@@ -158,52 +149,14 @@ public class GroovyScriptRunConfiguration extends AbstractGroovyScriptRunConfigu
     }
   }
 
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
-    final Module module = getModule();
-    if (module == null) {
-      throw new ExecutionException("Module is not specified");
-    }
+  @Override
+  protected void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script) throws CantRunException {
+    final String groovyHome = StringUtil.notNullize(LibrariesUtil.getGroovyHomePath(module));
+    configureJavaParams(params, module, groovyHome);
+    configureGroovyStarter(params, module, tests, script, groovyHome);
 
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    final Sdk sdk = rootManager.getSdk();
-    if (sdk == null || !(sdk.getSdkType() instanceof JavaSdkType)) {
-      throw CantRunException.noJdkForModule(module);
-    }
-
-    if (!GroovyConfigUtils.isSDKConfigured(module)) {
-      Messages.showErrorDialog(module.getProject(),
-                               ExecutionBundle.message("error.running.configuration.with.error.error.message", getName(),
-                                                       "Groovy is not configured"), ExecutionBundle.message("run.error.message.title"));
-
-      ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
-      return null;
-    }
-
-    final VirtualFile script = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(scriptPath));
-    if (script == null) {
-      throw new CantRunException("Cannot find script " + scriptPath);
-    }
-
-    final boolean isTests = ProjectRootManager.getInstance(getProject()).getFileIndex().isInTestSourceContent(script);
-
-    final JavaCommandLineState state = new JavaCommandLineState(environment) {
-      protected JavaParameters createJavaParameters() throws ExecutionException {
-        JavaParameters params = new JavaParameters();
-
-        final String groovyHome = StringUtil.notNullize(LibrariesUtil.getGroovyHomePath(module));
-        configureJavaParams(params, module, groovyHome);
-        configureGroovyStarter(params, module, isTests, script, groovyHome);
-
-        params.getProgramParametersList().add(scriptPath);
-        params.getProgramParametersList().addParametersString(scriptParams);
-
-        return params;
-      }
-    };
-
-    state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
-    return state;
-
+    params.getProgramParametersList().add(scriptPath);
+    params.getProgramParametersList().addParametersString(scriptParams);
   }
 
 }
