@@ -409,27 +409,32 @@ public class ExpectedHighlightingData {
 
     StringBuilder sb = new StringBuilder();
 
-    int end = text.length();
-    for (HighlightInfo info : list) {
-
-      for (Map.Entry<String, ExpectedHighlightingSet> entry : highlightingTypes.entrySet()) {
-        final ExpectedHighlightingSet set = entry.getValue();
-        if(set.enabled
-           && set.severity == info.getSeverity()
-           //&& (set.defaultErrorType.equals(info.type))
-           && set.endOfLine == info.isAfterEndOfLine
-          ) {
-          final String severity = entry.getKey();
-          sb.insert(0, text.substring(info.endOffset, end));
-          sb.insert(0, "<"+
-                       severity +" descr=\"" + info.description+"\">"+ text.substring(info.startOffset, info.endOffset)+"</"+
-                       severity +">");
-          end = info.startOffset;
-          break;
+    try {
+      int end = text.length();
+      for (HighlightInfo info : list) {
+        for (Map.Entry<String, ExpectedHighlightingSet> entry : highlightingTypes.entrySet()) {
+          final ExpectedHighlightingSet set = entry.getValue();
+          if(set.enabled
+             && set.severity == info.getSeverity()
+             //&& (set.defaultErrorType.equals(info.type))
+             && set.endOfLine == info.isAfterEndOfLine
+            ) {
+            final String severity = entry.getKey();
+            sb.insert(0, text.substring(info.endOffset, end));
+            sb.insert(0, "<"+
+                         severity +" descr=\"" + info.description+"\">"+ text.substring(info.startOffset, info.endOffset)+"</"+
+                         severity +">");
+            end = info.startOffset;
+            break;
+          }
         }
       }
+      sb.insert(0, text.substring(0, end));
     }
-    sb.insert(0, text.substring(0, end));
+    catch (IndexOutOfBoundsException e) {
+      //sometimes (rarely) we have info offsets < 0 
+      sb.insert(0, e.getMessage());
+    }
 
     Assert.assertEquals(failMessage + "\n" , myText, sb.toString());
     Assert.fail(failMessage);
