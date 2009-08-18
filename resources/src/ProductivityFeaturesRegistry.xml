@@ -433,6 +433,11 @@
       first-show="10"
       successive-show="3"
       min-usage-count="5"/>
+    <feature id="switcher"
+      tip-file="Switcher.html"
+      first-show="10"
+      successive-show="5"
+      min-usage-count="5"/>
   </group>
 
   <group id="ant">

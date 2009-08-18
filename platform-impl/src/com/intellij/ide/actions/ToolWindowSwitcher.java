@@ -1,5 +1,6 @@
 package com.intellij.ide.actions;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -25,6 +26,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -43,12 +45,14 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
   private static volatile ToolWindowSwitcherPanel SWITCHER = null;
   private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
   private static final Color SEPARATOR_COLOR = BORDER_COLOR.brighter();
+  @NonNls private static final String SWITCHER_FEATURE_ID = "switcher";
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
     if (SWITCHER == null) {
       SWITCHER = new ToolWindowSwitcherPanel(project);
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
     }
     if (e.getInputEvent().isShiftDown()) {
       SWITCHER.goBack();
