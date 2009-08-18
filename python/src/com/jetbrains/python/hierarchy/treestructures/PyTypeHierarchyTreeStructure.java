@@ -4,11 +4,8 @@ import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.hierarchy.PyTypeHierarchyNodeDescriptor;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,7 +16,7 @@ import java.util.List;
 public class PyTypeHierarchyTreeStructure extends PySubTypesHierarchyTreeStructure {
   private static PyTypeHierarchyNodeDescriptor buildHierarchyElement(@NotNull final PyClass cl) {
     PyTypeHierarchyNodeDescriptor descriptor = null;
-    PyClass[] superClasses = getSuperClasses(cl);
+    PyClass[] superClasses = PyUtil.getAllSuperClasses(cl);
     for (int i = superClasses.length - 1; i >= 0; --i) {
       final PyClass superClass = superClasses[i];
       final PyTypeHierarchyNodeDescriptor newDescriptor = new PyTypeHierarchyNodeDescriptor(descriptor, superClass, false);
@@ -33,19 +30,6 @@ public class PyTypeHierarchyTreeStructure extends PySubTypesHierarchyTreeStructu
       descriptor.setCachedChildren(new HierarchyNodeDescriptor[]{newDescriptor});
     }
     return newDescriptor;
-  }
-
-  private static PyClass[] getSuperClasses(@NotNull PyClass cl) {
-    List<PyClass> superClasses = new ArrayList<PyClass>();
-    while (true) {
-      final PyClass[] classes = cl.getSuperClasses();
-      if (classes.length == 0) {
-        break;
-      }
-      superClasses.addAll(Arrays.asList(classes));
-      cl = classes[0];
-    }
-    return superClasses.toArray(new PyClass[superClasses.size()]);
   }
 
   protected PyTypeHierarchyTreeStructure(final Project project, final HierarchyNodeDescriptor baseDescriptor) {

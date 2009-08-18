@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -209,7 +209,7 @@ public class PyUtil {
   }
 
   /**
-   * @see PyUtil#flattenedParens 
+   * @see PyUtil#flattenedParens
    */
   protected static <T extends PyElement> List<T> _unfoldParenExprs(T[] targets, List<T> receiver) {
     // NOTE: this proliferation of instanceofs is not very beautiful. Maybe rewrite using a visitor.
@@ -401,6 +401,31 @@ public class PyUtil {
     if (! isLast) node.addChild(gen.createComma(project), beforeThis);
   }
 
+  @NotNull
+  public static PyClass[] getAllSuperClasses(@NotNull PyClass pyClass) {
+    Set<PyClass> superClasses = new HashSet<PyClass>();
+    List<PyClass> superClassesBuffer = new LinkedList<PyClass>();
+    while (true) {
+      final PyClass[] classes = pyClass.getSuperClasses();
+      if (classes.length == 0) {
+        break;
+      }
+      superClassesBuffer.addAll(Arrays.asList(classes));
+      if (!superClasses.containsAll(Arrays.asList(classes))) {
+        superClasses.addAll(Arrays.asList(classes));
+      }
+      else {
+        break;
+      }
+      if (!superClassesBuffer.isEmpty()) {
+        pyClass = superClassesBuffer.remove(0);
+      }
+      else {
+        break;
+      }
+    }
+    return superClasses.toArray(new PyClass[superClasses.size()]);
+  }
 
   private static Pattern IDENTIFIER_PATTERN = Pattern.compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*");
 
