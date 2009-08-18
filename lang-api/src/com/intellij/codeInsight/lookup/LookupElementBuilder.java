@@ -32,13 +32,7 @@ public class LookupElementBuilder {
   private InsertHandler<LookupElement> myInsertHandler;
   private LookupElementRenderer<LookupElement> myRenderer;
   private AutoCompletionPolicy myAutoCompletionPolicy = AutoCompletionPolicy.SETTINGS_DEPENDENT;
-  private Icon myIcon;
-  private String myTypeText;
-  private String myPresentableText;
-  private boolean myBold;
-  private boolean myStrikeout;
-  private boolean myGrayedTail;
-  private String myTailText;
+  @Nullable private LookupElementPresentation myHardcodedPresentation;
 
   LookupElementBuilder(String lookupString) {
     this(lookupString, lookupString);
@@ -60,17 +54,26 @@ public class LookupElementBuilder {
   }
 
   public LookupElementBuilder setIcon(@Nullable Icon icon) {
-    myIcon = icon;
+    getHardcodedPresentation().setIcon(icon);
     return this;
   }
 
+  @NotNull
+  private LookupElementPresentation getHardcodedPresentation() {
+    LookupElementPresentation p = myHardcodedPresentation;
+    if (p == null) {
+      p = myHardcodedPresentation = new LookupElementPresentation(false);
+    }
+    return p;
+  }
+
   public LookupElementBuilder setTypeText(@Nullable String typeText) {
-    myTypeText = typeText;
+    getHardcodedPresentation().setTypeText(typeText);
     return this;
   }
 
   public LookupElementBuilder setPresentableText(@NotNull String presentableText) {
-    myPresentableText = presentableText;
+    getHardcodedPresentation().setItemText(presentableText);
     return this;
   }
 
@@ -84,7 +87,7 @@ public class LookupElementBuilder {
   }
 
   public LookupElementBuilder setBold(boolean bold) {
-    myBold = bold;
+    getHardcodedPresentation().setItemTextBold(bold);
     return this;
   }
 
@@ -93,7 +96,7 @@ public class LookupElementBuilder {
   }
   
   public LookupElementBuilder setStrikeout(boolean strikeout) {
-    myStrikeout = strikeout;
+    getHardcodedPresentation().setStrikeout(strikeout);
     return this;
   }
 
@@ -102,8 +105,7 @@ public class LookupElementBuilder {
   }
 
   public LookupElementBuilder setTailText(String tailText, boolean grayed) {
-    myTailText = tailText;
-    myGrayedTail = grayed;
+    getHardcodedPresentation().setTailText(tailText, grayed);
     return this;
   }
 
@@ -112,32 +114,33 @@ public class LookupElementBuilder {
   }
 
   private static class BuiltLookupElement extends LookupElement {
-    private Icon myIcon;
-    private InsertHandler<LookupElement> myInsertHandler;
-    private String myLookupString;
-    private String myPresentableText;
-    private Object myObject;
-    private LookupElementRenderer<LookupElement> myRenderer;
-    private AutoCompletionPolicy myAutoCompletionPolicy;
-    private String myTypeText;
-    private boolean myBold;
-    private boolean myStrikeout;
-    private boolean myGrayedTail;
-    private String myTailText;
+    private final InsertHandler<LookupElement> myInsertHandler;
+    private final String myLookupString;
+    private final Object myObject;
+    @Nullable private final LookupElementRenderer<LookupElement> myRenderer;
+    @Nullable private final LookupElementPresentation myHardcodedPresentation;
+    private final AutoCompletionPolicy myAutoCompletionPolicy;
 
     public BuiltLookupElement(LookupElementBuilder builder) {
-      myIcon = builder.myIcon;
       myInsertHandler = builder.myInsertHandler;
       myLookupString = builder.myLookupString;
-      myPresentableText = builder.myPresentableText != null ? builder.myPresentableText : myLookupString;
       myObject = builder.myObject;
       myRenderer = builder.myRenderer;
       myAutoCompletionPolicy = builder.myAutoCompletionPolicy;
-      myTypeText = builder.myTypeText;
-      myBold = builder.myBold;
-      myStrikeout = builder.myStrikeout;
-      myGrayedTail = builder.myGrayedTail;
-      myTailText = builder.myTailText;
+
+      final LookupElementPresentation presentation = builder.myHardcodedPresentation;
+      if (presentation != null || myRenderer == null) {
+        myHardcodedPresentation = new LookupElementPresentation(false);
+        if (presentation != null) {
+          myHardcodedPresentation.copyFrom(presentation);
+        }
+        if (myHardcodedPresentation.getItemText() == null) {
+          myHardcodedPresentation.setItemText(myLookupString);
+        }
+      } else {
+        myHardcodedPresentation = null;
+      }
+
     }
 
     public AutoCompletionPolicy getAutoCompletionPolicy() {
@@ -169,12 +172,8 @@ public class LookupElementBuilder {
         myRenderer.renderElement(this, presentation);
       }
       else {
-        presentation.setIcon(myIcon);
-        presentation.setItemText(myPresentableText, myStrikeout, myBold);
-        presentation.setTypeText(myTypeText);
-        if (myTailText != null) {
-          presentation.setTailText(myTailText, myGrayedTail, false, myStrikeout);
-        }
+        //noinspection ConstantConditions
+        presentation.copyFrom(myHardcodedPresentation);
       }
     }
 
@@ -185,36 +184,23 @@ public class LookupElementBuilder {
 
       BuiltLookupElement that = (BuiltLookupElement)o;
 
-      if (myBold != that.myBold) return false;
-      if (myGrayedTail != that.myGrayedTail) return false;
-      if (myStrikeout != that.myStrikeout) return false;
       if (myAutoCompletionPolicy != that.myAutoCompletionPolicy) return false;
-      if (myIcon != null ? !myIcon.equals(that.myIcon) : that.myIcon != null) return false;
       if (myInsertHandler != null ? !myInsertHandler.getClass().equals(that.myInsertHandler.getClass()) : that.myInsertHandler != null) return false;
       if (myLookupString != null ? !myLookupString.equals(that.myLookupString) : that.myLookupString != null) return false;
       if (myObject != null ? !myObject.equals(that.myObject) : that.myObject != null) return false;
-      if (myPresentableText != null ? !myPresentableText.equals(that.myPresentableText) : that.myPresentableText != null) return false;
       if (myRenderer != null ? !myRenderer.getClass().equals(that.myRenderer.getClass()) : that.myRenderer != null) return false;
-      if (myTailText != null ? !myTailText.equals(that.myTailText) : that.myTailText != null) return false;
-      if (myTypeText != null ? !myTypeText.equals(that.myTypeText) : that.myTypeText != null) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = myIcon != null ? myIcon.hashCode() : 0;
+      int result = 0;
       result = 31 * result + (myInsertHandler != null ? myInsertHandler.getClass().hashCode() : 0);
       result = 31 * result + (myLookupString != null ? myLookupString.hashCode() : 0);
-      result = 31 * result + (myPresentableText != null ? myPresentableText.hashCode() : 0);
       result = 31 * result + (myObject != null ? myObject.hashCode() : 0);
       result = 31 * result + (myRenderer != null ? myRenderer.getClass().hashCode() : 0);
       result = 31 * result + (myAutoCompletionPolicy != null ? myAutoCompletionPolicy.hashCode() : 0);
-      result = 31 * result + (myTypeText != null ? myTypeText.hashCode() : 0);
-      result = 31 * result + (myBold ? 1 : 0);
-      result = 31 * result + (myStrikeout ? 1 : 0);
-      result = 31 * result + (myGrayedTail ? 1 : 0);
-      result = 31 * result + (myTailText != null ? myTailText.hashCode() : 0);
       return result;
     }
   }

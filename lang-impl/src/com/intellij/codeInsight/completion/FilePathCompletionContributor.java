@@ -278,7 +278,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
       presentation.setItemText(myName);
 
       if (sb.length() > 0) {
-        presentation.setTailText(sb.toString(), true, false, false);
+        presentation.setTailText(sb.toString(), true);
       }
 
       presentation.setIcon(myIcon);

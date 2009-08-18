@@ -12,8 +12,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 /**
  * @author peter
  */
@@ -22,28 +20,18 @@ public class CastingLookupElementDecorator extends LookupElementDecorator<Lookup
   private final PsiType myCastType;
   private static final LookupElementVisagiste<CastingLookupElementDecorator> CASTING_VISAGISTE = new LookupElementVisagiste<CastingLookupElementDecorator>() {
     @Override
-    public void setItemText(@NotNull CastingLookupElementDecorator item,
-                            @NotNull LookupElementPresentation base,
-                            @Nullable String text,
-                            boolean strikeout,
-                            boolean bold) {
-      base.setItemText("(" + getItemText(base, item.getCastItem()) + ")" + text, strikeout, bold);
-    }
-
-    @Override
-    public void setTypeText(@NotNull CastingLookupElementDecorator item,
-                            @NotNull LookupElementPresentation base,
-                            @Nullable String text,
-                            @Nullable Icon icon) {
-      base.setTypeText(getItemText(base, item.getCastItem()));
+    public void applyCosmetics(@NotNull CastingLookupElementDecorator item, @NotNull LookupElementPresentation base) {
+      final String castType = getItemText(base, item.getCastItem());
+      base.setItemText("(" + castType + ")" + base.getItemText());
+      base.setTypeText(castType);
     }
   };
 
+  @Nullable
   private static String getItemText(LookupElementPresentation base, LookupElement castItem) {
-    final MemorizingLookupElementPresentation castPresentation = new MemorizingLookupElementPresentation(base);
+    final LookupElementPresentation castPresentation = new LookupElementPresentation(base.isReal());
     castItem.renderElement(castPresentation);
-    final String type = castPresentation.getItemText();
-    return type;
+    return castPresentation.getItemText();
   }
 
   private CastingLookupElementDecorator(LookupElement delegate, PsiType castType) {

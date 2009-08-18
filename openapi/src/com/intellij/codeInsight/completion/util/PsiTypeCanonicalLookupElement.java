@@ -85,10 +85,11 @@ public class PsiTypeCanonicalLookupElement extends LookupElement {
     final PsiClass psiClass = getPsiClass();
     if (psiClass != null) {
       presentation.setIcon(presentation.isReal() ? psiClass.getIcon(Iconable.ICON_FLAG_VISIBILITY) : EMPTY_ICON);
-      presentation.setTailText(" (" + PsiFormatUtil.getPackageDisplayName(psiClass) + ")", true, false, false);
+      presentation.setTailText(" (" + PsiFormatUtil.getPackageDisplayName(psiClass) + ")", true);
     }
     final PsiType type = getPsiType();
-    presentation.setItemText(type.getPresentableText(), false, type instanceof PsiPrimitiveType);
+    presentation.setItemText(type.getPresentableText());
+    presentation.setItemTextBold(type instanceof PsiPrimitiveType);
   }
 
 }

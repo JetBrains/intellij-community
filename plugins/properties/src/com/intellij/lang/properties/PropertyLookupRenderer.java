@@ -36,7 +36,7 @@ public class PropertyLookupRenderer implements ElementLookupRenderer<Property> {
     if (presentation.isReal() && value != null && value.length() > 10) value = value.substring(0, 10) + "...";
 
     TextAttributes attrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_VALUE);
-    presentation.setTailText("="+ value, attrs.getForegroundColor(), true, false);
+    presentation.setTailText("="+ value, attrs.getForegroundColor());
     if (hasBundle) {
       presentation.setTypeText(resourceBundle.getBaseName(), PropertiesFileType.FILE_ICON);
     }

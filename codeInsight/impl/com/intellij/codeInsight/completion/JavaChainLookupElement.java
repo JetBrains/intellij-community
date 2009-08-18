@@ -4,16 +4,14 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.MemorizingLookupElementPresentation;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -24,13 +22,12 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   private final LookupElement myQualifier;
   private static final LookupElementVisagiste<JavaChainLookupElement> CHAINING_VISAGISTE = new LookupElementVisagiste<JavaChainLookupElement>() {
     @Override
-    public void setItemText(@NotNull JavaChainLookupElement item, @NotNull LookupElementPresentation base, @Nullable String text, boolean strikeout,
-                            boolean bold) {
-      final MemorizingLookupElementPresentation qualifierPresentation = new MemorizingLookupElementPresentation(base);
+    public void applyCosmetics(@NotNull JavaChainLookupElement item, @NotNull LookupElementPresentation base) {
+      final LookupElementPresentation qualifierPresentation = new LookupElementPresentation(base.isReal());
       item.myQualifier.renderElement(qualifierPresentation);
       String name = item.maybeAddParentheses(qualifierPresentation.getItemText());
       final String qualifierText = item.myQualifier.as(CastingLookupElementDecorator.class) != null ? "(" + name + ")" : name;
-      base.setItemText(qualifierText + "." + text, strikeout, bold);
+      base.setItemText(qualifierText + "." + base.getItemText());
     }
   };
 

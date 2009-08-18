@@ -168,7 +168,8 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
 
     @Override
     public void renderElement(final LookupElementPresentation presentation) {
-      getDelegate().renderElement(LookupElementVisagiste.patchPresentation(presentation, myElement, myVisagiste));
+      getDelegate().renderElement(presentation);
+      myVisagiste.applyCosmetics(getDelegate(), presentation);
     }
 
     @Override

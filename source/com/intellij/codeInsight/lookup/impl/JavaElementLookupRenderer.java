@@ -28,7 +28,9 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
 
     final boolean bold = item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null;
     boolean strikeout = isToStrikeout(item);
-    presentation.setItemText(getName(element, item), strikeout, bold);
+    presentation.setItemText(getName(element, item));
+    presentation.setStrikeout(strikeout);
+    presentation.setItemTextBold(bold);
 
     String tailText = StringUtil.notNullize(getTailText(element, item));
     boolean grayed = item.getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null;
@@ -44,7 +46,7 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
       }
       grayed = true;
     }
-    presentation.setTailText(tailText, grayed, false, strikeout);
+    presentation.setTailText(tailText, grayed);
 
     final String typeText = getTypeText(element, item);
     presentation.setTypeText(typeText != null ? typeText : "");

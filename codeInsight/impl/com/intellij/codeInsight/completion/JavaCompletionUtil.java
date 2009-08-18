@@ -938,10 +938,8 @@ public class JavaCompletionUtil {
   private static LookupElementDecorator<LookupElement> highlight(LookupElement decorator) {
     return LookupElementDecorator.decorate(decorator, new LookupElementVisagiste<LookupElement>() {
       @Override
-      public void setItemText(@NotNull LookupElement item, @NotNull LookupElementPresentation base, @Nullable String text,
-                              boolean strikeout,
-                              boolean bold) {
-        base.setItemText(text, strikeout, true);
+      public void applyCosmetics(@NotNull LookupElement item, @NotNull LookupElementPresentation base) {
+        base.setItemTextBold(true);
       }
     });
   }
