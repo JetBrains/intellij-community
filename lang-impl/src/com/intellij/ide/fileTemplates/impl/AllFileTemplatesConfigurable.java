@@ -542,35 +542,27 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     // Apply templates
     ArrayList<FileTemplate> newModifiedItems = new ArrayList<FileTemplate>();
     FileTemplate[] templates = myTemplatesList.getTemplates();
-    for (FileTemplate template : templates) {
-      newModifiedItems.add(template);
-    }
+    newModifiedItems.addAll(Arrays.asList(templates));
     FileTemplateManager templatesManager = FileTemplateManager.getInstance();
     apply(newModifiedItems, myTemplatesList.savedTemplates, TEMPLATE_ID, templatesManager.getAllTemplates());
 
     // Apply patterns
     newModifiedItems = new ArrayList<FileTemplate>();
     templates = myIncludesList.getTemplates();
-    for (FileTemplate template : templates) {
-      newModifiedItems.add(template);
-    }
+    newModifiedItems.addAll(Arrays.asList(templates));
     apply(newModifiedItems, myIncludesList.savedTemplates, PATTERN_ID, templatesManager.getAllPatterns());
 
     //Apply code templates
     newModifiedItems = new ArrayList<FileTemplate>();
     templates = myCodeTemplatesList.getTemplates();
-    for (FileTemplate template : templates) {
-      newModifiedItems.add(template);
-    }
+    newModifiedItems.addAll(Arrays.asList(templates));
     apply(newModifiedItems, myCodeTemplatesList.savedTemplates, CODE_ID, templatesManager.getAllCodeTemplates());
 
     //Apply J2EE templates
     if (myJ2eeTemplatesList != null) {
       newModifiedItems = new ArrayList<FileTemplate>();
       templates = myJ2eeTemplatesList.getTemplates();
-      for (FileTemplate template : templates) {
-        newModifiedItems.add(template);
-      }
+      newModifiedItems.addAll(Arrays.asList(templates));
       apply(newModifiedItems, myJ2eeTemplatesList.savedTemplates, J2EE_ID, templatesManager.getAllJ2eeTemplates());
     }
 
@@ -703,6 +695,13 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
       myUIDisposable = null;
     }
     myTabbedPane = null;
+    myToolBar = null;
+    myTabs = null;
+    myCurrentTab = null;
+    myTemplatesList = null;
+    myCodeTemplatesList = null;
+    myIncludesList = null;
+    myJ2eeTemplatesList = null;
   }
 
   public void createNewTemplate(String preferredName, String extension, String text) {

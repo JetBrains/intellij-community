@@ -2,6 +2,7 @@ package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -98,6 +99,7 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
     myModel.fireListDataChanged();
   }
 
+  @NotNull
   public FileTemplate[] getTemplates() {
     final int size = myModel.getSize();
     List<FileTemplate> templates = new ArrayList<FileTemplate>(size);

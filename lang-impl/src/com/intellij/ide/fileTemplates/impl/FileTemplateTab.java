@@ -2,6 +2,7 @@ package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,6 +51,7 @@ abstract class FileTemplateTab {
 
   public abstract void fireDataChanged();
 
+  @NotNull 
   public FileTemplate[] getTemplates() {
     return savedTemplates.values().toArray(new FileTemplate[savedTemplates.values().size()]);
   }
