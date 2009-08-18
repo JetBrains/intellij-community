@@ -736,20 +736,22 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       throw new RuntimeInterruptedException(e);
     }
 
-    fireWriteActionStarted(action);
-
     try {
       synchronized (myWriteActionsStack) {
         myWriteActionsStack.push(action);
       }
+
+      fireWriteActionStarted(action);
+
       action.run();
     }
     finally {
       try {
+        fireWriteActionFinished(action);
+        
         synchronized (myWriteActionsStack) {
           myWriteActionsStack.pop();
         }
-        fireWriteActionFinished(action);
       }
       finally {
         myActionsLock.writeLock().release();

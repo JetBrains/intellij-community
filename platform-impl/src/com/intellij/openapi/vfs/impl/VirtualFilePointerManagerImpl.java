@@ -83,9 +83,14 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   private List<VirtualFilePointer> getPointersUnder(String url) {
-    List<VirtualFilePointer> pointers = new ArrayList<VirtualFilePointer>();
+    final List<VirtualFilePointer> pointers = new ArrayList<VirtualFilePointer>();
+    final boolean urlFromJarFS = url.indexOf(JarFileSystem.JAR_SEPARATOR) > 0;
     for (TreeMap<String, VirtualFilePointerImpl> urlToPointer : myUrlToPointerMaps.values()) {
       for (String pointerUrl : urlToPointer.keySet()) {
+        final boolean pointerFromJarFS = pointerUrl.indexOf(JarFileSystem.JAR_SEPARATOR) > 0;
+        if (urlFromJarFS != pointerFromJarFS) {
+          continue; // optimization: consider pointers from the same FS as the url specified
+        }
         if (startsWith(url, pointerUrl)) {
           VirtualFilePointer pointer = urlToPointer.get(pointerUrl);
           if (pointer != null) {

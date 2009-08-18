@@ -5,6 +5,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.impl.FileSystemSynchronizerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener;
@@ -33,7 +34,10 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -64,7 +68,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   private final MyVirtualFilePointerListener myVirtualFilePointerListener = new MyVirtualFilePointerListener();
 
-  private MyVirtualFileManagerListener myVirtualFileManagerListener;
+  private ApplicationListener myApplicationListener;
 
   private String myProjectJdkName;
   private String myProjectJdkType;
@@ -342,14 +346,14 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public void projectOpened() {
     addRootsToWatch();
-    myVirtualFileManagerListener = new MyVirtualFileManagerListener();
-    VirtualFileManager.getInstance().addVirtualFileManagerListener(myVirtualFileManagerListener);
+    myApplicationListener = new ApplicationListener();
+    ApplicationManager.getApplication().addApplicationListener(myApplicationListener);
     myProjectOpened = true;
   }
 
   public void projectClosed() {
     LocalFileSystem.getInstance().removeWatchedRoots(myRootsToWatch);
-    VirtualFileManager.getInstance().removeVirtualFileManagerListener(myVirtualFileManagerListener);
+    ApplicationManager.getApplication().removeApplicationListener(myApplicationListener);
     myProjectOpened = false;
   }
 
@@ -726,20 +730,21 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private int myInsideRefresh = 0;
   private boolean myPointerChangesDetected = false;
 
-  private class MyVirtualFileManagerListener implements VirtualFileManagerListener {
-    public void beforeRefreshStart(boolean asynchonous) {
+  private class ApplicationListener extends ApplicationAdapter {
+    public void beforeWriteActionStart(Object action) {
       myInsideRefresh++;
     }
 
-    public void afterRefreshFinish(boolean asynchonous) {
-      myInsideRefresh--;
-      if (myPointerChangesDetected) {
-        myPointerChangesDetected = false;
-        myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, false));
+    public void writeActionFinished(Object action) {
+      if (--myInsideRefresh == 0) {
+        if (myPointerChangesDetected) {
+          myPointerChangesDetected = false;
+          myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, false));
+  
+          doSynchronize();
 
-        doSynchronize();
-
-        addRootsToWatch();
+          addRootsToWatch();
+        }
       }
     }
   }
