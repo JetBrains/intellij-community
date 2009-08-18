@@ -35,6 +35,12 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
   public List<? extends PackagingElement<?>> getSubstitution(@NotNull PackagingElementResolvingContext context, @NotNull ArtifactType artifactType) {
     final Artifact artifact = findArtifact(context);
     if (artifact != null) {
+      final ArtifactType type = artifact.getArtifactType();
+      List<? extends PackagingElement<?>> substitution = type.getSubstitution(artifact, context, artifactType);
+      if (substitution != null) {
+        return substitution;
+      }
+
       final List<PackagingElement<?>> elements = new ArrayList<PackagingElement<?>>();
       final CompositePackagingElement<?> rootElement = artifact.getRootElement();
       if (rootElement instanceof ArtifactRootElement<?>) {
@@ -54,6 +60,9 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
                                                           @NotNull ArtifactType artifactType) {
     final Artifact artifact = findArtifact(resolvingContext);
     if (artifact != null) {
+      if (artifact.getArtifactType().getSubstitution(artifact, resolvingContext, artifactType) != null) {
+        return super.computeAntInstructions(resolvingContext, creator, generationContext, artifactType); 
+      }
       final String outputPath = BuildProperties.propertyRef(generationContext.getArtifactOutputProperty(artifact));
       return Collections.singletonList(creator.createDirectoryContentCopyInstruction(outputPath));
     }

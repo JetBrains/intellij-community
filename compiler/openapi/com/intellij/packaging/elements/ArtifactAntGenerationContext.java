@@ -16,7 +16,7 @@ public interface ArtifactAntGenerationContext {
 
   void runAfterBuild(Generator generator);
 
-  String createNewTempFileProperty(@NonNls String basePropertyName, @NonNls String baseFileName);
+  String createNewTempFileProperty(@NonNls String basePropertyName, @NonNls String fileName);
 
   String getModuleOutputPath(@NonNls String moduleName);
 

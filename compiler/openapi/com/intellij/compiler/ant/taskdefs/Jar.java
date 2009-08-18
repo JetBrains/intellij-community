@@ -17,7 +17,6 @@
 package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.Tag;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -26,7 +25,10 @@ import org.jetbrains.annotations.NonNls;
  */
 public class Jar extends Tag {
   public Jar(@NonNls final String destFile, @NonNls String duplicate) {
-    //noinspection HardCodedStringLiteral
-    super("jar", new Pair[] {Pair.create("destfile", destFile), Pair.create("duplicate", duplicate)});
+    this(destFile, duplicate, false);
+  }
+
+  public Jar(@NonNls final String destFile, @NonNls String duplicate, final boolean useManifestFromFileSets) {
+    super("jar", pair("destfile", destFile), pair("duplicate", duplicate), useManifestFromFileSets ? pair("filesetmanifest", "mergewithoutmain") : null);
   }
 }

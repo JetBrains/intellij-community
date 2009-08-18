@@ -54,6 +54,7 @@ public class ArtifactsGenerator {
         initTarget.add(new Property(myContext.getConfiguredArtifactOutputProperty(artifact), myContext.getSubstitutedPath(outputPath)));
       }
     }
+    initTarget.add(new Mkdir(BuildProperties.propertyRef(ArtifactAntGenerationContextImpl.ARTIFACTS_TEMP_DIR_PROPERTY)));
 
     StringBuilder depends = new StringBuilder();
     for (Artifact artifact : artifacts) {

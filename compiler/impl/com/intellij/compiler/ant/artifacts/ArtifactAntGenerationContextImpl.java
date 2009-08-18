@@ -5,10 +5,11 @@ import com.intellij.compiler.ant.GenerationOptions;
 import com.intellij.compiler.ant.GenerationUtils;
 import com.intellij.compiler.ant.Generator;
 import com.intellij.compiler.ant.taskdefs.Property;
+import com.intellij.compiler.ant.taskdefs.Mkdir;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.elements.ArtifactAntGenerationContext;
@@ -28,6 +29,7 @@ public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationCo
   private List<Generator> myBeforeBuildGenerators = new ArrayList<Generator>();
   private List<Generator> myAfterBuildGenerators = new ArrayList<Generator>();
   private Set<String> myTempFileNames = new THashSet<String>();
+  private Set<String> myCreatedTempSubdirs = new THashSet<String>();
   private Set<String> myProperties = new LinkedHashSet<String>();
   private final Project myProject;
   private GenerationOptions myGenerationOptions;
@@ -94,11 +96,13 @@ public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationCo
     myAfterBuildGenerators.add(generator);
   }
 
-  public String createNewTempFileProperty(String basePropertyName, String baseFileName) {
-    String tempFileName = baseFileName;
-    int i = 2;
+  public String createNewTempFileProperty(String basePropertyName, String fileName) {
+    String tempFileName = fileName;
+    int i = 1;
+    String tempSubdir = null;
     while (myTempFileNames.contains(tempFileName)) {
-      tempFileName = baseFileName + i++;
+      tempSubdir = String.valueOf(i++);
+      tempFileName = tempSubdir + "/" + fileName;
     }
 
     String propertyName = basePropertyName;
@@ -108,6 +112,9 @@ public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationCo
     }
 
     runBeforeBuild(new Property(propertyName, BuildProperties.propertyRelativePath(ARTIFACTS_TEMP_DIR_PROPERTY, tempFileName)));
+    if (tempSubdir != null && myCreatedTempSubdirs.add(tempSubdir)) {
+      runBeforeBuild(new Mkdir(BuildProperties.propertyRelativePath(ARTIFACTS_TEMP_DIR_PROPERTY, tempSubdir)));
+    }
     myTempFileNames.add(tempFileName);
     myProperties.add(propertyName);
     return propertyName;

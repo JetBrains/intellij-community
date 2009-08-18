@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author nik
@@ -65,5 +66,11 @@ public abstract class ArtifactType {
   public abstract CompositePackagingElement<?> createRootElement();
 
   public void checkRootElement(@NotNull CompositePackagingElement<?> rootElement, @NotNull Artifact artifact, @NotNull ArtifactValidationManager manager) {
+  }
+
+  @Nullable
+  public List<? extends PackagingElement<?>> getSubstitution(@NotNull Artifact artifact, @NotNull PackagingElementResolvingContext context,
+                                                             @NotNull ArtifactType parentType) {
+    return null;
   }
 }
