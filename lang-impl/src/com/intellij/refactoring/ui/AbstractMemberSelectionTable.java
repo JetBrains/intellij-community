@@ -330,7 +330,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       switch (modelColumn) {
         case DISPLAY_NAME_COLUMN:
           {
-            Icon memberIcon = member.getIcon(MEMBER_ICON_POSITION);
+            Icon memberIcon = myTable.getMemberIcon(memberInfo, 0);
             Icon overrideIcon = myTable.getOverrideIcon(memberInfo);
 
             RowIcon icon = new RowIcon(3);
@@ -360,6 +360,10 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       append((String)value, new SimpleTextAttributes(Font.PLAIN, c));
     }
 
+  }
+
+  protected Icon getMemberIcon(M memberInfo, int flags) {
+    return memberInfo.getMember().getIcon(flags);
   }
 
   private static class MyBooleanRenderer<T extends PsiElement, M extends MemberInfoBase<T>> extends BooleanTableCellRenderer {
