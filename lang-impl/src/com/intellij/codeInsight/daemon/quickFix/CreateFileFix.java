@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
 */
 public class CreateFileFix implements IntentionAction, LocalQuickFix {
-  private final boolean myIsdirectory;
+  private final boolean myIsDirectory;
   private final String myNewFileName;
   private final PsiDirectory myDirectory;
   private final @Nullable String myText;
@@ -37,24 +37,24 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
   private long myIsAvailableTimeStamp;
   private static final int REFRESH_INTERVAL = 1000;
 
-  public CreateFileFix(final boolean isdirectory,
+  public CreateFileFix(final boolean isDirectory,
                                    final String newFileName,
                                    final PsiDirectory directory,
                                    @Nullable String text,
                                    @NotNull String key) {
-    myIsdirectory = isdirectory;
+    myIsDirectory = isDirectory;
     myNewFileName = newFileName;
     myDirectory = directory;
     myText = text;
     myKey = key;
-    myIsAvailable = isdirectory || !FileTypeManager.getInstance().getFileTypeByFileName(newFileName).isBinary();
+    myIsAvailable = isDirectory || !FileTypeManager.getInstance().getFileTypeByFileName(newFileName).isBinary();
     myIsAvailableTimeStamp = System.currentTimeMillis();
   }
 
-  public CreateFileFix(final boolean isdirectory,
+  public CreateFileFix(final boolean isDirectory,
                                    final String newFileName,
                                    final PsiDirectory directory) {
-    this(isdirectory,newFileName,directory,null,isdirectory ? "create.directory.text":"create.file.text" );
+    this(isDirectory,newFileName,directory,null, isDirectory ? "create.directory.text":"create.file.text" );
   }
 
   @NotNull
@@ -97,11 +97,11 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
     myIsAvailableTimeStamp = 0; // to revalidate applicability
 
     try {
-      if (myIsdirectory) {
+      if (myIsDirectory) {
         myDirectory.createSubdirectory(myNewFileName);
       }
       else {
-        final PsiFile newfile = myDirectory.createFile(myNewFileName);
+        final PsiFile newFile = myDirectory.createFile(myNewFileName);
         String text = null;
 
         if (myText != null) {
@@ -112,12 +112,12 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
         }
 
         final FileEditorManager editorManager = FileEditorManager.getInstance(myDirectory.getProject());
-        final FileEditor[] fileEditors = editorManager.openFile(newfile.getVirtualFile(), true);
+        final FileEditor[] fileEditors = editorManager.openFile(newFile.getVirtualFile(), true);
 
         if (text != null) {
-          for(FileEditor feditor:fileEditors) {
-            if (feditor instanceof TextEditor) { // JSP is not safe to edit via Psi
-              final Document document = ((TextEditor)feditor).getEditor().getDocument();
+          for(FileEditor fileEditor: fileEditors) {
+            if (fileEditor instanceof TextEditor) { // JSP is not safe to edit via Psi
+              final Document document = ((TextEditor)fileEditor).getEditor().getDocument();
               document.setText(text);
 
               if (ApplicationManager.getApplication().isUnitTestMode()) {
