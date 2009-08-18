@@ -19,11 +19,13 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface RunProfile {
    /**
     * todo - javadoc
     */
+  @Nullable
   RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException ;
 
   String getName();

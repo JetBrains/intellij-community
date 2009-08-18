@@ -59,7 +59,7 @@ public class ExecutionEnvironment {
     return myConfigurationSettings;
   }
 
-  public RunProfileState getState(final Executor executor) throws ExecutionException {
+  @Nullable public RunProfileState getState(final Executor executor) throws ExecutionException {
     return myRunProfile.getState(executor, this);
   }
 }
