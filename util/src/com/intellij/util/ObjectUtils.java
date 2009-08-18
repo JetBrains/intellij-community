@@ -30,9 +30,13 @@ public class ObjectUtils {
     return _assertNotNull(t);
   }
 
-  @NotNull private static <T> T _assertNotNull(@NotNull T t) {
+  @NotNull
+  private static <T> T _assertNotNull(@NotNull T t) {
     return t;
   }
 
-
+  @Nullable
+  public static <T> T chooseNotNull(@Nullable T t1, @Nullable T t2) {
+    return t1 == null? t2 : t1;
+  }
 }
