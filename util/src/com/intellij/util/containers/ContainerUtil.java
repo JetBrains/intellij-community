@@ -103,7 +103,7 @@ public class ContainerUtil {
       final K key = keyConvertor.convert(value);
       Set<V> set = hashMap.get(key);
       if (set == null) {
-        hashMap.put(key, set = new HashSet<V>());
+        hashMap.put(key, set = new LinkedHashSet<V>()); // ordered set!!
       }
       set.add(value);
     }
