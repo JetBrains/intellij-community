@@ -8,9 +8,11 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
@@ -19,6 +21,7 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
   @Override
@@ -48,16 +51,19 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    List<File> files = getFiles(e);
+    final Project project = MavenActionUtil.getProject(e);
+    final List<File> files = getFiles(e);
     final List<VirtualFile> virtualFiles = collectVirtualFiles(files);
+
     if (files.size() == 1 && virtualFiles.isEmpty()) {
-      final File file = files.get(0);
-      new WriteCommandAction(MavenActionUtil.getProject(e), e.getPresentation().getText()) {
+      new WriteCommandAction(project, e.getPresentation().getText()) {
         @Override
         protected void run(Result result) throws Throwable {
+          File file = files.get(0);
           try {
             VirtualFile newFile = VfsUtil.createDirectoryIfMissing(file.getParent()).createChildData(this, file.getName());
             virtualFiles.add(newFile);
+            MavenUtil.runFileTemplate(project, newFile, getFileTemplate(), new Properties(), true);
           }
           catch (IOException ex) {
             NotificationsManager.getNotificationsManager()
@@ -65,10 +71,11 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
           }
         }
       }.execute();
+      return;
     }
 
     for (VirtualFile each : virtualFiles) {
-      new OpenFileDescriptor(MavenActionUtil.getProject(e), each).navigate(true);
+      new OpenFileDescriptor(project, each).navigate(true);
     }
   }
 
@@ -82,4 +89,6 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
   }
 
   protected abstract List<File> getFiles(AnActionEvent e);
+
+  protected abstract String getFileTemplate();
 }

@@ -1,9 +1,16 @@
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -27,6 +34,7 @@ import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -34,6 +42,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -213,21 +222,50 @@ public class MavenUtil {
     return "<img src=\"" + url + "\"> ";
   }
 
-  public static String makeFileContent(MavenId projectId) {
-    return makeFileContent(projectId, false, false);
+  public static void runMavenProjectFileTemplate(Project project,
+                                                 VirtualFile file,
+                                                 MavenId projectId,
+                                                 boolean interactive) throws IOException {
+    Properties properties = new Properties();
+    properties.setProperty("GROUP_ID", projectId.getGroupId());
+    properties.setProperty("ARTIFACT_ID", projectId.getArtifactId());
+    properties.setProperty("VERSION", projectId.getVersion());
+    runFileTemplate(project, file, MavenFileTemplateGroupFactory.MAVEN_PROJECT_XML_TEMPLATE, properties, interactive);
   }
 
-  public static String makeFileContent(MavenId projectId, boolean inheritGroupId, boolean inheritVersion) {
-    return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-           "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-           "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-           "    <modelVersion>4.0.0</modelVersion>\n" +
-           (inheritGroupId ? "" : "    <groupId>" + projectId.getGroupId() + "</groupId>\n") +
-           "    <artifactId>" +
-           projectId.getArtifactId() +
-           "</artifactId>\n" +
-           (inheritVersion ? "" : "    <version>" + projectId.getVersion() + "</version>\n") +
-           "</project>";
+  public static void runFileTemplate(Project project,
+                                     VirtualFile file,
+                                     String templateName,
+                                     Properties properties,
+                                     boolean interactive) throws IOException {
+    FileTemplateManager manager = FileTemplateManager.getInstance();
+    FileTemplate fileTemplate = manager.getJ2eeTemplate(templateName);
+    Properties allProperties = manager.getDefaultProperties();
+    if (!interactive) {
+      allProperties.putAll(properties);
+    }
+    String text = fileTemplate.getText(allProperties);
+    Pattern pattern = Pattern.compile("\\$\\{(.*)\\}");
+    Matcher matcher = pattern.matcher(text);
+    StringBuffer builder = new StringBuffer();
+    while(matcher.find()) {
+      matcher.appendReplacement(builder, "\\$" + matcher.group(1).toUpperCase() + "\\$");
+    }
+    matcher.appendTail(builder);
+    text = builder.toString();
+
+    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
+    Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+
+    TemplateImpl template = (TemplateImpl)TemplateManager.getInstance(project).createTemplate("", "", text);
+    for (int i = 0; i < template.getSegmentsCount(); i++) {
+      if (i == template.getEndSegmentNumber()) continue;
+      String name = template.getSegmentName(i);
+      String value = "\"" + properties.getProperty(name, "") + "\"";
+      template.addVariable(name, value, value, interactive);
+    }
+
+    TemplateManager.getInstance(project).startTemplate(editor, template);
   }
 
   public static <T extends Collection<Pattern>> T collectPattern(String text, T result) {

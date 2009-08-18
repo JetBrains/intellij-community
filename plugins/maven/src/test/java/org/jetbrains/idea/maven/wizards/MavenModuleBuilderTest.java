@@ -129,18 +129,22 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     setParentProject(myProjectPom);
     createNewModule(new MavenId("org.foo", "module", "1.0"));
 
-    assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                 "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                 "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-                 "    <parent>\n" +
-                 "        <artifactId>project</artifactId>\n" +
-                 "        <groupId>test</groupId>\n" +
-                 "        <version>1</version>\n" +
-                 "    </parent>\n" +
-                 "    <modelVersion>4.0.0</modelVersion>\n" +
-                 "    <groupId>org.foo</groupId>\n" +
-                 "    <artifactId>module</artifactId>\n" +
-                 "    <version>1.0</version>\n" +
+    assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n" +
+                 "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\r\n" +
+                 "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n" +
+                 "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\r\n" +
+                 "    <parent>\r\n" +
+                 "        <artifactId>project</artifactId>\r\n" +
+                 "        <groupId>test</groupId>\r\n" +
+                 "        <version>1</version>\r\n" +
+                 "    </parent>\r\n" +
+                 "    <modelVersion>4.0.0</modelVersion>\r\n" +
+                 "\r\n" +
+                 "    <groupId>org.foo</groupId>\r\n" +
+                 "    <artifactId>module</artifactId>\r\n" +
+                 "    <version>1.0</version>\r\n" +
+                 "\r\n" +
+                 "\r\n" +
                  "</project>",
                  VfsUtil.loadText(myProjectRoot.findFileByRelativePath("module/pom.xml")));
   }
@@ -155,16 +159,20 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     setInheritedOptions(true, true);
     createNewModule(new MavenId("org.foo", "module", "1.0"));
 
-    assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                 "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                 "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-                 "    <parent>\n" +
-                 "        <artifactId>project</artifactId>\n" +
-                 "        <groupId>test</groupId>\n" +
-                 "        <version>1</version>\n" +
-                 "    </parent>\n" +
-                 "    <modelVersion>4.0.0</modelVersion>\n" +
-                 "    <artifactId>module</artifactId>\n" +
+    assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n" +
+                 "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\r\n" +
+                 "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n" +
+                 "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\r\n" +
+                 "    <parent>\r\n" +
+                 "        <artifactId>project</artifactId>\r\n" +
+                 "        <groupId>test</groupId>\r\n" +
+                 "        <version>1</version>\r\n" +
+                 "    </parent>\r\n" +
+                 "    <modelVersion>4.0.0</modelVersion>\r\n" +
+                 "\r\n" +
+                 "    <artifactId>module</artifactId>\r\n" +
+                 "\r\n" +
+                 "\r\n" +
                  "</project>",
                  VfsUtil.loadText(myProjectRoot.findFileByRelativePath("module/pom.xml")));
   }
@@ -213,19 +221,23 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     setParentProject(myProjectPom);
     createNewModule(new MavenId("org.foo", "module", "1.0"));
 
-    assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                 "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                 "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-                 "    <parent>\n" +
-                 "        <artifactId>project</artifactId>\n" +
-                 "        <groupId>test</groupId>\n" +
-                 "        <version>1</version>\n" +
-                 "        <relativePath>../../pom.xml</relativePath>\n" +
-                 "    </parent>\n" +
-                 "    <modelVersion>4.0.0</modelVersion>\n" +
-                 "    <groupId>org.foo</groupId>\n" +
-                 "    <artifactId>module</artifactId>\n" +
-                 "    <version>1.0</version>\n" +
+    assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n" +
+                 "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\r\n" +
+                 "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n" +
+                 "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\r\n" +
+                 "    <parent>\r\n" +
+                 "        <artifactId>project</artifactId>\r\n" +
+                 "        <groupId>test</groupId>\r\n" +
+                 "        <version>1</version>\r\n" +
+                 "        <relativePath>../../pom.xml</relativePath>\r\n" +
+                 "    </parent>\r\n" +
+                 "    <modelVersion>4.0.0</modelVersion>\r\n" +
+                 "\r\n" +
+                 "    <groupId>org.foo</groupId>\r\n" +
+                 "    <artifactId>module</artifactId>\r\n" +
+                 "    <version>1.0</version>\r\n" +
+                 "\r\n" +
+                 "\r\n" +
                  "</project>",
                  VfsUtil.loadText(myProjectRoot.findFileByRelativePath("subDir/module/pom.xml")));
   }

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.wizards;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -15,7 +16,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -24,9 +24,9 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomModule;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.indices.ArchetypeInfo;
+import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
@@ -53,6 +53,8 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   private ArchetypeInfo myArchetype;
 
   public void setupRootModel(ModifiableRootModel rootModel) throws ConfigurationException {
+    final Project project = rootModel.getProject();
+
     final VirtualFile root = createAndGetContentEntry();
     rootModel.addContentEntry(root);
 
@@ -61,13 +63,11 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     final VirtualFile pom;
     try {
       pom = root.createChildData(this, MavenConstants.POM_XML);
-      VfsUtil.saveText(pom, MavenUtil.makeFileContent(myProjectId));
+      MavenUtil.runMavenProjectFileTemplate(project, pom, myProjectId, false);
     }
     catch (IOException e) {
       throw new ConfigurationException(e.getMessage());
     }
-
-    final Project project = rootModel.getProject();
 
     if (myAggregatorProject != null) {
       new WriteCommandAction.Simple(project,

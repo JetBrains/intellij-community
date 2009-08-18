@@ -8,6 +8,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
+  private static final String INTENTION_NAME = MavenDomBundle.message("fix.create.module.pom");
+
   public void testCompleteFromAllAvailableModules() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -56,14 +58,14 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "m1", "m2", "m2/m3");
 
     createModulePom("m2", "<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>" +
-                    "<packaging>pom</packaging>" +
+                          "<artifactId>project</artifactId>" +
+                          "<version>1</version>" +
+                          "<packaging>pom</packaging>" +
 
-                    "<modules>" +
-                    "  <module>m3</module>" +
-                    "  <module><caret></module>" +
-                    "</modules>");
+                          "<modules>" +
+                          "  <module>m3</module>" +
+                          "  <module><caret></module>" +
+                          "</modules>");
 
     assertCompletionVariants(module2Pom, "..", "../m1", "m3");
   }
@@ -186,10 +188,9 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "</modules>");
 
     VirtualFile m = createModulePom("m",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m</artifactId>" +
-                                     "<version>1</version>");
-
+                                    "<groupId>test</groupId>" +
+                                    "<artifactId>m</artifactId>" +
+                                    "<version>1</version>");
 
     importProject();
 
@@ -231,9 +232,9 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "</modules>");
 
     VirtualFile m = createModulePom("subDir/m",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m</artifactId>" +
-                                     "<version>1</version>");
+                                    "<groupId>test</groupId>" +
+                                    "<artifactId>m</artifactId>" +
+                                    "<version>1</version>");
 
     importProject();
 
@@ -284,21 +285,25 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>subDir/new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret("Create pom.xml");
+    IntentionAction i = getIntentionAtCaret(INTENTION_NAME);
     assertNotNull(i);
 
     myCodeInsightFixture.launchAction(i);
 
     assertCreatePomFixResult(
-        "subDir/newModule/pom.xml",
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-        "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-        "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-        "    <modelVersion>4.0.0</modelVersion>\n" +
-        "    <groupId>test</groupId>\n" +
-        "    <artifactId>newModule</artifactId>\n" +
-        "    <version>1</version>\n" +
-        "</project>");
+      "subDir/newModule/pom.xml",
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+      "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
+      "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+      "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
+      "    <modelVersion>4.0.0</modelVersion>\n" +
+      "\n" +
+      "    <groupId>test</groupId>\n" +
+      "    <artifactId>newModule</artifactId>\n" +
+      "    <version>1</version>\n" +
+      "\n" +
+      "    \n" +
+      "</project>");
   }
 
   public void testCreatePomQuickFixTakesGroupAndVersionFromSuperParent() throws Throwable {
@@ -321,21 +326,25 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret("Create pom.xml");
+    IntentionAction i = getIntentionAtCaret(INTENTION_NAME);
     assertNotNull(i);
 
     myCodeInsightFixture.launchAction(i);
 
     assertCreatePomFixResult(
-        "newModule/pom.xml",
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-        "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-        "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-        "    <modelVersion>4.0.0</modelVersion>\n" +
-        "    <groupId>parentGroup</groupId>\n" +
-        "    <artifactId>newModule</artifactId>\n" +
-        "    <version>parentVersion</version>\n" +
-        "</project>");
+      "newModule/pom.xml",
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+      "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
+      "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+      "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
+      "    <modelVersion>4.0.0</modelVersion>\n" +
+      "\n" +
+      "    <groupId>parentGroup</groupId>\n" +
+      "    <artifactId>newModule</artifactId>\n" +
+      "    <version>parentVersion</version>\n" +
+      "\n" +
+      "    \n" +
+      "</project>");
   }
 
   public void testCreatePomQuickFixWithProperties() throws Throwable {
@@ -357,7 +366,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>${dirName}/new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret("Create pom.xml");
+    IntentionAction i = getIntentionAtCaret(INTENTION_NAME);
     assertNotNull(i);
 
     myCodeInsightFixture.launchAction(i);
@@ -380,20 +389,24 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret("Create pom.xml");
+    IntentionAction i = getIntentionAtCaret(INTENTION_NAME);
     assertNotNull(i);
     myCodeInsightFixture.launchAction(i);
 
     assertCreatePomFixResult(
-        "newModule/pom.xml",
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-        "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-        "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-        "    <modelVersion>4.0.0</modelVersion>\n" +
-        "    <groupId>groupId</groupId>\n" +
-        "    <artifactId>newModule</artifactId>\n" +
-        "    <version>version</version>\n" +
-        "</project>");
+      "newModule/pom.xml",
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+      "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
+      "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+      "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
+      "    <modelVersion>4.0.0</modelVersion>\n" +
+      "\n" +
+      "    <groupId>groupId</groupId>\n" +
+      "    <artifactId>newModule</artifactId>\n" +
+      "    <version>version</version>\n" +
+      "\n" +
+      "    \n" +
+      "</project>");
   }
 
   public void testDoesNotShowCreatePomQuickFixForEmptyModuleTag() throws Throwable {
@@ -412,7 +425,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module><caret></module>" +
                      "</modules>");
 
-    assertNull(getIntentionAtCaret("Create pom.xml"));
+    assertNull(getIntentionAtCaret(INTENTION_NAME));
   }
 
   public void testDoesNotShowCreatePomQuickFixExistingModule() throws Throwable {
@@ -440,7 +453,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>m<caret>odule</module>" +
                      "</modules>");
 
-    assertNull(getIntentionAtCaret("Create pom.xml"));
+    assertNull(getIntentionAtCaret(INTENTION_NAME));
   }
 
   private void assertCreatePomFixResult(String relativePath, String expectedText) {

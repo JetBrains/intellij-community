@@ -1616,16 +1616,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   public void testDoNotFailToConfigureUnresolvedVersionRangeDependencies() throws Exception {
     // should not throw NPE when accessing CustomArtifact.getPath();
     MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "local1");
-    String repoPath = getRepositoryPath();
-    updateSettingsXmlFully("<settings>" +
-                           "<mirrors>" +
-                           "  <mirror>" +
-                           "    <id>name</id>" +
-                           "    <url>http://fooooooooo</url>" +
-                           "    <mirrorOf>*</mirrorOf>" +
-                           "  </mirror>" +
-                           "</mirrors>" +
-                           "</settings>");
+    String repoPath = helper.getTestDataPath("local1");
+    setRepositoryPath(repoPath);
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -1647,14 +1639,12 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
                   "<repositories>" +
                   "  <repository>" +
-                  "    <id>repo</id>" +
-                  "    <url>file://localhost/${basedir}/local-repo</url>" +
+                  "    <id>central</id>" +
+                  "    <url>file://localhost/${basedir}/repo</url>" +
                   "  </repository>" +
                   "</repositories>");
 
-    assertModuleLibDeps("project",
-                        "Maven: junit:junit:3.8.2",
-                        "Maven: junit:junit:4.1" /* for some reason maven adds 4.1 dependency, let me know if it is fixed someday*/);
+    assertModuleLibDeps("project", "Maven: junit:junit:3.8.2");
     assertModuleLibDep("project", "Maven: junit:junit:3.8.2",
                        "jar://" + repoPath + "/junit/junit/3.8.2/junit-3.8.2.jar!/");
   }

@@ -72,6 +72,8 @@
         implementation="org.jetbrains.idea.maven.dom.intentions.ResolveReferenceQuickFixProvider"/>
 
     <gotoFileContributor implementation="org.jetbrains.idea.maven.vfs.MavenGotoPropertyFileContibutor"/>
+    <gotoFileContributor implementation="org.jetbrains.idea.maven.utils.MavenGotoSettingsFileContibutor"/>
+    <fileTemplateGroup implementation="org.jetbrains.idea.maven.utils.MavenFileTemplateGroupFactory"/>
   </extensions>
 
   <application-components>
@@ -155,9 +157,11 @@
 
     <action id="Maven.AddFileAsMavenProject"
             class="org.jetbrains.idea.maven.project.actions.AddFileAsMavenProjectAction"
-            text="Add As Maven Project"
+            text="Add as Maven Project"
             description="Add and import Maven project to the projects tree"
             icon="/general/add.png">
+      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="Maven.GlobalProjectMenu"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="Maven.GlobalProjectMenu"/>
     </action>
 
     <action id="Maven.RemoveManagedFiles"
@@ -292,7 +296,6 @@
       <reference id="Maven.UpdateFoldersForProject"/>
       <reference id="Maven.DownloadArtifactsForProject"/>
       <separator/>
-      <reference id="Maven.AddFileAsMavenProject"/>
       <reference id="Maven.IgnoreProjects"/>
       <reference id="Maven.RemoveManagedFiles"/>
       <separator/>

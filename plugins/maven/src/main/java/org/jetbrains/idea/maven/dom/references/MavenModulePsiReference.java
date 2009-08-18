@@ -2,29 +2,20 @@ package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.codeInsight.lookup.MutableLookupElement;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.lang.StdLanguages;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.impl.NotificationsManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlText;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NotNull;
@@ -97,13 +88,13 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
 
   public LocalQuickFix[] getQuickFixes() {
     if (myText.length() == 0 || resolve() != null) return LocalQuickFix.EMPTY_ARRAY;
-    return new LocalQuickFix[]{new CreatePomFix()};
+    return new LocalQuickFix[]{new CreateModulePomFix()};
   }
 
-  private class CreatePomFix implements LocalQuickFix {
+  private class CreateModulePomFix implements LocalQuickFix {
     @NotNull
     public String getName() {
-      return MavenDomBundle.message("fix.create.pom");
+      return MavenDomBundle.message("fix.create.module.pom");
     }
 
     @NotNull
@@ -114,11 +105,16 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor d) {
       try {
         VirtualFile modulePom = createModulePom();
-        TemplateBuilderImpl b = buildTemplate(project, modulePom);
-        runTemplate(project, modulePom, b.buildTemplate());
+        MavenId id = MavenDomUtil.describe(myPsiFile);
+
+        String groupId = id.getGroupId() == null ? "groupId" : id.getGroupId();
+        String artifactId = modulePom.getParent().getName();
+        String version = id.getVersion() == null ? "version" : id.getVersion();
+        MavenUtil.runMavenProjectFileTemplate(project, modulePom, new MavenId(groupId, artifactId, version), true);
       }
       catch (IOException e) {
-        Messages.showErrorDialog(e.getMessage(), getName());
+        NotificationsManager.getNotificationsManager()
+          .notify("Cannot create a module", e.getMessage(), NotificationType.ERROR, NotificationListener.REMOVE);
       }
     }
 
@@ -127,37 +123,6 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
       String modulePath = PathUtil.getCanonicalPath(baseDir.getPath() + "/" + myText);
       VirtualFile moduleDir = VfsUtil.createDirectories(modulePath);
       return moduleDir.createChildData(this, MavenConstants.POM_XML);
-    }
-
-    private TemplateBuilderImpl buildTemplate(Project project, VirtualFile modulePomFile) {
-      MavenId id = MavenDomUtil.describe(myPsiFile);
-
-      String groupId = id.getGroupId() == null ? "groupId" : id.getGroupId();
-      String artifactId = modulePomFile.getParent().getName();
-      String version = id.getVersion() == null ? "version" : id.getVersion();
-
-      XmlFile psiFile = (XmlFile)PsiFileFactory.getInstance(project).createFileFromText(
-        MavenConstants.POM_XML,
-        StdLanguages.XML,
-        MavenUtil.makeFileContent(new MavenId(groupId, artifactId, version)));
-
-      TemplateBuilderImpl b = new TemplateBuilderImpl(psiFile);
-
-      b.replaceElement(getTagValueElement(psiFile, "groupId"), new ConstantNode(groupId));
-      b.replaceElement(getTagValueElement(psiFile, "artifactId"), new ConstantNode(artifactId));
-      b.replaceElement(getTagValueElement(psiFile, "version"), new ConstantNode(version));
-
-      return b;
-    }
-
-    private XmlText getTagValueElement(XmlFile psiFile, String qname) {
-      return psiFile.getDocument().getRootTag().findFirstSubTag(qname).getValue().getTextElements()[0];
-    }
-
-    private void runTemplate(Project project, VirtualFile modulePom, Template template) {
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, modulePom, 0);
-      Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-      TemplateManager.getInstance(project).startTemplate(editor, template);
     }
   }
 }
