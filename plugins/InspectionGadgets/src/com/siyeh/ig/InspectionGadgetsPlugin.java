@@ -611,6 +611,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(FinalStaticMethodInspection.class);
         m_inspectionClasses.add(InnerClassOnInterfaceInspection.class);
         m_inspectionClasses.add(LimitedScopeInnerClassInspection.class);
+        m_inspectionClasses.add(ListenerMayUseAdapterInspection.class);
         m_inspectionClasses.add(MarkerInterfaceInspection.class);
         m_inspectionClasses.add(MissingDeprecatedAnnotationInspection.class);
         m_inspectionClasses.add(MissingOverrideAnnotationInspection.class);

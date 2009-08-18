@@ -15,39 +15,56 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.openapi.project.Project;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.JComponent;
+
 public class ListenerMayUseAdapterInspection extends BaseInspection {
+
+    public boolean checkForEmptyMethods = true;
 
     @Override
     @Nls
     @NotNull
     public String getDisplayName() {
-        return "Class implementing listener may extend adapter instead";
+        return InspectionGadgetsBundle.message(
+                "listener.may.use.adapter.display.name");
     }
 
     @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
-        final PsiClass adapterClass = (PsiClass) infos[0];
+        final PsiClass aClass = (PsiClass)infos[0];
+        final String className = aClass.getName();
+        final PsiClass adapterClass = (PsiClass) infos[1];
         final String adapterName = adapterClass.getName();
-        return "Class implementing <code>#ref</code> may extend '" +
-                adapterName + '\'';
+        return InspectionGadgetsBundle.message(
+                "listener.may.use.adapter.problem.descriptor", className,
+                adapterName);
+    }
+
+    @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "listener.may.use.adapter.emtpy.methods.option"), this,
+                "checkForEmptyMethods");
     }
 
     @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiClass adapterClass = (PsiClass) infos[0];
+        final PsiClass adapterClass = (PsiClass) infos[1];
         return new ListenerMayUseAdapterFix(adapterClass);
     }
 
@@ -61,25 +78,55 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
 
         @NotNull
         public String getName() {
-            return "Replace with 'extends " + adapterClass.getName() + '\'';
+            return InspectionGadgetsBundle.message(
+                    "listener.may.use.adapter.quickfix",
+                    adapterClass.getName());
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
+            final PsiJavaCodeReferenceElement element =
+                    (PsiJavaCodeReferenceElement)descriptor.getPsiElement();
             final PsiClass aClass = PsiTreeUtil.getParentOfType(element,
                     PsiClass.class);
+            if (aClass == null) {
+                return;
+            }
             final PsiReferenceList extendsList = aClass.getExtendsList();
             if (extendsList == null) {
                 return;
+            }
+            final PsiMethod[] methods = aClass.getMethods();
+            if (methods.length > 0) {
+                final PsiElement target = element.resolve();
+                if (!(target instanceof PsiClass)) {
+                    return;
+                }
+                final PsiClass interfaceClass = (PsiClass)target;
+                for (PsiMethod method : methods) {
+                    final PsiCodeBlock body = method.getBody();
+                    if (body == null) {
+                        continue;
+                    }
+                    final PsiStatement[] statements = body.getStatements();
+                    if (statements.length != 0) {
+                        continue;
+                    }
+                    final PsiMethod[] superMethods = method.findSuperMethods(
+                            interfaceClass);
+                    if (superMethods.length > 0) {
+                        method.delete();
+                    }
+                }
             }
             element.delete();
             final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
             final PsiElementFactory elementFactory =
                     psiFacade.getElementFactory();
-            final PsiReferenceExpression referenceExpression =
-                    elementFactory.createReferenceExpression(adapterClass);
-            extendsList.add(referenceExpression);
+            final PsiJavaCodeReferenceElement referenceElement =
+                    elementFactory.createClassReferenceElement(adapterClass);
+            extendsList.add(referenceElement);
         }
     }
 
@@ -88,8 +135,7 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
         return new ListenerMayUseAdapterVisitor();
     }
 
-    private static class ListenerMayUseAdapterVisitor
-            extends BaseInspectionVisitor {
+    private class ListenerMayUseAdapterVisitor extends BaseInspectionVisitor {
 
         @Override
         public void visitClass(PsiClass aClass) {
@@ -97,24 +143,26 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
             if (extendsList == null) {
                 return;
             }
-            final PsiReference[] extendsReferences =
-                    extendsList.getReferences();
+            final PsiJavaCodeReferenceElement[] extendsReferences =
+                    extendsList.getReferenceElements();
             if (extendsReferences.length > 0) {
                 return;
             }
-            final PsiReferenceList referenceList = aClass.getImplementsList();
-            if (referenceList == null) {
+            final PsiReferenceList implementsList = aClass.getImplementsList();
+            if (implementsList == null) {
                 return;
             }
-            final PsiReference[] implementsReferences =
-                    referenceList.getReferences();
-            for (PsiReference implementsReference : implementsReferences) {
+            final PsiJavaCodeReferenceElement[] implementsReferences =
+                    implementsList.getReferenceElements();
+            for (PsiJavaCodeReferenceElement implementsReference :
+                    implementsReferences) {
                 checkReference(aClass, implementsReference);
             }
         }
 
-        private void checkReference(PsiClass aClass,
-                                    PsiReference implementsReference) {
+        private void checkReference(
+                PsiClass aClass,
+                PsiJavaCodeReferenceElement implementsReference) {
             final PsiElement target = implementsReference.resolve();
             if (!(target instanceof PsiClass)) {
                 return;
@@ -135,7 +183,53 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
             if (adapterClass == null) {
                 return;
             }
-            registerError(implementsReference.getElement(), adapterClass);
+            if (!adapterClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                return;
+            }
+            final PsiReferenceList implementsList =
+                    adapterClass.getImplementsList();
+            if (implementsList == null) {
+                return;
+            }
+            final PsiJavaCodeReferenceElement[] referenceElements =
+                    implementsList.getReferenceElements();
+            boolean adapterImplementsListener = false;
+            for (PsiJavaCodeReferenceElement referenceElement :
+                    referenceElements) {
+                final PsiElement implementsTarget = referenceElement.resolve();
+                if (!implementsClass.equals(implementsTarget)) {
+                    continue;
+                }
+                adapterImplementsListener = true;
+            }
+            if (!adapterImplementsListener) {
+                return;
+            }
+            if (checkForEmptyMethods) {
+                boolean emptyMethodFound = false;
+                final PsiMethod[] methods = aClass.getMethods();
+                for (PsiMethod method : methods) {
+                    final PsiCodeBlock body = method.getBody();
+                    if (body == null) {
+                        continue;
+                    }
+                    final PsiStatement[] statements = body.getStatements();
+                    if (statements.length != 0) {
+                        continue;
+                    }
+                    final PsiMethod[] superMethods =
+                            method.findSuperMethods(implementsClass);
+                    if (superMethods.length == 0) {
+                        continue;
+                    }
+                    emptyMethodFound = true;
+                    break;
+                }
+                if (!emptyMethodFound) {
+                    return;
+                }
+            }
+            registerError(implementsReference, aClass, adapterClass);
         }
     }
 }
