@@ -17,14 +17,13 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import org.jetbrains.annotations.Nullable;
 
 
 public class RunResult<T> extends Result<T> {
 
   private BaseActionRunnable<T> myActionRunnable;
 
-  protected Throwable myThrowable;
+  protected Exception myThrowable;
 
   protected RunResult() {
   }
@@ -38,12 +37,18 @@ public class RunResult<T> extends Result<T> {
       myActionRunnable.run(this);
     } catch (ProcessCanceledException e) {
       throw e; // this exception may occur from time to time and it shouldn't be catched
-    } catch (Throwable throwable) {
+    } catch (Exception throwable) {
       myThrowable = throwable;
       if (!myActionRunnable.isSilentExecution()) {
-        if (myThrowable instanceof Error) throw (Error)myThrowable;
-        else if (myThrowable instanceof RuntimeException) throw (RuntimeException)myThrowable; 
-        else throw new Error(myThrowable);
+        if (myThrowable instanceof RuntimeException) throw (RuntimeException)myThrowable;
+        else throw new RuntimeException(myThrowable);
+      }
+    }
+    catch (Throwable throwable) {
+      myThrowable = new RuntimeException(throwable);
+      if (!myActionRunnable.isSilentExecution()) {
+        if (throwable instanceof Error) throw (Error)throwable;
+        else throw new RuntimeException(myThrowable);
       }
     }
     finally {
@@ -65,7 +70,7 @@ public class RunResult<T> extends Result<T> {
     return this;
   }
 
-  public void throwException() throws Throwable {
+  public void throwException() throws Exception {
     if (hasException()) {
       throw myThrowable;
     }
@@ -75,11 +80,11 @@ public class RunResult<T> extends Result<T> {
     return myThrowable != null;
   }
 
-  public Throwable getThrowable() {
+  public Exception getThrowable() {
     return myThrowable;
   }
 
-  public void setThrowable(Throwable throwable) {
+  public void setThrowable(Exception throwable) {
     myThrowable = throwable;
   }
 

@@ -109,13 +109,13 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param filePaths the first file is tested only; the others are just copied along the first.
    *
    * @return highlighting duration in milliseconds.
-   * @throws Throwable any exception thrown during highlighting.
+   * @throws Exception any exception thrown during highlighting.
    */
-  long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @NonNls String... filePaths) throws Throwable;
+  long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @NonNls String... filePaths) throws Exception;
 
-  long testHighlightingAllFiles(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @NonNls String... filePaths) throws Throwable;
+  long testHighlightingAllFiles(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @NonNls String... filePaths) throws Exception;
 
-  long testHighlightingAllFiles(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @NonNls VirtualFile... files) throws Throwable;
+  long testHighlightingAllFiles(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @NonNls VirtualFile... files) throws Exception;
 
   /**
    * Check highlighting of file already loaded by configure* methods
@@ -123,11 +123,11 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param checkInfos
    * @param checkWeakWarnings
    * @return
-   * @throws Throwable
+   * @throws Exception
    */
-  long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws Throwable;
+  long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws Exception;
 
-  long checkHighlighting() throws Throwable;
+  long checkHighlighting() throws Exception;
 
   /**
    * Runs highliting test for the given files.
@@ -136,11 +136,11 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param filePaths the first file is tested only; the others are just copied along with the first.
    *
    * @return highlighting duration in milliseconds
-   * @throws Throwable any exception thrown during highlighting
+   * @throws Exception any exception thrown during highlighting
    */
-  long testHighlighting(@NonNls String... filePaths) throws Throwable;
+  long testHighlighting(@NonNls String... filePaths) throws Exception;
 
-  long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, VirtualFile file) throws Throwable;
+  long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, VirtualFile file) throws Exception;
 
   void testInspection(String testDir, InspectionTool tool) throws Exception;
 
@@ -149,12 +149,12 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    *
    * @param filePaths
    * @return null if no reference found.
-   * @throws Throwable any exception.
+   * @throws Exception any exception.
    *
    * @see #getReferenceAtCaretPositionWithAssertion(String...)
    */
   @Nullable
-  PsiReference getReferenceAtCaretPosition(@NonNls String... filePaths) throws Throwable;
+  PsiReference getReferenceAtCaretPosition(@NonNls String... filePaths) throws Exception;
 
   /**
    * Finds the reference in position marked by {@link #CARET_MARKER}.
@@ -162,49 +162,49 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    *
    * @param filePaths
    * @return founded reference
-   * @throws Throwable any exception
+   * @throws Exception any exception
    *
    * @see #getReferenceAtCaretPosition(String...)
    */
   @NotNull
-  PsiReference getReferenceAtCaretPositionWithAssertion(@NonNls String... filePaths) throws Throwable;
+  PsiReference getReferenceAtCaretPositionWithAssertion(@NonNls String... filePaths) throws Exception;
 
   /**
    * Collects available intentions in the whole file or at caret position if {@link #CARET_MARKER} presents.
    *
    * @param filePaths the first file is tested only; the others are just copied along with the first.
    * @return available intentions.
-   * @throws Throwable any exception.
+   * @throws Exception any exception.
    */
   @NotNull
-  List<IntentionAction> getAvailableIntentions(@NonNls String... filePaths) throws Throwable;
+  List<IntentionAction> getAvailableIntentions(@NonNls String... filePaths) throws Exception;
 
   @NotNull
-  List<IntentionAction> getAvailableIntentions() throws Throwable;
+  List<IntentionAction> getAvailableIntentions() throws Exception;
 
   /**
    * Returns all intentions whose text contains hint
    * @param hint
    * @return
-   * @throws Throwable
+   * @throws Exception
    */
-  List<IntentionAction> filterAvailableIntentions(@NotNull String hint) throws Throwable;
+  List<IntentionAction> filterAvailableIntentions(@NotNull String hint) throws Exception;
 
-  IntentionAction findSingleIntention(@NotNull String hint) throws Throwable;
+  IntentionAction findSingleIntention(@NotNull String hint) throws Exception;
 
-  IntentionAction getAvailableIntention(final String intentionName, final String... filePaths) throws Throwable;
+  IntentionAction getAvailableIntention(final String intentionName, final String... filePaths) throws Exception;
 
   /**
    * Launches the given action. Use {@link #checkResultByFile(String)} to check the result.
    *
    * @param action the action to be launched.
-   * @throws Throwable any exception.
+   * @throws Exception any exception.
    */
-  void launchAction(@NotNull IntentionAction action) throws Throwable;
+  void launchAction(@NotNull IntentionAction action) throws Exception;
 
-  void configureByFile(@NonNls String file) throws Throwable;
+  void configureByFile(@NonNls String file) throws Exception;
 
-  void configureByFiles(@NonNls String... files) throws Throwable;
+  void configureByFiles(@NonNls String... files) throws Exception;
 
   PsiFile configureByText(FileType fileType, @NonNls String text) throws IOException;
 
@@ -212,11 +212,11 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * Compares current file against the given one.
    *
    * @param expectedFile file to check against.
-   * @throws Throwable any exception.
+   * @throws Exception any exception.
    */
-  void checkResultByFile(@NonNls String expectedFile) throws Throwable;
+  void checkResultByFile(@NonNls String expectedFile) throws Exception;
   
-  void checkResultByFile(@NonNls String expectedFile, boolean ignoreWhitespaces) throws Throwable;
+  void checkResultByFile(@NonNls String expectedFile, boolean ignoreWhitespaces) throws Exception;
 
   /**
    * Compares two files.
@@ -224,11 +224,11 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param filePath file to be checked.
    * @param expectedFile file to check against.
    * @param ignoreWhitespaces set to true to ignore differences in whitespaces.
-   * @throws Throwable any exception.
+   * @throws Exception any exception.
    */
-  void checkResultByFile(@NonNls String filePath, @NonNls String expectedFile, boolean ignoreWhitespaces) throws Throwable;
+  void checkResultByFile(@NonNls String filePath, @NonNls String expectedFile, boolean ignoreWhitespaces) throws Exception;
 
-  void testCompletion(@NonNls String[] filesBefore, @NonNls String fileAfter) throws Throwable;
+  void testCompletion(@NonNls String[] filesBefore, @NonNls String fileAfter) throws Exception;
 
   /**
    * Runs basic completion in caret position in fileBefore.
@@ -236,18 +236,18 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param fileBefore
    * @param fileAfter
    * @param additionalFiles
-   * @throws Throwable
+   * @throws Exception
    */
-  void testCompletion(@NonNls String fileBefore, @NonNls String fileAfter, final String... additionalFiles) throws Throwable;
+  void testCompletion(@NonNls String fileBefore, @NonNls String fileAfter, final String... additionalFiles) throws Exception;
 
   /**
    * Runs basic completion in caret position in fileBefore.
    * Checks that lookup is shown and it contains items with given lookup strings
    * @param fileBefore
    * @param items most probably will contain > 1 items
-   * @throws Throwable
+   * @throws Exception
    */
-  void testCompletionVariants(@NonNls String fileBefore, @NonNls String... items) throws Throwable;
+  void testCompletionVariants(@NonNls String fileBefore, @NonNls String... items) throws Exception;
 
   /**
    * Launches renaming refactoring and checks the result.
@@ -256,18 +256,18 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param fileAfter result file to be checked against.
    * @param newName new name for the element.
    * @param additionalFiles
-   * @throws Throwable any exception.
+   * @throws Exception any exception.
    * @see #testRename(String, String, String, String[])
    */
-  void testRename(@NonNls String fileBefore, @NonNls String fileAfter, @NonNls String newName, final String... additionalFiles) throws Throwable;
+  void testRename(@NonNls String fileBefore, @NonNls String fileAfter, @NonNls String newName, final String... additionalFiles) throws Exception;
 
-  void testRename(String fileAfter, String newName) throws Throwable;
+  void testRename(String fileAfter, String newName) throws Exception;
 
-  Collection<UsageInfo> testFindUsages(@NonNls String... fileNames) throws Throwable;
+  Collection<UsageInfo> testFindUsages(@NonNls String... fileNames) throws Exception;
 
-  Collection<UsageInfo> findUsages(final PsiElement to) throws Throwable;
+  Collection<UsageInfo> findUsages(final PsiElement to) throws Exception;
 
-  void moveFile(@NonNls String filePath, @NonNls String to, final String... additionalFiles) throws Throwable;
+  void moveFile(@NonNls String filePath, @NonNls String to, final String... additionalFiles) throws Exception;
 
   /**
    * Returns gutter renderer at the caret position.
@@ -275,10 +275,10 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    *
    * @param filePath file path
    * @return gutter renderer at the caret position.
-   * @throws Throwable any exception.
+   * @throws Exception any exception.
    */
   @Nullable
-  GutterIconRenderer findGutter(@NonNls String filePath) throws Throwable;
+  GutterIconRenderer findGutter(@NonNls String filePath) throws Exception;
 
   PsiManager getPsiManager();
 
@@ -293,7 +293,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void setFileContext(@Nullable PsiElement context);
 
   @NotNull
-  Collection<GutterIconRenderer> findAllGutters(String filePath) throws Throwable;
+  Collection<GutterIconRenderer> findAllGutters(String filePath) throws Exception;
 
   void type(final char c);
 
@@ -305,7 +305,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   PsiFile addFileToProject(@NonNls String relativePath, @NonNls String fileText) throws IOException;
 
-  List<String> getCompletionVariants(String... filesBefore) throws Throwable;
+  List<String> getCompletionVariants(String... filesBefore) throws Exception;
 
   @Nullable
   LookupElement[] getLookupElements();
@@ -315,7 +315,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @Nullable
   List<String> getLookupElementStrings();
 
-  void renameElementAtCaret(String newName) throws Throwable;
+  void renameElementAtCaret(String newName) throws Exception;
 
   void allowTreeAccessForFile(VirtualFile file);
 }

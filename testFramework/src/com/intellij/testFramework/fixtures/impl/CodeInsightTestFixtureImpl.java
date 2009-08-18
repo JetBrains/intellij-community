@@ -149,6 +149,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
       VirtualFile fromVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fromFile);
+      if (fromVFile == null) {
+        fromVFile = myTempDirFixture.getFile(sourceFilePath);
+      }
       assert fromVFile != null: "can't find testdata file " + sourceFilePath;
       return myTempDirFixture.copyFile(fromVFile, targetPath);
     }
@@ -249,11 +252,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public long testHighlighting(final boolean checkWarnings,
                                final boolean checkInfos,
                                final boolean checkWeakWarnings,
-                               final String... filePaths) throws Throwable {
+                               final String... filePaths) throws Exception {
     final Ref<Long> duration = new Ref<Long>();
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
-      protected void run() throws Throwable {
+      protected void run() throws Exception {
         if (filePaths.length > 0) {
           configureByFilesInner(filePaths);
         }
@@ -266,7 +269,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public long testHighlightingAllFiles(final boolean checkWarnings,
                                        final boolean checkInfos,
                                        final boolean checkWeakWarnings,
-                                       @NonNls final String... filePaths) throws Throwable {
+                                       @NonNls final String... filePaths) throws Exception {
     final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
     for (String path : filePaths) {
       files.add(copyFileToProject(path));
@@ -277,11 +280,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public long testHighlightingAllFiles(final boolean checkWarnings,
                                final boolean checkInfos,
                                final boolean checkWeakWarnings,
-                               @NonNls final VirtualFile... files) throws Throwable {
+                               @NonNls final VirtualFile... files) throws Exception {
     final Ref<Long> duration = new Ref<Long>();
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
-      protected void run() throws Throwable {
+      protected void run() throws Exception {
         collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings, duration, files);
       }
     }.execute().throwException();
@@ -306,28 +309,28 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
-  public long checkHighlighting(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings) throws Throwable {
+  public long checkHighlighting(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings) throws Exception {
     final Ref<Long> duration = new Ref<Long>();
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
-      protected void run() throws Throwable {
+      protected void run() throws Exception {
         collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings, duration);
       }
     }.execute().throwException();
     return duration.get().longValue();
   }
 
-  public long checkHighlighting() throws Throwable {
+  public long checkHighlighting() throws Exception {
     return checkHighlighting(true, true, true);
   }
 
-  public long testHighlighting(final String... filePaths) throws Throwable {
+  public long testHighlighting(final String... filePaths) throws Exception {
     return testHighlighting(true, true, true, filePaths);
   }
 
-  public long testHighlighting(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings, final VirtualFile file) throws Throwable {
+  public long testHighlighting(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings, final VirtualFile file) throws Exception {
     final Ref<Long> duration = new Ref<Long>();
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
-      protected void run() throws Throwable {
+      protected void run() throws Exception {
         myFile = myPsiManager.findFile(file);
         myEditor = createEditor(file);
         collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings, duration);
@@ -350,9 +353,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Nullable
-  public PsiReference getReferenceAtCaretPosition(final String... filePaths) throws Throwable {
+  public PsiReference getReferenceAtCaretPosition(final String... filePaths) throws Exception {
     new WriteCommandAction<PsiReference>(myProjectFixture.getProject()) {
-      protected void run(final Result<PsiReference> result) throws Throwable {
+      protected void run(final Result<PsiReference> result) throws Exception {
         configureByFilesInner(filePaths);
       }
     }.execute().throwException();
@@ -360,18 +363,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @NotNull
-  public PsiReference getReferenceAtCaretPositionWithAssertion(final String... filePaths) throws Throwable {
+  public PsiReference getReferenceAtCaretPositionWithAssertion(final String... filePaths) throws Exception {
     final PsiReference reference = getReferenceAtCaretPosition(filePaths);
     assert reference != null: "no reference found at " + myEditor.getCaretModel().getLogicalPosition();
     return reference;
   }
 
   @NotNull
-  public List<IntentionAction> getAvailableIntentions(final String... filePaths) throws Throwable {
+  public List<IntentionAction> getAvailableIntentions(final String... filePaths) throws Exception {
 
     final Project project = myProjectFixture.getProject();
     return new WriteCommandAction<List<IntentionAction>>(project) {
-      protected void run(final Result<List<IntentionAction>> result) throws Throwable {
+      protected void run(final Result<List<IntentionAction>> result) throws Exception {
         configureByFilesInner(filePaths);
         result.setResult(getAvailableIntentions());
       }
@@ -384,7 +387,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return getAvailableIntentions(myEditor, myFile);
   }
 
-  public List<IntentionAction> filterAvailableIntentions(@NotNull final String hint) throws Throwable {
+  public List<IntentionAction> filterAvailableIntentions(@NotNull final String hint) throws Exception {
     return ContainerUtil.findAll(getAvailableIntentions(),new Condition<IntentionAction>() {
       public boolean value(final IntentionAction intentionAction) {
         return intentionAction.getText().startsWith(hint);
@@ -392,7 +395,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     });
   }
 
-  public IntentionAction findSingleIntention(@NotNull final String hint) throws Throwable {
+  public IntentionAction findSingleIntention(@NotNull final String hint) throws Exception {
     final List<IntentionAction> list = filterAvailableIntentions(hint);
     if (list.size() != 1) {
       Assert.fail(StringUtil.join(getAvailableIntentions(), new Function<IntentionAction, String>() {
@@ -404,21 +407,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return UsefulTestCase.assertOneElement(list);
   }
 
-  public IntentionAction getAvailableIntention(final String intentionName, final String... filePaths) throws Throwable {
+  public IntentionAction getAvailableIntention(final String intentionName, final String... filePaths) throws Exception {
     List<IntentionAction> intentions = getAvailableIntentions(filePaths);
     return CodeInsightTestUtil.findIntentionByText(intentions, intentionName);
   }
 
-  public void launchAction(@NotNull final IntentionAction action) throws Throwable {
+  public void launchAction(@NotNull final IntentionAction action) throws Exception {
     new WriteCommandAction(myProjectFixture.getProject()) {
-      protected void run(final Result result) throws Throwable {
+      protected void run(final Result result) throws Exception {
         action.invoke(getProject(), getEditor(), getFile());
       }
     }.execute().throwException();
 
   }
 
-  public void testCompletion(final String[] filesBefore, final String fileAfter) throws Throwable {
+  public void testCompletion(final String[] filesBefore, final String fileAfter) throws Exception {
     assertInitialized();
     configureByFiles(filesBefore);
     final LookupElement[] items = complete(CompletionType.BASIC);
@@ -432,17 +435,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Assert.assertNotNull("setUp() hasn't been called", myPsiManager);
   }
 
-  public void testCompletion(String fileBefore, String fileAfter, final String... additionalFiles) throws Throwable {
+  public void testCompletion(String fileBefore, String fileAfter, final String... additionalFiles) throws Exception {
     testCompletion(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, fileBefore)), fileAfter);
   }
 
-  public void testCompletionVariants(final String fileBefore, final String... expectedItems) throws Throwable {
+  public void testCompletionVariants(final String fileBefore, final String... expectedItems) throws Exception {
     assertInitialized();
     final List<String> result = getCompletionVariants(fileBefore);
     UsefulTestCase.assertSameElements(result, expectedItems);
   }
 
-  public List<String> getCompletionVariants(final String... filesBefore) throws Throwable {
+  public List<String> getCompletionVariants(final String... filesBefore) throws Exception {
     assertInitialized();
     configureByFiles(filesBefore);
     final LookupElement[] items = complete(CompletionType.BASIC);
@@ -463,21 +466,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     });
   }
 
-  public void testRename(final String fileBefore, final String fileAfter, final String newName, final String... additionalFiles) throws Throwable {
+  public void testRename(final String fileBefore, final String fileAfter, final String newName, final String... additionalFiles) throws Exception {
     assertInitialized();
     configureByFiles(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, fileBefore)));
     testRename(fileAfter, newName);
   }
 
-  public void testRename(final String fileAfter, final String newName) throws Throwable {
+  public void testRename(final String fileAfter, final String newName) throws Exception {
     renameElementAtCaret(newName);
     checkResultByFile(fileAfter);
   }
 
-  public void renameElementAtCaret(final String newName) throws Throwable {
+  public void renameElementAtCaret(final String newName) throws Exception {
     assertInitialized();
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
-      protected void run() throws Throwable {
+      protected void run() throws Exception {
         PsiElement element = TargetElementUtilBase.findTargetElement(getCompletionEditor(), TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
         assert element != null: "element not found in file " + myFile.getName() + " at caret position, offset " + myEditor.getCaretModel().getOffset();
         final PsiElement substitution = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, myEditor);
@@ -489,7 +492,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void type(final char c) {
     assertInitialized();
     new WriteCommandAction(getProject()) {
-      protected void run(Result result) throws Throwable {
+      protected void run(Result result) throws Exception {
         EditorActionManager actionManager = EditorActionManager.getInstance();
         final DataContext dataContext = DataManager.getInstance().getDataContext();
         if (c == '\b') {
@@ -524,7 +527,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     actionManager.getActionHandler(actionId).execute(getEditor(), dataContext);
   }
 
-  public Collection<UsageInfo> testFindUsages(@NonNls final String... fileNames) throws Throwable {
+  public Collection<UsageInfo> testFindUsages(@NonNls final String... fileNames) throws Exception {
     assertInitialized();
     configureByFiles(fileNames);
     final PsiElement targetElement = TargetElementUtilBase
@@ -548,11 +551,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return processor.getResults();
   }
 
-  public void moveFile(@NonNls final String filePath, @NonNls final String to, final String... additionalFiles) throws Throwable {
+  public void moveFile(@NonNls final String filePath, @NonNls final String to, final String... additionalFiles) throws Exception {
     assertInitialized();
     final Project project = myProjectFixture.getProject();
     new WriteCommandAction.Simple(project) {
-      protected void run() throws Throwable {
+      protected void run() throws Exception {
         configureByFiles(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, filePath)));
         final VirtualFile file = findFileInTempDir(to);
         assert file.isDirectory() : to + " is not a directory";
@@ -565,13 +568,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Nullable
-  public GutterIconRenderer findGutter(final String filePath) throws Throwable {
+  public GutterIconRenderer findGutter(final String filePath) throws Exception {
     assertInitialized();
     final Project project = myProjectFixture.getProject();
     final Ref<GutterIconRenderer> result = new Ref<GutterIconRenderer>();
     new WriteCommandAction.Simple(project) {
 
-      protected void run() throws Throwable {
+      protected void run() throws Exception {
         final int offset = configureByFilesInner(filePath);
 
         final Collection<HighlightInfo> infos = doHighlighting();
@@ -591,13 +594,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @NotNull
-  public Collection<GutterIconRenderer> findAllGutters(final String filePath) throws Throwable {
+  public Collection<GutterIconRenderer> findAllGutters(final String filePath) throws Exception {
     assertInitialized();
     final Project project = myProjectFixture.getProject();
     final SortedMap<Integer, List<GutterIconRenderer>> result = new TreeMap<Integer, List<GutterIconRenderer>>();
     new WriteCommandAction.Simple(project) {
 
-      protected void run() throws Throwable {
+      protected void run() throws Exception {
         configureByFilesInner(filePath);
 
         for (HighlightInfo info : doHighlighting()) {
@@ -659,7 +662,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assertInitialized();
     myEmptyLookup = false;
     new WriteCommandAction(getProject()) {
-      protected void run(Result result) throws Throwable {
+      protected void run(Result result) throws Exception {
         final CodeInsightActionHandler handler = new CodeCompletionHandlerBase(type) {
           protected PsiFile createFileCopy(final PsiFile file) {
             final PsiFile copy = super.createFileCopy(file);
@@ -715,26 +718,26 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     checkResult("TEXT", false, SelectionAndCaretMarkupLoader.fromText(text, getProject()), myFile.getText());
   }
 
-  public void checkResultByFile(final String expectedFile) throws Throwable {
+  public void checkResultByFile(final String expectedFile) throws Exception {
     checkResultByFile(expectedFile, false);
   }
 
-  public void checkResultByFile(final String expectedFile, final boolean ignoreWhitespaces) throws Throwable {
+  public void checkResultByFile(final String expectedFile, final boolean ignoreWhitespaces) throws Exception {
     assertInitialized();
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
-      protected void run() throws Throwable {
+      protected void run() throws Exception {
         checkResultByFile(expectedFile, myFile, ignoreWhitespaces);
       }
     }.execute().throwException();
   }
 
-  public void checkResultByFile(final String filePath, final String expectedFile, final boolean ignoreWhitespaces) throws Throwable {
+  public void checkResultByFile(final String filePath, final String expectedFile, final boolean ignoreWhitespaces) throws Exception {
     assertInitialized();
 
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
-      protected void run() throws Throwable {
+      protected void run() throws Exception {
         final VirtualFile copy = findFileInTempDir(filePath.replace(File.separatorChar, '/'));
         final PsiFile psiFile = myPsiManager.findFile(copy);
         assert psiFile != null;
@@ -851,15 +854,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void configureByFile(final String file) throws IOException {
     assertInitialized();
     new WriteCommandAction.Simple(getProject()) {
-      protected void run() throws Throwable {
+      protected void run() throws Exception {
         configureByFilesInner(file);
       }
     }.execute();
   }
 
-  public void configureByFiles(@NonNls final String... files) throws Throwable {
+  public void configureByFiles(@NonNls final String... files) throws Exception {
     new WriteCommandAction.Simple(getProject()) {
-      protected void run() throws Throwable {
+      protected void run() throws Exception {
         configureByFilesInner(files);
       }
     }.execute();
@@ -875,7 +878,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
       new WriteCommandAction(getProject()) {
-        protected void run(Result result) throws Throwable {
+        protected void run(Result result) throws Exception {
           fileTypeManager.associateExtension(fileType, extension);
         }
       }.execute();
@@ -1158,7 +1161,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       selEndMarker = selEndIndex >= 0 ? document.createRangeMarker(selEndIndex, selEndIndex) : null;
 
       new WriteCommandAction(project) {
-        protected void run(Result result) throws Throwable {
+        protected void run(Result result) throws Exception {
           if (caretMarker != null) {
             document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
           }
