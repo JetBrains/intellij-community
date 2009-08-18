@@ -88,7 +88,17 @@ public class TempFileSystem extends NewVirtualFileSystem {
   }
 
   public void moveFile(final Object requestor, final VirtualFile file, final VirtualFile newParent) throws IOException {
-    throw new UnsupportedOperationException("moveFile is not implemented"); // TODO
+    final FSItem fsItem = convert(file);
+    assert fsItem != null: "failed to move file " + file.getPath();
+    final FSItem newParentItem = convert(newParent);
+    assert newParentItem != null && newParentItem.isDirectory(): "failed to find move target " + file.getPath();
+    FSDir newDir = (FSDir) newParentItem;
+    if (newDir.findChild(file.getName()) != null) {
+      throw new IOException("Directory already contains a file named " + file.getName());
+    }
+
+    fsItem.getParent().removeChild(fsItem);
+    ((FSDir) newParentItem).addChild(fsItem);
   }
 
   public void renameFile(final Object requestor, final VirtualFile file, final String newName) throws IOException {
