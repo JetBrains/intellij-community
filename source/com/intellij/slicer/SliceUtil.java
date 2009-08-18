@@ -1,6 +1,8 @@
 package com.intellij.slicer;
 
 import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -11,15 +13,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
-import com.intellij.openapi.project.Project;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author cdr
@@ -232,6 +230,9 @@ public class SliceUtil {
               PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
               substitutor = resolveHelper.inferTypeArguments(typeParameters, parameters, expressions, parentSubstitutor, argumentList, false);
             }
+
+            substitutor = removeRawMappingsLeftFromResolve(substitutor);
+
             PsiSubstitutor combined = unify(substitutor, parentSubstitutor, project);
             if (combined != null) {
               return handToProcessor(passExpression, processor, parent, combined);
@@ -245,6 +246,22 @@ public class SliceUtil {
     }
 
     return true;
+  }
+
+  private static PsiSubstitutor removeRawMappingsLeftFromResolve(PsiSubstitutor substitutor) {
+    Map<PsiTypeParameter, PsiType> map = null;
+    for (Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {
+      if (entry.getValue() == null) {
+        if (map == null) map = new THashMap<PsiTypeParameter, PsiType>();
+        map.put(entry.getKey(), entry.getValue());
+      }
+    }
+    if (map != null) {
+      Map<PsiTypeParameter, PsiType> newmap = new THashMap<PsiTypeParameter, PsiType>(substitutor.getSubstitutionMap());
+      newmap.keySet().removeAll(map.keySet());
+      substitutor = PsiSubstitutorImpl.createSubstitutor(newmap);
+    }
+    return substitutor;
   }
 
   private static PsiSubstitutor rev(PsiSubstitutor substitutor) {
@@ -271,7 +288,6 @@ public class SliceUtil {
       PsiTypeParameter typeParameter = entry.getKey();
       PsiType type = entry.getValue();
       PsiClass resolved = PsiUtil.resolveClassInType(type);
-      if (resolved == null) continue;
       if (!parentSubstitutor.getSubstitutionMap().containsKey(typeParameter)) continue;
       PsiType parentType = parentSubstitutor.substitute(typeParameter);
       
@@ -279,10 +295,8 @@ public class SliceUtil {
         PsiTypeParameter res = (PsiTypeParameter)resolved;
         newMap.put(res, parentType);
       }
-      else {
-        if (!type.equals(parentType)) {
-          return null; // cannot unify
-        }
+      else if (!Comparing.equal(type, parentType)) {
+        return null; // cannot unify
       }
     }
     return JavaPsiFacade.getElementFactory(project).createSubstitutor(newMap);
