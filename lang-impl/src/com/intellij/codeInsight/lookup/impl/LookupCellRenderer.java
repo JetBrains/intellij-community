@@ -237,7 +237,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     int result = 2;
     result += getStringWidth(presentation.getItemText());
     result += getStringWidth(presentation.getTailText());
-    result += getStringWidth("XXX");
+    result += getStringWidth("XXXX"); //3 spaces for nice tail-type separation, one for unforeseen Swing size adjustments 
     result += getStringWidth(presentation.getTypeText());
     final Icon typeIcon = presentation.getTypeIcon();
     if (typeIcon != null) {
