@@ -404,4 +404,7 @@ public class ArtifactUtil {
     return true;
   }
 
+  public static boolean isArchiveName(String name) {
+    return name.length() >= 4 && name.charAt(name.length() - 4) == '.' && StringUtil.endsWithIgnoreCase(name, "ar");
+  }
 }
