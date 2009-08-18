@@ -227,12 +227,17 @@ public class FrameDebuggerTree extends DebuggerTree {
         }
 
         //noinspection unchecked
-        final Set<String> vars = new HashSet<String>();
-        final Set<TextWithImports> expressions = new HashSet<TextWithImports>();
-        final PsiElementVisitor variablesCollector = new VariablesCollector(visibleVars, adjustRange(element, lineRange), expressions, vars);
-        element.accept(variablesCollector);
+        if (element instanceof PsiCompiledElement) {
+          return new Pair<Set<String>, Set<TextWithImports>>(visibleVars, Collections.<TextWithImports>emptySet());
+        }
+        else {
+          final Set<String> vars = new HashSet<String>();
+          final Set<TextWithImports> expressions = new HashSet<TextWithImports>();
+          final PsiElementVisitor variablesCollector = new VariablesCollector(visibleVars, adjustRange(element, lineRange), expressions, vars);
+          element.accept(variablesCollector);
 
-        return new Pair<Set<String>, Set<TextWithImports>>(vars, expressions);
+          return new Pair<Set<String>, Set<TextWithImports>>(vars, expressions);
+        }
       }
     }
     return new Pair<Set<String>, Set<TextWithImports>>(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
@@ -252,9 +257,6 @@ public class FrameDebuggerTree extends DebuggerTree {
   }
 
   private static TextRange adjustRange(final PsiElement element, final TextRange originalRange) {
-    if (element instanceof PsiCompiledElement) {
-      return originalRange;
-    }
     final Ref<TextRange> rangeRef = new Ref<TextRange>(originalRange);
     element.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitExpressionStatement(final PsiExpressionStatement statement) {
@@ -385,7 +387,7 @@ public class FrameDebuggerTree extends DebuggerTree {
 
   }
 
-  private static class VariablesCollector extends JavaRecursiveElementWalkingVisitor {
+  private static class VariablesCollector extends JavaRecursiveElementVisitor {
     private final Set<String> myVisibleLocals;
     private final TextRange myLineRange;
     private final Set<TextWithImports> myExpressions;
