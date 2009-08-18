@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -30,8 +31,9 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
     return this;
   }
 
+  @Nullable
   public PsiFile getContainingFile() {
-    return myElement.getContainingFile();
+    return myElement != null && myElement.isValid() ? myElement.getContainingFile() : null;
   }
 
   public abstract boolean isValid();
