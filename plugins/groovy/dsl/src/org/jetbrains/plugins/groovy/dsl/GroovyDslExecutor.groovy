@@ -29,7 +29,7 @@ public class GroovyDslExecutor {
       enh.resolveStrategy = Closure.DELEGATE_FIRST
       myClassEnhancers << {
         ClassDescriptor cw, GroovyEnhancerConsumer c ->
-        if (!args.className || cw.isInheritor(args.className)) {
+        if (!args.className || cw.getQualifiedName() == args.className) {
           runEnhancer enh, new EnhancerDelegate(consumer:c)
         }
       }
