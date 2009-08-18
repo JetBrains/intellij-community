@@ -1,26 +1,25 @@
 package com.intellij.refactoring.extractclass;
 
-import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
+import com.intellij.refactoring.classMembers.DelegatingMemberInfoModel;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.classMembers.MemberInfoChangeListener;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.ui.MemberSelectionTable;
+import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.refactoring.classMembers.DelegatingMemberInfoModel;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,8 +27,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -40,8 +37,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   private final PsiClass sourceClass;
   private final List<MemberInfo> memberInfo;
   private final JTextField classNameField;
-  private final JTextField packageTextField;
-  private final FixedSizeButton packageChooserButton;
+  private final ReferenceEditorComboWithBrowseButton packageTextField;
   private final JTextField sourceClassTextField;
 
   ExtractClassDialog(PsiClass sourceClass, PsiMember selectedMember) {
@@ -55,10 +51,16 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
       }
     };
     classNameField = new JTextField();
-    packageTextField = new JTextField();
+    final PsiFile file = sourceClass.getContainingFile();
+    final String text = file instanceof PsiJavaFile ? ((PsiJavaFile)file).getPackageName() : "";
+    packageTextField = new PackageNameReferenceEditorCombo(text, myProject, "ExtractClass.RECENTS_KEY", RefactorJBundle.message("choose.destination.package.label"));
+    packageTextField.getChildComponent().getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+      @Override
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+        validateButtons();
+      }
+    });
     classNameField.getDocument().addDocumentListener(docListener);
-    packageTextField.getDocument().addDocumentListener(docListener);
-    packageChooserButton = new FixedSizeButton(packageTextField);
     sourceClassTextField = new JTextField();
     final MemberInfo.Filter<PsiMember> filter = new MemberInfo.Filter<PsiMember>() {
       public boolean includeMember(PsiMember element) {
@@ -66,16 +68,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
           return !((PsiMethod)element).isConstructor() && ((PsiMethod)element).getBody() != null;
         }
         else if (element instanceof PsiField) {
-          //don't include static fields with non-constant initializers
-          final PsiField field = (PsiField)element;
-          if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-            return true;
-          }
-          if (!field.hasInitializer()) {
-            return true;
-          }
-          final PsiExpression initializer = field.getInitializer();
-          return PsiUtil.isConstantExpression(initializer);
+          return true;
         }
         else if (element instanceof PsiClass) {
           return PsiTreeUtil.isAncestor(ExtractClassDialog.this.sourceClass, element, true);
@@ -90,11 +83,6 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
       }
     }
     super.init();
-
-    final PsiFile file = sourceClass.getContainingFile();
-    if (file instanceof PsiJavaFile) {
-      packageTextField.setText(((PsiJavaFile)file).getPackageName());
-    }
     sourceClassTextField.setText(sourceClass.getQualifiedName());
     validateButtons();
   }
@@ -195,25 +183,13 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     box.add(classNamePanel);
 
     box.add(Box.createVerticalStrut(5));
-    packageChooserButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final Project project = sourceClass.getProject();
-        final PackageChooserDialog chooser = new PackageChooserDialog(RefactorJBundle.message("choose.destination.package.label"), project);
-        chooser.selectPackage(packageTextField.getText());
-        chooser.show();
-        final PsiPackage aPackage = chooser.getSelectedPackage();
-        if (aPackage != null) {
-          packageTextField.setText(aPackage.getQualifiedName());
-        }
-      }
-    });
+
     final JPanel packageNamePanel = new JPanel(new BorderLayout());
     final JLabel packageLabel = new JLabel(RefactorJBundle.message("package.for.new.class.label"));
     packageLabel.setLabelFor(packageTextField);
     packageLabel.setDisplayedMnemonic('P');
     packageNamePanel.add(packageLabel, BorderLayout.NORTH);
     packageNamePanel.add(packageTextField, BorderLayout.CENTER);
-    packageNamePanel.add(packageChooserButton, BorderLayout.EAST);
     box.add(packageNamePanel);
 
     box.add(Box.createVerticalStrut(10));
