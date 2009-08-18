@@ -5,7 +5,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.ui.ArtifactProblemQuickFix;
 import com.intellij.packaging.ui.ArtifactValidationManager;
-import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -34,7 +34,7 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
     private List<String> myProblems = new ArrayList<String>();
     private Map<String, ArtifactProblemQuickFix> myQuickFixes = new THashMap<String, ArtifactProblemQuickFix>();
 
-    public PackagingEditorContext getContext() {
+    public ArtifactEditorContext getContext() {
       return new MockPackagingEditorContext();
     }
 

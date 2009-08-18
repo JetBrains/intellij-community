@@ -1,18 +1,25 @@
 package com.intellij.compiler.artifacts;
 
-import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.packaging.artifacts.*;
-import com.intellij.packaging.impl.artifacts.PlainArtifactType;
-import com.intellij.packaging.ui.PackagingEditorContext;
-import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.facet.impl.DefaultFacetsProvider;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.Result;
-import com.intellij.facet.impl.DefaultFacetsProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.packaging.artifacts.*;
+import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.impl.artifacts.PlainArtifactType;
+import com.intellij.packaging.impl.elements.ManifestFileUtil;
+import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.ManifestFileConfiguration;
+import com.intellij.packaging.ui.ArtifactEditor;
+import com.intellij.testFramework.IdeaTestCase;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author nik
@@ -66,8 +73,13 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     }.execute().getResultObject();
   }
 
-  protected class MockPackagingEditorContext implements PackagingEditorContext {
+  protected PackagingElementResolvingContext getContext() {
+    return ArtifactManager.getInstance(myProject).getResolvingContext();
+  }
+
+  protected class MockPackagingEditorContext implements ArtifactEditorContext {
     private ModifiableArtifactModel myModifiableModel;
+    private Map<CompositePackagingElement<?>, ManifestFileConfiguration> myManifestFiles = new HashMap<CompositePackagingElement<?>, ManifestFileConfiguration>();
 
     @NotNull
     public ModifiableArtifactModel getModifiableArtifactModel() {
@@ -98,6 +110,35 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     @NotNull
     public FacetsProvider getFacetsProvider() {
       return DefaultFacetsProvider.INSTANCE;
+    }
+
+    public void queueValidation() {
+    }
+
+    @NotNull
+    public ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType) {
+      ManifestFileConfiguration configuration = myManifestFiles.get(element);
+      if (configuration == null) {
+        configuration = ManifestFileUtil.createManifestFileConfiguration(element, this, PlainArtifactType.getInstance());
+        myManifestFiles.put(element, configuration);
+      }
+      return configuration;
+    }
+
+    public CompositePackagingElement<?> getRootElement(@NotNull Artifact originalArtifact) {
+      throw new UnsupportedOperationException("'getRootElement' not implemented in " + getClass().getName());
+    }
+
+    public ArtifactEditor getOrCreateEditor(Artifact artifact) {
+      throw new UnsupportedOperationException("'getOrCreateEditor' not implemented in " + getClass().getName());
+    }
+
+    public void ensureRootIsWritable(@NotNull Artifact originalArtifact) {
+    }
+
+    @NotNull
+    public ArtifactType getArtifactType() {
+      throw new UnsupportedOperationException("'getArtifactType' not implemented in " + getClass().getName());
     }
   }
 }

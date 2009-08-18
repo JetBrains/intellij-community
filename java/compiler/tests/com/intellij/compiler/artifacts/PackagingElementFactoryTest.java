@@ -56,7 +56,7 @@ public class PackagingElementFactoryTest extends PackagingElementsTestCase {
   }
 
   private PackagingElement<?> file(String outputPath, String filePath) {
-    return getFactory().createFileCopy(filePath, outputPath);
+    return getFactory().createFileCopyWithParentDirectories(filePath, outputPath);
   }
 
   private CompositePackagingElement<?> createRoot() {

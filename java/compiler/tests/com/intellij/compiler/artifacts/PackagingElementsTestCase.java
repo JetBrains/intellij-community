@@ -1,8 +1,8 @@
 package com.intellij.compiler.artifacts;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -19,7 +19,6 @@ import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.impl.elements.*;
 
-import java.util.Arrays;
 import java.io.IOException;
 
 /**
@@ -137,7 +136,7 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
     }
 
     public PackagingElementBuilder file(String path) {
-      myElement.addOrFindChild(getFactory().createFileCopy(path, "/"));
+      myElement.addOrFindChild(getFactory().createFileCopyWithParentDirectories(path, "/"));
       return this;
     }
 
@@ -156,11 +155,8 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
       return this;
     }
 
-    public PackagingElementBuilder archive(String name, final String... classpath) {
+    public PackagingElementBuilder archive(String name) {
       final CompositePackagingElement<?> archive = getFactory().createArchive(name);
-      if (classpath.length > 0) {
-        ((ArchivePackagingElement)archive).setClasspath(Arrays.asList(classpath));
-      }
       return new PackagingElementBuilder(myElement.addOrFindChild(archive), this);
     }
 
