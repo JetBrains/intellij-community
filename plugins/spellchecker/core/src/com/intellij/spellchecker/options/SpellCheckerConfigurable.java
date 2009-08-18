@@ -2,6 +2,7 @@ package com.intellij.spellchecker.options;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.Nls;
@@ -13,14 +14,14 @@ import java.util.Set;
 
 
 public final class SpellCheckerConfigurable implements Configurable {
-
-  private final SpellCheckerManager manager;
+  private SpellCheckerManager manager;
+  private final Project myProject;
   private final SpellCheckerConfiguration configuration;
 
   private SpellCheckerOptions options;
 
-  public SpellCheckerConfigurable(SpellCheckerManager manager, SpellCheckerConfiguration configuration) {
-    this.manager = manager;
+  public SpellCheckerConfigurable(Project project, SpellCheckerConfiguration configuration) {
+    myProject = project;
     this.configuration = configuration;
   }
 
@@ -41,6 +42,7 @@ public final class SpellCheckerConfigurable implements Configurable {
   }
 
   public JComponent createComponent() {
+    manager = SpellCheckerManager.getInstance(myProject);
     if (options == null) {
       options = new SpellCheckerOptions(configuration, manager);
     }
