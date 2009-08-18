@@ -448,8 +448,28 @@ public class ChooseRunConfigurationAction extends AnAction {
         }
 
         @Override
-        public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
-          new EditConfigurationsDialog(project).show();
+        public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
+          final EditConfigurationsDialog dialog = new EditConfigurationsDialog(project) {
+            @Override
+            protected void init() {
+              setOKButtonText(executor.getStartActionText());
+              setOKButtonIcon(executor.getIcon());
+
+              super.init();
+            }
+          };
+
+          dialog.show();
+          if (dialog.isOK()) {
+            SwingUtilities.invokeLater(new Runnable() {
+              public void run() {
+                final RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
+                if (configuration instanceof RunnerAndConfigurationSettingsImpl) {
+                  ExecutionUtil.executeConfiguration(project, (RunnerAndConfigurationSettingsImpl) configuration, executor, DataManager.getInstance().getDataContext());
+                }
+              }
+            });
+          }
         }
       };
 
