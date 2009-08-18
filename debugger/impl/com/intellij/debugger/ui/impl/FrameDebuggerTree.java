@@ -252,8 +252,11 @@ public class FrameDebuggerTree extends DebuggerTree {
   }
 
   private static TextRange adjustRange(final PsiElement element, final TextRange originalRange) {
+    if (element instanceof PsiCompiledElement) {
+      return originalRange;
+    }
     final Ref<TextRange> rangeRef = new Ref<TextRange>(originalRange);
-    element.accept(new JavaRecursiveElementWalkingVisitor() {
+    element.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitExpressionStatement(final PsiExpressionStatement statement) {
         final TextRange stRange = statement.getTextRange();
         if (originalRange.intersects(stRange)) {
