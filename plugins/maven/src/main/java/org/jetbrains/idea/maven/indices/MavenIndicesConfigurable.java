@@ -40,18 +40,6 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     myManager = MavenProjectIndicesManager.getInstance(myProject);
 
     configControls();
-    
-    myUpdatingIcon = new AsyncProcessIcon(IndicesBundle.message("maven.indices.updating"));
-    myUpdatingIcon.resume();
-
-    myRepaintTimer = new Timer(
-        AsyncProcessIcon.CYCLE_LENGTH / AsyncProcessIcon.COUNT,
-        new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            myTable.repaint();
-          }
-        });
-    myRepaintTimer.start();
   }
 
   private void configControls() {
@@ -142,6 +130,18 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     myTable.getColumnModel().getColumn(1).setPreferredWidth(50);
     myTable.getColumnModel().getColumn(2).setPreferredWidth(50);
     myTable.getColumnModel().getColumn(3).setPreferredWidth(20);
+
+    myUpdatingIcon = new AsyncProcessIcon(IndicesBundle.message("maven.indices.updating"));
+    myUpdatingIcon.resume();
+
+    myRepaintTimer = new Timer(
+        AsyncProcessIcon.CYCLE_LENGTH / AsyncProcessIcon.COUNT,
+        new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            myTable.repaint();
+          }
+        });
+    myRepaintTimer.start();
   }
 
   public void disposeUIResources() {
