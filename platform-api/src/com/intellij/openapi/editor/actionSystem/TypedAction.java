@@ -64,7 +64,7 @@ public class TypedAction {
         EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, str, true);
       }
       catch (ReadOnlyFragmentModificationException e) {
-        EditorActionManager.getInstance().getReadonlyFragmentModificationHandler().handle(e);
+        EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
       }
       finally {
         doc.stopGuardedBlockChecking();
@@ -109,7 +109,7 @@ public class TypedAction {
               getHandler().execute(editor, charTyped, dataContext);
             }
             catch (ReadOnlyFragmentModificationException e) {
-              EditorActionManager.getInstance().getReadonlyFragmentModificationHandler().handle(e);
+              EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
             }
             finally {
               doc.stopGuardedBlockChecking();

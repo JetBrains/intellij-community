@@ -3,8 +3,10 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.injected.editor.DocumentWindow;
 import org.jetbrains.annotations.NotNull;
 
 public class EditorActionManagerImpl extends EditorActionManager {
@@ -32,6 +34,22 @@ public class EditorActionManagerImpl extends EditorActionManager {
 
   public ReadonlyFragmentModificationHandler getReadonlyFragmentModificationHandler() {
     return myReadonlyFragmentsHandler;
+  }
+
+  @Override
+  public ReadonlyFragmentModificationHandler getReadonlyFragmentModificationHandler(@NotNull final Document document) {
+    final Document doc = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
+    final ReadonlyFragmentModificationHandler docHandler =
+      doc instanceof DocumentImpl ? ((DocumentImpl)doc).getReadonlyFragmentModificationHandler() : null;
+    return docHandler == null ? myReadonlyFragmentsHandler : docHandler;
+  }
+
+  @Override
+  public void setReadonlyFragmentModificationHandler(@NotNull final Document document, final ReadonlyFragmentModificationHandler handler) {
+    final Document doc = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
+    if (doc instanceof DocumentImpl) {
+      ((DocumentImpl)document).setReadonlyFragmentModificationHandler(handler);
+    }
   }
 
   public ReadonlyFragmentModificationHandler setReadonlyFragmentModificationHandler(@NotNull ReadonlyFragmentModificationHandler handler) {

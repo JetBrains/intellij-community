@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
@@ -36,6 +37,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private final List<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
   private final WeakHashMap<RangeMarkerEx,String> myRangeMarkers = new WeakHashMap<RangeMarkerEx, String>();
   private final List<RangeMarker> myGuardedBlocks = new ArrayList<RangeMarker>();
+  private ReadonlyFragmentModificationHandler myReadonlyFragmentModificationHandler;
 
   private final LineSet myLineSet = new LineSet();
   private final CharArray myText = new CharArray(0) {
@@ -183,6 +185,14 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       myIsReadOnly = isReadOnly;
       myPropertyChangeSupport.firePropertyChange(PROP_WRITABLE, !isReadOnly, isReadOnly);
     }
+  }
+
+  public ReadonlyFragmentModificationHandler getReadonlyFragmentModificationHandler() {
+    return myReadonlyFragmentModificationHandler;
+  }
+
+  public void setReadonlyFragmentModificationHandler(final ReadonlyFragmentModificationHandler readonlyFragmentModificationHandler) {
+    myReadonlyFragmentModificationHandler = readonlyFragmentModificationHandler;
   }
 
   public boolean isWritable() {

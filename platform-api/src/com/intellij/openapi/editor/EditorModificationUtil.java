@@ -289,7 +289,7 @@ public class EditorModificationUtil {
       if (guard != null) {
         DocumentEvent evt = new MockDocumentEvent(doc, editor.getCaretModel().getOffset());
         ReadOnlyFragmentModificationException e = new ReadOnlyFragmentModificationException(evt, guard);
-        EditorActionManager.getInstance().getReadonlyFragmentModificationHandler().handle(e);
+        EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
       }
       else {
         final LogicalPosition start = selectionModel.getBlockStart();

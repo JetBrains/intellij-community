@@ -81,7 +81,7 @@ public class TabAction extends EditorAction {
       }
     }
     catch (ReadOnlyFragmentModificationException e) {
-      EditorActionManager.getInstance().getReadonlyFragmentModificationHandler().handle(e);
+      EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
     }
     finally {
       doc.stopGuardedBlockChecking();

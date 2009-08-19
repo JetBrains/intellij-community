@@ -34,24 +34,24 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
 
     ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument(),editor.getProject()) {
       public void run() {
+        final Document doc = editor.getDocument();
         final SelectionModel selectionModel = editor.getSelectionModel();
         if (selectionModel.hasBlockSelection()) {
           RangeMarker guard = selectionModel.getBlockSelectionGuard();
           if (guard != null) {
             DocumentEvent evt = new MockDocumentEvent(editor.getDocument(), editor.getCaretModel().getOffset());
             ReadOnlyFragmentModificationException e = new ReadOnlyFragmentModificationException(evt, guard);
-            EditorActionManager.getInstance().getReadonlyFragmentModificationHandler().handle(e);
+            EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
             return;
           }
         }
 
-        Document doc = editor.getDocument();
         doc.startGuardedBlockChecking();
         try {
           executeWriteAction(editor, dataContext);
         }
         catch (ReadOnlyFragmentModificationException e) {
-          EditorActionManager.getInstance().getReadonlyFragmentModificationHandler().handle(e);
+          EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
         }
         finally {
           doc.stopGuardedBlockChecking();

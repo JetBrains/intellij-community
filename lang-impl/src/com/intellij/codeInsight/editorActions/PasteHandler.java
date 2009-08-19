@@ -93,7 +93,7 @@ public class PasteHandler extends EditorActionHandler {
       doPaste(editor, project, file, fileType, document);
     }
     catch (ReadOnlyFragmentModificationException e) {
-      EditorActionManager.getInstance().getReadonlyFragmentModificationHandler().handle(e);
+      EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(e);
     }
     finally {
       document.stopGuardedBlockChecking();

@@ -4022,7 +4022,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                   doc.deleteString(myDraggedRange.getStartOffset(), myDraggedRange.getEndOffset());
                 }
                 catch (ReadOnlyFragmentModificationException e) {
-                  EditorActionManager.getInstance().getReadonlyFragmentModificationHandler().handle(e);
+                  EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
                 }
                 finally {
                   doc.stopGuardedBlockChecking();

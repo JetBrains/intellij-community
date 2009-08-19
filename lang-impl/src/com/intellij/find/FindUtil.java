@@ -399,7 +399,7 @@ public class FindUtil {
       toPrompt = doReplace(project, editor, model, document, offset, toPrompt);
     }
     catch (ReadOnlyFragmentModificationException e) {
-      EditorActionManager.getInstance().getReadonlyFragmentModificationHandler().handle(e);
+      EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(e);
     }
     finally {
       if (!toPrompt) {
