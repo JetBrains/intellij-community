@@ -284,7 +284,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
         final CompilerConfiguration configuration = CompilerConfiguration.getInstance(myProject);
 
         if (module.getModuleType() instanceof JavaModuleType) {
-          final boolean compileGroovyFiles = facet != null && facet.getConfiguration().isCompileGroovyFiles();
+          final boolean compileGroovyFiles = facet == null || facet.getConfiguration().isCompileGroovyFiles();
           for (final VirtualFile file : moduleFiles) {
             final boolean shouldCompile = module.getModuleType() instanceof JavaModuleType &&
                                           (file.getFileType() == GroovyFileType.GROOVY_FILE_TYPE && compileGroovyFiles ||
