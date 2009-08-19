@@ -177,7 +177,7 @@ public class CompileAction extends CompileActionBase {
   }
 
   private boolean isCompilableResourceFile(final Project project, final CompilerConfiguration compilerConfiguration, final VirtualFile file) {
-    return compilerConfiguration.isResourceFile(file.getName()) &&
+    return compilerConfiguration.isResourceFile(file) &&
            (myCompilableResourceFileCondition == null || myCompilableResourceFileCondition.value(Pair.create(project, file)));
   }
 }

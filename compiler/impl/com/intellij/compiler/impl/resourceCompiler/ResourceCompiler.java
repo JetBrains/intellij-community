@@ -51,7 +51,7 @@ public class ResourceCompiler implements TranslatingCompiler {
   }
 
   public boolean isCompilableFile(VirtualFile file, CompileContext context) {
-    return !StdFileTypes.JAVA.equals(FILE_TYPE_MANAGER.getFileTypeByFile(file)) && myConfiguration.isResourceFile(file.getName());
+    return !StdFileTypes.JAVA.equals(FILE_TYPE_MANAGER.getFileTypeByFile(file)) && myConfiguration.isResourceFile(file);
   }
 
   public void compile(final CompileContext context, final VirtualFile[] files, OutputSink sink) {

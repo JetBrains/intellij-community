@@ -260,6 +260,11 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return myExcludedEntriesConfiguration.isExcluded(virtualFile);
   }
 
+  @Override
+  public boolean isResourceFile(VirtualFile virtualFile) {
+    return isResourceFile(virtualFile.getName());
+  }
+
   private void addWildcardResourcePattern(@NonNls final String wildcardPattern) throws MalformedPatternException {
     final Pattern pattern = compilePattern(convertToRegexp(wildcardPattern));
     if (pattern != null) {
