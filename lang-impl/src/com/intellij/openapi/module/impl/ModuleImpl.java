@@ -197,6 +197,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
   @NotNull
   public String getName() {
+    assert !isDisposed() : "Already Disposed!";
     final String fileName = getStateStore().getModuleFileName();
     String moduleName = myFileToModuleName.get(fileName); // TODO[wtf]: What this map is for???
     if (moduleName == null) {
