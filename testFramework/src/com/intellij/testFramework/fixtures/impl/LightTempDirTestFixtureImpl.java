@@ -21,7 +21,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     int pos = targetPath.lastIndexOf('/');
     String path = pos < 0 ? "" : targetPath.substring(0, pos);
     try {
-      VirtualFile targetDir = findOrCreateTargetDir(path);
+      VirtualFile targetDir = findOrCreateDir(path);
       return VfsUtil.copyFile(this, file, targetDir);
     }
     catch (IOException e) {
@@ -29,21 +29,31 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     }
   }
 
-  private VirtualFile findOrCreateTargetDir(String path) throws IOException {
-    VirtualFile root = LightPlatformTestCase.getSourceRoot();
-    if (path.length() == 0) return root;
-    path = StringUtil.trimStart(path, "/");
-    final String[] dirs = path.split("/");
-    for (String dirName : dirs) {
-      VirtualFile dir = root.findChild(dirName);
-      if (dir != null) {
-        root = dir;
+  @NotNull
+  public VirtualFile findOrCreateDir(final String path) {
+    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      public VirtualFile compute() {
+        VirtualFile root = LightPlatformTestCase.getSourceRoot();
+        if (path.length() == 0) return root;
+        String trimPath = StringUtil.trimStart(path, "/");
+        final String[] dirs = trimPath.split("/");
+        for (String dirName : dirs) {
+          VirtualFile dir = root.findChild(dirName);
+          if (dir != null) {
+            root = dir;
+          }
+          else {
+            try {
+              root = root.createChildDirectory(this, dirName);
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          }
+        }
+        return root;
       }
-      else {
-        root = root.createChildDirectory(this, dirName);
-      }
-    }
-    return root;
+    });
   }
 
   public VirtualFile copyAll(final String dataDir, final String targetDir) {
@@ -87,7 +97,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {
         try {
-          VirtualFile targetDir = findOrCreateTargetDir(path);
+          VirtualFile targetDir = findOrCreateDir(path);
           return targetDir.createChildData(this, name);
         }
         catch (IOException e) {

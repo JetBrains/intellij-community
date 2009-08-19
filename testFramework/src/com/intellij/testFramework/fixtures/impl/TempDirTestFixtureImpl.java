@@ -101,6 +101,11 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   }
 
   @NotNull
+  public VirtualFile findOrCreateDir(String name) throws IOException {
+    return VfsUtil.createDirectories(new File(createTempDirectory(), name).getPath());
+  }
+
+  @NotNull
   public VirtualFile createFile(final String name, final String text) throws IOException {
     final VirtualFile file = createFile(name);
     VfsUtil.saveText(file, text);

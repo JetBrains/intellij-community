@@ -39,5 +39,7 @@ public interface TempDirTestFixture extends IdeaTestFixture {
 
   @NotNull VirtualFile createFile(final String name);
 
+  @NotNull VirtualFile findOrCreateDir(final String name) throws IOException;
+
   @NotNull VirtualFile createFile(final String name, String text) throws IOException;
 }

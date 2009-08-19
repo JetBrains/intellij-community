@@ -72,7 +72,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
 
   public VirtualFile createChildFile(final Object requestor, final VirtualFile parent, final String file) throws IOException {
     final FSItem fsItem = convert(parent);
-    assert fsItem != null && fsItem.isDirectory();
+    assert fsItem != null && fsItem.isDirectory(): "cannot find parent directory " + parent.getPath();
 
     final FSDir fsDir = (FSDir)fsItem;
     fsDir.addChild(new FSFile(fsDir, file));
