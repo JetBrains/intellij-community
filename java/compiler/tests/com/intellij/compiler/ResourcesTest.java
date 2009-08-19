@@ -39,7 +39,7 @@ public class ResourcesTest extends CompilerTestCase {
     final CompilerConfiguration configuration = CompilerConfiguration.getInstance(myProject);
     copyTestProjectFiles(new VirtualFileFilter() {
       public boolean accept(VirtualFile file) {
-        return (file.isDirectory() || configuration.isResourceFile(file.getName())) && !"data.xml".equalsIgnoreCase(file.getName());
+        return (file.isDirectory() || configuration.isResourceFile(file)) && !"data.xml".equalsIgnoreCase(file.getName());
       }
     });
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
