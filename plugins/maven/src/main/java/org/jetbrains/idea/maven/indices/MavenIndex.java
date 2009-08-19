@@ -15,6 +15,7 @@ import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TopDocs;
 import org.apache.maven.artifact.manager.WagonManager;
+import org.apache.maven.wagon.events.TransferEvent;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.project.TransferListenerAdapter;
@@ -332,7 +333,19 @@ public class MavenIndex {
       request.setResourceFetcher(new MavenIndexFetcher(myRepositoryId,
                                                        getRepositoryUrl(),
                                                        embedder.<WagonManager>getComponent(WagonManager.class),
-                                                       new TransferListenerAdapter(new MavenProgressIndicator(progress))));
+                                                       new TransferListenerAdapter(new MavenProgressIndicator(progress)) {
+                                                         @Override
+                                                         protected void doUpdateProgress(long downloaded, long total) {
+                                                           super.doUpdateProgress(downloaded, total);
+                                                           myIndicator.setFraction(((double)downloaded) / total);
+                                                         }
+
+                                                         @Override
+                                                         public void transferCompleted(TransferEvent event) {
+                                                           super.transferCompleted(event);
+                                                           myIndicator.setText2(IndicesBundle.message("maven.indices.updating.processing"));
+                                                         }
+                                                       }));
       updater.fetchAndUpdateIndex(request);
     }
   }

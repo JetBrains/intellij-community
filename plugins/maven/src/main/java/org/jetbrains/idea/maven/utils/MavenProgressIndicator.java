@@ -18,6 +18,10 @@ public class MavenProgressIndicator {
   }
 
   public MavenProgressIndicator(ProgressIndicator i) {
+    myText = i.getText();
+    myText2 = i.getText2();
+    myFraction = i.getFraction();
+    myCanceled = i.isCanceled();
     addIndicator(i);
   }
 

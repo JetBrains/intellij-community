@@ -6,7 +6,7 @@ import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 public class TransferListenerAdapter implements TransferListener {
-  private final MavenProgressIndicator myIndicator;
+  protected final MavenProgressIndicator myIndicator;
 
   private String myRepository;
   private String myResource;
@@ -34,11 +34,11 @@ public class TransferListenerAdapter implements TransferListener {
   }
 
   private void updateProgress() {
-    myIndicator.setText2(ProjectBundle.message("maven.transfer.progress",
-                                               myProgress / 1024,
-                                               mySize / 1024,
-                                               myRepository,
-                                               myResource));
+    doUpdateProgress(myProgress / 1024, mySize / 1024);
+  }
+
+  protected void doUpdateProgress(long downloaded, long total) {
+    myIndicator.setText2(ProjectBundle.message("maven.transfer.progress", downloaded, total, myRepository, myResource));
   }
 
   public void transferProgress(TransferEvent event, byte[] bytes, int i) {
