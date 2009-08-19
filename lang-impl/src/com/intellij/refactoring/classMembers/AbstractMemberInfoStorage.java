@@ -12,7 +12,7 @@ public abstract class AbstractMemberInfoStorage<T extends PsiElement, C extends 
   protected final HashMap<C, LinkedHashSet<C>> myClassToSubclassesMap = new HashMap<C, LinkedHashSet<C>>();
   private final HashMap<C, Set<C>> myTargetClassToExtendingMap = new HashMap<C, Set<C>>();
   private final HashMap<C, List<M>> myClassToMemberInfoMap = new HashMap<C, List<M>>();
-  private final C myClass;
+  protected final C myClass;
   protected final MemberInfoBase.Filter<T> myFilter;
   private final HashMap<C, List<M>> myTargetClassToMemberInfosMap = new HashMap<C, List<M>>();
   private final HashMap<C, LinkedHashSet<M>> myTargetClassToMemberInfosListMap = new HashMap<C, LinkedHashSet<M>>();
