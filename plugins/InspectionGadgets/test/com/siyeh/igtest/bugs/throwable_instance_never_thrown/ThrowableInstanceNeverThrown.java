@@ -13,4 +13,8 @@ public class ThrowableInstanceNeverThrown {
     void bar() {
         new RuntimeException();
     }
+
+    void throwing() throws Throwable {
+        throw new RuntimeException("asdf").initCause(null);
+    }
 }

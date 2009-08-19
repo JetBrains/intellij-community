@@ -77,11 +77,7 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
                     "java.lang.Throwable")) {
                 return;
             }
-            PsiElement parent = expression.getParent();
-            while (parent instanceof PsiParenthesizedExpression ||
-                    parent instanceof PsiConditionalExpression) {
-                parent = parent.getParent();
-            }
+            final PsiElement parent = getParent(expression.getParent());
             if (parent instanceof PsiThrowStatement) {
                 return;
             } else if (parent instanceof PsiReturnStatement) {
@@ -136,6 +132,54 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
                 }
             }
             registerError(expression, expression);
+        }
+
+        public static PsiElement getParent(PsiElement element) {
+            PsiElement parent = element;
+            while (parent instanceof PsiParenthesizedExpression ||
+                    parent instanceof PsiConditionalExpression) {
+                parent = parent.getParent();
+            }
+            final PsiElement skipped = skipInitCause(parent);
+            if (skipped != null) {
+                return getParent(skipped);
+            }
+            return parent;
+        }
+
+        private static PsiElement skipInitCause(PsiElement parent) {
+            if (!(parent instanceof PsiReferenceExpression)) {
+                return null;
+            }
+            final PsiElement grandParent = parent.getParent();
+            if (!(grandParent instanceof PsiMethodCallExpression)) {
+                return null;
+            }
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression) grandParent;
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            if (!"initCause".equals(methodName)) {
+                return null;
+            }
+            final PsiMethod method =
+                    methodCallExpression.resolveMethod();
+            if (method == null) {
+                return null;
+            }
+            final PsiParameterList parameterList =
+                    method.getParameterList();
+            if (parameterList.getParametersCount() != 1) {
+                return null;
+            }
+            final PsiParameter[] parameters =
+                    parameterList.getParameters();
+            final PsiType type = parameters[0].getType();
+            if (!type.equalsToText("java.lang.Throwable")) {
+                return null;
+            }
+            return getParent(methodCallExpression.getParent());
         }
     }
 }
