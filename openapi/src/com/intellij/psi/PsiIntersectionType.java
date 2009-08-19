@@ -73,6 +73,7 @@ public class PsiIntersectionType extends PsiType {
     return types;
   }
 
+  @NotNull
   public PsiType[] getConjuncts() {
     return myConjuncts;
   }

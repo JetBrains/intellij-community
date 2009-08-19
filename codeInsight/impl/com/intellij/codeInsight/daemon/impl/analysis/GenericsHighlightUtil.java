@@ -499,8 +499,12 @@ public class GenericsHighlightUtil {
       PsiType rTypeArg = rSubstitutor.substituteWithBoundsPromotion(rParameter);
       if (lTypeArg == null) continue;
       if (rTypeArg == null) {
-        if (!(lTypeArg instanceof PsiWildcardType) ||
-            ((PsiWildcardType) lTypeArg).getBound() != null) return true; else continue;
+        if (lTypeArg instanceof PsiWildcardType && ((PsiWildcardType) lTypeArg).getBound() == null) {
+          continue;
+        }
+        else {
+          return true;
+        }
       }
       if (isUncheckedTypeArgumentConversion(lTypeArg, rTypeArg)) return true;
     }
@@ -584,8 +588,20 @@ public class GenericsHighlightUtil {
       return isUncheckedTypeArgumentConversion(((PsiArrayType)rTypeArg).getComponentType(), ((PsiArrayType)lTypeArg).getComponentType());
     }
     if (lTypeArg instanceof PsiArrayType || rTypeArg instanceof PsiArrayType) return false;
+    if (lTypeArg instanceof PsiIntersectionType) {
+      for (PsiType type : ((PsiIntersectionType)lTypeArg).getConjuncts()) {
+        if (!isUncheckedTypeArgumentConversion(type, rTypeArg)) return false;
+      }
+      return true;
+    }
     if (!(lTypeArg instanceof PsiClassType)) {
-      LOG.error(lTypeArg + "; "+lTypeArg.getClass());
+      LOG.error("left: "+lTypeArg + "; "+lTypeArg.getClass());
+    }
+    if (rTypeArg instanceof PsiIntersectionType) {
+      for (PsiType type : ((PsiIntersectionType)rTypeArg).getConjuncts()) {
+        if (!isUncheckedTypeArgumentConversion(lTypeArg, type)) return false;
+      }
+      return true;
     }
     if (!(rTypeArg instanceof PsiClassType)) {
       LOG.error("right :"+rTypeArg + "; "+rTypeArg.getClass());
