@@ -24,7 +24,6 @@ import java.util.Date;
 import java.util.List;
 
 public class MavenIndicesConfigurable extends BaseConfigurable {
-  private final Project myProject;
   private final MavenProjectIndicesManager myManager;
 
   private JPanel myMainPanel;
@@ -36,8 +35,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
   private Timer myRepaintTimer;
 
   public MavenIndicesConfigurable(Project project) {
-    myProject = project;
-    myManager = MavenProjectIndicesManager.getInstance(myProject);
+    myManager = MavenProjectIndicesManager.getInstance(project);
 
     configControls();
   }
@@ -134,13 +132,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     myUpdatingIcon = new AsyncProcessIcon(IndicesBundle.message("maven.indices.updating"));
     myUpdatingIcon.resume();
 
-    myRepaintTimer = new Timer(
-        AsyncProcessIcon.CYCLE_LENGTH / AsyncProcessIcon.COUNT,
-        new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            myTable.repaint();
-          }
-        });
+    myRepaintTimer = new MyTimer(myTable);
     myRepaintTimer.start();
   }
 
@@ -255,6 +247,28 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
           myWaitingIcon.paintIcon(this, g, x, y);
           break;
       }
+    }
+  }
+
+  private static class MyTimer extends Timer {
+    private volatile JTable myTable;
+
+    public MyTimer(final JTable table) {
+      super(AsyncProcessIcon.CYCLE_LENGTH / AsyncProcessIcon.COUNT, null);
+      myTable = table;
+      addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          if (myTable != null) {
+            myTable.repaint();
+          }
+        }
+      });
+    }
+
+    @Override
+    public void stop() {
+      myTable = null;
+      super.stop();
     }
   }
 }
