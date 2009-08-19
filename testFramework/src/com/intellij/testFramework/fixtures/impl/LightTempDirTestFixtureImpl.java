@@ -17,16 +17,20 @@ import java.io.IOException;
  * @author yole
  */
 public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirTestFixture {
-  public VirtualFile copyFile(VirtualFile file, String targetPath) {
+  public VirtualFile copyFile(final VirtualFile file, String targetPath) {
     int pos = targetPath.lastIndexOf('/');
-    String path = pos < 0 ? "" : targetPath.substring(0, pos);
-    try {
-      VirtualFile targetDir = findOrCreateDir(path);
-      return VfsUtil.copyFile(this, file, targetDir);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    final String path = pos < 0 ? "" : targetPath.substring(0, pos);
+    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      public VirtualFile compute() {
+        try {
+          VirtualFile targetDir = findOrCreateDir(path);
+          return VfsUtil.copyFile(this, file, targetDir);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   @NotNull
