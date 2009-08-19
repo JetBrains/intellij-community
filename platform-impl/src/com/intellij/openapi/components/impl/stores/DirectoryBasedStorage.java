@@ -373,6 +373,8 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     }
 
     public void put(final String componentName, final IFile file, final Element element) {
+      LOG.assertTrue(componentName != null, String.format("Component name should not be null for file: %s", file == null ? "NULL!" : file.getPath()));
+      
       Map<IFile, Element> stateMap = myStates.get(componentName);
       if (stateMap == null) {
         stateMap = new HashMap<IFile, Element>();
