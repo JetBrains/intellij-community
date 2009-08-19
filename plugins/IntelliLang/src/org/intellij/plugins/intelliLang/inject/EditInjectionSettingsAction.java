@@ -39,7 +39,7 @@ import java.util.List;
  * @author Gregory.Shrago
  */
 public class EditInjectionSettingsAction implements IntentionAction {
-  public static final String EDIT_INJECTION_TITLE = "Edit Language Injection Settings";
+  public static final String EDIT_INJECTION_TITLE = "Language Injection Settings";
 
   @NotNull
   public String getText() {

@@ -17,10 +17,9 @@ package org.intellij.plugins.intelliLang.inject.quickedit;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
@@ -30,6 +29,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
@@ -61,9 +61,11 @@ import java.util.Set;
  */
 public class QuickEditAction implements IntentionAction {
 
+  private String myLastLanguageName;
+
   @NotNull
   public String getText() {
-    return "Edit Injected Fragment";
+    return "Edit "+ StringUtil.notNullize(myLastLanguageName, "Injected")+" Fragment";
   }
 
   @NotNull
@@ -76,18 +78,22 @@ public class QuickEditAction implements IntentionAction {
   }
 
   @Nullable
-  private static Pair<PsiElement, TextRange> getRangePair(final PsiFile file, final int offset) {
+  private Pair<PsiElement, TextRange> getRangePair(final PsiFile file, final int offset) {
     final PsiLanguageInjectionHost host =
       PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiLanguageInjectionHost.class, false);
     if (host == null) return null;
     final List<Pair<PsiElement, TextRange>> injections = InjectedLanguageUtil.getInjectedPsiFiles(host);
     if (injections == null || injections.isEmpty()) return null;
     final int offsetInElement = offset - host.getTextRange().getStartOffset();
-    return ContainerUtil.find(injections, new Condition<Pair<PsiElement, TextRange>>() {
+    final Pair<PsiElement, TextRange> rangePair = ContainerUtil.find(injections, new Condition<Pair<PsiElement, TextRange>>() {
       public boolean value(final Pair<PsiElement, TextRange> pair) {
         return pair.second.containsRange(offsetInElement, offsetInElement);
       }
     });
+    if (rangePair != null) {
+      myLastLanguageName = rangePair.first.getContainingFile().getLanguage().getDisplayName();
+    }
+    return rangePair;
   }
 
   public void invoke(@NotNull Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
@@ -105,6 +111,11 @@ public class QuickEditAction implements IntentionAction {
         factory.createFileFromText("dummy." + fileType.getDefaultExtension(), fileType, text, LocalTimeCounter.currentTime(), true);
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file2);
     assert document != null;
+    EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(document, new ReadonlyFragmentModificationHandler() {
+      public void handle(final ReadOnlyFragmentModificationException e) {
+        //nothing
+      }
+    });
 
     final Map<PsiLanguageInjectionHost.Shred, RangeMarker> markers = ContainerUtil.assignValues(shreds.iterator(), new Convertor<PsiLanguageInjectionHost.Shred, RangeMarker>() {
       public RangeMarker convert(final PsiLanguageInjectionHost.Shred shred) {
@@ -186,7 +197,6 @@ public class QuickEditAction implements IntentionAction {
       }
     });
     builder.setDimensionServiceKey(project, getClass().getSimpleName()+"DimensionKey", false);
-    builder.setModalContext(true);
 
     final JBPopup popup = builder.createPopup();
     e.install(popup);
