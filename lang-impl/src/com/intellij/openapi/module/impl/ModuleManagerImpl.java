@@ -772,7 +772,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
     public Module findModuleByName(@NotNull String name) {
       for (Module module : myPathToModule.values()) {
-        if (module.getName().equals(name)) {
+        if (!module.isDisposed() && module.getName().equals(name)) {
           return module;
         }
       }
