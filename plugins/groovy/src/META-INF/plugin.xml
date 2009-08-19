@@ -43,6 +43,7 @@
     <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.dsl.DslMembersProcessor"/>
     <libraryManager implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryManager"/>
     <libraryManager implementation="org.jetbrains.plugins.gant.config.GantLibraryManager" order="last"/>
+    <libraryManager implementation="org.jetbrains.plugins.groovy.gradle.GradleLibraryManager" order="last"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.gant.debugger.GantPositionManagerHelper"/>
 
     <configuration implementation="org.jetbrains.plugins.gant.runner.GantScriptRunConfiguration"/>

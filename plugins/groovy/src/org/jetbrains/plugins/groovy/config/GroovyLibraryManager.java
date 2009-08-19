@@ -18,14 +18,15 @@ package org.jetbrains.plugins.groovy.config;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import javax.swing.*;
+import java.io.File;
 
 /**
  * @author peter
@@ -52,13 +53,31 @@ public class GroovyLibraryManager extends AbstractGroovyLibraryManager {
   }
 
   @Override
-  public Library createSDKLibrary(String path, String name, Project project, boolean inModuleSettings, boolean inProject) {
-    return GroovyConfigUtils.getInstance().createSDKLibImmediately(path, name, project, inModuleSettings, inProject);
+  public boolean isSDKHome(@NotNull VirtualFile file) {
+    return GroovyConfigUtils.getInstance().isSDKHome(file);
   }
 
   @Override
-  public boolean isSDKHome(@NotNull VirtualFile file) {
-    return GroovyConfigUtils.getInstance().isSDKHome(file);
+  protected void fillLibrary(String path, Library.ModifiableModel model) {
+    File srcRoot = new File(path + "/src/main");
+      if (srcRoot.exists()) {
+        model.addRoot(VfsUtil.getUrlForLibraryRoot(srcRoot), OrderRootType.SOURCES);
+      }
+
+      File[] jars;
+      File libDir = new File(path + "/lib");
+      if (libDir.exists()) {
+        jars = libDir.listFiles();
+      } else {
+        jars = new File(path + "/embeddable").listFiles();
+      }
+      if (jars != null) {
+        for (File file : jars) {
+          if (file.getName().endsWith(".jar")) {
+            model.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
+          }
+        }
+      }
   }
 
   @NotNull

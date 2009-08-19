@@ -1,14 +1,12 @@
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.facet.ui.ValidationResult;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -154,28 +152,6 @@ public abstract class AbstractConfigUtils {
     }
     return new ValidationResult(ERR_MESSAGE);
   }
-
-  @Nullable
-  public Library createSDKLibrary(final String path,
-                                  final String name,
-                                  final Project project,
-                                  final boolean inModuleSettings,
-                                  final boolean inProject) {
-    final Ref<Library> libRef = new Ref<Library>();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        Library library = createSDKLibImmediately(path, name, project, inModuleSettings, inProject);
-        libRef.set(library);
-      }
-    });
-    return libRef.get();
-  }
-
-  protected abstract Library createSDKLibImmediately(String path,
-                                                     String name,
-                                                     Project project,
-                                                     boolean inModuleSettings,
-                                                     final boolean inProject);
 
   public String generateNewSDKLibName(String version, final Project project) {
     String prefix = SDK_LIB_PREFIX;

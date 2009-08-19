@@ -230,6 +230,12 @@ public class GroovyFacetEditor {
         super.setEnabled(!myNewSdk.isSelected() && enabled);
       }
     };
+    mySdkPath = new TextFieldWithBrowseButton() {
+      @Override
+      public void setEnabled(boolean enabled) {
+        super.setEnabled(addNewSdk() && enabled);
+      }
+    };
   }
 
 }

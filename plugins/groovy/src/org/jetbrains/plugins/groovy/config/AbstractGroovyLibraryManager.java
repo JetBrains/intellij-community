@@ -22,7 +22,14 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
@@ -65,12 +72,46 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
     return getIcon();
   }
 
+  protected abstract void fillLibrary(final String path, final Library.ModifiableModel model);
+
   @Nullable
-  public abstract Library createSDKLibrary(final String path,
+  public final Library createSDKLibrary(final String path,
                                   final String name,
                                   final Project project,
                                   final boolean inModuleSettings,
-                                  final boolean inProject);
+                                  final boolean inProject) {
+    Library library;
+    final Library.ModifiableModel model;
+    LibraryTable.ModifiableModel globalModel = null;
+    if (inModuleSettings) {
+      globalModel = project != null && inProject ?
+                    ProjectLibrariesConfigurable.getInstance(project).getModelProvider(true).getModifiableModel() :
+                    GlobalLibrariesConfigurable.getInstance(project).getModelProvider(true).getModifiableModel();
+      assert globalModel != null;
+      library = globalModel.createLibrary(name);
+      model = ((LibrariesModifiableModel)globalModel).getLibraryEditor(library).getModel();
+    } else {
+      LibraryTable table =
+        project != null && inProject ? ProjectLibraryTable.getInstance(project) : LibraryTablesRegistrar.getInstance().getLibraryTable();
+      library = LibraryUtil.createLibrary(table, name);
+      model = library.getModifiableModel();
+    }
+
+    assert library != null;
+
+
+    fillLibrary(path, model);
+
+
+    if (!inModuleSettings) {
+      model.commit();
+    }
+    else {
+      globalModel.commit();
+    }
+
+    return library;
+  }
 
   @Override
   public Library createLibrary(@NotNull FacetEditorContext context) {

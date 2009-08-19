@@ -16,10 +16,10 @@
 
 package org.jetbrains.plugins.gant.config;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +27,7 @@ import org.jetbrains.plugins.gant.GantIcons;
 import org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager;
 
 import javax.swing.*;
+import java.io.File;
 
 /**
  * @author peter
@@ -70,7 +71,21 @@ public class GantLibraryManager extends AbstractGroovyLibraryManager {
   }
 
   @Override
-  public Library createSDKLibrary(String path, String name, Project project, boolean inModuleSettings, boolean inProject) {
-    return GantConfigUtils.getInstance().createSDKLibImmediately(path, name, project, inModuleSettings, inProject);
+  protected void fillLibrary(String path, Library.ModifiableModel model) {
+    File srcRoot = new File(path + "/src/main");
+    if (srcRoot.exists()) {
+      model.addRoot(VfsUtil.getUrlForLibraryRoot(srcRoot), OrderRootType.SOURCES);
+    }
+
+    // Add Gant jars
+    File lib = new File(path + "/lib");
+    File[] jars = lib.exists() ? lib.listFiles() : new File[0];
+    if (jars != null) {
+      for (File file : jars) {
+        if (file.getName().endsWith(".jar")) {
+          model.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
+        }
+      }
+    }
   }
 }

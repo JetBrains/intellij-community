@@ -24,18 +24,9 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.libraries.LibraryUtil;
-import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +34,6 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
-
-import java.io.File;
 
 /**
  * @author ilyas
@@ -109,70 +98,6 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
 
   public static boolean isGroovyAllJar(@NonNls final String name) {
     return name.matches(GROOVY_ALL_JAR_PATTERN) || name.matches(GROOVY_JAR_PATTERN);
-  }
-
-  protected Library createSDKLibImmediately(String path, String name, Project project, boolean inModuleSettings, final boolean inProject) {
-    String version = getSDKVersion(path);
-    String libName = name != null ? name : generateNewSDKLibName(version, project);
-    if (path.length() > 0) {
-      // create library
-      LibraryTable.ModifiableModel modifiableModel = null;
-      Library library;
-
-      if (inModuleSettings) {
-        StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
-        LibraryTableModifiableModelProvider provider = context
-          .createModifiableModelProvider(inProject ? LibraryTablesRegistrar.PROJECT_LEVEL : LibraryTablesRegistrar.APPLICATION_LEVEL, true);
-        modifiableModel = provider.getModifiableModel();
-        library = modifiableModel.createLibrary(libName);
-      } else {
-        LibraryTable libTable =
-          inProject ? ProjectLibraryTable.getInstance(project) : LibraryTablesRegistrar.getInstance().getLibraryTable();
-        library = libTable.getLibraryByName(libName);
-        if (library == null) {
-          library = LibraryUtil.createLibrary(libTable, libName);
-        }
-      }
-
-      // fill library
-      final Library.ModifiableModel model;
-      if (inModuleSettings) {
-        model = ((LibrariesModifiableModel)modifiableModel).getLibraryEditor(library).getModel();
-      } else {
-        model = library.getModifiableModel();
-      }
-      File srcRoot = new File(path + "/src/main");
-      if (srcRoot.exists()) {
-        model.addRoot(VfsUtil.getUrlForLibraryRoot(srcRoot), OrderRootType.SOURCES);
-      }
-
-      File[] jars;
-      File libDir = new File(path + "/lib");
-      if (libDir.exists()) {
-        jars = libDir.listFiles();
-      } else {
-        jars = new File(path + "/embeddable").listFiles();
-      }
-      if (jars != null) {
-        for (File file : jars) {
-          if (file.getName().endsWith(".jar")) {
-            model.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
-          }
-        }
-      }
-      if (!inModuleSettings) {
-        model.commit();
-      }
-      if (modifiableModel != null) {
-        modifiableModel.commit();
-      }
-      return library;
-    }
-    return null;
-  }
-
-  public static boolean isSDKConfigured(Module module) {
-    return module != null && GroovyFacet.getInstance(module) != null;
   }
 
   @NotNull
