@@ -244,7 +244,17 @@ public class MavenEmbedderFactory {
   }
 
   private static void validate(Configuration configuration) {
-    ConfigurationValidationResult result = MavenEmbedder.validateConfiguration(configuration);
+    ConfigurationValidationResult result = null;
+    try {
+      result = MavenEmbedder.validateConfiguration(configuration);
+    }
+    catch (Exception e) {
+      MavenLog.LOG.warn(e);
+
+      configuration.setGlobalSettingsFile(null);
+      configuration.setUserSettingsFile(null);
+      return;
+    }
 
     if (!result.isValid()) {
       if (result.getGlobalSettingsException() != null) {
