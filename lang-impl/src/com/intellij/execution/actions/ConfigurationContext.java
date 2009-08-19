@@ -82,16 +82,19 @@ public class ConfigurationContext {
 
   @Nullable
   public RunnerAndConfigurationSettingsImpl findExisting() {
+    if (myLocation == null) {
+      return null;
+    }
+
     final List<ConfigurationType> types = new ArrayList<ConfigurationType>();
     if (myRuntimeConfiguration != null) {
       types.add(myRuntimeConfiguration.getType());
-    } else {
-      if (myLocation != null) {
-        final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferedProducers(myLocation, this);
-        if (producers == null) return null;
-        for (RuntimeConfigurationProducer producer : producers) {
-          types.add(producer.createProducer(myLocation, this).getConfigurationType());
-        }
+    }
+    else {
+      final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferedProducers(myLocation, this);
+      if (producers == null) return null;
+      for (RuntimeConfigurationProducer producer : producers) {
+        types.add(producer.createProducer(myLocation, this).getConfigurationType());
       }
     }
     for (ConfigurationType type : types) {
