@@ -6,12 +6,11 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -23,8 +22,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.components.impl.stores.IProjectStore;
-import com.intellij.openapi.components.StorageScheme;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -102,78 +99,6 @@ public class ProjectUtil {
     return null;
   }
 
-  public static void saveInNewFormat(@NotNull final String path, final Runnable postRunnable) throws Exception {
-
-    final File iprFile = new File(path);
-
-    File ideaDir = new File(iprFile.getParentFile(), DIRECTORY_BASED_PROJECT_DIR);
-    File iwsFile = new File(iprFile.getParentFile(), getProjectName(iprFile) + WorkspaceFileType.DOT_DEFAULT_EXTENSION);
-
-    ideaDir.mkdirs();
-
-    File convertXml = new File(ideaDir, "convert.xml");
-    FileUtil.copy(iprFile, convertXml);
-    if (iwsFile.isFile()) {
-      FileUtil.copy(iwsFile, new File(ideaDir, "workspace.xml"));
-    }
-
-    LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-    final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByPath(path);
-
-    localFileSystem.refreshAndFindFileByIoFile(ideaDir);
-
-    if (virtualFile == null) return;
-
-    if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-      final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-
-      System.setProperty("convert.project.mode", "on");
-
-      try {
-        final Exception[] ex = new Exception[1];
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
-          public void run() {
-            try {
-              final Project project = projectManager.loadProject(iprFile.getParentFile().getPath()) ;
-
-              ExtensionPoint[] points = Extensions.getRootArea().getExtensionPoints();
-              for (ExtensionPoint point : points) {
-                point.getExtensions();
-              }
-
-              ApplicationManager.getApplication().invokeLater(new Runnable(){
-                public void run() {
-                  project.save();
-                  projectManager.closeProject(project);
-
-                  if (postRunnable != null) postRunnable.run();
-                }
-              });
-
-            }
-            catch (Exception e1) {
-              ex[0] = e1;
-            }
-
-          }
-        }, "Converting Project", false, null);
-
-        if (ex[0] != null) throw ex[0];
-      }
-      finally {
-        System.setProperty("convert.project.mode", "off");
-
-        FileUtil.delete(convertXml);
-
-      }
-
-    }
-  }
-
-  private static String getProjectName(final File iprFile) {
-    return FileUtil.getNameWithoutExtension(iprFile.getName());
-  }
-
   @Nullable
   public static ProjectOpenProcessor getImportProvider(VirtualFile file) {
     for (ProjectOpenProcessor provider : Extensions.getExtensions(ProjectOpenProcessor.EXTENSION_POINT_NAME)) {
@@ -248,7 +173,7 @@ public class ProjectUtil {
     String existing = FileUtil.toSystemIndependentName(projectStore.getProjectFilePath());
 
     final VirtualFile existingBaseDir = projectStore.getProjectBaseDir();
-    assert existingBaseDir != null;
+    if (existingBaseDir == null) return false; // could be null if not yet initialized
 
     final File openFile = new File(toOpen);
     if (openFile.isDirectory()) {
@@ -265,13 +190,9 @@ public class ProjectUtil {
 
   private static void focusProjectWindow(Project p) {
     JFrame f = WindowManager.getInstance().getFrame(p);
+    f.toFront();
     f.requestFocus();
   }
-
-  public static String getInitialModuleRootPath(String projectFilePath) {
-    return new File(projectFilePath).getParentFile().getAbsolutePath();
-  }
-
 
   public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {
     return isProjectOrWorkspaceFile(file, file.getFileType());
