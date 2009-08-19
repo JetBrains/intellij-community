@@ -77,6 +77,15 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
             } else {
                 iteratedValueText = name;
             }
+        } else if (iteratedValue instanceof PsiTypeCastExpression) {
+            PsiTypeCastExpression castExpression =
+                    (PsiTypeCastExpression) iteratedValue;
+            final PsiExpression operand = castExpression.getOperand();
+            if (operand == null) {
+                iteratedValueText = "";
+            } else {
+                iteratedValueText = operand.getText();
+            }
         } else {
             iteratedValueText = iteratedValue.getText();
         }
@@ -102,7 +111,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
             declaration.append(' ');
             declaration.append(variableName);
             declaration.append('=');
-            declaration.append(iteratedValue.getText());
+            declaration.append(iteratedValueText);
             declaration.append(';');
             final PsiElementFactory elementFactory =
                     JavaPsiFacade.getElementFactory(project);
@@ -118,7 +127,13 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
 
         newStatement.append(lengthText);
         newStatement.append(" = ");
-        newStatement.append(iteratedValueText);
+        if (iteratedValue instanceof PsiTypeCastExpression) {
+            newStatement.append('(');
+            newStatement.append(iteratedValue.getText());
+            newStatement.append(')');
+        } else {
+            newStatement.append(iteratedValueText);
+        }
         if (isArray) {
             newStatement.append(".length;");
         } else {
@@ -138,7 +153,13 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         newStatement.append(' ');
         newStatement.append(iterationParameter.getName());
         newStatement.append(" = ");
-        newStatement.append(iteratedValueText);
+        if (iteratedValue instanceof PsiTypeCastExpression) {
+            newStatement.append('(');
+            newStatement.append(iteratedValue.getText());
+            newStatement.append(')');
+        } else {
+            newStatement.append(iteratedValueText);
+        }
         if (isArray) {
             newStatement.append('[');
             newStatement.append(indexText);
