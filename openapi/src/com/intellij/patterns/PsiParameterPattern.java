@@ -15,9 +15,9 @@
  */
 package com.intellij.patterns;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,8 +33,9 @@ public class PsiParameterPattern extends PsiModifierListOwnerPattern<PsiParamete
   public PsiParameterPattern ofMethod(final int index, final ElementPattern pattern) {
     return with(new PatternCondition<PsiParameter>("ofMethod") {
       public boolean accepts(@NotNull final PsiParameter t, final ProcessingContext context) {
-        final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(t, PsiMethod.class);
-        if (psiMethod == null) return false;
+        PsiElement scope = t.getDeclarationScope();
+        if (!(scope instanceof PsiMethod)) return false;
+        PsiMethod psiMethod = (PsiMethod)scope;
         final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
         if (index < 0 || index >= parameters.length || !t.equals(parameters[index])) return false;
         return pattern.getCondition().accepts(psiMethod, context);
