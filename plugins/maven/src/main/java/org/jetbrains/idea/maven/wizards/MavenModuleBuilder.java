@@ -3,6 +3,8 @@ package org.jetbrains.idea.maven.wizards;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModuleType;
@@ -11,6 +13,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -34,6 +37,7 @@ import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -184,6 +188,31 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
         LocalFileSystem.getInstance().refreshWithoutFileWatcher(true);
       }
     });
+  }
+
+  @Override
+  public String getPresentableName() {
+    return MavenModuleType.MAVEN_MODULE;
+  }
+
+  @Override
+  public String getBuilderId() {
+    return MavenModuleType.MAVEN_MODULE_ID;
+  }
+
+  @Override
+  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
+    return new ModuleWizardStep[]{new MavenModuleWizardStep(wizardContext.getProject(), this)};
+  }
+
+  @Override
+  public Icon getBigIcon() {
+    return MavenModuleType.BIG_ICON;
+  }
+
+  @Override
+  public String getDescription() {
+    return MavenModuleType.DESCRIPTION;
   }
 
   public ModuleType getModuleType() {

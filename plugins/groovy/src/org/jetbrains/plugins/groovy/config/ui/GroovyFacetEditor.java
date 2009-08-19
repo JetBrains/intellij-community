@@ -24,9 +24,11 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager;
 import org.jetbrains.plugins.groovy.config.LibraryManager;
@@ -37,6 +39,8 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
@@ -58,13 +62,46 @@ public class GroovyFacetEditor {
   private TextFieldWithBrowseButton mySdkPath;
   private JPanel myPanel;
   private JComboBox myComboBox;
-  private JCheckBox myAddNewSdkCb;
+  private JRadioButton myExistingSdk;
+  private JRadioButton myNewSdk;
   private AbstractGroovyLibraryManager myChosenManager;
+  private final Class<? extends LibraryManager> myAcceptableManager;
 
   public GroovyFacetEditor(@Nullable Project project) {
+    this(project, LibraryManager.class, GROOVY_HOME);
+  }
+
+  public GroovyFacetEditor(@Nullable Project project, @NotNull Class<? extends LibraryManager> acceptableManager, final String envHome) {
+    myAcceptableManager = acceptableManager;
     Set<Pair<Library, LibraryManager>> libs = configureComboBox(project);
     configureSdkPathField(project);
-    configureNewSdkCheckBox(!libs.isEmpty());
+    boolean hasVersions = !libs.isEmpty();
+    myNewSdk.addItemListener(new ItemListener() {
+      public void itemStateChanged(ItemEvent e) {
+        boolean status = myNewSdk.isSelected();
+        mySdkPath.setEnabled(status);
+        myComboBox.setEnabled(!status);
+      }
+    });
+
+    if (hasVersions) {
+      myExistingSdk.setSelected(true);
+      mySdkPath.setEnabled(false);
+    } else {
+      myExistingSdk.setVisible(false);
+      myNewSdk.setVisible(false);
+      myNewSdk.setSelected(true);
+
+      mySdkPath.setEnabled(true);
+
+      myComboBox.setEnabled(false);
+      myComboBox.setVisible(false);
+    }
+
+    final String s = System.getenv(envHome);
+    if (s != null && s.length() > 0) {
+      mySdkPath.setText(s);
+    }
   }
 
   private Set<Pair<Library, LibraryManager>> configureComboBox(Project project) {
@@ -73,7 +110,7 @@ public class GroovyFacetEditor {
     Set<Pair<Library, LibraryManager>> libs = new TreeSet<Pair<Library, LibraryManager>>(LIBRARY_COMPARATOR);
     for (Library library : container.getAllLibraries()) {
       final LibraryManager manager = ManagedLibrariesEditor.findManagerFor(library, managers, container);
-      if (manager != null) {
+      if (myAcceptableManager.isInstance(manager)) {
         libs.add(Pair.create(library, manager));
       }
     }
@@ -136,40 +173,7 @@ public class GroovyFacetEditor {
   }
 
   public boolean addNewSdk() {
-    return myAddNewSdkCb.isSelected() && mySdkPath.isVisible();
-  }
-
-  private void configureNewSdkCheckBox(boolean hasVersions) {
-    myAddNewSdkCb.setEnabled(true);
-    if (hasVersions) {
-      myAddNewSdkCb.setSelected(false);
-      myAddNewSdkCb.setVisible(true);
-      mySdkPath.setEnabled(false);
-      mySdkPath.setVisible(false);
-    }
-    else {
-      myAddNewSdkCb.setSelected(true);
-      myAddNewSdkCb.setEnabled(true);
-      myAddNewSdkCb.setVisible(false);
-      myComboBox.setVisible(false);
-      mySdkPath.setEnabled(true);
-      mySdkPath.setVisible(true);
-    }
-
-    final String s = System.getenv(GROOVY_HOME);
-    if (s != null && s.length() > 0) {
-      mySdkPath.setText(s);
-    }
-
-    myAddNewSdkCb.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent event) {
-        boolean status = myAddNewSdkCb.isSelected();
-        mySdkPath.setEnabled(status);
-        mySdkPath.setVisible(status);
-        mySdkPath.setVisible(status);
-        myComboBox.setEnabled(!status);
-      }
-    });
+    return !myNewSdk.isVisible() || myNewSdk.isSelected();
   }
 
   private void configureSdkPathField(@Nullable final Project project) {
@@ -196,7 +200,7 @@ public class GroovyFacetEditor {
         final VirtualFile[] files = dialog.choose(null, project);
         if (files.length > 0) {
           final VirtualFile dir = files[0];
-          mySdkPath.setText(dir.getPath());
+          mySdkPath.setText(FileUtil.toSystemDependentName(dir.getPath()));
           myChosenManager = findManager(dir);
         }
       }
@@ -223,7 +227,7 @@ public class GroovyFacetEditor {
   private void createUIComponents() {
     myComboBox = new JComboBox() {
       public void setEnabled(boolean enabled) {
-        super.setEnabled(!myAddNewSdkCb.isSelected() && enabled);
+        super.setEnabled(!myNewSdk.isSelected() && enabled);
       }
     };
   }

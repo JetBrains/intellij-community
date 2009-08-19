@@ -14,25 +14,12 @@
  */
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetManager;
-import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportConfigurable;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportModel;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportProvider;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.ui.GroovyFacetEditor;
-import org.jetbrains.plugins.groovy.util.LibrariesUtil;
-
-import javax.swing.*;
 
 /**
  * @author peter
@@ -42,57 +29,14 @@ public class GroovyFacetSupportProvider extends FrameworkSupportProvider {
     super("Groovy", "Groovy et al");
   }
 
+  @Override
+  public boolean isEnabledForModuleBuilder(@NotNull ModuleBuilder builder) {
+    return super.isEnabledForModuleBuilder(builder) && !(builder instanceof GroovyAwareModuleBuilder);
+  }
+
   @NotNull
   public FrameworkSupportConfigurable createConfigurable(final @NotNull FrameworkSupportModel model) {
-    final Project project = model.getProject();
-    final GroovyFacetEditor facetEditor = new GroovyFacetEditor(project);
-    return new FrameworkSupportConfigurable() {
-
-      public JComponent getComponent() {
-        return facetEditor.getComponent();
-      }
-
-      public void addSupport(final Module module, final ModifiableRootModel rootModel, @Nullable Library library) {
-        FacetManager facetManager = FacetManager.getInstance(module);
-        ModifiableFacetModel model = facetManager.createModifiableModel();
-        Facet underlyingFacet = null;
-        final GroovyFacetType facetType = GroovyFacetType.getInstance();
-        GroovyFacet facet = facetManager.createFacet(facetType, facetType.getDefaultFacetName(), underlyingFacet);
-        model.addFacet(facet);
-        model.commit();
-
-        if (!facetEditor.addNewSdk()) {
-          final Library selectedLibrary = facetEditor.getSelectedLibrary();
-          if (selectedLibrary != null) {
-            LibrariesUtil.placeEntryToCorrectPlace(rootModel, rootModel.addLibraryEntry(selectedLibrary));
-          }
-          return;
-        }
-
-        final String path = facetEditor.getNewSdkPath();
-        final AbstractGroovyLibraryManager libraryManager = facetEditor.getChosenManager();
-        if (path != null && libraryManager != null) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              if (module.isDisposed()) {
-                return;
-              }
-
-              final Library lib = libraryManager.createLibrary(path, LibrariesContainerFactory.createContainer(module), false);
-              if (lib != null) {
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                  public void run() {
-                    ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-                    LibrariesUtil.placeEntryToCorrectPlace(rootModel, rootModel.addLibraryEntry(lib));
-                    rootModel.commit();
-                  }
-                });
-              }
-            }
-          });
-        }
-      }
-    };
+    return new GroovySupportConfigurable(new GroovyFacetEditor(model.getProject()));
   }
 
 }
