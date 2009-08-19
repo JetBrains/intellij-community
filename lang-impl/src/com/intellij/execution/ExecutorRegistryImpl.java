@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author spleaner
@@ -28,6 +30,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
   private List<Executor> myExecutors = new ArrayList<Executor>();
   private ActionManager myActionManager;
   private final Map<String, Executor> myId2Executor = new HashMap<String, Executor>();
+  private final Set<String> myContextActionIdSet = new HashSet<String>();
   private final Map<String, AnAction> myId2Action = new HashMap<String, AnAction>();
   private final Map<String, AnAction> myContextActionId2Action = new HashMap<String, AnAction>();
 
@@ -40,8 +43,13 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       LOG.error("Executor with id: \"" + executor.getId() + "\" was already registered!");
     }
 
+    if (myContextActionIdSet.contains(executor.getContextActionId())) {
+      LOG.error("Executor with context action id: \"" + executor.getContextActionId() + "\" was already registered!");
+    }
+
     myExecutors.add(executor);
     myId2Executor.put(executor.getId(), executor);
+    myContextActionIdSet.add(executor.getContextActionId());
 
     registerAction(executor.getId(), new ExecutorAction(executor), RUNNERS_GROUP, myId2Action);
     registerAction(executor.getContextActionId(), new RunContextAction(executor), RUN_CONTEXT_GROUP, myContextActionId2Action);
@@ -62,6 +70,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
   synchronized void deinitExecutor(@NotNull final Executor executor) {
     myExecutors.remove(executor);
     myId2Executor.remove(executor.getId());
+    myContextActionIdSet.remove(executor.getContextActionId());
 
     unregisterAction(executor.getId(), RUNNERS_GROUP, myId2Action);
     unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP, myContextActionId2Action);
