@@ -33,10 +33,10 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
   private AnimatedIcon myUpdatingIcon;
   private final Icon myWaitingIcon = IconLoader.getIcon("/process/step_passive.png");
   private Timer myRepaintTimer;
+  private ActionListener myTimerListener;
 
   public MavenIndicesConfigurable(Project project) {
     myManager = MavenProjectIndicesManager.getInstance(project);
-
     configControls();
   }
 
@@ -81,7 +81,8 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     String message = index.getFailureMessage();
     if (message == null) {
       myTable.setToolTipText(null);
-    } else {
+    }
+    else {
       myTable.setToolTipText(message);
     }
   }
@@ -132,22 +133,28 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     myUpdatingIcon = new AsyncProcessIcon(IndicesBundle.message("maven.indices.updating"));
     myUpdatingIcon.resume();
 
-    myRepaintTimer = new MyTimer(myTable);
+    myTimerListener = new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myTable.repaint();
+      }
+    };
+    myRepaintTimer = new Timer(AsyncProcessIcon.CYCLE_LENGTH / AsyncProcessIcon.COUNT, myTimerListener);
     myRepaintTimer.start();
   }
 
   public void disposeUIResources() {
+    myRepaintTimer.removeActionListener(myTimerListener);
     myRepaintTimer.stop();
     Disposer.dispose(myUpdatingIcon);
   }
 
   private class MyTableModel extends AbstractTableModel {
     private final String[] COLUMNS =
-        new String[]{
-            IndicesBundle.message("maven.index.url"),
-            IndicesBundle.message("maven.index.type"),
-            IndicesBundle.message("maven.index.updated"),
-            ""};
+      new String[]{
+        IndicesBundle.message("maven.index.url"),
+        IndicesBundle.message("maven.index.type"),
+        IndicesBundle.message("maven.index.updated"),
+        ""};
 
     private final List<MavenIndex> myIndices;
 
@@ -213,11 +220,12 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
       if (index.getFailureMessage() != null) {
         if (isSelected) {
           setForeground(Color.PINK);
-        } else {
+        }
+        else {
           setBackground(Color.PINK);
         }
       }
-      
+
       return c;
     }
   }
@@ -247,28 +255,6 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
           myWaitingIcon.paintIcon(this, g, x, y);
           break;
       }
-    }
-  }
-
-  private static class MyTimer extends Timer {
-    private volatile JTable myTable;
-
-    public MyTimer(final JTable table) {
-      super(AsyncProcessIcon.CYCLE_LENGTH / AsyncProcessIcon.COUNT, null);
-      myTable = table;
-      addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          if (myTable != null) {
-            myTable.repaint();
-          }
-        }
-      });
-    }
-
-    @Override
-    public void stop() {
-      myTable = null;
-      super.stop();
     }
   }
 }
