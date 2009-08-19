@@ -247,7 +247,7 @@ public class HighlightClassUtil {
         }
       }
       QuickFixAction.registerQuickFixAction(errorResult, new RenameFileFix(aClass.getName() + "." + StdFileTypes.JAVA.getDefaultExtension()));
-      QuickFixAction.registerQuickFixAction(errorResult, new RenamePublicClassFix(aClass));
+      QuickFixAction.registerQuickFixAction(errorResult, new RenameElementFix(aClass));
     }
     return errorResult;
   }
