@@ -1,6 +1,8 @@
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -247,6 +249,34 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
 
   public Project getProject() {
     return myProject;
+  }
+
+  @NotNull
+  public Artifact addArtifact(@NotNull final String name, @NotNull final ArtifactType type, final CompositePackagingElement<?> root) {
+    return new WriteAction<Artifact>() {
+      protected void run(final Result<Artifact> result) {
+        final ModifiableArtifactModel model = createModifiableModel();
+        final ModifiableArtifact artifact = model.addArtifact(name, type);
+        if (root != null) {
+          artifact.setRootElement(root);
+        }
+        model.commit();
+        result.setResult(artifact);
+      }
+    }.execute().getResultObject();
+  }
+
+  @Override
+  public void addElementsToDirectory(@NotNull Artifact artifact, @NotNull String relativePath,
+                                     @NotNull Collection<? extends PackagingElement<?>> elements) {
+    final ModifiableArtifactModel model = createModifiableModel();
+    final CompositePackagingElement<?> root = model.getOrCreateModifiableArtifact(artifact).getRootElement();
+    PackagingElementFactory.getInstance().getOrCreateDirectory(root, relativePath).addOrFindChildren(elements);
+    new WriteAction() {
+      protected void run(final Result result) {
+        model.commit();
+      }
+    }.execute();
   }
 
   private static class ArtifactManagerModel extends ArtifactModelBase {

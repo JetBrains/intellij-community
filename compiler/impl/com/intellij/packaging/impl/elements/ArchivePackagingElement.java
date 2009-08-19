@@ -42,7 +42,7 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
                                                           @NotNull ArtifactType artifactType) {
     final String tempJarProperty = generationContext.createNewTempFileProperty("temp.jar.path." + myArchiveFileName, myArchiveFileName);
     String jarPath = BuildProperties.propertyRef(tempJarProperty);
-    final Jar jar = new Jar(jarPath, "preserve");
+    final Jar jar = new Jar(jarPath, "preserve", true);
     for (Generator generator : computeChildrenGenerators(resolvingContext, new ArchiveAntCopyInstructionCreator(""), generationContext, artifactType)) {
       jar.add(generator);
     }

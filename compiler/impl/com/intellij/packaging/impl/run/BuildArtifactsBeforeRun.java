@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.project.Project;
@@ -19,9 +18,9 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
+import com.intellij.packaging.impl.compiler.ArtifactAwareCompiler;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.packaging.impl.compiler.IncrementalArtifactsCompiler;
-import com.intellij.packaging.impl.compiler.ArtifactAwareCompiler;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -61,7 +60,7 @@ public class BuildArtifactsBeforeRun implements BeforeRunTaskProvider<BuildArtif
   }
 
   public BuildArtifactsBeforeRunTask createTask(RunConfiguration runConfiguration) {
-    if (!ApplicationManagerEx.getApplicationEx().isInternal()) return null;
+    if (!ArtifactManager.useArtifacts()) return null;
     return new BuildArtifactsBeforeRunTask(myProject);
   }
 

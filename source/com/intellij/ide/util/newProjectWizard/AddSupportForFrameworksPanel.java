@@ -294,7 +294,7 @@ public class AddSupportForFrameworksPanel {
     }
     for (FrameworkSupportSettings settings : selectedFrameworks) {
       FrameworkSupportProvider provider = settings.myProvider;
-      if (provider instanceof FacetTypeFrameworkSupportProvider) {
+      if (provider instanceof FacetTypeFrameworkSupportProvider && !addedLibraries.isEmpty()) {
         ((FacetTypeFrameworkSupportProvider)provider).processAddedLibraries(module, addedLibraries);
       }
     }

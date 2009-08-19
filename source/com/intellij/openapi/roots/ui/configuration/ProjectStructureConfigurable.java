@@ -3,7 +3,6 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.facet.Facet;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.*;
@@ -23,6 +22,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.navigation.BackAction;
 import com.intellij.ui.navigation.ForwardAction;
@@ -198,7 +198,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
   private void addArtifactsConfig() {
-    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+    if (ArtifactManager.useArtifacts()) {
       addConfigurable(myArtifactsStructureConfigurable);
     }
   }

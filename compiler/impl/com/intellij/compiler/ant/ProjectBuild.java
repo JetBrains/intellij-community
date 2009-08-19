@@ -5,7 +5,7 @@ import com.intellij.compiler.ant.taskdefs.AntProject;
 import com.intellij.compiler.ant.taskdefs.Target;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.packaging.artifacts.ArtifactManager;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -54,7 +54,7 @@ public abstract class ProjectBuild extends Generator {
     myAntProject.add(initTarget, 1);
 
     ArtifactsGenerator artifactsGenerator;
-    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+    if (ArtifactManager.useArtifacts()) {
       artifactsGenerator = new ArtifactsGenerator(project, genOptions);
     }
     else {

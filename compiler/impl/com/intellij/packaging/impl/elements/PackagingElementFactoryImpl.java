@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.Messages;
@@ -242,8 +243,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     @Override
     public PackagingElementPropertiesPanel createElementPropertiesPanel(@NotNull DirectoryPackagingElement element,
                                                                                                    @NotNull ArtifactEditorContext context) {
-      final String name = element.getDirectoryName();
-      if (name.length() >= 4 && name.charAt(name.length() - 4) == '.' && StringUtil.endsWithIgnoreCase(name, "ar")) {
+      if (ArtifactUtil.isArchiveName(element.getDirectoryName())) {
         return new DirectoryElementPropertiesPanel(element, context);
       }
       return null;
