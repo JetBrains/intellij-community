@@ -331,12 +331,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final Ref<Long> duration = new Ref<Long>();
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
       protected void run() throws Exception {
-        myFile = myPsiManager.findFile(file);
-        myEditor = createEditor(file);
+        openFileInEditor(file);
         collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings, duration);
       }
     }.execute().throwException();
     return duration.get().longValue();
+  }
+
+  public void openFileInEditor(@NotNull final VirtualFile file) {
+    myFile = myPsiManager.findFile(file);
+    myEditor = createEditor(file);
   }
 
   public void testInspection(String testDir, InspectionTool tool) throws Exception {
