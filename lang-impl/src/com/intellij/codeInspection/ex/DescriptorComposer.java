@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.injected.editor.VirtualFileWindow;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -111,8 +112,11 @@ public class DescriptorComposer extends HTMLComposerImpl {
   protected void composeDescription(final CommonProblemDescriptor description, int i, StringBuffer buf, final RefEntity refElement) {
     PsiElement expression = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getPsiElement() : null;
     StringBuffer anchor = new StringBuffer();
+    VirtualFile vFile = null;
+
     if (expression != null) {
-      VirtualFile vFile = expression.getContainingFile().getVirtualFile();
+      vFile = expression.getContainingFile().getVirtualFile();
+      if (vFile instanceof VirtualFileWindow) vFile = ((VirtualFileWindow)vFile).getDelegate();
 
       //noinspection HardCodedStringLiteral
       anchor.append("<a HREF=\"");
@@ -147,7 +151,6 @@ public class DescriptorComposer extends HTMLComposerImpl {
     final int lineNumber = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
     StringBuffer lineAnchor = new StringBuffer();
     if (expression != null && lineNumber > 0) {
-      VirtualFile vFile = expression.getContainingFile().getVirtualFile();
       Document doc = FileDocumentManager.getInstance().getDocument(vFile);
       lineAnchor.append(InspectionsBundle.message("inspection.export.results.at.line")).append(" ");
       if (myExporter == null) {

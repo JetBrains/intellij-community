@@ -188,8 +188,22 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   public void appendElementReference(final StringBuffer buf, RefElement refElement, boolean isPackageIncluded) {
     final HTMLComposerExtension extension = getLanguageExtension(refElement);
+    
     if (extension != null) {
       extension.appendReferencePresentation(refElement, buf, isPackageIncluded);
+    } else if (refElement instanceof RefFile) {
+      buf.append(HTMLComposerImpl.A_HREF_OPENING);
+
+      if (myExporter == null) {
+        buf.append(((RefElementImpl)refElement).getURL());
+      }
+      else {
+        buf.append(myExporter.getURL(refElement));
+      }
+
+      buf.append("\">");
+      buf.append(refElement.getName());
+      buf.append(HTMLComposerImpl.A_CLOSING);
     }
   }
 
