@@ -51,7 +51,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   private final String myProfileType;
 
   public String PROJECT_PROFILE;
-  public boolean USE_PROJECT_PROFILE = true;
+  public boolean USE_PROJECT_PROFILE = !isPlatform();
 
   protected ApplicationProfileManager myApplicationProfileManager;
 
@@ -168,7 +168,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
 
   @NotNull
   public Profile getProjectProfileImpl(){
-    if (!USE_PROJECT_PROFILE) return myApplicationProfileManager.getRootProfile();
+    if (isPlatform() || !USE_PROJECT_PROFILE) return myApplicationProfileManager.getRootProfile();
     if (PROJECT_PROFILE == null || myProfiles.isEmpty()){
       @NonNls final String projectProfileName = "Project Default";
       setProjectProfile(projectProfileName);
@@ -184,6 +184,10 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     final Profile profile = myProfiles.get(PROJECT_PROFILE);
     profile.setProfileManager(this);
     return profile;
+  }
+
+  private static boolean isPlatform() {
+    return System.getProperty("idea.platform.prefix") != null;
   }
 
   public void addProfilesListener(ProfileChangeAdapter profilesListener) {

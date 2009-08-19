@@ -33,7 +33,6 @@ import com.intellij.openapi.wm.impl.status.TogglePopupHintsPanel;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
-import com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -212,18 +211,6 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   public void readExternal(final Element element) throws InvalidDataException {
     mySeverityRegistrar.readExternal(element);
     super.readExternal(element);
-  }
-
-  @NotNull
-  @Override
-  public Profile getProjectProfileImpl() {
-    try {
-      ProjectInspectionToolsConfigurable.getInstance(myProject);
-    }
-    catch (IllegalStateException e) { //disable project profile in platform
-      USE_PROJECT_PROFILE = false;
-    }
-    return super.getProjectProfileImpl();
   }
 
   public void writeExternal(final Element element) throws WriteExternalException {
