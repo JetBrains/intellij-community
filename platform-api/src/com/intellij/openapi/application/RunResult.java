@@ -23,7 +23,7 @@ public class RunResult<T> extends Result<T> {
 
   private BaseActionRunnable<T> myActionRunnable;
 
-  protected Exception myThrowable;
+  private Throwable myThrowable;
 
   protected RunResult() {
   }
@@ -37,16 +37,10 @@ public class RunResult<T> extends Result<T> {
       myActionRunnable.run(this);
     } catch (ProcessCanceledException e) {
       throw e; // this exception may occur from time to time and it shouldn't be catched
-    } catch (Exception throwable) {
+    } catch (Throwable throwable) {
       myThrowable = throwable;
       if (!myActionRunnable.isSilentExecution()) {
-        if (myThrowable instanceof RuntimeException) throw (RuntimeException)myThrowable;
-        else throw new RuntimeException(myThrowable);
-      }
-    }
-    catch (Throwable throwable) {
-      myThrowable = new RuntimeException(throwable);
-      if (!myActionRunnable.isSilentExecution()) {
+        if (throwable instanceof RuntimeException) throw (RuntimeException)throwable;
         if (throwable instanceof Error) throw (Error)throwable;
         else throw new RuntimeException(myThrowable);
       }
@@ -72,7 +66,14 @@ public class RunResult<T> extends Result<T> {
 
   public void throwException() throws Exception {
     if (hasException()) {
-      throw myThrowable;
+      if (myThrowable instanceof RuntimeException) {
+        throw (RuntimeException)myThrowable;
+      }
+      if (myThrowable instanceof Error) {
+        throw (Error)myThrowable;
+      }
+
+      throw new RuntimeException(myThrowable);
     }
   }
 
@@ -80,7 +81,7 @@ public class RunResult<T> extends Result<T> {
     return myThrowable != null;
   }
 
-  public Exception getThrowable() {
+  public Throwable getThrowable() {
     return myThrowable;
   }
 
