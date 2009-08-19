@@ -29,11 +29,11 @@ import java.util.Vector;
 
 public class StaticImportMethodFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix");
-  private final PsiMethodCallExpression myMethodCall;
+  private final SmartPsiElementPointer<PsiMethodCallExpression> myMethodCall;
   private List<PsiMethod> candidates;
 
-  public StaticImportMethodFix(PsiMethodCallExpression methodCallExpression) {
-    myMethodCall = methodCallExpression;
+  public StaticImportMethodFix(@NotNull PsiMethodCallExpression methodCallExpression) {
+    myMethodCall = SmartPointerManager.getInstance(methodCallExpression.getProject()).createSmartPsiElementPointer(methodCallExpression);
   }
 
   @NotNull
@@ -55,9 +55,11 @@ public class StaticImportMethodFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return PsiUtil.isLanguageLevel5OrHigher(file) && myMethodCall != null
-           && myMethodCall.isValid()
-           && myMethodCall.getMethodExpression().getQualifierExpression() == null
+    return PsiUtil.isLanguageLevel5OrHigher(file)
+           && myMethodCall != null
+           && myMethodCall.getElement() != null
+           && myMethodCall.getElement().isValid()
+           && myMethodCall.getElement().getMethodExpression().getQualifierExpression() == null
            && file.getManager().isInProject(file)
            && !(candidates == null ? candidates = getMethodsToImport() : candidates).isEmpty()
       ;
@@ -67,12 +69,13 @@ public class StaticImportMethodFix implements IntentionAction {
   private List<PsiMethod> getMethodsToImport() {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(myMethodCall.getProject());
     PsiShortNamesCache cache = facade.getShortNamesCache();
-    PsiReferenceExpression reference = myMethodCall.getMethodExpression();
-    PsiExpressionList argumentList = myMethodCall.getArgumentList();
+    PsiMethodCallExpression element = myMethodCall.getElement();
+    PsiReferenceExpression reference = element.getMethodExpression();
+    PsiExpressionList argumentList = element.getArgumentList();
     String name = reference.getReferenceName();
     ArrayList<PsiMethod> list = new ArrayList<PsiMethod>();
     if (name == null) return list;
-    GlobalSearchScope scope = myMethodCall.getResolveScope();
+    GlobalSearchScope scope = element.getResolveScope();
     PsiMethod[] methods = cache.getMethodsByNameIfNotMoreThan(name, scope, 20);
     List<PsiMethod> applicableList = new ArrayList<PsiMethod>();
     for (PsiMethod method : methods) {
@@ -84,7 +87,7 @@ public class StaticImportMethodFix implements IntentionAction {
       if (file instanceof PsiJavaFile
           //do not show methods from default package
           && ((PsiJavaFile)file).getPackageName().length() != 0
-          && PsiUtil.isAccessible(method, myMethodCall, aClass)) {
+          && PsiUtil.isAccessible(method, element, aClass)) {
         list.add(method);
         if (PsiUtil.isApplicable(method, PsiSubstitutor.EMPTY, argumentList)) {
           applicableList.add(method);
@@ -113,7 +116,10 @@ public class StaticImportMethodFix implements IntentionAction {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             try {
-              myMethodCall.getMethodExpression().bindToElementViaStaticImport(toImport.getContainingClass());
+              PsiMethodCallExpression element = myMethodCall.getElement();
+              if (element != null) {
+                element.getMethodExpression().bindToElementViaStaticImport(toImport.getContainingClass());
+              }
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
