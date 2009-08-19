@@ -5,6 +5,7 @@
 package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportProvider;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -21,10 +22,6 @@ public class FrameworkSupportUtil {
   private FrameworkSupportUtil() {
   }
 
-  public static boolean hasProviders(@NotNull ModuleType moduleType) {
-    return !getProviders(moduleType).isEmpty();
-  }
-
   public static List<FrameworkSupportProvider> getProviders(@NotNull ModuleType moduleType) {
     return getProviders(moduleType, null);
   }
@@ -38,6 +35,16 @@ public class FrameworkSupportUtil {
     ArrayList<FrameworkSupportProvider> result = new ArrayList<FrameworkSupportProvider>();
     for (FrameworkSupportProvider provider : providers) {
       if (provider.isEnabledForModuleType(moduleType) && (module == null || !provider.isSupportAlreadyAdded(module))) {
+        result.add(provider);
+      }
+    }
+    return result;
+  }
+
+  public static List<FrameworkSupportProvider> getProviders(@NotNull ModuleBuilder builder) {
+    ArrayList<FrameworkSupportProvider> result = new ArrayList<FrameworkSupportProvider>();
+    for (FrameworkSupportProvider provider : Extensions.getExtensions(FrameworkSupportProvider.EXTENSION_POINT)) {
+      if (provider.isEnabledForModuleBuilder(builder)) {
         result.add(provider);
       }
     }

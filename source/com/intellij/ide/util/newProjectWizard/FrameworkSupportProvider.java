@@ -10,6 +10,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,6 +71,10 @@ public abstract class FrameworkSupportProvider {
 
   public boolean isEnabledForModuleType(@NotNull ModuleType moduleType) {
     return moduleType instanceof JavaModuleType;
+  }
+
+  public boolean isEnabledForModuleBuilder(@NotNull ModuleBuilder builder) {
+    return isEnabledForModuleType(builder.getModuleType());
   }
 
   public boolean isSupportAlreadyAdded(@NotNull Module module) {

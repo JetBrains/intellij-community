@@ -31,7 +31,7 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
   private boolean myCommitted;
 
   public SupportForFrameworksStep(final ModuleBuilder builder, @NotNull LibrariesContainer librariesContainer) {
-    List<FrameworkSupportProvider> providers = FrameworkSupportUtil.getProviders(builder.getModuleType());
+    List<FrameworkSupportProvider> providers = FrameworkSupportUtil.getProviders(builder);
     mySupportForFrameworksPanel = new AddSupportForFrameworksPanel(providers, librariesContainer, builder, new Computable<String>() {
       public String compute() {
         return getBaseDirectory(builder);

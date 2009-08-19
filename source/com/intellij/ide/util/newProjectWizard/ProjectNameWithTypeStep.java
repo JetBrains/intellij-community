@@ -11,8 +11,6 @@ import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -84,20 +82,19 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
     });
     myModuleDescriptionPane.setEditable(false);
 
-    ModuleType[] allModuleTypes = ModuleTypeManager.getInstance().getRegisteredTypes();
     final DefaultListModel defaultListModel = new DefaultListModel();
-    for (ModuleType moduleType : allModuleTypes) {
-      defaultListModel.addElement(moduleType);
+    for (ModuleBuilder builder : ModuleBuilder.getAllBuilders()) {
+      defaultListModel.addElement(builder);
     }
     myTypesList.setModel(defaultListModel);
     myTypesList.setSelectionModel(new PermanentSingleSelectionModel());
     myTypesList.setCellRenderer(new DefaultListCellRenderer(){
       public Component getListCellRendererComponent(final JList list, final Object value, final int index, final boolean isSelected, final boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        final ModuleType moduleType = (ModuleType)value;
-        setIcon(moduleType.getBigIcon());
-        setDisabledIcon(moduleType.getBigIcon());
-        setText(moduleType.getName());
+        final ModuleBuilder builder = (ModuleBuilder)value;
+        setIcon(builder.getBigIcon());
+        setDisabledIcon(builder.getBigIcon());
+        setText(builder.getPresentableName());
         return rendererComponent;
       }
     });
@@ -108,7 +105,7 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
           return;
         }
 
-        final ModuleType typeSelected = (ModuleType)myTypesList.getSelectedValue();
+        final ModuleBuilder typeSelected = (ModuleBuilder)myTypesList.getSelectedValue();
 
         final StringBuilder sb = new StringBuilder("<html><body><font face=\"Verdana\" ");
         sb.append(SystemInfo.isMac ? "" : "size=\"-1\"").append('>');
@@ -269,7 +266,7 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
   public void updateStep() {
     super.updateStep();
     if (myCreateModuleCb.isSelected()) {
-      mySequence.setType(((ModuleType)myTypesList.getSelectedValue()).getId());
+      mySequence.setType(getSelectedBuilderId());
     } else {
       mySequence.setType(null);
     }
@@ -277,7 +274,7 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
 
   public void updateDataModel() {
     if (myCreateModuleCb.isSelected()) {
-      mySequence.setType(((ModuleType)myTypesList.getSelectedValue()).getId());
+      mySequence.setType(getSelectedBuilderId());
       super.updateDataModel();
       final ModuleBuilder builder = (ModuleBuilder)myMode.getModuleBuilder();
       assert builder != null;
@@ -288,6 +285,10 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       mySequence.setType(null);
       super.updateDataModel();
     }
+  }
+
+  private String getSelectedBuilderId() {
+    return ((ModuleBuilder)myTypesList.getSelectedValue()).getBuilderId();
   }
 
   public boolean validate() throws ConfigurationException {

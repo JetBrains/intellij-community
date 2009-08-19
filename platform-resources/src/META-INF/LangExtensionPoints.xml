@@ -336,6 +336,8 @@
 
   <extensionPoint name="moduleType"
                   beanClass="com.intellij.openapi.module.ModuleTypeEP"/>
+  <extensionPoint name="moduleBuilder"
+                  beanClass="com.intellij.ide.util.projectWizard.ModuleBuilderFactory"/>
   <extensionPoint name="facetType"
                   interface="com.intellij.facet.FacetType"/>
 

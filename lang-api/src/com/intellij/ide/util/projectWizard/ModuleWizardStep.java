@@ -55,7 +55,7 @@ public abstract class ModuleWizardStep extends StepAdapter{
   }
 
   public Icon getIcon() {
-    return null;
+    return ICON;
   }
 
   public JComponent getPreferredFocusedComponent() {

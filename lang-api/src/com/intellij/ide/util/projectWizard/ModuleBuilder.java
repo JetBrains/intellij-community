@@ -19,10 +19,11 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -32,14 +33,15 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,12 +49,25 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class ModuleBuilder extends ProjectBuilder{
+  private static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleBuilder");
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleBuilder");
   private String myName;
   @NonNls private String myModuleFilePath;
   @Nullable
   private final List<ModuleConfigurationUpdater> myUpdaters = new ArrayList<ModuleConfigurationUpdater>();
   private final EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
+
+  public static List<ModuleBuilder> getAllBuilders() {
+    final ArrayList<ModuleBuilder> result = new ArrayList<ModuleBuilder>();
+    for (final ModuleType moduleType : ModuleTypeManager.getInstance().getRegisteredTypes()) {
+      result.add(moduleType.createModuleBuilder());
+    }
+    for (ModuleBuilderFactory factory : EP_NAME.getExtensions()) {
+      result.add(factory.createBuilder());
+    }
+    return result;
+  }
 
   @Nullable
   protected final String acceptParameter(String param) {
@@ -61,6 +76,14 @@ public abstract class ModuleBuilder extends ProjectBuilder{
 
   public String getName() {
     return myName;
+  }
+
+  public String getBuilderId() {
+    return getModuleType().getId();
+  }
+
+  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
+    return getModuleType().createWizardSteps(wizardContext, this, modulesProvider);
   }
 
   public void setName(String name) {
@@ -204,6 +227,18 @@ public abstract class ModuleBuilder extends ProjectBuilder{
         file.refresh(false, false);
       }
     }
+  }
+
+  public Icon getBigIcon() {
+    return getModuleType().getBigIcon();
+  }
+
+  public String getDescription() {
+    return getModuleType().getDescription();
+  }
+
+  public String getPresentableName() {
+    return getModuleType().getName();
   }
 
   public static abstract class ModuleConfigurationUpdater {

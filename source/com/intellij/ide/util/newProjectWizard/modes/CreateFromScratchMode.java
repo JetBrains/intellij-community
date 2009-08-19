@@ -11,10 +11,9 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.module.ModuleType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,22 +38,25 @@ public class CreateFromScratchMode extends WizardMode {
 
   @Nullable
   protected StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider) {
-     StepSequence myStepSequence;
-      myStepSequence = new StepSequence(null);
-      myStepSequence.addCommonStep(new ProjectNameWithTypeStep(context, myStepSequence, this));
-      final ModuleType[] allModuleTypes = ModuleTypeManager.getInstance().getRegisteredTypes();
-      for (ModuleType type : allModuleTypes) {
-        final StepSequence sequence = new StepSequence(myStepSequence);
-        myStepSequence.addSpecificSteps(type.getId(), sequence);
-        final ModuleBuilder builder = type.createModuleBuilder();
-        myBuildersMap.put(type.getId(), builder);
-        final ModuleWizardStep[] steps = type.createWizardSteps(context, builder, modulesProvider);
-        for (ModuleWizardStep step : steps) {
-          sequence.addCommonStep(step);
-        }
-      }
+    final StepSequence sequence = new StepSequence(null);
+    sequence.addCommonStep(new ProjectNameWithTypeStep(context, sequence, this));
+    for (ModuleBuilder builder : ModuleBuilder.getAllBuilders()) {
+      addModuleBuilder(builder, context, modulesProvider, sequence);
+    }
     myBuildersMap.put(ModuleType.EMPTY.getId(), new EmptyModuleBuilder());
-    return myStepSequence;
+    return sequence;
+  }
+
+  private void addModuleBuilder(ModuleBuilder builder, WizardContext context, ModulesProvider modulesProvider, StepSequence myStepSequence) {
+    final String id = builder.getBuilderId();
+    final StepSequence sequence = new StepSequence(myStepSequence);
+    myBuildersMap.put(id, builder);
+    for (ModuleWizardStep step : builder.createWizardSteps(context, modulesProvider)) {
+      sequence.addCommonStep(step);
+    }
+    if (!sequence.getCommonSteps().isEmpty()) {
+      myStepSequence.addSpecificSteps(id, sequence);
+    }
   }
 
   public boolean isAvailable(WizardContext context) {

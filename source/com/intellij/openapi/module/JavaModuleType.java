@@ -86,7 +86,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
     steps.add(wizardFactory.createSourcePathsStep(wizardContext, moduleBuilder, getWizardIcon(), "reference.dialogs.new.project.fromScratch.source"));
     steps.add(wizardFactory.createProjectJdkStep(wizardContext));
-    if (FrameworkSupportUtil.hasProviders(this)) {
+    if (!FrameworkSupportUtil.getProviders(moduleBuilder).isEmpty()) {
       steps.add(new SupportForFrameworksStep(moduleBuilder, LibrariesContainerFactory.createContainer(wizardContext.getProject())));
     }
     final ModuleWizardStep[] wizardSteps = steps.toArray(new ModuleWizardStep[steps.size()]);
