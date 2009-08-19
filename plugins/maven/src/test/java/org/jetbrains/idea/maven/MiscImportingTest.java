@@ -1,9 +1,12 @@
 package org.jetbrains.idea.maven;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 
 import java.io.File;
@@ -152,16 +155,16 @@ public class MiscImportingTest extends MavenImportingTestCase {
 
     // valid password is 'fg3W9' (see http://www.jetbrains.net/confluence/display/JBINT/HTTP+Proxy+with+authorization)
     updateSettingsXml("<proxies>" +
-                       " <proxy>" +
-                       "    <id>my</id>" +
-                       "    <active>true</active>" +
-                       "    <protocol>http</protocol>" +
-                       "    <host>proxy-auth-test.labs.intellij.net</host>" +
-                       "    <port>3128</port>" +
-                       "    <username>user1</username>" +
-                       "    <password>invalid</password>" +
-                       "  </proxy>" +
-                       "</proxies>");
+                      " <proxy>" +
+                      "    <id>my</id>" +
+                      "    <active>true</active>" +
+                      "    <protocol>http</protocol>" +
+                      "    <host>proxy-auth-test.labs.intellij.net</host>" +
+                      "    <port>3128</port>" +
+                      "    <username>user1</username>" +
+                      "    <password>invalid</password>" +
+                      "  </proxy>" +
+                      "</proxies>");
 
     removeFromLocalRepository("junit");
     assertFalse(jarFile.exists());
@@ -182,6 +185,44 @@ public class MiscImportingTest extends MavenImportingTestCase {
     scheduleResolveAll(); // force resolving
     resolveDependenciesAndImport();
     assertTrue(jarFile.exists());
+  }
+
+  public void testCheckingIfModuleIsNotDisposedBeforeCommitOnImport() throws Exception {
+    if (ignore()) return;
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<modules>" +
+                  "  <module>m1</module>" +
+                  "  <module>m2</module>" +
+                  "</modules>");
+
+    createModulePom("m1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>");
+
+    createModulePom("m2",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m2</artifactId>" +
+                    "<version>1</version>");
+
+    importProject();
+    assertModules("project", "m1", "m2");
+
+    myProjectsManager.scheduleImportInTests(myProjectsManager.getProjectsFiles());
+    myProjectsManager.importProjects(new MavenDefaultModifiableModelsProvider(myProject) {
+      @Override
+      public void commit() {
+        ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();
+        model.disposeModule(model.findModuleByName("m1"));
+        model.disposeModule(model.findModuleByName("m2"));
+        model.commit();
+        super.commit();
+      }
+    });
   }
 
   private void assertRootsChanged(int count) {
