@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,39 +29,39 @@ import java.util.List;
 
 public class MakeAppendChainIntoAppendSequenceIntention extends Intention {
 
-	@NotNull
-	protected PsiElementPredicate getElementPredicate() {
-		return new AppendChainPredicate();
-	}
+    @NotNull
+    protected PsiElementPredicate getElementPredicate() {
+        return new AppendChainPredicate();
+    }
 
-	public void processIntention(PsiElement element)
-			throws IncorrectOperationException {
-		final PsiExpression call = (PsiExpression)element;
-		final List<String> argumentsList = new ArrayList<String>();
-		PsiExpression currentCall = call;
-		while (AppendUtil.isAppendCall(currentCall)) {
-			final PsiMethodCallExpression methodCallExpression =
-					(PsiMethodCallExpression)currentCall;
-			final PsiExpressionList arguments =
+    public void processIntention(PsiElement element)
+            throws IncorrectOperationException {
+        final PsiExpression call = (PsiExpression)element;
+        final List<String> argumentsList = new ArrayList<String>();
+        PsiExpression currentCall = call;
+        while (AppendUtil.isAppendCall(currentCall)) {
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression)currentCall;
+            final PsiExpressionList arguments =
                     methodCallExpression.getArgumentList();
-			final String argumentsText = arguments.getText();
-			argumentsList.add(argumentsText);
-			final PsiReferenceExpression methodExpression =
-					methodCallExpression.getMethodExpression();
-			currentCall = methodExpression.getQualifierExpression();
-			if (currentCall == null) {
-				return;
-			}
-		}
-		final String targetText;
-		final PsiStatement appendStatement;
-		@NonNls final String firstStatement;
+            final String argumentsText = arguments.getText();
+            argumentsList.add(argumentsText);
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            currentCall = methodExpression.getQualifierExpression();
+            if (currentCall == null) {
+                return;
+            }
+        }
+        final String targetText;
+        final PsiStatement appendStatement;
+        @NonNls final String firstStatement;
         final PsiElement parent = call.getParent();
         if (parent instanceof PsiExpressionStatement) {
-			targetText = currentCall.getText();
-			appendStatement = (PsiStatement)parent;
-			firstStatement = null;
-		} else {
+            targetText = currentCall.getText();
+            appendStatement = (PsiStatement)parent;
+            firstStatement = null;
+        } else {
             final PsiElement grandParent = parent.getParent();
             appendStatement = (PsiStatement)grandParent;
             if (parent instanceof PsiAssignmentExpression &&
@@ -93,38 +93,38 @@ public class MakeAppendChainIntoAppendSequenceIntention extends Intention {
             }
         }
         final StringBuilder builder = new StringBuilder("{");
-		if (firstStatement != null) {
-			builder.append(firstStatement);
-		}
-		Collections.reverse(argumentsList);
-		for (String argument : argumentsList) {
-			builder.append(targetText);
-			builder.append(".append");
-			builder.append(argument);
-			builder.append(';');
-		}
-		builder.append('}');
-		final PsiManager manager = element.getManager();
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-		final PsiElement appendStatementParent = appendStatement.getParent();
-		final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
-		final PsiCodeBlock codeBlock =
-				factory.createCodeBlockFromText(builder.toString(),
+        if (firstStatement != null) {
+            builder.append(firstStatement);
+        }
+        Collections.reverse(argumentsList);
+        for (String argument : argumentsList) {
+            builder.append(targetText);
+            builder.append(".append");
+            builder.append(argument);
+            builder.append(';');
+        }
+        builder.append('}');
+        final PsiManager manager = element.getManager();
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+        final PsiElement appendStatementParent = appendStatement.getParent();
+        final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+        final PsiCodeBlock codeBlock =
+                factory.createCodeBlockFromText(builder.toString(),
                         appendStatement);
-		if (appendStatementParent instanceof PsiLoopStatement ||
+        if (appendStatementParent instanceof PsiLoopStatement ||
                 appendStatementParent instanceof PsiIfStatement) {
-			final PsiElement insertedStatement =
+            final PsiElement insertedStatement =
                     appendStatement.replace(codeBlock);
-			codeStyleManager.reformat(insertedStatement);
-		} else {
-			final PsiStatement[] statements = codeBlock.getStatements();
-			for (PsiStatement statement : statements) {
-				final PsiElement insertedStatement =
+            codeStyleManager.reformat(insertedStatement);
+        } else {
+            final PsiStatement[] statements = codeBlock.getStatements();
+            for (PsiStatement statement : statements) {
+                final PsiElement insertedStatement =
                         appendStatementParent.addBefore(statement,
                                 appendStatement);
-				codeStyleManager.reformat(insertedStatement);
-			}
-			appendStatement.delete();
-		}
-	}
+                codeStyleManager.reformat(insertedStatement);
+            }
+            appendStatement.delete();
+        }
+    }
 }
