@@ -125,8 +125,13 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
     return myTargetNamespace != null ? myTargetNamespace : "";
   }
 
-  private final Map<Pair<String, String>, CachedValue<XmlElementDescriptor>> myDescriptorsMap = Collections.synchronizedMap(new HashMap<Pair<String,String>, CachedValue<XmlElementDescriptor>>());
-  private final Map<Pair<String, XmlTag>, CachedValue<TypeDescriptor>> myTypesMap = Collections.synchronizedMap(new HashMap<Pair<String,XmlTag>, CachedValue<TypeDescriptor>>());
+  static class QNameKey extends Pair<String, String>{
+     QNameKey(String name, String namespace) {
+      super(name, namespace);
+    }
+  }
+  private final Map<QNameKey, CachedValue<XmlElementDescriptor>> myDescriptorsMap = Collections.synchronizedMap(new HashMap<QNameKey, CachedValue<XmlElementDescriptor>>());
+  private final Map<Pair<QNameKey, XmlTag>, CachedValue<TypeDescriptor>> myTypesMap = Collections.synchronizedMap(new HashMap<Pair<QNameKey,XmlTag>, CachedValue<TypeDescriptor>>());
 
   @Nullable
   public XmlElementDescriptor getElementDescriptor(String localName, String namespace) {
@@ -136,7 +141,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
   public XmlElementDescriptor getElementDescriptor(String localName, String namespace, Set<XmlNSDescriptorImpl> visited, boolean reference) {
     if(visited.contains(this)) return null;
 
-    final Pair<String, String> pair = new Pair<String, String>(namespace, localName);
+    final QNameKey pair = new QNameKey(namespace, localName);
     final CachedValue<XmlElementDescriptor> descriptor = myDescriptorsMap.get(pair);
     if(descriptor != null) {
       final XmlElementDescriptor value = descriptor.getValue();
@@ -419,7 +424,8 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
       visited.add(rootTag);
     }
 
-    final Pair<String, XmlTag> pair = new Pair<String, XmlTag>(name, rootTag);
+    final Pair<QNameKey, XmlTag> pair = new Pair<QNameKey, XmlTag>(new QNameKey(name, namespace), rootTag);
+
     final CachedValue<TypeDescriptor> descriptor = myTypesMap.get(pair);
     if(descriptor != null) {
       TypeDescriptor value = descriptor.getValue();
@@ -441,7 +447,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
     return doFindIn(tags, name, namespace, pair, rootTag, visited);
   }
 
-  private TypeDescriptor doFindIn(final XmlTag[] tags, final String name, final String namespace, final Pair<String, XmlTag> pair, final XmlTag rootTag, final Set<XmlTag> visited) {
+  private TypeDescriptor doFindIn(final XmlTag[] tags, final String name, final String namespace, final Pair<QNameKey, XmlTag> pair, final XmlTag rootTag, final Set<XmlTag> visited) {
     for (final XmlTag tag : tags) {
       if (equalsToSchemaName(tag, "complexType")) {
         if (name == null) {
@@ -559,7 +565,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
     return nsDescriptor;
   }
 
-  private CachedValue<TypeDescriptor> createAndPutTypesCachedValueSimpleType(final XmlTag tag, final Pair<String, XmlTag> pair) {
+  private CachedValue<TypeDescriptor> createAndPutTypesCachedValueSimpleType(final XmlTag tag, final Pair<QNameKey, XmlTag> pair) {
     final CachedValue<TypeDescriptor> value = tag.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<TypeDescriptor>() {
       public CachedValueProvider.Result<TypeDescriptor> compute() {
         final SimpleTypeDescriptor simpleTypeDescriptor = new SimpleTypeDescriptor(tag);
@@ -570,12 +576,16 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
     return value;
   }
 
-  private CachedValue<TypeDescriptor> createAndPutTypesCachedValue(final XmlTag tag, final Pair<String, XmlTag> pair) {
+  private CachedValue<TypeDescriptor> createAndPutTypesCachedValue(final XmlTag tag, final Pair<QNameKey, XmlTag> pair) {
     final CachedValue<TypeDescriptor> value = tag.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<TypeDescriptor>() {
       public CachedValueProvider.Result<TypeDescriptor> compute() {
         final String name = tag.getAttributeValue("name");
         
-        if (name != null && pair.first != null && !name.equals(XmlUtil.findLocalNameByQualifiedName(pair.first))) {
+        if (name != null &&
+            pair.first != null &&
+            pair.first.first != null &&
+            !name.equals(XmlUtil.findLocalNameByQualifiedName(pair.first.first))
+           ) {
           myTypesMap.remove(pair);
           return new Result<TypeDescriptor>(null);
         }
