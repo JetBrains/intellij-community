@@ -16,6 +16,7 @@
 
 package git4idea.vfs;
 
+import com.intellij.ProjectTopics;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -25,6 +26,9 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -33,6 +37,7 @@ import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.util.messages.MessageBusConnection;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
@@ -54,6 +59,10 @@ public class GitRootTracker implements VcsListener {
    * The context project
    */
   private final Project myProject;
+  /**
+   * Tracker of roots for project root manager
+   */
+  private final ProjectRootManager myProjectRoots;
   /**
    * The vcs manager that tracks content roots
    */
@@ -103,11 +112,13 @@ public class GitRootTracker implements VcsListener {
    */
   private GitRootsListener myMulticaster;
 
+  private final MessageBusConnection myMessageBusConnection;
+
   /**
    * The constructor
    *
    * @param project     the project instance
-   * @param multicaster
+   * @param multicaster the listeners to notify
    */
   public GitRootTracker(GitVcs vcs, @NotNull Project project, @NotNull GitRootsListener multicaster) {
     myMulticaster = multicaster;
@@ -115,10 +126,21 @@ public class GitRootTracker implements VcsListener {
       throw new IllegalArgumentException("The project must not be default");
     }
     myProject = project;
+    myProjectRoots = ProjectRootManager.getInstance(myProject);
     myVcs = vcs;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myVcsManager.addVcsListener(this);
     myLocalFileSystem = LocalFileSystem.getInstance();
+    myMessageBusConnection = myProject.getMessageBus().connect();
+    myMessageBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      public void beforeRootsChange(ModuleRootEvent event) {
+        // do nothing
+      }
+
+      public void rootsChanged(ModuleRootEvent event) {
+        invalidate();
+      }
+    });
     myCommandListener = new CommandAdapter() {
       @Override
       public void commandFinished(CommandEvent event) {
@@ -155,6 +177,7 @@ public class GitRootTracker implements VcsListener {
    */
   public void dispose() {
     myVcsManager.removeVcsListener(this);
+    myMessageBusConnection.disconnect();
     CommandProcessor.getInstance().removeCommandListener(myCommandListener);
     VirtualFileManagerEx fileManager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
     fileManager.removeVirtualFileListener(myFileListener);
@@ -418,6 +441,13 @@ public class GitRootTracker implements VcsListener {
   }
 
   /**
+   * Invalidate git root
+   */
+  private void invalidate() {
+    myRootsInvalidated.set(true);
+  }
+
+  /**
    * The listener for git roots
    */
   private class MyFileListener extends VirtualFileAdapter {
@@ -427,7 +457,7 @@ public class GitRootTracker implements VcsListener {
      * @param file the file to check
      * @return true if file has git repositories
      */
-    private boolean hasGitRepositories(VirtualFile file) {
+    private boolean hasGitRepositoriesInSubfolders(VirtualFile file) {
       if (!file.isDirectory()) {
         return false;
       }
@@ -435,7 +465,7 @@ public class GitRootTracker implements VcsListener {
         return true;
       }
       for (VirtualFile child : file.getChildren()) {
-        if (hasGitRepositories(child)) {
+        if (hasGitRepositoriesInSubfolders(child)) {
           return true;
         }
       }
@@ -443,11 +473,31 @@ public class GitRootTracker implements VcsListener {
     }
 
     /**
-     * Invalidate git root
+     * Return true if file has git repositories
+     *
+     * @param file the file to check
+     * @return true if file has git repositories
      */
-    private void invalidate() {
-      myRootsInvalidated.set(true);
+    private boolean hasGitRepositories(VirtualFile file) {
+      VirtualFile baseDir = myProject.getBaseDir();
+      if (baseDir == null) {
+        return false;
+      }
+      if (!VfsUtil.isAncestor(baseDir, file, false)) {
+        boolean isUnder = false;
+        for (VirtualFile c : myProjectRoots.getContentRoots()) {
+          if (!VfsUtil.isAncestor(baseDir, c, false) && VfsUtil.isAncestor(c, file, false)) {
+            isUnder = true;
+            break;
+          }
+        }
+        if (!isUnder) {
+          return false;
+        }
+      }
+      return hasGitRepositoriesInSubfolders(file);
     }
+
 
     /**
      * {@inheritDoc}
@@ -461,7 +511,6 @@ public class GitRootTracker implements VcsListener {
         invalidate();
       }
     }
-
 
     /**
      * {@inheritDoc}
