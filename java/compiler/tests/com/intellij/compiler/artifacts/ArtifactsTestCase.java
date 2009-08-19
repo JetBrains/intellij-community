@@ -60,17 +60,7 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
   }
 
   protected Artifact addArtifact(final String name, final ArtifactType type, final CompositePackagingElement<?> root) {
-    return new WriteAction<Artifact>() {
-      protected void run(final Result<Artifact> result) {
-        final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
-        final ModifiableArtifact artifact = model.addArtifact(name, type);
-        if (root != null) {
-          artifact.setRootElement(root);
-        }
-        model.commit();
-        result.setResult(artifact);
-      }
-    }.execute().getResultObject();
+    return getArtifactManager().addArtifact(name, type, root);
   }
 
   protected PackagingElementResolvingContext getContext() {
