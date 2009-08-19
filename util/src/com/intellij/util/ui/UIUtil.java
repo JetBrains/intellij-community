@@ -85,7 +85,7 @@ public class UIUtil {
 
   public static void setEnabled(Component component, boolean enabled, boolean recursively) {
     component.setEnabled(enabled);
-    if (recursively) {
+    if (recursively && enabled == component.isEnabled()) {
       if (component instanceof Container) {
         final Container container = (Container)component;
         final int subComponentCount = container.getComponentCount();
