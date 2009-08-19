@@ -24,7 +24,7 @@ import java.io.*;
 
 class IoFile implements IFile {
   private final File myFile;
-
+  private final IFile[] EMPTY_ARRAY = new IFile[0];
 
   public IoFile(@NotNull final File file) {
     myFile = file;
@@ -102,6 +102,8 @@ class IoFile implements IFile {
 
   public IFile[] listFiles() {
     final File[] files = myFile.listFiles();
+    if (files == null) return EMPTY_ARRAY;
+
     IFile[] result = new IoFile[files.length];
 
     for (int i = 0; i < result.length; i++) {
