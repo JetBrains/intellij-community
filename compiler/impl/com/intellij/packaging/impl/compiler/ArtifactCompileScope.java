@@ -49,10 +49,13 @@ public class ArtifactCompileScope {
     return scope;
   }
 
-  public static ProjectCompileScope create(@NotNull Project project, @NotNull Collection<Artifact> artifacts) {
-    final ProjectCompileScope scope = new ProjectCompileScope(project);
-    scope.putUserData(ARTIFACTS_KEY, artifacts.toArray(new Artifact[artifacts.size()]));
-    return scope;
+  public static CompileScope create(@NotNull Project project, @NotNull Collection<Artifact> artifacts) {
+    return create(new ProjectCompileScope(project), artifacts);
+  }
+
+  public static CompileScope create(final CompileScope baseScope, @NotNull Collection<Artifact> artifacts) {
+    baseScope.putUserData(ARTIFACTS_KEY, artifacts.toArray(new Artifact[artifacts.size()]));
+    return baseScope;
   }
 
   @Nullable
