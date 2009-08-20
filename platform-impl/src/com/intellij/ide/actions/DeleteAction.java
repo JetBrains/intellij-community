@@ -54,7 +54,13 @@ public class DeleteAction extends AnAction implements DumbAware {
       Object component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       if (component instanceof JTextComponent) provider = null; // Do not override text deletion
     }
-    presentation.setEnabled(provider != null && provider.canDeleteElement(dataContext));
+    final boolean canDelete = provider != null && provider.canDeleteElement(dataContext);
+    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+      presentation.setVisible(canDelete);
+    }
+    else {
+      presentation.setEnabled(canDelete);
+    }
   }
 
   public DeleteAction(String text, String description, Icon icon) {
