@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.actions;
 import com.intellij.CommonBundle;
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
 import com.intellij.ide.actions.CreateTemplateInPackageAction;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
@@ -28,6 +30,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 public class NewGroovyClassAction extends CreateTemplateInPackageAction<GrTypeDefinition> implements DumbAware {
   public NewGroovyClassAction() {
@@ -44,6 +47,11 @@ public class NewGroovyClassAction extends CreateTemplateInPackageAction<GrTypeDe
     builder.addKind("Enum", GroovyIcons.ENUM, "GroovyEnum.groovy");
     builder.addKind("Annotation", GroovyIcons.ANNOTATION_TYPE, "GroovyAnnotation.groovy");
     return builder;
+  }
+
+  @Override
+  protected boolean isAvailable(DataContext dataContext) {
+    return super.isAvailable(dataContext) && LibrariesUtil.hasGroovySdk(DataKeys.MODULE.getData(dataContext));
   }
 
   @Override

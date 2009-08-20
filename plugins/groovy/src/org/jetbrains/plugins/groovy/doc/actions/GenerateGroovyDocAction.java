@@ -51,7 +51,7 @@ public final class GenerateGroovyDocAction extends AnAction implements DumbAware
     final DataContext context = event.getDataContext();
     Module module = (Module)context.getData(DataKeys.MODULE.getName());
 
-    if (module == null || LibrariesUtil.getGroovyHomePath(module) == null) {
+    if (module == null || !LibrariesUtil.hasGroovySdk(module)) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
     }

@@ -77,6 +77,10 @@ public class LibrariesUtil {
     return getGroovyLibraryHome(classRoots);
   }
 
+  public static boolean hasGroovySdk(@Nullable Module module) {
+    return module != null && getGroovyHomePath(module) != null;
+  }
+
   @Nullable
   public static String getGroovyHomePath(Module module) {
     final String home = getGroovyLibraryHome(ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES));

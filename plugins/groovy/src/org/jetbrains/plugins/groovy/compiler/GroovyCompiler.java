@@ -15,8 +15,6 @@
 
 package org.jetbrains.plugins.groovy.compiler;
 
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.module.JavaModuleType;
@@ -58,12 +56,6 @@ public class GroovyCompiler extends GroovyCompilerBase {
   }
 
   @Override
-  protected void copyFiles(CompileContext compileContext, List<VirtualFile> toCopy, CompilerConfiguration configuration, OutputSink sink) {
-    final ResourceCompiler resourceCompiler = new ResourceCompiler(myProject, configuration);
-    resourceCompiler.compile(compileContext, toCopy.toArray(new VirtualFile[toCopy.size()]), sink);
-  }
-
-  @Override
   protected void compileFiles(CompileContext compileContext, Module module, List<VirtualFile> toCompile, VirtualFile outputDir, OutputSink sink) {
     runGroovycCompiler(compileContext, module, toCompile, false, outputDir, sink);
   }
@@ -95,8 +87,7 @@ public class GroovyCompiler extends GroovyCompilerBase {
         continue;
       }
 
-      final String groovyInstallPath = LibrariesUtil.getGroovyHomePath(module);
-      if (groovyInstallPath == null) {
+      if (!LibrariesUtil.hasGroovySdk(module)) {
         if (!GroovyConfigUtils.getInstance().tryToSetUpGroovyFacetOntheFly(module)) {
           Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.facet", module.getName()),
                                    GroovyBundle.message("cannot.compile"));

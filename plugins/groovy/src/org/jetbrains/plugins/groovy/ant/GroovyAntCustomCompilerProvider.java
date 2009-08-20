@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.plugins.groovy.config.GroovyFacet;
+import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -82,7 +82,7 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
    */
   public boolean hasCustomCompile(ModuleChunk chunk) {
     for (Module m : chunk.getModules()) {
-      if (GroovyFacet.getInstance(m) != null) {
+      if (LibrariesUtil.hasGroovySdk(m)) {
         return true;
       }
     }

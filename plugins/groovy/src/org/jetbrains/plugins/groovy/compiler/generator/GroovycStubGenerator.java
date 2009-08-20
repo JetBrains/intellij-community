@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.compiler.generator;
 
-import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.IntermediateOutputCompiler;
@@ -64,10 +63,6 @@ public class GroovycStubGenerator extends GroovyCompilerBase implements Intermed
     }
 
     compile(compileContext, total.toArray(new VirtualFile[total.size()]), sink);
-  }
-
-  @Override
-  protected void copyFiles(CompileContext compileContext, List<VirtualFile> toCopy, CompilerConfiguration configuration, OutputSink sink) {
   }
 
   @Override

@@ -31,7 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.config.GroovyFacet;
+import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 /**
  * @author ven
@@ -88,6 +88,6 @@ public class RenameJavaFileToGroovyFileAction extends AnAction implements DumbAw
     }
 
     final Module module = ModuleUtil.findModuleForPsiElement(file);
-    return module != null && GroovyFacet.getInstance(module) != null;
+    return module != null && LibrariesUtil.hasGroovySdk(module);
   }
 }
