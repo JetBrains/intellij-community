@@ -23,8 +23,10 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.Javac;
 import org.apache.tools.ant.types.Path;
+import org.objectweb.asm.ClassAdapter;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -179,13 +181,8 @@ public class Javac2 extends Javac {
         instrumentForms(loader);
 
         //NotNull instrumentation
-        if (isJdkVersion(5) || isJdkVersion(6)) {
-            final int instrumented = instrumentNotNull(getDestdir(), loader);
-            log("Added @NotNull assertions to " + instrumented + " files", Project.MSG_INFO);
-        }
-        else {
-            log("Skipped @NotNull instrumentation because target JDK is not 1.5 or 1.6", Project.MSG_INFO);
-        }
+        final int instrumented = instrumentNotNull(getDestdir(), loader);
+        log("Added @NotNull assertions to " + instrumented + " files", Project.MSG_INFO);
     }
 
     /**
@@ -248,8 +245,16 @@ public class Javac2 extends Javac {
             class2form.put(classToBind, formFile);
 
             try {
+                int version;
+                InputStream stream = new FileInputStream(classFile);
+                try {
+                    version = getClassFileVersion(new ClassReader(stream));
+                }
+                finally {
+                    stream.close();
+                }
                 final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, new AntNestedFormLoader(loader), false,
-                                                                            new AntClassWriter(getAsmClassWriterFlags(), loader));
+                                                                            new AntClassWriter(getAsmClassWriterFlags(version), loader));
                 codeGenerator.patchFile(classFile);
                 final FormErrorInfo[] warnings = codeGenerator.getWarnings();
 
@@ -277,34 +282,8 @@ public class Javac2 extends Javac {
     /**
      * @return the flags for class writer
      */
-    private int getAsmClassWriterFlags() {
-        return isJdkVersion(6) ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS;
-    }
-
-    /**
-     * Check JDK version
-     *
-     * @param ver the version to check (for Java 5 it is {@value 5}. for Java 6 it is {@value 6})
-     * @return if the target JDK is of the specified version
-     */
-    private boolean isJdkVersion(int ver) {
-        String versionString = Integer.toString(ver);
-        String targetVersion = getTarget();
-        if (targetVersion == null) {
-            final String[] strings = getCurrentCompilerArgs();
-            for (int i = 0; i < strings.length; i++) {
-                log("currentCompilerArgs: " + strings[i], Project.MSG_VERBOSE);
-                if (strings[i].equals("-target") && i < strings.length - 1) {
-                    targetVersion = strings[i + 1];
-                    break;
-                }
-            }
-        }
-        if (targetVersion != null) {
-            log("targetVersion: " + targetVersion, Project.MSG_VERBOSE);
-            return targetVersion.equals(versionString) || targetVersion.equals("1." + versionString);
-        }
-        return getCompilerVersion().equals("javac1." + versionString);
+    private static int getAsmClassWriterFlags(int version) {
+        return version >= Opcodes.V1_6 ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS;
     }
 
     /**
@@ -379,18 +358,23 @@ public class Javac2 extends Javac {
                     final FileInputStream inputStream = new FileInputStream(file);
                     try {
                         ClassReader reader = new ClassReader(inputStream);
-                        ClassWriter writer = new AntClassWriter(getAsmClassWriterFlags(), loader);
 
-                        final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
-                        reader.accept(instrumenter, 0);
-                        if (instrumenter.isModification()) {
-                            final FileOutputStream fileOutputStream = new FileOutputStream(path);
-                            try {
-                                fileOutputStream.write(writer.toByteArray());
-                                instrumented++;
-                            }
-                            finally {
-                                fileOutputStream.close();
+                        int version = getClassFileVersion(reader);
+
+                        if (version >= Opcodes.V1_5) {
+                            ClassWriter writer = new AntClassWriter(getAsmClassWriterFlags(version), loader);
+
+                            final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
+                            reader.accept(instrumenter, 0);
+                            if (instrumenter.isModification()) {
+                                final FileOutputStream fileOutputStream = new FileOutputStream(path);
+                                try {
+                                    fileOutputStream.write(writer.toByteArray());
+                                    instrumented++;
+                                }
+                                finally {
+                                    fileOutputStream.close();
+                                }
                             }
                         }
                     }
@@ -411,6 +395,17 @@ public class Javac2 extends Javac {
         }
 
         return instrumented;
+    }
+
+    private static int getClassFileVersion(ClassReader reader) {
+        final int[] classfileVersion = new int[1];
+        reader.accept(new ClassAdapter(null) {
+            public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+                classfileVersion[0] = version;
+            }
+        }, 0);
+
+        return classfileVersion[0];
     }
 
     private void fireError(final String message) {
