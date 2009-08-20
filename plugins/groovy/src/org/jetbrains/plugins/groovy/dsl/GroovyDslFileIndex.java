@@ -26,7 +26,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -105,11 +104,11 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     return pair.first;
   }
 
-  public static boolean processExecutors(PsiElement place, PairProcessor<GroovyFile, GroovyDslExecutor> consumer) {
+  public static void processExecutors(PsiElement place, ClassDescriptor descriptor, GroovyEnhancerConsumer consumer) {
     final PsiFile placeFile = place.getContainingFile().getOriginalFile();
     final VirtualFile placeVFfile = placeFile.getVirtualFile();
     if (placeVFfile == null) {
-      return true;
+      return;
     }
 
     int count = 0;
@@ -132,8 +131,8 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         final String text = file.getText();
         count++;
         scheduleParsing(queue, file, vfile, stamp, text);
-      } else if (!consumer.process(file, cached)) {
-        return false;
+      } else {
+        cached.processVariants(descriptor, consumer);
       }
     }
 
@@ -150,8 +149,8 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         final Pair<GroovyFile, GroovyDslExecutor> pair = queue.poll(20, TimeUnit.MILLISECONDS);
         if (pair != null) {
           final GroovyDslExecutor executor = pair.second;
-          if (executor != null && !consumer.process(pair.first, executor)) {
-            return false;
+          if (executor != null) {
+            executor.processVariants(descriptor, consumer);
           }
 
           count--;
@@ -161,8 +160,6 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     catch (InterruptedException e) {
       LOG.error(e);
     }
-
-    return true;
   }
 
   private static void scheduleParsing(final LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>> queue,
