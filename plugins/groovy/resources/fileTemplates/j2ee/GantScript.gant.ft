@@ -1,7 +1,5 @@
 #parse("File Header.java")
 
-includeTool << gant.tools.Ivy
-
 target('default': 'The default target') {
   
 }
