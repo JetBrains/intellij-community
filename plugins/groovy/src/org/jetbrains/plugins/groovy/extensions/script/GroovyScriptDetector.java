@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.groovy.extensions.script;
 
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
@@ -15,11 +14,5 @@ public interface GroovyScriptDetector {
 
   @NotNull
   Icon getScriptIcon();
-
-  @NotNull
-  String getScriptExtension();
-
-  @NotNull
-  LanguageFileType getScriptFileType();
 
 }

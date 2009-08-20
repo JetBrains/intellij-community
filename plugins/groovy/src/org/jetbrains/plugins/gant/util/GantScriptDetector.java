@@ -1,8 +1,6 @@
 package org.jetbrains.plugins.gant.util;
 
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gant.GantFileType;
 import org.jetbrains.plugins.gant.GantIcons;
 import org.jetbrains.plugins.groovy.extensions.script.GroovyScriptDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -23,13 +21,4 @@ public class GantScriptDetector implements GroovyScriptDetector {
     return GantIcons.GANT_ICON_16x16;
   }
 
-  @NotNull
-  public String getScriptExtension() {
-    return GantFileType.DEFAULT_EXTENSION;
-  }
-
-  @NotNull
-  public LanguageFileType getScriptFileType() {
-    return GantFileType.GANT_FILE_TYPE;
-  }
 }

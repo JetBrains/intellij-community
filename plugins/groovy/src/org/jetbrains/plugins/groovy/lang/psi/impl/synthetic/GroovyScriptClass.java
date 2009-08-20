@@ -28,9 +28,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.extensions.script.GroovyScriptDetector;
-import org.jetbrains.plugins.groovy.extensions.script.ScriptDetectorRegistry;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
@@ -297,15 +294,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    String ext = GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension();
-    final ScriptDetectorRegistry registry = ScriptDetectorRegistry.getInstance();
-    for (GroovyScriptDetector detector : registry.getScriptDetectors()) {
-      if (detector.isSpecificScriptFile(myFile)) {
-        ext = detector.getScriptExtension();
-        break;
-      }
-    }
-    myFile.setName(name + "." + ext);
+    myFile.setName(name + "." + myFile.getViewProvider().getVirtualFile().getExtension());
     return this;
   }
 
