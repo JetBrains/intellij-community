@@ -1,13 +1,11 @@
 package com.intellij.util.containers.hash;
 
 
-
 import gnu.trove.THashSet;
 
 import org.junit.Assert;
 
 import org.junit.Test;
-
 
 
 import java.util.HashSet;
@@ -17,9 +15,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 
-
-public class HastSetTest {
-
+public class HashSetTest {
 
 
   @Test
@@ -43,7 +39,6 @@ public class HastSetTest {
     }
 
   }
-
 
 
   @Test
@@ -74,7 +69,8 @@ public class HastSetTest {
 
         Assert.assertFalse(tested.contains(i));
 
-      } else {
+      }
+      else {
 
         Assert.assertTrue(tested.contains(i));
 
@@ -85,7 +81,6 @@ public class HastSetTest {
   }
 
 
-
   @Test
 
   public void iterator() {
@@ -93,7 +88,6 @@ public class HastSetTest {
     final HashSet<Integer> tested = new HashSet<Integer>();
 
     final Set<Integer> set = new java.util.HashSet<Integer>();
-
 
 
     for (int i = 0; i < 10000; ++i) {
@@ -115,7 +109,6 @@ public class HastSetTest {
   }
 
 
-
   @Test
 
   public void iterator2() {
@@ -123,7 +116,6 @@ public class HastSetTest {
     final HashSet<Integer> tested = new HashSet<Integer>();
 
     final Set<Integer> set = new HashSet<Integer>();
-
 
 
     for (int i = 0; i < 10000; ++i) {
@@ -151,9 +143,7 @@ public class HastSetTest {
     }
 
 
-
     Assert.assertEquals(5000, tested.size());
-
 
 
     it = tested.iterator();
@@ -173,15 +163,12 @@ public class HastSetTest {
   }
 
 
-
-  @Test
+  //@Test
 
   public void benchmarkGet() {
 
 
-
     long started;
-
 
 
     final Set<Integer> map = new java.util.HashSet<Integer>();
@@ -207,7 +194,6 @@ public class HastSetTest {
     System.out.println("100 000 000 lookups in java.util.HashSet took " + (System.currentTimeMillis() - started));
 
 
-
     final Set<Integer> troveSet = new THashSet<Integer>();
 
     for (int i = 0; i < 100000; ++i) {
@@ -229,7 +215,6 @@ public class HastSetTest {
     }
 
     System.out.println("100 000 000 lookups in THashSet took " + (System.currentTimeMillis() - started));
-
 
 
     final HashSet<Integer> tested = new HashSet<Integer>();
@@ -257,15 +242,12 @@ public class HastSetTest {
   }
 
 
-
-  @Test
+  //@Test
 
   public void benchmarkGetMissingKeys() {
 
 
-
     long started;
-
 
 
     final Set<Integer> map = new java.util.HashSet<Integer>();
@@ -291,7 +273,6 @@ public class HastSetTest {
     System.out.println("100 000 000 lookups in java.util.HashSet took " + (System.currentTimeMillis() - started));
 
 
-
     final Set<Integer> troveSet = new THashSet<Integer>();
 
     for (int i = 0; i < 100000; ++i) {
@@ -313,7 +294,6 @@ public class HastSetTest {
     }
 
     System.out.println("100 000 000 lookups in THashSet took " + (System.currentTimeMillis() - started));
-
 
 
     final HashSet<Integer> tested = new HashSet<Integer>();

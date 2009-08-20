@@ -1,11 +1,9 @@
 package com.intellij.util.containers.hash;
 
 
-
 import org.junit.Assert;
 
 import org.junit.Test;
-
 
 
 import java.util.Iterator;
@@ -13,9 +11,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 
-
 public class LinkedHashMapTest {
-
 
 
   @Test
@@ -55,7 +51,6 @@ public class LinkedHashMapTest {
   }
 
 
-
   @Test
 
   public void testPutGet2() {
@@ -93,7 +88,6 @@ public class LinkedHashMapTest {
   }
 
 
-
   @Test
 
   public void testPutGetRemove() {
@@ -125,7 +119,6 @@ public class LinkedHashMapTest {
   }
 
 
-
   @Test
 
   public void keySet() {
@@ -147,7 +140,6 @@ public class LinkedHashMapTest {
     }
 
   }
-
 
 
   @Test
@@ -177,9 +169,7 @@ public class LinkedHashMapTest {
     }
 
 
-
     Assert.assertEquals(5000, tested.size());
-
 
 
     it = tested.keySet().iterator();
@@ -193,7 +183,6 @@ public class LinkedHashMapTest {
     }
 
   }
-
 
 
   @Test
@@ -237,7 +226,6 @@ public class LinkedHashMapTest {
   }
 
 
-
   @Test
 
   public void lru2() {
@@ -273,7 +261,6 @@ public class LinkedHashMapTest {
     Assert.assertNull(tested.get(1000));
 
   }
-
 
 
   @Test
@@ -317,15 +304,12 @@ public class LinkedHashMapTest {
   }
 
 
-
-  @Test
+  //@Test
 
   public void benchmarkGet() {
 
 
-
     long started;
-
 
 
     final Map<Integer, String> map = new java.util.LinkedHashMap<Integer, String>();
@@ -349,7 +333,6 @@ public class LinkedHashMapTest {
     }
 
     System.out.println("100 000 000 lookups in java.util.LinkedHashMap took " + (System.currentTimeMillis() - started));
-
 
 
     final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>();
@@ -377,15 +360,12 @@ public class LinkedHashMapTest {
   }
 
 
-
-  @Test
+  //@Test
 
   public void benchmarkGetMissingKeys() {
 
 
-
     long started;
-
 
 
     final Map<Integer, String> map = new java.util.LinkedHashMap<Integer, String>();
@@ -409,7 +389,6 @@ public class LinkedHashMapTest {
     }
 
     System.out.println("100 000 000 lookups in java.util.LinkedHashMap took " + (System.currentTimeMillis() - started));
-
 
 
     final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>();
@@ -437,15 +416,12 @@ public class LinkedHashMapTest {
   }
 
 
-
-  @Test
+  //@Test
 
   public void benchmarkLRU() {
 
 
-
     long started;
-
 
 
     final Map<Integer, String> map = new java.util.LinkedHashMap<Integer, String>();
@@ -471,7 +447,6 @@ public class LinkedHashMapTest {
     }
 
     System.out.println("20 000 000 LRU lookups in java.util.LinkedHashMap took " + (System.currentTimeMillis() - started));
-
 
 
     final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>();
