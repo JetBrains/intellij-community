@@ -121,14 +121,12 @@ public class RenameDialog extends RefactoringDialog {
   private String[] getSuggestedNames() {
     List<String> result = new ArrayList<String>();
     final NameSuggestionProvider[] providers = Extensions.getExtensions(NameSuggestionProvider.EP_NAME);
-    if (providers.length == 0) {
-      result.add(UsageViewUtil.getShortName(myPsiElement));
+    for(NameSuggestionProvider provider: providers) {
+      SuggestedNameInfo info = provider.getSuggestedNames(myPsiElement, myNameSuggestionContext, result);
+      if (info != null) mySuggestedNameInfo = info;
     }
-    else {
-      for(NameSuggestionProvider provider: providers) {
-        SuggestedNameInfo info = provider.getSuggestedNames(myPsiElement, myNameSuggestionContext, result);
-        if (info != null) mySuggestedNameInfo = info;
-      }
+    if (result.size() == 0) {
+      result.add(UsageViewUtil.getShortName(myPsiElement));
     }
     return ArrayUtil.toStringArray(result);
   }
