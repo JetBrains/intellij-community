@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -34,6 +35,7 @@ import org.apache.oro.text.regex.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -57,8 +59,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private final List<Pattern> myRegexpResourcePaterns = new ArrayList<Pattern>(getDefaultRegexpPatterns());
   // extensions of the files considered as resource files. If present, Overrides patterns in old regexp format stored in myRegexpResourcePaterns
   private final List<String> myWildcardPatterns = new ArrayList<String>();
-  private final List<Pattern> myCompiledPatterns = new ArrayList<Pattern>();
-  private final List<Pattern> myNegatedCompiledPatterns = new ArrayList<Pattern>();
+  private final List<Pair<Pattern, Pattern>> myCompiledPatterns = new ArrayList<Pair<Pattern, Pattern>>();
+  private final List<Pair<Pattern, Pattern>> myNegatedCompiledPatterns = new ArrayList<Pair<Pattern, Pattern>>();
   private boolean myWildcardPatternsInitialized = false;
   private final Project myProject;
   private final ExcludedEntriesConfiguration myExcludedEntriesConfiguration;
@@ -68,7 +70,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private final Collection<BackendCompiler> myRegisteredCompilers = new ArrayList<BackendCompiler>();
   private BackendCompiler JAVAC_EXTERNAL_BACKEND;
   private final Perl5Matcher myPatternMatcher = new Perl5Matcher();
-  private CompilerAPICompiler myInprocessJavaCompiler;
 
   {
     loadDefaultWildcardPatterns();
@@ -196,8 +197,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
       if (ApplicationManagerEx.getApplicationEx().isInternal()) {
         try {
-          myInprocessJavaCompiler = new CompilerAPICompiler(myProject);
-          myRegisteredCompilers.add(myInprocessJavaCompiler);
+          CompilerAPICompiler inprocessJavaCompiler = new CompilerAPICompiler(myProject);
+          myRegisteredCompilers.add(inprocessJavaCompiler);
         }
         catch (NoClassDefFoundError e) {
           // wrong JDK
@@ -217,10 +218,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   public Collection<BackendCompiler> getRegisteredJavaCompilers() {
     return myRegisteredCompilers;
-  }
-
-  public CompilerAPICompiler getInprocessJavaCompiler() {
-    return myInprocessJavaCompiler;
   }
 
   public String[] getResourceFilePatterns() {
@@ -262,11 +259,11 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   @Override
   public boolean isResourceFile(VirtualFile virtualFile) {
-    return isResourceFile(virtualFile.getName());
+    return isResourceFile(virtualFile.getName(), virtualFile.getParent());
   }
 
   private void addWildcardResourcePattern(@NonNls final String wildcardPattern) throws MalformedPatternException {
-    final Pattern pattern = compilePattern(convertToRegexp(wildcardPattern));
+    final Pair<Pattern, Pattern> pattern = convertToRegexp(wildcardPattern);
     if (pattern != null) {
       myWildcardPatterns.add(wildcardPattern);
       if (isPatternNegated(wildcardPattern)) {
@@ -292,20 +289,53 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myNegatedCompiledPatterns.clear();
   }
 
-  private static String convertToRegexp(String wildcardPattern) {
+  private static Pair<Pattern, Pattern> convertToRegexp(String wildcardPattern) {
     if (isPatternNegated(wildcardPattern)) {
       wildcardPattern = wildcardPattern.substring(1);
     }
 
+    wildcardPattern = FileUtil.toSystemIndependentName(wildcardPattern);
+
+    String dirPattern = null;
+    int slash = wildcardPattern.lastIndexOf('/');
+    if (slash >= 0) {
+      dirPattern = wildcardPattern.substring(0, slash + 1);
+      wildcardPattern = wildcardPattern.substring(slash + 1);
+      if (!dirPattern.startsWith("/")) {
+        dirPattern = "/" + dirPattern;
+      }
+      //now dirPattern starts and ends with '/'
+
+      dirPattern = normalizeWildcards(dirPattern);
+
+      dirPattern = StringUtil.replace(dirPattern, "/.*.*/", "(/.*)?/");
+      dirPattern = StringUtil.trimEnd(dirPattern, "/");
+
+      dirPattern = optimize(dirPattern);
+
+      dirPattern = ".*" + dirPattern;
+
+    }
+
+    wildcardPattern = normalizeWildcards(wildcardPattern);
+    wildcardPattern = optimize(wildcardPattern);
+
+    final Pattern dirCompiled = dirPattern == null ? null : compilePattern(dirPattern);
+    return Pair.create(compilePattern(wildcardPattern), dirCompiled);
+  }
+
+  private static String optimize(String wildcardPattern) {
+    return wildcardPattern.replaceAll("(?:\\.\\*)+", ".*");
+  }
+
+  private static String normalizeWildcards(String wildcardPattern) {
     wildcardPattern = StringUtil.replace(wildcardPattern, "\\!", "!");
     wildcardPattern = StringUtil.replace(wildcardPattern, ".", "\\.");
     wildcardPattern = StringUtil.replace(wildcardPattern, "*?", ".+");
     wildcardPattern = StringUtil.replace(wildcardPattern, "?*", ".+");
     wildcardPattern = StringUtil.replace(wildcardPattern, "*", ".*");
     wildcardPattern = StringUtil.replace(wildcardPattern, "?", ".");
-    return wildcardPattern.
-      replaceAll("(?:\\.\\*)+", ".*")  // optimization
-    ;
+    return wildcardPattern;
   }
 
   public static boolean isPatternNegated(String wildcardPattern) {
@@ -313,17 +343,27 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   public boolean isResourceFile(String name) {
-    for (int i = 0; i < myCompiledPatterns.size(); i++) {
-      final Pattern pattern = myCompiledPatterns.get(i);
+    return isResourceFile(name, null);
+  }
+
+  private boolean matches(String s, Pattern p) {
+    synchronized (myPatternMatcher) {
       try {
-        synchronized (myPatternMatcher) {
-          if (myPatternMatcher.matches(name, pattern)) {
-            return true;
-          }
-        }
+        return myPatternMatcher.matches(s, p);
       }
       catch (Exception e) {
-        LOG.error("Exception matching file name \"" + name + "\" against the pattern \"" + pattern.getPattern() + "\"", e);
+        LOG.error("Exception matching file name \"" + s + "\" against the pattern \"" + p + "\"", e);
+        return false;
+      }
+    }
+  }
+
+  private boolean isResourceFile(String name, @Nullable VirtualFile parent) {
+    final Ref<String> parentRef = Ref.create(null);
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < myCompiledPatterns.size(); i++) {
+      if (matches(name, parent, parentRef, myCompiledPatterns.get(i))) {
+        return true;
       }
     }
 
@@ -331,20 +371,30 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       return false;
     }
 
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < myNegatedCompiledPatterns.size(); i++) {
-      final Pattern pattern = myNegatedCompiledPatterns.get(i);
-      try {
-        synchronized (myPatternMatcher) {
-          if (myPatternMatcher.matches(name, pattern)) {
-            return false;
-          }
-        }
-      }
-      catch (Exception e) {
-        LOG.error("Exception matching file name \"" + name + "\" against the pattern \"" + pattern.getPattern() + "\"", e);
+      if (matches(name, parent, parentRef, myNegatedCompiledPatterns.get(i))) {
+        return false;
       }
     }
     return true;
+  }
+
+  private boolean matches(String name, VirtualFile parent, Ref<String> parentRef, Pair<Pattern, Pattern> pair) {
+    if (!matches(name, pair.first)) {
+      return false;
+    }
+
+    final Pattern dirPattern = pair.second;
+    if (dirPattern == null || parent == null) {
+      return true;
+    }
+
+    String parentPath = parentRef.get();
+    if (parentPath == null) {
+      parentRef.set(parentPath = parent.getPath());
+    }
+    return matches(parentPath, dirPattern);
   }
 
   // property names
