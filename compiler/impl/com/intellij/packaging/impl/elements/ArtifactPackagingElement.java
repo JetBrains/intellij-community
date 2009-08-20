@@ -2,8 +2,11 @@ package com.intellij.packaging.impl.elements;
 
 import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.compiler.ant.Generator;
+import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.packaging.artifacts.ArtifactPointer;
+import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.ArtifactElementPresentation;
 import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation;
@@ -20,16 +23,18 @@ import java.util.List;
 /**
  * @author nik
  */
-public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPackagingElement> {
-  private String myArtifactName;
+public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPackagingElement.ArtifactPackagingElementState> {
+  private final Project myProject;
+  private ArtifactPointer myArtifactPointer;
 
-  public ArtifactPackagingElement() {
+  public ArtifactPackagingElement(@NotNull Project project) {
     super(ArtifactElementType.ARTIFACT_ELEMENT_TYPE);
+    myProject = project;
   }
 
-  public ArtifactPackagingElement(String artifactName) {
-    super(ArtifactElementType.ARTIFACT_ELEMENT_TYPE);
-    myArtifactName = artifactName;
+  public ArtifactPackagingElement(@NotNull Project project, @NotNull ArtifactPointer artifactPointer) {
+    this(project);
+    myArtifactPointer = artifactPointer;
   }
 
   public List<? extends PackagingElement<?>> getSubstitution(@NotNull PackagingElementResolvingContext context, @NotNull ArtifactType artifactType) {
@@ -79,34 +84,54 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
   }
 
   public PackagingElementPresentation createPresentation(PackagingEditorContext context) {
-    return new DelegatedPackagingElementPresentation(new ArtifactElementPresentation(myArtifactName, findArtifact(context), context));
+    return new DelegatedPackagingElementPresentation(new ArtifactElementPresentation(myArtifactPointer, context));
   }
 
-  public ArtifactPackagingElement getState() {
-    return this;
+  public ArtifactPackagingElementState getState() {
+    final ArtifactPackagingElementState state = new ArtifactPackagingElementState();
+    if (myArtifactPointer != null) {
+      state.setArtifactName(myArtifactPointer.getName());
+    }
+    return state;
   }
 
-  public void loadState(ArtifactPackagingElement state) {
-    myArtifactName = state.getArtifactName();
+  public void loadState(ArtifactPackagingElementState state) {
+    final String name = state.getArtifactName();
+    myArtifactPointer = name != null ? ArtifactPointerManager.getInstance(myProject).create(name) : null;
+  }
+
+  @Override
+  public String toString() {
+    return "artifact:" + getArtifactName();
   }
 
   @Override
   public boolean isEqualTo(@NotNull PackagingElement<?> element) {
-    return element instanceof ArtifactPackagingElement && myArtifactName != null
-           && myArtifactName.equals(((ArtifactPackagingElement)element).getArtifactName());
-  }
-
-  @Attribute("artifact-name")
-  public String getArtifactName() {
-    return myArtifactName;
+    return element instanceof ArtifactPackagingElement && myArtifactPointer != null
+           && myArtifactPointer.equals(((ArtifactPackagingElement)element).myArtifactPointer);
   }
 
   @Nullable
   public Artifact findArtifact(@NotNull PackagingElementResolvingContext context) {
-    return context.getArtifactModel().findArtifact(myArtifactName);
+    return myArtifactPointer != null ? myArtifactPointer.findArtifact(context.getArtifactModel()) : null;
   }
 
-  public void setArtifactName(String artifactName) {
-    myArtifactName = artifactName;
+  @Nullable
+  public String getArtifactName() {
+    return myArtifactPointer != null ? myArtifactPointer.getName() : null;
+  }
+
+
+  public static class ArtifactPackagingElementState {
+    private String myArtifactName;
+
+    @Attribute("artifact-name")
+    public String getArtifactName() {
+      return myArtifactName;
+    }
+
+    public void setArtifactName(String artifactName) {
+      myArtifactName = artifactName;
+    }
   }
 }

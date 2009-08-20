@@ -14,7 +14,10 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
@@ -94,8 +97,8 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
 
   @NotNull
   @Override
-  public PackagingElement<?> createArtifactElement(@NotNull Artifact artifact) {
-    return new ArtifactPackagingElement(artifact.getName());
+  public PackagingElement<?> createArtifactElement(@NotNull Artifact artifact, @NotNull Project project) {
+    return new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).create(artifact));
   }
 
   @NotNull
@@ -143,8 +146,14 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   }
 
   @NotNull
-  public PackagingElement<?> createModuleOutput(@NotNull String moduleName) {
+  public PackagingElement<?> createModuleOutput(@NotNull String moduleName, Project project) {
     return new ModuleOutputPackagingElement(moduleName);
+  }
+
+  @NotNull
+  @Override
+  public PackagingElement<?> createModuleOutput(@NotNull Module module) {
+    return new ModuleOutputPackagingElement(module.getName());
   }
 
   @NotNull
@@ -236,7 +245,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     }
 
     @NotNull
-    public DirectoryPackagingElement createEmpty() {
+    public DirectoryPackagingElement createEmpty(@NotNull Project project) {
       return new DirectoryPackagingElement();
     }
 
@@ -269,7 +278,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
 
     @NotNull
     @Override
-    public ArchivePackagingElement createEmpty() {
+    public ArchivePackagingElement createEmpty(@NotNull Project project) {
       return new ArchivePackagingElement();
     }
 
@@ -315,7 +324,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     }
 
     @NotNull
-    public FileCopyPackagingElement createEmpty() {
+    public FileCopyPackagingElement createEmpty(@NotNull Project project) {
       return new FileCopyPackagingElement();
     }
   }
@@ -332,7 +341,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     }
 
     @NotNull
-    public ArtifactRootElement<?> createEmpty() {
+    public ArtifactRootElement<?> createEmpty(@NotNull Project project) {
       return new ArtifactRootElementImpl();
     }
   }

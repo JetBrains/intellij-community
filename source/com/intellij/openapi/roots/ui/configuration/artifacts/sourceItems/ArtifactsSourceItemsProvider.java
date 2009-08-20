@@ -56,7 +56,7 @@ public class ArtifactsSourceItemsProvider extends PackagingSourceItemsProvider {
     }
 
     @NotNull
-    public List<? extends PackagingElement<?>> createElements() {
+    public List<? extends PackagingElement<?>> createElements(@NotNull PackagingEditorContext context) {
       return Collections.emptyList();
     }
 

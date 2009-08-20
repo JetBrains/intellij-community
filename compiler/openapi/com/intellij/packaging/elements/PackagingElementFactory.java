@@ -1,7 +1,9 @@
 package com.intellij.packaging.elements;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,13 +30,16 @@ public abstract class PackagingElementFactory {
   public abstract CompositePackagingElement<?> createArchive(@NotNull @NonNls String archiveFileName);
 
   @NotNull
-  public abstract PackagingElement<?> createModuleOutput(@NotNull String moduleName);
+  public abstract PackagingElement<?> createModuleOutput(@NotNull String moduleName, Project project);
+
+  @NotNull
+  public abstract PackagingElement<?> createModuleOutput(@NotNull Module module);
 
   @NotNull
   public abstract List<? extends PackagingElement<?>> createLibraryElements(@NotNull Library library);
 
   @NotNull
-  public abstract PackagingElement<?> createArtifactElement(@NotNull Artifact artifact);
+  public abstract PackagingElement<?> createArtifactElement(@NotNull Artifact artifact, @NotNull Project project);
 
   @NotNull
   public abstract PackagingElement<?> createLibraryFiles(@NotNull String level, @NotNull String name);

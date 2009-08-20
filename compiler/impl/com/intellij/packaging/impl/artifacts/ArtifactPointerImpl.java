@@ -39,6 +39,12 @@ public class ArtifactPointerImpl implements ArtifactPointer {
   }
 
   public Artifact findArtifact(@NotNull ArtifactModel artifactModel) {
+    if (myArtifact != null) {
+      final Artifact artifact = artifactModel.getArtifactByOriginal(myArtifact);
+      if (!artifact.equals(myArtifact)) {
+        return artifact;
+      }
+    }
     return artifactModel.findArtifact(myName);
   }
 

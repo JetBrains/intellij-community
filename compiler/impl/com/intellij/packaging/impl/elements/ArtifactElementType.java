@@ -3,7 +3,9 @@ package com.intellij.packaging.impl.elements;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ChooseArtifactsDialog;
+import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
@@ -32,13 +34,14 @@ public class ArtifactElementType extends PackagingElementType<ArtifactPackagingE
   @NotNull
   public List<? extends ArtifactPackagingElement> createWithDialog(@NotNull PackagingEditorContext context, Artifact artifact,
                                                                    CompositePackagingElement<?> parent) {
-    ChooseArtifactsDialog dialog = new ChooseArtifactsDialog(context.getProject(), getAvailableArtifacts(context, artifact),
+    final Project project = context.getProject();
+    ChooseArtifactsDialog dialog = new ChooseArtifactsDialog(project, getAvailableArtifacts(context, artifact),
                                                              CompilerBundle.message("dialog.title.choose.artifacts"), "");
     dialog.show();
     final List<ArtifactPackagingElement> elements = new ArrayList<ArtifactPackagingElement>();
     if (dialog.isOK()) {
       for (Artifact selected : dialog.getChosenElements()) {
-        elements.add(new ArtifactPackagingElement(selected.getName()));
+        elements.add(new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).create(selected.getName())));
       }
     }
     return elements;
@@ -60,7 +63,7 @@ public class ArtifactElementType extends PackagingElementType<ArtifactPackagingE
       final boolean notContainThis =
           ArtifactUtil.processPackagingElements(another, ARTIFACT_ELEMENT_TYPE, new Processor<ArtifactPackagingElement>() {
             public boolean process(ArtifactPackagingElement element) {
-              return !element.getArtifactName().equals(artifact.getName());
+              return !artifact.getName().equals(element.getArtifactName());
             }
           }, context, true);
       if (!notContainThis) {
@@ -71,7 +74,7 @@ public class ArtifactElementType extends PackagingElementType<ArtifactPackagingE
   }
 
   @NotNull
-  public ArtifactPackagingElement createEmpty() {
-    return new ArtifactPackagingElement();
+  public ArtifactPackagingElement createEmpty(@NotNull Project project) {
+    return new ArtifactPackagingElement(project);
   }
 }

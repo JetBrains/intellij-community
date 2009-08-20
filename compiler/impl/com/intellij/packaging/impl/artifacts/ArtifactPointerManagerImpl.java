@@ -42,6 +42,12 @@ public class ArtifactPointerManagerImpl extends ArtifactPointerManager {
     });
   }
 
+  public void updateAllPointers() {
+    for (ArtifactPointerImpl pointer : myPointers.values()) {
+      pointer.getArtifact();
+    }
+  }
+
   public ArtifactPointer create(@NotNull String name) {
     ArtifactPointerImpl pointer = myPointers.get(name);
     if (pointer == null) {

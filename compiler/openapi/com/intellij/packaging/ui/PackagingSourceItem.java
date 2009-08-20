@@ -29,7 +29,7 @@ public abstract class PackagingSourceItem {
   public abstract SourceItemPresentation createPresentation(@NotNull PackagingEditorContext context);
 
   @NotNull
-  public abstract List<? extends PackagingElement<?>> createElements();
+  public abstract List<? extends PackagingElement<?>> createElements(@NotNull PackagingEditorContext context);
 
   public boolean isProvideElements() {
     return myProvideElements;

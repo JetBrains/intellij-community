@@ -110,10 +110,10 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     return element;
   }
 
-  public static <T> PackagingElement<T> deserializeElement(Element element) {
+  private <T> PackagingElement<T> deserializeElement(Element element) {
     final String id = element.getAttributeValue("id");
     PackagingElementType<?> type = PackagingElementFactory.getInstance().findElementType(id);
-    PackagingElement<T> packagingElement = (PackagingElement<T>)type.createEmpty();
+    PackagingElement<T> packagingElement = (PackagingElement<T>)type.createEmpty(myProject);
     T state = packagingElement.getState();
     if (state != null) {
       XmlSerializer.deserializeInto(state, element);
@@ -190,6 +190,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
 
   @Override
   public ModifiableArtifactModel createModifiableModel() {
+    ((ArtifactPointerManagerImpl)ArtifactPointerManager.getInstance(myProject)).updateAllPointers();
     final ArtifactModelImpl model = new ArtifactModelImpl(this);
     model.addArtifacts(getArtifactsList());
     return model;
@@ -206,7 +207,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
 
   public void commit(ArtifactModelImpl artifactModel) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    LOG.assertTrue(!myInsideCommit, "Recusive commit");
+    LOG.assertTrue(!myInsideCommit, "Recursive commit");
 
     myInsideCommit = true;
     try {

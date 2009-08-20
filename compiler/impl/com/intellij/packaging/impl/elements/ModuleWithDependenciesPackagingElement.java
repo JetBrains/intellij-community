@@ -45,7 +45,7 @@ public class ModuleWithDependenciesPackagingElement extends ComplexPackagingElem
       final ModuleRootModel rootModel = context.getModulesProvider().getRootModel(module);
       for (OrderEntry entry : rootModel.getOrderEntries()) {
         if (entry instanceof ModuleSourceOrderEntry) {
-          elements.add(factory.createModuleOutput(myModuleName));
+          elements.add(factory.createModuleOutput(myModuleName, context.getProject()));
         }
         else if (entry instanceof LibraryOrderEntry) {
           final Library library = ((LibraryOrderEntry)entry).getLibrary();

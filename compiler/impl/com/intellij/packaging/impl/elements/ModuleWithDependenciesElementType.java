@@ -6,6 +6,7 @@ import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,7 +41,7 @@ public class ModuleWithDependenciesElementType extends PackagingElementType<Modu
   }
 
   @NotNull
-  public ModuleWithDependenciesPackagingElement createEmpty() {
+  public ModuleWithDependenciesPackagingElement createEmpty(@NotNull Project project) {
     return new ModuleWithDependenciesPackagingElement();
   }
 }

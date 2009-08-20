@@ -2,6 +2,7 @@ package com.intellij.packaging.elements;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
@@ -44,7 +45,7 @@ public abstract class PackagingElementType<E extends PackagingElement<?>> {
                                                      CompositePackagingElement<?> parent);
 
   @NotNull
-  public abstract E createEmpty();
+  public abstract E createEmpty(@NotNull Project project);
 
   protected static <T extends PackagingElementType<?>> T getInstance(final Class<T> aClass) {
     for (PackagingElementType type : Extensions.getExtensions(EP_NAME)) {

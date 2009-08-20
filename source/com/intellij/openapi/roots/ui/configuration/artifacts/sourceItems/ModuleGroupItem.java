@@ -42,7 +42,7 @@ public class ModuleGroupItem extends PackagingSourceItem {
 
   @NotNull
   @Override
-  public List<? extends PackagingElement<?>> createElements() {
+  public List<? extends PackagingElement<?>> createElements(@NotNull PackagingEditorContext context) {
     return Collections.emptyList();
   }
 

@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.ui.treeStructure.SimpleNode;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,13 +22,13 @@ public class LayoutNodesDraggingObject extends PackagingElementDraggingObject {
     myNodes = nodes;
   }
 
-  public List<PackagingElement<?>> createPackagingElements() {
+  public List<PackagingElement<?>> createPackagingElements(ArtifactEditorContext context) {
     final List<PackagingElement<?>> result = new ArrayList<PackagingElement<?>>();
 
     for (PackagingElementNode<?> node : myNodes) {
       final List<? extends PackagingElement<?>> elements = node.getPackagingElements();
       for (PackagingElement<?> element : elements) {
-        result.add(ArtifactUtil.copyWithChildren(element));
+        result.add(ArtifactUtil.copyWithChildren(element, myArtifactsEditor.getContext().getProject()));
       }
     }
 

@@ -62,7 +62,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
   }
 
   @NotNull
-  public List<? extends PackagingElement<?>> createElements() {
+  public List<? extends PackagingElement<?>> createElements(@NotNull PackagingEditorContext context) {
     return PackagingElementFactory.getInstance().createLibraryElements(myLibrary);
   }
 

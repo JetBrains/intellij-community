@@ -295,7 +295,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
       ensureRootIsWritable();
       draggingObject.beforeDrop();
       List<PackagingElement<?>> toSelect = new ArrayList<PackagingElement<?>>();
-      for (PackagingElement<?> element : draggingObject.createPackagingElements()) {
+      for (PackagingElement<?> element : draggingObject.createPackagingElements(myContext)) {
         toSelect.add(element);
         targetElement.addOrFindChild(element);
       }
@@ -356,7 +356,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
       final String path = artifactType.getDefaultPathFor(item);
       if (path != null) {
         final CompositePackagingElement<?> directory = PackagingElementFactory.getInstance().getOrCreateDirectory(rootElement, path);
-        final List<? extends PackagingElement<?>> elements = item.createElements();
+        final List<? extends PackagingElement<?>> elements = item.createElements(myContext);
         toSelect.addAll(directory.addOrFindChildren(elements));
       }
     }

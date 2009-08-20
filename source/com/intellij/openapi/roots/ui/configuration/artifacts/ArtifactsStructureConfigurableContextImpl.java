@@ -56,7 +56,7 @@ class ArtifactsStructureConfigurableContextImpl implements PackagingEditorContex
     }
     CompositePackagingElement<?> root = myModifiableRoots.get(originalArtifact);
     if (root == null) {
-      root = ArtifactUtil.copyFromRoot(originalArtifact.getRootElement());
+      root = ArtifactUtil.copyFromRoot(originalArtifact.getRootElement(), myProject);
       myModifiableRoots.put(originalArtifact, root);
     }
     return root;

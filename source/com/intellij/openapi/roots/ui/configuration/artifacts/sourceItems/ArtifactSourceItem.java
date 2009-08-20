@@ -1,6 +1,8 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactPointerManager;
+import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.impl.ui.ArtifactElementPresentation;
@@ -24,7 +26,8 @@ public class ArtifactSourceItem extends PackagingSourceItem {
   }
 
   public SourceItemPresentation createPresentation(@NotNull PackagingEditorContext context) {
-    return new DelegatedSourceItemPresentation(new ArtifactElementPresentation(myArtifact.getName(), myArtifact, context)) {
+    final ArtifactPointer pointer = ArtifactPointerManager.getInstance(context.getProject()).create(myArtifact);
+    return new DelegatedSourceItemPresentation(new ArtifactElementPresentation(pointer, context)) {
       @Override
       public int getWeight() {
         return SourceItemWeights.ARTIFACT_WEIGHT;
@@ -33,8 +36,8 @@ public class ArtifactSourceItem extends PackagingSourceItem {
   }
 
   @NotNull
-  public List<? extends PackagingElement<?>> createElements() {
-    return Collections.singletonList(PackagingElementFactory.getInstance().createArtifactElement(myArtifact));
+  public List<? extends PackagingElement<?>> createElements(@NotNull PackagingEditorContext context) {
+    return Collections.singletonList(PackagingElementFactory.getInstance().createArtifactElement(myArtifact, context.getProject()));
   }
 
   public boolean equals(Object obj) {

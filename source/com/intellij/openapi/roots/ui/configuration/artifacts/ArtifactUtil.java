@@ -29,31 +29,32 @@ public class ArtifactUtil {
   private ArtifactUtil() {
   }
 
-  public static CompositePackagingElement<?> copyFromRoot(@NotNull CompositePackagingElement<?> oldRoot) {
-    final CompositePackagingElement<?> newRoot = (CompositePackagingElement<?>)copyElement(oldRoot);
-    copyChildren(oldRoot, newRoot);
+  public static CompositePackagingElement<?> copyFromRoot(@NotNull CompositePackagingElement<?> oldRoot, @NotNull Project project) {
+    final CompositePackagingElement<?> newRoot = (CompositePackagingElement<?>)copyElement(oldRoot, project);
+    copyChildren(oldRoot, newRoot, project);
     return newRoot;
   }
 
 
-  public static void copyChildren(CompositePackagingElement<?> oldParent, CompositePackagingElement<?> newParent) {
+  public static void copyChildren(CompositePackagingElement<?> oldParent, CompositePackagingElement<?> newParent, @NotNull Project project) {
     for (PackagingElement<?> child : oldParent.getChildren()) {
-      newParent.addOrFindChild(copyWithChildren(child));
+      newParent.addOrFindChild(copyWithChildren(child, project));
     }
   }
 
   @NotNull
-  public static <S> PackagingElement<S> copyWithChildren(@NotNull PackagingElement<S> element) {
-    final PackagingElement<S> copy = copyElement(element);
+  public static <S> PackagingElement<S> copyWithChildren(@NotNull PackagingElement<S> element, @NotNull Project project) {
+    final PackagingElement<S> copy = copyElement(element, project);
     if (element instanceof CompositePackagingElement<?>) {
-      copyChildren((CompositePackagingElement<?>)element, (CompositePackagingElement<?>)copy);
+      copyChildren((CompositePackagingElement<?>)element, (CompositePackagingElement<?>)copy, project);
     }
     return copy;
   }
 
   @NotNull
-  private static <S> PackagingElement<S> copyElement(@NotNull PackagingElement<S> element) {
-    final PackagingElement<S> copy = (PackagingElement<S>)element.getType().createEmpty();
+  private static <S> PackagingElement<S> copyElement(@NotNull PackagingElement<S> element, @NotNull Project project) {
+    //noinspection unchecked
+    final PackagingElement<S> copy = (PackagingElement<S>)element.getType().createEmpty(project);
     copy.loadState(element.getState());
     return copy;
   }
@@ -373,7 +374,7 @@ public class ArtifactUtil {
 
             @Override
             public boolean process(@NotNull List<CompositePackagingElement<?>> parents, @NotNull ArtifactPackagingElement element) {
-              if (element.getArtifactName().equals(artifact.getName())) {
+              if (artifact.getName().equals(element.getArtifactName())) {
                 FList<Pair<Artifact, CompositePackagingElement<?>>> currentPath = pathFromRoot;
                 for (int i = 0, parentsSize = parents.size(); i < parentsSize - 1; i++) {
                   CompositePackagingElement<?> parent = parents.get(i);

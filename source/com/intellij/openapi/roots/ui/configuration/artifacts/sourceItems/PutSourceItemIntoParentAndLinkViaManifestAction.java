@@ -98,7 +98,7 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends AnAction {
     final CompositePackagingElement<?> grandParent = parentsInfo.getGrandparentElement();
     final List<String> classpath = new ArrayList<String>();
     for (PackagingSourceItem item : items) {
-      final List<? extends PackagingElement<?>> elements = item.createElements();
+      final List<? extends PackagingElement<?>> elements = item.createElements(context);
       grandParent.addOrFindChildren(elements);
       ArtifactUtil.processElements(elements, context, artifact.getArtifactType(), new Processor<PackagingElement<?>>() {
         public boolean process(PackagingElement<?> element) {

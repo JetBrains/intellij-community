@@ -13,6 +13,7 @@ import com.intellij.packaging.elements.ArtifactRootElement;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
+import com.intellij.packaging.ui.PackagingEditorContext;
 
 /**
  * @author nik
@@ -49,16 +50,17 @@ public class InlineArtifactAction extends AnAction {
 
     treeComponent.ensureRootIsWritable();
     parent.removeChild(element);
-    final Artifact artifact = ((ArtifactPackagingElement)element).findArtifact(myEditor.getContext());
+    final PackagingEditorContext context = myEditor.getContext();
+    final Artifact artifact = ((ArtifactPackagingElement)element).findArtifact(context);
     if (artifact != null) {
       final CompositePackagingElement<?> rootElement = artifact.getRootElement();
       if (rootElement instanceof ArtifactRootElement<?>) {
         for (PackagingElement<?> child : rootElement.getChildren()) {
-          parent.addOrFindChild(ArtifactUtil.copyWithChildren(child));
+          parent.addOrFindChild(ArtifactUtil.copyWithChildren(child, context.getProject()));
         }
       }
       else {
-        parent.addOrFindChild(ArtifactUtil.copyWithChildren(rootElement));
+        parent.addOrFindChild(ArtifactUtil.copyWithChildren(rootElement, context.getProject()));
       }
     }
     treeComponent.rebuildTree();

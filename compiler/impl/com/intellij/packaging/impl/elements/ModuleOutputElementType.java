@@ -3,6 +3,7 @@ package com.intellij.packaging.impl.elements;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDialog;
 import com.intellij.openapi.util.IconLoader;
@@ -66,7 +67,7 @@ public class ModuleOutputElementType extends PackagingElementType<ModuleOutputPa
   }
 
   @NotNull
-  public ModuleOutputPackagingElement createEmpty() {
+  public ModuleOutputPackagingElement createEmpty(@NotNull Project project) {
     return new ModuleOutputPackagingElement();
   }
 }

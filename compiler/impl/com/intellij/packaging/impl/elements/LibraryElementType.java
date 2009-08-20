@@ -2,6 +2,7 @@ package com.intellij.packaging.impl.elements;
 
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -75,7 +76,7 @@ public class LibraryElementType extends PackagingElementType<LibraryPackagingEle
   }
 
   @NotNull
-  public LibraryPackagingElement createEmpty() {
+  public LibraryPackagingElement createEmpty(@NotNull Project project) {
     return new LibraryPackagingElement();
   }
 }

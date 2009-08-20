@@ -3,6 +3,7 @@ package com.intellij.packaging.impl.ui;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementWeights;
@@ -18,9 +19,9 @@ public class ArtifactElementPresentation extends TreeNodePresentation {
   private final PackagingEditorContext myContext;
   private final String myName;
 
-  public ArtifactElementPresentation(String artifactName, Artifact artifact, PackagingEditorContext context) {
-    myName = artifactName;
-    myArtifact = artifact;
+  public ArtifactElementPresentation(ArtifactPointer artifactPointer, PackagingEditorContext context) {
+    myName = artifactPointer != null ? artifactPointer.getName() : "<unknown>";
+    myArtifact = artifactPointer != null ? artifactPointer.findArtifact(context.getArtifactModel()) : null;
     myContext = context;
   }
 

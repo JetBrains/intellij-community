@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -14,7 +15,7 @@ public abstract class PackagingElementDraggingObject {
   private PackagingElementNode<?> myTargetNode;
   private CompositePackagingElement<?> myTargetElement;
 
-  public abstract List<PackagingElement<?>> createPackagingElements();
+  public abstract List<PackagingElement<?>> createPackagingElements(ArtifactEditorContext context);
 
   public void setTargetNode(PackagingElementNode<?> targetNode) {
     myTargetNode = targetNode;

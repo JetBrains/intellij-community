@@ -38,7 +38,7 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
   }
 
   @NotNull
-  public List<? extends PackagingElement<?>> createElements() {
+  public List<? extends PackagingElement<?>> createElements(@NotNull PackagingEditorContext context) {
     return Collections.singletonList(new ModuleWithDependenciesPackagingElement(myModule.getName()));
   }
 
