@@ -140,14 +140,30 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
     final String id = PropertiesComponent.getInstance(project).getValue(LAST_SELECTED_CONFIGURABLE);
     if (id == null) return null;
 
-    final java.util.List<Configurable> all = SearchUtil.expand(groups);
-    for (Configurable each : all) {
-      if (each instanceof SearchableConfigurable) {
-        if (id.equals(((SearchableConfigurable)each).getId())) return each;
-      }
-      if (id.equals(each.getClass().getName())) return each;
-    }
+    return findConfigurableInGroups(id, groups);
+  }
 
+  private static Configurable findConfigurableInGroups(String id, Configurable.Composite... groups) {
+    // avoid unnecessary group expand: check top-level configurables in all groups before looking at children
+    for (Configurable.Composite group : groups) {
+      final Configurable[] configurables = group.getConfigurables();
+      for (Configurable c : configurables) {
+        if (c instanceof SearchableConfigurable && id.equals(((SearchableConfigurable)c).getId())) {
+          return c;
+        }
+      }
+    }
+    for (Configurable.Composite group : groups) {
+      final Configurable[] configurables = group.getConfigurables();
+      for (Configurable c : configurables) {
+        if (c instanceof Configurable.Composite) {
+          Configurable result = findConfigurableInGroups(id, (Configurable.Composite)c);
+          if (result != null) {
+            return result;
+          }
+        }
+      }
+    }
     return null;
   }
 
