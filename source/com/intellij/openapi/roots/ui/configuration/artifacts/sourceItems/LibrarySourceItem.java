@@ -7,7 +7,7 @@ import com.intellij.openapi.roots.ui.configuration.packaging.PackagingEditorUtil
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
-import com.intellij.packaging.elements.PackagingElementFilesKind;
+import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.packaging.ui.SourceItemPresentation;
@@ -48,17 +48,22 @@ public class LibrarySourceItem extends PackagingSourceItem {
 
   @NotNull
   @Override
-  public PackagingElementFilesKind getKindOfProducedElements() {
+  public PackagingElementOutputKind getKindOfProducedElements() {
     return getKindForLibrary(myLibrary);
   }
 
-  public static PackagingElementFilesKind getKindForLibrary(final Library library) {
+  public static PackagingElementOutputKind getKindForLibrary(final Library library) {
+    boolean containsDirectories = false;
+    boolean containsJars = false;
     for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
       if (file.isInLocalFileSystem()) {
-        return PackagingElementFilesKind.DIRECTORIES_WITH_CLASSES;
+        containsDirectories = true;
+      }
+      else {
+        containsJars = true;
       }
     }
-    return PackagingElementFilesKind.JAR_FILES;
+    return new PackagingElementOutputKind(containsDirectories, containsJars);
   }
 
   @NotNull

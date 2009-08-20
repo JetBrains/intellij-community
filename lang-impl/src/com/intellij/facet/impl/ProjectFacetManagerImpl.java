@@ -1,11 +1,13 @@
 package com.intellij.facet.impl;
 
-import com.intellij.facet.FacetConfiguration;
-import com.intellij.facet.FacetType;
+import com.intellij.facet.*;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -14,10 +16,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author nik
@@ -36,6 +35,11 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ProjectFacetManagerImpl");
   private ProjectFacetManagerState myState = new ProjectFacetManagerState();
   private final List<Runnable> myRunnablesToRunOnProjectSettingsClosed = new ArrayList<Runnable>();
+  private Project myProject;
+
+  public ProjectFacetManagerImpl(Project project) {
+    myProject = project;
+  }
 
   public ProjectFacetManagerState getState() {
     return myState;
@@ -43,6 +47,20 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
 
   public void loadState(final ProjectFacetManagerState state) {
     myState = state;
+  }
+
+  @Override
+  public <F extends Facet> List<F> getFacets(@NotNull FacetTypeId<F> typeId) {
+    return getFacets(typeId, ModuleManager.getInstance(myProject).getModules());
+  }
+
+  @Override
+  public <F extends Facet> List<F> getFacets(@NotNull FacetTypeId<F> typeId, final Module[] modules) {
+    final List<F> result = new ArrayList<F>();
+    for (Module module : modules) {
+      result.addAll(FacetManager.getInstance(module).getFacetsByType(typeId));
+    }
+    return result;
   }
 
   public <C extends FacetConfiguration> C createDefaultConfiguration(@NotNull final FacetType<?, C> facetType) {

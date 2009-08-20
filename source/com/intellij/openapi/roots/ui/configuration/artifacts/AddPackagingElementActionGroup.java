@@ -32,6 +32,8 @@ public class AddPackagingElementActionGroup extends ActionGroup {
     List<AnAction> actions = new ArrayList<AnAction>();
     final PackagingElementType<?>[] types = PackagingElementFactory.getInstance().getNonCompositeElementTypes();
     for (final PackagingElementType<?> type : types) {
+      if (!type.canCreate(myArtifactEditor.getContext(), myArtifactEditor.getArtifact())) continue;
+
       final AnAction action = new AnAction(type.getPresentableName()) {
         @Override
         public void actionPerformed(AnActionEvent e) {

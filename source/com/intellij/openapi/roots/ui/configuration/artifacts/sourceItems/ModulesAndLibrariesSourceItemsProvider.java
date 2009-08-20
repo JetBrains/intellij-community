@@ -5,15 +5,18 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.impl.elements.LibraryElementType;
-import com.intellij.packaging.impl.elements.ModuleOutputElementType;
+import com.intellij.packaging.impl.elements.*;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.packaging.ui.PackagingSourceItemsProvider;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -52,11 +55,11 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
       }
     }
 
-    for (Module toAdd : ModuleOutputElementType.getNotAddedModules(editorContext, artifact, module)) {
+    for (Module toAdd : getNotAddedModules(editorContext, artifact, module)) {
       items.add(new ModuleOutputSourceItem(toAdd));
     }
 
-    for (Library library : LibraryElementType.getNotAddedLibraries(editorContext, artifact, libraries)) {
+    for (Library library : getNotAddedLibraries(editorContext, artifact, libraries)) {
       items.add(new LibrarySourceItem(library));
     }
     return items;
@@ -83,5 +86,39 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
       items.add(0, new ModuleGroupItem(ArrayUtil.append(groupPath, group)));
     }
     return items;
+  }
+
+  @NotNull
+  private static List<? extends Module> getNotAddedModules(@NotNull final PackagingEditorContext context, @NotNull Artifact artifact,
+                                                          final Module... allModules) {
+    final Set<Module> modules = new HashSet<Module>(Arrays.asList(allModules));
+    ArtifactUtil.processPackagingElements(artifact, ModuleOutputElementType.MODULE_OUTPUT_ELEMENT_TYPE, new Processor<ModuleOutputPackagingElement>() {
+      public boolean process(ModuleOutputPackagingElement moduleOutputPackagingElement) {
+        modules.remove(moduleOutputPackagingElement.findModule(context));
+        return true;
+      }
+    }, context, true);
+    return new ArrayList<Module>(modules);
+  }
+
+  private static List<? extends Library> getNotAddedLibraries(@NotNull final PackagingEditorContext context, @NotNull Artifact artifact,
+                                                             List<Library> librariesList) {
+    final Set<VirtualFile> roots = new HashSet<VirtualFile>();
+    ArtifactUtil.processPackagingElements(artifact, PackagingElementFactoryImpl.FILE_COPY_ELEMENT_TYPE, new Processor<FileCopyPackagingElement>() {
+      public boolean process(FileCopyPackagingElement fileCopyPackagingElement) {
+        final VirtualFile root = fileCopyPackagingElement.getLibraryRoot();
+        if (root != null) {
+          roots.add(root);
+        }
+        return true;
+      }
+    }, context, true);
+    final List<Library> result = new ArrayList<Library>();
+    for (Library library : librariesList) {
+      if (!roots.containsAll(Arrays.asList(library.getFiles(OrderRootType.CLASSES)))) {
+        result.add(library);
+      }
+    }
+    return result;
   }
 }

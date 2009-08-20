@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Collection;
+import java.util.Arrays;
 
 /**
  * @author nik
@@ -57,5 +58,19 @@ public class ArtifactCompileScope {
   @Nullable
   public static Artifact[] getArtifacts(@NotNull CompileScope compileScope) {
     return compileScope.getUserData(ARTIFACTS_KEY);
+  }
+
+  public static Set<Artifact> getArtifactsToBuild(final Project project, final CompileScope compileScope) {
+    final Artifact[] artifactsFromScope = getArtifacts(compileScope);
+    if (artifactsFromScope != null) {
+      return new HashSet<Artifact>(Arrays.asList(artifactsFromScope));
+    }
+    Set<Artifact> artifacts = new HashSet<Artifact>();
+    for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
+      if (artifact.isBuildOnMake()) {
+        artifacts.add(artifact);
+      }
+    }
+    return artifacts;
   }
 }

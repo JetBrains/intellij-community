@@ -31,9 +31,14 @@ public class ArtifactElementType extends PackagingElementType<ArtifactPackagingE
     return PlainArtifactType.ARTIFACT_ICON;
   }
 
+  @Override
+  public boolean canCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact) {
+    return !getAvailableArtifacts(context, artifact).isEmpty();
+  }
+
   @NotNull
-  public List<? extends ArtifactPackagingElement> createWithDialog(@NotNull PackagingEditorContext context, Artifact artifact,
-                                                                   CompositePackagingElement<?> parent) {
+  public List<? extends ArtifactPackagingElement> chooseAndCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact,
+                                                                   @NotNull CompositePackagingElement<?> parent) {
     final Project project = context.getProject();
     ChooseArtifactsDialog dialog = new ChooseArtifactsDialog(project, getAvailableArtifacts(context, artifact),
                                                              CompilerBundle.message("dialog.title.choose.artifacts"), "");

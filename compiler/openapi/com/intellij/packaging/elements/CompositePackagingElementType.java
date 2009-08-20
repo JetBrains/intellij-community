@@ -17,12 +17,17 @@ public abstract class CompositePackagingElementType<E extends CompositePackaging
     super(id, presentableName);
   }
 
+  @Override
+  public boolean canCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact) {
+    return true;
+  }
+
 
   @Nullable
   public abstract E createComposite(@NotNull PackagingEditorContext context, CompositePackagingElement<?> parent);
 
   @NotNull
-  public List<? extends E> createWithDialog(@NotNull PackagingEditorContext context, Artifact artifact, CompositePackagingElement<?> parent) {
+  public List<? extends E> chooseAndCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact, @NotNull CompositePackagingElement<?> parent) {
     final E composite = createComposite(context, parent);
     return composite != null ? Collections.singletonList(composite) : Collections.<E>emptyList();
   }

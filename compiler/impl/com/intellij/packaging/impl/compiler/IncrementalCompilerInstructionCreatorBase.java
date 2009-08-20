@@ -12,7 +12,7 @@ public abstract class IncrementalCompilerInstructionCreatorBase implements Incre
     if (children != null) {
       for (VirtualFile child : children) {
         if (!child.isDirectory()) {
-          addFileCopyInstruction(child);
+          addFileCopyInstruction(child, child.getName());
         }
         else {
           subFolder(child.getName()).addDirectoryCopyInstructions(child);

@@ -10,8 +10,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.openapi.util.Pair;
-import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.RenameablePackagingElement;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.treeStructure.SimpleNode;
@@ -152,7 +152,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
       final Object node = ((DefaultMutableTreeNode)value).getUserObject();
       final PackagingElement<?> element = ((PackagingElementNode)node).getElementIfSingle();
       LOG.assertTrue(element != null);
-      final String name = ((CompositePackagingElement)element).getName();
+      final String name = ((RenameablePackagingElement)element).getName();
       field.setText(name);
       int i = name.lastIndexOf('.');
       field.setSelectionStart(0);
@@ -165,11 +165,11 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
       final String newValue = ((JTextField)editorComponent).getText();
       final TreePath path = getEditingPath();
       final Object node = getNodeFor(path);
-      CompositePackagingElement currentElement = null;
+      RenameablePackagingElement currentElement = null;
       if (node instanceof PackagingElementNode) {
         final PackagingElement<?> element = ((PackagingElementNode)node).getElementIfSingle();
-        if (element instanceof CompositePackagingElement) {
-          currentElement = (CompositePackagingElement)element;
+        if (element instanceof RenameablePackagingElement) {
+          currentElement = (RenameablePackagingElement)element;
         }
       }
       final boolean stopped = super.stopCellEditing();

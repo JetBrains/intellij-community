@@ -1,16 +1,14 @@
 package com.intellij.packaging.elements;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.vfs.VirtualFile;
-
-import java.util.List;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
 public interface IncrementalCompilerInstructionCreator {
 
-  void addFileCopyInstruction(@NotNull VirtualFile file);
+  void addFileCopyInstruction(@NotNull VirtualFile file, String outputFileName);
 
   void addDirectoryCopyInstructions(VirtualFile directory);
 

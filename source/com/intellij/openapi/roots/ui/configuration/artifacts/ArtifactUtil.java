@@ -215,7 +215,7 @@ public class ArtifactUtil {
         }
         else if (element instanceof FileCopyPackagingElement) {
           final FileCopyPackagingElement fileCopy = (FileCopyPackagingElement)element;
-          if (!fileCopy.isDirectory() && firstName.equals(fileCopy.getFileName())) {
+          if (!fileCopy.isDirectory() && firstName.equals(fileCopy.getOutputFileName())) {
             children.add(element);
           }
         }
@@ -310,7 +310,7 @@ public class ArtifactUtil {
           if (fileCopyElement.isDirectory()) {
             dirCopies.add(fileCopyElement);
           }
-          else if (firstName.equals(fileCopyElement.getFileName())) {
+          else if (firstName.equals(fileCopyElement.getOutputFileName())) {
             fileCopies.add(fileCopyElement);
           }
         }

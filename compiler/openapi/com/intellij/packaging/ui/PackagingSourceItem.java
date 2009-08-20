@@ -1,7 +1,7 @@
 package com.intellij.packaging.ui;
 
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementFilesKind;
+import com.intellij.packaging.elements.PackagingElementOutputKind;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -36,7 +36,7 @@ public abstract class PackagingSourceItem {
   }
 
   @NotNull
-  public PackagingElementFilesKind getKindOfProducedElements() {
-    return PackagingElementFilesKind.OTHER;
+  public PackagingElementOutputKind getKindOfProducedElements() {
+    return PackagingElementOutputKind.OTHER;
   }
 }

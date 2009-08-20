@@ -9,7 +9,7 @@ import com.intellij.openapi.deployment.LibraryLink;
 import com.intellij.packaging.elements.ComplexPackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
-import com.intellij.packaging.elements.PackagingElementFilesKind;
+import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.impl.ui.LibraryElementPresentation;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
@@ -54,9 +54,9 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
 
   @NotNull
   @Override
-  public PackagingElementFilesKind getFilesKind(PackagingElementResolvingContext context) {
+  public PackagingElementOutputKind getFilesKind(PackagingElementResolvingContext context) {
     final Library library = findLibrary(context);
-    return library != null ? LibrarySourceItem.getKindForLibrary(library) : PackagingElementFilesKind.OTHER;
+    return library != null ? LibrarySourceItem.getKindForLibrary(library) : PackagingElementOutputKind.OTHER;
   }
 
   public PackagingElementPresentation createPresentation(PackagingEditorContext context) {

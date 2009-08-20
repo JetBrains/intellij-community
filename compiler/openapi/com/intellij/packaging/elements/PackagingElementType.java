@@ -40,9 +40,11 @@ public abstract class PackagingElementType<E extends PackagingElement<?>> {
     return null;
   }
 
+  public abstract boolean canCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact);
+
   @NotNull 
-  public abstract List<? extends E> createWithDialog(@NotNull PackagingEditorContext context, Artifact artifact,
-                                                     CompositePackagingElement<?> parent);
+  public abstract List<? extends E> chooseAndCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact,
+                                                    @NotNull CompositePackagingElement<?> parent);
 
   @NotNull
   public abstract E createEmpty(@NotNull Project project);

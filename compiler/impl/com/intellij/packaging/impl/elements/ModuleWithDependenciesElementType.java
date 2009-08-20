@@ -28,10 +28,15 @@ public class ModuleWithDependenciesElementType extends PackagingElementType<Modu
     return IconLoader.getIcon("/nodes/ModuleOpen.png");
   }
 
+  @Override
+  public boolean canCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact) {
+    return context.getModulesProvider().getModules().length > 0;
+  }
+
   @NotNull
-  public List<? extends ModuleWithDependenciesPackagingElement> createWithDialog(@NotNull PackagingEditorContext context,
-                                                                                 Artifact artifact,
-                                                                                 CompositePackagingElement<?> parent) {
+  public List<? extends ModuleWithDependenciesPackagingElement> chooseAndCreate(@NotNull PackagingEditorContext context,
+                                                                                 @NotNull Artifact artifact,
+                                                                                 @NotNull CompositePackagingElement<?> parent) {
     final List<Module> modules = ModuleOutputElementType.chooseModules(context, artifact);
     final List<ModuleWithDependenciesPackagingElement> elements = new ArrayList<ModuleWithDependenciesPackagingElement>();
     for (Module module : modules) {

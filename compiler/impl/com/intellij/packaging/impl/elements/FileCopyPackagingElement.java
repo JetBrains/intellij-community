@@ -1,21 +1,22 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.compiler.ant.Generator;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.FileCopyPresentation;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
-import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.Collections;
@@ -24,20 +25,26 @@ import java.util.List;
 /**
  * @author nik
  */
-public class FileCopyPackagingElement extends PackagingElement<FileCopyPackagingElement> {
+public class FileCopyPackagingElement extends PackagingElement<FileCopyPackagingElement> implements RenameablePackagingElement {
   private String myFilePath;
+  private String myRenamedOutputFileName;
 
   public FileCopyPackagingElement() {
     super(PackagingElementFactoryImpl.FILE_COPY_ELEMENT_TYPE);
   }
 
   public FileCopyPackagingElement(String filePath) {
-    super(PackagingElementFactoryImpl.FILE_COPY_ELEMENT_TYPE);
+    this();
     myFilePath = filePath;
   }
 
+  public FileCopyPackagingElement(String filePath, String outputFileName) {
+    this(filePath);
+    myRenamedOutputFileName = outputFileName;
+  }
+
   public PackagingElementPresentation createPresentation(PackagingEditorContext context) {
-    return new FileCopyPresentation(myFilePath);
+    return new FileCopyPresentation(myFilePath, getOutputFileName());
   }
 
   @Override
@@ -51,13 +58,13 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
       generator = creator.createDirectoryContentCopyInstruction(path);
     }
     else {
-      generator = creator.createFileCopyInstruction(path, getFileName());
+      generator = creator.createFileCopyInstruction(path, getOutputFileName());
     }
     return Collections.singletonList(generator);
   }
 
-  public String getFileName() {
-    return StringUtil.getShortName(myFilePath, '/');
+  public String getOutputFileName() {
+    return myRenamedOutputFileName != null ? myRenamedOutputFileName : StringUtil.getShortName(myFilePath, '/');
   }
 
   @Override
@@ -72,7 +79,7 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
       creator.addDirectoryCopyInstructions(file);
     }
     else {
-      creator.addFileCopyInstruction(file);
+      creator.addFileCopyInstruction(file, getOutputFileName());
     }
   }
 
@@ -82,7 +89,7 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
 
   @NonNls @Override
   public String toString() {
-    return "file:" + myFilePath;
+    return "file:" + myFilePath + (myRenamedOutputFileName != null ? ",rename to:" + myRenamedOutputFileName : "");
   }
 
   public boolean isDirectory() {
@@ -94,7 +101,8 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
   @Override
   public boolean isEqualTo(@NotNull PackagingElement<?> element) {
     return element instanceof FileCopyPackagingElement && myFilePath != null
-           && myFilePath.equals(((FileCopyPackagingElement)element).getFilePath());
+           && myFilePath.equals(((FileCopyPackagingElement)element).getFilePath())
+           && Comparing.equal(myRenamedOutputFileName, ((FileCopyPackagingElement)element).getRenamedOutputFileName());
   }
 
   public FileCopyPackagingElement getState() {
@@ -102,7 +110,8 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
   }
 
   public void loadState(FileCopyPackagingElement state) {
-    myFilePath = state.getFilePath();
+    setFilePath(state.getFilePath());
+    setRenamedOutputFileName(state.getRenamedOutputFileName());
   }
 
   @Attribute("path")
@@ -112,6 +121,28 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
 
   public void setFilePath(String filePath) {
     myFilePath = filePath;
+  }
+
+  @Nullable
+  @Attribute("output-file-name")
+  public String getRenamedOutputFileName() {
+    return myRenamedOutputFileName;
+  }
+
+  public void setRenamedOutputFileName(String renamedOutputFileName) {
+    myRenamedOutputFileName = renamedOutputFileName;
+  }
+
+  public String getName() {
+    return getOutputFileName();
+  }
+
+  public boolean canBeRenamed() {
+    return !isDirectory();
+  }
+
+  public void rename(@NotNull String newName) {
+    myRenamedOutputFileName = newName.equals(StringUtil.getShortName(myFilePath, '/')) ? null : newName;
   }
 
   @Nullable

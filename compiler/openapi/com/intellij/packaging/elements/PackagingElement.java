@@ -36,7 +36,7 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
   public abstract boolean isEqualTo(@NotNull PackagingElement<?> element);
 
   @NotNull
-  public PackagingElementFilesKind getFilesKind(PackagingElementResolvingContext context) {
-    return PackagingElementFilesKind.OTHER;
+  public PackagingElementOutputKind getFilesKind(PackagingElementResolvingContext context) {
+    return PackagingElementOutputKind.OTHER;
   }
 }

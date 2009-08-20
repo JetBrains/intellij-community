@@ -35,34 +35,15 @@ public class LibraryElementType extends PackagingElementType<LibraryPackagingEle
     return Icons.LIBRARY_ICON;
   }
 
-  public static List<? extends Library> getNotAddedLibraries(@NotNull final PackagingEditorContext context, @NotNull Artifact artifact,
-                                                             List<Library> librariesList) {
-    final Set<VirtualFile> roots = new HashSet<VirtualFile>();
-    ArtifactUtil.processPackagingElements(artifact, PackagingElementFactoryImpl.FILE_COPY_ELEMENT_TYPE, new Processor<FileCopyPackagingElement>() {
-      public boolean process(FileCopyPackagingElement fileCopyPackagingElement) {
-        final VirtualFile root = fileCopyPackagingElement.getLibraryRoot();
-        if (root != null) {
-          roots.add(root);
-        }
-        return true;
-      }
-    }, context, true);
-    final List<Library> result = new ArrayList<Library>();
-    for (Library library : librariesList) {
-      if (!roots.containsAll(Arrays.asList(library.getFiles(OrderRootType.CLASSES)))) {
-        result.add(library);
-      }
-    }
-    return result;
+  @Override
+  public boolean canCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact) {
+    return !getAllLibraries(context).isEmpty();
   }
 
   @NotNull
-  public List<? extends LibraryPackagingElement> createWithDialog(@NotNull PackagingEditorContext context, Artifact artifact,
-                                                                  CompositePackagingElement<?> parent) {
-    List<Library> libraries = new ArrayList<Library>();
-    libraries.addAll(Arrays.asList(LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraries()));
-    libraries.addAll(Arrays.asList(LibraryTablesRegistrar.getInstance().getLibraryTable(context.getProject()).getLibraries()));
-    ChooseLibrariesDialog dialog = new ChooseLibrariesDialog(context.getProject(), getNotAddedLibraries(context, artifact, libraries),
+  public List<? extends LibraryPackagingElement> chooseAndCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact,
+                                                                  @NotNull CompositePackagingElement<?> parent) {
+    ChooseLibrariesDialog dialog = new ChooseLibrariesDialog(context.getProject(), getAllLibraries(context),
                                                              ProjectBundle.message("dialog.title.packaging.choose.library"), "");
     dialog.show();
     final List<Library> selected = dialog.getChosenElements();
@@ -73,6 +54,13 @@ public class LibraryElementType extends PackagingElementType<LibraryPackagingEle
       }
     }
     return elements;
+  }
+
+  private List<Library> getAllLibraries(PackagingEditorContext context) {
+    List<Library> libraries = new ArrayList<Library>();
+    libraries.addAll(Arrays.asList(LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraries()));
+    libraries.addAll(Arrays.asList(LibraryTablesRegistrar.getInstance().getLibraryTable(context.getProject()).getLibraries()));
+    return libraries;
   }
 
   @NotNull

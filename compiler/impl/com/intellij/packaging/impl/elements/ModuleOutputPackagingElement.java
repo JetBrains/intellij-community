@@ -61,8 +61,8 @@ public class ModuleOutputPackagingElement extends PackagingElement<ModuleOutputP
 
   @NotNull
   @Override
-  public PackagingElementFilesKind getFilesKind(PackagingElementResolvingContext context) {
-    return PackagingElementFilesKind.DIRECTORIES_WITH_CLASSES;
+  public PackagingElementOutputKind getFilesKind(PackagingElementResolvingContext context) {
+    return PackagingElementOutputKind.DIRECTORIES_WITH_CLASSES;
   }
 
   @Override

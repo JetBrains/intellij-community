@@ -7,18 +7,18 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeSelection;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
-import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.RenameablePackagingElement;
 
 import javax.swing.tree.TreePath;
 
 /**
  * @author nik
  */
-public class RenameCompositeElementAction extends AnAction {
+public class RenamePackagingElementAction extends AnAction {
   private final ArtifactEditorEx myArtifactEditor;
 
-  public RenameCompositeElementAction(ArtifactEditorEx artifactEditor) {
+  public RenamePackagingElementAction(ArtifactEditorEx artifactEditor) {
     super(ProjectBundle.message("action.name.rename.packaging.element"));
     registerCustomShortcutSet(CommonShortcuts.getRename(), artifactEditor.getLayoutTreeComponent().getTreePanel());
     myArtifactEditor = artifactEditor;
@@ -28,7 +28,7 @@ public class RenameCompositeElementAction extends AnAction {
   public void update(AnActionEvent e) {
     final LayoutTreeSelection selection = myArtifactEditor.getLayoutTreeComponent().getSelection();
     final PackagingElement<?> element = selection.getElementIfSingle();
-    final boolean visible = element instanceof CompositePackagingElement && ((CompositePackagingElement)element).canBeRenamed();
+    final boolean visible = element instanceof RenameablePackagingElement && ((RenameablePackagingElement)element).canBeRenamed();
     e.getPresentation().setEnabled(visible);
     e.getPresentation().setVisible(visible);
   }

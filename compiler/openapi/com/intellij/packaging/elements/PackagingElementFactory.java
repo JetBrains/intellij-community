@@ -52,6 +52,10 @@ public abstract class PackagingElementFactory {
   public abstract PackagingElement<?> createFileCopyWithParentDirectories(@NotNull String filePath, @NotNull String relativeOutputPath);
 
   @NotNull
+  public abstract PackagingElement<?> createFileCopyWithParentDirectories(@NotNull String filePath, @NotNull String relativeOutputPath,
+                                                                          @Nullable String outputFileName);
+  
+  @NotNull
   public abstract CompositePackagingElement<?> getOrCreateDirectory(@NotNull CompositePackagingElement<?> parent, @NotNull String relativePath);
 
   @NotNull

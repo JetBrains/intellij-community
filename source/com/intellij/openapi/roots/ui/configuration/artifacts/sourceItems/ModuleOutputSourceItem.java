@@ -2,7 +2,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementFilesKind;
+import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
 import com.intellij.packaging.impl.ui.ModuleElementPresentation;
 import com.intellij.packaging.ui.PackagingEditorContext;
@@ -49,7 +49,7 @@ public class ModuleOutputSourceItem extends PackagingSourceItem {
 
   @NotNull
   @Override
-  public PackagingElementFilesKind getKindOfProducedElements() {
-    return PackagingElementFilesKind.DIRECTORIES_WITH_CLASSES;
+  public PackagingElementOutputKind getKindOfProducedElements() {
+    return PackagingElementOutputKind.DIRECTORIES_WITH_CLASSES;
   }
 }

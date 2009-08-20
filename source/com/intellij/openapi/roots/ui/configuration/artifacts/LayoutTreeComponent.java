@@ -133,7 +133,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     CompositePackagingElement<?> parent = element instanceof CompositePackagingElement<?> ? (CompositePackagingElement<?>)element
                                                                                              : getArtifact().getRootElement();
 
-    final List<? extends PackagingElement<?>> children = type.createWithDialog(myContext, getArtifact(), parent);
+    final List<? extends PackagingElement<?>> children = type.chooseAndCreate(myContext, getArtifact(), parent);
     for (PackagingElement<?> child : children) {
       parent.addOrFindChild(child);
     }

@@ -19,46 +19,56 @@ import javax.swing.*;
  */
 public class FileCopyPresentation extends PackagingElementPresentation {
   private static final Icon COPY_OF_FOLDER_ICON = IconLoader.getIcon("/nodes/copyOfFolder.png");
-  private final String myParentPath;
-  private final String myFileName;
+  private final String mySourcePath;
+  private final String myOutputFileName;
+  private final String mySourceFileName;
   private final VirtualFile myFile;
   private final boolean myIsDirectory;
 
-  public FileCopyPresentation(String filePath) {
+  public FileCopyPresentation(String filePath, String outputFileName) {
+    mySourceFileName = StringUtil.getShortName(filePath, '/');
+    myOutputFileName = outputFileName;
+
+    String parentPath;
     myFile = LocalFileSystem.getInstance().findFileByPath(filePath);
     if (myFile != null) {
-      myFileName = myFile.getName();
       final VirtualFile parent = myFile.getParent();
-      myParentPath = parent != null ? FileUtil.toSystemDependentName(parent.getPath()) : "";
+      parentPath = parent != null ? FileUtil.toSystemDependentName(parent.getPath()) : "";
       myIsDirectory = myFile.isDirectory();
     }
     else {
-      myFileName = StringUtil.getShortName(filePath, '/');
-      myParentPath = FileUtil.toSystemDependentName(StringUtil.getPackageName(filePath, '/'));
+      parentPath = FileUtil.toSystemDependentName(StringUtil.getPackageName(filePath, '/'));
       myIsDirectory = false;
+    }
+
+    if (!myIsDirectory && !mySourceFileName.equals(myOutputFileName)) {
+      mySourcePath = parentPath + "/" + mySourceFileName;
+    }
+    else {
+      mySourcePath = parentPath;
     }
   }
 
   public String getPresentableName() {
-    return myFileName;
+    return myOutputFileName;
   }
 
   public void render(@NotNull PresentationData presentationData) {
     if (myFile != null) {
       presentationData.setIcons(myIsDirectory ? COPY_OF_FOLDER_ICON : myFile.getIcon());
       if (myIsDirectory) {
-        presentationData.addText(CompilerBundle.message("node.text.0.directory.content", myFileName), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        presentationData.addText(CompilerBundle.message("node.text.0.directory.content", mySourceFileName), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
       else {
-        presentationData.addText(myFileName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        presentationData.addText(myOutputFileName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
-      presentationData.addText(" (" + myParentPath + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      presentationData.addText(" (" + mySourcePath + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
     else {
       presentationData.setIcons(COPY_OF_FOLDER_ICON);
-      presentationData.addText(myFileName, SimpleTextAttributes.ERROR_ATTRIBUTES);
-      final VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(myParentPath));
-      presentationData.addText("(" + myParentPath + ")",
+      presentationData.addText(myOutputFileName, SimpleTextAttributes.ERROR_ATTRIBUTES);
+      final VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(mySourcePath));
+      presentationData.addText("(" + mySourcePath + ")",
                       parentFile != null ? SimpleTextAttributes.GRAY_ATTRIBUTES : SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
   }

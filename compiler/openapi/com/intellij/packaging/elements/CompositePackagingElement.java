@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public abstract class CompositePackagingElement<S> extends PackagingElement<S> {
+public abstract class CompositePackagingElement<S> extends PackagingElement<S> implements RenameablePackagingElement {
   private final List<PackagingElement<?>> myChildren = new ArrayList<PackagingElement<?>>();
   private List<PackagingElement<?>> myUnmodifiableChildren;
 
@@ -58,13 +58,9 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> {
     return myUnmodifiableChildren;
   }
 
-  public abstract String getName();
-
   public boolean canBeRenamed() {
     return true;
   }
-
-  public abstract void rename(@NotNull String newName);
 
   protected List<? extends Generator> computeChildrenGenerators(PackagingElementResolvingContext resolvingContext,
                                                                 final AntCopyInstructionCreator copyInstructionCreator,

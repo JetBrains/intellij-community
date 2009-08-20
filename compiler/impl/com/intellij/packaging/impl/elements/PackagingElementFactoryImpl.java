@@ -211,7 +211,15 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   @NotNull
   @Override
   public PackagingElement<?> createFileCopyWithParentDirectories(@NotNull String filePath, @NotNull String relativeOutputPath) {
-    final FileCopyPackagingElement file = createFileCopy(filePath);
+    return createFileCopyWithParentDirectories(filePath, relativeOutputPath, null);
+  }
+
+  @NotNull
+  @Override
+  public PackagingElement<?> createFileCopyWithParentDirectories(@NotNull String filePath,
+                                                                 @NotNull String relativeOutputPath,
+                                                                 @Nullable String outputFileName) {
+    final FileCopyPackagingElement file = new FileCopyPackagingElement(filePath, outputFileName);
     return createParentDirectories(relativeOutputPath, file);
   }
 
@@ -310,9 +318,14 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
       return null;
     }
 
+    @Override
+    public boolean canCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact) {
+      return true;
+    }
+
     @NotNull
-    public List<? extends FileCopyPackagingElement> createWithDialog(@NotNull PackagingEditorContext context, Artifact artifact,
-                                                                     CompositePackagingElement<?> parent) {
+    public List<? extends FileCopyPackagingElement> chooseAndCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact,
+                                                                     @NotNull CompositePackagingElement<?> parent) {
       final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, false, true);
       final FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, context.getProject());
       final VirtualFile[] files = chooser.choose(null, context.getProject());
@@ -334,9 +347,14 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
       super("root", "");
     }
 
+    @Override
+    public boolean canCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact) {
+      return false;
+    }
+
     @NotNull
-    public List<? extends ArtifactRootElement<?>> createWithDialog(@NotNull PackagingEditorContext context, Artifact artifact,
-                                                                   CompositePackagingElement<?> parent) {
+    public List<? extends ArtifactRootElement<?>> chooseAndCreate(@NotNull PackagingEditorContext context, @NotNull Artifact artifact,
+                                                                   @NotNull CompositePackagingElement<?> parent) {
       throw new UnsupportedOperationException("'create' not implemented in " + getClass().getName());
     }
 

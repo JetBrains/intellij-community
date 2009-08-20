@@ -54,7 +54,7 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
   protected ArtifactPackagingProcessingItem[] collectItems(ArtifactsProcessingItemsBuilderContext builderContext, final Project project) {
     final CompileContext context = builderContext.getCompileContext();
 
-    final Set<Artifact> artifactsToBuild = getArtifactsToBuild(project, context.getCompileScope());
+    final Set<Artifact> artifactsToBuild = ArtifactCompileScope.getArtifactsToBuild(project, context.getCompileScope());
     for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
       final String outputPath = artifact.getOutputPath();
       if (outputPath != null && outputPath.length() != 0) {
@@ -67,20 +67,6 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     }
     context.putUserData(AFFECTED_ARTIFACTS, artifactsToBuild);
     return builderContext.getProcessingItems();
-  }
-
-  private static Set<Artifact> getArtifactsToBuild(final Project project, final CompileScope compileScope) {
-    final Artifact[] artifactsFromScope = ArtifactCompileScope.getArtifacts(compileScope);
-    if (artifactsFromScope != null) {
-      return new HashSet<Artifact>(Arrays.asList(artifactsFromScope));
-    }
-    Set<Artifact> artifacts = new HashSet<Artifact>();
-    for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
-      if (artifact.isBuildOnMake()) {
-        artifacts.add(artifact);
-      }
-    }
-    return artifacts;
   }
 
   protected void onBuildFinished(ArtifactsProcessingItemsBuilderContext context, JarsBuilder builder, final Project project)

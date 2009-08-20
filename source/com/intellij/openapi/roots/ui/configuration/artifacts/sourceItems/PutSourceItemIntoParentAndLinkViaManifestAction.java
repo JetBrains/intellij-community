@@ -4,20 +4,19 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ParentElementProcessor;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementFilesKind;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement;
 import com.intellij.packaging.ui.ArtifactEditor;
-import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +48,7 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends AnAction {
 
     boolean enable = parentInfo != null;
     for (PackagingSourceItem item : mySourceItemsTree.getSelectedItems()) {
-      if (item.getKindOfProducedElements() != PackagingElementFilesKind.JAR_FILES) {
+      if (!item.getKindOfProducedElements().containsJarFiles()) {
         enable = false;
         break;
       }
@@ -103,7 +102,7 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends AnAction {
       ArtifactUtil.processElements(elements, context, artifact.getArtifactType(), new Processor<PackagingElement<?>>() {
         public boolean process(PackagingElement<?> element) {
           if (element instanceof FileCopyPackagingElement) {
-            classpath.add(((FileCopyPackagingElement)element).getFileName());
+            classpath.add(((FileCopyPackagingElement)element).getOutputFileName());
           }
           else if (element instanceof ArchivePackagingElement) {
             classpath.add(((ArchivePackagingElement)element).getName());

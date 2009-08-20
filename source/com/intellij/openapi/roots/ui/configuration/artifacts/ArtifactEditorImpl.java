@@ -219,7 +219,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     popupActionGroup.add(removeAction);
     popupActionGroup.add(new ExtractArtifactAction(this));
     popupActionGroup.add(new InlineArtifactAction(this));
-    popupActionGroup.add(new RenameCompositeElementAction(this));
+    popupActionGroup.add(new RenamePackagingElementAction(this));
     popupActionGroup.add(Separator.getInstance());
     popupActionGroup.add(new HideContentAction(this));
     popupActionGroup.add(new ArtifactEditorNavigateAction(myLayoutTreeComponent));

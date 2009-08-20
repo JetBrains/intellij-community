@@ -21,9 +21,8 @@ public class CopyToDirectoryInstructionCreator extends IncrementalCompilerInstru
     myOutputFile = outputFile;
   }
 
-  public void addFileCopyInstruction(@NotNull VirtualFile file) {
-    final String fileName = file.getName();
-    myContext.addDestination(file, new ExplodedDestinationInfo(myOutputPath + "/" + fileName, outputChild(fileName)));
+  public void addFileCopyInstruction(@NotNull VirtualFile file, String outputFileName) {
+    myContext.addDestination(file, new ExplodedDestinationInfo(myOutputPath + "/" + outputFileName, outputChild(outputFileName)));
   }
 
   public IncrementalCompilerInstructionCreator subFolder(String directoryName) {
