@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,15 +32,13 @@ public class SimplifyIfElseIntention extends Intention {
         return new SimplifyIfElsePredicate();
     }
 
-    public void processIntention(PsiElement element)
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        final PsiJavaToken token =
-                (PsiJavaToken)element;
-        final PsiIfStatement statement = (PsiIfStatement)token.getParent();
+        final PsiIfStatement statement = (PsiIfStatement)element.getParent();
         if (SimplifyIfElsePredicate.isSimplifiableAssignment(statement)) {
             replaceSimplifiableAssignment(statement);
         } else if (SimplifyIfElsePredicate.isSimplifiableReturn(statement)) {
-            repaceSimplifiableReturn(statement);
+            replaceSimplifiableReturn(statement);
         } else if (SimplifyIfElsePredicate.isSimplifiableImplicitReturn(
                 statement)) {
             replaceSimplifiableImplicitReturn(statement);
@@ -49,7 +47,7 @@ public class SimplifyIfElseIntention extends Intention {
             replaceSimplifiableAssignmentNegated(statement);
         } else if (SimplifyIfElsePredicate.isSimplifiableReturnNegated(
                 statement)) {
-            repaceSimplifiableReturnNegated(statement);
+            replaceSimplifiableReturnNegated(statement);
         } else if (SimplifyIfElsePredicate.isSimplifiableImplicitReturnNegated(
                 statement)) {
             replaceSimplifiableImplicitReturnNegated(statement);
@@ -80,7 +78,7 @@ public class SimplifyIfElseIntention extends Intention {
         nextStatement.delete();
     }
 
-    private static void repaceSimplifiableReturn(PsiIfStatement statement)
+    private static void replaceSimplifiableReturn(PsiIfStatement statement)
             throws IncorrectOperationException {
         final PsiExpression condition = statement.getCondition();
         if (condition == null) {
@@ -176,7 +174,7 @@ public class SimplifyIfElseIntention extends Intention {
         nextStatement.delete();
     }
 
-    private static void repaceSimplifiableReturnNegated(
+    private static void replaceSimplifiableReturnNegated(
             PsiIfStatement statement)
             throws IncorrectOperationException {
         final PsiExpression condition = statement.getCondition();
