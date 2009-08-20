@@ -3,16 +3,16 @@ package org.jetbrains.plugins.groovy.gant;
 import com.intellij.execution.Location;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.gant.GantIcons;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.runner.AbstractGroovyScriptRunConfiguration;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 
 import javax.swing.*;
 
@@ -29,6 +29,11 @@ public class GantScriptType extends GroovyScriptType {
   @NotNull
   public Icon getScriptIcon() {
     return GantIcons.GANT_ICON_16x16;
+  }
+
+  @Override
+  public GroovyScriptRunner getRunner() {
+    return new GantRunner();
   }
 
   @Override

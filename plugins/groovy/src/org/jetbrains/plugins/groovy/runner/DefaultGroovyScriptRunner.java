@@ -24,17 +24,11 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.nio.charset.Charset;
 
-public class GroovyScriptRunConfiguration extends GroovyConfiguration {
-  @Override
-  public boolean runsScript(@NotNull VirtualFile scriptFile) {
-    return scriptFile.getFileType() == GroovyFileType.GROOVY_FILE_TYPE;
-  }
+public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
   @Override
   public boolean isValidModule(Module module) {

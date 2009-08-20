@@ -1,20 +1,18 @@
 package org.jetbrains.plugins.groovy.runner;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,20 +21,7 @@ import java.util.regex.Pattern;
 /**
  * @author peter
  */
-public abstract class GroovyConfiguration {
-  private static final ExtensionPointName<GroovyConfiguration> EP_NAME = ExtensionPointName.create("org.intellij.groovy.configuration");
-
-  @Nullable
-  public static GroovyConfiguration findConfiguration(VirtualFile scriptFile) {
-    for (GroovyConfiguration configuration : EP_NAME.getExtensions()) {
-      if (configuration.runsScript(scriptFile)) {
-        return configuration;
-      }
-    }
-    return null;
-  }
-
-  protected abstract boolean runsScript(@NotNull VirtualFile scriptFile);
+public abstract class GroovyScriptRunner {
 
   public abstract boolean isValidModule(Module module);
 
@@ -113,7 +98,7 @@ public abstract class GroovyConfiguration {
     }
   }
 
-  protected static String getClearClasspath(Module module, boolean isTests) throws CantRunException {
+  private static String getClearClasspath(Module module, boolean isTests) throws CantRunException {
     final JavaParameters tmp = new JavaParameters();
     tmp.configureByModule(module, isTests ? JavaParameters.JDK_AND_CLASSES_AND_TESTS : JavaParameters.JDK_AND_CLASSES);
     StringBuffer buffer = RunnerUtil.getClearClassPathString(tmp, module);

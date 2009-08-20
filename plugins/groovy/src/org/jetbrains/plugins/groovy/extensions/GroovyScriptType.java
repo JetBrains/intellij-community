@@ -3,9 +3,12 @@ package org.jetbrains.plugins.groovy.extensions;
 import com.intellij.execution.Location;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.runner.AbstractGroovyScriptRunConfiguration;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
+import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
 
 import javax.swing.*;
 
@@ -24,6 +27,11 @@ public abstract class GroovyScriptType {
     @Override
     public Icon getScriptIcon() {
       return GroovyFileType.GROOVY_LOGO;
+    }
+
+    @Override
+    public GroovyScriptRunner getRunner() {
+      return new DefaultGroovyScriptRunner();
     }
   };
 
@@ -46,5 +54,10 @@ public abstract class GroovyScriptType {
   public abstract Icon getScriptIcon();
 
   public void tuneConfiguration(@NotNull GroovyFile file, @NotNull AbstractGroovyScriptRunConfiguration configuration, Location location) {
+  }
+
+  @Nullable
+  public GroovyScriptRunner getRunner() {
+    return null;
   }
 }

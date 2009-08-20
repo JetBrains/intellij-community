@@ -25,10 +25,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -77,15 +81,15 @@ public class AbstractGroovyScriptRunConfiguration extends ModuleBasedConfigurati
 
   public Collection<Module> getValidModules() {
     Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-    final GroovyConfiguration configuration = findConfiguration();
-    if (configuration == null) {
+    final GroovyScriptRunner scriptRunner = findConfiguration();
+    if (scriptRunner == null) {
       return Arrays.asList(modules);
     }
 
 
     ArrayList<Module> res = new ArrayList<Module>();
     for (Module module : modules) {
-      if (configuration.isValidModule(module)) {
+      if (scriptRunner.isValidModule(module)) {
         res.add(module);
       }
     }
@@ -93,13 +97,18 @@ public class AbstractGroovyScriptRunConfiguration extends ModuleBasedConfigurati
   }
 
   @Nullable
-  private GroovyConfiguration findConfiguration() {
+  private GroovyScriptRunner findConfiguration() {
     final VirtualFile scriptFile = getScriptFile();
     if (scriptFile == null) {
       return null;
     }
 
-    return GroovyConfiguration.findConfiguration(scriptFile);
+    final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(scriptFile);
+    if (!(psiFile instanceof GroovyFile) || !((GroovyFile)psiFile).isScript()) {
+      return null;
+    }
+
+    return GroovyScriptType.getScriptType((GroovyFile)psiFile).getRunner();
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -152,12 +161,12 @@ public class AbstractGroovyScriptRunConfiguration extends ModuleBasedConfigurati
       throw new CantRunException("Cannot find script " + scriptPath);
     }
 
-    final GroovyConfiguration configuration = findConfiguration();
-    if (configuration == null) {
+    final GroovyScriptRunner scriptRunner = findConfiguration();
+    if (scriptRunner == null) {
       throw new CantRunException("Unknown script type " + scriptPath);
     }
 
-    if (!configuration.ensureRunnerConfigured(module, groovyHomePath)) {
+    if (!scriptRunner.ensureRunnerConfigured(module, groovyHomePath)) {
       return null;
     }
 
@@ -171,9 +180,9 @@ public class AbstractGroovyScriptRunConfiguration extends ModuleBasedConfigurati
         params.setJdk(ModuleRootManager.getInstance(module).getSdk());
         params.setWorkingDirectory(getAbsoluteWorkDir());
 
-        final String confPath = configuration.getConfPath(module);
+        final String confPath = scriptRunner.getConfPath(module);
         final String groovyHome = FileUtil.toSystemDependentName(groovyHomePath);
-        configuration.configureCommandLine(params, module, tests, script, confPath, groovyHome, AbstractGroovyScriptRunConfiguration.this);
+        scriptRunner.configureCommandLine(params, module, tests, script, confPath, groovyHome, AbstractGroovyScriptRunConfiguration.this);
 
         if (isDebugEnabled) {
           params.getProgramParametersList().add("--debug");
