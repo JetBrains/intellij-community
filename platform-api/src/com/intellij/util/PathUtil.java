@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.StringTokenizer;
@@ -39,6 +40,20 @@ public class PathUtil {
       path = path.substring(0, path.length() - JarFileSystem.JAR_SEPARATOR.length());
     }
     return path.replace('/', File.separatorChar);
+  }
+
+  @NotNull
+  public static VirtualFile getLocalFile(@NotNull VirtualFile file) {
+    if (!file.isValid()) {
+      return file;
+    }
+    if (file.getFileSystem() instanceof JarFileSystem) {
+      final VirtualFile jarFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
+      if (jarFile != null) {
+        return jarFile;
+      }
+    }
+    return file;
   }
 
   public static String getJarPathForClass(final Class aClass) {
