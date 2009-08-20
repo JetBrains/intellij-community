@@ -69,7 +69,6 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
     computeChildrenInstructions(creator, resolvingContext, compilerContext, artifactType);
   }
 
-  @Override
   public String getName() {
     return "";
   }

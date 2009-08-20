@@ -75,12 +75,10 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     myArchiveFileName = archiveFileName;
   }
 
-  @Override
   public String getName() {
     return myArchiveFileName;
   }
 
-  @Override
   public void rename(@NotNull String newName) {
     myArchiveFileName = newName;
   }

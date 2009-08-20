@@ -78,7 +78,6 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
     myDirectoryName = newName;
   }
 
-  @Override
   public String getName() {
     return myDirectoryName;
   }
