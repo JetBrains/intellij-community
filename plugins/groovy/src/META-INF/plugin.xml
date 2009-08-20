@@ -33,6 +33,7 @@
     <extensionPoint name="compilerExtension" interface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerExtension"/>
     <extensionPoint name="facetExtension" interface="org.jetbrains.plugins.groovy.config.GroovyFacetExtension"/>
     <extensionPoint name="configuration" interface="org.jetbrains.plugins.groovy.runner.GroovyConfiguration"/>
+    <extensionPoint name="scriptType" interface="org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeEP"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
@@ -48,6 +49,8 @@
 
     <configuration implementation="org.jetbrains.plugins.gant.runner.GantScriptRunConfiguration"/>
     <configuration implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration" order="last"/>
+
+    <scriptType extensions="gant" descriptorClass="org.jetbrains.plugins.gant.util.GantScriptType"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -184,8 +187,6 @@
     <quoteHandler fileType="Gant" className="org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler"/>
     <!--Gant Run/debug-->
     <configurationType implementation="org.jetbrains.plugins.gant.runner.GantScriptRunConfigurationType"/>
-    <configurationProducer implementation="org.jetbrains.plugins.gant.runner.GantScriptRunConfigurationProducer"/>
-    <fileTypeFactory implementation="org.jetbrains.plugins.gant.GantFileTypeLoader"/>
 
     <psi.referenceContributor implementation="org.jetbrains.plugins.gant.reference.GantReferenceContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.providers.GroovyReferenceContributor"/>
@@ -419,9 +420,6 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.extensions.script.ScriptDetectorRegistry</implementation-class>
     </component>
   </application-components>
 

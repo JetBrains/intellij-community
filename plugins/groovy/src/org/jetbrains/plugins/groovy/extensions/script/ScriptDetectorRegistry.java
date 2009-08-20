@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 
 import java.util.ArrayList;
 
@@ -12,7 +13,7 @@ import java.util.ArrayList;
  */
 public class ScriptDetectorRegistry implements ApplicationComponent {
 
-  private final ArrayList<GroovyScriptDetector> myDetectors = new ArrayList<GroovyScriptDetector>();
+  private final ArrayList<GroovyScriptType> myTypes = new ArrayList<GroovyScriptType>();
 
   @NonNls
   @NotNull
@@ -24,12 +25,12 @@ public class ScriptDetectorRegistry implements ApplicationComponent {
     return ApplicationManager.getApplication().getComponent(ScriptDetectorRegistry.class);
   }
 
-  public void registerDetector(GroovyScriptDetector detector) {
-    myDetectors.add(detector);
+  public void registerDetector(GroovyScriptType type) {
+    myTypes.add(type);
   }
 
-  public GroovyScriptDetector[] getScriptDetectors() {
-    return myDetectors.toArray(new GroovyScriptDetector[myDetectors.size()]);
+  public GroovyScriptType[] getScriptDetectors() {
+    return myTypes.toArray(new GroovyScriptType[myTypes.size()]);
   }
 
 

@@ -18,10 +18,14 @@ package org.jetbrains.plugins.groovy;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeEP;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
 
 /**
  * @author ilyas
@@ -33,8 +37,18 @@ public class GroovyFileTypeLoader extends FileTypeFactory{
     return GROOVY_FILE_TYPES.toArray(new FileType[GROOVY_FILE_TYPES.size()]);
   }
 
+  public static List<String> getAllGroovyExtensions() {
+    final ArrayList<String> strings = new ArrayList<String>();
+    strings.add(GroovyFileType.DEFAULT_EXTENSION);
+    strings.add("gdsl");
+    for (GroovyScriptTypeEP ep : GroovyScriptType.EP_NAME.getExtensions()) {
+      strings.addAll(Arrays.asList(ep.extensions.split(";")));
+    }
+    return strings;
+  }
+
   public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-    consumer.consume(GroovyFileType.GROOVY_FILE_TYPE, GroovyFileType.DEFAULT_EXTENSION + ";gdsl");
+    consumer.consume(GroovyFileType.GROOVY_FILE_TYPE, StringUtil.join(getAllGroovyExtensions(), ";"));
     GROOVY_FILE_TYPES.add(GroovyFileType.GROOVY_FILE_TYPE);
   }
 }

@@ -45,6 +45,7 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
 import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -208,16 +209,13 @@ public class GroovyPositionManager implements PositionManager {
     int dotIndex = qName.lastIndexOf(".");
     String packageName = dotIndex > 0 ? qName.substring(0, dotIndex) : "";
     Query<VirtualFile> query = directoryIndex.getDirectoriesByPackageName(packageName, true);
-    String fileNameWithoutExtension = dotIndex > 0 ? qName.substring(dotIndex + 1) : qName;
-    final Set<String> fileNames = new HashSet<String>();
-    for (final String extention : GROOVY_EXTENSIONS) {
-      fileNames.add(fileNameWithoutExtension + "." + extention);
-    }
+    final String fileNameWithoutExtension = dotIndex > 0 ? qName.substring(dotIndex + 1) : qName;
+    final Set<String> extensions = getAllGroovyFileExtensions();
     final Ref<PsiFile> result = new Ref<PsiFile>();
     query.forEach(new Processor<VirtualFile>() {
       public boolean process(VirtualFile vDir) {
-        for (final String fileName : fileNames) {
-          VirtualFile vFile = vDir.findChild(fileName);
+        for (final String extension : extensions) {
+          VirtualFile vFile = vDir.findChild(fileNameWithoutExtension + "." + extension);
           if (vFile != null) {
             PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
             if (psiFile instanceof GroovyFileBase) {
@@ -241,6 +239,15 @@ public class GroovyPositionManager implements PositionManager {
       }
     }
     return null;
+  }
+
+  private static Set<String> getAllGroovyFileExtensions() {
+    final Set<String> extensions = new HashSet<String>();
+    extensions.addAll(GroovyFileTypeLoader.getAllGroovyExtensions());
+    extensions.add("gvy");
+    extensions.add("gy");
+    extensions.add("gsh");
+    return extensions;
   }
 
   @NotNull

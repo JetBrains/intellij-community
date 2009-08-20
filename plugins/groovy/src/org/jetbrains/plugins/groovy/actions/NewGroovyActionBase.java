@@ -16,20 +16,22 @@
 package org.jetbrains.plugins.groovy.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateElementActionBase;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
+import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import javax.swing.*;
 
@@ -54,45 +56,14 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
 
   protected abstract String getDialogTitle();
 
-  public void update(final AnActionEvent event) {
-    super.update(event);
-    final Presentation presentation = event.getPresentation();
-    final DataContext context = event.getDataContext();
-    Module module = (Module) context.getData(DataKeys.MODULE.getName());
-
-    if (!GroovyUtils.isSuitableModule(module) ||
-        !presentation.isEnabled() ||
-        !isUnderSourceRoots(event) ||
-        !ActionsUtil.isGroovyConfigured(event)) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
-    } else {
-      presentation.setEnabled(true);
-      presentation.setVisible(true);
-    }
-
-  }
-
-  public static boolean isUnderSourceRoots(final AnActionEvent e) {
-    final DataContext context = e.getDataContext();
-    Module module = (Module) context.getData(DataKeys.MODULE.getName());
-    if (!GroovyUtils.isSuitableModule(module)) {
+  @Override
+  protected boolean isAvailable(DataContext dataContext) {
+    if (!super.isAvailable(dataContext)) {
       return false;
     }
-    final IdeView view = (IdeView) context.getData(DataKeys.IDE_VIEW.getName());
-    final Project project = (Project) context.getData(DataKeys.PROJECT.getName());
-    if (view != null && project != null) {
-      ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      PsiDirectory[] dirs = view.getDirectories();
-      for (PsiDirectory dir : dirs) {
-        PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(dir);
-        if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && aPackage != null) {
-          return true;
-        }
-      }
-    }
 
-    return false;
+    Module module = (Module) dataContext.getData(DataKeys.MODULE.getName());
+    return GroovyUtils.isSuitableModule(module) && LibrariesUtil.hasGroovySdk(module);
   }
 
   @NotNull

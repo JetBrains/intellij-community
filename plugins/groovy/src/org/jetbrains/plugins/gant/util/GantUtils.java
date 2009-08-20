@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gant.util;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.lang.ASTNode;
-import org.jetbrains.plugins.gant.GantFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -25,7 +24,7 @@ public class GantUtils {
       GroovyFile groovyFile = (GroovyFile)file;
       if (!groovyFile.isScript()) return false;
       String name = file.getName();
-      return name.endsWith(GantFileType.DEFAULT_EXTENSION);
+      return name.endsWith(GantScriptType.DEFAULT_EXTENSION);
     }
     return false;
   }

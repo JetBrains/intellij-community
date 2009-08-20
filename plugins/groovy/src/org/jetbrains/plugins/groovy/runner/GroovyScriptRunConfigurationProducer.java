@@ -1,13 +1,13 @@
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.plugins.groovy.extensions.script.GroovyScriptDetector;
-import org.jetbrains.plugins.groovy.extensions.script.ScriptDetectorRegistry;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
@@ -26,16 +26,19 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
 
   protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(final Location location, final ConfigurationContext context) {
     final PsiElement element = location.getPsiElement();
-
     final PsiFile file = element.getContainingFile();
-    if (file instanceof GroovyFile) {
-      for (GroovyScriptDetector detector : ScriptDetectorRegistry.getInstance().getScriptDetectors()) {
-        if (detector.isSpecificScriptFile(((GroovyFile)file))) return null;
-      }
-      GroovyFile groovyFile = (GroovyFile)file;
-      if (groovyFile.isScript()) {
-        mySourceElement = element;
-        return (RunnerAndConfigurationSettingsImpl)GroovyScriptRunConfigurationType.getInstance().createConfigurationByLocation(location);
+    if (!(file instanceof GroovyFile)) {
+      return null;
+    }
+
+    GroovyFile groovyFile = (GroovyFile)file;
+    if (groovyFile.isScript()) {
+      mySourceElement = element;
+      final RunnerAndConfigurationSettings settings = GroovyScriptRunConfigurationType.getInstance().createConfigurationByLocation(location);
+      if (settings != null) {
+        final AbstractGroovyScriptRunConfiguration configuration = (AbstractGroovyScriptRunConfiguration)settings.getConfiguration();
+        GroovyScriptType.getScriptType(groovyFile).tuneConfiguration(groovyFile, configuration, location);
+        return (RunnerAndConfigurationSettingsImpl)settings;
       }
     }
 

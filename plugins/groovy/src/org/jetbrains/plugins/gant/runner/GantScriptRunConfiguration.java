@@ -11,8 +11,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gant.GantBundle;
-import org.jetbrains.plugins.gant.GantFileType;
 import org.jetbrains.plugins.gant.GantIcons;
+import org.jetbrains.plugins.gant.util.GantScriptType;
 import org.jetbrains.plugins.gant.config.GantConfigUtils;
 import org.jetbrains.plugins.groovy.runner.AbstractGroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyConfiguration;
@@ -26,7 +26,7 @@ import java.io.File;
 public class GantScriptRunConfiguration extends GroovyConfiguration {
   @Override
   public boolean runsScript(@NotNull VirtualFile scriptFile) {
-    return GantFileType.DEFAULT_EXTENSION.equals(scriptFile.getExtension());
+    return GantScriptType.DEFAULT_EXTENSION.equals(scriptFile.getExtension());
   }
 
   @Override

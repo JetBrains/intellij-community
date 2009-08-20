@@ -53,7 +53,7 @@ public class GroovyFileType extends LanguageFileType {
   @NonNls
   @NotNull
   public String getDescription() {
-    return "Groovy Scripts and Classes";
+    return "Groovy Files";
   }
 
   @NotNull

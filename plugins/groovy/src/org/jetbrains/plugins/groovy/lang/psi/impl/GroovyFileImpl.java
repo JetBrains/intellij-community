@@ -37,8 +37,7 @@ import org.jetbrains.plugins.groovy.dsl.GroovyDslExecutor;
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
 import org.jetbrains.plugins.groovy.dsl.GroovyEnhancerConsumer;
 import org.jetbrains.plugins.groovy.dsl.ScriptWrapper;
-import org.jetbrains.plugins.groovy.extensions.script.GroovyScriptDetector;
-import org.jetbrains.plugins.groovy.extensions.script.ScriptDetectorRegistry;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -314,8 +313,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @Nullable
   public Icon getIcon(int flags) {
-    for (GroovyScriptDetector detector : ScriptDetectorRegistry.getInstance().getScriptDetectors()) {
-      if (detector.isSpecificScriptFile(this)) return detector.getScriptIcon();
+    if (isScript()) {
+      return GroovyScriptType.getScriptType(this).getScriptIcon();
     }
     return GroovyFileType.GROOVY_LOGO;
   }

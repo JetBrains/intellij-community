@@ -2,9 +2,9 @@ package org.jetbrains.plugins.gant.debugger;
 
 import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.gant.GantFileType;
 import org.jetbrains.plugins.gant.config.GantConfigUtils;
 import org.jetbrains.plugins.gant.util.GantUtils;
+import org.jetbrains.plugins.gant.util.GantScriptType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import com.intellij.psi.PsiFile;
@@ -47,7 +47,7 @@ public class GantPositionManagerHelper implements ScriptPositionManagerHelper {
   }
 
   public PsiFile getExtraScriptIfNotFound(ReferenceType refType, @NotNull final String runtimeName, final Project project) {
-    PsiFile[] files = FilenameIndex.getFilesByName(project, StringUtil.trimEnd(runtimeName, GANT_SUFFIX) + "." + GantFileType.DEFAULT_EXTENSION,
+    PsiFile[] files = FilenameIndex.getFilesByName(project, StringUtil.trimEnd(runtimeName, GANT_SUFFIX) + "." + GantScriptType.DEFAULT_EXTENSION,
                                                    GlobalSearchScope.allScope(project));
     if (files.length == 1) return files[0];
     return null;

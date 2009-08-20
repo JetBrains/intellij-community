@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.gant.actions;
 
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -7,8 +9,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gant.GantBundle;
-import org.jetbrains.plugins.gant.GantFileType;
 import org.jetbrains.plugins.gant.GantIcons;
+import org.jetbrains.plugins.gant.util.GantScriptType;
+import org.jetbrains.plugins.gant.config.GantConfigUtils;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.actions.NewGroovyActionBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -39,6 +42,11 @@ public class NewGantScriptAction extends NewGroovyActionBase {
     return GantBundle.message("newscript.command.name");
   }
 
+  @Override
+  protected boolean isAvailable(DataContext dataContext) {
+    return super.isAvailable(dataContext) && GantConfigUtils.getInstance().isSDKConfiguredToRun(DataKeys.MODULE.getData(dataContext));
+  }
+
   @NotNull
   protected PsiElement[] doCreate(String newName, PsiDirectory directory) throws Exception {
     PsiFile file = createGantScriptFromTemplate(directory, newName, "GantScript.gant");
@@ -58,7 +66,7 @@ public class NewGantScriptAction extends NewGroovyActionBase {
                                                       String templateName,
                                                       @NonNls String... parameters) throws IncorrectOperationException {
     return GroovyTemplatesFactory
-      .createFromTemplate(directory, className, className + "." + GantFileType.DEFAULT_EXTENSION, templateName, parameters);
+      .createFromTemplate(directory, className, className + "." + GantScriptType.DEFAULT_EXTENSION, templateName, parameters);
   }
 
 }
