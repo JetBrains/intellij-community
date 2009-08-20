@@ -62,6 +62,7 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
     return super.getParent();
   }
 
+  @NotNull
   public PsiElement getNavigationElement() {
     final PsiElement data = getUserData(ORIGINAL_ELEMENT);
     if (data != null) return data;

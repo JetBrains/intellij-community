@@ -267,6 +267,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     return true;
   }
 
+  @NotNull
   public PsiElement getNavigationElement() {
     return getNameElement();
   }

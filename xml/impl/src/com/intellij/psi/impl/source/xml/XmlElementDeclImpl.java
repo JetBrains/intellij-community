@@ -123,6 +123,7 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
     return null;
   }
 
+  @NotNull
   public PsiElement getNavigationElement() {
     return this;
   }

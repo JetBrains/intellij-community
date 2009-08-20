@@ -166,6 +166,7 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
     navigatable.navigate(requestFocus);
   }
 
+  @NotNull
   public PsiElement getNavigationElement() {
     return this;
   }
