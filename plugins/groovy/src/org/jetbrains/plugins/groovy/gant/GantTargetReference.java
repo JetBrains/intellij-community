@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gant.reference;
+package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
@@ -11,8 +11,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gant.GantIcons;
-import org.jetbrains.plugins.gant.util.GantUtils;
+import org.jetbrains.plugins.groovy.gant.GantIcons;
+import org.jetbrains.plugins.groovy.gant.GantUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;

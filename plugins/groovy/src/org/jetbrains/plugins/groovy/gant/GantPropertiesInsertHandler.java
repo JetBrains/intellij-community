@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gant.completion;
+package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -10,8 +10,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.plugins.gant.reference.AntTasksProvider;
-import org.jetbrains.plugins.gant.util.GantUtils;
+import org.jetbrains.plugins.groovy.gant.AntTasksProvider;
+import org.jetbrains.plugins.groovy.gant.GantUtils;
 import org.jetbrains.plugins.groovy.extensions.completion.ContextSpecificInsertHandler;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;

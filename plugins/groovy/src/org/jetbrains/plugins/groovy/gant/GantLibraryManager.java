@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jetbrains.plugins.gant.config;
+package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -23,7 +23,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gant.GantIcons;
+import org.jetbrains.plugins.groovy.gant.GantIcons;
+import org.jetbrains.plugins.groovy.gant.GantUtils;
 import org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager;
 
 import javax.swing.*;
@@ -34,12 +35,12 @@ import java.io.File;
  */
 public class GantLibraryManager extends AbstractGroovyLibraryManager {
   public boolean managesLibrary(@NotNull Library library, LibrariesContainer container) {
-    return GantConfigUtils.isGantLibrary(container.getLibraryFiles(library, OrderRootType.CLASSES));
+    return GantUtils.isGantLibrary(container.getLibraryFiles(library, OrderRootType.CLASSES));
   }
 
   @Nls
   public String getLibraryVersion(@NotNull Library library, LibrariesContainer librariesContainer) {
-    return GantConfigUtils.getInstance().getSDKVersion(GantConfigUtils.getGantLibraryHome(librariesContainer.getLibraryFiles(library, OrderRootType.CLASSES)));
+    return GantUtils.getGantVersion(GantUtils.getGantLibraryHome(librariesContainer.getLibraryFiles(library, OrderRootType.CLASSES)));
   }
 
   @NotNull
@@ -49,13 +50,13 @@ public class GantLibraryManager extends AbstractGroovyLibraryManager {
 
   @Override
   public boolean isSDKHome(@NotNull VirtualFile file) {
-    return GantConfigUtils.isGantSdkHome(file);
+    return GantUtils.isGantSdkHome(file);
   }
 
   @NotNull
   @Override
   public String getSDKVersion(String path) {
-    return GantConfigUtils.getGantVersion(path);
+    return GantUtils.getGantVersion(path);
   }
 
   @Override

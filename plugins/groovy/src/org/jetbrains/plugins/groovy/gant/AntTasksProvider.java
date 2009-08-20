@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gant.reference;
+package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;

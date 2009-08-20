@@ -84,10 +84,6 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
     return CommonBundle.getErrorTitle();
   }
 
-  protected String getActionName(PsiDirectory directory, String newName) {
-    return GroovyBundle.message("newclass.progress.text", newName);
-  }
-
   protected void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
     JavaDirectoryService.getInstance().checkCreateClass(directory, newName);
   }

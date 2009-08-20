@@ -1,10 +1,9 @@
-package org.jetbrains.plugins.gant.debugger;
+package org.jetbrains.plugins.groovy.gant;
 
 import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.gant.config.GantConfigUtils;
-import org.jetbrains.plugins.gant.util.GantUtils;
-import org.jetbrains.plugins.gant.util.GantScriptType;
+import org.jetbrains.plugins.groovy.gant.GantUtils;
+import org.jetbrains.plugins.groovy.gant.GantScriptType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import com.intellij.psi.PsiFile;
@@ -37,8 +36,8 @@ public class GantPositionManagerHelper implements ScriptPositionManagerHelper {
 
   @NotNull
   public String getRuntimeScriptName(@NotNull final String originalName, GroovyFile groovyFile) {
-    final String version = GantConfigUtils.getInstance()
-      .getSDKVersion(GantConfigUtils.getInstance().getSDKInstallPath(ModuleUtil.findModuleForPsiElement(groovyFile)));
+    final String version =
+      GantUtils.getGantVersion(GantUtils.getSDKInstallPath(ModuleUtil.findModuleForPsiElement(groovyFile)));
     if (version.compareToIgnoreCase("1.5") >= 0) {
       return originalName;
     }

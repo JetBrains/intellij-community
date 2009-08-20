@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gant.reference;
+package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;

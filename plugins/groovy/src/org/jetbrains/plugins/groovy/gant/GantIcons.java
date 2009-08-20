@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gant;
+package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.openapi.util.IconLoader;
 

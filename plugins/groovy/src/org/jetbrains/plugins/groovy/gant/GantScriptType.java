@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gant.util;
+package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.execution.Location;
 import com.intellij.psi.PsiElement;
@@ -6,7 +6,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.gant.GantIcons;
+import org.jetbrains.plugins.groovy.gant.GantIcons;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;

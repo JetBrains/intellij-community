@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gant.actions;
+package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
@@ -8,10 +8,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gant.GantBundle;
-import org.jetbrains.plugins.gant.GantIcons;
-import org.jetbrains.plugins.gant.util.GantScriptType;
-import org.jetbrains.plugins.gant.config.GantConfigUtils;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.actions.NewGroovyActionBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -22,8 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 public class NewGantScriptAction extends NewGroovyActionBase {
 
   public NewGantScriptAction() {
-    super(GantBundle.message("newscript.menu.action.text"), GantBundle.message("newscript.menu.action.description"),
-          GantIcons.GANT_ICON_16x16);
+    super("Gant Script", "Create new Gant Script", GantIcons.GANT_ICON_16x16);
   }
 
   protected String getActionName(PsiDirectory directory, String newName) {
@@ -31,20 +26,20 @@ public class NewGantScriptAction extends NewGroovyActionBase {
   }
 
   protected String getDialogPrompt() {
-    return GantBundle.message("newscript.dlg.prompt");
+    return "Enter name for new Gant Script";
   }
 
   protected String getDialogTitle() {
-    return GantBundle.message("newscript.dlg.title");
+    return "New Gant Script";
   }
 
   protected String getCommandName() {
-    return GantBundle.message("newscript.command.name");
+    return "Create Gant Script";
   }
 
   @Override
   protected boolean isAvailable(DataContext dataContext) {
-    return super.isAvailable(dataContext) && GantConfigUtils.getInstance().isSDKConfiguredToRun(DataKeys.MODULE.getData(dataContext));
+    return super.isAvailable(dataContext) && GantUtils.isSDKConfiguredToRun(DataKeys.MODULE.getData(dataContext));
   }
 
   @NotNull

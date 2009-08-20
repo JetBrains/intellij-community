@@ -43,14 +43,14 @@
     <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.VetoableAnnotationProcessor"/>
     <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.dsl.DslMembersProcessor"/>
     <libraryManager implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryManager"/>
-    <libraryManager implementation="org.jetbrains.plugins.gant.config.GantLibraryManager" order="last"/>
+    <libraryManager implementation="org.jetbrains.plugins.groovy.gant.GantLibraryManager" order="last"/>
     <libraryManager implementation="org.jetbrains.plugins.groovy.gradle.GradleLibraryManager" order="last"/>
-    <positionManagerDelegate implementation="org.jetbrains.plugins.gant.debugger.GantPositionManagerHelper"/>
+    <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
-    <configuration implementation="org.jetbrains.plugins.gant.runner.GantScriptRunConfiguration"/>
+    <configuration implementation="org.jetbrains.plugins.groovy.gant.GantScriptRunConfiguration"/>
     <configuration implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration" order="last"/>
 
-    <scriptType extensions="gant" descriptorClass="org.jetbrains.plugins.gant.util.GantScriptType"/>
+    <scriptType extensions="gant" descriptorClass="org.jetbrains.plugins.groovy.gant.GantScriptType"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -186,13 +186,13 @@
     <!--Gant filetype-->
     <quoteHandler fileType="Gant" className="org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler"/>
     <!--Gant Run/debug-->
-    <configurationType implementation="org.jetbrains.plugins.gant.runner.GantScriptRunConfigurationType"/>
+    <configurationType implementation="org.jetbrains.plugins.groovy.gant.GantScriptRunConfigurationType"/>
 
-    <psi.referenceContributor implementation="org.jetbrains.plugins.gant.reference.GantReferenceContributor"/>
+    <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.gant.GantReferenceContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.providers.GroovyReferenceContributor"/>
 
-    <projectService serviceInterface="org.jetbrains.plugins.gant.reference.AntTasksProvider"
-                    serviceImplementation="org.jetbrains.plugins.gant.reference.AntTasksProvider"/>
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.AntTasksProvider"
+                    serviceImplementation="org.jetbrains.plugins.groovy.gant.AntTasksProvider"/>
 
     <refactoring.copyHandler implementation="org.jetbrains.plugins.groovy.refactoring.copy.GroovyCopyFilesOrDirectoriesHandler"/>
 
@@ -379,7 +379,7 @@
             text="Groovy Class" description="Create new Groovy class">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="Groovy.NewScript"/>
     </action>
-    <action id="Gant.NewScript" class="org.jetbrains.plugins.gant.actions.NewGantScriptAction"
+    <action id="Gant.NewScript" class="org.jetbrains.plugins.groovy.gant.NewGantScriptAction"
             text="Gant Script" description="Create new Gant script">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Groovy.NewClass"/>
     </action>
@@ -416,7 +416,7 @@
       <implementation-class>org.jetbrains.plugins.groovy.GroovyLoader</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.gant.GantLoader</implementation-class>
+      <implementation-class>org.jetbrains.plugins.groovy.gant.GantLoader</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry</implementation-class>

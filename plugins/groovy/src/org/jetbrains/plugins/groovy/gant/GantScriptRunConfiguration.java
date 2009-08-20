@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gant.runner;
+package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.JavaParameters;
@@ -10,10 +10,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gant.GantBundle;
-import org.jetbrains.plugins.gant.GantIcons;
-import org.jetbrains.plugins.gant.util.GantScriptType;
-import org.jetbrains.plugins.gant.config.GantConfigUtils;
 import org.jetbrains.plugins.groovy.runner.AbstractGroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyConfiguration;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
@@ -31,14 +27,14 @@ public class GantScriptRunConfiguration extends GroovyConfiguration {
 
   @Override
   public boolean isValidModule(Module module) {
-    return GantConfigUtils.getInstance().isSDKConfiguredToRun(module);
+    return GantUtils.isSDKConfiguredToRun(module);
   }
 
   @Override
   public boolean ensureRunnerConfigured(Module module, final String groovyHomePath) {
     if (!isValidModule(module)) {
       int result = Messages
-        .showOkCancelDialog(GantBundle.message("gant.configure.facet.question.text"), GantBundle.message("gant.configure.facet.question"),
+        .showOkCancelDialog("Gant is not configured. Do you want to configure it?", "Configure Gant SDK",
                             GantIcons.GANT_ICON_16x16);
       if (result == 0) {
         ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
@@ -53,7 +49,7 @@ public class GantScriptRunConfiguration extends GroovyConfiguration {
 
   @Override
   public String getConfPath(@NotNull Module module) {
-    String gantHome = GantConfigUtils.getInstance().getSDKInstallPath(module);
+    String gantHome = GantUtils.getSDKInstallPath(module);
     String confPath = FileUtil.toSystemDependentName(gantHome + "/conf/gant-starter.conf");
     if (new File(confPath).exists()) {
       return confPath;
@@ -71,7 +67,7 @@ public class GantScriptRunConfiguration extends GroovyConfiguration {
       params.getClassPath().addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(groovyHome + "/lib", ".*\\.jar"));
     }
 
-    String gantHome = GantConfigUtils.getInstance().getSDKInstallPath(module);
+    String gantHome = GantUtils.getSDKInstallPath(module);
 
     String antHome = System.getenv("ANT_HOME");
     if (StringUtil.isEmpty(antHome)) {
