@@ -57,7 +57,7 @@ public class GitChangeProvider implements ChangeProvider {
                          final ChangeListManagerGate addGate) throws VcsException {
     Collection<VirtualFile> roots = GitUtil.gitRootsForPaths(dirtyScope.getAffectedContentRoots());
     for (VirtualFile root : roots) {
-      ChangeCollector c = new ChangeCollector(myProject, root);
+      ChangeCollector c = new ChangeCollector(myProject, dirtyScope, root);
       for (Change file : c.changes()) {
         builder.processChange(file, GitVcs.getKey());
       }

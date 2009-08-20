@@ -16,11 +16,15 @@
 package git4idea.changes;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -35,6 +39,10 @@ import java.util.*;
  * cannot be got as a sum of stateless operations.
  */
 class ChangeCollector {
+  /**
+   * The dirty scope used in the collector
+   */
+  private VcsDirtyScope myDirtyScope;
   /**
    * a vcs root for changes
    */
@@ -67,10 +75,12 @@ class ChangeCollector {
   /**
    * A constructor
    *
-   * @param project a project
-   * @param vcsRoot a vcs root
+   * @param project    a project
+   * @param dirtyScope the dirty scope to check
+   * @param vcsRoot    a vcs root
    */
-  public ChangeCollector(final Project project, final VirtualFile vcsRoot) {
+  public ChangeCollector(final Project project, VcsDirtyScope dirtyScope, final VirtualFile vcsRoot) {
+    myDirtyScope = dirtyScope;
     myVcsRoot = vcsRoot;
     myProject = project;
   }
@@ -119,6 +129,76 @@ class ChangeCollector {
   }
 
   /**
+   * Collect dirty file paths
+   *
+   * @param includeChanges if true, previous changes are included in collection
+   * @return the set of dirty paths to check, the paths are automatically collapsed if the summary length more than limit
+   */
+  private Collection<FilePath> dirtyPaths(boolean includeChanges) {
+    // TODO collapse paths with common prefix
+    ArrayList<FilePath> paths = new ArrayList<FilePath>();
+    FilePath rootPath = VcsUtil.getFilePath(myVcsRoot.getPath(), true);
+    for (FilePath p : myDirtyScope.getRecursivelyDirtyDirectories()) {
+      addToPaths(rootPath, paths, p);
+    }
+    ArrayList<FilePath> candidatePaths = new ArrayList<FilePath>();
+    candidatePaths.addAll(myDirtyScope.getDirtyFilesNoExpand());
+    if (includeChanges) {
+      try {
+        ChangeListManager cm = ChangeListManager.getInstance(myProject);
+        for (Change c : cm.getChangesIn(myVcsRoot)) {
+          switch (c.getType()) {
+            case NEW:
+            case DELETED:
+            case MOVED:
+              if (c.getAfterRevision() != null) {
+                addToPaths(rootPath, paths, c.getAfterRevision().getFile());
+              }
+              if (c.getBeforeRevision() != null) {
+                addToPaths(rootPath, paths, c.getBeforeRevision().getFile());
+              }
+            default:
+              // do nothing
+          }
+        }
+      }
+      catch (Exception t) {
+        // ignore exceptions
+      }
+    }
+    for (FilePath p : candidatePaths) {
+      addToPaths(rootPath, paths, p);
+    }
+    return paths;
+  }
+
+  /**
+   * Add path to the collection of the paths to check for this vcs root
+   *
+   * @param root  the root path
+   * @param paths the existing paths
+   * @param toAdd the path to add
+   */
+  void addToPaths(FilePath root, Collection<FilePath> paths, FilePath toAdd) {
+    if (GitUtil.getGitRootOrNull(toAdd) != myVcsRoot) {
+      return;
+    }
+    if (root.isUnder(toAdd, true)) {
+      toAdd = root;
+    }
+    for (Iterator<FilePath> i = paths.iterator(); i.hasNext();) {
+      FilePath p = i.next();
+      if (p.isUnder(toAdd, true)) {
+        i.remove();
+      }
+      if (toAdd.isUnder(p, false)) {
+        return;
+      }
+    }
+    paths.add(toAdd);
+  }
+
+  /**
    * Collect diff with head
    *
    * @throws VcsException if there is a problem with running git
@@ -130,6 +210,7 @@ class ChangeCollector {
     handler.setSilent(true);
     handler.setStdoutSuppressed(true);
     handler.endOptions();
+    handler.addRelativePaths(dirtyPaths(true));
     try {
       String output = handler.run();
       GitChangeUtils.parseChanges(myProject, myVcsRoot, null, GitChangeUtils.loadRevision(myProject, myVcsRoot, "HEAD"), output, myChanges,
@@ -171,6 +252,7 @@ class ChangeCollector {
     handler.setSilent(true);
     handler.setNoSSH(true);
     handler.setStdoutSuppressed(true);
+    handler.addRelativePaths(dirtyPaths(false));
     // run handler and collect changes
     String list = handler.run();
     for (StringScanner sc = new StringScanner(list); sc.hasMoreData();) {
@@ -181,12 +263,19 @@ class ChangeCollector {
       char status = sc.peek();
       sc.skipChars(2);
       if ('?' == status) {
-        myUnversioned.add(myVcsRoot.findFileByRelativePath(GitUtil.unescapePath(sc.line())));
+        VirtualFile file = myVcsRoot.findFileByRelativePath(GitUtil.unescapePath(sc.line()));
+        if (GitUtil.gitRootOrNull(file) == myVcsRoot) {
+          myUnversioned.add(file);
+        }
       }
       else { //noinspection HardCodedStringLiteral
         if ('M' == status) {
           sc.boundedToken('\t');
           String file = GitUtil.unescapePath(sc.line());
+          VirtualFile vFile = myVcsRoot.findFileByRelativePath(GitUtil.unescapePath(sc.line()));
+          if (GitUtil.gitRootOrNull(vFile) != myVcsRoot) {
+            continue;
+          }
           if (!myUnmergedNames.add(file)) {
             continue;
           }
@@ -205,5 +294,4 @@ class ChangeCollector {
       }
     }
   }
-
 }
