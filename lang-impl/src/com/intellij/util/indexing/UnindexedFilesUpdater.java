@@ -120,6 +120,9 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
               break;
             }
           }
+          if (myProject.isDisposed()) {
+            indicator.cancel();
+          }
         }
         finally {
           queue.clear();

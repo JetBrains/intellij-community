@@ -18,6 +18,8 @@ package com.intellij.util;
 import com.intellij.ide.FileIconPatcher;
 import com.intellij.ide.FileIconProvider;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -91,7 +93,12 @@ public class IconUtil {
 
         Icon providersIcon = getProvidersIcon(file, flags, project);
         Icon icon = providersIcon == null ? file.getIcon() : providersIcon;
+        final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
         for (FileIconPatcher patcher : getPatchers()) {
+          if (dumb && !(patcher instanceof DumbAware)) {
+            continue;
+          }
+
           icon = patcher.patchIcon(icon, file, flags, project);
         }
         return icon;
