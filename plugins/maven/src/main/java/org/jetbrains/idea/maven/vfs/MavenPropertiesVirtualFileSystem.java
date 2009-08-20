@@ -37,6 +37,7 @@ public class MavenPropertiesVirtualFileSystem extends DummyFileSystem implements
   public void disposeComponent() {
   }
 
+  @NotNull
   public String getProtocol() {
     return PROTOCOL;
   }
@@ -68,7 +69,7 @@ public class MavenPropertiesVirtualFileSystem extends DummyFileSystem implements
   public void refresh(boolean asynchronous) {
   }
 
-  public VirtualFile refreshAndFindFileByPath(String path) {
+  public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
     return findFileByPath(path);
   }
 
