@@ -49,4 +49,8 @@ public class StandardDslIndexedRootsProvider implements IndexedRootsProvider {
   public Set<String> getRootsToIndex() {
     return Collections.singleton(ourDslsDir);
   }
+
+  public static StandardDslIndexedRootsProvider getInstance() {
+    return IndexedRootsProvider.EP_NAME.findExtension(StandardDslIndexedRootsProvider.class);
+  }
 }

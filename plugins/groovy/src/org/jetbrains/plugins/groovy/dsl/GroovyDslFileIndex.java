@@ -22,6 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -81,12 +83,15 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private static List<GroovyFile> getDslFiles(final GlobalSearchScope scope) {
     final Project project = scope.getProject();
     assert project != null;
-    final Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, OUR_KEY, scope);
-    if (files.isEmpty()) return Collections.emptyList();
+    final AdditionalIndexableFileSet fileSet = new AdditionalIndexableFileSet(StandardDslIndexedRootsProvider.getInstance());
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
     List<GroovyFile> result = new ArrayList<GroovyFile>();
-    for(VirtualFile file: files) {
+    for(VirtualFile file: FileBasedIndex.getInstance().getContainingFiles(NAME, OUR_KEY, new AdditionalIndexedRootsScope(scope, fileSet))) {
       if (!file.isValid()) continue;
+      if (!fileSet.isInSet(file) && !fileIndex.isInSourceContent(file) && !fileIndex.isInLibraryClasses(file) && !fileIndex.isInLibrarySource(file)) {
+        continue;
+      }
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile instanceof GroovyFile) {
         result.add((GroovyFile)psiFile);
@@ -115,7 +120,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     final LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>> queue = new LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>>();
 
     final Set<String> unusedPaths = new THashSet<String>(ourMapping.keySet());
-    for (final GroovyFile file : getDslFiles(new AdditionalIndexedRootsScope(place.getResolveScope(), StandardDslIndexedRootsProvider.class))) {
+    for (final GroovyFile file : getDslFiles(place.getResolveScope())) {
       final VirtualFile vfile = file.getVirtualFile();
       if (vfile == null) {
         continue;
