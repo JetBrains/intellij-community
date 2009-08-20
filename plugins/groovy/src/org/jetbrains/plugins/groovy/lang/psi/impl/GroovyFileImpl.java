@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
 import org.jetbrains.plugins.groovy.dsl.GroovyScriptDescriptor;
-import org.jetbrains.plugins.groovy.dsl.NonCodeMembersGenerator;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -244,9 +243,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       return true;
     }
 
-    final NonCodeMembersGenerator generator = new NonCodeMembersGenerator(getProject());
-    GroovyDslFileIndex.processExecutors(place, new GroovyScriptDescriptor(this, scriptClass), generator);
-    return generator.processGeneratedMembers(processor);
+    return GroovyDslFileIndex.processExecutors(place, new GroovyScriptDescriptor(this, scriptClass), processor);
   }
 
 

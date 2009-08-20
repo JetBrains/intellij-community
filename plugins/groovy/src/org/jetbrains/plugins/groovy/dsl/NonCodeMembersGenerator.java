@@ -2,14 +2,8 @@ package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.scope.NameHint;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.Function;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 
@@ -39,26 +33,8 @@ public class NonCodeMembersGenerator implements GroovyEnhancerConsumer{
     myClassText.append(") {}\n");
   }
 
-  public boolean processGeneratedMembers(PsiScopeProcessor processor) {
-    if (myClassText.length() == 0) {
-      return true;
-    }
-
-    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
-    final String text = "class GroovyEnhanced {\n" + myClassText + "}";
-    PsiClass psiClass = factory.createGroovyFile(text, false, null).getTypeDefinitions()[0];
-
-    final NameHint nameHint = processor.getHint(NameHint.KEY);
-    final String expectedName = nameHint == null ? null : nameHint.getName(ResolveState.initial());
-
-    for (PsiMethod method : psiClass.getMethods()) {
-      if ((expectedName == null || expectedName.equals(method.getName())) && !processor.execute(method, ResolveState.initial())) {
-        return false;
-      }
-    }
-    for (final PsiField field : psiClass.getFields()) {
-      if ((expectedName == null || expectedName.equals(field.getName())) && !processor.execute(field, ResolveState.initial())) return false;
-    }
-    return true;
+  @Nullable
+  public NonCodeMembersHolder getMembersHolder() {
+    return myClassText.length() == 0 ? null : new NonCodeMembersHolder(myClassText.toString(), myProject);
   }
 }

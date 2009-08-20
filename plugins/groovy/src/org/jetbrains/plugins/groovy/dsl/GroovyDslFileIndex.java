@@ -19,15 +19,21 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -46,6 +52,7 @@ import java.util.concurrent.TimeUnit;
  * @author peter
  */
 public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
+  public static final Key<CachedValue<ConcurrentFactoryMap<ClassDescriptor, NonCodeMembersHolder>>> CACHED_ENHANCEMENTS = Key.create("CACHED_ENHANCEMENTS");
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex");
   @NonNls public static final ID<String, Void> NAME = ID.create("GroovyDslFileIndex");
   @NonNls private static final String OUR_KEY = "ourKey";
@@ -109,11 +116,11 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     return pair.first;
   }
 
-  public static void processExecutors(PsiElement place, ClassDescriptor descriptor, GroovyEnhancerConsumer consumer) {
+  public static boolean processExecutors(PsiElement place, ClassDescriptor descriptor, PsiScopeProcessor processor) {
     final PsiFile placeFile = place.getContainingFile().getOriginalFile();
-    final VirtualFile placeVFfile = placeFile.getVirtualFile();
-    if (placeVFfile == null) {
-      return;
+    final VirtualFile placeVFile = placeFile.getVirtualFile();
+    if (placeVFile == null) {
+      return true;
     }
 
     int count = 0;
@@ -126,7 +133,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         continue;
       }
       unusedPaths.remove(vfile.getUrl());
-      if (vfile.equals(placeVFfile)) {
+      if (vfile.equals(placeVFile)) {
         continue;
       }
 
@@ -137,7 +144,9 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         count++;
         scheduleParsing(queue, file, vfile, stamp, text);
       } else {
-        cached.processVariants(descriptor, consumer);
+        if (!processExecutor(cached, descriptor, processor, file)) {
+          return false;
+        }
       }
     }
 
@@ -154,8 +163,10 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         final Pair<GroovyFile, GroovyDslExecutor> pair = queue.poll(20, TimeUnit.MILLISECONDS);
         if (pair != null) {
           final GroovyDslExecutor executor = pair.second;
-          if (executor != null) {
-            executor.processVariants(descriptor, consumer);
+          final GroovyFile dslFile = pair.first;
+          dslFile.putUserData(CACHED_ENHANCEMENTS, null); //otherwise an old executor instance will be executed inside cachedValue
+          if (executor != null && !processExecutor(executor, descriptor, processor, dslFile)) {
+            return false;
           }
 
           count--;
@@ -165,6 +176,30 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     catch (InterruptedException e) {
       LOG.error(e);
     }
+
+    return true;
+  }
+
+
+  private static boolean processExecutor(final GroovyDslExecutor executor, final ClassDescriptor descriptor, PsiScopeProcessor processor, final GroovyFile dslFile) {
+    final Project project = dslFile.getProject();
+    final ConcurrentFactoryMap<ClassDescriptor, NonCodeMembersHolder> map = dslFile.getManager().getCachedValuesManager()
+      .getCachedValue(dslFile, CACHED_ENHANCEMENTS, new CachedValueProvider<ConcurrentFactoryMap<ClassDescriptor, NonCodeMembersHolder>>() {
+        public Result<ConcurrentFactoryMap<ClassDescriptor, NonCodeMembersHolder>> compute() {
+          final ConcurrentFactoryMap<ClassDescriptor, NonCodeMembersHolder> result = new ConcurrentFactoryMap<ClassDescriptor, NonCodeMembersHolder>() {
+              @Override
+              protected NonCodeMembersHolder create(ClassDescriptor key) {
+                final NonCodeMembersGenerator generator = new NonCodeMembersGenerator(project);
+                executor.processVariants(key, generator);
+                return generator.getMembersHolder();
+              }
+            };
+          return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, dslFile);
+        }
+      }, false);
+    assert map != null;
+    final NonCodeMembersHolder holder = map.get(descriptor);
+    return holder == null || holder.processMembers(processor);
   }
 
   private static void scheduleParsing(final LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>> queue,
@@ -181,7 +216,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
             }
 
             final GroovyDslExecutor executor = new GroovyDslExecutor(text, vfile.getName());
-
+            
             // executor is not only time-consuming to create, but also takes some PermGenSpace
             // => we can't afford garbage-collecting it together with PsiFile
             // => cache globally by file path
