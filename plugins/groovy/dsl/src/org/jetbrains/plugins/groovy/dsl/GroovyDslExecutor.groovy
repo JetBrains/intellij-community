@@ -18,7 +18,7 @@ public class GroovyDslExecutor {
     mc.enhanceScript = {Map args, Closure enh ->
       enh.resolveStrategy = Closure.DELEGATE_FIRST
       myScriptEnhancers << {
-        ScriptWrapper wrapper, GroovyEnhancerConsumer c ->
+        ScriptDescriptor wrapper, GroovyEnhancerConsumer c ->
         if (args.extension == wrapper.extension) {
           runEnhancer enh, new EnhancerDelegate(consumer:c)
         }
@@ -54,14 +54,8 @@ public class GroovyDslExecutor {
     copy()
   }
 
-  def processScriptVariants(ScriptWrapper wrapper, GroovyEnhancerConsumer consumer) {
-    for (e in myScriptEnhancers) {
-      e(wrapper, consumer)
-    }
-  }
-
-  def processClassVariants(ClassDescriptor descriptor, GroovyEnhancerConsumer consumer) {
-    for (e in myClassEnhancers) {
+  def processVariants(ClassDescriptor descriptor, GroovyEnhancerConsumer consumer) {
+    for (e in (descriptor instanceof ScriptDescriptor ? myScriptEnhancers : myClassEnhancers)) {
       e(descriptor, consumer)
     }
   }

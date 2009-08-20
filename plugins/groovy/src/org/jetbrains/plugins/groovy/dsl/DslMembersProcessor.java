@@ -20,7 +20,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.util.PairProcessor;
@@ -44,19 +43,7 @@ public class DslMembersProcessor implements NonCodeMembersProcessor {
             public boolean process(GroovyFile groovyFile, GroovyDslExecutor executor) {
               final StringBuilder classText = new StringBuilder();
 
-              executor.processClassVariants(new ClassDescriptor() {
-                public String getQualifiedName() {
-                  return qname;
-                }
-
-                public boolean isInheritor(String qname) {
-                  return InheritanceUtil.isInheritor(psiClass, qname);
-                }
-
-                public MethodDescriptor[] getMethods() {
-                  return new MethodDescriptor[0];
-                }
-              }, new GroovyEnhancerConsumer() {
+              executor.processVariants(new GroovyClassDescriptor(psiClass), new GroovyEnhancerConsumer() {
                 public void property(String name, String type) {
                   classText.append("def ").append(type).append(" ").append(name).append("\n");
                 }
@@ -98,4 +85,5 @@ public class DslMembersProcessor implements NonCodeMembersProcessor {
     }
     return true;
   }
+
 }

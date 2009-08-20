@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.groovy.dsl
 
+import java.beans.MethodDescriptor
+
 /**
  * @author peter
  */
@@ -10,36 +12,8 @@ interface ClassDescriptor {
 
   boolean isInheritor(String qname)
 
-  MethodDescriptor[] getMethods()
-
-}
-interface MethodDescriptor {
-  String getName()
-
-  ParameterDescriptor[] getParameters()
 }
 
-interface ParameterDescriptor {
-  String getName()
-
-  TypeDescriptor getType()
-
-  void setType(TypeDescriptor descriptor)
-}
-
-interface TypeDescriptor {
-}
-
-interface ClassTypeDescriptor extends TypeDescriptor {
-  ClassDescriptor getClazz()
-}
-
-interface MapDescriptor extends TypeDescriptor {
-  TypeDescriptor getAt(String name)
-
-  void putAt(String name, TypeDescriptor descriptor)
-}
-
-interface ClosureDescriptor extends TypeDescriptor {
-  ParameterDescriptor[] getParameters()
+interface ScriptDescriptor extends ClassDescriptor {
+  String getExtension()
 }

@@ -33,10 +33,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.dsl.GroovyDslExecutor;
-import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
-import org.jetbrains.plugins.groovy.dsl.GroovyEnhancerConsumer;
-import org.jetbrains.plugins.groovy.dsl.ScriptWrapper;
+import org.jetbrains.plugins.groovy.dsl.*;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -64,7 +61,7 @@ import java.util.Set;
 public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl");
 
-  private PsiClass myScriptClass;
+  private GroovyScriptClass myScriptClass;
   private static final String SYNTHETIC_PARAMETER_NAME = "args";
   private GrParameter mySyntheticArgsParameter = null;
 
@@ -243,15 +240,17 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   private boolean processScriptEnhancements(final PsiElement place, final PsiScopeProcessor processor) {
+    final GroovyScriptClass scriptClass = getScriptClass();
+    if (scriptClass == null) {
+      return true;
+    }
+
     return GroovyDslFileIndex.processExecutors(this, new PairProcessor<GroovyFile, GroovyDslExecutor>() {
       public boolean process(GroovyFile groovyFile, GroovyDslExecutor executor) {
         final StringBuilder classText = new StringBuilder();
 
-        executor.processScriptVariants(new ScriptWrapper() {
-          public String getExtension() {
-            return getOriginalFile().getVirtualFile().getExtension();
-          }
-        }, new GroovyEnhancerConsumer() {
+        
+        executor.processVariants(new GroovyScriptDescriptor(GroovyFileImpl.this, scriptClass), new GroovyEnhancerConsumer() {
           public void property(String name, String type) {
             classText.append("def ").append(type).append(" ").append(name).append("\n");
           }
@@ -394,7 +393,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return false;
   }
 
-  public synchronized PsiClass getScriptClass() {
+  public synchronized GroovyScriptClass getScriptClass() {
     if (isScript()) {
       if (myScriptClass == null) myScriptClass = new GroovyScriptClass(this);
       return myScriptClass;
