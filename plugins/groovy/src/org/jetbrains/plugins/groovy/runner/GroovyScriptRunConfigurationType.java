@@ -75,7 +75,7 @@ public class GroovyScriptRunConfigurationType implements LocatableConfigurationT
   private RunnerAndConfigurationSettings createConfiguration(final PsiClass aClass) {
     final Project project = aClass.getProject();
     RunnerAndConfigurationSettings settings = RunManagerEx.getInstanceEx(project).createConfiguration("", myConfigurationFactory);
-    final AbstractGroovyScriptRunConfiguration configuration = (AbstractGroovyScriptRunConfiguration) settings.getConfiguration();
+    final GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration) settings.getConfiguration();
     final PsiFile file = aClass.getContainingFile();
     final PsiDirectory dir = file.getContainingDirectory();
     assert dir != null;
@@ -127,7 +127,7 @@ public class GroovyScriptRunConfigurationType implements LocatableConfigurationT
     }
 
     public RunConfiguration createTemplateConfiguration(Project project) {
-      return new AbstractGroovyScriptRunConfiguration("Groovy Script", project, this);
+      return new GroovyScriptRunConfiguration("Groovy Script", project, this);
     }
 
   }

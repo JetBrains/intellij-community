@@ -30,7 +30,7 @@ public abstract class GroovyScriptRunner {
   }
 
   public abstract void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script, String confPath,
-                                               final String groovyHome, AbstractGroovyScriptRunConfiguration configuration) throws CantRunException;
+                                               final String groovyHome, GroovyScriptRunConfiguration configuration) throws CantRunException;
 
   public String getConfPath(@NotNull Module module) {
     String confpath = FileUtil.toSystemDependentName(LibrariesUtil.getGroovyHomePath(module) + "/conf/groovy-starter.conf");
@@ -52,7 +52,7 @@ public abstract class GroovyScriptRunner {
     }
   }
 
-  protected static void defaultGroovyStarter(JavaParameters params, Module module, String confPath, boolean tests, final String groovyHome, AbstractGroovyScriptRunConfiguration configuration) throws CantRunException {
+  protected static void defaultGroovyStarter(JavaParameters params, Module module, String confPath, boolean tests, final String groovyHome, GroovyScriptRunConfiguration configuration) throws CantRunException {
     addGroovyJar(params, module);
 
     params.getVMParametersList().addParametersString("-Dgroovy.home=" + "\"" + groovyHome + "\"");

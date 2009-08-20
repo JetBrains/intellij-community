@@ -10,7 +10,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.runner.AbstractGroovyScriptRunConfiguration;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
@@ -56,7 +56,7 @@ public class GantRunner extends GroovyScriptRunner {
 
   @Override
   public void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script, String confPath,
-                                      final String groovyHome, AbstractGroovyScriptRunConfiguration configuration) throws CantRunException {
+                                      final String groovyHome, GroovyScriptRunConfiguration configuration) throws CantRunException {
     defaultGroovyStarter(params, module, confPath, tests, groovyHome, configuration);
 
     if (groovyHome.contains("grails")) {

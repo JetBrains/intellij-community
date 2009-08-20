@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.runner.AbstractGroovyScriptRunConfiguration;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 
 import javax.swing.*;
@@ -37,7 +37,7 @@ public class GantScriptType extends GroovyScriptType {
   }
 
   @Override
-  public void tuneConfiguration(@NotNull GroovyFile file, @NotNull AbstractGroovyScriptRunConfiguration configuration, Location location) {
+  public void tuneConfiguration(@NotNull GroovyFile file, @NotNull GroovyScriptRunConfiguration configuration, Location location) {
     final PsiElement element = location.getPsiElement();
     PsiElement pp = element.getParent();
     PsiElement parent = element;

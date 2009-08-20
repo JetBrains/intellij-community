@@ -37,7 +37,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
   @Override
   public void configureCommandLine(JavaParameters params, Module module, boolean tests, VirtualFile script, String confPath,
-                                      final String groovyHome, AbstractGroovyScriptRunConfiguration configuration) throws CantRunException {
+                                      final String groovyHome, GroovyScriptRunConfiguration configuration) throws CantRunException {
     defaultGroovyStarter(params, module, confPath, tests, groovyHome, configuration);
 
     params.getProgramParametersList().add("--main");

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.runner.AbstractGroovyScriptRunConfiguration;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
 
@@ -53,7 +53,7 @@ public abstract class GroovyScriptType {
   @NotNull
   public abstract Icon getScriptIcon();
 
-  public void tuneConfiguration(@NotNull GroovyFile file, @NotNull AbstractGroovyScriptRunConfiguration configuration, Location location) {
+  public void tuneConfiguration(@NotNull GroovyFile file, @NotNull GroovyScriptRunConfiguration configuration, Location location) {
   }
 
   @Nullable

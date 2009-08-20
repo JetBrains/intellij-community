@@ -36,7 +36,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
       mySourceElement = element;
       final RunnerAndConfigurationSettings settings = GroovyScriptRunConfigurationType.getInstance().createConfigurationByLocation(location);
       if (settings != null) {
-        final AbstractGroovyScriptRunConfiguration configuration = (AbstractGroovyScriptRunConfiguration)settings.getConfiguration();
+        final GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration)settings.getConfiguration();
         GroovyScriptType.getScriptType(groovyFile).tuneConfiguration(groovyFile, configuration, location);
         return (RunnerAndConfigurationSettingsImpl)settings;
       }

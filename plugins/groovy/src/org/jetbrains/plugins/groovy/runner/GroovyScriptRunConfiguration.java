@@ -42,21 +42,21 @@ import java.util.Collection;
 /**
  * @author peter
  */
-public class AbstractGroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule> {
+public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule> {
   public String vmParams;
   public String workDir;
   public boolean isDebugEnabled;
   public String scriptParams;
   public String scriptPath;
 
-  public AbstractGroovyScriptRunConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
+  public GroovyScriptRunConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
     super(name, new RunConfigurationModule(project), factory);
     workDir = PathUtil.getLocalPath(project.getBaseDir());
   }
 
   @Override
   protected ModuleBasedConfiguration createInstance() {
-    return new AbstractGroovyScriptRunConfiguration(getName(), getProject(), getFactory());
+    return new GroovyScriptRunConfiguration(getName(), getProject(), getFactory());
   }
 
   public void setWorkDir(String dir) {
@@ -182,7 +182,7 @@ public class AbstractGroovyScriptRunConfiguration extends ModuleBasedConfigurati
 
         final String confPath = scriptRunner.getConfPath(module);
         final String groovyHome = FileUtil.toSystemDependentName(groovyHomePath);
-        scriptRunner.configureCommandLine(params, module, tests, script, confPath, groovyHome, AbstractGroovyScriptRunConfiguration.this);
+        scriptRunner.configureCommandLine(params, module, tests, script, confPath, groovyHome, GroovyScriptRunConfiguration.this);
 
         if (isDebugEnabled) {
           params.getProgramParametersList().add("--debug");
