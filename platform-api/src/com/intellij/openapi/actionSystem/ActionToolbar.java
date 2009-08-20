@@ -105,4 +105,6 @@ public interface ActionToolbar {
   void setTargetComponent(final JComponent component);
 
   void setReservePlaceAutoPopupIcon(final boolean reserve);
+
+  void setSecondaryActionsTooltip(String secondaryActionsTooltip);
 }

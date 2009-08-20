@@ -920,6 +920,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     myReservePlaceAutoPopupIcon = reserve;
   }
 
+  public void setSecondaryActionsTooltip(String secondaryActionsTooltip) {
+    mySecondaryActions.getTemplatePresentation().setDescription(secondaryActionsTooltip);
+  }
+
   private static class SecondaryButton extends ActionButton {
     private SecondaryButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
       super(action, presentation, place, minimumSize);

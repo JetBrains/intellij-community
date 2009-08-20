@@ -461,6 +461,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
     myAutoScrollFromSourceHandler.install();
 
     myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.PROJECT_VIEW_TOOLBAR, myActionGroup, true);
+    myToolBar.setSecondaryActionsTooltip("View Options");
     JComponent toolbarComponent = myToolBar.getComponent();
     myActionGroupPanel.setLayout(new BorderLayout());
     myActionGroupPanel.add(toolbarComponent, BorderLayout.CENTER);
