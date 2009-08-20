@@ -1,9 +1,8 @@
 package com.intellij.openapi.fileChooser.ex;
 
-import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -50,7 +49,6 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private Project myProject;
   private VirtualFile[] myChosenFiles = VirtualFile.EMPTY_ARRAY;
 
-  private final List<Disposable> myDisposables = new ArrayList<Disposable>();
   private JPanel myNorthPanel;
 
   private static boolean ourToShowTextField = true;
@@ -125,19 +123,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     final AnAction syncAction = ActionManager.getInstance().getAction(fileChooserActionId);
 
     AnAction original = ActionManager.getInstance().getAction(baseActionId);
-    syncAction.registerCustomShortcutSet(original.getShortcutSet(), tree);
-    myDisposables.add(new Disposable() {
-      public void dispose() {
-        syncAction.unregisterCustomShortcutSet(tree);
-      }
-    });
-  }
-
-  private void addToGroup(DefaultActionGroup group, AnAction action) {
-    group.add(action);
-    if (action instanceof Disposable) {
-      myDisposables.add(((Disposable)action));
-    }
+    syncAction.registerCustomShortcutSet(original.getShortcutSet(), tree, myDisposable);
   }
 
   protected final JComponent createTitlePane() {
@@ -172,7 +158,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         updateTreeFromPath(newValue);
       }
     };
-    myDisposables.add(myPathTextField);
+    Disposer.register(myDisposable, myPathTextField);
     myPathTextFieldWrapper.add(myPathTextField.getField(), BorderLayout.CENTER);
 
     myNorthPanel = new JPanel(new BorderLayout());
@@ -206,11 +192,6 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   public final void dispose() {
-    for (Disposable disposable : myDisposables) {
-      Disposer.dispose(disposable);
-    }
-    myDisposables.clear();
-    myFileSystemTree.dispose();
     LocalFileSystem.getInstance().removeWatchedRoots(myRequests.values());
     super.dispose();
   }
@@ -259,6 +240,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
   protected JTree createTree() {
     myFileSystemTree = new FileSystemTreeImpl(myProject, myChooserDescriptor);
+    Disposer.register(myDisposable, myFileSystemTree);
 
     myFileSystemTree.addOkAction(new Runnable() {
       public void run() {doOKAction(); }
