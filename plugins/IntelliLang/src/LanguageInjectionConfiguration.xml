@@ -26,710 +26,298 @@
     <place><![CDATA[groovyElement().methodCallParameter(0, psiMethod().withName("executeUpdate").withParameters("java.lang.String", "int[]").definedInClass("java.sql.Statement"))]]></place>
     <place><![CDATA[groovyElement().methodCallParameter(0, psiMethod().withName("executeUpdate").withParameters("java.lang.String", "java.lang.String[]").definedInClass("java.sql.Statement"))]]></place>
   </injection>
-  <TAGS>
-    <entry>
-      <XmlTagInjection>
-        <setting name="LANGUAGE" value="JavaScript"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="TAGNAME" value="script"/>
-        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml"/>
-        <setting name="VALUE_PATTERN" value=""/>
-        <setting name="XPATH_CONDITION" value=""/>
-        <setting name="APPLY_TO_SUBTAGS" value="false"/>
-      </XmlTagInjection>
-    </entry>
-    <entry>
-      <XmlTagInjection>
-        <setting name="LANGUAGE" value="CSS"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="TAGNAME" value="style"/>
-        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml"/>
-        <setting name="VALUE_PATTERN" value=""/>
-        <setting name="XPATH_CONDITION" value="lower-case(@type)='text/css'"/>
-        <setting name="APPLY_TO_SUBTAGS" value="false"/>
-      </XmlTagInjection>
-    </entry>
-    <entry>
-      <XmlTagInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="TAGNAME" value="mapped-statement"/>
-        <setting name="TAGNAMESPACE" value="http://www.ibatis.com/dtd/sql-map.dtd"/>
-        <setting name="VALUE_PATTERN" value=""/>
-        <setting name="XPATH_CONDITION" value=""/>
-        <setting name="APPLY_TO_SUBTAGS" value="false"/>
-      </XmlTagInjection>
-    </entry>
-    <entry>
-      <XmlTagInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="TAGNAME" value="sql|select|insert|update|delete|statement"/>
-        <setting name="TAGNAMESPACE" value="http://ibatis.apache.org/dtd/sql-map-2.dtd"/>
-        <setting name="VALUE_PATTERN" value=""/>
-        <setting name="XPATH_CONDITION" value=""/>
-        <setting name="APPLY_TO_SUBTAGS" value="true"/>
-      </XmlTagInjection>
-    </entry>
-    <entry>
-      <XmlTagInjection>
-        <setting name="LANGUAGE" value="HQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="TAGNAME" value="query"/>
-        <setting name="TAGNAMESPACE" value="http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd"/>
-        <setting name="VALUE_PATTERN" value=""/>
-        <setting name="XPATH_CONDITION" value=""/>
-        <setting name="APPLY_TO_SUBTAGS" value="false"/>
-      </XmlTagInjection>
-    </entry>
-    <entry>
-      <XmlTagInjection>
-        <setting name="LANGUAGE" value="JPAQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="TAGNAME" value="query"/>
-        <setting name="TAGNAMESPACE" value="http://java.sun.com/xml/ns/persistence/orm"/>
-        <setting name="VALUE_PATTERN" value=""/>
-        <setting name="XPATH_CONDITION" value=""/>
-        <setting name="APPLY_TO_SUBTAGS" value="false"/>
-      </XmlTagInjection>
-    </entry>
-    <entry>
-      <XmlTagInjection>
-        <setting name="LANGUAGE" value="EJBQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="TAGNAME" value="ejb-ql"/>
-        <setting name="TAGNAMESPACE"
-                 value="http://java.sun.com/xml/ns/javaee|http://java.sun.com/xml/ns/j2ee|http://java.sun.com/j2ee/dtds/ejb-jar_1_0.dtd|http://java.sun.com/j2ee/dtds/ejb-jar_1_1.dtd|http://java.sun.com/dtd/ejb-jar_2_0.dtd"/>
-        <setting name="VALUE_PATTERN" value=""/>
-        <setting name="XPATH_CONDITION" value=""/>
-        <setting name="APPLY_TO_SUBTAGS" value="false"/>
-      </XmlTagInjection>
-    </entry>
-    <entry>
-      <XmlTagInjection>
-        <setting name="LANGUAGE" value="EJBQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="TAGNAME" value="ejbql"/>
-        <setting name="TAGNAMESPACE" value="http://jboss.com/products/seam/framework"/>
-        <setting name="VALUE_PATTERN" value=""/>
-        <setting name="XPATH_CONDITION" value=""/>
-        <setting name="APPLY_TO_SUBTAGS" value="false"/>
-      </XmlTagInjection>
-    </entry>
-  </TAGS>
-  <ATTRIBUTES>
-    <entry>
-      <XmlAttributeInjection>
-        <setting name="LANGUAGE" value="JavaScript"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="TAGNAME" value=""/>
-        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml"/>
-        <setting name="VALUE_PATTERN" value=""/>
-        <setting name="XPATH_CONDITION" value=""/>
-        <setting name="ATT_NAME" value="on.*"/>
-        <setting name="ATT_NAMESPACE" value=""/>
-      </XmlAttributeInjection>
-    </entry>
-    <entry>
-      <XmlAttributeInjection>
-        <setting name="LANGUAGE" value="JavaScript"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="TAGNAME" value=""/>
-        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml"/>
-        <setting name="VALUE_PATTERN" value="^javascript:(.+)"/>
-        <setting name="XPATH_CONDITION" value=""/>
-        <setting name="ATT_NAME" value="href"/>
-        <setting name="ATT_NAMESPACE" value=""/>
-      </XmlAttributeInjection>
-    </entry>
-    <entry>
-      <XmlAttributeInjection>
-        <setting name="LANGUAGE" value="CSS"/>
-        <setting name="PREFIX" value="dummy_selector {"/>
-        <setting name="SUFFIX" value="}"/>
-        <setting name="TAGNAME" value=""/>
-        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml"/>
-        <setting name="VALUE_PATTERN" value=""/>
-        <setting name="XPATH_CONDITION" value=""/>
-        <setting name="ATT_NAME" value="style"/>
-        <setting name="ATT_NAMESPACE" value=""/>
-      </XmlAttributeInjection>
-    </entry>
-    <entry>
-      <XmlAttributeInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="TAGNAME" value="query|update"/>
-        <setting name="TAGNAMESPACE" value="http://java.sun.com/jsp/jstl/sql"/>
-        <setting name="VALUE_PATTERN" value=""/>
-        <setting name="XPATH_CONDITION" value=""/>
-        <setting name="ATT_NAME" value="sql"/>
-        <setting name="ATT_NAMESPACE" value=""/>
-      </XmlAttributeInjection>
-    </entry>
-    <entry>
-      <XmlAttributeInjection>
-        <setting name="LANGUAGE" value="XPath"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="TAGNAME" value="out|if|forEach|set|when"/>
-        <setting name="TAGNAMESPACE" value="http://java.sun.com/jsp/jstl/xml"/>
-        <setting name="VALUE_PATTERN" value=""/>
-        <setting name="XPATH_CONDITION" value=""/>
-        <setting name="ATT_NAME" value="select"/>
-        <setting name="ATT_NAMESPACE" value=""/>
-      </XmlAttributeInjection>
-    </entry>
-    <entry>
-      <XmlAttributeInjection>
-        <setting name="LANGUAGE" value="EJBQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="TAGNAME" value="entity-query"/>
-        <setting name="TAGNAMESPACE" value="http://jboss.com/products/seam/framework"/>
-        <setting name="VALUE_PATTERN" value=""/>
-        <setting name="XPATH_CONDITION" value=""/>
-        <setting name="ATT_NAME" value="ejbql"/>
-        <setting name="ATT_NAMESPACE" value=""/>
-      </XmlAttributeInjection>
-    </entry>
-  </ATTRIBUTES>
-  <PARAMETERS>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="RegExp"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="java.util.regex.Pattern"/>
-        <setting name="APPLY_IN_HIERARCHY" value="false"/>
-        <SIGNATURES name="compile(java.lang.String)" value="true"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="XPath"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.dom4j.Node"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="createXPath(java.lang.String)" value="true"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="XPath"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.dom4j.Node"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="selectNodes(java.lang.String)" value="true"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="XPath"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.dom4j.Node"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="selectSingleNode(java.lang.String)" value="true"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="RegExp"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="java.util.regex.Pattern"/>
-        <setting name="APPLY_IN_HIERARCHY" value="false"/>
-        <SIGNATURES name="compile(java.lang.String)" value="true"/>
-        <SIGNATURES name="compile(java.lang.String, int)" value="true,false"/>
-        <SIGNATURES name="matches(java.lang.String, java.lang.CharSequence)" value="true,false"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="RegExp"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="java.lang.String"/>
-        <setting name="APPLY_IN_HIERARCHY" value="false"/>
-        <SIGNATURES name="replaceAll(java.lang.String, java.lang.String)" value="true,false"/>
-        <SIGNATURES name="replaceFirst(java.lang.String, java.lang.String)" value="true,false"/>
-        <SIGNATURES name="split(java.lang.String)" value="true"/>
-        <SIGNATURES name="split(java.lang.String, int)" value="true,false"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="XPath"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.jdom.xpath.XPath"/>
-        <setting name="APPLY_IN_HIERARCHY" value="false"/>
-        <SIGNATURES name="newInstance(java.lang.String)" value="true"/>
-        <SIGNATURES name="selectNodes(java.lang.Object, java.lang.String)" value="false,true"/>
-        <SIGNATURES name="selectSingleNode(java.lang.Object, java.lang.String)" value="false,true"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="XPath"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="javax.xml.xpath.XPath"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="compile(java.lang.String)" value="true"/>
-        <SIGNATURES name="evaluate(java.lang.String, java.lang.Object)" value="true,false"/>
-        <SIGNATURES name="evaluate(java.lang.String, java.lang.Object, javax.xml.namespace.QName)" value="true,false,false"/>
-        <SIGNATURES name="evaluate(java.lang.String, org.xml.sax.InputSource)" value="true,false"/>
-        <SIGNATURES name="evaluate(java.lang.String, org.xml.sax.InputSource, javax.xml.namespace.QName)" value="true,false,false"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="java.sql.Connection"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="nativeSQL(java.lang.String)" value="true"/>
-        <SIGNATURES name="prepareCall(java.lang.String)" value="true"/>
-        <SIGNATURES name="prepareCall(java.lang.String, int, int)" value="true,false,false"/>
-        <SIGNATURES name="prepareCall(java.lang.String, int, int, int)" value="true,false,false,false"/>
-        <SIGNATURES name="prepareStatement(java.lang.String)" value="true"/>
-        <SIGNATURES name="prepareStatement(java.lang.String, int)" value="true,false"/>
-        <SIGNATURES name="prepareStatement(java.lang.String, int, int)" value="true,false,false"/>
-        <SIGNATURES name="prepareStatement(java.lang.String, int, int, int)" value="true,false,false,false"/>
-        <SIGNATURES name="prepareStatement(java.lang.String, int[])" value="true,false"/>
-        <SIGNATURES name="prepareStatement(java.lang.String, java.lang.String[])" value="true,false"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="java.sql.Statement"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="addBatch(java.lang.String)" value="true"/>
-        <SIGNATURES name="execute(java.lang.String)" value="true"/>
-        <SIGNATURES name="execute(java.lang.String, int)" value="true,false"/>
-        <SIGNATURES name="execute(java.lang.String, int[])" value="true,false"/>
-        <SIGNATURES name="execute(java.lang.String, java.lang.String[])" value="true,false"/>
-        <SIGNATURES name="executeQuery(java.lang.String)" value="true"/>
-        <SIGNATURES name="executeUpdate(java.lang.String)" value="true"/>
-        <SIGNATURES name="executeUpdate(java.lang.String, int)" value="true,false"/>
-        <SIGNATURES name="executeUpdate(java.lang.String, int[])" value="true,false"/>
-        <SIGNATURES name="executeUpdate(java.lang.String, java.lang.String[])" value="true,false"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.springframework.jdbc.core.JdbcOperations"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="batchUpdate(java.lang.String, org.springframework.jdbc.core.BatchPreparedStatementSetter)" value="true,false"/>
-        <SIGNATURES name="batchUpdate(java.lang.String[])" value="true"/>
-        <SIGNATURES name="execute(java.lang.String)" value="true"/>
-        <SIGNATURES name="execute(java.lang.String, org.springframework.jdbc.core.PreparedStatementCallback)" value="true,false"/>
-        <SIGNATURES name="query(java.lang.String, java.lang.Object[], int[], org.springframework.jdbc.core.ResultSetExtractor)"
-                    value="true,false,false,false"/>
-        <SIGNATURES name="query(java.lang.String, java.lang.Object[], int[], org.springframework.jdbc.core.RowCallbackHandler)"
-                    value="true,false,false,false"/>
-        <SIGNATURES name="query(java.lang.String, java.lang.Object[], int[], org.springframework.jdbc.core.RowMapper)"
-                    value="true,false,false,false"/>
-        <SIGNATURES name="query(java.lang.String, java.lang.Object[], org.springframework.jdbc.core.ResultSetExtractor)"
-                    value="true,false,false"/>
-        <SIGNATURES name="query(java.lang.String, java.lang.Object[], org.springframework.jdbc.core.RowCallbackHandler)"
-                    value="true,false,false"/>
-        <SIGNATURES name="query(java.lang.String, java.lang.Object[], org.springframework.jdbc.core.RowMapper)" value="true,false,false"/>
-        <SIGNATURES
-            name="query(java.lang.String, org.springframework.jdbc.core.PreparedStatementSetter, org.springframework.jdbc.core.ResultSetExtractor)"
-            value="true,false,false"/>
-        <SIGNATURES
-            name="query(java.lang.String, org.springframework.jdbc.core.PreparedStatementSetter, org.springframework.jdbc.core.RowCallbackHandler)"
-            value="true,false,false"/>
-        <SIGNATURES
-            name="query(java.lang.String, org.springframework.jdbc.core.PreparedStatementSetter, org.springframework.jdbc.core.RowMapper)"
-            value="true,false,false"/>
-        <SIGNATURES name="query(java.lang.String, org.springframework.jdbc.core.ResultSetExtractor)" value="true,false"/>
-        <SIGNATURES name="query(java.lang.String, org.springframework.jdbc.core.RowCallbackHandler)" value="true,false"/>
-        <SIGNATURES name="query(java.lang.String, org.springframework.jdbc.core.RowMapper)" value="true,false"/>
-        <SIGNATURES name="queryForInt(java.lang.String)" value="true"/>
-        <SIGNATURES name="queryForInt(java.lang.String, java.lang.Object[])" value="true,false"/>
-        <SIGNATURES name="queryForInt(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
-        <SIGNATURES name="queryForList(java.lang.String)" value="true"/>
-        <SIGNATURES name="queryForList(java.lang.String, java.lang.Class)" value="true,false"/>
-        <SIGNATURES name="queryForList(java.lang.String, java.lang.Object[])" value="true,false"/>
-        <SIGNATURES name="queryForList(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
-        <SIGNATURES name="queryForList(java.lang.String, java.lang.Object[], int[], java.lang.Class)" value="true,false,false,false"/>
-        <SIGNATURES name="queryForList(java.lang.String, java.lang.Object[], java.lang.Class)" value="true,false,false"/>
-        <SIGNATURES name="queryForLong(java.lang.String)" value="true"/>
-        <SIGNATURES name="queryForLong(java.lang.String, java.lang.Object[])" value="true,false"/>
-        <SIGNATURES name="queryForLong(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
-        <SIGNATURES name="queryForMap(java.lang.String)" value="true"/>
-        <SIGNATURES name="queryForMap(java.lang.String, java.lang.Object[])" value="true,false"/>
-        <SIGNATURES name="queryForMap(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
-        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Class)" value="true,false"/>
-        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Object[], int[], java.lang.Class)" value="true,false,false,false"/>
-        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Object[], int[], org.springframework.jdbc.core.RowMapper)"
-                    value="true,false,false,false"/>
-        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Object[], java.lang.Class)" value="true,false,false"/>
-        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Object[], org.springframework.jdbc.core.RowMapper)"
-                    value="true,false,false"/>
-        <SIGNATURES name="queryForObject(java.lang.String, org.springframework.jdbc.core.RowMapper)" value="true,false"/>
-        <SIGNATURES name="queryForRowSet(java.lang.String)" value="true"/>
-        <SIGNATURES name="queryForRowSet(java.lang.String, java.lang.Object[])" value="true,false"/>
-        <SIGNATURES name="queryForRowSet(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
-        <SIGNATURES name="update(java.lang.String)" value="true"/>
-        <SIGNATURES name="update(java.lang.String, java.lang.Object[])" value="true,false"/>
-        <SIGNATURES name="update(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
-        <SIGNATURES name="update(java.lang.String, org.springframework.jdbc.core.PreparedStatementSetter)" value="true,false"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.springframework.jdbc.core.simple.SimpleJdbcOperations"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES
-            name="query(java.lang.String, org.springframework.jdbc.core.simple.ParameterizedRowMapper&lt;T&gt;, java.lang.Object...)"
-            value="true,false,false"/>
-        <SIGNATURES name="queryForInt(java.lang.String, java.lang.Object...)" value="true,false"/>
-        <SIGNATURES name="queryForList(java.lang.String, java.lang.Object...)" value="true,false"/>
-        <SIGNATURES name="queryForLong(java.lang.String, java.lang.Object...)" value="true,false"/>
-        <SIGNATURES name="queryForMap(java.lang.String, java.lang.Object...)" value="true,false"/>
-        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Class&lt;T&gt;, java.lang.Object...)" value="true,false,false"/>
-        <SIGNATURES
-            name="queryForObject(java.lang.String, org.springframework.jdbc.core.simple.ParameterizedRowMapper&lt;T&gt;, java.lang.Object...)"
-            value="true,false,false"/>
-        <SIGNATURES name="update(java.lang.String, java.lang.Object...)" value="true,false"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.springframework.jdbc.object.RdbmsOperation"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="setSql(java.lang.String)" value="true"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.springframework.jdbc.object.SqlOperation"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="newPreparedStatementCreator(java.lang.String, java.lang.Object[])" value="true,false"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.springframework.jdbc.object.BatchSqlUpdate"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="BatchSqlUpdate(javax.sql.DataSource, java.lang.String)" value="false,true"/>
-        <SIGNATURES name="BatchSqlUpdate(javax.sql.DataSource, java.lang.String, int[])" value="false,true,false"/>
-        <SIGNATURES name="BatchSqlUpdate(javax.sql.DataSource, java.lang.String, int[], int)" value="false,true,false,false"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.springframework.jdbc.object.MappingSqlQuery"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="MappingSqlQuery(javax.sql.DataSource, java.lang.String)" value="false,true"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.springframework.jdbc.object.MappingSqlQueryWithParameters"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="MappingSqlQueryWithParameters(javax.sql.DataSource, java.lang.String)" value="false,true"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.springframework.jdbc.object.SqlCall"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="SqlCall(javax.sql.DataSource, java.lang.String)" value="false,true"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.springframework.jdbc.object.SqlFunction"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="SqlFunction(javax.sql.DataSource, java.lang.String)" value="false,true"/>
-        <SIGNATURES name="SqlFunction(javax.sql.DataSource, java.lang.String, int[])" value="false,true,false"/>
-        <SIGNATURES name="SqlFunction(javax.sql.DataSource, java.lang.String, int[], java.lang.Class)" value="false,true,false,false"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.springframework.jdbc.object.SqlQuery"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="SqlQuery(javax.sql.DataSource, java.lang.String)" value="false,true"/>
-        <SIGNATURES name="execute(java.lang.String)" value="true"/>
-        <SIGNATURES name="execute(java.lang.String, java.util.Map)" value="true,false"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.springframework.jdbc.object.SqlUpdate"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="SqlUpdate(javax.sql.DataSource, java.lang.String)" value="false,true"/>
-        <SIGNATURES name="SqlUpdate(javax.sql.DataSource, java.lang.String, int[])" value="false,true,false"/>
-        <SIGNATURES name="SqlUpdate(javax.sql.DataSource, java.lang.String, int[], int)" value="false,true,false,false"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.springframework.jdbc.object.UpdatableSqlQuery"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="UpdatableSqlQuery(javax.sql.DataSource, java.lang.String)" value="false,true"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.springframework.jdbc.core.JdbcOperations"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="batchUpdate(java.lang.String, org.springframework.jdbc.core.BatchPreparedStatementSetter)" value="true,false"/>
-        <SIGNATURES name="batchUpdate(java.lang.String[])" value="true"/>
-        <SIGNATURES name="execute(java.lang.String)" value="true"/>
-        <SIGNATURES name="execute(java.lang.String, org.springframework.jdbc.core.PreparedStatementCallback)" value="true,false"/>
-        <SIGNATURES name="query(java.lang.String, java.lang.Object[], int[], org.springframework.jdbc.core.ResultSetExtractor)"
-                    value="true,false,false,false"/>
-        <SIGNATURES name="query(java.lang.String, java.lang.Object[], int[], org.springframework.jdbc.core.RowCallbackHandler)"
-                    value="true,false,false,false"/>
-        <SIGNATURES name="query(java.lang.String, java.lang.Object[], int[], org.springframework.jdbc.core.RowMapper)"
-                    value="true,false,false,false"/>
-        <SIGNATURES name="query(java.lang.String, java.lang.Object[], org.springframework.jdbc.core.ResultSetExtractor)"
-                    value="true,false,false"/>
-        <SIGNATURES name="query(java.lang.String, java.lang.Object[], org.springframework.jdbc.core.RowCallbackHandler)"
-                    value="true,false,false"/>
-        <SIGNATURES name="query(java.lang.String, java.lang.Object[], org.springframework.jdbc.core.RowMapper)" value="true,false,false"/>
-        <SIGNATURES
-            name="query(java.lang.String, org.springframework.jdbc.core.PreparedStatementSetter, org.springframework.jdbc.core.ResultSetExtractor)"
-            value="true,false,false"/>
-        <SIGNATURES
-            name="query(java.lang.String, org.springframework.jdbc.core.PreparedStatementSetter, org.springframework.jdbc.core.RowCallbackHandler)"
-            value="true,false,false"/>
-        <SIGNATURES
-            name="query(java.lang.String, org.springframework.jdbc.core.PreparedStatementSetter, org.springframework.jdbc.core.RowMapper)"
-            value="true,false,false"/>
-        <SIGNATURES name="query(java.lang.String, org.springframework.jdbc.core.ResultSetExtractor)" value="true,false"/>
-        <SIGNATURES name="query(java.lang.String, org.springframework.jdbc.core.RowCallbackHandler)" value="true,false"/>
-        <SIGNATURES name="query(java.lang.String, org.springframework.jdbc.core.RowMapper)" value="true,false"/>
-        <SIGNATURES name="queryForInt(java.lang.String)" value="true"/>
-        <SIGNATURES name="queryForInt(java.lang.String, java.lang.Object[])" value="true,false"/>
-        <SIGNATURES name="queryForInt(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
-        <SIGNATURES name="queryForList(java.lang.String)" value="true"/>
-        <SIGNATURES name="queryForList(java.lang.String, java.lang.Class)" value="true,false"/>
-        <SIGNATURES name="queryForList(java.lang.String, java.lang.Object[])" value="true,false"/>
-        <SIGNATURES name="queryForList(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
-        <SIGNATURES name="queryForList(java.lang.String, java.lang.Object[], int[], java.lang.Class)" value="true,false,false,false"/>
-        <SIGNATURES name="queryForList(java.lang.String, java.lang.Object[], java.lang.Class)" value="true,false,false"/>
-        <SIGNATURES name="queryForLong(java.lang.String)" value="true"/>
-        <SIGNATURES name="queryForLong(java.lang.String, java.lang.Object[])" value="true,false"/>
-        <SIGNATURES name="queryForLong(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
-        <SIGNATURES name="queryForMap(java.lang.String)" value="true"/>
-        <SIGNATURES name="queryForMap(java.lang.String, java.lang.Object[])" value="true,false"/>
-        <SIGNATURES name="queryForMap(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
-        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Class)" value="true,false"/>
-        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Object[], int[], java.lang.Class)" value="true,false,false,false"/>
-        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Object[], int[], org.springframework.jdbc.core.RowMapper)"
-                    value="true,false,false,false"/>
-        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Object[], java.lang.Class)" value="true,false,false"/>
-        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Object[], org.springframework.jdbc.core.RowMapper)"
-                    value="true,false,false"/>
-        <SIGNATURES name="queryForObject(java.lang.String, org.springframework.jdbc.core.RowMapper)" value="true,false"/>
-        <SIGNATURES name="queryForRowSet(java.lang.String)" value="true"/>
-        <SIGNATURES name="queryForRowSet(java.lang.String, java.lang.Object[])" value="true,false"/>
-        <SIGNATURES name="queryForRowSet(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
-        <SIGNATURES name="update(java.lang.String)" value="true"/>
-        <SIGNATURES name="update(java.lang.String, java.lang.Object[])" value="true,false"/>
-        <SIGNATURES name="update(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
-        <SIGNATURES name="update(java.lang.String, org.springframework.jdbc.core.PreparedStatementSetter)" value="true,false"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="JPAQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="javax.persistence.EntityManager"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="createQuery(java.lang.String)" value="true"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="javax.persistence.EntityManager"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="createNativeQuery(java.lang.String)" value="true"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="JPAQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="javax.persistence.NamedQuery"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="query()" value="true:"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="javax.persistence.NamedNativeQuery"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="query()" value="true:"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="HQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.hibernate.Session"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="createQuery(java.lang.String)" value="true"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="SQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.hibernate.Session"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="createSQLQuery(java.lang.String)" value="true"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="HQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.springframework.orm.hibernate3.HibernateOperations"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="bulkUpdate(java.lang.String)" value="true"/>
-        <SIGNATURES name="bulkUpdate(java.lang.String, java.lang.Object)" value="true,false"/>
-        <SIGNATURES name="bulkUpdate(java.lang.String, java.lang.Object[])" value="true,false"/>
-        <SIGNATURES name="find(java.lang.String)" value="true"/>
-        <SIGNATURES name="find(java.lang.String, java.lang.Object)" value="true,false"/>
-        <SIGNATURES name="find(java.lang.String, java.lang.Object[])" value="true,false"/>
-        <SIGNATURES name="findByNamedParam(java.lang.String, java.lang.String, java.lang.Object)" value="true,false,false"/>
-        <SIGNATURES name="findByNamedParam(java.lang.String, java.lang.String[], java.lang.Object[])" value="true,false,false"/>
-        <SIGNATURES name="findByValueBean(java.lang.String, java.lang.Object)" value="true,false"/>
-        <SIGNATURES name="iterate(java.lang.String)" value="true"/>
-        <SIGNATURES name="iterate(java.lang.String, java.lang.Object)" value="true,false"/>
-        <SIGNATURES name="iterate(java.lang.String, java.lang.Object[])" value="true,false"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="JPAQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.springframework.orm.jpa.JpaOperations"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="find(java.lang.String)" value="true"/>
-        <SIGNATURES name="find(java.lang.String, java.lang.Object...)" value="true,false"/>
-        <SIGNATURES name="findByNamedParams(java.lang.String, java.util.Map)"
-                    value="true,false"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="HQL"/>
-        <setting name="PREFIX" value=""/>
-        <setting name="SUFFIX" value=""/>
-        <setting name="CLASS" value="org.springframework.orm.hibernate.HibernateOperations"/>
-        <setting name="APPLY_IN_HIERARCHY" value="true"/>
-        <SIGNATURES name="find(java.lang.String)" value="true"/>
-        <SIGNATURES name="find(java.lang.String, java.lang.Object)" value="true,false"/>
-        <SIGNATURES name="find(java.lang.String, java.lang.Object, net.sf.hibernate.type.Type)" value="true,false,false"/>
-        <SIGNATURES name="find(java.lang.String, java.lang.Object[])" value="true,false"/>
-        <SIGNATURES name="find(java.lang.String, java.lang.Object[], net.sf.hibernate.type.Type[])" value="true,false,false"/>
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="RegExp" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />
-        <setting name="VALUE_PATTERN" value="[^:]*:[\s]*([^\}]*)" />
-        <setting name="SINGLE_FILE" value="false" />
-        <setting name="CLASS" value="javax.ws.rs.Path" />
-        <setting name="APPLY_IN_HIERARCHY" value="true" />
-        <SIGNATURES name="value()" value="true" />
-      </MethodParameterInjection>
-    </entry>
-    <entry>
-      <MethodParameterInjection>
-        <setting name="LANGUAGE" value="RegExp" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />        
-        <setting name="SINGLE_FILE" value="false" />
-        <setting name="CLASS" value="javax.validation.constraints.Pattern" />
-        <setting name="APPLY_IN_HIERARCHY" value="true" />
-        <SIGNATURES name="regexp()" value="true" />
-      </MethodParameterInjection>
-    </entry>
-  </PARAMETERS>
-  <option name="INSTRUMENTATION" value="ASSERT"/>
-  <option name="LANGUAGE_ANNOTATION" value="org.intellij.lang.annotations.Language"/>
-  <option name="PATTERN_ANNOTATION" value="org.intellij.lang.annotations.Pattern"/>
-  <option name="SUBST_ANNOTATION" value="org.intellij.lang.annotations.Subst"/>
+  <injection language="SQL" injector-id="java">
+    <display-name>BatchSqlUpdate (org.springframework.jdbc.object)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("BatchSqlUpdate").withParameters("javax.sql.DataSource", "java.lang.String").definedInClass("org.springframework.jdbc.object.BatchSqlUpdate"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("BatchSqlUpdate").withParameters("javax.sql.DataSource", "java.lang.String", "int[]").definedInClass("org.springframework.jdbc.object.BatchSqlUpdate"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("BatchSqlUpdate").withParameters("javax.sql.DataSource", "java.lang.String", "int[]", "int").definedInClass("org.springframework.jdbc.object.BatchSqlUpdate"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="java">
+    <display-name>Connection (java.sql)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("nativeSQL").withParameters("java.lang.String").definedInClass("java.sql.Connection"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("prepareCall").withParameters("java.lang.String").definedInClass("java.sql.Connection"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("prepareCall").withParameters("java.lang.String", "int", "int").definedInClass("java.sql.Connection"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("prepareCall").withParameters("java.lang.String", "int", "int", "int").definedInClass("java.sql.Connection"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("prepareStatement").withParameters("java.lang.String").definedInClass("java.sql.Connection"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("prepareStatement").withParameters("java.lang.String", "int").definedInClass("java.sql.Connection"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("prepareStatement").withParameters("java.lang.String", "int", "int").definedInClass("java.sql.Connection"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("prepareStatement").withParameters("java.lang.String", "int", "int", "int").definedInClass("java.sql.Connection"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("prepareStatement").withParameters("java.lang.String", "int[]").definedInClass("java.sql.Connection"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("prepareStatement").withParameters("java.lang.String", "java.lang.String[]").definedInClass("java.sql.Connection"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="java">
+    <display-name>EntityManager.createNativeQuery (javax.persistence)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createNativeQuery").withParameters("java.lang.String").definedInClass("javax.persistence.EntityManager"))]]></place>
+  </injection>
+  <injection language="JPAQL" injector-id="java">
+    <display-name>EntityManager.createQuery (javax.persistence)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createQuery").withParameters("java.lang.String").definedInClass("javax.persistence.EntityManager"))]]></place>
+  </injection>
+  <injection language="HQL" injector-id="java">
+    <display-name>HibernateOperations (org.springframework.orm.hibernate)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("find").withParameters("java.lang.String").definedInClass("org.springframework.orm.hibernate.HibernateOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("find").withParameters("java.lang.String", "java.lang.Object").definedInClass("org.springframework.orm.hibernate.HibernateOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("find").withParameters("java.lang.String", "java.lang.Object", "net.sf.hibernate.type.Type").definedInClass("org.springframework.orm.hibernate.HibernateOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("find").withParameters("java.lang.String", "java.lang.Object[]").definedInClass("org.springframework.orm.hibernate.HibernateOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("find").withParameters("java.lang.String", "java.lang.Object[]", "net.sf.hibernate.type.Type[]").definedInClass("org.springframework.orm.hibernate.HibernateOperations"))]]></place>
+  </injection>
+  <injection language="HQL" injector-id="java">
+    <display-name>HibernateOperations (org.springframework.orm.hibernate3)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("bulkUpdate").withParameters("java.lang.String").definedInClass("org.springframework.orm.hibernate3.HibernateOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("bulkUpdate").withParameters("java.lang.String", "java.lang.Object").definedInClass("org.springframework.orm.hibernate3.HibernateOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("bulkUpdate").withParameters("java.lang.String", "java.lang.Object[]").definedInClass("org.springframework.orm.hibernate3.HibernateOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("find").withParameters("java.lang.String").definedInClass("org.springframework.orm.hibernate3.HibernateOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("find").withParameters("java.lang.String", "java.lang.Object").definedInClass("org.springframework.orm.hibernate3.HibernateOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("find").withParameters("java.lang.String", "java.lang.Object[]").definedInClass("org.springframework.orm.hibernate3.HibernateOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("findByNamedParam").withParameters("java.lang.String", "java.lang.String", "java.lang.Object").definedInClass("org.springframework.orm.hibernate3.HibernateOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("findByNamedParam").withParameters("java.lang.String", "java.lang.String[]", "java.lang.Object[]").definedInClass("org.springframework.orm.hibernate3.HibernateOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("findByValueBean").withParameters("java.lang.String", "java.lang.Object").definedInClass("org.springframework.orm.hibernate3.HibernateOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("iterate").withParameters("java.lang.String").definedInClass("org.springframework.orm.hibernate3.HibernateOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("iterate").withParameters("java.lang.String", "java.lang.Object").definedInClass("org.springframework.orm.hibernate3.HibernateOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("iterate").withParameters("java.lang.String", "java.lang.Object[]").definedInClass("org.springframework.orm.hibernate3.HibernateOperations"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="java">
+    <display-name>JdbcOperations (org.springframework.jdbc.core)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("batchUpdate").withParameters("java.lang.String", "org.springframework.jdbc.core.BatchPreparedStatementSetter").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("batchUpdate").withParameters("java.lang.String[]").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("execute").withParameters("java.lang.String").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("execute").withParameters("java.lang.String", "org.springframework.jdbc.core.PreparedStatementCallback").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("query").withParameters("java.lang.String", "java.lang.Object[]", "int[]", "org.springframework.jdbc.core.ResultSetExtractor").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("query").withParameters("java.lang.String", "java.lang.Object[]", "int[]", "org.springframework.jdbc.core.RowCallbackHandler").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("query").withParameters("java.lang.String", "java.lang.Object[]", "int[]", "org.springframework.jdbc.core.RowMapper").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("query").withParameters("java.lang.String", "java.lang.Object[]", "org.springframework.jdbc.core.ResultSetExtractor").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("query").withParameters("java.lang.String", "java.lang.Object[]", "org.springframework.jdbc.core.RowCallbackHandler").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("query").withParameters("java.lang.String", "java.lang.Object[]", "org.springframework.jdbc.core.RowMapper").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("query").withParameters("java.lang.String", "org.springframework.jdbc.core.PreparedStatementSetter", "org.springframework.jdbc.core.ResultSetExtractor").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("query").withParameters("java.lang.String", "org.springframework.jdbc.core.PreparedStatementSetter", "org.springframework.jdbc.core.RowCallbackHandler").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("query").withParameters("java.lang.String", "org.springframework.jdbc.core.PreparedStatementSetter", "org.springframework.jdbc.core.RowMapper").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("query").withParameters("java.lang.String", "org.springframework.jdbc.core.ResultSetExtractor").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("query").withParameters("java.lang.String", "org.springframework.jdbc.core.RowCallbackHandler").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("query").withParameters("java.lang.String", "org.springframework.jdbc.core.RowMapper").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForInt").withParameters("java.lang.String").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForInt").withParameters("java.lang.String", "java.lang.Object[]").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForInt").withParameters("java.lang.String", "java.lang.Object[]", "int[]").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForList").withParameters("java.lang.String").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForList").withParameters("java.lang.String", "java.lang.Class").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForList").withParameters("java.lang.String", "java.lang.Object[]").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForList").withParameters("java.lang.String", "java.lang.Object[]", "int[]").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForList").withParameters("java.lang.String", "java.lang.Object[]", "int[]", "java.lang.Class").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForList").withParameters("java.lang.String", "java.lang.Object[]", "java.lang.Class").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForLong").withParameters("java.lang.String").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForLong").withParameters("java.lang.String", "java.lang.Object[]").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForLong").withParameters("java.lang.String", "java.lang.Object[]", "int[]").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForMap").withParameters("java.lang.String").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForMap").withParameters("java.lang.String", "java.lang.Object[]").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForMap").withParameters("java.lang.String", "java.lang.Object[]", "int[]").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForObject").withParameters("java.lang.String", "java.lang.Class").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForObject").withParameters("java.lang.String", "java.lang.Object[]", "int[]", "java.lang.Class").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForObject").withParameters("java.lang.String", "java.lang.Object[]", "int[]", "org.springframework.jdbc.core.RowMapper").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForObject").withParameters("java.lang.String", "java.lang.Object[]", "java.lang.Class").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForObject").withParameters("java.lang.String", "java.lang.Object[]", "org.springframework.jdbc.core.RowMapper").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForObject").withParameters("java.lang.String", "org.springframework.jdbc.core.RowMapper").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForRowSet").withParameters("java.lang.String").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForRowSet").withParameters("java.lang.String", "java.lang.Object[]").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForRowSet").withParameters("java.lang.String", "java.lang.Object[]", "int[]").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("update").withParameters("java.lang.String").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("update").withParameters("java.lang.String", "java.lang.Object[]").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("update").withParameters("java.lang.String", "java.lang.Object[]", "int[]").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("update").withParameters("java.lang.String", "org.springframework.jdbc.core.PreparedStatementSetter").definedInClass("org.springframework.jdbc.core.JdbcOperations"))]]></place>
+  </injection>
+  <injection language="JPAQL" injector-id="java">
+    <display-name>JpaOperations (org.springframework.orm.jpa)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("find").withParameters("java.lang.String").definedInClass("org.springframework.orm.jpa.JpaOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("find").withParameters("java.lang.String", "java.lang.Object...").definedInClass("org.springframework.orm.jpa.JpaOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("findByNamedParams").withParameters("java.lang.String", "java.util.Map").definedInClass("org.springframework.orm.jpa.JpaOperations"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="java">
+    <display-name>MappingSqlQuery.MappingSqlQuery (org.springframework.jdbc.object)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("MappingSqlQuery").withParameters("javax.sql.DataSource", "java.lang.String").definedInClass("org.springframework.jdbc.object.MappingSqlQuery"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="java">
+    <display-name>MappingSqlQueryWithParameters.MappingSqlQueryWithParameters (org.springframework.jdbc.object)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("MappingSqlQueryWithParameters").withParameters("javax.sql.DataSource", "java.lang.String").definedInClass("org.springframework.jdbc.object.MappingSqlQueryWithParameters"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="java">
+    <display-name>NamedNativeQuery.query (javax.persistence)</display-name>
+    <place><![CDATA[psiMethod().withName("query").withParameters().definedInClass("javax.persistence.NamedNativeQuery")]]></place>
+  </injection>
+  <injection language="JPAQL" injector-id="java">
+    <display-name>NamedQuery.query (javax.persistence)</display-name>
+    <place><![CDATA[psiMethod().withName("query").withParameters().definedInClass("javax.persistence.NamedQuery")]]></place>
+  </injection>
+  <injection language="XPath" injector-id="java">
+    <display-name>Node.createXPath (org.dom4j)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createXPath").withParameters("java.lang.String").definedInClass("org.dom4j.Node"))]]></place>
+  </injection>
+  <injection language="XPath" injector-id="java">
+    <display-name>Node.selectNodes (org.dom4j)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("selectNodes").withParameters("java.lang.String").definedInClass("org.dom4j.Node"))]]></place>
+  </injection>
+  <injection language="XPath" injector-id="java">
+    <display-name>Node.selectSingleNode (org.dom4j)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("selectSingleNode").withParameters("java.lang.String").definedInClass("org.dom4j.Node"))]]></place>
+  </injection>
+  <injection language="RegExp" injector-id="java">
+    <display-name>Path.value (javax.ws.rs)</display-name>
+    <value-pattern>[^:]*:[\s]*([^\}]*)</value-pattern>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("value").withParameters().definedInClass("javax.ws.rs.Path"))]]></place>
+  </injection>
+  <injection language="RegExp" injector-id="java">
+    <display-name>Pattern (java.util.regex)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("compile").withParameters("java.lang.String").definedInClass("java.util.regex.Pattern"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("compile").withParameters("java.lang.String", "int").definedInClass("java.util.regex.Pattern"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("matches").withParameters("java.lang.String", "java.lang.CharSequence").definedInClass("java.util.regex.Pattern"))]]></place>
+  </injection>
+  <injection language="RegExp" injector-id="java">
+    <display-name>Pattern.regexp (javax.validation.constraints)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("regexp").withParameters().definedInClass("javax.validation.constraints.Pattern"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="java">
+    <display-name>RdbmsOperation.setSql (org.springframework.jdbc.object)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("setSql").withParameters("java.lang.String").definedInClass("org.springframework.jdbc.object.RdbmsOperation"))]]></place>
+  </injection>
+  <injection language="HQL" injector-id="java">
+    <display-name>Session.createQuery (org.hibernate)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createQuery").withParameters("java.lang.String").definedInClass("org.hibernate.Session"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="java">
+    <display-name>Session.createSQLQuery (org.hibernate)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createSQLQuery").withParameters("java.lang.String").definedInClass("org.hibernate.Session"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="java">
+    <display-name>SimpleJdbcOperations (org.springframework.jdbc.core.simple)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("query").withParameters("java.lang.String", "org.springframework.jdbc.core.simple.ParameterizedRowMapper<T>", "java.lang.Object...").definedInClass("org.springframework.jdbc.core.simple.SimpleJdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForInt").withParameters("java.lang.String", "java.lang.Object...").definedInClass("org.springframework.jdbc.core.simple.SimpleJdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForList").withParameters("java.lang.String", "java.lang.Object...").definedInClass("org.springframework.jdbc.core.simple.SimpleJdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForLong").withParameters("java.lang.String", "java.lang.Object...").definedInClass("org.springframework.jdbc.core.simple.SimpleJdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForMap").withParameters("java.lang.String", "java.lang.Object...").definedInClass("org.springframework.jdbc.core.simple.SimpleJdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForObject").withParameters("java.lang.String", "java.lang.Class<T>", "java.lang.Object...").definedInClass("org.springframework.jdbc.core.simple.SimpleJdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryForObject").withParameters("java.lang.String", "org.springframework.jdbc.core.simple.ParameterizedRowMapper<T>", "java.lang.Object...").definedInClass("org.springframework.jdbc.core.simple.SimpleJdbcOperations"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("update").withParameters("java.lang.String", "java.lang.Object...").definedInClass("org.springframework.jdbc.core.simple.SimpleJdbcOperations"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="java">
+    <display-name>SqlCall.SqlCall (org.springframework.jdbc.object)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("SqlCall").withParameters("javax.sql.DataSource", "java.lang.String").definedInClass("org.springframework.jdbc.object.SqlCall"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="java">
+    <display-name>SqlFunction (org.springframework.jdbc.object)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("SqlFunction").withParameters("javax.sql.DataSource", "java.lang.String").definedInClass("org.springframework.jdbc.object.SqlFunction"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("SqlFunction").withParameters("javax.sql.DataSource", "java.lang.String", "int[]").definedInClass("org.springframework.jdbc.object.SqlFunction"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("SqlFunction").withParameters("javax.sql.DataSource", "java.lang.String", "int[]", "java.lang.Class").definedInClass("org.springframework.jdbc.object.SqlFunction"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="java">
+    <display-name>SqlOperation.newPreparedStatementCreator (org.springframework.jdbc.object)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("newPreparedStatementCreator").withParameters("java.lang.String", "java.lang.Object[]").definedInClass("org.springframework.jdbc.object.SqlOperation"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="java">
+    <display-name>SqlQuery (org.springframework.jdbc.object)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("execute").withParameters("java.lang.String").definedInClass("org.springframework.jdbc.object.SqlQuery"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("execute").withParameters("java.lang.String", "java.util.Map").definedInClass("org.springframework.jdbc.object.SqlQuery"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("SqlQuery").withParameters("javax.sql.DataSource", "java.lang.String").definedInClass("org.springframework.jdbc.object.SqlQuery"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="java">
+    <display-name>SqlUpdate (org.springframework.jdbc.object)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("SqlUpdate").withParameters("javax.sql.DataSource", "java.lang.String").definedInClass("org.springframework.jdbc.object.SqlUpdate"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("SqlUpdate").withParameters("javax.sql.DataSource", "java.lang.String", "int[]").definedInClass("org.springframework.jdbc.object.SqlUpdate"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("SqlUpdate").withParameters("javax.sql.DataSource", "java.lang.String", "int[]", "int").definedInClass("org.springframework.jdbc.object.SqlUpdate"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="java">
+    <display-name>Statement (java.sql)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("addBatch").withParameters("java.lang.String").definedInClass("java.sql.Statement"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("execute").withParameters("java.lang.String").definedInClass("java.sql.Statement"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("execute").withParameters("java.lang.String", "int").definedInClass("java.sql.Statement"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("execute").withParameters("java.lang.String", "int[]").definedInClass("java.sql.Statement"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("execute").withParameters("java.lang.String", "java.lang.String[]").definedInClass("java.sql.Statement"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("executeQuery").withParameters("java.lang.String").definedInClass("java.sql.Statement"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("executeUpdate").withParameters("java.lang.String").definedInClass("java.sql.Statement"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("executeUpdate").withParameters("java.lang.String", "int").definedInClass("java.sql.Statement"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("executeUpdate").withParameters("java.lang.String", "int[]").definedInClass("java.sql.Statement"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("executeUpdate").withParameters("java.lang.String", "java.lang.String[]").definedInClass("java.sql.Statement"))]]></place>
+  </injection>
+  <injection language="RegExp" injector-id="java">
+    <display-name>String (java.lang)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("replaceAll").withParameters("java.lang.String", "java.lang.String").definedInClass("java.lang.String"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("replaceFirst").withParameters("java.lang.String", "java.lang.String").definedInClass("java.lang.String"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("split").withParameters("java.lang.String").definedInClass("java.lang.String"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("split").withParameters("java.lang.String", "int").definedInClass("java.lang.String"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="java">
+    <display-name>UpdatableSqlQuery.UpdatableSqlQuery (org.springframework.jdbc.object)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("UpdatableSqlQuery").withParameters("javax.sql.DataSource", "java.lang.String").definedInClass("org.springframework.jdbc.object.UpdatableSqlQuery"))]]></place>
+  </injection>
+  <injection language="XPath" injector-id="java">
+    <display-name>XPath (javax.xml.xpath)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("compile").withParameters("java.lang.String").definedInClass("javax.xml.xpath.XPath"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("evaluate").withParameters("java.lang.String", "java.lang.Object").definedInClass("javax.xml.xpath.XPath"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("evaluate").withParameters("java.lang.String", "java.lang.Object", "javax.xml.namespace.QName").definedInClass("javax.xml.xpath.XPath"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("evaluate").withParameters("java.lang.String", "org.xml.sax.InputSource").definedInClass("javax.xml.xpath.XPath"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("evaluate").withParameters("java.lang.String", "org.xml.sax.InputSource", "javax.xml.namespace.QName").definedInClass("javax.xml.xpath.XPath"))]]></place>
+  </injection>
+  <injection language="XPath" injector-id="java">
+    <display-name>XPath (org.jdom.xpath)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("newInstance").withParameters("java.lang.String").definedInClass("org.jdom.xpath.XPath"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("selectNodes").withParameters("java.lang.Object", "java.lang.String").definedInClass("org.jdom.xpath.XPath"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("selectSingleNode").withParameters("java.lang.Object", "java.lang.String").definedInClass("org.jdom.xpath.XPath"))]]></place>
+  </injection>
+  <injection language="JavaScript" injector-id="xml">
+    <display-name>*/@href</display-name>
+    <value-pattern>^javascript:(.+)</value-pattern>
+    <place><![CDATA[xmlAttribute().withLocalName(string().matches("href")).inside(xmlTag().withNamespace(string().matches("http://www.w3.org/1999/xhtml")))]]></place>
+  </injection>
+  <injection language="JavaScript" injector-id="xml">
+    <display-name>*/@on.*</display-name>
+    <place><![CDATA[xmlAttribute().withLocalName(string().matches("on.*")).inside(xmlTag().withNamespace(string().matches("http://www.w3.org/1999/xhtml")))]]></place>
+  </injection>
+  <injection language="CSS" injector-id="xml">
+    <display-name>*/@style</display-name>
+    <prefix>dummy_selector {</prefix>
+    <suffix>}</suffix>
+    <place><![CDATA[xmlAttribute().withLocalName(string().matches("style")).inside(xmlTag().withNamespace(string().matches("http://www.w3.org/1999/xhtml")))]]></place>
+  </injection>
+  <injection language="EJBQL" injector-id="xml">
+    <display-name>ejb-ql</display-name>
+    <place><![CDATA[xmlTag().withLocalName(string().matches("ejb-ql")).withNamespace(string().matches("http://java.sun.com/dtd/ejb-jar_2_0.dtd|http://java.sun.com/j2ee/dtds/ejb-jar_1_0.dtd|http://java.sun.com/j2ee/dtds/ejb-jar_1_1.dtd|http://java.sun.com/xml/ns/j2ee|http://java.sun.com/xml/ns/javaee"))]]></place>
+  </injection>
+  <injection language="EJBQL" injector-id="xml">
+    <display-name>ejbql</display-name>
+    <place><![CDATA[xmlTag().withLocalName(string().matches("ejbql")).withNamespace(string().matches("http://jboss.com/products/seam/framework"))]]></place>
+  </injection>
+  <injection language="EJBQL" injector-id="xml">
+    <display-name>entity-query/@ejbql</display-name>
+    <place><![CDATA[xmlAttribute().withLocalName(string().matches("ejbql")).inside(xmlTag().withLocalName(string().matches("entity-query")).withNamespace(string().matches("http://jboss.com/products/seam/framework")))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="xml">
+    <display-name>mapped-statement</display-name>
+    <place><![CDATA[xmlTag().withLocalName(string().matches("mapped-statement")).withNamespace(string().matches("http://www.ibatis.com/dtd/sql-map.dtd"))]]></place>
+  </injection>
+  <injection language="XPath" injector-id="xml">
+    <display-name>out|if|forEach|set|when/@select</display-name>
+    <place><![CDATA[xmlAttribute().withLocalName(string().matches("select")).inside(xmlTag().withLocalName(string().matches("out|if|forEach|set|when")).withNamespace(string().matches("http://java.sun.com/jsp/jstl/xml")))]]></place>
+  </injection>
+  <injection language="HQL" injector-id="xml">
+    <display-name>query</display-name>
+    <place><![CDATA[xmlTag().withLocalName(string().matches("query")).withNamespace(string().matches("http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd"))]]></place>
+  </injection>
+  <injection language="JPAQL" injector-id="xml">
+    <display-name>query</display-name>
+    <place><![CDATA[xmlTag().withLocalName(string().matches("query")).withNamespace(string().matches("http://java.sun.com/xml/ns/persistence/orm"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="xml">
+    <display-name>query|update/@sql</display-name>
+    <place><![CDATA[xmlAttribute().withLocalName(string().matches("sql")).inside(xmlTag().withLocalName(string().matches("query|update")).withNamespace(string().matches("http://java.sun.com/jsp/jstl/sql")))]]></place>
+  </injection>
+  <injection language="JavaScript" injector-id="xml">
+    <display-name>script</display-name>
+    <place><![CDATA[xmlTag().withLocalName(string().matches("script")).withNamespace(string().matches("http://www.w3.org/1999/xhtml"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="xml">
+    <display-name>sql|select|insert|update|delete|statement</display-name>
+    <place><![CDATA[xmlTag().withLocalName(string().matches("sql|select|insert|update|delete|statement")).withNamespace(string().matches("http://ibatis.apache.org/dtd/sql-map-2.dtd"))]]></place>
+    <apply-to-subtags />
+  </injection>
+  <injection language="CSS" injector-id="xml">
+    <display-name>style</display-name>
+    <place><![CDATA[xmlTag().withLocalName(string().matches("style")).withNamespace(string().matches("http://www.w3.org/1999/xhtml"))]]></place>
+    <xpath-condition>lower-case(@type)='text/css'</xpath-condition>
+  </injection>
 </component>

@@ -33,6 +33,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.FileContentUtil;
+import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -158,14 +159,15 @@ public final class Configuration implements PersistentStateComponent<Element> {
   }
 
   private void mergeWithDefaultConfiguration() {
+    Configuration cfg = null;
     try {
-      final Configuration cfg = load(getClass().getResourceAsStream("/" + COMPONENT_NAME + ".xml"));
-      if (cfg == null) return; // very strange
-      importFrom(cfg);
+      cfg = load(getClass().getResourceAsStream("/" + COMPONENT_NAME + ".xml"));
     }
     catch (Exception e) {
       LOG.warn(e);
     }
+    if (cfg == null) return;
+    importFrom(cfg);
   }
 
   public Element getState() {
@@ -289,32 +291,60 @@ public final class Configuration implements PersistentStateComponent<Element> {
 
   /**
    * Import from another configuration (e.g. imported file). Returns the number of imported items.
+   * @param cfg configuration to import from
+   * @return added injections count
    */
   public int importFrom(final Configuration cfg) {
-    int n = 0;
+    final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>();
+    final ArrayList<BaseInjection> newInjections = new ArrayList<BaseInjection>();
     for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
-      final List<BaseInjection> mineInjections = myInjections.get(supportId);
-      for (BaseInjection other : cfg.getInjections(supportId)) {
-        final BaseInjection existing = findExistingInjection(other);
-        if (existing == null) {
-          n ++;
-          mineInjections.add(other);
+      importInjections(getInjections(supportId), cfg.getInjections(supportId), originalInjections, newInjections);
+    }
+    if (!newInjections.isEmpty()) configurationModified();
+    replaceInjections(newInjections, originalInjections);
+    return newInjections.size();
+  }
+
+  static void importInjections(final Collection<BaseInjection> existingInjections, final Collection<BaseInjection> importingInjections,
+                               final Collection<BaseInjection> originalInjections, final Collection<BaseInjection> newInjections) {
+    final MultiValuesMap<String, BaseInjection> existingMap = createInjectionMap(existingInjections);
+    main: for (BaseInjection other : importingInjections) {
+      final List<BaseInjection> matchingInjections = ContainerUtil.concat(other.getInjectionPlaces(), new Function<InjectionPlace, Collection<? extends BaseInjection>>() {
+        public Collection<? extends BaseInjection> fun(final InjectionPlace o) {
+          final Collection<BaseInjection> collection = existingMap.get(o.getText());
+          return collection == null? Collections.<BaseInjection>emptyList() : collection;
         }
-        else {
-          if (existing.equals(other)) continue;
-          boolean placesAdded = false;
-          for (InjectionPlace place : other.getInjectionPlaces()) {
-            if (existing.findPlaceByText(place.getText()) == null) {
-              existing.getInjectionPlaces().add(place);
-              placesAdded = true;
-            }
+      });
+      if (matchingInjections.isEmpty()) {
+        newInjections.add(other);
+      }
+      else {
+        BaseInjection existing = null;
+        for (BaseInjection injection : matchingInjections) {
+          if (injection.equals(other)) continue main;
+          if (existing == null && injection.sameLanguageParameters(other)) {
+            existing = injection;
           }
-          if (placesAdded) n++;
+        }
+        if (existing == null) continue main; // skip!! language changed
+        final BaseInjection newInjection = existing.copy();
+        newInjection.mergeOriginalPlacesFrom(other, true);
+        if (!newInjection.equals(existing)) {
+          originalInjections.add(existing);
+          newInjections.add(newInjection);
         }
       }
     }
-    if (n >= 0) configurationModified();
-    return n;
+  }
+
+  private static MultiValuesMap<String, BaseInjection> createInjectionMap(final Collection<BaseInjection> injections) {
+    final MultiValuesMap<String, BaseInjection> existingMap = new MultiValuesMap<String, BaseInjection>();
+    for (BaseInjection injection : injections) {
+      for (InjectionPlace place : injection.getInjectionPlaces()) {
+        existingMap.put(place.getText(), injection);
+      }
+    }
+    return existingMap;
   }
 
   public void configurationModified() {
