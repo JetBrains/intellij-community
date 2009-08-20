@@ -5,8 +5,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 
-public final class UnscrambleAction extends AnAction {
+public final class UnscrambleAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     UnscrambleDialog dialog = new UnscrambleDialog(project);
