@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.groovy.gradle;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
@@ -7,6 +9,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -59,16 +62,43 @@ public class GradleLibraryManager extends AbstractGroovyLibraryManager {
     return isGradleSdk(lib.getChildren());
   }
 
-  public static boolean isGradleSdk(VirtualFile[] files) {
-    for (VirtualFile file : files) {
-      if (isGradleJar(file)) {
-        return true;
+  @Nullable
+  public static VirtualFile getSdkHome(@Nullable Module module) {
+    final VirtualFile gradleJar = findGradleJar(module);
+
+    if (gradleJar != null) {
+      final VirtualFile parent = gradleJar.getParent();
+      if (parent != null && "lib".equals(parent.getName())) {
+        return parent.getParent();
       }
     }
-    return false;
+    return null;
   }
 
-  static boolean isGradleJar(VirtualFile file) {
+  @Nullable
+  public static VirtualFile findGradleJar(@Nullable Module module) {
+    if (module == null) {
+      return null;
+    }
+
+    return findGradleJar(ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES));
+  }
+
+  @Nullable
+  private static VirtualFile findGradleJar(VirtualFile[] files) {
+    for (VirtualFile file : files) {
+      if (isGradleJar(file)) {
+        return PathUtil.getLocalFile(file);
+      }
+    }
+    return null;
+  }
+
+  public static boolean isGradleSdk(VirtualFile[] files) {
+    return findGradleJar(files) != null;
+  }
+
+  private static boolean isGradleJar(VirtualFile file) {
     return GRADLE_JAR_FILE_PATTERN.matcher(file.getName()).matches();
   }
 

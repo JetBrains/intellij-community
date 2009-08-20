@@ -76,7 +76,7 @@ public abstract class GroovyScriptRunner {
     params.getProgramParametersList().add(getClearClasspath(module, tests));
   }
 
-  private static void setToolsJar(JavaParameters params) {
+  protected static void setToolsJar(JavaParameters params) {
     Sdk jdk = params.getJdk();
     if (jdk != null && jdk.getSdkType() instanceof JavaSdkType) {
       String toolsPath = ((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk);
@@ -86,7 +86,7 @@ public abstract class GroovyScriptRunner {
     }
   }
 
-  private static void addGroovyJar(JavaParameters params, Module module) {
+  protected static void addGroovyJar(JavaParameters params, Module module) {
     final Pattern pattern = Pattern.compile(".*[\\\\/]groovy[^\\\\/]*jar");
     for (Library library : GroovyConfigUtils.getInstance().getSDKLibrariesByModule(module)) {
       for (VirtualFile root : library.getFiles(OrderRootType.CLASSES)) {

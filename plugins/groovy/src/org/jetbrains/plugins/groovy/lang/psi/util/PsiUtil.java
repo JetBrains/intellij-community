@@ -748,4 +748,9 @@ public class PsiUtil {
     }
     return null;
   }
+
+  public static boolean isMethodCall(GrMethodCallExpression call, String methodName) {
+    final GrExpression expression = call.getInvokedExpression();
+    return expression instanceof GrReferenceExpression && methodName.equals(expression.getText().trim());
+  }
 }

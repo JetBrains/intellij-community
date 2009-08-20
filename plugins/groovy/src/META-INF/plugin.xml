@@ -47,6 +47,7 @@
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
     <scriptType extensions="gant" descriptorClass="org.jetbrains.plugins.groovy.gant.GantScriptType"/>
+    <scriptType extensions="gradle" descriptorClass="org.jetbrains.plugins.groovy.gradle.GradleScriptType"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

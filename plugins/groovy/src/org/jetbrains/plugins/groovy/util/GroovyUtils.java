@@ -18,11 +18,6 @@ package org.jetbrains.plugins.groovy.util;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -36,51 +31,6 @@ import java.util.regex.Pattern;
  */
 public abstract class GroovyUtils {
   public static final String PLUGIN_MODULE_ID = "PLUGIN_MODULE";
-
-  /**
-   * @param dir
-   * @return true if current file is VCS auxiliary directory
-   */
-  public static boolean isVersionControlSysDir(final VirtualFile dir) {
-    if (!dir.isDirectory()) {
-      return false;
-    }
-    final String name = dir.getName().toLowerCase();
-    return ".svn".equals(name) || "_svn".equals(name) ||
-        ".cvs".equals(name) || "_cvs".equals(name);
-  }
-
-  /**
-   * @param file
-   * @return true if current file is true groovy file
-   */
-
-  public static boolean isGroovyFileOrDirectory(final @NotNull VirtualFile file) {
-    return isGroovyFile(file) || file.isDirectory();
-  }
-
-  public static boolean isGroovyFile(VirtualFile file) {
-    return GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension().equals(file.getExtension());
-  }
-
-  /**
-   * @param module Module to get content root
-   * @return VirtualFile corresponding to content root
-   */
-  @NotNull
-  public static String[] getModuleRootUrls(@NotNull final Module module) {
-    VirtualFile[] roots = ModuleRootManager.getInstance(module).getSourceRoots();
-    if (roots.length == 0) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
-    }
-
-    String[] urls = new String[roots.length];
-    int i = 0;
-    for (VirtualFile root : roots) {
-      urls[i++] = root.getUrl();
-    }
-    return urls;
-  }
 
   public static File[] getFilesInDirectoryByPattern(String dirPath, final String patternString) {
     File distDir = new File(dirPath);

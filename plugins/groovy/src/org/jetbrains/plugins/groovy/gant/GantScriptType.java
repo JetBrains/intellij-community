@@ -11,6 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 
@@ -45,7 +46,7 @@ public class GantScriptType extends GroovyScriptType {
       pp = pp.getParent();
       parent = parent.getParent();
     }
-    if (pp != null && parent instanceof GrMethodCallExpression) {
+    if (pp != null && parent instanceof GrMethodCallExpression && PsiUtil.isMethodCall((GrMethodCallExpression)parent, "target")) {
       String target = getFoundTargetName(((GrMethodCallExpression)parent));
       if (target != null) {
         configuration.scriptParams = target;
