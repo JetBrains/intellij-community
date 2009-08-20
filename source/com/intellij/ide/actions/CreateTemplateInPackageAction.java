@@ -87,7 +87,7 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
     presentation.setEnabled(enabled);
   }
 
-  private static boolean isAvailable(final DataContext dataContext) {
+  protected boolean isAvailable(final DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || view == null || view.getDirectories().length == 0) {
