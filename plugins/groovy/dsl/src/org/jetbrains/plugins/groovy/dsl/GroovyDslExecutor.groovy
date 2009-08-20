@@ -7,8 +7,11 @@ package org.jetbrains.plugins.groovy.dsl
 public class GroovyDslExecutor {
   private final List<Closure> myScriptEnhancers = [];
   private final List<Closure> myClassEnhancers = [];
+  private final String myFileName;
 
   public GroovyDslExecutor(String text, String fileName) {
+    myFileName = fileName
+
     def shell = new GroovyShell()
     def script = shell.parse(text, fileName)
 
@@ -58,6 +61,10 @@ public class GroovyDslExecutor {
     for (e in (descriptor instanceof ScriptDescriptor ? myScriptEnhancers : myClassEnhancers)) {
       e(descriptor, consumer)
     }
+  }
+
+  def String toString() {
+    return "${super.toString()}; file = $myFileName";
   }
 
 }
