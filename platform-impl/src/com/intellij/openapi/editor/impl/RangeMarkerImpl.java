@@ -79,6 +79,14 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     isExpandToRight = greedy;
   }
 
+  public boolean isGreedyToLeft() {
+    return isExpandToLeft;
+  }
+
+  public boolean isGreedyToRight() {
+    return isExpandToRight;
+  }
+
   public void documentChanged(DocumentEvent e) {
     int oldStart = myStart;
     int oldEnd = myEnd;
@@ -159,6 +167,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   @NonNls
   public String toString() {
-    return "RangeMarker[" + (isValid ? "valid" : "invalid") + "," + myStart + "," + myEnd + "]";
+    return "RangeMarker" + (isGreedyToLeft() ? "[" : "(") + (isValid ? "valid" : "invalid") + "," + getStartOffset() + "," + getEndOffset() + (
+      isGreedyToRight() ? "]" : ")");
   }
 }

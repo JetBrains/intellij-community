@@ -115,6 +115,14 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
     public void setGreedyToRight(boolean greedy) {
       ensureDelegate().setGreedyToRight(greedy);
     }
+
+    public boolean isGreedyToRight() {
+      return ensureDelegate().isGreedyToRight();
+    }
+
+    public boolean isGreedyToLeft() {
+      return ensureDelegate().isGreedyToLeft();
+    }
   }
 
   private static class OffsetLazyMarker extends LazyMarker {

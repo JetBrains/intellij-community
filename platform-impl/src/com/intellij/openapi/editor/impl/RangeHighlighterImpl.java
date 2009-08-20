@@ -192,11 +192,19 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
     myRangeMarker.setGreedyToRight(greedy);
   }
 
-  public <T> T getUserData(Key<T> key) {
+  public boolean isGreedyToRight() {
+    return myRangeMarker.isGreedyToRight();
+  }
+
+  public boolean isGreedyToLeft() {
+    return myRangeMarker.isGreedyToLeft();
+  }
+
+  public <T> T getUserData(@NotNull Key<T> key) {
     return myRangeMarker.getUserData(key);
   }
 
-  public <T> void putUserData(Key<T> key, T value) {
+  public <T> void putUserData(@NotNull Key<T> key, T value) {
     myRangeMarker.putUserData(key, value);
   }
 

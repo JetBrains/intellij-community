@@ -67,4 +67,12 @@ public class RangeMarkerWindow implements RangeMarkerEx {
   public RangeMarkerEx getDelegate() {
     return myHostMarker;
   }
+
+  public boolean isGreedyToRight() {
+    return myHostMarker.isGreedyToRight();
+  }
+
+  public boolean isGreedyToLeft() {
+    return myHostMarker.isGreedyToLeft();
+  }
 }

@@ -199,14 +199,14 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return !myIsReadOnly;
   }
 
-  public void removeRangeMarker(RangeMarkerEx rangeMarker) {
+  public void removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     synchronized(myRangeMarkers) {
       myRangeMarkers.remove(rangeMarker);
     }
   }
 
-  public void addRangeMarker(RangeMarkerEx rangeMarker) {
+  public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     synchronized(myRangeMarkers) {
       myRangeMarkers.put(rangeMarker, null);
@@ -225,6 +225,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myGuardedBlocks.remove(block);
   }
 
+  @NotNull
   public List<RangeMarker> getGuardedBlocks() {
     return myGuardedBlocks;
   }
@@ -241,7 +242,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public RangeMarker getRangeGuard(int start, int end) {
     for (RangeMarker block : myGuardedBlocks) {
-      if (rangeIntersect(start, end, block.getStartOffset(), block.getEndOffset())) return block;
+      if (rangeIntersect(start, end, block.getStartOffset(), block.getEndOffset(), block.isGreedyToLeft(), block.isGreedyToRight())) {
+        return block;
+    }
     }
 
     return null;
@@ -260,12 +263,16 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return start <= offset && offset < end;
   }
 
-  private static boolean rangeIntersect(int s1, int e1, int s2, int e2) {
-    return s2 <= s1 && s1 < e2
-           || s2 < e1 && e1 <= e2
-           || s1 <= s2 && s2 < e1
+  private static boolean before(int a1, int a2, boolean a1Inclusive, boolean a2Inclusive) {
+    return a1 < a2 || a1 == a2 && (a1Inclusive || !a2Inclusive);
+  }
+
+  private static boolean rangeIntersect(int s1, int e1, int s2, int e2, boolean greedyToLeft, boolean greedyToRight) {
+    return before(s2, s1, greedyToLeft, true) && s1 < e2
+           || s2 < e1 && (e1 < e2 || e1==e2 && s1<e1)
+           || before(s1, s2, true, greedyToLeft) && s2 < e1
            || s1 < e2 && e2 <= e1
-           || s1==s2 && e1==e2
+           || s1==s2 && greedyToLeft && e1==e2
            ;
   }
 
@@ -295,7 +302,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myModificationStamp = modificationStamp;
   }
 
-  public void replaceText(CharSequence chars, long newModificationStamp) {
+  public void replaceText(@NotNull CharSequence chars, long newModificationStamp) {
     replaceString(0, getTextLength(), chars, newModificationStamp, true); //TODO: optimization!!!
     clearLineModificationFlags();
   }
@@ -574,6 +581,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return lineIndex;
   }
 
+  @NotNull
   public LineIterator createLineIterator() {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     return myLineSet.createIterator();
@@ -627,11 +635,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
-  public void addEditReadOnlyListener(EditReadOnlyListener listener) {
+  public void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
     myReadOnlyListeners.add(listener);
   }
 
-  public void removeEditReadOnlyListener(EditReadOnlyListener listener) {
+  public void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
     myReadOnlyListeners.remove(listener);
   }
 
@@ -698,7 +706,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       runnable.run();
     }
     else {
-      CommandProcessor.getInstance().executeCommand(runnable, "file text set", this);
+      CommandProcessor.getInstance().executeCommand(runnable, "file text set", CommandProcessor.noneGroupId(this));
     }
 
     clearLineModificationFlags();
