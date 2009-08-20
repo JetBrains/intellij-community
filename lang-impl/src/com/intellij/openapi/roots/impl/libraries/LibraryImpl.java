@@ -246,6 +246,8 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
 
 
   public void writeExternal(Element rootElement) {
+    LOG.assertTrue(!isDisposed(), "Already disposed!");
+
     Element element = new Element(ELEMENT);
     if (myName != null) {
       element.setAttribute(LIBRARY_NAME_ATTR, myName);

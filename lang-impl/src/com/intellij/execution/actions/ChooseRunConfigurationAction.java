@@ -13,20 +13,19 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.popup.list.PopupListElementRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,11 +39,6 @@ public class ChooseRunConfigurationAction extends AnAction {
   private static final Icon EDIT_ICON = IconLoader.getIcon("/actions/editSource.png");
   private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
 
-  private static final Icon _00_ICON = IconLoader.getIcon("/ide/numbers/00.png");
-  private static final Icon _01_ICON = IconLoader.getIcon("/ide/numbers/01.png");
-  private static final Icon _02_ICON = IconLoader.getIcon("/ide/numbers/02.png");
-  private static final Icon _03_ICON = IconLoader.getIcon("/ide/numbers/03.png");
-
   private Executor myCurrentExecutor;
   private boolean myEditConfiguration;
   private boolean myDeleteConfiguration;
@@ -57,16 +51,18 @@ public class ChooseRunConfigurationAction extends AnAction {
     final Executor executor = getDefaultExecutor();
     assert executor != null;
 
-    final ListPopup popup = JBPopupFactory.getInstance()
-      .createListPopup(new ConfigurationListPopupStep(this, project, String.format("%s", executor.getActionName())));
+    final ListPopupImpl popup = new ListPopupImpl(new ConfigurationListPopupStep(this, project, String.format("%s", executor.getActionName()))) {
+      @Override
+      protected ListCellRenderer getListElementRenderer() {
+        return new RunListElementRenderer(this);
+      }
+    };
 
-    if (popup instanceof ListPopupImpl) {
-      registerActions((ListPopupImpl)popup);
-    }
+    registerActions(popup);
 
     final String adText = getAdText(getAlternateExecutor());
     if (adText != null) {
-      ((AbstractPopup)popup).setAdText(adText);
+      popup.setAdText(adText);
     }
 
     popup.showCenteredInCurrentWindow(project);
@@ -88,21 +84,6 @@ public class ChooseRunConfigurationAction extends AnAction {
     }
 
     return null;
-  }
-
-  private static Icon getNumberIcon(final Icon base, final int number) {
-    switch (number) {
-      case 0:
-        return LayeredIcon.create(base, _00_ICON);
-      case 1:
-        return LayeredIcon.create(base, _01_ICON);
-      case 2:
-        return LayeredIcon.create(base, _02_ICON);
-      case 3:
-        return LayeredIcon.create(base, _03_ICON);
-      default:
-        return base;
-    }
   }
 
   private void registerActions(final ListPopupImpl popup) {
@@ -342,12 +323,7 @@ public class ChooseRunConfigurationAction extends AnAction {
 
         @Override
         public Icon getIcon() {
-          final Icon result = ExecutionUtil.getConfigurationIcon(project, getValue());
-          if (getMnemonic() != -1) {
-            return getNumberIcon(result, getMnemonic());
-          }
-
-          return result;
+          return ExecutionUtil.getConfigurationIcon(project, getValue());
         }
 
         @Override
@@ -439,7 +415,7 @@ public class ChooseRunConfigurationAction extends AnAction {
       final ItemWrapper edit = new ItemWrapper(null) {
         @Override
         public Icon getIcon() {
-          return getNumberIcon(EDIT_ICON, 0);
+          return EDIT_ICON;
         }
 
         @Override
@@ -516,12 +492,7 @@ public class ChooseRunConfigurationAction extends AnAction {
             final ItemWrapper wrapper = new ItemWrapper(configuration) {
               @Override
               public Icon getIcon() {
-                Icon result = IconLoader.getTransparentIcon(ExecutionUtil.getConfigurationIcon(project, configuration), 0.3f);
-                if (getMnemonic() != -1) {
-                  result = getNumberIcon(result, getMnemonic());
-                }
-
-                return result;
+                return IconLoader.getTransparentIcon(ExecutionUtil.getConfigurationIcon(project, configuration), 0.3f);
               }
 
               @Override
@@ -754,6 +725,54 @@ public class ChooseRunConfigurationAction extends AnAction {
 
     public Icon getIcon() {
       return myIcon;
+    }
+  }
+
+  private static class RunListElementRenderer extends PopupListElementRenderer {
+    private JLabel myLabel;
+    private ListPopupImpl myPopup1;
+
+    private RunListElementRenderer(ListPopupImpl popup) {
+      super(popup);
+
+      myPopup1 = popup;
+    }
+
+    @Override
+    protected JComponent createItemComponent() {
+      if (myLabel == null) {
+        myLabel = new JLabel();
+        myLabel.setPreferredSize(new JLabel("8.").getPreferredSize());
+      }
+      
+      final JComponent result = super.createItemComponent();
+      result.add(myLabel, BorderLayout.WEST);
+      return result;
+    }
+
+    @Override
+    protected void customizeComponent(JList list, Object value, boolean isSelected) {
+      super.customizeComponent(list, value, isSelected);
+
+      ListPopupStep<Object> step = myPopup1.getListStep();
+      boolean isSelectable = step.isSelectable(value);
+      myLabel.setEnabled(isSelectable);
+
+      if (isSelected) {
+        setSelected(myLabel);
+      } else {
+        setDeselected(myLabel);
+      }
+
+      if (value instanceof ItemWrapper) {
+        final int mnemonic = ((ItemWrapper)value).getMnemonic();
+        if (mnemonic != -1) {
+          myLabel.setText(mnemonic + ".");
+          myLabel.setDisplayedMnemonicIndex(0);
+        } else {
+          myLabel.setText("");
+        }
+      }
     }
   }
 }
