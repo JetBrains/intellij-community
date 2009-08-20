@@ -24,6 +24,12 @@ public class WeightBasedComparator implements Comparator<NodeDescriptor> {
   private boolean myCompareToString;
 
   public static final WeightBasedComparator INSTANCE = new WeightBasedComparator();
+  public static final WeightBasedComparator FULL_INSTANCE = new WeightBasedComparator(true) {
+    @Override
+    protected int compareWeights(final int w1, final int w2) {
+      return w1 - w2;
+    }
+  };
 
   public WeightBasedComparator() {
     this(false);
@@ -34,16 +40,26 @@ public class WeightBasedComparator implements Comparator<NodeDescriptor> {
   }
 
   public int compare(NodeDescriptor o1, NodeDescriptor o2) {
-    SimpleNode first = (SimpleNode) o1;
-    SimpleNode second = (SimpleNode) o2;
+    final SimpleNode first = (SimpleNode) o1;
+    final SimpleNode second = (SimpleNode) o2;
 
-    if (myCompareToString && first.getWeight() == second.getWeight()) {
-      String s1 = first.toString();
-      String s2 = second.toString();
-      if (s1 == null) return s2 == null ? 0 : -1;
-      if (s2 == null) return +1;
-      return s1.compareToIgnoreCase(s2);
+    final int w1 = first.getWeight();
+    final int w2 = second.getWeight();
+    if (myCompareToString && w1 == w2) {
+      return compareToString(first, second);
     }
-    return second.getWeight() - first.getWeight();
+    return compareWeights(w1, w2);
+  }
+
+  protected int compareWeights(final int w1, final int w2) {
+    return w2 - w1;
+  }
+
+  protected int compareToString(final SimpleNode first, final SimpleNode second) {
+    String s1 = first.toString();
+    String s2 = second.toString();
+    if (s1 == null) return s2 == null ? 0 : -1;
+    if (s2 == null) return +1;
+    return s1.compareToIgnoreCase(s2);
   }
 }
