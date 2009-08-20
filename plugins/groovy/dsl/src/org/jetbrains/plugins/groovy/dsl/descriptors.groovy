@@ -1,7 +1,5 @@
 package org.jetbrains.plugins.groovy.dsl
 
-import java.beans.MethodDescriptor
-
 /**
  * @author peter
  */
