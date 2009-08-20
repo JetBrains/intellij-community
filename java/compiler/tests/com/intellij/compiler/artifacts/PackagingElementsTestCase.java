@@ -141,7 +141,7 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
     }
 
     public PackagingElementBuilder module(Module module) {
-      myElement.addOrFindChild(getFactory().createModuleOutput(module.getName()));
+      myElement.addOrFindChild(getFactory().createModuleOutput(module));
       return this;
     }
 
@@ -151,7 +151,7 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
     }
 
     public PackagingElementBuilder artifact(Artifact artifact) {
-      myElement.addOrFindChild(getFactory().createArtifactElement(artifact));
+      myElement.addOrFindChild(getFactory().createArtifactElement(artifact, myProject));
       return this;
     }
 
