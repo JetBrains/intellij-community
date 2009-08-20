@@ -37,8 +37,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   private MyDocumentAdapter myDocumentListener;
   private FileStatusProvider myFileStatusProvider;
 
-  public FileStatusManagerImpl(Project project,
-                               StartupManager startupManager) {
+  public FileStatusManagerImpl(Project project, StartupManager startupManager) {
     myProject = project;
 
     startupManager.registerPostStartupActivity(new DumbAwareRunnable() {

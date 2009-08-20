@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -78,6 +79,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     ApplicationManager.getApplication().runReadAction(
       new Runnable() {
         public void run() {
+          assert !HeavyProcessLatch.INSTANCE.isRunning();
           HeavyProcessLatch.INSTANCE.processStarted();
           try {
             runActivities(myPreStartupActivities);
@@ -193,6 +195,20 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
     else {
       registerPostStartupActivity(runnable);
+    }
+  }
+
+  @TestOnly
+  public void checkCleared() {
+    try {
+      assert myActivities.isEmpty() : "Activities: "+myActivities;
+      assert myPostStartupActivities.isEmpty() : "Post Activities: "+myPostStartupActivities;
+      assert myPreStartupActivities.isEmpty() : "Pre Activities: "+myPreStartupActivities;
+    }
+    finally {
+      myActivities.clear();
+      myPostStartupActivities.clear();
+      myPreStartupActivities.clear();
     }
   }
 }

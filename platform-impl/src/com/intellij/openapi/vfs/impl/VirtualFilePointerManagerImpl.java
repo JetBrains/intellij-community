@@ -10,7 +10,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.pointers.*;
@@ -159,8 +158,9 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   @NotNull
   private VirtualFilePointer create(VirtualFile file, String url, @NotNull final Disposable parentDisposable, VirtualFilePointerListener listener) {
-    if (file != null && file.getFileSystem() instanceof DummyFileSystem) {
-      return new VirtualFilePointerImpl(file, file.getUrl(), myVirtualFileManager, listener, parentDisposable);
+    if (file != null && file.getFileSystem() != LocalFileSystem.getInstance() && file.getFileSystem() != JarFileSystem.getInstance()) {
+      // we are unable to track alien file systems for now
+      return new IdentityVirtualFilePointer(file);
     }
 
     url = FileUtil.toSystemIndependentName(url);
@@ -169,6 +169,11 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     if (fileSystem == null) {
       // this pointer will never be alive
       return new NullVirtualFilePointer(url);
+    }
+    if (fileSystem != LocalFileSystem.getInstance() && fileSystem != JarFileSystem.getInstance()) {
+      // we are unable to track alien file systems for now
+      VirtualFile found = VirtualFileManager.getInstance().findFileByUrl(url);
+      return found == null ? new NullVirtualFilePointer(url) : new IdentityVirtualFilePointer(found);
     }
 
     url = stripTrailingPathSeparator(url, protocol);

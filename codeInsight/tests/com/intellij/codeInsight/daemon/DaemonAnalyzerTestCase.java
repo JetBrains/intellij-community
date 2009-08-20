@@ -15,6 +15,8 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.ToolsImpl;
+import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
@@ -25,6 +27,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -62,6 +65,8 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
+    ((VirtualFilePointerManagerImpl)VirtualFilePointerManagerImpl.getInstance()).cleanupForNextTest();
+
     final LocalInspectionTool[] tools = configureLocalInspectionTools();
     for (LocalInspectionTool tool : tools) {
       enableInspectionTool(tool);
@@ -117,9 +122,12 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     if (toInitializeDaemon) {
       daemonCodeAnalyzer.projectOpened();
     }
+    ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runStartupActivities();
+    ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivities();
   }
 
   protected void tearDown() throws Exception {
+    ((StartupManagerImpl)StartupManager.getInstance(getProject())).checkCleared();
     if (toInitializeDaemon) {
       DaemonCodeAnalyzer.getInstance(getProject()).projectClosed();
     }
