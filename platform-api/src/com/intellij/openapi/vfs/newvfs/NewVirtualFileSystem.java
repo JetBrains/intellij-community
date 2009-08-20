@@ -86,7 +86,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   }
 
   @Nullable
-  public VirtualFile refreshAndFindFileByPath(final String path) {
+  public VirtualFile refreshAndFindFileByPath(@NotNull final String path) {
     final String normalizedPath = normalize(path);
     if (normalizedPath == null) return null;
     final String basePath = extractRootPath(normalizedPath);
@@ -127,7 +127,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
 
   protected abstract String extractRootPath(@NotNull String path);
 
-  public void addVirtualFileListener(final VirtualFileListener listener) {
+  public void addVirtualFileListener(@NotNull final VirtualFileListener listener) {
     synchronized (myListenerWrappers) {
       VirtualFileListener wrapper = new VirtualFileFilteringListener(listener, this);
       VirtualFileManager.getInstance().addVirtualFileListener(wrapper);
@@ -135,7 +135,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
     }
   }
 
-  public void removeVirtualFileListener(final VirtualFileListener listener) {
+  public void removeVirtualFileListener(@NotNull final VirtualFileListener listener) {
     synchronized (myListenerWrappers) {
       final VirtualFileListener wrapper = myListenerWrappers.remove(listener);
       if (wrapper != null) {
@@ -146,12 +146,12 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
 
   public abstract int getRank();
 
-  public abstract VirtualFile copyFile(final Object requestor, final VirtualFile file, final VirtualFile newParent, final String copyName) throws IOException;
-  public abstract VirtualFile createChildDirectory(final Object requestor, final VirtualFile parent, final String dir) throws IOException;
-  public abstract VirtualFile createChildFile(final Object requestor, final VirtualFile parent, final String file) throws IOException;
-  public abstract void deleteFile(final Object requestor, final VirtualFile file) throws IOException;
-  public abstract void moveFile(final Object requestor, final VirtualFile file, final VirtualFile newParent) throws IOException;
-  public abstract void renameFile(final Object requestor, final VirtualFile file, final String newName) throws IOException;
+  public abstract VirtualFile copyFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent, @NotNull final String copyName) throws IOException;
+  public abstract VirtualFile createChildDirectory(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String dir) throws IOException;
+  public abstract VirtualFile createChildFile(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String file) throws IOException;
+  public abstract void deleteFile(final Object requestor, @NotNull final VirtualFile file) throws IOException;
+  public abstract void moveFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent) throws IOException;
+  public abstract void renameFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final String newName) throws IOException;
 
   public boolean markNewFilesAsDirty() {
     return false;

@@ -29,7 +29,7 @@ import java.util.List;
 public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
   protected final List<VirtualFileListener> myFileListeners = ContainerUtil.createEmptyCOWList();
 
-  public void addVirtualFileListener(VirtualFileListener listener) {
+  public void addVirtualFileListener(@NotNull VirtualFileListener listener) {
     synchronized (myFileListeners) {
       myFileListeners.add(listener);
     }
@@ -40,7 +40,7 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
    *
    * @param listener the listener
    */
-  public void removeVirtualFileListener(VirtualFileListener listener) {
+  public void removeVirtualFileListener(@NotNull VirtualFileListener listener) {
     synchronized (myFileListeners) {
       myFileListeners.remove(listener);
     }

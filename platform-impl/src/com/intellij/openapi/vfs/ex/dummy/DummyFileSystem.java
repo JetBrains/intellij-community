@@ -56,6 +56,7 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements Appl
     return null;
   }
 
+  @NotNull
   public String getProtocol() {
     return PROTOCOL;
   }
@@ -65,14 +66,14 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements Appl
     return null;
   }
 
-  public String extractPresentableUrl(String path) {
+  public String extractPresentableUrl(@NotNull String path) {
     return path;
   }
 
   public void refresh(boolean asynchronous) {
   }
 
-  public VirtualFile refreshAndFindFileByPath(String path) {
+  public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
     return findFileByPath(path);
   }
 
@@ -81,7 +82,7 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements Appl
     return "DummyFileSystem";
   }
 
-  public void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
+  public void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException {
     fireBeforeFileDeletion(requestor, vFile);
     final VirtualFileDirectoryImpl parent = (VirtualFileDirectoryImpl)vFile.getParent();
     if (parent == null) {
@@ -92,22 +93,22 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements Appl
     fireFileDeleted(requestor, vFile, vFile.getName(), parent);
   }
 
-  public void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {
+  public void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException {
     throw new UnsupportedOperationException();
   }
 
-  public VirtualFile copyFile(Object requestor, VirtualFile vFile, VirtualFile newParent, final String copyName) throws IOException {
+  public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull final String copyName) throws IOException {
     throw new UnsupportedOperationException();
   }
 
-  public void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException {
+  public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
     final String oldName = vFile.getName();
     fireBeforePropertyChange(requestor, vFile, VirtualFile.PROP_NAME, oldName, newName);
     ((VirtualFileImpl)vFile).setName(newName);
     firePropertyChanged(requestor, vFile, VirtualFile.PROP_NAME, oldName, newName);
   }
 
-  public VirtualFile createChildFile(Object requestor, VirtualFile vDir, String fileName) throws IOException {
+  public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
     final VirtualFileDirectoryImpl dir = ((VirtualFileDirectoryImpl)vDir);
     VirtualFileImpl child = new VirtualFileDataImpl(this, dir, fileName);
     dir.addChild(child);
@@ -125,7 +126,7 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements Appl
     super.fireContentsChanged(requestor, file, oldModificationStamp);
   }
 
-  public VirtualFile createChildDirectory(Object requestor, VirtualFile vDir, String dirName) throws IOException {
+  public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
     final VirtualFileDirectoryImpl dir = ((VirtualFileDirectoryImpl)vDir);
     VirtualFileImpl child = new VirtualFileDirectoryImpl(this, dir, dirName);
     dir.addChild(child);

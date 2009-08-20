@@ -144,6 +144,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     addRootToWatch(path, true);
   }
 
+  @NotNull
   public String getProtocol() {
     return PROTOCOL;
   }
@@ -168,7 +169,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   @Nullable
-  public VirtualFile refreshAndFindFileByPath(String path) {
+  public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
     String canonicalPath = getVfsCanonicalPath(path);
     if (canonicalPath == null) return null;
     return super.refreshAndFindFileByPath(canonicalPath);
@@ -347,7 +348,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   @Nullable
-  private static String getVfsCanonicalPath(String path) {
+  private static String getVfsCanonicalPath(@NotNull String path) {
     if (path.length() == 0) {
       try {
         return new File("").getCanonicalPath();
@@ -647,7 +648,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return new File(path);
   }
 
-  public VirtualFile createChildDirectory(final Object requestor, final VirtualFile parent, final String dir) throws IOException {
+  public VirtualFile createChildDirectory(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String dir) throws IOException {
     final File ioDir = new File(convertToIOFile(parent), dir);
     final boolean succ = auxCreateDirectory(parent, dir) || ioDir.mkdirs();
     auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
@@ -662,7 +663,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return new FakeVirtualFile(parent, dir);
   }
 
-  public VirtualFile createChildFile(final Object requestor, final VirtualFile parent, final String file) throws IOException {
+  public VirtualFile createChildFile(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String file) throws IOException {
     final File ioFile = new File(convertToIOFile(parent), file);
     final boolean succ = auxCreateFile(parent, file) || FileUtil.createIfDoesntExist(ioFile);
     auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
@@ -677,7 +678,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return new FakeVirtualFile(parent, file);
   }
 
-  public void deleteFile(final Object requestor, final VirtualFile file) throws IOException {
+  public void deleteFile(final Object requestor, @NotNull final VirtualFile file) throws IOException {
     if (!auxDelete(file)) {
       delete(convertToIOFile(file));
     }
@@ -760,7 +761,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return names != null ? names : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  public void moveFile(final Object requestor, final VirtualFile file, final VirtualFile newParent) throws IOException {
+  public void moveFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent) throws IOException {
     if (!auxMove(file, newParent)) {
       final File ioFrom = convertToIOFile(file);
       final File ioParent = convertToIOFile(newParent);
@@ -773,7 +774,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     });
   }
 
-  public void renameFile(final Object requestor, final VirtualFile file, final String newName) throws IOException {
+  public void renameFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final String newName) throws IOException {
     if (!file.exists()) {
       throw new IOException("File to move does not exist: " + file.getPath());
     }
@@ -793,7 +794,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     });
   }
 
-  public VirtualFile copyFile(final Object requestor, final VirtualFile vFile, final VirtualFile newParent, final String copyName)
+  public VirtualFile copyFile(final Object requestor, @NotNull final VirtualFile vFile, @NotNull final VirtualFile newParent, @NotNull final String copyName)
     throws IOException {
     File physicalCopy = auxCopy(vFile, newParent, copyName);
 

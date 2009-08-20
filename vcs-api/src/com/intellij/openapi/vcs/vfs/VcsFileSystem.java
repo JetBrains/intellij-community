@@ -33,6 +33,7 @@ public class VcsFileSystem extends DeprecatedVirtualFileSystem implements Applic
     return ApplicationManager.getApplication().getComponent(VcsFileSystem.class);
   }
 
+  @NotNull
   public String getProtocol() {
     return "vcs";
   }
@@ -44,7 +45,7 @@ public class VcsFileSystem extends DeprecatedVirtualFileSystem implements Applic
   public void refresh(boolean asynchronous) {
   }
 
-  public VirtualFile refreshAndFindFileByPath(String path) {
+  public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
     return null;
   }
 
@@ -75,27 +76,27 @@ public class VcsFileSystem extends DeprecatedVirtualFileSystem implements Applic
     super.fireBeforeContentsChange(requestor, file);
   }
 
-  public void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
+  public void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException {
     throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
   }
 
-  public void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {
+  public void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException {
     throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
   }
 
-  public VirtualFile copyFile(Object requestor, VirtualFile vFile, VirtualFile newParent, final String copyName) throws IOException {
+  public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull final String copyName) throws IOException {
     throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
   }
 
-  public void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException {
+  public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
     throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
   }
 
-  public VirtualFile createChildFile(Object requestor, VirtualFile vDir, String fileName) throws IOException {
+  public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
     throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
   }
 
-  public VirtualFile createChildDirectory(Object requestor, VirtualFile vDir, String dirName) throws IOException {
+  public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
     throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
   }
 }

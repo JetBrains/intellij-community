@@ -48,12 +48,12 @@ public class TempFileSystem extends NewVirtualFileSystem {
     return parentItem.findChild(file.getName());
   }
 
-  public VirtualFile copyFile(final Object requestor, final VirtualFile file, final VirtualFile newParent, final String copyName)
+  public VirtualFile copyFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent, @NotNull final String copyName)
       throws IOException {
     return VfsUtil.copyFile(requestor, file, newParent, copyName);
   }
 
-  public VirtualFile createChildDirectory(final Object requestor, final VirtualFile parent, final String dir) throws IOException {
+  public VirtualFile createChildDirectory(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String dir) throws IOException {
     final FSItem fsItem = convert(parent);
     assert fsItem != null && fsItem.isDirectory();
 
@@ -70,7 +70,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
     return new FakeVirtualFile(parent, dir);
   }
 
-  public VirtualFile createChildFile(final Object requestor, final VirtualFile parent, final String file) throws IOException {
+  public VirtualFile createChildFile(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String file) throws IOException {
     final FSItem fsItem = convert(parent);
     assert fsItem != null && fsItem.isDirectory(): "cannot find parent directory " + parent.getPath();
 
@@ -80,14 +80,14 @@ public class TempFileSystem extends NewVirtualFileSystem {
     return new FakeVirtualFile(parent, file);
   }
 
-  public void deleteFile(final Object requestor, final VirtualFile file) throws IOException {
+  public void deleteFile(final Object requestor, @NotNull final VirtualFile file) throws IOException {
     final FSItem fsItem = convert(file);
     assert fsItem != null: "failed to delete file " + file.getPath();
 
     fsItem.getParent().removeChild(fsItem);
   }
 
-  public void moveFile(final Object requestor, final VirtualFile file, final VirtualFile newParent) throws IOException {
+  public void moveFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent) throws IOException {
     final FSItem fsItem = convert(file);
     assert fsItem != null: "failed to move file " + file.getPath();
     final FSItem newParentItem = convert(newParent);
@@ -101,13 +101,14 @@ public class TempFileSystem extends NewVirtualFileSystem {
     ((FSDir) newParentItem).addChild(fsItem);
   }
 
-  public void renameFile(final Object requestor, final VirtualFile file, final String newName) throws IOException {
+  public void renameFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final String newName) throws IOException {
     final FSItem fsItem = convert(file);
     assert fsItem != null;
 
     fsItem.setName(newName);
   }
 
+  @NotNull
   public String getProtocol() {
     return "temp";
   }

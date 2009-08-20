@@ -39,7 +39,7 @@ public abstract class VirtualFileSystem {
    * @see VirtualFile#getUrl
    * @see VirtualFileManager#getFileSystem
    */
-  @NonNls
+  @NonNls @NotNull 
   public abstract String getProtocol();
 
   /**
@@ -64,7 +64,7 @@ public abstract class VirtualFileSystem {
    * @return presentable URL
    * @see VirtualFile#getPresentableUrl
    */
-  public String extractPresentableUrl(String path) {
+  public String extractPresentableUrl(@NotNull String path) {
     return path.replace('/', File.separatorChar);
   }
 
@@ -95,7 +95,7 @@ public abstract class VirtualFileSystem {
    * @return <code>{@link VirtualFile}</code> if the file was found, <code>null</code> otherwise
    */
   @Nullable
-  public abstract VirtualFile refreshAndFindFileByPath(String path);
+  public abstract VirtualFile refreshAndFindFileByPath(@NotNull String path);
 
   /**
    * Adds listener to the file system. Normally one should use {@link VirtualFileManager#addVirtualFileListener}.
@@ -104,14 +104,14 @@ public abstract class VirtualFileSystem {
    * @see VirtualFileListener
    * @see VirtualFileManager#addVirtualFileListener
    */
-  public abstract void addVirtualFileListener(VirtualFileListener listener);
+  public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener);
 
   /**
    * Removes listener form the file system.
    *
    * @param listener the listener
    */
-  public abstract void removeVirtualFileListener(VirtualFileListener listener);
+  public abstract void removeVirtualFileListener(@NotNull VirtualFileListener listener);
 
   @Deprecated
   /**
@@ -126,35 +126,35 @@ public abstract class VirtualFileSystem {
    *
    * @see VirtualFile#delete(Object)
    */
-  protected abstract void deleteFile(Object requestor, VirtualFile vFile) throws IOException;
+  protected abstract void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException;
 
   /**
    * Implementation of moving files in this file system
    *
    * @see VirtualFile#move(Object,VirtualFile)
    */
-  protected abstract void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException;
+  protected abstract void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException;
 
   /**
    * Implementation of renaming files in this file system
    *
    * @see VirtualFile#rename(Object,String)
    */
-  protected abstract void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException;
+  protected abstract void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException;
 
   /**
    * Implementation of adding files in this file system
    *
    * @see VirtualFile#createChildData(Object,String)
    */
-  protected abstract VirtualFile createChildFile(Object requestor, VirtualFile vDir, String fileName) throws IOException;
+  protected abstract VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException;
 
   /**
    * Implementation of adding directories in this file system
    *
    * @see VirtualFile#createChildDirectory(Object,String)
    */
-  protected abstract VirtualFile createChildDirectory(Object requestor, VirtualFile vDir, String dirName) throws IOException;
+  protected abstract VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException;
 
   /**
    * Implementation of copying files in this file system
@@ -162,9 +162,9 @@ public abstract class VirtualFileSystem {
    * @see VirtualFile#copy(Object,VirtualFile,String)
    */
   protected abstract VirtualFile copyFile(final Object requestor,
-                                       final VirtualFile virtualFile,
-                                       final VirtualFile newParent,
-                                       final String copyName) throws IOException;
+                                       @NotNull VirtualFile virtualFile,
+                                       @NotNull VirtualFile newParent,
+                                       @NotNull String copyName) throws IOException;
 
   public abstract boolean isReadOnly();
 }

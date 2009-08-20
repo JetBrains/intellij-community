@@ -88,6 +88,7 @@ public class MockLocalFileSystem extends LocalFileSystem {
     throw new UnsupportedOperationException("'processCachedFilesInSubtree' not implemented in " + getClass().getName());
   }
 
+  @NotNull
   public String getProtocol() {
     return LocalFileSystem.PROTOCOL;
   }
@@ -101,28 +102,28 @@ public class MockLocalFileSystem extends LocalFileSystem {
   }
 
   @Nullable
-  public VirtualFile refreshAndFindFileByPath(final String path) {
+  public VirtualFile refreshAndFindFileByPath(@NotNull final String path) {
     return findFileByPath(path);
   }
 
-  public void deleteFile(final Object requestor, final VirtualFile vFile) throws IOException {
+  public void deleteFile(final Object requestor, @NotNull final VirtualFile vFile) throws IOException {
   }
 
-  public void moveFile(final Object requestor, final VirtualFile vFile, final VirtualFile newParent) throws IOException {
+  public void moveFile(final Object requestor, @NotNull final VirtualFile vFile, @NotNull final VirtualFile newParent) throws IOException {
   }
 
-  public void renameFile(final Object requestor, final VirtualFile vFile, final String newName) throws IOException {
+  public void renameFile(final Object requestor, @NotNull final VirtualFile vFile, @NotNull final String newName) throws IOException {
   }
 
-  public VirtualFile createChildFile(final Object requestor, final VirtualFile vDir, final String fileName) throws IOException {
+  public VirtualFile createChildFile(final Object requestor, @NotNull final VirtualFile vDir, @NotNull final String fileName) throws IOException {
     return myDelegate.createChildFile(requestor, vDir, fileName);
   }
 
-  public VirtualFile createChildDirectory(final Object requestor, final VirtualFile vDir, final String dirName) throws IOException {
+  public VirtualFile createChildDirectory(final Object requestor, @NotNull final VirtualFile vDir, @NotNull final String dirName) throws IOException {
     return myDelegate.createChildDirectory(requestor, vDir, dirName);
   }
 
-  public VirtualFile copyFile(final Object requestor, final VirtualFile virtualFile, final VirtualFile newParent, final String copyName)
+  public VirtualFile copyFile(final Object requestor, @NotNull final VirtualFile virtualFile, @NotNull final VirtualFile newParent, @NotNull final String copyName)
     throws IOException {
     return myDelegate.copyFile(requestor, virtualFile, newParent, copyName);
   }
