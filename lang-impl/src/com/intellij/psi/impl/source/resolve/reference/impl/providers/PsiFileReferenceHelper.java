@@ -7,7 +7,6 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -26,20 +25,10 @@ import java.util.*;
 /**
  * @author peter
  */
-public class PsiFileReferenceHelper implements FileReferenceHelper {
-
-  @NotNull
-  public String getDirectoryTypeName() {
-    return LangBundle.message("terms.directory");
-  }
+public class PsiFileReferenceHelper extends FileReferenceHelper {
 
   public List<? extends LocalQuickFix> registerFixes(HighlightInfo info, FileReference reference) {
     return FileReferenceQuickFixProvider.registerQuickFix(info, reference);
-  }
-
-  public PsiFileSystemItem getPsiFileSystemItem(final Project project, @NotNull final VirtualFile file) {
-    final PsiManager psiManager = PsiManager.getInstance(project);
-    return file.isDirectory() ? psiManager.findDirectory(file) : psiManager.findFile(file);
   }
 
   public PsiFileSystemItem findRoot(final Project project, @NotNull final VirtualFile file) {

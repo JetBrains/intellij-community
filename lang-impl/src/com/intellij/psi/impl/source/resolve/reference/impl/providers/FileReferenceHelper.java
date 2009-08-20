@@ -11,39 +11,45 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Collections;
 
 /**
  * @author peter
  */
-public interface FileReferenceHelper {
+public abstract class FileReferenceHelper {
 
-  ExtensionPointName<FileReferenceHelper> EP_NAME = new ExtensionPointName<FileReferenceHelper>("com.intellij.psi.fileReferenceHelper");
-
-  @NotNull String trimUrl(@NotNull String url);
-
-  /** will be removed */
-  @Deprecated
-  @NotNull String getDirectoryTypeName();
-
-  @Nullable
-  List<? extends LocalQuickFix> registerFixes(HighlightInfo info, FileReference reference);
-
-  @Nullable
-  PsiFileSystemItem getPsiFileSystemItem(final Project project, final @NotNull VirtualFile file);
-
-  @Nullable
-  PsiFileSystemItem findRoot(final Project project, final @NotNull VirtualFile file);
+  public static final ExtensionPointName<FileReferenceHelper> EP_NAME = new ExtensionPointName<FileReferenceHelper>("com.intellij.psi.fileReferenceHelper");
 
   @NotNull
-  Collection<PsiFileSystemItem> getRoots(@NotNull Module module);
+  public String trimUrl(@NotNull String url) {
+    return url;
+  }
+
+  @Nullable
+  public List<? extends LocalQuickFix> registerFixes(HighlightInfo info, FileReference reference) {
+    return Collections.emptyList();
+  }
+
+  @Nullable
+  public PsiFileSystemItem getPsiFileSystemItem(final Project project, final @NotNull VirtualFile file) {
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    return file.isDirectory() ? psiManager.findDirectory(file) : psiManager.findFile(file);
+  }
+
+  @Nullable
+  public abstract PsiFileSystemItem findRoot(final Project project, final @NotNull VirtualFile file);
 
   @NotNull
-  Collection<PsiFileSystemItem> getContexts(final Project project, final @NotNull VirtualFile file);
+  public abstract Collection<PsiFileSystemItem> getRoots(@NotNull Module module);
 
-  boolean isMine(final Project project, final @NotNull VirtualFile file);
+  @NotNull
+  public abstract Collection<PsiFileSystemItem> getContexts(final Project project, final @NotNull VirtualFile file);
+
+  public abstract boolean isMine(final Project project, final @NotNull VirtualFile file);
 }

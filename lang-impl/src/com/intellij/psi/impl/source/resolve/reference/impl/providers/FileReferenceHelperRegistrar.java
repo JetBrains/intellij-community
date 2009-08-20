@@ -4,9 +4,6 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -22,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author peter
@@ -58,26 +54,7 @@ public class FileReferenceHelperRegistrar {
     return element2.getManager().areElementsEquivalent(element1, element2);
   }
 
-  private static class NullFileReferenceHelper implements FileReferenceHelper {
-
-    @NotNull
-    public String getDirectoryTypeName() {
-      return LangBundle.message("terms.directory");
-    }
-
-    @NotNull
-    public String trimUrl(@NotNull final String url) {
-      return url;
-    }
-
-    public List<? extends LocalQuickFix> registerFixes(final HighlightInfo info, final FileReference reference) {
-      return Collections.emptyList();
-    }
-
-    public PsiFileSystemItem getPsiFileSystemItem(final Project project, @NotNull final VirtualFile file) {
-      final PsiManager psiManager = PsiManager.getInstance(project);
-      return file.isDirectory() ? psiManager.findDirectory(file) : psiManager.findFile(file);
-    }
+  private static class NullFileReferenceHelper extends FileReferenceHelper {
 
     public PsiFileSystemItem findRoot(final Project project, @NotNull final VirtualFile file) {
       final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();

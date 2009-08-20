@@ -1,7 +1,5 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -11,25 +9,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
-public class JarFileReferenceHelper implements FileReferenceHelper {
-  @NotNull
-  public String trimUrl(@NotNull String url) {
-    return url;
-  }
-
-  @NotNull
-  public String getDirectoryTypeName() {
-    return "";
-  }
-
-  public List<? extends LocalQuickFix> registerFixes(HighlightInfo info, FileReference reference) {
-    return Collections.emptyList();
-  }
+public class JarFileReferenceHelper extends FileReferenceHelper {
 
   public PsiFileSystemItem getPsiFileSystemItem(Project project, @NotNull VirtualFile file) {
     return null;
