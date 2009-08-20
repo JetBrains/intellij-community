@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author yole
@@ -40,7 +41,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
         VirtualFile root = LightPlatformTestCase.getSourceRoot();
         if (path.length() == 0) return root;
         String trimPath = StringUtil.trimStart(path, "/");
-        final String[] dirs = trimPath.split("/");
+        final List<String> dirs = StringUtil.split(trimPath, "/");
         for (String dirName : dirs) {
           VirtualFile dir = root.findChild(dirName);
           if (dir != null) {
@@ -68,12 +69,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
         try {
           VirtualFile tempDir = LightPlatformTestCase.getSourceRoot();
           if (targetDir.length() > 0) {
-            assert !targetDir.contains("/") : "nested directories not implemented";
-            VirtualFile child = tempDir.findChild(targetDir);
-            if (child == null) {
-              child = tempDir.createChildDirectory(this, targetDir);
-            }
-            tempDir = child;
+            tempDir = findOrCreateChildDir(tempDir, targetDir);
           }
 
           VfsUtil.copyDirectory(this, from, tempDir, null);
@@ -84,6 +80,24 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
         }
       }
     });
+  }
+
+  private VirtualFile findOrCreateChildDir(VirtualFile root, String relativePath) throws IOException {
+    String thisLevel = relativePath;
+    String nextLevel = null;
+    final int pos = relativePath.indexOf('/');
+    if (pos > 0) {
+      thisLevel = relativePath.substring(0, pos);
+      nextLevel = relativePath.substring(pos+1);
+    }
+    VirtualFile child = root.findChild(thisLevel);
+    if (child == null) {
+      child = root.createChildDirectory(this, thisLevel);
+    }
+    if (nextLevel != null && nextLevel.length() > 0) {
+      return findOrCreateChildDir(child, nextLevel);
+    }
+    return child;
   }
 
   public String getTempDirPath() {
