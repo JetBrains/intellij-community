@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -287,14 +288,12 @@ public class GrClassImplUtil {
     }
 
     final GrTypeDefinitionBody body = grType.getBody();
-    if (lastParent == body && body != null) {
+    if (body != null && !isSuperClassReferenceResolving(grType, lastParent)) {
       if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.CLASS)) {
-        for (PsiClass innerClass : grType.getAllInnerClasses()) {
+        for (CandidateInfo info : CollectClassMembersUtil.getAllInnerClasses(grType, false).values()) {
+          final PsiClass innerClass = (PsiClass)info.getElement();
+          assert innerClass != null;
           final String innerClassName = innerClass.getName();
-          if (innerClassName == null) {
-            continue;
-          }
-
           if (nameHint != null && !innerClassName.equals(nameHint.getName(state))) {
             continue;
           }
@@ -308,6 +307,11 @@ public class GrClassImplUtil {
 
 
     return true;
+  }
+
+  private static boolean isSuperClassReferenceResolving(GrTypeDefinition grType, PsiElement lastParent) {
+    return lastParent instanceof GrReferenceList ||
+           grType.isAnonymous() && lastParent == ((GrAnonymousClassDefinition)grType).getBaseClassReferenceGroovy();
   }
 
 
