@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.openapi.project.DumbService;
 
 import java.util.HashMap;
 
@@ -12,6 +13,8 @@ public class VariableParameterizedTypeFix {
   public static void registerIntentions(HighlightInfo highlightInfo, PsiVariable variable, PsiReferenceParameterList parameterList) {
     PsiType type = variable.getType();
     if (!(type instanceof PsiClassType)) return;
+
+    if (DumbService.getInstance(variable.getProject()).isDumb()) return;
 
     String shortName = ((PsiClassType)type).getClassName();
     PsiManager manager = parameterList.getManager();
