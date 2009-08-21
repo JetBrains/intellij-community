@@ -411,13 +411,12 @@ public class JavaCompletionUtil {
     final String name = psiClass.getQualifiedName();
     if (name == null) return false;
     CodeInsightSettings cis = CodeInsightSettings.getInstance();
-    boolean isExcluded = false;
-    for (String packages : cis.EXCLUDED_PACKAGES) {
-      if (name.startsWith(packages)) {
-        isExcluded = true;
+    for (String excluded : cis.EXCLUDED_PACKAGES) {
+      if (name.equals(excluded) || name.startsWith(excluded + ".")) {
+        return true;
       }
     }
-    return isExcluded;
+    return false;
   }
 
   @NotNull
