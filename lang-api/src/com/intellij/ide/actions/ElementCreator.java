@@ -54,20 +54,20 @@ public abstract class ElementCreator {
 
   public PsiElement[] tryCreate(@NotNull final String inputString) {
     if (inputString.length() == 0) {
-        Messages.showMessageDialog(myProject, IdeBundle.message("error.name.should.be.specified"), CommonBundle.getErrorTitle(),
-                                   Messages.getErrorIcon());
-        return PsiElement.EMPTY_ARRAY;
-      }
+      Messages.showMessageDialog(myProject, IdeBundle.message("error.name.should.be.specified"), CommonBundle.getErrorTitle(),
+                                 Messages.getErrorIcon());
+      return PsiElement.EMPTY_ARRAY;
+    }
 
-      try {
-        checkBeforeCreate(inputString);
-      }
-      catch (IncorrectOperationException e) {
-        Messages.showMessageDialog(myProject, CreateElementActionBase.filterMessage(e.getMessage()), myErrorTitle, Messages.getErrorIcon());
-        return PsiElement.EMPTY_ARRAY;
-      }
+    try {
+      checkBeforeCreate(inputString);
+    }
+    catch (IncorrectOperationException e) {
+      Messages.showMessageDialog(myProject, CreateElementActionBase.filterMessage(e.getMessage()), myErrorTitle, Messages.getErrorIcon());
+      return PsiElement.EMPTY_ARRAY;
+    }
 
-      final Exception[] exception = new Exception[1];
+    final Exception[] exception = new Exception[1];
     final SmartPsiElementPointer[][] myCreatedElements = {null};
 
     final String commandName = getActionName(inputString);
@@ -93,15 +93,15 @@ public abstract class ElementCreator {
       }
     }.execute();
 
-      if (exception[0] != null) {
-        LOG.info(exception[0]);
-        String errorMessage = CreateElementActionBase.filterMessage(exception[0].getMessage());
-        if (errorMessage == null || errorMessage.length() == 0) {
-          errorMessage = exception[0].toString();
-        }
-        Messages.showMessageDialog(myProject, errorMessage, myErrorTitle, Messages.getErrorIcon());
-
+    if (exception[0] != null) {
+      LOG.info(exception[0]);
+      String errorMessage = CreateElementActionBase.filterMessage(exception[0].getMessage());
+      if (errorMessage == null || errorMessage.length() == 0) {
+        errorMessage = exception[0].toString();
       }
+      Messages.showMessageDialog(myProject, errorMessage, myErrorTitle, Messages.getErrorIcon());
+      return PsiElement.EMPTY_ARRAY;
+    }
 
     List<PsiElement> result = new SmartList<PsiElement>();
     for (final SmartPsiElementPointer pointer : myCreatedElements[0]) {
