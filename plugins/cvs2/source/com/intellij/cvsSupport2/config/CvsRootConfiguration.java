@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.project.Project;
 import org.netbeans.lib.cvsclient.CvsRoot;
 import org.netbeans.lib.cvsclient.ValidRequestsExpectedException;
 import org.netbeans.lib.cvsclient.command.CommandException;
@@ -204,8 +205,8 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
            Comparing.equal(EXT_CONFIGURATION, another.EXT_CONFIGURATION);
   }
 
-  public boolean login(ModalityContext executor) {
-    return getSettings().login(executor);
+  public boolean login(ModalityContext executor, Project project) {
+    return getSettings().login(executor, project);
   }
 
   public RevisionOrDate getRevisionOrDate() {

@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.PasswordPromptDialog;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
@@ -50,7 +51,7 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
         : underlyingThrowable.getLocalizedMessage();
   }
 
-  public boolean login(PServerCvsSettings settings, ModalityContext executor) {
+  public boolean login(PServerCvsSettings settings, ModalityContext executor, Project project) {
     String cvsRoot = settings.getCvsRootAsString();
     String stored = getPassword(cvsRoot);
     if (stored != null) {
@@ -61,13 +62,13 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
         return true;
       }
       catch (AuthenticationException e) {
-        if (settings.checkReportOfflineException(e)) {
+        if (settings.checkReportOfflineException(e, project)) {
           return false;
         }
         else {
-          settings.showConnectionErrorMessage(getMessageFrom(e), CvsBundle.message("error.title.authorization.error"), false);
+          settings.showConnectionErrorMessage(getMessageFrom(e), project);
           settings.releasePassword();
-          return relogin(settings, executor);
+          return relogin(settings, executor, project);
         }
       }
       finally {
@@ -90,10 +91,10 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
       return false;
     }
     settings.storePassword(password);
-    return login(settings, executor);
+    return login(settings, executor, project);
   }
 
-  public boolean relogin(PServerCvsSettings settings, ModalityContext executor) {
+  public boolean relogin(PServerCvsSettings settings, ModalityContext executor, Project project) {
     String cvsRoot = settings.getCvsRootAsString();
     String password = requestForPassword(cvsRoot);
     if (password == null) return false;
@@ -105,7 +106,7 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
       return false;
     }
     settings.storePassword(password);
-    return login(settings, executor);
+    return login(settings, executor, project);
   }
 
   private static ArrayList<String> readConfigurationNotMatchedWith(String cvsRoot, File passFile) {

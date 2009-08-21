@@ -40,13 +40,16 @@ import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.connections.CvsConnectionUtil;
 import com.intellij.cvsSupport2.connections.CvsRootData;
 import com.intellij.cvsSupport2.connections.ssh.ui.SshPasswordDialog;
-import com.intellij.cvsSupport2.connections.sshViaMaverick.SolveableAuthenticationException;
+import com.intellij.cvsSupport2.connections.ssh.SolveableAuthenticationException;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.cvsSupport2.javacvsImpl.io.StreamLogger;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
@@ -85,7 +88,7 @@ public class SshConnectionSettings extends CvsConnectionSettings {
     return CvsConnectionUtil.createSshConnection(settings, sshConfiguration, proxy_settings, SSHPasswordProviderImpl.getInstance(),timeout);
   }
 
-  public static boolean login(String cvsRoot, SshSettings settings) {
+  public static boolean login(String cvsRoot, SshSettings settings, Project project) {
     if (!settings.USE_PPK) {
       SSHPasswordProviderImpl sshPasswordProvider = SSHPasswordProviderImpl.getInstance();
       String password = sshPasswordProvider.getPasswordForCvsRoot(cvsRoot);
@@ -119,8 +122,8 @@ public class SshConnectionSettings extends CvsConnectionSettings {
 
   }
 
-  public boolean login(ModalityContext executor) {
-    if (!login(myStringRepsentation, getSshConfiguration())) {
+  public boolean login(ModalityContext executor, @Nullable Project project) {
+    if (!login(myStringRepsentation, getSshConfiguration(), project)) {
       return false;
     }
     try {
@@ -134,23 +137,21 @@ public class SshConnectionSettings extends CvsConnectionSettings {
       }
     }
     catch (AuthenticationException e) {
-      if (checkReportOfflineException(e)) {
+      if (checkReportOfflineException(e, project)) {
         return false;
       }
       else if (e instanceof SolveableAuthenticationException) {
-        Messages.showMessageDialog(e.getLocalizedMessage(),
-                                   CvsBundle.message("error.dialog.title.cannot.connect.to.cvs"), Messages.getErrorIcon());
+        notifyOnException(e, project);
 
         if (getSshConfiguration().USE_PPK) {
           SSHPasswordProviderImpl.getInstance().removePPKPasswordFor(myStringRepsentation);
-          return login(executor);
+          return login(executor, project);
         } else {
           SSHPasswordProviderImpl.getInstance().removePasswordFor(myStringRepsentation);
-          return login(executor);
+          return login(executor, project);
         }
       } else {
-        Messages.showMessageDialog(e.getLocalizedMessage(),
-                                   CvsBundle.message("error.dialog.title.cannot.connect.to.cvs"), Messages.getErrorIcon());
+        notifyOnException(e, project);
         return false;
       }
 
@@ -158,6 +159,13 @@ public class SshConnectionSettings extends CvsConnectionSettings {
     return true;
   }
 
+  private void notifyOnException(final Exception e, final Project project) {
+    String localizedMessage = e.getLocalizedMessage();
+    localizedMessage = (localizedMessage == null) ? e.getMessage() : localizedMessage;
+    localizedMessage = (localizedMessage == null) ? CvsBundle.message("error.dialog.title.cannot.connect.to.cvs") :
+      localizedMessage;
+    new ChangesViewBalloonProblemNotifier(project, localizedMessage, MessageType.ERROR).run();
+  }
 
   public CommandException processException(CommandException t) {
     return t;

@@ -11,6 +11,7 @@ import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.CvsBundle;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.IOCommandException;
@@ -43,11 +44,11 @@ public class ExtConnectionCvsSettings extends CvsConnectionSettings {
     return ExtConnection.DEFAULT_PORT;
   }
 
-  public boolean login(ModalityContext executor) {
-    if (!SshConnectionSettings.login(myStringRepsentation, mySshSettings)){
+  public boolean login(ModalityContext executor, Project project) {
+    if (!SshConnectionSettings.login(myStringRepsentation, mySshSettings, project)){
       return false;
     }
-    return new ExtLoginProvider().login(this, executor);
+    return new ExtLoginProvider().login(this, executor, project);
   }
 
   public CommandException processException(CommandException t) {

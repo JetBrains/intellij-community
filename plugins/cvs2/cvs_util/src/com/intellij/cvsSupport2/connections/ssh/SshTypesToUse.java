@@ -1,4 +1,4 @@
-package com.intellij.cvsSupport2.connections.sshViaMaverick;
+package com.intellij.cvsSupport2.connections.ssh;
 
 import org.jetbrains.annotations.NonNls;
 

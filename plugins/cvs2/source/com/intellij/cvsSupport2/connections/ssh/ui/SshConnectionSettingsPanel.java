@@ -4,7 +4,6 @@ import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsRootEditor;
 import com.intellij.cvsSupport2.config.SshSettings;
 import com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl;
-import com.intellij.cvsSupport2.connections.sshViaMaverick.SshTypesToUse;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -19,11 +18,7 @@ import java.awt.event.ActionListener;
 public class SshConnectionSettingsPanel {
   private TextFieldWithBrowseButton myPathToPrivateKeyFile;
   private JCheckBox myUsePrivateKeyFile;
-  private JRadioButton myForceSSH2;
-  private JRadioButton myForceSSH1;
   private JPanel myPanel;
-  private JTextField myPort;
-  private JRadioButton myAllowBoth;
   private JButton myChangePasswordButton;
 
   private final CvsRootEditor myRootProvider;
@@ -55,17 +50,6 @@ public class SshConnectionSettingsPanel {
   public void updateFrom(SshSettings ssh_configuration) {
     myUsePrivateKeyFile.setSelected(ssh_configuration.USE_PPK);
     myPathToPrivateKeyFile.setText(ssh_configuration.PATH_TO_PPK);
-    myPort.setText(ssh_configuration.PORT);
-
-    if (ssh_configuration.SSH_TYPE == SshTypesToUse.ALLOW_BOTH) {
-      myAllowBoth.setSelected(true);
-    }
-    else if (ssh_configuration.SSH_TYPE == SshTypesToUse.FORCE_SSH1) {
-      myForceSSH1.setSelected(true);
-    }
-    else {
-      myForceSSH2.setSelected(true);
-    }
 
     setPathToPPKEnabled();
   }
@@ -86,29 +70,12 @@ public class SshConnectionSettingsPanel {
     }
     ssh_configuration.USE_PPK = myUsePrivateKeyFile.isSelected();
     ssh_configuration.PATH_TO_PPK = myPathToPrivateKeyFile.getText().trim();
-    ssh_configuration.PORT = myPort.getText().trim();
-    ssh_configuration.SSH_TYPE = getSelectedSshType();
-  }
-
-  private SshTypesToUse getSelectedSshType() {
-    if (myForceSSH1.isSelected()) {
-      return SshTypesToUse.FORCE_SSH1;
-    }
-    else if (myForceSSH2.isSelected()) {
-      return SshTypesToUse.FORCE_SSH2;
-    }
-    else {
-      return SshTypesToUse.ALLOW_BOTH;
-    }
-
   }
 
   public boolean equalsTo(SshSettings ssh_configuration) {
     if (ssh_configuration.USE_PPK != myUsePrivateKeyFile.isSelected()) return false;
     if (!ssh_configuration.PATH_TO_PPK.equals(myPathToPrivateKeyFile.getText().trim())) return false;
-    if (!ssh_configuration.PORT.equals(myPort.getText().trim())) return false;
-
-    return ssh_configuration.SSH_TYPE == getSelectedSshType();
+    return true;
   }
 
   private void changePassword() {

@@ -11,6 +11,7 @@ import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.admin.Entries;
 import org.netbeans.lib.cvsclient.admin.Entry;
@@ -256,7 +257,7 @@ public class CvsInfo {
       return t;
     }
 
-    public boolean login(ModalityContext executor) {
+    public boolean login(ModalityContext executor, Project project) {
       Messages.showMessageDialog(CvsBundle.message("message.error.invalid.cvs.root", myStringRepsentation),
                                  CvsBundle.message("message.error.cannot.connect.to.cvs.title"),
                                  Messages.getErrorIcon());

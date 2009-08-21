@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.BooleanValueHolder;
+import com.intellij.CvsBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,8 +54,10 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
   private JPanel myProxySettingsPanel;
   private final ProxySettingsPanel myProxySettingsNonEmptyPanel;
   @NonNls private static final String NON_EMPTY_PROXY_SETTINGS = "NON-EMPTY-PROXY-SETTINGS";
+  private final Project myProject;
 
   public Cvs2SettingsEditPanel(Project project) {
+    myProject = project;
     myDateOrRevisionOrTagSettings =
     new DateOrRevisionOrTagSettings(new TagsProviderOnEnvironment() {
       @NotNull
@@ -169,7 +172,7 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
   public void testConnection() {
     CvsRootConfiguration newConfiguration = createConfigurationWithCurrentSettings();
     if (newConfiguration == null) return;
-    testConnection(newConfiguration, myPanel);
+    testConnection(newConfiguration, myPanel, myProject);
     updateFrom(newConfiguration);
   }
 
@@ -179,10 +182,14 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
     return newConfiguration;
   }
 
-  public static void testConnection(CvsRootConfiguration configuration, Component component) {
+  public static void testConnection(CvsRootConfiguration configuration, Component component, Project project) {
     try {
-      boolean loggedIn = configuration.login(new ModalityContextImpl(true));
-      if (!loggedIn) return;
+      boolean loggedIn = configuration.login(new ModalityContextImpl(true), project);
+      if (!loggedIn) {
+        Messages.showMessageDialog(component, CvsBundle.message("test.connection.login.failed.text"),
+                                   CvsBundle.message("operation.name.test.connection"), Messages.getErrorIcon());
+        return;
+      }
 
       configuration.testConnection();
       showSuccessfulConnectionMessage(component);
@@ -195,11 +202,11 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
   }
 
   private static void showConnectionFailedMessage(Exception ex, Component component) {
-    Messages.showMessageDialog(component, ex.getLocalizedMessage(), com.intellij.CvsBundle.message("operation.name.test.connection"), Messages.getErrorIcon());
+    Messages.showMessageDialog(component, ex.getLocalizedMessage(), CvsBundle.message("operation.name.test.connection"), Messages.getErrorIcon());
   }
 
   private static void showSuccessfulConnectionMessage(Component component) {
-    Messages.showMessageDialog(component, com.intellij.CvsBundle.message("operation.status.connection.successful"), com.intellij.CvsBundle.message("operation.name.test.connection"),
+    Messages.showMessageDialog(component, CvsBundle.message("operation.status.connection.successful"), CvsBundle.message("operation.name.test.connection"),
                                Messages.getInformationIcon());
   }
 

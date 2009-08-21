@@ -1,6 +1,6 @@
 package com.intellij.cvsSupport2.config;
 
-import com.intellij.cvsSupport2.connections.sshViaMaverick.SshTypesToUse;
+import com.intellij.cvsSupport2.connections.ssh.SshTypesToUse;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;

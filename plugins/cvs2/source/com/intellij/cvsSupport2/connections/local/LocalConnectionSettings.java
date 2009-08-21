@@ -4,6 +4,7 @@ import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
+import com.intellij.openapi.project.Project;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 
@@ -24,7 +25,7 @@ public class LocalConnectionSettings extends CvsConnectionSettings{
     return new LocalConnection(REPOSITORY, getLocalConfiguration(), errorRegistry);
   }
 
-  public boolean login(ModalityContext executor) {
+  public boolean login(ModalityContext executor, Project project) {
     return true;
   }
 

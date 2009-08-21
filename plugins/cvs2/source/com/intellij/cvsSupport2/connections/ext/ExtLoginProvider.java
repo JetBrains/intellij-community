@@ -9,6 +9,7 @@ import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.cvsSupport2.javacvsImpl.io.StreamLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.project.Project;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 
@@ -21,7 +22,7 @@ public class ExtLoginProvider {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.connections.ext.ExtLoginProvider");
 
-  public boolean login(CvsConnectionSettings env, ModalityContext executor) {
+  public boolean login(CvsConnectionSettings env, ModalityContext executor, Project project) {
 
     IConnection connection = env.createConnection(new ReadWriteStatistics());
     try {
@@ -30,13 +31,13 @@ public class ExtLoginProvider {
     }
     catch(AuthenticationException ex) {
       //noinspection SimplifiableIfStatement
-      if (env.checkReportOfflineException(ex)) {
+      if (env.checkReportOfflineException(ex, project)) {
         return false;
       }
-      return relogin(ex, env, executor);
+      return relogin(ex, env, executor, project);
     }
     catch (Exception ex) {
-      return relogin(ex, env, executor);
+      return relogin(ex, env, executor, project);
     }
     finally {
       try {
@@ -49,16 +50,16 @@ public class ExtLoginProvider {
 
   }
 
-  private boolean relogin(Exception ex, CvsConnectionSettings env, ModalityContext executor) {
-    return relogin(ex.getLocalizedMessage(), env, executor);
+  private boolean relogin(Exception ex, CvsConnectionSettings env, ModalityContext executor, Project project) {
+    return relogin(ex.getLocalizedMessage(), env, executor, project);
   }
 
-  private boolean relogin(String message, CvsConnectionSettings env, ModalityContext executor) {
+  private boolean relogin(String message, CvsConnectionSettings env, ModalityContext executor, Project project) {
     Messages.showMessageDialog(message, CvsBundle.message("message.error.cannot.connect.to.cvs.title"), Messages.getErrorIcon());
     if (!executor.isForTemporaryConfiguration()){
       CvsRootConfiguration cvsRootConfiguration = CvsConfigurationsListEditor.reconfigureCvsRoot(env.getCvsRootAsString(), null);
       if (cvsRootConfiguration == null) return false;
-      return login(env, executor);
+      return login(env, executor, project);
     }
     else {
       return false;

@@ -8,10 +8,7 @@ import com.intellij.cvsSupport2.config.ExtConfiguration;
 import com.intellij.cvsSupport2.config.ProxySettings;
 import com.intellij.cvsSupport2.config.SshSettings;
 import com.intellij.cvsSupport2.connections.ext.ExtConnection;
-import com.intellij.cvsSupport2.connections.ssh.SSHPasswordProvider;
-import com.intellij.cvsSupport2.connections.sshViaMaverick.PublicKeyVerification;
-import com.intellij.cvsSupport2.connections.sshViaMaverick.SshPasswordMaverickConnection;
-import com.intellij.cvsSupport2.connections.sshViaMaverick.SshPublicKeyMaverickConnection;
+import com.intellij.cvsSupport2.connections.ssh.*;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import org.netbeans.lib.cvsclient.connection.ConnectionSettings;
 import org.netbeans.lib.cvsclient.connection.IConnection;
@@ -31,7 +28,7 @@ public class CvsConnectionUtil {
                                                 final SSHPasswordProvider sshPasswordProvider,
                                                 final int timeout) {
     ConnectionSettingsImpl connectionSettings = new ConnectionSettingsImpl(settings.HOST,
-                                                                           getPort(sshConfiguration),
+                                                                           settings.PORT,
                                                                            proxySettings.USE_PROXY,
                                                                            proxySettings.PROXY_HOST,
                                                                            proxySettings.PROXY_PORT,
@@ -39,41 +36,27 @@ public class CvsConnectionUtil {
                                                                            proxySettings.getType(),
                                                                            proxySettings.getLogin(),
                                                                            proxySettings.getPassword());
+    //final EmptyPool pool = EmptyPool.getInstance();
+    final ConnectionPoolI pool = SshConnectionPool.getInstance();
+    final SshAuthentication authentication;
     if (sshConfiguration.USE_PPK) {
-      return new SshPublicKeyMaverickConnection(connectionSettings, settings.USER,
-                                                new File(sshConfiguration.PATH_TO_PPK),
-                                                sshPasswordProvider.getPPKPasswordForCvsRoot(settings.getCvsRootAsString()),
-                                                sshConfiguration.SSH_TYPE,
-                                                new PublicKeyVerification() {
-                                                  public boolean allowsPublicKey(String host,
-                                                                                 int keyLength,
-                                                                                 String fingerprint,
-                                                                                 String algorithmName) {
-                                                    return true;
-                                                  }
-                                                },
-                                                settings.REPOSITORY);
+      authentication = new SshPublicKeyAuthentication(new File(sshConfiguration.PATH_TO_PPK),
+            sshPasswordProvider.getPPKPasswordForCvsRoot(settings.getCvsRootAsString()), settings.USER);
     }
     else {
-      return new SshPasswordMaverickConnection(connectionSettings, settings.USER,
-                                               sshPasswordProvider.getPasswordForCvsRoot(settings.getCvsRootAsString()),
-                                               sshConfiguration.SSH_TYPE,
-                                               new PublicKeyVerification() {
-                                                 public boolean allowsPublicKey(String host,
-                                                                                int keyLength,
-                                                                                String fingerprint,
-                                                                                String algorithmName) {
-                                                   return true;
-                                                 }
-                                               },
-                                               settings.REPOSITORY);
+      authentication = new SshPasswordAuthentication(settings.USER, sshPasswordProvider.getPasswordForCvsRoot(settings.getCvsRootAsString()));
     }
+    return pool.getConnection(settings.REPOSITORY, connectionSettings, authentication);
   }
 
-  public static int getPort(SshSettings configuration) {
-    String port = configuration.PORT;
+  public static int getPort(final String port) {
     if (port.length() == 0) return 22;
-    return Integer.parseInt(port);
+    try {
+      return Integer.parseInt(port);
+    }
+    catch (NumberFormatException e) {
+      return 22;
+    }
   }
 
   public static IConnection createExtConnection(final CvsRootData settings,

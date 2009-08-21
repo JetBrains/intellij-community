@@ -16,7 +16,7 @@ package org.netbeans.lib.cvsclient.connection;
 
 import org.netbeans.lib.cvsclient.io.IStreamLogger;
 
-import java.io.IOException;
+import java.io.Closeable;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -28,7 +28,7 @@ import java.io.OutputStream;
  * set up.
  * @author  Robert Greig
  */
-public interface IConnection {
+public interface IConnection extends Closeable {
 
 	InputStream getInputStream();
 
@@ -48,9 +48,4 @@ public interface IConnection {
 	 * cannot be established
 	 */
 	void open(IStreamLogger streamLogger) throws AuthenticationException;
-
-	/**
-	 * Close the connection with the server
-	 */
-	void close() throws IOException;
 }

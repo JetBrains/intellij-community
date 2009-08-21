@@ -47,7 +47,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction{
 
     mySelectedConfiguration = selectCvsConfigurationDialog.getSelectedConfiguration();
 
-    return new MyCvsHandler();
+    return new MyCvsHandler(context.getProject());
   }
 
   protected void onActionPerformed(CvsContext context,
@@ -68,8 +68,11 @@ public class BrowseCvsRepositoryAction extends AbstractAction{
   }
 
   private class MyCvsHandler extends AbstractCvsHandler {
-    public MyCvsHandler() {
+    private final Project myProject;
+
+    public MyCvsHandler(Project project) {
       super(TITLE, FileSetToBeUpdated.EMPTY);
+      myProject = project;
     }
 
     public boolean isCanceled() {
@@ -81,7 +84,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction{
     }
 
     public boolean login(ModalityContext executor) throws Exception {
-      return mySelectedConfiguration.login(executor);
+      return mySelectedConfiguration.login(executor, myProject);
     }
   }
 }

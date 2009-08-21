@@ -53,7 +53,10 @@ import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.ClientEnvironment;
@@ -117,10 +120,14 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
     setIsLoggedIn();
     Collection<CvsRootProvider> allCvsRoots = getAllCvsRoots();
 
+    final ProjectLocator projectLocator = ProjectLocator.getInstance();
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
     for (final CvsRootProvider cvsRootProvider : allCvsRoots) {
       if (processedCvsRoots.contains(cvsRootProvider)) continue;
       processedCvsRoots.add(cvsRootProvider);
-      if (!cvsRootProvider.login(executor)) return false;
+      final VirtualFile vf = lfs.findFileByIoFile(cvsRootProvider.getLocalRoot());
+      final Project project = (vf == null) ? null : projectLocator.guessProjectForFile(vf);
+      if (!cvsRootProvider.login(executor, project)) return false;
     }
     return true;
 

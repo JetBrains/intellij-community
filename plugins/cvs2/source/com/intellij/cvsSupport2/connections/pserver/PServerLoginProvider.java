@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.connections.pserver;
 
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
 
@@ -21,5 +22,5 @@ public abstract class PServerLoginProvider {
   @Nullable
   public abstract String getScrambledPasswordForCvsRoot(String cvsroot);
 
-  public abstract boolean login(PServerCvsSettings settings, ModalityContext executor);
+  public abstract boolean login(PServerCvsSettings settings, ModalityContext executor, Project project);
 }

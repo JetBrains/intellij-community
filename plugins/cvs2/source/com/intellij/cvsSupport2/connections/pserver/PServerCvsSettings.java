@@ -6,6 +6,7 @@ import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.connections.CvsConnectionUtil;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
+import com.intellij.openapi.project.Project;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 
@@ -35,8 +36,8 @@ public class PServerCvsSettings extends CvsConnectionSettings {
     return CvsConnectionUtil.DEFAULT_PSERVER_PORT;
   }
 
-  public boolean login(ModalityContext executor) {
-    return PServerLoginProvider.getInstance().login(this, executor);
+  public boolean login(ModalityContext executor, Project project) {
+    return PServerLoginProvider.getInstance().login(this, executor, project);
   }
 
   public void releasePassword() {
