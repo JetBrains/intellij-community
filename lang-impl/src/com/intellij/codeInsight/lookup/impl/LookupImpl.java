@@ -620,7 +620,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     int offset = myEditor.getSelectionModel().hasSelection()
                  ? myEditor.getSelectionModel().getSelectionStart()
                  : myEditor.getCaretModel().getOffset();
-    return offset - myMinPrefixLength;
+    return Math.max(offset - myMinPrefixLength, 0);
   }
 
   private void selectMostPreferableItem(){
