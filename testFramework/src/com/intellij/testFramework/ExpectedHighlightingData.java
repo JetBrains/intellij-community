@@ -409,8 +409,8 @@ public class ExpectedHighlightingData {
 
     StringBuilder sb = new StringBuilder();
 
+    int end = text.length();
     try {
-      int end = text.length();
       for (HighlightInfo info : list) {
         for (Map.Entry<String, ExpectedHighlightingSet> entry : highlightingTypes.entrySet()) {
           final ExpectedHighlightingSet set = entry.getValue();
@@ -429,12 +429,12 @@ public class ExpectedHighlightingData {
           }
         }
       }
-      sb.insert(0, text.substring(0, end));
     }
     catch (IndexOutOfBoundsException e) {
       //sometimes (rarely) we have info offsets < 0 
-      sb.insert(0, e.getMessage());
+      sb.insert(0, "<exception>" + e.getMessage() + "</exception>");
     }
+    sb.insert(0, text.substring(0, end));
 
     Assert.assertEquals(failMessage + "\n" , myText, sb.toString());
     Assert.fail(failMessage);
