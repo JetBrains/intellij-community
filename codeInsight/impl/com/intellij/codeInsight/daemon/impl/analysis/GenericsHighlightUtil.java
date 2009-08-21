@@ -16,6 +16,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -927,27 +928,34 @@ public class GenericsHighlightUtil {
 
     return null;
   }
+
+  @Nullable
   public static HighlightInfo checkOverrideAnnotation(PsiMethod method) {
     PsiModifierList list = method.getModifierList();
     final PsiAnnotation overrideAnnotation = list.findAnnotation("java.lang.Override");
     if (overrideAnnotation == null) {
       return null;
     }
-    MethodSignatureBackedByPsiMethod superMethod = SuperMethodsSearch.search(method, null, true, false).findFirst();
-    if (superMethod == null) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, overrideAnnotation,
-                                               JavaErrorMessages.message("method.doesnot.override.super"));
+    try {
+      MethodSignatureBackedByPsiMethod superMethod = SuperMethodsSearch.search(method, null, true, false).findFirst();
+      if (superMethod == null) {
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, overrideAnnotation,
+                                                 JavaErrorMessages.message("method.doesnot.override.super"));
+      }
+      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(method);
+      PsiClass superClass = superMethod.getMethod().getContainingClass();
+      if (languageLevel.equals(LanguageLevel.JDK_1_5) &&
+          superClass != null &&
+          superClass.isInterface()) {
+        HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, overrideAnnotation, JavaErrorMessages.message("override.not.allowed.in.interfaces"));
+        QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_6));
+        return info;
+      }
+      return null;
     }
-    LanguageLevel languageLevel = PsiUtil.getLanguageLevel(method);
-    PsiClass superClass = superMethod.getMethod().getContainingClass();
-    if (languageLevel.equals(LanguageLevel.JDK_1_5) &&
-        superClass != null &&
-        superClass.isInterface()) {
-      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, overrideAnnotation, JavaErrorMessages.message("override.not.allowed.in.interfaces"));
-      QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_6));
-      return info;
+    catch (IndexNotReadyException e) {
+      return null;
     }
-    return null;
   }
 
   static void checkEnumConstantForConstructorProblems(PsiEnumConstant enumConstant, final HighlightInfoHolder holder) {

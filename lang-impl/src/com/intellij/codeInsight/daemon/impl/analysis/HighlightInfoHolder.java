@@ -9,6 +9,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,7 +31,7 @@ public class HighlightInfoHolder {
     myFilters = filters;
   }
 
-  public boolean add(HighlightInfo info) {
+  public boolean add(@Nullable HighlightInfo info) {
     if (!writable) throw new IllegalStateException("Update highlight holder after visit finished; "+this+"; info="+info);
     if (info == null || !accepted(info)) return false;
 
