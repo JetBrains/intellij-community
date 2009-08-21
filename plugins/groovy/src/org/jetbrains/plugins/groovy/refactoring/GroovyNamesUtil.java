@@ -17,6 +17,9 @@ package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.Function;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
@@ -81,5 +84,14 @@ public class GroovyNamesUtil {
     if (str.length() == 0) return "";
     if (str.length() == 1) return str.toLowerCase();
     return str.substring(0, 1).toLowerCase() + str.substring(1);
+  }
+
+  public static String camelToSnake(final String string) {
+    ArrayList<String> tokens = camelizeString(string);
+    return StringUtil.join(ContainerUtil.map2Array(tokens, String.class, new Function<String, String>() {
+      public String fun(final String s) {
+        return StringUtil.decapitalize(s);
+      }
+    }), "-");
   }
 }
