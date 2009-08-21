@@ -6,6 +6,7 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiFile;
 
 public abstract class CompileActionBase extends AnAction implements DumbAware {
@@ -17,7 +18,7 @@ public abstract class CompileActionBase extends AnAction implements DumbAware {
     }
     Editor editor = e.getData(PlatformDataKeys.EDITOR);
     PsiFile file = e.getData(LangDataKeys.PSI_FILE);
-    if (file != null && editor != null) {
+    if (file != null && editor != null && !DumbService.getInstance(project).isDumb()) {
       DaemonCodeAnalyzer.getInstance(project).autoImportReferenceAtCursor(editor, file); //let autoimport complete
     }
     doAction(dataContext, project);
