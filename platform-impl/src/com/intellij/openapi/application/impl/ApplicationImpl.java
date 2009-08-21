@@ -219,6 +219,19 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private void disposeSelf() {
+    Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
+    final boolean[] canClose = {true};
+    for (final Project project : openProjects) {
+      CommandProcessor commandProcessor = CommandProcessor.getInstance();
+      commandProcessor.executeCommand(project, new Runnable() {
+        public void run() {
+          FileDocumentManager.getInstance().saveAllDocuments();
+          canClose[0] = ProjectUtil.closeProject(project);
+        }
+      }, ApplicationBundle.message("command.exit"), null);
+      if (!canClose[0]) return;
+    }
+    myDisposeInProgress = true;
     Disposer.dispose(this);
     Disposer.assertIsEmpty();
   }
@@ -407,24 +420,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
 
   public void dispose() {
-    myDisposeInProgress = true;
-    Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
-    final boolean[] canClose = {true};
-    for (final Project project : openProjects) {
-      CommandProcessor commandProcessor = CommandProcessor.getInstance();
-      commandProcessor.executeCommand(project, new Runnable() {
-        public void run() {
-          FileDocumentManager.getInstance().saveAllDocuments();
-          canClose[0] = ProjectUtil.closeProject(project);
-        }
-      }, ApplicationBundle.message("command.exit"), null);
-      if (!canClose[0]) break;
-    }
-
-    if (canClose[0]) {
-      fireApplicationExiting();
-      disposeComponents();
-    }
+    fireApplicationExiting();
+    disposeComponents();
 
     ourThreadExecutorsService.shutdownNow();
     super.dispose();
