@@ -34,6 +34,12 @@ import java.util.List;
 import java.util.Comparator;
 
 /**
+ * Implement this class to support new type of breakpoints. An implementation should be registered in a plugin.xml:
+ * <p>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
+ * &nbsp;&nbsp;&lt;xdebugger.breakpointType implementation="qualified-class-name"/&gt;<br>
+ * &lt;/extensions&gt;
+ *
  * @author nik
  */
 public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreakpointProperties> {
@@ -42,10 +48,19 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   private @Nls @NotNull String myTitle;
   private boolean mySuspendThreadSupported;
 
+  /**
+   * @param id an unique id of breakpoint type
+   * @param title title of tab in the breakpoints dialog
+   */
   protected XBreakpointType(@NonNls @NotNull final String id, @Nls @NotNull final String title) {
     this(id, title, false);
   }
 
+  /**
+   * @param id an unique id of breakpoint type
+   * @param title title of tab in the breakpoints dialog
+   * @param suspendThreadSupported <code>true</code> if suspending only one thread is supported for this type of breakpoints
+   */
   protected XBreakpointType(@NonNls @NotNull final String id, @Nls @NotNull final String title, boolean suspendThreadSupported) {
     myId = id;
     myTitle = title;

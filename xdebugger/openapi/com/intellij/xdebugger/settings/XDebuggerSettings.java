@@ -8,6 +8,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 /**
+ * Implement this class to provide settings page for debugger. Settings page will be placed under 'Debugger' node in the 'Settings' dialog.
+ * An implementation should be registered in plugin.xml:
+ * <p>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
+ * &nbsp;&nbsp;&lt;xdebugger.settings implementation="qualified-class-name"/&gt;<br>
+ * &lt;/extensions&gt;
+ * 
  * @author nik
  */
 public abstract class XDebuggerSettings<T> implements PersistentStateComponent<T> {
