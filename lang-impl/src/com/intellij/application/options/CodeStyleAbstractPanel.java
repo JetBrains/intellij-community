@@ -125,7 +125,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     EditorFactory editorFactory = EditorFactory.getInstance();
     myTextToReformat = getPreviewText();
     Document editorDocument = editorFactory.createDocument(myTextToReformat);
-    EditorEx editor = (EditorEx)editorFactory.createEditor(editorDocument);
+    EditorEx editor = (EditorEx)editorFactory.createViewer(editorDocument);
 
     myLastDocumentModificationStamp = editor.getDocument().getModificationStamp();
 
