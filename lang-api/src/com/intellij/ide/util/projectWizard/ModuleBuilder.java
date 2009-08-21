@@ -222,10 +222,10 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     final File moduleFile = new File(moduleFilePath);
     if (moduleFile.exists()) {
       FileUtil.delete(moduleFile);
-      final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(moduleFile);
-      if (file != null) {
-        file.refresh(false, false);
-      }
+    }
+    final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(moduleFile);
+    if (file != null) {
+      file.refresh(false, false);
     }
   }
 
