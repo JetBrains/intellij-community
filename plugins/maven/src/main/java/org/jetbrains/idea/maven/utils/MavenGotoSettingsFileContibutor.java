@@ -2,6 +2,7 @@ package org.jetbrains.idea.maven.utils;
 
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -13,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class MavenGotoSettingsFileContibutor implements ChooseByNameContributor {
+public class MavenGotoSettingsFileContibutor implements ChooseByNameContributor, DumbAware {
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     Set<String> result = new THashSet<String>();
     for (VirtualFile each : getSettingsFiles(project)) {
