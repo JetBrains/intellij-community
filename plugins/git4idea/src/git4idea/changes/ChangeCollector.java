@@ -204,13 +204,17 @@ class ChangeCollector {
    * @throws VcsException if there is a problem with running git
    */
   private void collectDiffChanges() throws VcsException {
+    Collection<FilePath> dirtyPaths = dirtyPaths(true);
+    if (dirtyPaths.isEmpty()) {
+      return;
+    }
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitHandler.DIFF);
     handler.addParameters("--name-status", "--diff-filter=ADCMRUX", "-M", "HEAD");
     handler.setNoSSH(true);
     handler.setSilent(true);
     handler.setStdoutSuppressed(true);
     handler.endOptions();
-    handler.addRelativePaths(dirtyPaths(true));
+    handler.addRelativePaths(dirtyPaths);
     try {
       String output = handler.run();
       GitChangeUtils.parseChanges(myProject, myVcsRoot, null, GitChangeUtils.loadRevision(myProject, myVcsRoot, "HEAD"), output, myChanges,
@@ -246,13 +250,17 @@ class ChangeCollector {
    * @throws VcsException if there is a problem with running git
    */
   private void collectUnmergedAndUnversioned() throws VcsException {
+    Collection<FilePath> dirtyPaths = dirtyPaths(false);
+    if (dirtyPaths.isEmpty()) {
+      return;
+    }
     // prepare handler
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitHandler.LS_FILES);
     handler.addParameters("-v", "--others", "--unmerged", "--exclude-standard");
     handler.setSilent(true);
     handler.setNoSSH(true);
     handler.setStdoutSuppressed(true);
-    handler.addRelativePaths(dirtyPaths(false));
+    handler.addRelativePaths(dirtyPaths);
     // run handler and collect changes
     String list = handler.run();
     for (StringScanner sc = new StringScanner(list); sc.hasMoreData();) {

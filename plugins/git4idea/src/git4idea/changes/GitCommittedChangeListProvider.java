@@ -92,7 +92,7 @@ public class GitCommittedChangeListProvider implements CachingCommittedChangesPr
       }
       else {
         GitRemote r = GitRemote.find(myProject, gitRoot, remote);
-        return r == null ? null : new GitRepositoryLocation(r.url(), rootFile);
+        return r == null ? null : new GitRepositoryLocation(r.fetchUrl(), rootFile);
       }
     }
     catch (VcsException e) {

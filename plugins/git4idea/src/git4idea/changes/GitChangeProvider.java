@@ -79,5 +79,4 @@ public class GitChangeProvider implements ChangeProvider {
    */
   public void doCleanup(final List<VirtualFile> files) {
   }
-
 }
