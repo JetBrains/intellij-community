@@ -2,7 +2,10 @@ package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.execution.actions.ChooseDebugConfigurationAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.AbstractDebuggerSession;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,7 +14,18 @@ import org.jetbrains.annotations.NotNull;
 public class ResumeAction extends XDebuggerActionBase {
   @Override
   protected boolean isEnabled(AnActionEvent e) {
-    return true;
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+    boolean haveCurrentSession = false;
+    for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
+      final AbstractDebuggerSession session = support.getCurrentSession(project);
+      if (session != null && !session.isStopped()) {
+        haveCurrentSession = true;
+        if (session.isPaused()) {
+          return true;
+        }
+      }
+    }
+    return !haveCurrentSession;
   }
 
   @Override

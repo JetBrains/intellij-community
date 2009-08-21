@@ -36,6 +36,7 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.Event;
@@ -47,7 +48,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class DebuggerSession {
+public class DebuggerSession implements AbstractDebuggerSession {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerSession");
   // flags
   private final MyDebuggerStateManager myContextManager;

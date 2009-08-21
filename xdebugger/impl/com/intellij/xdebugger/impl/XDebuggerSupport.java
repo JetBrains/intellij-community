@@ -1,7 +1,9 @@
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
@@ -166,6 +168,11 @@ public class XDebuggerSupport extends DebuggerSupport {
   @NotNull
   public DebuggerToggleActionHandler getMuteBreakpointsHandler() {
     return myMuteBreakpointsHandler;
+  }
+
+  @Override
+  public AbstractDebuggerSession getCurrentSession(Project project) {
+    return XDebuggerManagerImpl.getInstance(project).getCurrentSession();
   }
 
   @NotNull

@@ -2,6 +2,7 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.actions.*;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.*;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointFactory;
@@ -11,6 +12,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
@@ -144,6 +146,12 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   @NotNull
   public DebuggerToggleActionHandler getMuteBreakpointsHandler() {
     return myMuteBreakpointsHandler;
+  }
+
+  @Override
+  public AbstractDebuggerSession getCurrentSession(Project project) {
+    final DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(project)).getContext();
+    return context != null ? context.getDebuggerSession() : null;
   }
 
   @NotNull

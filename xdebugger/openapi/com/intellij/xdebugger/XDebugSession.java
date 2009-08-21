@@ -33,14 +33,13 @@ import javax.swing.*;
 /**
  * @author nik
  */
-public interface XDebugSession {
+public interface XDebugSession extends AbstractDebuggerSession {
 
   @NotNull
   Project getProject();
 
   @NotNull XDebugProcess getDebugProcess();
 
-  boolean isPaused();
   boolean isSuspended();
 
   @Nullable
@@ -101,7 +100,6 @@ public interface XDebugSession {
    */
   void positionReached(@NotNull XSuspendContext suspendContext);
 
-  boolean isStopped();
   void stop();
 
   void setBreakpointMuted(boolean muted);

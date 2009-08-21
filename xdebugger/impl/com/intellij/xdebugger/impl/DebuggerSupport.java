@@ -2,12 +2,15 @@ package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.settings.DebuggerSettingsPanelProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -74,4 +77,7 @@ public abstract class DebuggerSupport {
 
   @NotNull
   public abstract DebuggerToggleActionHandler getMuteBreakpointsHandler();
+
+  @Nullable
+  public abstract AbstractDebuggerSession getCurrentSession(Project project);
 }
