@@ -30,7 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
@@ -88,13 +87,6 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   @Nullable
   public GrExpression getInitializerGroovy() {
     return null;
-  }
-
-  @NotNull
-  public PsiClass getContainingClass() {
-    PsiElement parent = getParent();
-    assert parent instanceof GrEnumConstantList : parent;
-    return (PsiClass)parent.getParent().getParent();
   }
 
   public boolean isProperty() {
