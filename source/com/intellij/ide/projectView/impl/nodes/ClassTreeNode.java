@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.PsiClassChildrenSource;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -108,15 +109,20 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
     if (aClass == null || !aClass.isValid()) {
       return 0;
     }
-    int pos = ElementPresentationUtil.getClassKind(aClass);
-    //abstract class before concrete
-    if (pos == ElementPresentationUtil.CLASS_KIND_CLASS || pos == ElementPresentationUtil.CLASS_KIND_EXCEPTION) {
-      boolean isAbstract = aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isInterface();
-      if (isAbstract) {
-        pos --;
+    try {
+      int pos = ElementPresentationUtil.getClassKind(aClass);
+      //abstract class before concrete
+      if (pos == ElementPresentationUtil.CLASS_KIND_CLASS || pos == ElementPresentationUtil.CLASS_KIND_EXCEPTION) {
+        boolean isAbstract = aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isInterface();
+        if (isAbstract) {
+          pos --;
+        }
       }
+      return pos;
     }
-    return pos;
+    catch (IndexNotReadyException e) {
+      return 0;
+    }
   }
 
   private class ClassNameSortKey implements Comparable {
