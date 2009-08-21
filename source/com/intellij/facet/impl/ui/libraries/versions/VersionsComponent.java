@@ -27,7 +27,7 @@ public abstract class VersionsComponent {
   private JPanel myMainPanel;
   private static String UNKNOWN_RI_NAME = "Unknown";
 
-  @Nullable private Module myModule;
+  private final @NotNull Module myModule;
   private FacetLibrariesValidator myValidator;
 
   private ButtonGroup myButtonGroup = new ButtonGroup();
@@ -36,7 +36,7 @@ public abstract class VersionsComponent {
 
   private LibraryVersionInfo myCurrentVersion = null;
 
-  public VersionsComponent(@Nullable final Module module, FacetLibrariesValidator validator) {
+  public VersionsComponent(@NotNull final Module module, FacetLibrariesValidator validator) {
     myModule = module;
     myValidator = validator;
   }
@@ -95,7 +95,7 @@ public abstract class VersionsComponent {
   @Nullable
   private LibraryVersionInfo getCurrentVersion(@NotNull String currentRI) {
     String detectionClass = getFacetDetectionClass(currentRI);
-    if (detectionClass != null && myModule != null) {
+    if (detectionClass != null) {
       final String version = JarVersionDetectionUtil.detectJarVersion(detectionClass, myModule);
       if (version != null) {
         LibraryVersionInfo approximatedVersion = null;
@@ -247,7 +247,7 @@ public abstract class VersionsComponent {
     return myValidator;
   }
 
-  @Nullable
+  @NotNull
   public Module getModule() {
     return myModule;
   }
