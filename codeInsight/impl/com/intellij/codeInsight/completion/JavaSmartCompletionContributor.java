@@ -567,7 +567,9 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         for (final PsiType psiType : psiTypes) {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
-              consumer.consume(psiType);
+              if (psiType.isValid()) {
+                consumer.consume(psiType);
+              }
             }
           });
         }
