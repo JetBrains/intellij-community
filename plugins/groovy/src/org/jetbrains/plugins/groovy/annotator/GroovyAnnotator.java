@@ -648,15 +648,6 @@ public class GroovyAnnotator implements Annotator {
         String message = GroovyBundle.message(key, refExpr.getReferenceName());
         holder.createWarningAnnotation(refExpr, message);
       }
-      else if (parent instanceof GrCall) {
-        if (resolved instanceof PsiMethod && resolved.getUserData(GrMethod.BUILDER_METHOD) == null) {
-          checkMethodApplicability(resolveResult, refExpr, holder);
-        }
-        else {
-          checkClosureApplicability(resolveResult, refExpr.getType(), refExpr, holder);
-        }
-      }
-      if (isDeclarationAssignment(refExpr) || resolved instanceof PsiPackage) return;
     }
     else {
       GrExpression qualifier = refExpr.getQualifierExpression();
@@ -666,6 +657,20 @@ public class GroovyAnnotator implements Annotator {
         checkSingleResolvedElement(holder, refExpr, resolveResult);
       }
     }
+    
+    if (parent instanceof GrCall) {
+      if (resolved == null && results.length > 0) {
+        resolved = results[0].getElement();
+        resolveResult = results[0];
+      }
+      if (resolved instanceof PsiMethod && resolved.getUserData(GrMethod.BUILDER_METHOD) == null) {
+        checkMethodApplicability(resolveResult, refExpr, holder);
+      }
+      else {
+        checkClosureApplicability(resolveResult, refExpr.getType(), refExpr, holder);
+      }
+    }
+    if (isDeclarationAssignment(refExpr) || resolved instanceof PsiPackage) return;
 
     if (resolved == null) {
       PsiElement refNameElement = refExpr.getReferenceNameElement();
