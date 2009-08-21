@@ -104,6 +104,7 @@ public interface PsiReference {
    *
    * @return the array of available identifiers.
    */
+  @NotNull 
   Object[] getVariants();
 
   /**
