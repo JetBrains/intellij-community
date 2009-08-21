@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.idea.ActionsBundle;
 
-public class GotoTestOrCodeAction extends BaseCodeInsightAction implements DumbAware {
+public class GotoTestOrCodeAction extends BaseCodeInsightAction {
   protected CodeInsightActionHandler getHandler(){
     return new GotoTestOrCodeHandler();
   }
