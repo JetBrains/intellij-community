@@ -35,6 +35,7 @@ import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,7 +45,7 @@ import com.intellij.util.ArrayUtil;
 
 import java.util.ArrayList;
 
-public class ProjectBaseDirNavigationContributor implements ChooseByNameContributor {
+public class ProjectBaseDirNavigationContributor implements ChooseByNameContributor, DumbAware {
 
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     final VirtualFile baseDir = project.getBaseDir();

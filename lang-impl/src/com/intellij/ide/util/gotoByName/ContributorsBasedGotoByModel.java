@@ -37,6 +37,8 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
@@ -89,10 +91,16 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
    */
   public Object[] getElementsByName(String name, boolean checkBoxState, final String pattern) {
     List<NavigationItem> items = null;
+    final boolean dumb = DumbService.getInstance(myProject).isDumb();
+
     for (ChooseByNameContributor contributor : myContributors) {
       try {
-        for(NavigationItem item : contributor.getItemsByName(name, pattern, myProject, checkBoxState)) {
-          if(acceptItem(item)) {
+        if (dumb && !(contributor instanceof DumbAware)) {
+          continue;
+        }
+
+        for (NavigationItem item : contributor.getItemsByName(name, pattern, myProject, checkBoxState)) {
+          if (acceptItem(item)) {
             if (items == null) {
               items = new ArrayList<NavigationItem>(2);
             }

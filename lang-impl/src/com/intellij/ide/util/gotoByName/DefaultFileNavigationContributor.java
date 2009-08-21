@@ -33,11 +33,12 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.ProjectScope;
 
-public class DefaultFileNavigationContributor implements ChooseByNameContributor {
+public class DefaultFileNavigationContributor implements ChooseByNameContributor, DumbAware {
 
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     return FilenameIndex.getAllFilenames(project);
