@@ -34,7 +34,6 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -59,7 +58,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
   private final MyInputFilter myInputFilter = new MyInputFilter();
 
-  private static final Map<String, Pair<GroovyDslExecutor, Long>> ourMapping = new ConcurrentHashMap<String, Pair<GroovyDslExecutor, Long>>();
+  private static final Map<String, Pair<GroovyDslExecutor, Long>> ourMapping = new java.util.concurrent.ConcurrentHashMap<String, Pair<GroovyDslExecutor, Long>>();
 
   private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
 
