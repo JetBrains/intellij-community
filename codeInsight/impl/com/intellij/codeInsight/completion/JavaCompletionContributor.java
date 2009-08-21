@@ -218,7 +218,11 @@ public class JavaCompletionContributor extends CompletionContributor {
                 LOG.assertTrue(false, "Position=" + insertedElement + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(
                   variants));
               }
-              result.addElement(LookupItemUtil.objectToLookupItem(completion));
+              if (completion instanceof LookupElement) {
+                result.addElement((LookupElement)completion);
+              } else {
+                result.addElement(LookupItemUtil.objectToLookupItem(completion));
+              }
             }
           }
         });
