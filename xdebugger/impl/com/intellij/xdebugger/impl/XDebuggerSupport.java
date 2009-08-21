@@ -1,7 +1,10 @@
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
@@ -12,6 +15,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.XQuickEvaluateHandler;
 import com.intellij.xdebugger.impl.settings.DebuggerSettingsPanelProvider;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsPanelProviderImpl;
+import com.intellij.execution.actions.ChooseDebugConfigurationAction;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,7 +31,7 @@ public class XDebuggerSupport extends DebuggerSupport {
   private final XDebuggerSuspendedActionHandler myForceStepIntoHandler;
   private final XDebuggerRunToCursorActionHandler myRunToCursorHandler;
   private final XDebuggerRunToCursorActionHandler myForceRunToCursor;
-  private final XDebuggerActionHandler myResumeHandler;
+  private final DebuggerActionHandler myResumeHandler;
   private final XDebuggerPauseActionHandler myPauseHandler;
   private final XDebuggerSuspendedActionHandler myShowExecutionPointHandler;
   private final XDebuggerEvaluateActionHandler myEvaluateHandler;
@@ -67,13 +71,22 @@ public class XDebuggerSupport extends DebuggerSupport {
     mySmartStepIntoHandler = new XDebuggerSmartStepIntoHandler();
     myRunToCursorHandler = new XDebuggerRunToCursorActionHandler(false);
     myForceRunToCursor = new XDebuggerRunToCursorActionHandler(true);
-    myResumeHandler = new XDebuggerActionHandler() {
-      protected boolean isEnabled(@NotNull final XDebugSession session, final DataContext dataContext) {
-        return session.isPaused();
+    myResumeHandler = new DebuggerActionHandler() {
+      @Override
+      public void perform(@NotNull Project project, AnActionEvent event) {
+        XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+        if (session != null) {
+          session.resume();
+        }
+        else {
+          new ChooseDebugConfigurationAction().actionPerformed(event);
+        }
       }
 
-      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
-        session.resume();
+      @Override
+      public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
+        XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+        return session == null || session.isPaused();
       }
     };
     myPauseHandler = new XDebuggerPauseActionHandler();
