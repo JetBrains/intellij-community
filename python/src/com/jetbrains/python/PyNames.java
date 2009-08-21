@@ -17,6 +17,8 @@ public class PyNames {
   @NonNls public static final String DOT_PY = ".py";
   @NonNls public static final String INIT_DOT_PY = INIT + DOT_PY;
 
+  @NonNls public static final String NEW = "__new__";
+
   @NonNls public static final String OBJECT = "object";
   @NonNls public static final String NONE = "None";
 
@@ -62,7 +64,7 @@ public class PyNames {
     _UnderscoredNames.add("__iadd__");
     _UnderscoredNames.add("__import__");
     _UnderscoredNames.add("__imul__");
-    _UnderscoredNames.add("__init__");
+    _UnderscoredNames.add(INIT);
     _UnderscoredNames.add("__int__");
     _UnderscoredNames.add("__invert__");
     _UnderscoredNames.add("__iter__");
@@ -79,7 +81,7 @@ public class PyNames {
     _UnderscoredNames.add("__name__");
     _UnderscoredNames.add("__ne__");
     _UnderscoredNames.add("__neg__");
-    _UnderscoredNames.add("__new__");
+    _UnderscoredNames.add(NEW);
     _UnderscoredNames.add("__nonzero__");
     _UnderscoredNames.add("__oct__");
     _UnderscoredNames.add("__or__");

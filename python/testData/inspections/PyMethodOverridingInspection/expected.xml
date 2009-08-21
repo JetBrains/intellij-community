@@ -15,4 +15,9 @@
     <line>14</line>
     <description>Method signature does not match signature of base method</description>
   </problem>
+  <problem>
+    <file>method-overriding.py</file>
+    <line>46</line>
+    <description>Number of parameters does not match parameters of base method</description>
+  </problem>
 </problems>

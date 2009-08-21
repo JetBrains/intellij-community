@@ -5,6 +5,8 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameter;
@@ -56,6 +58,17 @@ public class PyMethodOverridingInspection extends LocalInspectionTool {
 
     @Override
     public void visitPyFunction(final PyFunction function) {
+      // sanity checks
+      PyClass cls = function.getContainingClass();
+      if (cls == null) return; // not a method, ignore
+      String name = function.getName();
+      if (PyNames.INIT.equals(name)) return; // inits are expected to change signature 
+      if (PyNames.NEW.equals(name)) return;  // __new__ is also expected to change signature   
+      // real work
+      /* TODO: implement more sophisticated logic.
+       E.g. foo(a, b, c) -> foo(*params) is a compatible override, while foo(a, b=1) -> foo(a, c=1) isn't,
+       but current implementation thinks otherwise.
+       */
       for (PsiElement psiElement : PySuperMethodsSearch.search(function)) {
         final PyParameter[] parameters = function.getParameterList().getParameters();
         if (psiElement instanceof PyFunction) {
