@@ -58,9 +58,20 @@ public class CreateClassUtil {
       if (psiFile != null) {
         psiFile.delete();
       }
+
+      final String rawClassName = extractClassName(className);
+      final PsiFile existing = directory.findFile(rawClassName + ".java");
+      if (existing instanceof PsiJavaFile) {
+        final PsiClass[] classes = ((PsiJavaFile)existing).getClasses();
+        if (classes.length > 0) {
+          return classes[0];
+        }
+        return null;
+      }
+
       final PsiClass aClass;
       if (templateName.equals(DEFAULT_CLASS_TEMPLATE)) {
-        aClass = JavaDirectoryService.getInstance().createClass(directory, extractClassName(className));
+        aClass = JavaDirectoryService.getInstance().createClass(directory, rawClassName);
       }
       else {
         final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance();
