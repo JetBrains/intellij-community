@@ -20,6 +20,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -242,9 +243,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public RangeMarker getRangeGuard(int start, int end) {
     for (RangeMarker block : myGuardedBlocks) {
-      if (rangeIntersect(start, end, block.getStartOffset(), block.getEndOffset(), block.isGreedyToLeft(), block.isGreedyToRight())) {
+      if (rangeIntersect(new int[]{start, block.getStartOffset()}, new int[]{end, block.getEndOffset()}, new boolean[]{true, block.isGreedyToLeft()}, new boolean[]{true, block.isGreedyToRight()})) {
         return block;
-    }
+      }
     }
 
     return null;
@@ -263,17 +264,17 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return start <= offset && offset < end;
   }
 
-  private static boolean before(int a1, int a2, boolean a1Inclusive, boolean a2Inclusive) {
-    return a1 < a2 || a1 == a2 && (a1Inclusive || !a2Inclusive);
-  }
+  private static boolean rangeIntersect(int[] start, int end[], boolean[] leftInclusive, boolean[] rightInclusive) {
+    if (start[0] > start[1] || start[0] == start[1] && !leftInclusive[0]) {
+      ArrayUtil.swap(start, 0, 1);
+      ArrayUtil.swap(end, 0, 1);
+      ArrayUtil.swap(leftInclusive, 0, 1);
+      ArrayUtil.swap(rightInclusive, 0, 1);
+    }
+    if (end[0] < start[1]) return false;
+    if (end[0] > start[1]) return true;
 
-  private static boolean rangeIntersect(int s1, int e1, int s2, int e2, boolean greedyToLeft, boolean greedyToRight) {
-    return before(s2, s1, greedyToLeft, true) && s1 < e2
-           || s2 < e1 && (e1 < e2 || e1==e2 && s1<e1)
-           || before(s1, s2, true, greedyToLeft) && s2 < e1
-           || s1 < e2 && e2 <= e1
-           || s1==s2 && greedyToLeft && e1==e2
-           ;
+    return leftInclusive[1] && rightInclusive[0];
   }
 
   @NotNull

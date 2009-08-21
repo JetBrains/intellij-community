@@ -409,6 +409,11 @@ public class ArrayUtil {
     array[i1] = array[i2];
     array[i2] = t;
   }
+  public static void swap(boolean [] array, int i1, int i2) {
+    final boolean t = array[i1];
+    array[i1] = array[i2];
+    array[i2] = t;
+  }
   public static void swap(char[] array, int i1, int i2) {
     final char t = array[i1];
     array[i1] = array[i2];
