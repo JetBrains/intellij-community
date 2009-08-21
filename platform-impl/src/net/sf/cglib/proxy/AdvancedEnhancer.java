@@ -823,8 +823,11 @@ public class AdvancedEnhancer extends AbstractClassGenerator
         e.goTo(end);
       }
       public void processDefault() {
-        // TODO: error?
-        e.pop2(); // stack height
+        final Type type = Type.getType(AssertionError.class);
+        e.new_instance(type);
+        e.dup();
+        e.invoke_constructor(type);
+        e.athrow();
       }
     });
     e.return_value();
