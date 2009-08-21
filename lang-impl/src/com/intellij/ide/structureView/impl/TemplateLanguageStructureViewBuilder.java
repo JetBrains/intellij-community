@@ -83,13 +83,15 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
                 final TemplateLanguageFileViewProvider provider = getViewProvider();
                 if (provider == null) return;
 
+                StructureViewWrapper structureViewWrapper = StructureViewFactoryEx.getInstanceEx(myProject).getStructureViewWrapper();
+                if (structureViewWrapper == null) return;
+
                 Language baseLanguage = provider.getTemplateDataLanguage();
                 if (baseLanguage == myTemplateDataLanguage) {
                   updateBaseLanguageView();
                 }
                 else {
                   myTemplateDataLanguage = baseLanguage;
-                  StructureViewWrapper structureViewWrapper = StructureViewFactoryEx.getInstanceEx(myProject).getStructureViewWrapper();
                   ((StructureViewWrapperImpl)structureViewWrapper).rebuild();
                 }
               }

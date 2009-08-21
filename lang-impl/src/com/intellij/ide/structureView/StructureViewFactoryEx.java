@@ -2,6 +2,7 @@ package com.intellij.ide.structureView;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -10,6 +11,7 @@ import java.util.Collection;
  */
 public abstract class StructureViewFactoryEx extends StructureViewFactory {
 
+  @Nullable
   public abstract StructureViewWrapper getStructureViewWrapper();
 
   public abstract void registerExtension(Class<? extends PsiElement> type, StructureViewExtension extension);
