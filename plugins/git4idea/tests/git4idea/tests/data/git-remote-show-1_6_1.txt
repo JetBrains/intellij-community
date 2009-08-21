@@ -1,0 +1,6 @@
+* remote origin
+  URL: git@host/dir.git
+  Remote branch merged with 'git pull' while on branch master
+    master
+  Tracked remote branch
+    master

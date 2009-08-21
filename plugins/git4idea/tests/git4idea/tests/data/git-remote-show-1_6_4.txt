@@ -1,0 +1,10 @@
+* remote origin
+  Fetch URL: git://host/dir.git
+  Push  URL: git@host/dir.git
+  HEAD branch: (not queried)
+  Remote branch: (status not queried)
+    master
+  Local branch configured for 'git pull':
+    master merges with remote master
+  Local ref configured for 'git push' (status not queried):
+    (matching) pushes to (matching)

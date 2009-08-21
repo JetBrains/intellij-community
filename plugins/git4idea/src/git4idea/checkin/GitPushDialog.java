@@ -373,7 +373,7 @@ public class GitPushDialog extends DialogWrapper {
           GitTag.listAsStrings(myProject, getGitRoot(), myTagNames);
         }
         catch (VcsException ex) {
-          LOG.warn("Exception in branchlist: \n" + StringUtil.getThrowableText(ex));
+          LOG.warn("Exception in branch list: \n" + StringUtil.getThrowableText(ex));
         }
       }
     };
@@ -385,7 +385,7 @@ public class GitPushDialog extends DialogWrapper {
    * Update remotes
    */
   private void updateRemotes() {
-    GitUIUtil.setupRemotes(myProject, getGitRoot(), myRemoteComboBox);
+    GitUIUtil.setupRemotes(myProject, getGitRoot(), myRemoteComboBox, false);
   }
 
   /**

@@ -34,6 +34,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A git remotes
@@ -44,13 +46,25 @@ public final class GitRemote {
    */
   private final String myName;
   /**
-   * The url of the remote
+   * The fetch url of the remote
    */
-  private final String myUrl;
+  private final String myFetchUrl;
+  /**
+   * The push url of the remote
+   */
+  private String myPushUrl;
   /**
    * Prefix for url in "git remote show -n {branch}"
    */
   @NonNls private static final String SHOW_URL_PREFIX = "  URL: ";
+  /**
+   * Prefix for url in "git remote show -n {branch}"
+   */
+  @NonNls private static final String SHOW_FETCH_URL_PREFIX = "  Fetch URL: ";
+  /**
+   * Prefix for url in "git remote show -n {branch}"
+   */
+  @NonNls private static final String SHOW_PUSH_URL_PREFIX = "  Push  URL: ";
   /**
    * Prefix for local branch mapping in "git remote show -n {branch}"
    */
@@ -58,11 +72,15 @@ public final class GitRemote {
   /**
    * line that starts branches section in "git remote show -n {branch}"
    */
-  @NonNls private static final String SHOW_BRANCHES_LINE = "  Tracked remote branches";
+  @NonNls private static final String SHOW_BRANCHES_LINE = "  Tracked remote branch";
   /**
    * US-ASCII encoding name
    */
   @NonNls private static final String US_ASCII_ENCODING = "US-ASCII";
+  /**
+   * Pattern that parses pull spec
+   */
+  private static final Pattern PULL_PATTERN = Pattern.compile("(\\S+)\\s+merges with remote (\\S+)");
 
   /**
    * A constructor
@@ -71,8 +89,20 @@ public final class GitRemote {
    * @param url  the url
    */
   public GitRemote(@NotNull final String name, final String url) {
+    this(name, url, url);
+  }
+
+  /**
+   * A constructor
+   *
+   * @param name     the name
+   * @param fetchUrl the fetch url
+   * @param pushUrl  the fetch url
+   */
+  public GitRemote(String name, String fetchUrl, String pushUrl) {
     myName = name;
-    myUrl = url;
+    myFetchUrl = fetchUrl;
+    myPushUrl = pushUrl;
   }
 
   /**
@@ -83,10 +113,17 @@ public final class GitRemote {
   }
 
   /**
-   * @return the url of the remote
+   * @return the fetch url of the remote
    */
-  public String url() {
-    return myUrl;
+  public String fetchUrl() {
+    return myFetchUrl;
+  }
+
+  /**
+   * @return the push url of the remote
+   */
+  public String pushUrl() {
+    return myPushUrl;
   }
 
   /**
@@ -122,19 +159,54 @@ public final class GitRemote {
    * @throws VcsException in case of git error
    */
   public static List<GitRemote> list(Project project, VirtualFile root) throws VcsException {
-    ArrayList<GitRemote> remotes = new ArrayList<GitRemote>();
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.REMOTE);
     handler.setNoSSH(true);
     handler.setSilent(true);
     handler.addParameters("-v");
-    for (String line : handler.run().split("\n")) {
-      int i = line.indexOf('\t');
-      if (i == -1) {
-        continue;
+    String output = handler.run();
+    return parseRemoteListInternal(output);
+  }
+
+  /**
+   * Parse list of remotes (internal method)
+   *
+   * @param output the output to parse
+   * @return list of remotes
+   */
+  public static List<GitRemote> parseRemoteListInternal(String output) {
+    ArrayList<GitRemote> remotes = new ArrayList<GitRemote>();
+    StringScanner s = new StringScanner(output);
+    String name = null;
+    String fetch = null;
+    String push = null;
+    while (s.hasMoreData()) {
+      String n = s.tabToken();
+      if (name != null && !n.equals(name) && fetch != null) {
+        if (push == null) {
+          push = fetch;
+        }
+        remotes.add(new GitRemote(name, fetch, push));
+        fetch = null;
+        push = null;
       }
-      String name = line.substring(0, i);
-      String url = line.substring(i + 1);
-      remotes.add(new GitRemote(name, url));
+      name = n;
+      String url = s.line();
+      if (url.endsWith(" (push)")) {
+        push = url.substring(0, url.length() - " (push)".length());
+      }
+      else if (url.endsWith(" (fetch)")) {
+        fetch = url.substring(0, url.length() - " (fetch)".length());
+      }
+      else {
+        fetch = url;
+        push = url;
+      }
+    }
+    if (name != null && fetch != null) {
+      if (push == null) {
+        push = fetch;
+      }
+      remotes.add(new GitRemote(name, fetch, push));
     }
     return remotes;
   }
@@ -155,17 +227,48 @@ public final class GitRemote {
     handler.setSilent(true);
     handler.ignoreErrorCode(1);
     handler.addParameters("show", "-n", name);
-    StringScanner in = new StringScanner(handler.run());
+    String output = handler.run();
     if (handler.getExitCode() != 0) {
       return null;
     }
-    if (!in.tryConsume("* ") || !name.equals(in.line()) || !in.hasMoreData()) {
+    return parseRemoteInternal(name, output);
+  }
+
+  /**
+   * Parse output of the remote (internal method)
+   *
+   * @param name   the name of the remote
+   * @param output the output of "git remote show -n {name}" command
+   * @return the parsed remote
+   */
+  public static GitRemote parseRemoteInternal(String name, String output) {
+    StringScanner in = new StringScanner(output);
+    if (!in.tryConsume("* ")) {
       throw new IllegalStateException("Unexpected format for 'git remote show'");
     }
-    if (!in.tryConsume(SHOW_URL_PREFIX)) {
-      throw new IllegalStateException("Unexpected format for 'git remote show'");
+    String nameLine = in.line();
+    if (!nameLine.endsWith(name)) {
+      throw new IllegalStateException("Name line of 'git remote show' ends with wrong name: " + nameLine);
     }
-    return new GitRemote(name, in.line());
+    String fetch = null;
+    String push = null;
+    if (in.tryConsume(SHOW_URL_PREFIX)) {
+      fetch = in.line();
+      push = fetch;
+    }
+    else if (in.tryConsume(SHOW_FETCH_URL_PREFIX)) {
+      fetch = in.line();
+      if (in.tryConsume(SHOW_PUSH_URL_PREFIX)) {
+        push = in.line();
+      }
+      else {
+        push = fetch;
+      }
+    }
+    else {
+      throw new IllegalStateException("Unexpected format for 'git remote show':\n" + output);
+    }
+    return new GitRemote(name, fetch, push);
   }
 
 
@@ -182,32 +285,62 @@ public final class GitRemote {
     handler.setNoSSH(true);
     handler.setSilent(true);
     handler.addParameters("show", "-n", myName);
-    String[] lines = handler.run().split("\n");
+    String output = handler.run();
+    return parseInfoInternal(output);
+  }
+
+
+  /**
+   * Parse remote information
+   *
+   * @param output the output of "git remote show -n {name}" command
+   * @return the parsed remote
+   */
+  public Info parseInfoInternal(String output) {
     TreeMap<String, String> mapping = new TreeMap<String, String>();
     TreeSet<String> branches = new TreeSet<String>();
-    int i = 0;
-    if (!lines[i].startsWith("*") || !lines[i].endsWith(myName)) {
-      throw new IllegalStateException("Unexpected format for 'git remote show' line " + i + ":" + lines[i]);
+    StringScanner s = new StringScanner(output);
+    if (s.tryConsume("* ") && !s.line().endsWith(myName)) {
+      throw new IllegalStateException("Unexpected format for 'git remote show'" + output);
     }
-    if (i >= lines.length) {
-      throw new IllegalStateException("Premature end from 'git remote show' at line " + i);
+    if (!s.hasMoreData()) {
+      throw new IllegalStateException("Premature end from 'git remote show'" + output);
     }
-    i++;
-    if (!lines[i].startsWith(SHOW_URL_PREFIX) || !lines[i].endsWith(myUrl)) {
-      throw new IllegalStateException("Unexpected format for 'git remote show' line " + i + ":" + lines[i]);
+    do {
+      if (s.tryConsume(SHOW_MAPPING_PREFIX)) {
+        // old format
+        String local = s.line();
+        String remote = s.line().trim();
+        mapping.put(local, remote);
+      }
+      else if (s.tryConsume(SHOW_BRANCHES_LINE)) {
+        s.line();
+        if (s.tryConsume("    ")) {
+          branches.addAll(Arrays.asList(s.line().split(" ")));
+        }
+      }
+      else if (s.tryConsume("  Remote branch")) {
+        s.line();
+        while (s.tryConsume("    ")) {
+          branches.add(s.line().trim());
+        }
+      }
+      else if (s.tryConsume("  Local branch configured for 'git pull':")) {
+        s.line();
+        while (s.tryConsume("    ")) {
+          Matcher m = PULL_PATTERN.matcher(s.line());
+          if (m.matches()) {
+            String local = m.group(1);
+            String remote = m.group(2);
+            mapping.put(local, remote);
+          }
+        }
+      }
+      else {
+        s.line();
+      }
     }
-    i++;
-    while (i < lines.length && lines[i].startsWith(SHOW_MAPPING_PREFIX)) {
-      String local = lines[i].substring(SHOW_MAPPING_PREFIX.length());
-      i++;
-      String remote = lines[i].trim();
-      i++;
-      mapping.put(local, remote);
-    }
-    if (i < lines.length && lines[i].equals(SHOW_BRANCHES_LINE)) {
-      i++;
-      branches.addAll(Arrays.asList(lines[i].substring(4).split(" ")));
-    }
+    while (s.hasMoreData());
     return new Info(Collections.unmodifiableSortedMap(mapping), Collections.unmodifiableSortedSet(branches));
   }
 

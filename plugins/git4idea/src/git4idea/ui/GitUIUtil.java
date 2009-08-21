@@ -82,9 +82,10 @@ public class GitUIUtil {
    * remote for the branch with bold.
    *
    * @param defaultRemote a default remote
+   * @param fetchUrl      if true, the fetch url is shown
    * @return a list cell renderer for virtual files (it renders presentable URL
    */
-  public static ListCellRenderer getGitRemoteListCellRenderer(final String defaultRemote) {
+  public static ListCellRenderer getGitRemoteListCellRenderer(final String defaultRemote, final boolean fetchUrl) {
     return new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(final JList list,
                                                     final Object value,
@@ -107,7 +108,7 @@ public class GitUIUtil {
           else {
             key = "util.remote.renderer.normal";
           }
-          text = GitBundle.message(key, remote.name(), remote.url());
+          text = GitBundle.message(key, remote.name(), fetchUrl ? remote.fetchUrl() : remote.pushUrl());
         }
         return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
       }
@@ -198,8 +199,9 @@ public class GitUIUtil {
    * @param project        the project
    * @param root           the git root
    * @param remoteCombobox the combobox to update
+   * @param fetchUrl       if true, the fetch url is shown instead of push url
    */
-  public static void setupRemotes(final Project project, final VirtualFile root, final JComboBox remoteCombobox) {
+  public static void setupRemotes(final Project project, final VirtualFile root, final JComboBox remoteCombobox, final boolean fetchUrl) {
     GitBranch gitBranch = null;
     try {
       gitBranch = GitBranch.current(project, root);
@@ -208,7 +210,7 @@ public class GitUIUtil {
       // ignore error
     }
     final String branch = gitBranch != null ? gitBranch.getName() : null;
-    setupRemotes(project, root, branch, remoteCombobox);
+    setupRemotes(project, root, branch, remoteCombobox, fetchUrl);
 
   }
 
@@ -220,18 +222,20 @@ public class GitUIUtil {
    * @param root           the git root
    * @param currentBranch  the current branch
    * @param remoteCombobox the combobox to update
+   * @param fetchUrl       if true, the fetch url is shown for remotes, push otherwise
    */
   public static void setupRemotes(final Project project,
                                   final VirtualFile root,
                                   final String currentBranch,
-                                  final JComboBox remoteCombobox) {
+                                  final JComboBox remoteCombobox,
+                                  final boolean fetchUrl) {
     try {
       List<GitRemote> remotes = GitRemote.list(project, root);
       String remote = null;
       if (currentBranch != null) {
         remote = GitConfigUtil.getValue(project, root, "branch." + currentBranch + ".remote");
       }
-      remoteCombobox.setRenderer(getGitRemoteListCellRenderer(remote));
+      remoteCombobox.setRenderer(getGitRemoteListCellRenderer(remote, fetchUrl));
       GitRemote toSelect = null;
       remoteCombobox.removeAllItems();
       for (GitRemote r : remotes) {

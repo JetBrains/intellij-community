@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.StringScanner;
 import git4idea.config.GitConfigUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -142,11 +143,19 @@ public class GitBranch extends GitReference {
     else if (remote) {
       handler.addParameters("-r");
     }
-    for (String line : handler.run().split("\n")) {
+    StringScanner s = new StringScanner(handler.run());
+    while (s.hasMoreData()) {
+      String line = s.line();
       if (line.length() == 0 || line.endsWith(NO_BRANCH_NAME)) {
         continue;
       }
-      branches.add(line.substring(2));
+      int sp = line.indexOf(' ', 2);
+      if (sp != -1) {
+        branches.add(line.substring(2, sp));
+      }
+      else {
+        branches.add(line.substring(2));
+      }
     }
   }
 

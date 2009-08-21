@@ -171,7 +171,7 @@ public class GitFetchDialog extends DialogWrapper {
    * Update remotes
    */
   private void updateRemotes() {
-    GitUIUtil.setupRemotes(myProject, getGitRoot(), myRemote);
+    GitUIUtil.setupRemotes(myProject, getGitRoot(), myRemote, true);
   }
 
   /**

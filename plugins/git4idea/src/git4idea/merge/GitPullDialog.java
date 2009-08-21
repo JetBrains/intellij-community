@@ -264,7 +264,7 @@ public class GitPullDialog extends DialogWrapper {
    * Update remotes for the git root
    */
   private void updateRemotes() {
-    GitUIUtil.setupRemotes(myProject, gitRoot(), currentBranch(), myRemote);
+    GitUIUtil.setupRemotes(myProject, gitRoot(), currentBranch(), myRemote, true);
   }
 
   /**
