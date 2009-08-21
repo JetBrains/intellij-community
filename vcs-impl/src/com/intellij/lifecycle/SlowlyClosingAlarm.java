@@ -30,6 +30,7 @@ public class SlowlyClosingAlarm implements AtomicSectionsAware, Disposable {
   private static final ThreadFactory THREAD_FACTORY_OWN = threadFactory("SlowlyClosingAlarm pool");
   private final String myName;
   private final boolean myExecutorIsShared;
+  private boolean myDisposed;
 
   private static ThreadFactory threadFactory(@NonNls final String threadsName) {
     return new ThreadFactory() {
@@ -46,6 +47,7 @@ public class SlowlyClosingAlarm implements AtomicSectionsAware, Disposable {
         future.cancel(true);
       }
       myFutureList.clear();
+      myDisposed = true;
     }
   }
 
@@ -74,7 +76,7 @@ public class SlowlyClosingAlarm implements AtomicSectionsAware, Disposable {
 
   public void addRequest(final Runnable runnable) {
     synchronized (myLock) {
-      if (myDisposeStarted) return;
+      if (myDisposed || myDisposeStarted) return;
       final MyWrapper wrapper = new MyWrapper(runnable);
       final Future<?> future = myExecutorService.submit(wrapper);
       wrapper.setFuture(future);
