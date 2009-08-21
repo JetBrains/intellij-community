@@ -16,7 +16,6 @@
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,25 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  *
  */
-public class PsiFormatUtil {
-  public static final int SHOW_NAME = 0x0001; // variable, method, class
-  public static final int SHOW_TYPE = 0x0002; // variable, method
-  public static final int TYPE_AFTER = 0x0004; // variable, method
-  public static final int SHOW_MODIFIERS = 0x0008; // variable, method, class
-  public static final int MODIFIERS_AFTER = 0x0010; // variable, method, class
-  public static final int SHOW_REDUNDANT_MODIFIERS = 0x0020; // variable, method, class, modifier list
-  public static final int SHOW_PACKAGE_LOCAL = 0x0040; // variable, method, class, modifier list
-  public static final int SHOW_INITIALIZER = 0x0080; // variable
-  public static final int SHOW_PARAMETERS = 0x0100; // method
-  public static final int SHOW_THROWS = 0x0200; // method
-  public static final int SHOW_EXTENDS_IMPLEMENTS = 0x0400; // class
-  public static final int SHOW_FQ_NAME = 0x0800; // class, field, method
-  public static final int SHOW_CONTAINING_CLASS = 0x1000; // field, method
-  public static final int SHOW_FQ_CLASS_NAMES = 0x2000; // variable, method, class
-  public static final int JAVADOC_MODIFIERS_ONLY = 0x4000; // field, method, class
-  public static final int SHOW_ANONYMOUS_CLASS_VERBOSE = 0x8000; // class
-  public static final int SHOW_RAW_TYPE = 0x10000; //type
-  public static final int MAX_PARAMS_TO_SHOW = 7;
+public class PsiFormatUtil extends PsiFormatUtilBase {
 
   public static String formatVariable(PsiVariable variable, int options, PsiSubstitutor substitutor){
     StringBuilder buffer = new StringBuilder();
@@ -207,11 +188,6 @@ public class PsiFormatUtil {
     }
   }
 
-  private static void appendSpaceIfNeeded(StringBuilder buffer) {
-    if (buffer.length() != 0 && !StringUtil.endsWithChar(buffer, ' ')) {
-      buffer.append(' ');
-    }
-  }
   @NotNull public static String formatClass(@NotNull PsiClass aClass, int options){
     StringBuilder buffer = new StringBuilder();
     if ((options & SHOW_MODIFIERS) != 0 && (options & MODIFIERS_AFTER) == 0){
