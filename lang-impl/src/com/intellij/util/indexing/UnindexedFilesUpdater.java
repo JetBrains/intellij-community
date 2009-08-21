@@ -5,7 +5,6 @@ import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.startup.FileContentQueue;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -79,12 +78,12 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
     final RegistryValue value = Registry.get(DumbServiceImpl.FILE_INDEX_BACKGROUND);
     if (!value.asBoolean()) {
       if (Messages.showDialog(myProject, "<html>" +
-                                         "While indices are updated in background, most of " + ApplicationNamesInfo.getInstance().getFullProductName() + "'s<br>" +
-                                         "smart functionality <b>won't be available</b>.<br>" +
-                                         "Only the most basic editing and version control operations will be enabled.<br>" +
-                                         "There will be no Goto Class, no error highlighting, <b>no refactorings</b>, etc!<br>" +
-                                         "Do you still want to send indexing to background?</html>", "Are you really sure?",
-                              new String[]{"Yes", "No"}, 1, UIUtil.getWarningIcon()) != 0) {
+                                         "Sending indices update to background allows you to immediately use the most\n" +
+                                         "basic editing capabilities of IntelliJ IDEA, plus version control operations.<p>" +
+                                         "However, many advanced functions such as 'Go to Class', advanced error highlighting,\n" +
+                                         "refactorings and some others <b>will not be available</b> until indexing is complete.<p>" +
+                                         "Do you still want to send indexing to background?</html>", "Background Indexing",
+                              new String[]{"Yes", "No"}, 1, UIUtil.getInformationIcon()) != 0) {
         return false;
       }
     }
