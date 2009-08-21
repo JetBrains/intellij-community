@@ -16,11 +16,10 @@
 
 package com.intellij.openapi.compiler.make;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.Module;
 
 import java.util.Collection;
-import java.util.Collections;
 
 /**
  * @author nik
@@ -28,10 +27,6 @@ import java.util.Collections;
 public abstract class BuildParticipantProvider<P extends BuildParticipant> {
   public static final ExtensionPointName<BuildParticipantProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.compiler.buildParticipantProvider");
 
-
-  public Collection<P> getDependentParticipants(P participant) {
-    return Collections.emptyList();
-  }
 
   public abstract Collection<P> getParticipants(Module module);
 
