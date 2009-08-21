@@ -77,6 +77,10 @@ public class CreateFieldFromUsageFix implements IntentionAction {
     TemplateBuilderImpl builder = new TemplateBuilderImpl(fieldDecl);
     builder.replaceElement(typeElement, expr);
     fieldDecl = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(fieldDecl);
+    if (fieldDecl == null) {
+      return;
+    }
+
     Template template = builder.buildTemplate();
 
     Editor newEditor = QuickfixUtil.positionCursor(project, myTargetClass.getContainingFile(), fieldDecl);

@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicElementSettings;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -79,7 +80,7 @@ public class QuickfixUtil {
     return !operationStatus.hasReadonlyFiles();
   }
 
-  public static Editor positionCursor(Project project, PsiFile targetFile, PsiElement element) {
+  public static Editor positionCursor(@NotNull Project project, @NotNull PsiFile targetFile, @NotNull PsiElement element) {
     TextRange range = element.getTextRange();
     int textOffset = range.getStartOffset();
 
