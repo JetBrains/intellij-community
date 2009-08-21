@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -66,7 +67,12 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     }
 
-    invokeCompletion(project, editor, psiFile, 1);
+    try {
+      invokeCompletion(project, editor, psiFile, 1);
+    }
+    catch (IndexNotReadyException e) {
+      DumbService.getInstance(project).showDumbModeNotification("Code completion is not available here while indices are built");
+    }
   }
 
   public void invokeCompletion(final Project project, final Editor editor, final PsiFile psiFile, int time) {
