@@ -32,7 +32,7 @@ public abstract class XDebuggerActionBase extends AnAction {
     }
   }
 
-  private boolean isEnabled(final AnActionEvent e) {
+  protected boolean isEnabled(final AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project != null) {
       DebuggerSupport[] debuggerSupports = XDebuggerSupport.getDebuggerSupports();
@@ -53,18 +53,23 @@ public abstract class XDebuggerActionBase extends AnAction {
   }
 
   public void actionPerformed(final AnActionEvent e) {
+    performWithHandler(e);
+  }
+
+  protected boolean performWithHandler(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
-      return;
+      return true;
     }
 
     DebuggerSupport[] debuggerSupports = XDebuggerSupport.getDebuggerSupports();
     for (DebuggerSupport support : debuggerSupports) {
       if (isEnabled(project, e, support)) {
         perform(project, e, support);
-        break;
+        return true;
       }
     }
+    return false;
   }
 
   private void perform(final Project project, final AnActionEvent e, final DebuggerSupport support) {
