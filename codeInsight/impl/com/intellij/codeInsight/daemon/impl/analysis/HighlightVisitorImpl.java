@@ -146,11 +146,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   public void visitElement(final PsiElement element) {
     if (element instanceof XmlAttributeValue) {
-      for (PsiReference reference : element.getReferences()) {
-        if(reference instanceof PsiJavaReference && myRefCountHolder != null){
-          final PsiJavaReference psiJavaReference = (PsiJavaReference)reference;
-          myRefCountHolder.registerReference(psiJavaReference, psiJavaReference.advancedResolve(false));
-        }        
+      try {
+        for (PsiReference reference : element.getReferences()) {
+          if(reference instanceof PsiJavaReference && myRefCountHolder != null){
+            final PsiJavaReference psiJavaReference = (PsiJavaReference)reference;
+            myRefCountHolder.registerReference(psiJavaReference, psiJavaReference.advancedResolve(false));
+          }
+        }
+      }
+      catch (IndexNotReadyException ignored) {
       }
     }
   }
