@@ -22,9 +22,13 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.highlighting.DomCollectionProblemDescriptor;
@@ -42,6 +46,7 @@ import java.awt.*;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author peter
@@ -195,7 +200,15 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   }
 
   protected void doRemove(final List<T> toDelete) {
-    new WriteCommandAction(getProject()) {
+    Set<PsiFile> files = new HashSet<PsiFile>();
+    for (final T t : toDelete) {
+      final XmlElement element = t.getXmlElement();
+      if (element != null) {
+        ContainerUtil.addIfNotNull(element.getContainingFile(), files);
+      }
+    }
+
+    new WriteCommandAction(getProject(), files.toArray(new PsiFile[files.size()])) {
       protected void run(Result result) throws Throwable {
         for (final T t : toDelete) {
           if (t.isValid()) {
