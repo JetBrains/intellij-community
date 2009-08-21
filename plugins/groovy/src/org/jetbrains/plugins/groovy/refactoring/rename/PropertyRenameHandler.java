@@ -19,6 +19,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
+import java.util.Arrays;
+
 /**
  * @author ven
  */
@@ -88,6 +90,6 @@ public class PropertyRenameHandler implements RenameHandler {
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, @Nullable DataContext dataContext) {
-    throw new RuntimeException("Should not call");
+    throw new RuntimeException("Should not call: " + Arrays.toString(elements));
   }
 }
