@@ -2,6 +2,7 @@ package com.intellij.html.preview;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -192,6 +193,10 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
       final PsiElement element = myManager.getPsiElementAt(myPoint);
       if (element != null && element.isValid()) {
         if (PsiDocumentManager.getInstance(element.getProject()).isUncommited(myManager.getEditor().getDocument())) {
+          return;
+        }
+
+        if (DumbService.getInstance(element.getProject()).isDumb()) {
           return;
         }
 
