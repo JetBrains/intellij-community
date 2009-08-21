@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -67,7 +68,13 @@ public class FindInProjectUtil {
   private FindInProjectUtil() {}
 
   public static void setDirectoryName(FindModel model, DataContext dataContext) {
-    PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement psiElement;
+    try {
+      psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    }
+    catch (IndexNotReadyException e) {
+      psiElement = null;
+    }
 
     String directoryName = null;
 
