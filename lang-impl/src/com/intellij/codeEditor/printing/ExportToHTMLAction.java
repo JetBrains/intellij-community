@@ -2,7 +2,6 @@ package com.intellij.codeEditor.printing;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -11,7 +10,7 @@ import com.intellij.psi.PsiFile;
 import javax.swing.*;
 import java.io.FileNotFoundException;
 
-public class ExportToHTMLAction extends AnAction implements DumbAware {
+public class ExportToHTMLAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
