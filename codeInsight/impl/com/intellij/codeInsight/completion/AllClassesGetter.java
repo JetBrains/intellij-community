@@ -147,6 +147,7 @@ public class AllClassesGetter {
       }
     }).forEach(new Processor<PsiClass>() {
       public boolean process(PsiClass psiClass) {
+        assert psiClass != null;
         if (isSuitable(context, packagePrefix, qnames, lookingForAnnotations, psiClass, filterByScope)) {
           set.addElement(createLookupItem(psiClass));
         }
@@ -173,9 +174,9 @@ public class AllClassesGetter {
     return j > 0 ? prefix.substring(0, j) : "";
   }
 
-  private boolean isSuitable(final PsiElement context, final String packagePrefix, final Set<String> qnames,
+  private boolean isSuitable(@NotNull final PsiElement context, final String packagePrefix, final Set<String> qnames,
                              final boolean lookingForAnnotations,
-                             final PsiClass psiClass,
+                             @NotNull final PsiClass psiClass,
                              final boolean filterByScope) {
     //noinspection AutoUnboxing
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
