@@ -112,7 +112,7 @@ public class CompAPIDriver {
   public void finish() {
     assert !compiling : "still compiling to "+myOutputDir;
     assert !processing;
-    assert myCompilationResults.isEmpty() : myCompilationResults;
+    //assert myCompilationResults.isEmpty() : myCompilationResults;
     myCompilationResults.clear();
   }
 
