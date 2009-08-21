@@ -222,23 +222,25 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
 
     public void insert(SegmentArrayWithData segmentArray, final int startIndex) {
-      super.insert(segmentArray, startIndex);
+      synchronized (LayeredLexerEditorHighlighter.this) {
+        super.insert(segmentArray, startIndex);
 
-      final int newCount = segmentArray.getSegmentCount();
-      final MappedRange[] newRanges = new MappedRange[newCount];
+        final int newCount = segmentArray.getSegmentCount();
+        final MappedRange[] newRanges = new MappedRange[newCount];
 
-      myRanges = insert(myRanges, newRanges, startIndex, newCount);
+        myRanges = insert(myRanges, newRanges, startIndex, newCount);
 
-      int endIndex = startIndex + segmentArray.getSegmentCount();
+        int endIndex = startIndex + segmentArray.getSegmentCount();
 
-      TokenProcessor processor = createTokenProcessor(startIndex);
-      for (int i = startIndex; i < endIndex; i++) {
-        final short data = getSegmentData(i);
-        final IElementType token = unpackToken(data);
-        processor.addToken(i, mySegments.getSegmentStart(i), mySegments.getSegmentEnd(i), data, token);
+        TokenProcessor processor = createTokenProcessor(startIndex);
+        for (int i = startIndex; i < endIndex; i++) {
+          final short data = getSegmentData(i);
+          final IElementType token = unpackToken(data);
+          processor.addToken(i, mySegments.getSegmentStart(i), mySegments.getSegmentEnd(i), data, token);
+        }
+
+        processor.finish();
       }
-
-      processor.finish();
     }
 
     private void updateMappingForToken(final int i) {
