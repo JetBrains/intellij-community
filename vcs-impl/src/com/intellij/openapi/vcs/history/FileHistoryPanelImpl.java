@@ -533,7 +533,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       revision = getFirstSelectedRevision();
       final String message = revision.getCommitMessage();
       myOriginalComment = message;
-      @NonNls final String text = "<html><body>" + IssueLinkHtmlRenderer.formatTextWithLinks(myProject, message) + "</body></html>";
+      @NonNls final String text = IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, message);
       myComments.setText(text);
       myComments.setCaretPosition(0);
     }

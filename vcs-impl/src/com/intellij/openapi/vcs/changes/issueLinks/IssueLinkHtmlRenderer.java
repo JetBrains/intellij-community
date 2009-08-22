@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.xml.util.XmlTagUtilBase;
+import com.intellij.util.ui.UIUtil;
 
 import java.util.List;
 
@@ -12,6 +13,11 @@ import java.util.List;
  */
 public class IssueLinkHtmlRenderer {
   private IssueLinkHtmlRenderer() {
+  }
+
+  public static String formatTextIntoHtml(final Project project, final String c) {
+    return "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" +
+           formatTextWithLinks(project, c) + "</body></html>";
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

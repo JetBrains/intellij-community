@@ -170,8 +170,7 @@ public class CommittedChangesBrowser extends JPanel {
   }
 
   private String formatText(final CommittedChangeList list) {
-    return "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + 
-           "</head><body>" + IssueLinkHtmlRenderer.formatTextWithLinks(myProject, list.getComment()) + "</body></html>";
+    return IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, list.getComment());
   }
 
   public CommittedChangeList getSelectedChangeList() {
