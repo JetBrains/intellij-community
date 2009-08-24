@@ -454,7 +454,7 @@ public class EclipseClasspathReader {
     final List entriesElements = root.getChildren(IdeaXml.CONTENT_ENTRY_TAG);
     if (!entriesElements.isEmpty()) {
       for (Object o : entriesElements) {
-        readContentEntry(root, model.addContentEntry(((Element)o).getAttributeValue(IdeaXml.URL_ATTR)));
+        readContentEntry((Element)o, model.addContentEntry(((Element)o).getAttributeValue(IdeaXml.URL_ATTR)));
       }
     } else {
       final ContentEntry[] entries = model.getContentEntries();
