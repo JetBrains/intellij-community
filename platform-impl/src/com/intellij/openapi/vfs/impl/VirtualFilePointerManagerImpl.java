@@ -81,16 +81,16 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
   }
 
-  private List<VirtualFilePointer> getPointersUnder(String url) {
+  private List<VirtualFilePointer> getPointersUnder(String path) {
     final List<VirtualFilePointer> pointers = new ArrayList<VirtualFilePointer>();
-    final boolean urlFromJarFS = url.indexOf(JarFileSystem.JAR_SEPARATOR) > 0;
+    final boolean urlFromJarFS = path.indexOf(JarFileSystem.JAR_SEPARATOR) > 0;
     for (TreeMap<String, VirtualFilePointerImpl> urlToPointer : myUrlToPointerMaps.values()) {
       for (String pointerUrl : urlToPointer.keySet()) {
         final boolean pointerFromJarFS = pointerUrl.indexOf(JarFileSystem.JAR_SEPARATOR) > 0;
         if (urlFromJarFS != pointerFromJarFS) {
           continue; // optimization: consider pointers from the same FS as the url specified
         }
-        if (startsWith(url, pointerUrl)) {
+        if (startsWith(path, pointerUrl)) {
           VirtualFilePointer pointer = urlToPointer.get(pointerUrl);
           if (pointer != null) {
             pointers.add(pointer);
@@ -261,7 +261,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     assertPointersDisposed();
   }
 
-  public void assertPointersDisposed() {
+  public synchronized void assertPointersDisposed() {
     for (Map.Entry<VirtualFilePointerListener, TreeMap<String, VirtualFilePointerImpl>> entry : myUrlToPointerMaps.entrySet()) {
       VirtualFilePointerListener listener = entry.getKey();
       TreeMap<String, VirtualFilePointerImpl> map = entry.getValue();
