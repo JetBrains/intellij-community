@@ -5,12 +5,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomParameter;
 
+import java.util.List;
+
 public class MavenPluginModelDocumentationProvider implements DocumentationProvider {
   public String getQuickNavigateInfo(PsiElement element) {
     return getDocForMavenPluginParameter(element);
   }
 
-  public String getUrlFor(PsiElement element, PsiElement originalElement) {
+  public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     return null;
   }
 

@@ -26,6 +26,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
+import java.util.List;
+
 /**
  * @author ven
  */
@@ -183,7 +185,7 @@ public class GroovyDocumentationProvider implements DocumentationProvider {
   }
 
   @Nullable
-  public String getUrlFor(PsiElement element, PsiElement originalElement) {
+  public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     return null;
   }
 

@@ -50,6 +50,8 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.ref.SoftReference;
 import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -58,7 +60,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
     private SoftReference<Document> myDocument;
 
     @Nullable
-    public String getUrlFor(PsiElement psiElement, PsiElement psiElement1) {
+    public List<String> getUrlFor(PsiElement psiElement, PsiElement psiElement1) {
         if (psiElement instanceof XsltElement) return null;
 
         final String category;
@@ -83,7 +85,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
             xPath.addNamespace("x", document.getRootElement().getNamespaceURI());
             final Element e = (Element)xPath.selectSingleNode(document);
             if (e != null) {
-                return e.getParentElement().getAttributeValue("base") + e.getAttributeValue("href");
+                return Collections.singletonList(e.getParentElement().getAttributeValue("base") + e.getAttributeValue("href"));
             }
         } catch (Exception e) {
             Logger.getInstance(getClass().getName()).error(e);
