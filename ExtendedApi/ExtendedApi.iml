@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="dom-openapi" />
     <orderEntry type="module" module-name="lang-api" exported="" />
     <orderEntry type="module" module-name="lang-impl" exported="" />
+    <orderEntry type="module" module-name="compiler-impl" />
   </component>
   <component name="copyright">
     <Base>
