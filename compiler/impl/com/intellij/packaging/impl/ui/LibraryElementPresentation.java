@@ -44,11 +44,11 @@ public class LibraryElementPresentation extends PackagingElementPresentation {
     ProjectStructureConfigurable.getInstance(myContext.getProject()).selectProjectOrGlobalLibrary(myLibrary, true);
   }
 
-  public void render(@NotNull PresentationData presentationData) {
+  public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     if (myLibrary != null) {
       presentationData.setIcons(Icons.LIBRARY_ICON);
-      presentationData.addText(myName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      presentationData.addText(PackagingEditorUtil.getLibraryTableComment(myLibrary), SimpleTextAttributes.GRAY_ATTRIBUTES);
+      presentationData.addText(myName, mainAttributes);
+      presentationData.addText(PackagingEditorUtil.getLibraryTableComment(myLibrary), commentAttributes);
     }
     else {
       presentationData.addText(myName, SimpleTextAttributes.ERROR_ATTRIBUTES);

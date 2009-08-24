@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 import com.intellij.packaging.ui.SourceItemPresentation;
 import com.intellij.packaging.ui.TreeNodePresentation;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,8 +25,8 @@ public class DelegatedSourceItemPresentation extends SourceItemPresentation {
     return myPresentation.getSearchName();
   }
 
-  public void render(@NotNull PresentationData presentationData) {
-    myPresentation.render(presentationData);
+  public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
+    myPresentation.render(presentationData, mainAttributes, commentAttributes);
   }
 
   @Nullable

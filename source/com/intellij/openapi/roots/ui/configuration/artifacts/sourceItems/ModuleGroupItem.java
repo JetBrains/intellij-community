@@ -63,10 +63,11 @@ public class ModuleGroupItem extends PackagingSourceItem {
     }
 
     @Override
-    public void render(@NotNull PresentationData presentationData) {
+    public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes,
+                       SimpleTextAttributes commentAttributes) {
       presentationData.setClosedIcon(Icons.CLOSED_MODULE_GROUP_ICON);
       presentationData.setOpenIcon(Icons.OPENED_MODULE_GROUP_ICON);
-      presentationData.addText(myGroupName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      presentationData.addText(myGroupName, mainAttributes);
     }
 
     @Override

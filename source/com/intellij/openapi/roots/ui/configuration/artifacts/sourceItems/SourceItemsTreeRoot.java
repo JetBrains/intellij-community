@@ -2,16 +2,17 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
-import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.packaging.ui.TreeNodePresentation;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
 public class SourceItemsTreeRoot extends SourceItemNodeBase {
-  public SourceItemsTreeRoot(PackagingEditorContext context, ArtifactEditorImpl artifactsEditor) {
+  public SourceItemsTreeRoot(ArtifactEditorContext context, ArtifactEditorImpl artifactsEditor) {
     super(context, null, new RootNodePresentation(), artifactsEditor);
   }
 
@@ -36,7 +37,8 @@ public class SourceItemsTreeRoot extends SourceItemNodeBase {
     }
 
     @Override
-    public void render(@NotNull PresentationData presentationData) {
+    public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes,
+                       SimpleTextAttributes commentAttributes) {
     }
 
     @Override

@@ -4,7 +4,7 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.ComplexElementSubst
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTree;
 import com.intellij.packaging.elements.ComplexPackagingElement;
 import com.intellij.packaging.elements.CompositePackagingElement;
-import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.ui.treeStructure.SimpleTree;
 
 import java.awt.event.InputEvent;
@@ -16,7 +16,7 @@ import java.util.Collection;
 public class ComplexPackagingElementNode extends PackagingElementNode<ComplexPackagingElement<?>> {
   private final ComplexElementSubstitutionParameters mySubstitutionParameters;
 
-  public ComplexPackagingElementNode(ComplexPackagingElement<?> element, PackagingEditorContext context, CompositePackagingElementNode parentNode,
+  public ComplexPackagingElementNode(ComplexPackagingElement<?> element, ArtifactEditorContext context, CompositePackagingElementNode parentNode,
                                      CompositePackagingElement<?> parentElement,
                                      ComplexElementSubstitutionParameters substitutionParameters, Collection<PackagingNodeSource> nodeSources) {
     super(element, context, parentNode, parentElement, nodeSources);

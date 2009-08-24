@@ -3,6 +3,7 @@ package com.intellij.packaging.elements;
 import com.intellij.compiler.ant.Generator;
 import com.intellij.packaging.artifacts.ArtifactType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,6 +44,20 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
     }
     myUnmodifiableChildren = null;
     return added;
+  }
+
+  @Nullable
+  public PackagingElement<?> moveChild(int index, int direction) {
+    int target = index + direction;
+    if (0 <= index && index < myChildren.size() && 0 <= target && target < myChildren.size()) {
+      final PackagingElement<?> element1 = myChildren.get(index);
+      final PackagingElement<?> element2 = myChildren.get(target);
+      myChildren.set(index, element2);
+      myChildren.set(target, element1);
+      myUnmodifiableChildren = null;
+      return element1;
+    }
+    return null;
   }
 
   public void removeChild(@NotNull PackagingElement<?> child) {

@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingNodeSource;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingTreeNodeFactory;
+import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.ArtifactRootNode;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -51,6 +52,8 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   private JPanel myPropertiesPanelWrapper;
   private JPanel myPropertiesPanel;
   private SimpleTreeBuilder myBuilder;
+  private boolean mySortElements = true;
+  private SimpleTreeStructure myTreeStructure;
 
   public LayoutTreeComponent(ArtifactEditorImpl artifactsEditor, ComplexElementSubstitutionParameters substitutionParameters,
                                ArtifactEditorContext context, Artifact originalArtifact) {
@@ -59,7 +62,8 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     myContext = context;
     myOriginalArtifact = originalArtifact;
     myTree = new LayoutTree(myArtifactsEditor);
-    myBuilder = new SimpleTreeBuilder(myTree, myTree.getBuilderModel(), new LayoutTreeStructure(), new WeightBasedComparator(true));
+    myTreeStructure = new LayoutTreeStructure();
+    myBuilder = new SimpleTreeBuilder(myTree, myTree.getBuilderModel(), myTreeStructure, getComparator());
     Disposer.register(this, myTree);
     Disposer.register(this, myBuilder);
 
@@ -73,6 +77,16 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
     myTreePanel.add(myPropertiesPanelWrapper, BorderLayout.SOUTH);
     DnDManager.getInstance().registerTarget(this, myTree);
+  }
+
+  @Nullable
+  private WeightBasedComparator getComparator() {
+    return mySortElements ? new WeightBasedComparator(true) : null;
+  }
+
+  public void setSortElements(boolean sortElements) {
+    mySortElements = sortElements;
+    myBuilder.setNodeDescriptorComparator(getComparator());
   }
 
   @Nullable
@@ -173,6 +187,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   public void updateAndSelect(PackagingElementNode<?> node, final List<? extends PackagingElement<?>> toSelect) {
     myArtifactsEditor.queueValidation();
     final DefaultMutableTreeNode treeNode = TreeUtil.findNodeWithObject(myTree.getRootNode(), node);
+    myTreeStructure.clearCaches();
     myBuilder.addSubtreeToUpdate(treeNode, new Runnable() {
       public void run() {
         List<PackagingElementNode<?>> nodes = myTree.findNodes(toSelect);
@@ -212,7 +227,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     }
   }
 
-  public boolean checkCanRemove(final List<PackagingElementNode<?>> nodes) {
+  public boolean checkCanRemove(final List<? extends PackagingElementNode<?>> nodes) {
     Set<Artifact> parentArtifacts = new HashSet<Artifact>();
     for (PackagingElementNode<?> node : nodes) {
       final Collection<PackagingNodeSource> sources = node.getNodeSources();
@@ -341,6 +356,10 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     return myContext.getRootElement(myOriginalArtifact);
   }
 
+  public void updateTreeNodesPresentation() {
+    myBuilder.updateFromRoot(false);
+  }
+
   public void initTree() {
     myBuilder.initRootNode();
     mySelectedElementInfo.showPropertiesPanel();
@@ -374,6 +393,10 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     if (panel != null) {
       panel.reset();
     }
+  }
+
+  public boolean isSortElements() {
+    return mySortElements;
   }
 
   private class SelectedElementInfo<E extends PackagingElement<?>> {
@@ -412,9 +435,14 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   }
 
   private class LayoutTreeStructure extends SimpleTreeStructure {
+    private ArtifactRootNode myRootNode;
+
     @Override
     public Object getRootElement() {
-      return PackagingTreeNodeFactory.createRootNode(myArtifactsEditor, myContext, mySubstitutionParameters, getArtifact().getArtifactType());
+      if (myRootNode == null) {
+        myRootNode = PackagingTreeNodeFactory.createRootNode(myArtifactsEditor, myContext, mySubstitutionParameters, getArtifact().getArtifactType());
+      }
+      return myRootNode;
     }
   }
 }

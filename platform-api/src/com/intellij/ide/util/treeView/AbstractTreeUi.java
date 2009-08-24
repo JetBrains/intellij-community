@@ -119,7 +119,7 @@ class AbstractTreeUi {
                             JTree tree,
                             DefaultTreeModel treeModel,
                             AbstractTreeStructure treeStructure,
-                            Comparator<NodeDescriptor> comparator) {
+                            @Nullable Comparator<NodeDescriptor> comparator) {
 
     init(builder, tree, treeModel, treeStructure, comparator, true);
   }
@@ -128,7 +128,7 @@ class AbstractTreeUi {
                       JTree tree,
                       DefaultTreeModel treeModel,
                       AbstractTreeStructure treeStructure,
-                      Comparator<NodeDescriptor> comparator,
+                      @Nullable Comparator<NodeDescriptor> comparator,
                       boolean updateIfInactive) {
     myBuilder = builder;
     myTree = tree;

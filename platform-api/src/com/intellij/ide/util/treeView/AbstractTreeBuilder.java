@@ -44,13 +44,13 @@ public class AbstractTreeBuilder implements Disposable {
   public AbstractTreeBuilder(JTree tree,
                              DefaultTreeModel treeModel,
                              AbstractTreeStructure treeStructure,
-                             Comparator<NodeDescriptor> comparator) {
+                             @Nullable Comparator<NodeDescriptor> comparator) {
     init(tree, treeModel, treeStructure, comparator, true);
   }
   public AbstractTreeBuilder(JTree tree,
                              DefaultTreeModel treeModel,
                              AbstractTreeStructure treeStructure,
-                             Comparator<NodeDescriptor> comparator,
+                             @Nullable Comparator<NodeDescriptor> comparator,
                              boolean updateIfInactive) {
     init(tree, treeModel, treeStructure, comparator, updateIfInactive);
   }
@@ -59,12 +59,12 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
 
-  protected void init(final JTree tree, final DefaultTreeModel treeModel, final AbstractTreeStructure treeStructure, final Comparator<NodeDescriptor> comparator) {
+  protected void init(final JTree tree, final DefaultTreeModel treeModel, final AbstractTreeStructure treeStructure, final @Nullable Comparator<NodeDescriptor> comparator) {
 
     myUi = createUi();
     getUi().init(this, tree, treeModel, treeStructure, comparator);
   }
-  protected void init(final JTree tree, final DefaultTreeModel treeModel, final AbstractTreeStructure treeStructure, final Comparator<NodeDescriptor> comparator,
+  protected void init(final JTree tree, final DefaultTreeModel treeModel, final AbstractTreeStructure treeStructure, final @Nullable Comparator<NodeDescriptor> comparator,
                       final boolean updateIfInactive) {
 
     tree.putClientProperty(TREE_BUILDER, new WeakReference(this));

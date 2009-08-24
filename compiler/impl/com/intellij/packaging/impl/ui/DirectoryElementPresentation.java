@@ -22,10 +22,10 @@ public class DirectoryElementPresentation extends PackagingElementPresentation {
     return myElement.getDirectoryName();
   }
 
-  public void render(@NotNull PresentationData presentationData) {
+  public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     presentationData.setOpenIcon(Icons.DIRECTORY_OPEN_ICON);
     presentationData.setClosedIcon(Icons.DIRECTORY_CLOSED_ICON);
-    presentationData.addText(myElement.getDirectoryName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    presentationData.addText(myElement.getDirectoryName(), mainAttributes);
   }
 
   @Override

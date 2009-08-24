@@ -2,16 +2,15 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.nodes;
 
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ComplexElementSubstitutionParameters;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.ArtifactRootElement;
 import com.intellij.packaging.elements.ComplexPackagingElement;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.ui.PackagingEditorContext;
-import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -23,22 +22,8 @@ public class PackagingTreeNodeFactory {
   private PackagingTreeNodeFactory() {
   }
 
-  public static List<? extends PackagingElementNode<?>> createNodes(@NotNull List<? extends PackagingElement<?>> elements,
-                                                                    final @NotNull CompositePackagingElementNode parentNode,
-                                                                    final @NotNull CompositePackagingElement parentElement,
-                                                                    @NotNull PackagingEditorContext context,
-                                                                    @NotNull ComplexElementSubstitutionParameters substitutionParameters,
-                                                                    @NotNull Collection<PackagingNodeSource> nodeSources,
-                                                                    final ArtifactType artifactType) {
-    List<PackagingElementNode<?>> nodes = new ArrayList<PackagingElementNode<?>>();
-
-    addNodes(elements, parentNode, parentElement, context, substitutionParameters, nodeSources, nodes, artifactType);
-
-    return nodes;
-  }
-
-  private static void addNodes(@NotNull List<? extends PackagingElement<?>> elements, @NotNull CompositePackagingElementNode parentNode,
-                               @NotNull CompositePackagingElement parentElement, @NotNull PackagingEditorContext context,
+  public static void addNodes(@NotNull List<? extends PackagingElement<?>> elements, @NotNull CompositePackagingElementNode parentNode,
+                               @NotNull CompositePackagingElement parentElement, @NotNull ArtifactEditorContext context,
                                @NotNull ComplexElementSubstitutionParameters substitutionParameters, @NotNull Collection<PackagingNodeSource> nodeSources,
                                @NotNull List<PackagingElementNode<?>> nodes,
                                ArtifactType artifactType) {
@@ -86,7 +71,7 @@ public class PackagingTreeNodeFactory {
   }
 
   @NotNull
-  public static ArtifactRootNode createRootNode(ArtifactEditorImpl artifactsEditor, PackagingEditorContext context,
+  public static ArtifactRootNode createRootNode(ArtifactEditorImpl artifactsEditor, ArtifactEditorContext context,
                                                 ComplexElementSubstitutionParameters substitutionParameters, final ArtifactType artifactType) {
     return new ArtifactRootNode(artifactsEditor, context, substitutionParameters, artifactType);
   }

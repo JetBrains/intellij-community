@@ -89,19 +89,20 @@ public class LibrarySourceItem extends PackagingSourceItem {
     }
 
     @Override
-    public void render(@NotNull PresentationData presentationData) {
+    public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes,
+                       SimpleTextAttributes commentAttributes) {
       final String name = myLibrary.getName();
       if (name != null) {
         presentationData.setIcons(Icons.LIBRARY_ICON);
-        presentationData.addText(name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        presentationData.addText(PackagingEditorUtil.getLibraryTableComment(myLibrary), SimpleTextAttributes.GRAY_ATTRIBUTES);
+        presentationData.addText(name, mainAttributes);
+        presentationData.addText(PackagingEditorUtil.getLibraryTableComment(myLibrary), commentAttributes);
       }
       else {
         final VirtualFile[] files = myLibrary.getFiles(OrderRootType.CLASSES);
         if (files.length > 0) {
           final VirtualFile file = files[0];
           presentationData.setIcons(file.getIcon());
-          presentationData.addText(file.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          presentationData.addText(file.getName(), mainAttributes);
         }
         else {
           presentationData.addText("Empty Library", SimpleTextAttributes.ERROR_ATTRIBUTES);

@@ -16,19 +16,19 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
-import com.intellij.packaging.ui.*;
+import com.intellij.packaging.ui.ManifestFileConfiguration;
+import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,9 +62,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private final LayoutTreeComponent myLayoutTreeComponent;
   private TabbedPaneWrapper myTabbedPane;
   private ArtifactPropertiesEditors myPropertiesEditors;
-  private ArtifactErrorPanel myErrorPanel;
-  private ArtifactEditorImpl.ArtifactValidationManagerImpl myValidationManager;
-  private MergingUpdateQueue myValidationQueue;
+  private ArtifactValidationManagerImpl myValidationManager;
 
   public ArtifactEditorImpl(final PackagingEditorContext context, Artifact artifact) {
     myContext = new ArtifactEditorContextImpl(context, this);
@@ -83,9 +81,8 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
                                                                           getArtifact().getName()), myProject,
                                                    FileChooserDescriptorFactory.createSingleFolderDescriptor());
     setOutputPath(outputPath);
-    myErrorPanel = new ArtifactErrorPanel(this);
-    myValidationManager = new ArtifactValidationManagerImpl();
-    myValidationQueue = new MergingUpdateQueue("ArtifactValidation", 300, false, myMainPanel, this, myMainPanel);
+    myValidationManager = new ArtifactValidationManagerImpl(this);
+    myContext.setValidationMananger(myValidationManager);
   }
 
   private void setOutputPath(@Nullable String outputPath) {
@@ -118,7 +115,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myDispatcher.addListener(listener);
   }
 
-  public PackagingEditorContext getContext() {
+  public ArtifactEditorContextImpl getContext() {
     return myContext;
   }
 
@@ -139,18 +136,8 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     mySourceItemsTree.rebuildTree();
   }
 
-  private void runValidation() {
-    myErrorPanel.clearError();
-    myLayoutTreeComponent.saveElementProperties();
-    getArtifact().getArtifactType().checkRootElement(getRootElement(), getArtifact(), myValidationManager);
-  }
-
   public void queueValidation() {
-    myValidationQueue.queue(new Update("validate") {
-      public void run() {
-        runValidation();
-      }
-    });
+    myValidationManager.queueValidation();
   }
 
   public JComponent createMainComponent() {
@@ -158,7 +145,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myLayoutTreeComponent.initTree();
     myMainPanel.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new TypeSafeDataProviderAdapter(new MyDataProvider()));
 
-    myErrorPanelPlace.add(myErrorPanel.getMainPanel(), BorderLayout.CENTER);
+    myErrorPanelPlace.add(myValidationManager.getMainErrorPanel(), BorderLayout.CENTER);
 
     mySplitter = new Splitter(false);
     final JPanel leftPanel = new JPanel(new BorderLayout());
@@ -188,17 +175,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
       }
     });
 
-    final DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
-
-    final List<AnAction> createActions2 = new ArrayList<AnAction>();
-    AddCompositeElementActionGroup.addCompositeCreateActions(createActions2, this);
-    for (AnAction createAction : createActions2) {
-      toolbarActionGroup.add(createAction);
-    }
-
-    toolbarActionGroup.add(createAddAction(false));
-    toolbarActionGroup.add(new RemovePackagingElementAction(this));
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActionGroup, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createToolbarActionGroup(), true);
     leftPanel.add(toolbar.getComponent(), BorderLayout.NORTH);
     rightTopPanel.setPreferredSize(new Dimension(-1, toolbar.getComponent().getPreferredSize().height));
 
@@ -207,6 +184,31 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myPropertiesEditors.addTabs(myTabbedPane);
     myEditorPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
 
+    PopupHandler.installPopupHandler(myLayoutTreeComponent.getLayoutTree(), createPopupActionGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    TreeToolTipHandler.install(myLayoutTreeComponent.getLayoutTree());
+    ToolTipManager.sharedInstance().registerComponent(myLayoutTreeComponent.getLayoutTree());
+    rebuildTries();
+    return getMainComponent();
+  }
+
+  private DefaultActionGroup createToolbarActionGroup() {
+    final DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
+
+    final List<AnAction> createActions = new ArrayList<AnAction>();
+    AddCompositeElementActionGroup.addCompositeCreateActions(createActions, this);
+    for (AnAction createAction : createActions) {
+      toolbarActionGroup.add(createAction);
+    }
+
+    toolbarActionGroup.add(createAddAction(false));
+    toolbarActionGroup.add(new RemovePackagingElementAction(this));
+    toolbarActionGroup.add(new SortElementsToggleAction(this.getLayoutTreeComponent()));
+    toolbarActionGroup.add(new MoveElementAction(myLayoutTreeComponent, "Move Up", "", IconLoader.getIcon("/actions/moveUp.png"), -1));
+    toolbarActionGroup.add(new MoveElementAction(myLayoutTreeComponent, "Move Down", "", IconLoader.getIcon("/actions/moveDown.png"), 1));
+    return toolbarActionGroup;
+  }
+
+  private DefaultActionGroup createPopupActionGroup() {
     DefaultActionGroup popupActionGroup = new DefaultActionGroup();
     final List<AnAction> createActions = new ArrayList<AnAction>();
     AddCompositeElementActionGroup.addCompositeCreateActions(createActions, this);
@@ -215,7 +217,8 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     }
     popupActionGroup.add(createAddAction(true));
     final RemovePackagingElementAction removeAction = new RemovePackagingElementAction(this);
-    removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myLayoutTreeComponent.getLayoutTree());
+    final LayoutTree tree = myLayoutTreeComponent.getLayoutTree();
+    removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE, tree);
     popupActionGroup.add(removeAction);
     popupActionGroup.add(new ExtractArtifactAction(this));
     popupActionGroup.add(new InlineArtifactAction(this));
@@ -227,15 +230,10 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
     popupActionGroup.add(Separator.getInstance());
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-    DefaultTreeExpander treeExpander = new DefaultTreeExpander(myLayoutTreeComponent.getLayoutTree());
-    popupActionGroup.add(actionsManager.createExpandAllAction(treeExpander, myLayoutTreeComponent.getLayoutTree()));
-    popupActionGroup.add(actionsManager.createCollapseAllAction(treeExpander, myLayoutTreeComponent.getLayoutTree()));
-
-    PopupHandler.installPopupHandler(myLayoutTreeComponent.getLayoutTree(), popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
-    TreeToolTipHandler.install(myLayoutTreeComponent.getLayoutTree());
-    ToolTipManager.sharedInstance().registerComponent(myLayoutTreeComponent.getLayoutTree());
-    rebuildTries();
-    return getMainComponent();
+    DefaultTreeExpander treeExpander = new DefaultTreeExpander(tree);
+    popupActionGroup.add(actionsManager.createExpandAllAction(treeExpander, tree));
+    popupActionGroup.add(actionsManager.createCollapseAllAction(treeExpander, tree));
+    return popupActionGroup;
   }
 
   public ComplexElementSubstitutionParameters getSubstitutionParameters() {
@@ -300,17 +298,4 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     }
   }
 
-  private class ArtifactValidationManagerImpl implements ArtifactValidationManager {
-    public ArtifactEditorContext getContext() {
-      return myContext;
-    }
-
-    public void registerProblem(@NotNull String message) {
-      registerProblem(message, null);
-    }
-
-    public void registerProblem(@NotNull String message, @Nullable ArtifactProblemQuickFix quickFix) {
-      myErrorPanel.showError(message, quickFix);
-    }
-  }
 }

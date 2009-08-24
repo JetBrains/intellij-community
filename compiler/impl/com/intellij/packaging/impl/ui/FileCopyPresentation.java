@@ -53,23 +53,23 @@ public class FileCopyPresentation extends PackagingElementPresentation {
     return myOutputFileName;
   }
 
-  public void render(@NotNull PresentationData presentationData) {
+  public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     if (myFile != null) {
       presentationData.setIcons(myIsDirectory ? COPY_OF_FOLDER_ICON : myFile.getIcon());
       if (myIsDirectory) {
-        presentationData.addText(CompilerBundle.message("node.text.0.directory.content", mySourceFileName), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        presentationData.addText(CompilerBundle.message("node.text.0.directory.content", mySourceFileName), mainAttributes);
       }
       else {
-        presentationData.addText(myOutputFileName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        presentationData.addText(myOutputFileName, mainAttributes);
       }
-      presentationData.addText(" (" + mySourcePath + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      presentationData.addText(" (" + mySourcePath + ")", commentAttributes);
     }
     else {
       presentationData.setIcons(COPY_OF_FOLDER_ICON);
       presentationData.addText(myOutputFileName, SimpleTextAttributes.ERROR_ATTRIBUTES);
       final VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(mySourcePath));
       presentationData.addText("(" + mySourcePath + ")",
-                      parentFile != null ? SimpleTextAttributes.GRAY_ATTRIBUTES : SimpleTextAttributes.ERROR_ATTRIBUTES);
+                      parentFile != null ? commentAttributes : SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
   }
 

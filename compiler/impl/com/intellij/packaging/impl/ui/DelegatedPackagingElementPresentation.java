@@ -3,6 +3,7 @@ package com.intellij.packaging.impl.ui;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.TreeNodePresentation;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,8 +25,8 @@ public class DelegatedPackagingElementPresentation extends PackagingElementPrese
     return myDelegate.getSearchName();
   }
 
-  public void render(@NotNull PresentationData presentationData) {
-    myDelegate.render(presentationData);
+  public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
+    myDelegate.render(presentationData, mainAttributes, commentAttributes);
   }
 
   @Nullable

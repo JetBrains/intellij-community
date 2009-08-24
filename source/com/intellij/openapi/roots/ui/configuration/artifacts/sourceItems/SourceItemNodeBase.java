@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.ArtifactsTreeNode;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.packaging.ui.PackagingSourceItemsProvider;
 import com.intellij.packaging.ui.TreeNodePresentation;
@@ -24,7 +24,7 @@ public abstract class SourceItemNodeBase extends ArtifactsTreeNode {
   private Artifact myArtifact;
   private final ArtifactEditorEx myArtifactEditor;
 
-  public SourceItemNodeBase(PackagingEditorContext context, NodeDescriptor parentDescriptor, final TreeNodePresentation presentation,
+  public SourceItemNodeBase(ArtifactEditorContext context, NodeDescriptor parentDescriptor, final TreeNodePresentation presentation,
                             ArtifactEditorEx artifactEditor) {
     super(context, parentDescriptor, presentation);
     myArtifact = artifactEditor.getArtifact();
@@ -44,7 +44,8 @@ public abstract class SourceItemNodeBase extends ArtifactsTreeNode {
     super.update(presentation);
   }
 
-  public SimpleNode[] getChildren() {
+  @Override
+  protected SimpleNode[] buildChildren() {
     final PackagingSourceItemsProvider[] providers = Extensions.getExtensions(PackagingSourceItemsProvider.EP_NAME);
     List<SimpleNode> children = new ArrayList<SimpleNode>();
     for (PackagingSourceItemsProvider provider : providers) {

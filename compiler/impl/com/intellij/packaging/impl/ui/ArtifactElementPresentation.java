@@ -39,9 +39,9 @@ public class ArtifactElementPresentation extends TreeNodePresentation {
     ProjectStructureConfigurable.getInstance(myContext.getProject()).select(myArtifact, true);
   }
 
-  public void render(@NotNull PresentationData presentationData) {
+  public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     presentationData.setIcons(myArtifact != null ? myArtifact.getArtifactType().getIcon() : PlainArtifactType.ARTIFACT_ICON);
-    presentationData.addText(myName, myArtifact != null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.ERROR_ATTRIBUTES);
+    presentationData.addText(myName, myArtifact != null ? mainAttributes : SimpleTextAttributes.ERROR_ATTRIBUTES);
   }
 
   @Override

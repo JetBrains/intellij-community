@@ -22,9 +22,9 @@ public class ArchiveElementPresentation extends PackagingElementPresentation {
     return myElement.getArchiveFileName();
   }
 
-  public void render(@NotNull PresentationData presentationData) {
+  public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     presentationData.setIcons(Icons.JAR_ICON);
-    presentationData.addText(myElement.getArchiveFileName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    presentationData.addText(myElement.getArchiveFileName(), mainAttributes);
   }
 
   @Override

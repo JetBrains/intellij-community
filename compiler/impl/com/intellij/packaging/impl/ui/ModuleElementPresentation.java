@@ -41,13 +41,13 @@ public class ModuleElementPresentation extends TreeNodePresentation {
     ProjectStructureConfigurable.getInstance(myModule.getProject()).select(myModule.getName(), null, true);
   }
 
-  public void render(@NotNull PresentationData presentationData) {
+  public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     if (myModule != null) {
       presentationData.setOpenIcon(myModule.getModuleType().getNodeIcon(true));
       presentationData.setClosedIcon(myModule.getModuleType().getNodeIcon(false));
     }
     presentationData.addText(getNodeText(),
-                             myModule != null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.ERROR_ATTRIBUTES);
+                             myModule != null ? mainAttributes : SimpleTextAttributes.ERROR_ATTRIBUTES);
   }
 
   protected String getNodeText() {

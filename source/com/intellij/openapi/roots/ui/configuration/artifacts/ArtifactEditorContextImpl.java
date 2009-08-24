@@ -3,15 +3,15 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactModel;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
-import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.ui.ArtifactEditor;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
 import com.intellij.packaging.ui.PackagingEditorContext;
-import com.intellij.packaging.ui.ArtifactEditor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   private final PackagingEditorContext myParent;
   private final ArtifactEditorEx myEditor;
+  private ArtifactValidationManagerImpl myValidationManager;
 
   public ArtifactEditorContextImpl(PackagingEditorContext parent, ArtifactEditorEx editor) {
     myParent = parent;
@@ -75,5 +76,13 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   @NotNull
   public ArtifactType getArtifactType() {
     return myEditor.getArtifact().getArtifactType();
+  }
+
+  public ArtifactValidationManagerImpl getValidationManager() {
+    return myValidationManager;
+  }
+
+  public void setValidationMananger(ArtifactValidationManagerImpl validationManager) {
+    myValidationManager = validationManager;
   }
 }

@@ -1,16 +1,16 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.dnd.DnDAction;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDSource;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.ide.DefaultTreeExpander;
-import com.intellij.ide.CommonActionsManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
@@ -18,13 +18,14 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.SimpleDnDAwareTree;
 import com.intellij.openapi.roots.ui.configuration.artifacts.SourceItemsDraggingObject;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.WeightBasedComparator;
-import com.intellij.ui.PopupHandler;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -41,7 +42,7 @@ public class SourceItemsTree implements DnDSource, Disposable{
   private final ArtifactEditorImpl myArtifactsEditor;
   private SimpleTreeBuilder myBuilder;
 
-  public SourceItemsTree(PackagingEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
+  public SourceItemsTree(ArtifactEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
     myEditorContext = editorContext;
     myArtifactsEditor = artifactsEditor;
     myTree = new SimpleDnDAwareTree();
@@ -124,10 +125,10 @@ public class SourceItemsTree implements DnDSource, Disposable{
   }
 
   private static class SourceItemsTreeStructure extends SimpleTreeStructure {
-    private final PackagingEditorContext myEditorContext;
+    private final ArtifactEditorContext myEditorContext;
     private final ArtifactEditorImpl myArtifactsEditor;
 
-    public SourceItemsTreeStructure(PackagingEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
+    public SourceItemsTreeStructure(ArtifactEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
       myEditorContext = editorContext;
       myArtifactsEditor = artifactsEditor;
     }
