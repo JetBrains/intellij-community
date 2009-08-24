@@ -88,7 +88,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   protected void configureByFile(@NonNls String filePath) throws Exception {
     configureByFile(filePath, null);
   }
-  protected void configureByFiles(String projectRoot,String... files) throws Exception {
+  protected VirtualFile configureByFiles(String projectRoot,String... files) throws Exception {
     final VirtualFile[] vFiles = new VirtualFile[files.length];
     for (int i = 0; i < files.length; i++) {
       String path = files[i];
@@ -100,7 +100,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
     File projectFile = projectRoot == null ? null : new File(getTestDataPath() + projectRoot);
 
-    configureByFiles(projectFile, vFiles);
+    return configureByFiles(projectFile, vFiles);
   }
   protected VirtualFile configureByFile(String filePath, String projectRoot) throws Exception {
     String fullPath = getTestDataPath() + filePath;

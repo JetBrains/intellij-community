@@ -15,8 +15,8 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.ToolsImpl;
-import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
@@ -246,6 +246,10 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     data.checkLineMarkers(DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(getFile()), getProject()), text);
     data.checkResult(infos, text);
     return infos;
+  }
+
+  public void allowTreeAccessForFile(final VirtualFile file) {
+    myAddedClasses.add(file);
   }
 
   protected Collection<HighlightInfo> highlightErrors() {
