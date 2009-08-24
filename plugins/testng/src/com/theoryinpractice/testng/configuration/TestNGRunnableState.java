@@ -382,8 +382,12 @@ public class TestNGRunnableState extends JavaCommandLineState {
                     .replace(' ', '_');
                 final File suiteFile = new File(PathManager.getSystemPath(), fileId);
                 FileWriter fileWriter = new FileWriter(suiteFile);
-                fileWriter.write(suite.toXml());
-                fileWriter.close();
+                try {
+                  fileWriter.write(suite.toXml());
+                }
+                finally {
+                  fileWriter.close();
+                }
                 String path = suiteFile.getAbsolutePath() + "\n";
                 FileUtil.writeToFile(myTempFile, path.getBytes(), true);
               }
