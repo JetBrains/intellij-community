@@ -8,9 +8,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
@@ -33,11 +30,8 @@ public class JarVersionDetectionUtil {
 
   @Nullable
   public static String detectJarVersion(@NotNull final String detectionClass, @NotNull Module module) {
-
-    final GlobalSearchScope scope = module.getModuleWithDependenciesAndLibrariesScope(false);
-    final PsiManager psiManager = PsiManager.getInstance(module.getProject());
     try {
-      final ZipFile zipFile = getDetectionJar(detectionClass, scope, psiManager, module);
+      final ZipFile zipFile = getDetectionJar(detectionClass, module);
       if (zipFile == null) {
         return null;
       }
@@ -56,24 +50,7 @@ public class JarVersionDetectionUtil {
   }
 
   @Nullable
-  private static VirtualFile getDetectionFile(final String detectionClass, final GlobalSearchScope scope, final PsiManager psiManager) {
-    final PsiClass psiClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(detectionClass, scope);
-    if (psiClass == null) {
-      return null;
-    }
-    final PsiFile psiFile = psiClass.getContainingFile();
-    if (psiFile == null) {
-      return null;
-    }
-    return psiFile.getVirtualFile();
-  }
-
-  @Nullable
-  private static ZipFile getDetectionJar(final String detectionClass,
-                                         final GlobalSearchScope scope,
-                                         final PsiManager psiManager,
-                                         Module module) throws IOException {
-    //if (DumbService.getInstance(module.getProject()).isDumb()) {
+  private static ZipFile getDetectionJar(final String detectionClass, Module module) throws IOException {
       ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
       for (OrderEntry library : model.getOrderEntries()) {
         if (library instanceof LibraryOrderEntry) {
@@ -83,13 +60,6 @@ public class JarVersionDetectionUtil {
           }
         }
       }
-    //}
-    //
-    //final VirtualFile virtualFile = getDetectionFile(detectionClass, scope, psiManager);
-    //if (virtualFile == null || !(virtualFile.getFileSystem() instanceof JarFileSystem)) {
-    //  return null;
-    //}
-    //return JarFileSystem.getInstance().getJarFile(virtualFile);
     return null;
   }
 }
