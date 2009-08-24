@@ -62,7 +62,7 @@ public class GroovycStubGenerator extends GroovyCompilerBase implements Intermed
       }
     }
 
-    compile(compileContext, total.toArray(new VirtualFile[total.size()]), sink);
+    super.compile(compileContext, total.toArray(new VirtualFile[total.size()]), sink);
   }
 
   @Override
