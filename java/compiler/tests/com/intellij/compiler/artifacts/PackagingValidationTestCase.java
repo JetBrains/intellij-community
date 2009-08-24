@@ -1,12 +1,12 @@
 package com.intellij.compiler.artifacts;
 
-import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.elements.CompositePackagingElement;
-import com.intellij.packaging.ui.ArtifactProblemQuickFix;
-import com.intellij.packaging.ui.ArtifactValidationManager;
-import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.impl.ui.ArtifactValidationManagerBase;
+import com.intellij.packaging.ui.ArtifactProblemQuickFix;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -30,19 +30,15 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
   }
 
 
-  protected class MockArtifactValidationManager implements ArtifactValidationManager {
+  protected class MockArtifactValidationManager extends ArtifactValidationManagerBase {
     private List<String> myProblems = new ArrayList<String>();
     private Map<String, ArtifactProblemQuickFix> myQuickFixes = new THashMap<String, ArtifactProblemQuickFix>();
 
-    public ArtifactEditorContext getContext() {
-      return new MockPackagingEditorContext();
+    public MockArtifactValidationManager() {
+      super(new MockPackagingEditorContext());
     }
 
-    public void registerProblem(@NotNull String message) {
-      myProblems.add(message);
-    }
-
-    public void registerProblem(@NotNull String message, @Nullable ArtifactProblemQuickFix quickFix) {
+    public void registerProblem(@NotNull String message, @Nullable PackagingElement<?> place, @Nullable ArtifactProblemQuickFix quickFix) {
       myProblems.add(message);
       if (quickFix != null) {
         myQuickFixes.put(message, quickFix);

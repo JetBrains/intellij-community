@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.ui.ArtifactEditorContext;
@@ -129,6 +130,10 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     @NotNull
     public ArtifactType getArtifactType() {
       throw new UnsupportedOperationException("'getArtifactType' not implemented in " + getClass().getName());
+    }
+
+    public boolean hasProblems(PackagingElement<?> element) {
+      return false;
     }
   }
 }
