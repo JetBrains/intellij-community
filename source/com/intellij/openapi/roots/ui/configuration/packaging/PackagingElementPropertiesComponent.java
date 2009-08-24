@@ -83,7 +83,7 @@ public class PackagingElementPropertiesComponent {
 
   private void updateOutputPath() {
     PackagingMethod method = getSelectedMethod();
-    if (method != myLastSelectedMethod) {
+    if (method != myLastSelectedMethod && method != null) {
       Map<ContainerElement, String> paths = new HashMap<ContainerElement, String>();
       for (ContainerElement element : myElementsInfo.getElements()) {
         PackagingMethod oldMethod = element.getPackagingMethod();
