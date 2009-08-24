@@ -30,7 +30,7 @@ public interface UndoableAction {
   /**
    * Returns array of documents that are "affected" by this action.
    * If the returned value is null, all documents are "affected".
-   * The action can be undone iff all of its affected documents are either
+   * The action can be undone if all of its affected documents are either
    * not affected by any of further actions or all of such actions are undone.
    */
   DocumentReference[] getAffectedDocuments();
