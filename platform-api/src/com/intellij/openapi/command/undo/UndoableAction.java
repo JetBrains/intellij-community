@@ -16,7 +16,9 @@
 package com.intellij.openapi.command.undo;
 
 
-
+/**
+ * @see com.intellij.openapi.command.undo.UndoManager#undoableActionPerformed(UndoableAction) 
+ */
 public interface UndoableAction {
   /**
    * Undoes this action.
