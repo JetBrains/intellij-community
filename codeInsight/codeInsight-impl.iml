@@ -14,14 +14,11 @@
     <orderEntry type="module" module-name="Annotations" />
     <orderEntry type="module" module-name="inspections-impl" />
     <orderEntry type="module" module-name="inspections-openapi" />
-    <orderEntry type="module" module-name="UIDesignerCore" />
     <orderEntry type="library" name="Trove4j" level="project" />
-    <orderEntry type="module" module-name="refactoring-openapi" />
     <orderEntry type="module" module-name="refactoring-impl" />
     <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="module" module-name="ExtendedApi" />
-    <orderEntry type="module" module-name="plugins-management" />
     <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="library" name="Groovy" level="project" />
