@@ -12,7 +12,6 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -29,7 +28,7 @@ public class InjectedLanguageFixtureTestCase extends JavaCodeInsightFixtureTestC
     assertNotNull(elements);
     myFixture.checkResult(text.replaceAll("\\|", "<caret>"));
 
-    UsefulTestCase.assertSameElements(ContainerUtil.map(elements, new Function<LookupElement, String>() {
+    assertSameElements(ContainerUtil.map(elements, new Function<LookupElement, String>() {
       public String fun(final LookupElement lookupItem) {
         return lookupItem.getLookupString();
       }
