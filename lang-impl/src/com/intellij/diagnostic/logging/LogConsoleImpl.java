@@ -391,9 +391,10 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
     public ReaderThread(File file){
       try {
         try {
-          myFileStream = new BufferedReader(new FileReader(file));
+          final FileInputStream inputStream = new FileInputStream(file);
+          myFileStream = new BufferedReader(new InputStreamReader(inputStream));
           if (file.length() >= mySkippedContents) { //do not skip forward
-            myFileStream.skip(mySkippedContents);
+            inputStream.skip(mySkippedContents);
           }
         }
         catch (FileNotFoundException e) {
