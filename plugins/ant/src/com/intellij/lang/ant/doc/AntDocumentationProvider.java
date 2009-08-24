@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -205,12 +206,12 @@ public class AntDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  public String getUrlFor(PsiElement element, PsiElement originalElement) {
+  public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     final VirtualFile helpFile = getHelpFile(originalElement);
     if (helpFile == null || !(helpFile.getFileSystem() instanceof LocalFileSystem)) {
       return null;
     }
-    return helpFile.getUrl();
+    return Collections.singletonList(helpFile.getUrl());
   }
 
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {

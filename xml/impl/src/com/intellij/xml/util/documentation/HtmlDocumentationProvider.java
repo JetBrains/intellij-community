@@ -18,6 +18,9 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Created by IntelliJ IDEA.
  * User: maxim
@@ -43,14 +46,14 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return null; 
   }
 
-  public String getUrlFor(PsiElement element, PsiElement originalElement) {
+  public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     String result = getUrlForHtml(element, PsiTreeUtil.getParentOfType(originalElement,XmlTag.class,false));
 
     if (result == null && ourStyleProvider !=null) {
-      result = ourStyleProvider.getUrlFor(element, originalElement);
+      return ourStyleProvider.getUrlFor(element, originalElement);
     }
 
-    return result;
+    return result != null ? Collections.singletonList(result) : null;
   }
 
   public String getUrlForHtml(PsiElement element, XmlTag context) {

@@ -87,8 +87,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider {
     return null;
   }
 
-  public String getUrlFor(final PsiElement element, final PsiElement originalElement) {
-    return null;
+  public List<String> getUrlFor(final PsiElement element, final PsiElement originalElement) {
+    return getExternalJavaDocUrl(element);
   }
 
   private static void newLine(StringBuffer buffer) {
@@ -708,13 +708,11 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider {
     }
     else {
       DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
-      if (provider != null) {
-        final SmartPsiElementPointer originalElementPointer = element.getUserData(DocumentationManager.ORIGINAL_ELEMENT_KEY);
-        final String url = provider.getUrlFor(element, originalElementPointer != null ? originalElementPointer.getElement() : null);
-        if (url != null) {
-          urls = new ArrayList<String>();
-          urls.add(url);
-        }
+      final SmartPsiElementPointer originalElementPointer = element.getUserData(DocumentationManager.ORIGINAL_ELEMENT_KEY);
+      final List<String> urlz = provider.getUrlFor(element, originalElementPointer != null ? originalElementPointer.getElement() : null);
+      if (urlz != null) {
+        urls = new ArrayList<String>();
+        urls.addAll(urlz);
       }
     }
 

@@ -21,6 +21,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @see com.intellij.lang.LanguageDocumentation
  */
@@ -32,7 +34,7 @@ public interface DocumentationProvider {
   String getQuickNavigateInfo(PsiElement element);
 
   @Nullable
-  String getUrlFor(PsiElement element, PsiElement originalElement);
+  List<String> getUrlFor(PsiElement element, PsiElement originalElement);
 
   @Nullable
   String generateDoc(PsiElement element, PsiElement originalElement);

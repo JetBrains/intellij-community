@@ -43,8 +43,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.WeakReference;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 public class DocumentationManager {
   @NonNls public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
@@ -558,8 +558,8 @@ public class DocumentationManager {
           public String getDocumentation() throws Exception {
             if (docUrl.startsWith(DOC_ELEMENT_PROTOCOL)) {
               final DocumentationProvider provider = getProviderFromElement(psiElement);
-              final String url = provider.getUrlFor(psiElement, getOriginalElement(psiElement));
-              BrowserUtil.launchBrowser(url != null? url : docUrl);
+              final List<String> urls = provider.getUrlFor(psiElement, getOriginalElement(psiElement));
+              BrowserUtil.launchBrowser(urls != null && !urls.isEmpty() ? urls.get(0) : docUrl);
             } else {
               BrowserUtil.launchBrowser(docUrl);
             }

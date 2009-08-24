@@ -4,7 +4,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.ElementLocationUtil;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.actions.ExternalJavaDocAction;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -26,6 +26,7 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.text.View;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.List;
 import java.util.Stack;
 
 public class DocumentationComponent extends JPanel implements Disposable{
@@ -360,9 +361,10 @@ public class DocumentationComponent extends JPanel implements Disposable{
             if (myElement != null) {
               final PsiElement element = myElement.getElement();
               final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
-              final String url = provider.getUrlFor(element, DocumentationManager.getOriginalElement(element));
-              assert url != null;
-              BrowserUtil.launchBrowser(url);
+              final List<String> urls = provider.getUrlFor(element, DocumentationManager.getOriginalElement(element));
+              assert urls != null;
+              assert !urls.isEmpty();
+              ExternalJavaDocAction.showExternalJavadoc(urls);
             }
         }
 
@@ -372,8 +374,8 @@ public class DocumentationComponent extends JPanel implements Disposable{
           if (myElement != null) {
             final PsiElement element = myElement.getElement();
             final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
-            final String url = provider.getUrlFor(element, DocumentationManager.getOriginalElement(element));
-            presentation.setEnabled(element != null && url!= null);
+            final List<String> urls = provider.getUrlFor(element, DocumentationManager.getOriginalElement(element));
+            presentation.setEnabled(element != null && urls!= null && !urls.isEmpty());
           }
         }
     }

@@ -30,6 +30,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Created by IntelliJ IDEA.
  * User: maxim
@@ -61,7 +64,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return sb.toString();
   }
 
-  public String getUrlFor(PsiElement element, PsiElement originalElement) {
+  public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     if (element instanceof XmlTag) {
       XmlTag tag = (XmlTag)element;
 
@@ -76,7 +79,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         }
       }
 
-      return processor.url;
+      return processor.url != null ? Collections.singletonList(processor.url) : null;
     }
     return null;
   }

@@ -52,20 +52,20 @@ public class CompositeDocumentationProvider implements DocumentationProvider{
       String result = provider.getQuickNavigateInfo(element);
       if ( result != null ) return result;
     }
-    for (DocumentationProvider provider : Extensions.getExtensions(DocumentationProvider.EP_NAME)) {
+    for (DocumentationProvider provider : Extensions.getExtensions(EP_NAME)) {
       final String result = provider.getQuickNavigateInfo(element);
       if (result != null) return result;
     }
     return null;
   }
 
-  public String getUrlFor(PsiElement element, PsiElement originalElement) {
+  public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     for ( DocumentationProvider provider : myProviders ) {
-      String result = provider.getUrlFor(element,originalElement);
+      List<String> result = provider.getUrlFor(element,originalElement);
       if ( result != null ) return result;
     }
-    for (DocumentationProvider provider : Extensions.getExtensions(DocumentationProvider.EP_NAME)) {
-      final String result = provider.getUrlFor(element, originalElement);
+    for (DocumentationProvider provider : Extensions.getExtensions(EP_NAME)) {
+      final List<String> result = provider.getUrlFor(element, originalElement);
       if (result != null) return result;
     }
     return null;
@@ -76,7 +76,7 @@ public class CompositeDocumentationProvider implements DocumentationProvider{
       String result = provider.generateDoc(element,originalElement);
       if ( result != null ) return result;
     }
-    for (DocumentationProvider provider : Extensions.getExtensions(DocumentationProvider.EP_NAME)) {
+    for (DocumentationProvider provider : Extensions.getExtensions(EP_NAME)) {
       final String result = provider.generateDoc(element, originalElement);
       if (result != null) return result;
     }
@@ -88,7 +88,7 @@ public class CompositeDocumentationProvider implements DocumentationProvider{
       PsiElement result = provider.getDocumentationElementForLookupItem(psiManager,object,element);
       if ( result != null ) return result;
     }
-    for (DocumentationProvider provider : Extensions.getExtensions(DocumentationProvider.EP_NAME)) {
+    for (DocumentationProvider provider : Extensions.getExtensions(EP_NAME)) {
       final PsiElement result = provider.getDocumentationElementForLookupItem(psiManager, object, element);
       if (result != null) return result;
     }
@@ -100,7 +100,7 @@ public class CompositeDocumentationProvider implements DocumentationProvider{
       PsiElement result = provider.getDocumentationElementForLink(psiManager,link,context);
       if ( result != null ) return result;
     }
-    for (DocumentationProvider provider : Extensions.getExtensions(DocumentationProvider.EP_NAME)) {
+    for (DocumentationProvider provider : Extensions.getExtensions(EP_NAME)) {
       final PsiElement result = provider.getDocumentationElementForLink(psiManager, link, context);
       if (result != null) return result;
     }

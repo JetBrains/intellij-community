@@ -20,10 +20,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public abstract class QuickDocumentationProvider implements DocumentationProvider {
   @Nullable
 
-  public String getUrlFor(PsiElement element, PsiElement originalElement) {
+  public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     return null;
   }
 

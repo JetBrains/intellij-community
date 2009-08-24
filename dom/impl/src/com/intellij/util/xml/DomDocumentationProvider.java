@@ -4,6 +4,8 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 
+import java.util.List;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -13,7 +15,7 @@ public class DomDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  public String getUrlFor(final PsiElement element, final PsiElement originalElement) {
+  public List<String> getUrlFor(final PsiElement element, final PsiElement originalElement) {
     return null;
   }
 
