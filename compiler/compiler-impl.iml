@@ -19,10 +19,7 @@
     <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="module" module-name="NotNull" />
     <orderEntry type="library" name="asm" level="project" />
-    <orderEntry type="module" module-name="plugins-management" />
     <orderEntry type="library" name="Eclipse" level="project" />
-    <orderEntry type="module" module-name="j2ee-openapi" />
-    <orderEntry type="module" module-name="boot" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module-library">
       <library>
