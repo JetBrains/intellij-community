@@ -11,6 +11,7 @@
     <lang.foldingBuilder language="Python" implementationClass="com.jetbrains.python.PythonFoldingBuilder"/>
     <lang.findUsagesProvider language="Python" implementationClass="com.jetbrains.python.PythonFindUsagesProvider"/>
     <lang.formatter language="Python" implementationClass="com.jetbrains.python.PythonFormattingModelBuilder"/>
+    <lang.namesValidator language="Python" implementationClass="com.jetbrains.python.refactoring.PythonNamesValidator"/>
     <lang.psiStructureViewFactory language="Python" implementationClass="com.jetbrains.python.structureView.PyStructureViewFactory"/>
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.PythonDocumentationProvider"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
@@ -67,6 +68,7 @@
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.PythonTemplateContextType"/>
 
     <codeInsight.overrideMethod language="Python" implementationClass="com.jetbrains.python.codeInsight.override.PyOverrideMethodsHandler"/>
+    <lang.refactoringSupport language="Python" implementationClass="com.jetbrains.python.refactoring.RefactoringProvider"/>
   </extensions>
 
   <extensionPoints>
