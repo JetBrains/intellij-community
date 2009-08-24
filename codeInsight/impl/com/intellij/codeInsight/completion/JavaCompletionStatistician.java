@@ -55,9 +55,11 @@ public class JavaCompletionStatistician extends CompletionStatistician{
       final boolean isClass = o instanceof PsiClass;
       if (qualifierType != null) {
         if (type == CompletionType.SMART) {
-          String context = JavaStatisticsManager.getMemberUseKey1(qualifierType);
+          String context;
           if (isClass) {
-            context += "###smartAfterNew";
+            context = JavaStatisticsManager.getAfterNewKey(qualifierType);
+          } else {
+            context = JavaStatisticsManager.getMemberUseKey1(qualifierType);
           }
           return new StatisticsInfo(context, JavaStatisticsManager.getMemberUseKey2((PsiMember)o));
         }

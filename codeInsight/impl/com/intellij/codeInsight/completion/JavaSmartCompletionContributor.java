@@ -532,7 +532,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           final Processor<PsiClass> processor = CodeInsightUtil
               .createInheritorsProcessor(parameters.getPosition(), type, 0, false, statVariants, baseClass, baseSubstitutor);
           final StatisticsInfo[] statisticsInfos =
-              StatisticsManager.getInstance().getAllValues(JavaStatisticsManager.getMemberUseKey1(type));
+              StatisticsManager.getInstance().getAllValues(JavaStatisticsManager.getAfterNewKey(type));
           for (final StatisticsInfo statisticsInfo : statisticsInfos) {
             final String value = statisticsInfo.getValue();
             if (value.startsWith(JavaStatisticsManager.CLASS_PREFIX)) {

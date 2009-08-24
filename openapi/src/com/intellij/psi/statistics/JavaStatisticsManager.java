@@ -172,6 +172,10 @@ public abstract class JavaStatisticsManager {
     return ArrayUtil.toStringArray(list);
   }
 
+  public static String getAfterNewKey(PsiType expectedType) {
+    return getMemberUseKey1(expectedType) + "###smartAfterNew";
+  }
+
   public enum NameContext{
     LOCAL_VARIABLE_NAME,
     FIELD_NAME,
