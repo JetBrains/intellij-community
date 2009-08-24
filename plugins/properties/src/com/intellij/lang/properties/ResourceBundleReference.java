@@ -75,6 +75,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implem
     return false;
   }
 
+  @NotNull
   public Object[] getVariants() {
     PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(getElement().getProject());
     return referenceManager.getPropertyFileBaseNames(myElement.getResolveScope(), this);
