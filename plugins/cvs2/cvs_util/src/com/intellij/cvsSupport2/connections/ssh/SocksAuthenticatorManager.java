@@ -74,9 +74,9 @@ public class SocksAuthenticatorManager {
         return super.getPasswordAuthentication();
       }
       final RequestorType type = getRequestorType();
-      if ((type == null) || (! RequestorType.PROXY.equals(type))) {
+      /*if ((type == null) || (! RequestorType.PROXY.equals(type))) {
         return super.getPasswordAuthentication();
-      }
+      }*/
       final String host = getRequestingHost();
       final int port = getRequestingPort();
       final Pair<String, String> result = myKnown.get(new Pair<String, Integer>(host, port));
