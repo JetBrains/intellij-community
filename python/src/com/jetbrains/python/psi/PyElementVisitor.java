@@ -154,6 +154,14 @@ public class PyElementVisitor extends PsiElementVisitor {
     visitPyElement(node);
   }
 
+  public void visitPyNamedParameter(final PyNamedParameter node) {
+    visitPyParameter(node);
+  }
+
+  public void visitPyTupleParameter(final PyTupleParameter node) {
+    visitPyParameter(node);
+  }
+
   public void visitPyArgumentList(final PyArgumentList node) {
     visitPyElement(node);
   }

@@ -44,7 +44,7 @@ public class PyTupleParameterImpl extends PyPresentableElementImpl<PyTupleParame
 
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
-    pyVisitor.visitPyParameter(this);
+    pyVisitor.visitPyTupleParameter(this);
   }
 
   @NotNull

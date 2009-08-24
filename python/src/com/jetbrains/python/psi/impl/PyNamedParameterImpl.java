@@ -69,7 +69,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
 
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
-    pyVisitor.visitPyParameter(this);
+    pyVisitor.visitPyNamedParameter(this);
   }
 
   public boolean isPositionalContainer() {

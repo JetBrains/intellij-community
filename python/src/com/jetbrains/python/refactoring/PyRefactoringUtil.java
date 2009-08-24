@@ -104,10 +104,8 @@ public class PyRefactoringUtil {
       }
 
       @Override
-      public void visitPyParameter(@NotNull final PyParameter node) {
-        if (node instanceof PyNamedParameter) {
-          variables.add(node.getName());
-        }
+      public void visitPyNamedParameter(@NotNull final PyNamedParameter node) {
+        variables.add(node.getName());
       }
 
       @Override
