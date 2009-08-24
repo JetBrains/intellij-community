@@ -149,7 +149,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   }
 
   @Override
-  public AbstractDebuggerSession getCurrentSession(Project project) {
+  public AbstractDebuggerSession getCurrentSession(@NotNull Project project) {
     final DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(project)).getContext();
     return context != null ? context.getDebuggerSession() : null;
   }

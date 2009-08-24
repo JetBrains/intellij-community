@@ -79,5 +79,5 @@ public abstract class DebuggerSupport {
   public abstract DebuggerToggleActionHandler getMuteBreakpointsHandler();
 
   @Nullable
-  public abstract AbstractDebuggerSession getCurrentSession(Project project);
+  public abstract AbstractDebuggerSession getCurrentSession(@NotNull Project project);
 }

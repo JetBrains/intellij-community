@@ -171,7 +171,7 @@ public class XDebuggerSupport extends DebuggerSupport {
   }
 
   @Override
-  public AbstractDebuggerSession getCurrentSession(Project project) {
+  public AbstractDebuggerSession getCurrentSession(@NotNull Project project) {
     return XDebuggerManagerImpl.getInstance(project).getCurrentSession();
   }
 

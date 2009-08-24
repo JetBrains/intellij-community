@@ -15,6 +15,8 @@ public class ResumeAction extends XDebuggerActionBase {
   @Override
   protected boolean isEnabled(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null) return false;
+
     boolean haveCurrentSession = false;
     for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
       final AbstractDebuggerSession session = support.getCurrentSession(project);
