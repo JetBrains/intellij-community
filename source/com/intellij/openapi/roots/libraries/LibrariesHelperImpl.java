@@ -1,19 +1,16 @@
-package com.intellij.j2ee.openapi.impl;
+package com.intellij.openapi.roots.libraries;
 
-import com.intellij.javaee.LibrariesManager;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * author: lesya
  */
-public class LibrariesManagerImpl extends LibrariesManager {
+public class LibrariesHelperImpl extends LibrariesHelper {
 
   @Override
   public VirtualFile findJarByClass(Library library, @NonNls String fqn) {
