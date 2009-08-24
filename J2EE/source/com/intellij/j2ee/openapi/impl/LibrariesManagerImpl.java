@@ -8,11 +8,24 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * author: lesya
  */
 public class LibrariesManagerImpl extends LibrariesManager {
+
+  @Override
+  public VirtualFile findJarByClass(Library library, @NonNls String fqn) {
+    return library == null ? null : findJarByClass(library.getFiles(OrderRootType.CLASSES), fqn);
+  }
+
+  private VirtualFile findJarByClass(VirtualFile[] files, String fqn) {
+    for (VirtualFile file : files) {
+      if (findInFile(file, new StringTokenizer(fqn, "."))) return file;
+    }
+    return null;
+  }
 
   public boolean isClassAvailableInLibrary(Library library, String fqn) {
     final String[] urls = library.getUrls(OrderRootType.CLASSES);
@@ -39,8 +52,7 @@ public class LibrariesManagerImpl extends LibrariesManager {
       name += ".class";
     }
     final VirtualFile child = root.findChild(name);
-    if (child != null) return findInFile(child, filePath);
-    return false;
+    return child != null && findInFile(child, filePath);
   }
 
 }

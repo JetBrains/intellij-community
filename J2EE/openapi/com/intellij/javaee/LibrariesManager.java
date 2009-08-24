@@ -17,7 +17,9 @@ package com.intellij.javaee;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * author: lesya
@@ -30,4 +32,7 @@ public abstract class LibrariesManager {
   public abstract boolean isClassAvailableInLibrary(final Library library, @NonNls final String fqn);
 
   public abstract boolean isClassAvailable(@NonNls String[] urls, @NonNls String fqn);
+
+  @Nullable
+  public abstract VirtualFile findJarByClass(final Library library, @NonNls String fqn);
 }
