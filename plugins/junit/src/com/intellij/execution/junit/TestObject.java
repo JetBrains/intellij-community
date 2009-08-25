@@ -30,10 +30,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.testframework.Filter;
-import com.intellij.execution.testframework.JavaAwareFilter;
-import com.intellij.execution.testframework.SourceScope;
-import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.*;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -250,7 +247,9 @@ public abstract class TestObject implements JavaCommandLine {
             final JUnitRunningModel model = consoleView.getModel();
             final int failed = model != null ? Filter.DEFECTIVE_LEAF.and(JavaAwareFilter.METHOD(myProject)).select(model.getRoot().getAllTests()).size() : -1;
 
-            final String testRunDebugId = consoleView.getProperties().isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
+            final TestConsoleProperties properties = consoleView.getProperties();
+            if (properties == null) return;
+            final String testRunDebugId = properties.isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
             final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
             if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
               toolWindowManager.notifyByBalloon(testRunDebugId,
