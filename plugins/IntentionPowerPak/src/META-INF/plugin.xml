@@ -161,6 +161,11 @@
       <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.siyeh.ipp.adapter.AdapterToListenerIntention</className>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
     <!-- Imports -->
 
     <intentionAction>
