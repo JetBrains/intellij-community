@@ -4,7 +4,6 @@
  */
 package com.intellij.refactoring.move.moveMembers;
 
-import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -377,10 +376,18 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       }
     }
     else if (scope instanceof PsiNewExpression) {
-      final PsiMethod refElement = ((PsiNewExpression)scope).resolveConstructor();
-      if (refElement != null) {
-        if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, membersToMove, newContext, false)) {
-          checkAccessibility(refElement, newContext, null, member, conflicts);
+      final PsiNewExpression newExpression = (PsiNewExpression)scope;
+      final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
+      if (anonymousClass != null) {
+        if (!RefactoringHierarchyUtil.willBeInTargetClass(anonymousClass, membersToMove, newContext, false)){
+          checkAccessibility(anonymousClass, newContext, anonymousClass, member, conflicts);
+        }
+      } else {
+        final PsiMethod refElement = newExpression.resolveConstructor();
+        if (refElement != null) {
+          if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, membersToMove, newContext, false)) {
+            checkAccessibility(refElement, newContext, null, member, conflicts);
+          }
         }
       }
     }

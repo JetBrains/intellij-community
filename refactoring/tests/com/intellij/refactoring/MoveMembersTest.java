@@ -62,6 +62,10 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("C", "B", 0);
   }
 
+  public void testProtectedConstructor() throws Exception {
+    doTest("pack1.A", "pack1.C", 0);
+  }
+
   public void testOtherPackageImport() throws Exception {
     doTest("pack1.ClassWithStaticMethod", "pack2.OtherClass", 1);
   }
