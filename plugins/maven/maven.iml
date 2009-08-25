@@ -112,6 +112,7 @@
     <orderEntry type="module" module-name="FlexSupport" />
     <orderEntry type="module" module-name="jetgroovy" />
     <orderEntry type="module" module-name="xml" />
+    <orderEntry type="module" module-name="ExtendedApi" />
   </component>
   <component name="copyright">
     <Base>
