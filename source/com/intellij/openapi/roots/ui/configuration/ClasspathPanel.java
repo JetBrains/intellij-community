@@ -797,8 +797,8 @@ public class ClasspathPanel extends JPanel {
     private static final String EXPORT_COLUMN_NAME = ProjectBundle.message("modules.order.export.export.column");
     private static final String SCOPE_COLUMN_NAME = ProjectBundle.message("modules.order.export.scope.column");
     public static final int EXPORT_COLUMN = 0;
-    public static final int SCOPE_COLUMN = 1;
-    public static final int ITEM_COLUMN = 2;
+    public static final int ITEM_COLUMN = 1;
+    public static final int SCOPE_COLUMN = 2;
     private final List<TableItem> myItems = new ArrayList<TableItem>();
     private final ModifiableRootModel myRootModel;
 
