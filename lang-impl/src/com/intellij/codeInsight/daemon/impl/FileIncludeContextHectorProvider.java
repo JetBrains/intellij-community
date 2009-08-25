@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.editor.HectorComponentPanel;
 import com.intellij.openapi.editor.HectorComponentPanelsProvider;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.include.FileIncludeManager;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +20,9 @@ public class FileIncludeContextHectorProvider implements HectorComponentPanelsPr
 
   @Nullable
   public HectorComponentPanel createConfigurable(@NotNull final PsiFile file) {
+    if (DumbService.getInstance(file.getProject()).isDumb()) {
+      return null;
+    }
     if (myIncludeManager.getIncludingFiles(file.getVirtualFile(), false).length > 0) {
       return new FileIncludeContextHectorPanel(file, myIncludeManager);
     }
