@@ -251,14 +251,18 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
     public void keyTyped(KeyEvent e) {
     }
 
+    public void keyReleased(KeyEvent e) {
+      if (e.getKeyCode() == CTRL_KEY || e.getKeyCode() == KeyEvent.VK_ENTER) {
+        navigate();
+      } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+        goLeft();
+      } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+        goRight();
+      }
+    }
+
     public void keyPressed(KeyEvent e) {
       switch (e.getKeyCode()) {
-        case KeyEvent.VK_LEFT:
-          goLeft();
-          break;
-        case KeyEvent.VK_RIGHT:
-          goRight();
-          break;
         case KeyEvent.VK_UP:
           goBack();
           break;
@@ -278,7 +282,7 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
           goLeft();
         } else {
           goRight();
-        }        
+        }
       }
     }
 
@@ -318,12 +322,6 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
         container.setSize(container.getPreferredSize());
       } while (container != rootPane);
       container.getParent().setSize(container.getPreferredSize());
-    }
-
-    public void keyReleased(KeyEvent e) {
-      if (e.getKeyCode() == CTRL_KEY || e.getKeyCode() == KeyEvent.VK_ENTER) {
-        navigate();
-      }
     }
 
     private boolean isFilesSelected() {
