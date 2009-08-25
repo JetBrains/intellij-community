@@ -368,33 +368,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       return getUrls(OrderRootType.CLASSES_AND_OUTPUT, processed);
     }
     return ArrayUtil.EMPTY_STRING_ARRAY;
-
-    /*
-    if (OrderRootType.SOURCES.equals(rootType)) {
-      return ModuleRootManagerImpl.this.getSourceRootUrls();
-    }
-    else if (OrderRootType.JAVADOC.equals(rootType)) {
-      return new String[0];
-    }
-    else if (OrderRootType.CLASSES.equals(rootType)) {
-      return ModuleRootManagerImpl.this.getUrls(OrderRootType.CLASSES);
-    }
-    else if (OrderRootType.CLASSES_AND_OUTPUT.equals(rootType)) {
-      return ModuleRootManagerImpl.this.getUrls(OrderRootType.CLASSES_AND_OUTPUT);
-    }
-    else if (OrderRootType.COMPILATION_CLASSES.equals(rootType)) {
-      final ArrayList<String> result = new ArrayList<String>();
-      if (getCompilerOutputPathUrl() != null) {
-        result.add(getCompilerOutputPathUrl());
-      }
-      if (getCompilerOutputPathForTestsUrl() != null) {
-        result.add(getCompilerOutputPathForTestsUrl());
-      }
-      return (String[])result.toArray(new String[result.size()]);
-    }
-    LOG.error("Unknown root type: " + rootType);
-    return null;
-    */
   }
 
   @NotNull
