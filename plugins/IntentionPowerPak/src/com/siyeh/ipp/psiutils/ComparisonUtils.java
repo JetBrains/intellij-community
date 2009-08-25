@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.siyeh.ipp.psiutils;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,58 +28,61 @@ import java.util.Set;
 
 public class ComparisonUtils{
 
-    private static final Set<String> s_comparisonStrings =
+    private static final Set<String> comparisons =
             new HashSet<String>(6);
-    private static final Map<String, String> s_swappedComparisons =
+    private static final Map<String, String> flippedComparisons =
             new HashMap<String, String>(6);
-    private static final Map<String, String> s_invertedComparisons =
+    private static final Map<String, String> negatedComparisons =
             new HashMap<String, String>(6);
 
     private ComparisonUtils(){
-        super();
     }
 
     static {
-        s_comparisonStrings.add("==");
-        s_comparisonStrings.add("!=");
-        s_comparisonStrings.add(">");
-        s_comparisonStrings.add("<");
-        s_comparisonStrings.add(">=");
-        s_comparisonStrings.add("<=");
+        comparisons.add("==");
+        comparisons.add("!=");
+        comparisons.add(">");
+        comparisons.add("<");
+        comparisons.add(">=");
+        comparisons.add("<=");
 
-        s_swappedComparisons.put("==", "==");
-        s_swappedComparisons.put("!=", "!=");
-        s_swappedComparisons.put(">", "<");
-        s_swappedComparisons.put("<", ">");
-        s_swappedComparisons.put(">=", "<=");
-        s_swappedComparisons.put("<=", ">=");
+        flippedComparisons.put("==", "==");
+        flippedComparisons.put("!=", "!=");
+        flippedComparisons.put(">", "<");
+        flippedComparisons.put("<", ">");
+        flippedComparisons.put(">=", "<=");
+        flippedComparisons.put("<=", ">=");
 
-        s_invertedComparisons.put("==", "!=");
-        s_invertedComparisons.put("!=", "==");
-        s_invertedComparisons.put(">", "<=");
-        s_invertedComparisons.put("<", ">=");
-        s_invertedComparisons.put(">=", "<");
-        s_invertedComparisons.put("<=", ">");
+        negatedComparisons.put("==", "!=");
+        negatedComparisons.put("!=", "==");
+        negatedComparisons.put(">", "<=");
+        negatedComparisons.put("<", ">=");
+        negatedComparisons.put(">=", "<");
+        negatedComparisons.put("<=", ">");
     }
 
-    public static boolean isComparison(PsiExpression expression){
+    public static boolean isComparison(@Nullable PsiExpression expression){
         if(!(expression instanceof PsiBinaryExpression)){
             return false;
         }
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression) expression;
         final PsiJavaToken sign = binaryExpression.getOperationSign();
-        final String operation = sign.getText();
-        return s_comparisonStrings.contains(operation);
+        return isComparison(sign);
     }
 
-    public static String getFlippedComparison(PsiJavaToken token){
-        final String text = token.getText();
-        return s_swappedComparisons.get(text);
+    public static boolean isComparison(@NotNull PsiJavaToken sign) {
+        final String text = sign.getText();
+        return comparisons.contains(text);
     }
 
-    public static String getNegatedComparison(PsiJavaToken token){
-        final String text = token.getText();
-        return s_invertedComparisons.get(text);
+    public static String getFlippedComparison(@NotNull PsiJavaToken sign){
+        final String text = sign.getText();
+        return flippedComparisons.get(text);
+    }
+
+    public static String getNegatedComparison(@NotNull PsiJavaToken sign){
+        final String text = sign.getText();
+        return negatedComparisons.get(text);
     }
 }
