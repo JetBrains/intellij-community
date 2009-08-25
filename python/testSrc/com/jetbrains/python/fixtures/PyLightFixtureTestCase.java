@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
@@ -29,7 +30,8 @@ public abstract class PyLightFixtureTestCase extends UsefulTestCase {
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl());
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
+                                                                                    new LightTempDirTestFixtureImpl(LightPlatformTestCase.getSourceRoot()));
     myFixture.setUp();
 
     myFixture.setTestDataPath(getTestDataPath());
