@@ -38,7 +38,7 @@ public class RenameElementFix implements IntentionAction, LocalQuickFix {
   public RenameElementFix(PsiNamedElement element, String newName) {
     myElement = element;
     myNewName = newName;
-    myText = "Rename " + myElement.getName() + " to " + myNewName;
+    myText = CodeInsightBundle.message("rename.named.element.text", myElement.getName(), myNewName);
   }
 
   @NotNull
