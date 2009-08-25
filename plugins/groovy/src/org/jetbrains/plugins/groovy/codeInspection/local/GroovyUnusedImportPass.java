@@ -54,7 +54,7 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
   private volatile Set<GrImportStatement> myUnusedImports = Collections.emptySet();
 
   public GroovyUnusedImportPass(PsiFile file, Editor editor) {
-    super(file.getProject(), editor.getDocument());
+    super(file.getProject(), editor.getDocument(), true);
     myFile = file;
   }
 
