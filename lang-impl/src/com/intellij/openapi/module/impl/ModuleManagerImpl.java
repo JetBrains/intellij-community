@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -302,6 +303,9 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
                                      Messages.getWarningIcon()) == 0) {
           converter.convertModuleRoot(fileName, element);
           JDOMUtil.writeDocument(document, modulePath.myPath, SystemProperties.getLineSeparator());
+          final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+          assert virtualFile != null;
+          virtualFile.refresh(false, false);
         }
         return;
       }
