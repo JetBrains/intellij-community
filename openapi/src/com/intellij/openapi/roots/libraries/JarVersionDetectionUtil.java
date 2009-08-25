@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -64,8 +63,7 @@ public class JarVersionDetectionUtil {
 
   @Nullable
   private static ZipFile getDetectionJar(final String detectionClass, Module module) throws IOException {
-      ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-      for (OrderEntry library : model.getOrderEntries()) {
+      for (OrderEntry library : ModuleRootManager.getInstance(module).getOrderEntries()) {
         if (library instanceof LibraryOrderEntry) {
           VirtualFile file = LibrariesHelper.getInstance().findJarByClass(((LibraryOrderEntry)library).getLibrary(), detectionClass);
           if (file != null) {
