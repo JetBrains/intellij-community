@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,24 +24,24 @@ public class ErrorUtil{
 
     private ErrorUtil(){}
 
-	/**
-	 * Checks only immediate children. No expensive full tree traversal.
-	 * @return true, if an PsiErrorElement was found, false otherwise.
-	 */
-	public static boolean containsError(PsiElement element){
-        // check only immediate children, full tree traveral is too expensive
+    /**
+     * Checks only immediate children. No expensive full tree traversal.
+     * @return true, if an PsiErrorElement was found, false otherwise.
+     */
+    public static boolean containsError(PsiElement element){
+        // check only immediate children, full tree traversal is too expensive
         return PsiUtil.hasErrorElementChild(element);
     }
 
-	/**
-	 * Does full tree traversal check for PsiErrorElements.
-	 * @return true, if an PsiErrorElement was found, false otherwise.
-	 */
-	public static boolean containsDeepError(PsiElement element){
-		final ErrorElementVisitor visitor = new ErrorElementVisitor();
-		element.accept(visitor);
-		return visitor.containsErrorElement();
-	}
+    /**
+     * Does full tree traversal check for PsiErrorElements.
+     * @return true, if an PsiErrorElement was found, false otherwise.
+     */
+    public static boolean containsDeepError(PsiElement element){
+        final ErrorElementVisitor visitor = new ErrorElementVisitor();
+        element.accept(visitor);
+        return visitor.containsErrorElement();
+    }
 
     private static class ErrorElementVisitor extends PsiRecursiveElementWalkingVisitor {
         private boolean containsErrorElement = false;
