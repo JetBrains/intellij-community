@@ -108,11 +108,6 @@ public interface ModifiableModuleModel {
   void commit();
 
   /**
-   * @deprecated use {@link #commit()} instead.
-   */
-  void commitAssertingNoCircularDependency();
-
-  /**
    * Schedules the rename of a module to be performed when the model is committed.
    *
    * @param module the module to rename.

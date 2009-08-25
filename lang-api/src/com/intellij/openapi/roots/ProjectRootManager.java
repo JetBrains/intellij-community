@@ -96,16 +96,6 @@ public abstract class ProjectRootManager implements ModificationTracker {
   public abstract VirtualFile[] getContentSourceRoots();
 
   /**
-   * @deprecated
-   */
-  public abstract VirtualFile[] getFullClassPath();
-
-  /**
-   * @deprecated
-   */
-  public abstract Sdk getJdk();
-
-  /**
    * Returns the instance of the JDK selected for the project.
    *
    * @return the JDK instance, or null if the name of the selected JDK does not correspond

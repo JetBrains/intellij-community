@@ -81,12 +81,6 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
           }
           params.getVMParametersList().addParametersString(VM_PARAMETERS);
           params.setMainClass("sun.applet.AppletViewer");
-         /* if (params.getJdk().getVersionString().indexOf("1.1") > -1) {
-            params.getClassPath().add(params.getJdkPath() + File.separator + "lib" + File.separator + "classes.zip");
-          }
-          else {
-            params.getClassPath().add(params.getJdkPath() + File.separator + "lib" + File.separator + "tools.jar");
-          }*/
           params.getProgramParametersList().add(myHtmlURL.getUrl());
         }
         return params;

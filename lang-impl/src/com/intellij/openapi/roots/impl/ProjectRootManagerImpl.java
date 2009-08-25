@@ -281,20 +281,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return result.toArray(new VirtualFile[result.size()]);
   }
 
-  public VirtualFile[] getFullClassPath() {
-    return getFilesFromAllModules(OrderRootType.CLASSES_AND_OUTPUT);
-  }
-
-  public Sdk getJdk() {
-    final Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    if (modules.length > 0) {
-      return ModuleRootManager.getInstance(modules[0]).getSdk();
-    }
-    else {
-      return null;
-    }
-  }
-
   public Sdk getProjectJdk() {
     if (myProjectJdkName != null) {
       return ProjectJdkTable.getInstance().findJdk(myProjectJdkName, myProjectJdkType);

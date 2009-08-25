@@ -469,7 +469,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     myModificationCount++;
     final ModifiableModuleModel modifiableModel = getModifiableModel();
     final Module module = modifiableModel.newModule(filePath, moduleType);
-    modifiableModel.commitAssertingNoCircularDependency();
+    modifiableModel.commit();
     return module;
   }
 
@@ -490,7 +490,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       public void run() {
         final ModifiableModuleModel modifiableModel = getModifiableModel();
         modifiableModel.disposeModule(module);
-        modifiableModel.commitAssertingNoCircularDependency();
+        modifiableModel.commit();
       }
     });
   }
@@ -809,10 +809,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
     private boolean isModuleDependent(Module module, Module onModule) {
       return ModuleRootManager.getInstance(module).isDependsOn(onModule);
-    }
-
-    public void commitAssertingNoCircularDependency() {
-      commit();
     }
 
     public void commit() {

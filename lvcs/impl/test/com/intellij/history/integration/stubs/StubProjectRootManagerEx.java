@@ -102,14 +102,6 @@ public class StubProjectRootManagerEx extends ProjectRootManagerEx {
     throw new UnsupportedOperationException();
   }
 
-  public VirtualFile[] getFullClassPath() {
-    throw new UnsupportedOperationException();
-  }
-
-  public Sdk getJdk() {
-    throw new UnsupportedOperationException();
-  }
-
   @Nullable
   public Sdk getProjectJdk() {
     throw new UnsupportedOperationException();
