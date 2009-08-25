@@ -18,13 +18,13 @@ import java.util.List;
  * @author yole
  */
 public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirTestFixture {
-  private final VirtualFile mySourceRoot;
+  @NotNull private final VirtualFile mySourceRoot;
 
   public LightTempDirTestFixtureImpl() {
     mySourceRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
   }
 
-  public LightTempDirTestFixtureImpl(VirtualFile sourceRoot) {
+  public LightTempDirTestFixtureImpl(@NotNull VirtualFile sourceRoot) {
     mySourceRoot = sourceRoot;
   }
 
