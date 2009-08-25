@@ -10,6 +10,7 @@ package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
@@ -19,6 +20,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -100,6 +102,14 @@ public class PullUpHelper {
           if (styleSettings.INSERT_OVERRIDE_ANNOTATION) {
             if ((PsiUtil.isLanguageLevel5OrHigher(mySourceClass) && !myTargetSuperClass.isInterface()) || PsiUtil.isLanguageLevel6OrHigher(mySourceClass)) {
               new AddAnnotationFix("java.lang.Override", method).invoke(method.getProject(), null, mySourceClass.getContainingFile());
+            }
+          }
+          if (isOriginalMethodAbstract && myTargetSuperClass.isInterface() && !PsiUtil.isLanguageLevel6OrHigher(mySourceClass)) {
+            for (PsiMethod oMethod : OverridingMethodsSearch.search(method)) {
+              final PsiAnnotation annotation = AnnotationUtil.findAnnotation(oMethod, Override.class.getName());
+              if (annotation != null) {
+                annotation.delete();
+              }
             }
           }
           myMembersAfterMove.add(movedElement);

@@ -4,6 +4,8 @@
 package com.intellij.refactoring;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
@@ -35,6 +37,10 @@ public class PullUpTest extends LightCodeInsightTestCase {
 
   }
 
+  public void testRemoveOverride() throws Exception {
+    doTest(new Pair<String, Class<? extends PsiMember>> ("get", PsiMethod.class));
+  }
+
   private void doTest(Pair<String, Class<? extends PsiMember>>... membersToFind) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement elementAt = getFile().findElementAt(getEditor().getCaretModel().getOffset());
@@ -42,7 +48,12 @@ public class PullUpTest extends LightCodeInsightTestCase {
     assertNotNull(sourceClass);
 
     PsiClass targetClass = sourceClass.getSuperClass();
-    assertTrue(targetClass.isWritable());
+    if (!targetClass.isWritable()) {
+      final PsiClass[] interfaces = sourceClass.getInterfaces();
+      assertTrue(interfaces.length == 1);
+      assertTrue(interfaces[0].isWritable());
+      targetClass = interfaces[0];
+    }
     MemberInfo[] infos = findMembers(sourceClass, membersToFind);
 
     final int[] countMoved = new int[] {0};
@@ -79,5 +90,9 @@ public class PullUpTest extends LightCodeInsightTestCase {
       infos[i] = new MemberInfo(member);
     }
     return infos;
+  }
+
+  protected Sdk getProjectJDK() {
+    return JavaSdkImpl.getMockJdk15("50");
   }
 }
