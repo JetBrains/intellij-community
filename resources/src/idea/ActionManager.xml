@@ -112,16 +112,17 @@
 
     <!-- Analyze -->
     <group id="AnalyzeMenu" popup="true">
-      <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
       <separator/>
       <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction"/>
       <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction"/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
     </group>
 
-    <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction">
-      <add-to-group group-id="AnalyzeMenu" anchor="after" relative-to-action="InspectCode"/>
-    </action>
+    <group id="InspectCodeGroup" text="Inspect Code Actions">
+      <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
+      <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
+      <add-to-group group-id="AnalyzeMenu" anchor="first"/>
+    </group>
 
     <group id="CoverageMenu">
       <action id="SwitchCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction"/>
@@ -134,8 +135,6 @@
     <group id="AnalyzeJavaMenu">
       <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction"/>
       <action id="ShowModulesDependencies" class="com.intellij.moduleDependencies.ShowModuleDependenciesAction"/>
-      <separator/>
-      <action id="DupLocate" class="com.intellij.dupLocator.DuplocateAction"/>
       <separator/>
       <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction"/>
       <action id="SliceForward" class="com.intellij.slicer.SliceForwardAction"/>

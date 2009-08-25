@@ -43,7 +43,7 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
-    <group id="InspectCodePlatformMenu">
+    <group id="InspectCodeGroup">
       <separator/>
       <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
 

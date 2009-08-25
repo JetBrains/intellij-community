@@ -116,11 +116,6 @@
   <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"
                       serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"/>
 
-  <projectService serviceInterface="com.intellij.dupLocator.DuplocateManager"
-                  serviceImplementation="com.intellij.dupLocator.DuplocateManager"/>
-  <applicationService serviceInterface="com.intellij.dupLocator.DuplocatorSettings"
-                        serviceImplementation="com.intellij.dupLocator.DuplocatorSettings"/>
-
   <projectService serviceInterface="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"
                   serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"/>
 

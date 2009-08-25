@@ -1,4 +1,4 @@
-package com.intellij.openapi.roots.ui;
+package com.intellij.testFramework;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.FileUtil;

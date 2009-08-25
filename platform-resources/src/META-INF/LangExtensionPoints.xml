@@ -80,8 +80,6 @@
   <extensionPoint name="module.converter"
                     interface="com.intellij.ide.impl.convert.ModuleConverter"/>
 
-  <extensionPoint name="duplicatesProfile" interface="com.intellij.dupLocator.DuplicatesProfile"/>
-
   <extensionPoint name="annotator"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="externalAnnotator"
