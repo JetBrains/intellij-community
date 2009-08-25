@@ -9,6 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="structuralsearch" />
     <orderEntry type="module" module-name="idea-tests" />
+    <orderEntry type="module" module-name="ExtendedApi" />
   </component>
 </module>
 
