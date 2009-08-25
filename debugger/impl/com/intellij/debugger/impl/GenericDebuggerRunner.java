@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDebuggerRunnerSettings> {
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
@@ -29,43 +30,47 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
 
   protected RunContentDescriptor doExecute(final Project project, final Executor executor, final RunProfileState state, final RunContentDescriptor contentToReuse,
                                            final ExecutionEnvironment env) throws ExecutionException {
-    final RunProfile runProfile = env.getRunProfile();
+    FileDocumentManager.getInstance().saveAllDocuments();
 
-    final boolean addHistoryLabel = LocalHistoryConfiguration.getInstance().ADD_LABEL_ON_RUNNING;
-    RunContentDescriptor contentDescriptor = null;
+    if (LocalHistoryConfiguration.getInstance().ADD_LABEL_ON_RUNNING) {
+      final String name = env.getRunProfile().getName();
+      final String label = state instanceof RemoteState
+                           ? DebuggerBundle.message("debugger.runner.vcs.label.remote.debug", name)
+                           : DebuggerBundle.message("debugger.runner.vcs.label.debugging", name);
+      LocalHistory.putSystemLabel(project, label);
+    }
 
-    final DebuggerPanelsManager manager = DebuggerPanelsManager.getInstance(project);
+    return createContentDescriptor(project, executor, state, contentToReuse, env);
+  }
+
+  @Nullable
+  protected RunContentDescriptor createContentDescriptor(Project project, Executor executor, RunProfileState state,
+                                                         RunContentDescriptor contentToReuse,
+                                                         ExecutionEnvironment env) throws ExecutionException {
     if (state instanceof JavaCommandLine) {
-      FileDocumentManager.getInstance().saveAllDocuments();
-      final JavaCommandLine javaCommandLine = (JavaCommandLine)state;
-      if (addHistoryLabel) {
-        LocalHistory.putSystemLabel(project, DebuggerBundle.message("debugger.runner.vcs.label.debugging", runProfile.getName()));
-      }
-      RemoteConnection connection = DebuggerManagerImpl
-          .createDebugParameters(javaCommandLine.getJavaParameters(), true, DebuggerSettings.getInstance().DEBUGGER_TRANSPORT, "", false);
-      contentDescriptor =
-          manager.attachVirtualMachine(executor, this, env, javaCommandLine, contentToReuse, connection, true);
+      final JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
+      RemoteConnection connection = DebuggerManagerImpl.createDebugParameters(parameters, true, DebuggerSettings.getInstance().DEBUGGER_TRANSPORT, "", false);
+      return attachVirtualMachine(project, executor, state, contentToReuse, env, connection, true);
     }
-    else if (state instanceof PatchedRunnableState) {
-      FileDocumentManager.getInstance().saveAllDocuments();
-      if (addHistoryLabel) {
-        LocalHistory.putSystemLabel(project, DebuggerBundle.message("debugger.runner.vcs.label.debugging", runProfile.getName()));
-      }
+    if (state instanceof PatchedRunnableState) {
       final RemoteConnection connection = doPatch(new JavaParameters(), state.getRunnerSettings());
-      contentDescriptor = manager.attachVirtualMachine(executor, this, env, state, contentToReuse, connection, true);
+      return attachVirtualMachine(project, executor, state, contentToReuse, env, connection, true);
     }
-    else if (state instanceof RemoteState) {
-      FileDocumentManager.getInstance().saveAllDocuments();
-      if (addHistoryLabel) {
-        LocalHistory.putSystemLabel(project, DebuggerBundle.message("debugger.runner.vcs.label.remote.debug", runProfile.getName()));
-      }
-      RemoteState remoteState = (RemoteState)state;
-      final RemoteConnection connection = createRemoteDebugConnection(remoteState, state.getRunnerSettings());
-      contentDescriptor =
-          manager.attachVirtualMachine(executor, this, env, remoteState, contentToReuse, connection, false);
+    if (state instanceof RemoteState) {
+      final RemoteConnection connection = createRemoteDebugConnection((RemoteState)state, state.getRunnerSettings());
+      return attachVirtualMachine(project, executor, state, contentToReuse, env, connection, false);
     }
 
-    return contentDescriptor != null ? contentDescriptor : null;
+    return null;
+  }
+
+  @Nullable
+  protected RunContentDescriptor attachVirtualMachine(Project project, Executor executor, RunProfileState state,
+                                                      RunContentDescriptor contentToReuse,
+                                                      ExecutionEnvironment env, RemoteConnection connection, boolean pollConnection)
+    throws ExecutionException {
+    final DebuggerPanelsManager manager = DebuggerPanelsManager.getInstance(project);
+    return manager.attachVirtualMachine(executor, this, env, state, contentToReuse, connection, pollConnection);
   }
 
   private static RemoteConnection createRemoteDebugConnection(RemoteState connection, final RunnerSettings settings) {
