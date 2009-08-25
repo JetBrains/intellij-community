@@ -258,7 +258,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
       } else {
         state = diffProvider.getLastRevision(vf);
       }
-      final VcsRevisionNumber newNumber = state.getNumber();
+      final VcsRevisionNumber newNumber = state == null ? UNKNOWN : state.getNumber();
 
       final Pair<VcsRoot, VcsRevisionNumber> oldPair;
       synchronized (myLock) {
