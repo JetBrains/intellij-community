@@ -78,9 +78,9 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
     final RegistryValue value = Registry.get(DumbServiceImpl.FILE_INDEX_BACKGROUND);
     if (!value.asBoolean()) {
       if (Messages.showDialog(myProject, "<html>" +
-                                         "Sending indices update to background allows you to immediately use the most\n" +
+                                         "Sending indices update to background allows you to immediately use the most<br>" +
                                          "basic editing capabilities of IntelliJ IDEA, plus version control operations.<p>" +
-                                         "However, many advanced functions such as 'Go to Class', advanced error highlighting,\n" +
+                                         "However, many advanced functions such as 'Go to Class', advanced error highlighting,<br>" +
                                          "refactorings and some others <b>will not be available</b> until indexing is complete.<p>" +
                                          "Do you still want to send indexing to background?</html>", "Background Indexing",
                               new String[]{"Yes", "No"}, 1, UIUtil.getInformationIcon()) != 0) {
