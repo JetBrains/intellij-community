@@ -132,6 +132,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myStatusBarUpdater = new StatusBarUpdater(myProject);
 
     myDaemonListeners = new DaemonListeners(myProject, this, myEditorTracker);
+    Disposer.register(myProject, myDaemonListeners);
     reloadScopes();
 
     myInitialized = true;
@@ -146,7 +147,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     // clear dangling references to PsiFiles/Documents. SCR#10358
     myFileStatusMap.markAllFilesDirty();
 
-    Disposer.dispose(myDaemonListeners);
     stopProcess(false);
     myPassExecutorService.dispose();
     myStatusBarUpdater.dispose();
@@ -351,16 +351,16 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   @NotNull
-  public static HighlightInfo[] getHighlights(Document document, HighlightSeverity minSeverity, Project project) {
+  public static List<HighlightInfo> getHighlights(Document document, HighlightSeverity minSeverity, Project project) {
     return getHighlights(document, minSeverity, project, Integer.MIN_VALUE, Integer.MAX_VALUE);
   }
 
   @NotNull
-  public static HighlightInfo[] getHighlights(Document document, HighlightSeverity minSeverity, Project project, int startOffset, int endOffset) {
+  public static List<HighlightInfo> getHighlights(Document document, HighlightSeverity minSeverity, Project project, int startOffset, int endOffset) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
     List<HighlightInfo> highlights = getHighlights(document, project);
-    if (highlights == null) return HighlightInfo.EMPTY_ARRAY;
-    Collection<HighlightInfo> array = new ArrayList<HighlightInfo>();
+    if (highlights == null) return Collections.emptyList();
+    List<HighlightInfo> array = new ArrayList<HighlightInfo>();
     final SeverityRegistrar instance = SeverityRegistrar.getInstance(project);
 
     for (HighlightInfo info : highlights) {
@@ -370,22 +370,22 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         array.add(info);
       }
     }
-    return array.toArray(new HighlightInfo[array.size()]);
+    return array;
   }
 
   @NotNull
-  public static HighlightInfo[] getHighlightsAround(Document document, Project project, int offset) {
+  public static List<HighlightInfo> getHighlightsAround(Document document, Project project, int offset) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
     List<HighlightInfo> highlights = getHighlights(document, project);
-    if (highlights == null) return HighlightInfo.EMPTY_ARRAY;
-    Collection<HighlightInfo> array = new ArrayList<HighlightInfo>();
+    if (highlights == null) return Collections.emptyList();
+    List<HighlightInfo> array = new ArrayList<HighlightInfo>();
 
     for (HighlightInfo info : highlights) {
       if (isOffsetInsideHighlightInfo(offset, info, true)) {
         array.add(info);
       }
     }
-    return array.toArray(new HighlightInfo[array.size()]);
+    return array;
   }
 
   @Nullable

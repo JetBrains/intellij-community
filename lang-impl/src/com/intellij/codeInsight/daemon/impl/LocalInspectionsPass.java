@@ -64,7 +64,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private final SeverityRegistrar mySeverityRegistrar;
 
   public LocalInspectionsPass(@NotNull PsiFile file, @Nullable Document document, int startOffset, int endOffset) {
-    super(file.getProject(), document, IN_PROGRESS_ICON, PRESENTABLE_NAME, file);
+    super(file.getProject(), document, IN_PROGRESS_ICON, PRESENTABLE_NAME, file, true);
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     setId(Pass.LOCAL_INSPECTIONS);

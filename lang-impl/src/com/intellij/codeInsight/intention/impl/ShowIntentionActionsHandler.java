@@ -31,7 +31,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
 
 /**
  * @author mike
@@ -51,27 +50,20 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     codeAnalyzer.autoImportReferenceAtCursor(editor, file); //let autoimport complete
 
-    final ArrayList<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    final ArrayList<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    final ArrayList<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    final ArrayList<HighlightInfo.IntentionActionDescriptor> gutters = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-
-    ShowIntentionsPass.getActionsToShow(editor, file, intentionsToShow, errorFixesToShow, inspectionFixesToShow, gutters, -1);
+    ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
+    ShowIntentionsPass.getActionsToShow(editor, file, intentions, -1);
     
     if (!codeAnalyzer.isAllAnalysisFinished(file)) {
-      runPassesAndShowIntentions(project, editor, file, intentionsToShow, gutters);
+      runPassesAndShowIntentions(project, editor, file, intentions);
     }
-    else if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty() || !gutters.isEmpty()) {
-      IntentionHintComponent.showIntentionHint(project, file, editor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, gutters, true);
+    else if (!intentions.isEmpty()) {
+      IntentionHintComponent.showIntentionHint(project, file, editor, intentions, true);
     }
   }
 
-  private static void runPassesAndShowIntentions(final Project project, final Editor editor, final PsiFile file, final ArrayList<HighlightInfo.IntentionActionDescriptor> intentionsToShow,
-                                                 final ArrayList<HighlightInfo.IntentionActionDescriptor> gutters) {
-    final ArrayList<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    final ArrayList<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    errorFixesToShow.clear();
-    inspectionFixesToShow.clear();
+  private static void runPassesAndShowIntentions(final Project project, final Editor editor, final PsiFile file, final ShowIntentionsPass.IntentionsInfo intentions) {
+    intentions.errorFixesToShow.clear();
+    intentions.inspectionFixesToShow.clear();
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return;
     final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
@@ -96,10 +88,10 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
                                         action.isAvailable(project, editor, file);
                     if (available) {
                       if (isError) {
-                        errorFixesToShow.add(actionRanges.first);
+                        intentions.errorFixesToShow.add(actionRanges.first);
                       }
                       else {
-                        inspectionFixesToShow.add(actionRanges.first);
+                        intentions.inspectionFixesToShow.add(actionRanges.first);
                       }
                     }
                   }
@@ -112,8 +104,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
         SwingUtilities.invokeLater(new Runnable(){
           public void run() {
             if (editor.getComponent().isDisplayable()) {
-              if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty()) {
-                IntentionHintComponent.showIntentionHint(project, file, editor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, gutters, true);
+              if (!intentions.isEmpty()) {
+                IntentionHintComponent.showIntentionHint(project, file, editor, intentions, true);
               }
             }
           }

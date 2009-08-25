@@ -31,16 +31,21 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   public static final TextEditorHighlightingPass[] EMPTY_ARRAY = new TextEditorHighlightingPass[0];
   protected final Document myDocument;
   protected final Project myProject;
+  private final boolean myRunIntentionPassAfter;
   private final long myInitialStamp;
   private int[] myCompletionPredecessorIds = ArrayUtil.EMPTY_INT_ARRAY;
   private int[] myStartingPredecessorIds = ArrayUtil.EMPTY_INT_ARRAY;
   private int myId;
   private boolean myDumb;
 
-  protected TextEditorHighlightingPass(@NotNull final Project project, @Nullable final Document document) {
+  protected TextEditorHighlightingPass(@NotNull final Project project, @Nullable final Document document, boolean runIntentionPassAfter) {
     myDocument = document;
     myProject = project;
+    myRunIntentionPassAfter = runIntentionPassAfter;
     myInitialStamp = document == null ? 0 : document.getModificationStamp();
+  }
+  protected TextEditorHighlightingPass(@NotNull final Project project, @Nullable final Document document) {
+    this(project, document, true);
   }
 
   public final void collectInformation(ProgressIndicator progress) {
@@ -107,5 +112,9 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   @NonNls
   public String toString() {
     return getClass() + "; id=" + getId();
+  }
+
+  public boolean isRunIntentionPassAfter() {
+    return myRunIntentionPassAfter;
   }
 }

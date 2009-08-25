@@ -39,11 +39,11 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.awt.*;
 
 public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.ShowIntentionsPass");
@@ -51,9 +51,38 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
   private final PsiFile myFile;
   private final int myPassIdToShowIntentionsFor;
+  private final IntentionsInfo myIntentionsInfo = new IntentionsInfo();
+  private volatile boolean myShowBulb;
+  private volatile boolean myHasToRecreate;
+
+  public static class IntentionsInfo {
+    public final List<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    public final List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    public final List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    public final List<HighlightInfo.IntentionActionDescriptor> guttersToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+
+    public void filterActions(@NotNull IntentionFilterOwner.IntentionActionsFilter actionsFilter) {
+      filter(intentionsToShow, actionsFilter);
+      filter(errorFixesToShow, actionsFilter);
+      filter(inspectionFixesToShow, actionsFilter);
+      filter(guttersToShow, actionsFilter);
+    }
+
+    private static void filter(List<HighlightInfo.IntentionActionDescriptor> descriptors,
+                        IntentionFilterOwner.IntentionActionsFilter actionsFilter) {
+      for (Iterator<HighlightInfo.IntentionActionDescriptor> it = descriptors.iterator(); it.hasNext();) {
+          HighlightInfo.IntentionActionDescriptor actionDescriptor = it.next();
+          if (!actionsFilter.isAvailable(actionDescriptor.getAction())) it.remove();
+        }
+    }
+
+    public boolean isEmpty() {
+      return intentionsToShow.isEmpty() && errorFixesToShow.isEmpty() && inspectionFixesToShow.isEmpty() && guttersToShow.isEmpty();
+    }
+  }
 
   ShowIntentionsPass(@NotNull Project project, @NotNull Editor editor, int passId) {
-    super(project, editor.getDocument());
+    super(project, editor.getDocument(), false);
     myPassIdToShowIntentionsFor = passId;
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -64,96 +93,86 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
+    if (!myEditor.getContentComponent().hasFocus()) return;
+    TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
+    if (state == null || state.isFinished()) {
+      getIntentionActionsToShow();
+    }
   }
 
   public void doApplyInformationToEditor() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (!myEditor.getContentComponent().hasFocus()) return;
-    TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
-    if (state == null || state.isFinished()) {
-      showIntentionActions();
-    }
-  }
-
-  private void showIntentionActions() {
-    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
-    if (LookupManager.getInstance(myProject).getActiveLookup() != null) return;
 
     // do not show intentions if caret is outside visible area
     LogicalPosition caretPos = myEditor.getCaretModel().getLogicalPosition();
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
     Point xy = myEditor.logicalPositionToXY(caretPos);
     if (!visibleArea.contains(xy)) return;
-    List<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    List<HighlightInfo.IntentionActionDescriptor> guttersToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    getActionsToShow(myEditor, myFile, intentionsToShow, errorFixesToShow, inspectionFixesToShow, guttersToShow, myPassIdToShowIntentionsFor);
+
+    TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
+    if (myShowBulb && (state == null || state.isFinished()) && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
+      IntentionHintComponent hintComponent = IntentionHintComponent.showIntentionHint(myProject, myFile, myEditor, myIntentionsInfo, false);
+      if (myHasToRecreate) {
+        hintComponent.recreate();
+      }
+      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).setLastIntentionHint(hintComponent);
+    }
+  }
+
+  private void getIntentionActionsToShow() {
+    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+    if (LookupManager.getInstance(myProject).getActiveLookup() != null) return;
+
+    getActionsToShow(myEditor, myFile, myIntentionsInfo, myPassIdToShowIntentionsFor);
     if (myFile instanceof IntentionFilterOwner) {
       final IntentionFilterOwner.IntentionActionsFilter actionsFilter = ((IntentionFilterOwner)myFile).getIntentionActionsFilter();
       if (actionsFilter == null) return;
       if (actionsFilter != IntentionFilterOwner.IntentionActionsFilter.EVERYTHING_AVAILABLE) {
-        filterIntentionActions(actionsFilter, intentionsToShow);
-        filterIntentionActions(actionsFilter, errorFixesToShow);
-        filterIntentionActions(actionsFilter, inspectionFixesToShow);
+        myIntentionsInfo.filterActions(actionsFilter);
       }
     }
 
-    if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty() || !guttersToShow.isEmpty()) {
-      boolean showBulb = !guttersToShow.isEmpty();
-      if (!showBulb) {
-        for (HighlightInfo.IntentionActionDescriptor action : ContainerUtil.concat(errorFixesToShow, inspectionFixesToShow)) {
-          if (IntentionManagerSettings.getInstance().isShowLightBulb(action.getAction())) {
-            showBulb = true;
-            break;
-          }
-        }
-      }
-      if (!showBulb) {
-        for (HighlightInfo.IntentionActionDescriptor descriptor : intentionsToShow) {
-          final IntentionAction action = descriptor.getAction();
-          if (IntentionManagerSettings.getInstance().isShowLightBulb(action) && action.isAvailable(myProject, myEditor, myFile)) {
-            showBulb = true;
-            break;
-          }
-        }
-      }
-
-      if (showBulb) {
-        IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
-
-        if (hintComponent != null) {
-          if (hintComponent.updateActions(intentionsToShow, errorFixesToShow, inspectionFixesToShow, guttersToShow)) {
-            return;
-          }
-          codeAnalyzer.setLastIntentionHint(null);
-        }
-        if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
-          hintComponent = IntentionHintComponent.showIntentionHint(myProject, myFile, myEditor,
-                                                                   intentionsToShow,
-                                                                   errorFixesToShow,
-                                                                   inspectionFixesToShow,
-                                                                   guttersToShow, false);
-          codeAnalyzer.setLastIntentionHint(hintComponent);
+    if (myIntentionsInfo.isEmpty()) {
+      return;
+    }
+    myShowBulb = !myIntentionsInfo.guttersToShow.isEmpty();
+    if (!myShowBulb) {
+      for (HighlightInfo.IntentionActionDescriptor action : ContainerUtil.concat(myIntentionsInfo.errorFixesToShow, myIntentionsInfo.inspectionFixesToShow)) {
+        if (IntentionManagerSettings.getInstance().isShowLightBulb(action.getAction())) {
+          myShowBulb = true;
+          break;
         }
       }
     }
-  }
-
-  private static void filterIntentionActions(final IntentionFilterOwner.IntentionActionsFilter actionsFilter, final List<HighlightInfo.IntentionActionDescriptor> intentionActionDescriptors) {
-    for (Iterator<HighlightInfo.IntentionActionDescriptor> it = intentionActionDescriptors.iterator(); it.hasNext();) {
-        HighlightInfo.IntentionActionDescriptor actionDescriptor = it.next();
-        if (!actionsFilter.isAvailable(actionDescriptor.getAction())) it.remove();
+    if (!myShowBulb) {
+      for (HighlightInfo.IntentionActionDescriptor descriptor : myIntentionsInfo.intentionsToShow) {
+        final IntentionAction action = descriptor.getAction();
+        if (IntentionManagerSettings.getInstance().isShowLightBulb(action) && action.isAvailable(myProject, myEditor, myFile)) {
+          myShowBulb = true;
+          break;
+        }
       }
+    }
+
+    IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
+    if (!myShowBulb || hintComponent == null) {
+      return;
+    }
+    Boolean result = hintComponent.updateActions(myIntentionsInfo);
+    if (result == null) {
+      // reshow all
+    }
+    else if (result == Boolean.FALSE) {
+      myHasToRecreate = true;
+    }
+    else {
+      myShowBulb = false;  // nothing to apply
+    }
   }
 
-  public static void getActionsToShow(final Editor editor, final PsiFile psiFile,
-                                      final List<HighlightInfo.IntentionActionDescriptor> intentionsToShow,
-                                      final List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow,
-                                      final List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow,
-                                      final List<HighlightInfo.IntentionActionDescriptor> guttersToShow,
-                                      int passIdToShowIntentionsFor) {
+  public static void getActionsToShow(@NotNull final Editor editor, @NotNull final PsiFile psiFile, @NotNull IntentionsInfo intentions, int passIdToShowIntentionsFor) {
     final PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
     LOG.assertTrue(psiElement == null || psiElement.isValid(), psiElement);
     final boolean isInProject = psiFile.getManager().isInProject(psiFile);
@@ -174,7 +193,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       }
       List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
       enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
-      intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));
+      intentions.intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));
     }
 
     List<HighlightInfo.IntentionActionDescriptor> actions = QuickFixAction.getAvailableActions(editor, psiFile, passIdToShowIntentionsFor);
@@ -182,13 +201,13 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     final Document document = editor.getDocument();
     HighlightInfo infoAtCursor = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(document, offset, true);
     if (infoAtCursor == null || infoAtCursor.getSeverity() == HighlightSeverity.ERROR) {
-      errorFixesToShow.addAll(actions);
+      intentions.errorFixesToShow.addAll(actions);
     }
     else {
-      inspectionFixesToShow.addAll(actions);
+      intentions.inspectionFixesToShow.addAll(actions);
     }
     final int line = document.getLineNumber(offset);
-    final HighlightInfo[] infoList = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.INFORMATION, project,
+    final List<HighlightInfo> infoList = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.INFORMATION, project,
                                                                           document.getLineStartOffset(line),
                                                                           document.getLineEndOffset(line));
     for (HighlightInfo info : infoList) {
@@ -211,7 +230,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
                 return text;
               }
             };
-            guttersToShow.add(new HighlightInfo.IntentionActionDescriptor(actionAdapter, Collections.<IntentionAction>emptyList(), text, renderer.getIcon()));
+            intentions.guttersToShow.add(new HighlightInfo.IntentionActionDescriptor(actionAdapter, Collections.<IntentionAction>emptyList(), text, renderer.getIcon()));
           }
         }
       }

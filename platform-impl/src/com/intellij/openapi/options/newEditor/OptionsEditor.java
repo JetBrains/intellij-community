@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EdtRunnable;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.SearchTextField;
@@ -306,7 +305,11 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       myLoadingDecorator.startLoading(false);
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
-          initConfigurable(configurable).notifyWhenDone(result);
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              initConfigurable(configurable).notifyWhenDone(result);
+            }
+          });
         }
       });
 
@@ -320,25 +323,26 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   private ActionCallback initConfigurable(@NotNull final Configurable configurable) {
     final ActionCallback result = new ActionCallback();
 
-    final Ref<ConfigurableContent> content = new Ref<ConfigurableContent>();
+    final ConfigurableContent content;
 
     if (configurable instanceof MasterDetails) {
-      content.set(new Details((MasterDetails)configurable));
-    } else {
-      content.set(new Simple(configurable));
+      content = new Details((MasterDetails)configurable);
+    }
+    else {
+      content = new Simple(configurable);
     }
 
     if (!myConfigurable2Content.containsKey(configurable)) {
       if (configurable instanceof Place.Navigator) {
         ((Place.Navigator)configurable).setHistory(myHistory);
       }
-
       configurable.reset();
     }
 
+    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
-        myConfigurable2Content.put(configurable, content.get());
+        myConfigurable2Content.put(configurable, content);
         result.setDone();
       }
     });
@@ -415,9 +419,13 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
-            initConfigurable(configurable).doWhenDone(new Runnable() {
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
-                fireModifiationInt(configurable);
+                initConfigurable(configurable).doWhenDone(new Runnable() {
+                  public void run() {
+                    fireModifiationInt(configurable);
+                  }
+                });
               }
             });
           }

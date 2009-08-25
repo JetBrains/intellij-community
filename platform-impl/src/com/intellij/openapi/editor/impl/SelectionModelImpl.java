@@ -49,10 +49,10 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   private TextAttributes myTextAttributes;
   private boolean myIsInUpdate;
 
-  class MyRangeMarker extends RangeMarkerImpl {
+  private class MyRangeMarker extends RangeMarkerImpl {
     private boolean myIsReleased;
 
-    public MyRangeMarker(Document document, int start, int end) {
+    private MyRangeMarker(Document document, int start, int end) {
       super(document, start, end);
       myIsReleased = false;
     }
@@ -105,24 +105,29 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   }
 
   public int getSelectionStart() {
-    validateContext();
+    validateContext(false);
     if (!hasSelection()) return myEditor.getCaretModel().getOffset();
     return mySelectionMarker.getStartOffset();
   }
 
-  private void validateContext() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  private void validateContext(boolean isWrite) {
+    if (isWrite) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+    }
+    else {
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+    }
     LOG.assertTrue(!myIsInUpdate, "Selection model is in its update stage. All requests are illegal at this point.");
   }
 
   public int getSelectionEnd() {
-    validateContext();
+    validateContext(false);
     if (!hasSelection()) return myEditor.getCaretModel().getOffset();
     return mySelectionMarker.getEndOffset();
   }
 
   public boolean hasSelection() {
-    validateContext();
+    validateContext(false);
     if (mySelectionMarker != null && !mySelectionMarker.isValid()) {
       removeSelection();
     }
@@ -131,7 +136,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   }
 
   public void setSelection(int startOffset, int endOffset) {
-    validateContext();
+    validateContext(true);
 
     removeBlockSelection();
     Document doc = myEditor.getDocument();
@@ -238,7 +243,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   }
 
   public void removeSelection() {
-    validateContext();
+    validateContext(true);
     removeBlockSelection();
     myLastSelectionStart = myEditor.getCaretModel().getOffset();
     if (mySelectionMarker != null) {
@@ -363,7 +368,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   }
 
   public String getSelectedText() {
-    validateContext();
+    validateContext(false);
     if (!hasSelection() && !hasBlockSelection()) return null;
 
     CharSequence text = myEditor.getDocument().getCharsSequence();
@@ -386,10 +391,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return text.subSequence(selectionStart, selectionEnd).toString();
   }
 
-  private static void appendCharSequence(StringBuffer buf, CharSequence s, int srcOffset, int len) {
-    if (s == null){
-      s = "null";
-    }
+  private static void appendCharSequence(@NotNull StringBuffer buf, @NotNull CharSequence s, int srcOffset, int len) {
     if (srcOffset < 0 || len < 0 || srcOffset > s.length() - len) {
       throw new IndexOutOfBoundsException("srcOffset " + srcOffset + ", len " + len + ", s.length() " + s.length());
     }
@@ -404,7 +406,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
 
   public int getLeadSelectionOffset() {
-    validateContext();
+    validateContext(false);
     int caretOffset = myEditor.getCaretModel().getOffset();
     if (!hasSelection()) return caretOffset;
     int startOffset = mySelectionMarker.getStartOffset();
@@ -414,7 +416,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   }
 
   public void selectLineAtCaret() {
-    validateContext();
+    validateContext(true);
     int lineNumber = myEditor.getCaretModel().getLogicalPosition().line;
     Document document = myEditor.getDocument();
     if (lineNumber >= document.getLineCount()) {
@@ -435,7 +437,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   }
 
   public void selectWordAtCaret(boolean honorCamelWordsSettings) {
-    validateContext();
+    validateContext(true);
     removeSelection();
     final EditorSettings settings = myEditor.getSettings();
     boolean camelTemp = settings.isCamelWords();
@@ -457,7 +459,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   int getWordAtCaretStart() {
     Document document = myEditor.getDocument();
     int offset = myEditor.getCaretModel().getOffset();
-    if (offset == 0) return offset;
+    if (offset == 0) return 0;
     int lineNumber = myEditor.getCaretModel().getLogicalPosition().line;
     CharSequence text = document.getCharsSequence();
     int newOffset = offset - 1;
@@ -494,7 +496,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   }
 
   public void copySelectionToClipboard() {
-    validateContext();
+    validateContext(true);
     String s = myEditor.getSelectionModel().getSelectedText();
     if (s == null) return;
 

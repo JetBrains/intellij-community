@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 */
 class WolfHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   WolfHighlightingPass(@NotNull Project project, @NotNull Document document, @NotNull PsiFile file) {
-    super(project, document, null, DaemonBundle.message("pass.wolf"), file);
+    super(project, document, null, DaemonBundle.message("pass.wolf"), file, false);
   }
 
   protected void collectInformationWithProgress(final ProgressIndicator progress) {

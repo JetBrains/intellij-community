@@ -132,14 +132,6 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
           pass.setStartingPredecessorIds(ids.isEmpty() ? ArrayUtil.EMPTY_INT_ARRAY : ids.toNativeArray());
           pass.setId(passId);
           id2Pass.put(passId, pass);
-          if (passConfig.runIntentionsPassAfter && !(pass instanceof ProgressableTextEditorHighlightingPass.EmptyPass)) {
-            Project project = psiFile.getProject();
-            ShowIntentionsPass intentionsPass = new ShowIntentionsPass(project, editor, passId);
-            intentionsPass.setCompletionPredecessorIds(new int[]{passId});
-            int id = nextId[0]++;
-            intentionsPass.setId(id);
-            id2Pass.put(id, intentionsPass);
-          }
         }
         return true;
       }

@@ -15,6 +15,8 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
+import java.util.List;
+
 public class GotoNextErrorHandler implements CodeInsightActionHandler {
   private final boolean myGoForward;
 
@@ -33,8 +35,8 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
 
   private void gotoNextError(Project project, Editor editor, PsiFile file, int caretOffset) {
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
-    HighlightInfo[] highlights = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), severityRegistrar.getSeverityByIndex(0), project);
-    if (highlights.length == 0){
+    List<HighlightInfo> highlights = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), severityRegistrar.getSeverityByIndex(0), project);
+    if (highlights.isEmpty()){
       showMessageWhenNoHighlights(project, file, editor);
       return;
     }
@@ -43,8 +45,8 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
       for (int idx = severityRegistrar.getSeveritiesCount() - 1; idx >= 0; idx--) {
         final HighlightSeverity minSeverity = severityRegistrar.getSeverityByIndex(idx);
         if (!SeverityRegistrar.skipSeverity(minSeverity)) {
-          HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), minSeverity, project);
-          if (errors.length != 0) {
+          List<HighlightInfo> errors = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), minSeverity, project);
+          if (!errors.isEmpty()) {
             highlights = errors;
             break;
           }

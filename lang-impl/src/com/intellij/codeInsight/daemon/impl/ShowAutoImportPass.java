@@ -34,7 +34,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   private final int myEndOffset;
 
   public ShowAutoImportPass(@NotNull Project project, @NotNull final PsiFile file, @NotNull Editor editor) {
-    super(project, editor.getDocument());
+    super(project, editor.getDocument(), false);
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     myEditor = editor;

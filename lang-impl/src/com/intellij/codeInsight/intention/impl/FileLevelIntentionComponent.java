@@ -6,6 +6,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -19,8 +20,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -30,7 +29,6 @@ public class FileLevelIntentionComponent extends JPanel {
   private static final Icon ourIntentionIcon = IconLoader.getIcon("/actions/intentionBulb.png");
   private static final Icon ourQuickFixIcon = IconLoader.getIcon("/actions/quickfixBulb.png");
 
-  private final ArrayList<HighlightInfo.IntentionActionDescriptor> myIntentions;
   private final Project myProject;
   private final Editor myEditor;
 
@@ -42,16 +40,17 @@ public class FileLevelIntentionComponent extends JPanel {
     myEditor = editor;
     myProject = project;
 
-    myIntentions = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    final ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
 
     if (intentions != null) {
       for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> intention : intentions) {
-        myIntentions.add(intention.getFirst());
+        info.intentionsToShow.add(intention.getFirst());
       }
     }
 
     JLabel content =
-      new JLabel(description, SeverityRegistrar.getInstance(project).compare(severity, HighlightSeverity.ERROR) >= 0 ? ourQuickFixIcon : ourIntentionIcon, JLabel.LEADING);
+      new JLabel(description, SeverityRegistrar.getInstance(project).compare(severity, HighlightSeverity.ERROR) >= 0 ? ourQuickFixIcon : ourIntentionIcon,
+                 SwingConstants.LEADING);
     add(content, BorderLayout.WEST);
     content.setBackground(null);
     setBackground(getColor(severity));
@@ -61,11 +60,7 @@ public class FileLevelIntentionComponent extends JPanel {
         Point location = SwingUtilities.convertPoint(FileLevelIntentionComponent.this,
                                                      new Point(0, 0),
                                                      myEditor.getComponent().getRootPane().getLayeredPane());
-        IntentionHintComponent.showIntentionHint(myProject, psiFile, myEditor,
-                                                 Collections.<HighlightInfo.IntentionActionDescriptor>emptyList(),
-                                                 myIntentions, Collections.<HighlightInfo.IntentionActionDescriptor>emptyList(),
-                                                 Collections.<HighlightInfo.IntentionActionDescriptor>emptyList(),
-                                                 true, location);
+        IntentionHintComponent.showIntentionHint(myProject, psiFile, myEditor, info, true, location);
       }
     });
   }

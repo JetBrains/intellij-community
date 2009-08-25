@@ -3,7 +3,9 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.concurrency.Job;
+import com.intellij.concurrency.JobImpl;
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,12 +22,14 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,19 +38,31 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author cdr
  */
-public abstract class PassExecutorService {
+public abstract class PassExecutorService implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PassExecutorService");
 
   private final Map<ScheduledPass, Job<Void>> mySubmittedPasses = new ConcurrentHashMap<ScheduledPass, Job<Void>>();
   private final Project myProject;
   private boolean isDisposed;
+  private final AtomicInteger nextPassId = new AtomicInteger(100);
 
   public PassExecutorService(Project project) {
     myProject = project;
+    Disposer.register(project, this);
   }
 
   public void dispose() {
-    cancelAll();
+    for (Job<Void> submittedPass : mySubmittedPasses.values()) {
+      submittedPass.cancel();
+    }
+    for (Job<Void> job : mySubmittedPasses.values()) {
+      try {
+        ((JobImpl)job).waitForTermination();
+      }
+      catch (Throwable throwable) {
+        LOG.error(throwable);
+      }
+    }
     isDisposed = true;
   }
 
@@ -87,7 +103,7 @@ public abstract class PassExecutorService {
         }
         else {
           // run all passes in sequence
-          textEditorHighlightingPass = new TextEditorHighlightingPass(myProject, document) {
+          textEditorHighlightingPass = new TextEditorHighlightingPass(myProject, document, true) {
             public void doCollectInformation(ProgressIndicator progress) {
               pass.collectInformation(progress);
             }
@@ -153,14 +169,14 @@ public abstract class PassExecutorService {
     }
   }
 
-  private ScheduledPass createScheduledPass(final List<FileEditor> fileEditors,
-                                            final TextEditorHighlightingPass pass,
-                                            final Map<Pair<Document, Integer>, ScheduledPass> toBeSubmitted,
-                                            final List<TextEditorHighlightingPass> textEditorHighlightingPasses,
-                                            final List<ScheduledPass> freePasses,
-                                            final DaemonProgressIndicator updateProgress,
-                                            final AtomicInteger threadsToStartCountdown,
-                                            final int jobPriority) {
+  private ScheduledPass createScheduledPass(@NotNull List<FileEditor> fileEditors,
+                                            @NotNull TextEditorHighlightingPass pass,
+                                            @NotNull Map<Pair<Document, Integer>, ScheduledPass> toBeSubmitted,
+                                            @NotNull List<TextEditorHighlightingPass> textEditorHighlightingPasses,
+                                            @NotNull List<ScheduledPass> freePasses,
+                                            @NotNull DaemonProgressIndicator updateProgress,
+                                            @NotNull AtomicInteger threadsToStartCountdown,
+                                            int jobPriority) {
     int passId = pass.getId();
     Document document = pass.getDocument();
     Pair<Document, Integer> key = Pair.create(document, passId);
@@ -251,10 +267,10 @@ public abstract class PassExecutorService {
     private final Collection<ScheduledPass> mySuccessorsOnSubmit = new ArrayList<ScheduledPass>();
     private final DaemonProgressIndicator myUpdateProgress;
 
-    private ScheduledPass(List<FileEditor> fileEditors,
-                         TextEditorHighlightingPass pass,
-                         DaemonProgressIndicator progressIndicator,
-                         AtomicInteger threadsToStartCountdown,
+    private ScheduledPass(@NotNull List<FileEditor> fileEditors,
+                         @NotNull TextEditorHighlightingPass pass,
+                         @NotNull DaemonProgressIndicator progressIndicator,
+                         @NotNull AtomicInteger threadsToStartCountdown,
                          int jobPriority) {
       myFileEditors = fileEditors;
       myPass = pass;
@@ -292,6 +308,13 @@ public abstract class PassExecutorService {
               }
               catch (ProcessCanceledException e) {
                 log(myUpdateProgress, myPass, "Canceled ");
+
+                //Throwable throwable = e;
+                ////throwable.fillInStackTrace();
+                //StringWriter writer = new StringWriter();
+                //throwable.printStackTrace(new PrintWriter(writer));
+                //System.out.println("PCE "+myUpdateProgress.hashCode()+"; "+writer.toString().replaceAll("\n","   ").replaceAll("\r","   "));
+
                 myUpdateProgress.cancel(); //in case when some smartasses throw PCE just for fun
               }
               catch (RuntimeException e) {
@@ -363,6 +386,14 @@ public abstract class PassExecutorService {
             pass.applyInformationToEditor();
           }
           afterApplyInformationToEditor(pass, fileEditor, updateProgress);
+
+          if (pass.isRunIntentionPassAfter() && fileEditor instanceof TextEditor && !updateProgress.isCanceled()) {
+            Editor editor = ((TextEditor)fileEditor).getEditor();
+            ShowIntentionsPass ip = new ShowIntentionsPass(myProject, editor, -1);
+            ip.setId(nextPassId.incrementAndGet());
+            threadsToStartCountdown.incrementAndGet();
+            submit(new ScheduledPass(fileEditors, ip, updateProgress, threadsToStartCountdown, Job.DEFAULT_PRIORITY));
+          }
         }
       }
       catch (RuntimeException e) {

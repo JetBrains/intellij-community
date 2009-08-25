@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,10 +76,9 @@ public final class QuickFixAction {
   public static List<HighlightInfo.IntentionActionDescriptor> getAvailableActions(@NotNull Editor editor, @NotNull PsiFile file, final int passId) {
     int offset = editor.getCaretModel().getOffset();
     final Project project = file.getProject();
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    HighlightInfo[] infos = DaemonCodeAnalyzerImpl.getHighlightsAround(editor.getDocument(), project, offset);
+    List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlightsAround(editor.getDocument(), project, offset);
     int[] groups = passId == -1 ? null : new int[]{passId};
     for (HighlightInfo info : infos) {
       addAvailableActionsForGroups(info, editor, file, result, groups, offset);

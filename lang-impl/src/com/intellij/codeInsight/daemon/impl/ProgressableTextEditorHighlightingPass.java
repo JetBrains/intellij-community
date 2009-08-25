@@ -24,8 +24,8 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   protected final PsiFile myFile;
 
   protected ProgressableTextEditorHighlightingPass(final Project project, @Nullable final Document document, final Icon inProgressIcon,
-                                                   final String presentableName, @NotNull PsiFile file) {
-    super(project, document);
+                                                   final String presentableName, @NotNull PsiFile file, boolean runIntentionPassAfter) {
+    super(project, document, runIntentionPassAfter);
     myInProgressIcon = inProgressIcon;
     myPresentableName = presentableName;
     myFile = file;
@@ -78,7 +78,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
 
   public static class EmptyPass extends TextEditorHighlightingPass {
     public EmptyPass(final Project project, @Nullable final Document document, Icon icon, String text) {
-      super(project, document);
+      super(project, document, false);
     }
 
     public void doCollectInformation(final ProgressIndicator progress) {

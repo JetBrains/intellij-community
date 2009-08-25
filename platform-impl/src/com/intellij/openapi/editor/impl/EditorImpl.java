@@ -85,10 +85,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
   private final DocumentImpl myDocument;
 
-  private JPanel myPanel;
-  private JScrollPane myScrollPane;
-  private EditorComponentImpl myEditorComponent;
-  private EditorGutterComponentImpl myGutterComponent;
+  private final JPanel myPanel;
+  private final JScrollPane myScrollPane;
+  private final EditorComponentImpl myEditorComponent;
+  private final EditorGutterComponentImpl myGutterComponent;
 
   static {
     @SuppressWarnings({"UnusedDeclaration"})
@@ -96,7 +96,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private final CommandProcessor myCommandProcessor;
-  private MyScrollBar myVerticalScrollBar;
+  private final MyScrollBar myVerticalScrollBar;
 
   private final CopyOnWriteArrayList<EditorMouseListener> myMouseListeners = ContainerUtil.createEmptyCOWList();
   private final CopyOnWriteArrayList<EditorMouseMotionListener> myMouseMotionListeners;
@@ -190,7 +190,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private Color myLastBackgroundColor = null;
   private int myLastBackgroundWidth;
   private static final boolean ourIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-  private JPanel myHeaderPanel;
+  private final JPanel myHeaderPanel;
 
   private MouseEvent myInitialMouseEvent;
   private boolean myIgnoreMouseEventsConsecutiveToInitial;
@@ -264,6 +264,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     EditorHighlighter highlighter = new EmptyEditorHighlighter(myScheme.getAttributes(HighlighterColors.TEXT));
     setHighlighter(highlighter);
 
+    myEditorComponent = new EditorComponentImpl(this);
+    myScrollPane = new MyScrollPane();
+    myPanel = new JPanel() {
+      public void addNotify() {
+        super.addNotify();
+        if (((JComponent)getParent()).getBorder() != null) myScrollPane.setBorder(null);
+      }
+    };
+
+    myHeaderPanel = new MyHeaderPanel();
+    myVerticalScrollBar = new MyScrollBar(Adjustable.VERTICAL);
+    myGutterComponent = new EditorGutterComponentImpl(this);
     initComponent();
 
     myScrollingModel = new ScrollingModelImpl(this);
@@ -352,7 +364,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   public EditorSettings getSettings() {
-    assertIsDispatchThread();
+    assertReadAccess();
     return mySettings;
   }
 
@@ -429,58 +441,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void initComponent() {
-    myEditorComponent = new EditorComponentImpl(this);
 //    myStatusBar = new EditorStatusBarImpl();
-
-    myScrollPane = new JScrollPane2() {
-      protected void processMouseWheelEvent(MouseWheelEvent e) {
-        if (mySettings.isWheelFontChangeEnabled()) {
-          boolean changeFontSize = SystemInfo.isMac
-                                   ? !e.isControlDown() && e.isMetaDown() && !e.isAltDown() && !e.isShiftDown()
-                                   : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
-          if (changeFontSize) {
-            setFontSize(myScheme.getEditorFontSize() + e.getWheelRotation());
-            return;
-          }
-        }
-
-        super.processMouseWheelEvent(e);
-      }
-    };
-    myPanel = new JPanel() {
-      public void addNotify() {
-        super.addNotify();
-        if (((JComponent)getParent()).getBorder() != null) myScrollPane.setBorder(null);
-      }
-    };
 
     //myPanel.setLayout(new BoxLayout(myPanel, BoxLayout.Y_AXIS));
     myPanel.setLayout(new BorderLayout());
-    myHeaderPanel = new JPanel(new BorderLayout()) {
-      private int myOldHeight = 0;
-
-      public void revalidate() {
-        myOldHeight = getHeight();
-        super.revalidate();
-      }
-
-      protected void validateTree() {
-        int height = myOldHeight;
-        super.validateTree();
-        height -= getHeight();
-
-        if (height != 0) {
-          myVerticalScrollBar.setValue(myVerticalScrollBar.getValue() - height);
-        }
-        myOldHeight = getHeight();
-      }
-    };
 
     myPanel.add(myHeaderPanel, BorderLayout.NORTH);
 
-    myVerticalScrollBar = new MyScrollBar(Adjustable.VERTICAL);
-
-    myGutterComponent = new EditorGutterComponentImpl(this);
     myGutterComponent.setOpaque(true);
 
     myScrollPane.setVerticalScrollBar(myVerticalScrollBar);
@@ -1589,8 +1556,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private boolean paintSelection() {
-    if (!isOneLineMode()) return true;
-    return IJSwingUtilities.hasFocus(getContentComponent());
+    return !isOneLineMode() || IJSwingUtilities.hasFocus(getContentComponent());
   }
 
   private class CachedFontContent {
@@ -1963,7 +1929,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public int getLineHeight() {
     if (myLineHeight != -1) return myLineHeight;
 
-    assertIsDispatchThread();
+    assertReadAccess();
 
     FontMetrics fontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.PLAIN));
     myLineHeight = (int)(fontMetrics.getHeight() * (isOneLineMode() ? 1 : myScheme.getLineSpacing()));
@@ -2053,7 +2019,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    assertIsDispatchThread();
+    assertReadAccess();
     if (myDocument.getLineCount() == 0) return 0;
 
     if (pos.line < 0) throw new IndexOutOfBoundsException("Wrong line: " + pos.line);
@@ -2078,7 +2044,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int getLastColumnNumber() {
-    assertIsDispatchThread();
+    assertReadAccess();
     return myLastColumnNumber;
   }
 
@@ -2090,7 +2056,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos) {
-    assertIsDispatchThread();
+    assertReadAccess();
     if (!myFoldingModel.isFoldingEnabled()) return new VisualPosition(logicalPos.line, logicalPos.column);
 
     int offset = logicalPositionToOffset(logicalPos);
@@ -2199,7 +2165,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos) {
-    assertIsDispatchThread();
+    assertReadAccess();
     if (!myFoldingModel.isFoldingEnabled()) return new LogicalPosition(visiblePos.line, visiblePos.column);
 
     int line = visiblePos.line;
@@ -2288,205 +2254,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     LogicalPosition pos1 = new LogicalPosition(lineNumber, columnNumber);
     getCaretModel().moveToLogicalPosition(pos1);
-  }
-
-  private void runMousePressedCommand(final MouseEvent e) {
-    myMousePressedEvent = e;
-    EditorMouseEvent event = new EditorMouseEvent(this, e, getMouseEventArea(e));
-
-    for (EditorMouseListener mouseListener : myMouseListeners) {
-      mouseListener.mousePressed(event);
-    }
-
-    // On some systems (for example on Linux) popup trigger is MOUSE_PRESSED event.
-    // But this trigger is always consumed by popup handler. In that case we have to
-    // also move caret.
-    if (event.isConsumed() && !(event.getMouseEvent().isPopupTrigger() || event.getArea() == EditorMouseEventArea.EDITING_AREA)) {
-      return;
-    }
-
-    if (myCommandProcessor != null) {
-      Runnable runnable = new Runnable() {
-        public void run() {
-          processMousePressed(e);
-        }
-      };
-      myCommandProcessor.executeCommand(myProject, runnable, "", CommandProcessor.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument());
-    }
-    else {
-      processMousePressed(e);
-    }
-  }
-
-  private void runMouseClickedCommand(final MouseEvent e) {
-    EditorMouseEvent event = new EditorMouseEvent(this, e, getMouseEventArea(e));
-    for (EditorMouseListener listener : myMouseListeners) {
-      listener.mouseClicked(event);
-      if (event.isConsumed()) {
-        e.consume();
-        return;
-      }
-    }
-  }
-
-  private void runMouseReleasedCommand(final MouseEvent e) {
-    myScrollingTimer.stop();
-    EditorMouseEvent event = new EditorMouseEvent(this, e, getMouseEventArea(e));
-    for (EditorMouseListener listener : myMouseListeners) {
-      listener.mouseReleased(event);
-      if (event.isConsumed()) {
-        e.consume();
-        return;
-      }
-    }
-
-    if (myCommandProcessor != null) {
-      Runnable runnable = new Runnable() {
-        public void run() {
-          processMouseReleased(e);
-        }
-      };
-      myCommandProcessor.executeCommand(myProject, runnable, "", CommandProcessor.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument());
-    }
-    else {
-      processMouseReleased(e);
-    }
-  }
-
-  private void runMouseEnteredCommand(MouseEvent e) {
-    EditorMouseEvent event = new EditorMouseEvent(this, e, getMouseEventArea(e));
-    for (EditorMouseListener listener : myMouseListeners) {
-      listener.mouseEntered(event);
-      if (event.isConsumed()) {
-        e.consume();
-        return;
-      }
-    }
-  }
-
-  private void runMouseExitedCommand(MouseEvent e) {
-    EditorMouseEvent event = new EditorMouseEvent(this, e, getMouseEventArea(e));
-    for (EditorMouseListener listener : myMouseListeners) {
-      listener.mouseExited(event);
-      if (event.isConsumed()) {
-        e.consume();
-        return;
-      }
-    }
-  }
-
-  private void processMousePressed(MouseEvent e) {
-    myInitialMouseEvent = e;
-
-    if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE && System.currentTimeMillis() - myMouseSelectionChangeTimestamp > 1000) {
-      setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
-    }
-
-    int x = e.getX();
-    int y = e.getY();
-
-    if (x < 0) x = 0;
-    if (y < 0) y = 0;
-
-    final EditorMouseEventArea eventArea = getMouseEventArea(e);
-    if (eventArea == EditorMouseEventArea.FOLDING_OUTLINE_AREA) {
-      final FoldRegion range = myGutterComponent.findFoldingAnchorAt(x, y);
-      if (range != null) {
-        final boolean expansion = !range.isExpanded();
-
-        int scrollShift = y - getScrollingModel().getVerticalScrollOffset();
-        Runnable processor = new Runnable() {
-          public void run() {
-            myFoldingModel.flushCaretShift();
-            range.setExpanded(expansion);
-          }
-        };
-        getFoldingModel().runBatchFoldingOperation(processor);
-        y = myGutterComponent.getHeadCenterY(range);
-        getScrollingModel().scrollVertically(y - scrollShift);
-        return;
-      }
-    }
-
-    if (e.getSource() == myGutterComponent) {
-      if (eventArea == EditorMouseEventArea.LINE_MARKERS_AREA || eventArea == EditorMouseEventArea.ANNOTATIONS_AREA || eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA) {
-        myGutterComponent.mousePressed(e);
-        if (e.isConsumed()) return;
-      }
-      x = 0;
-    }
-
-    int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
-    moveCaretToScreenPos(x, y);
-
-    if (e.isPopupTrigger()) return;
-
-    requestFocus();
-
-    int caretOffset = getCaretModel().getOffset();
-
-    myMouseSelectedRegion = myFoldingModel.getFoldingPlaceholderAt(new Point(x, y));
-    myMousePressedInsideSelection = mySelectionModel.hasSelection() && caretOffset >= mySelectionModel.getSelectionStart() &&
-                                    caretOffset <= mySelectionModel.getSelectionEnd();
-
-    if (!myMousePressedInsideSelection && mySelectionModel.hasBlockSelection()) {
-      int[] starts = mySelectionModel.getBlockSelectionStarts();
-      int[] ends = mySelectionModel.getBlockSelectionEnds();
-      for (int i = 0; i < starts.length; i++) {
-        if (caretOffset >= starts[i] && caretOffset < ends[i]) {
-          myMousePressedInsideSelection = true;
-          break;
-        }
-      }
-    }
-
-    if (getMouseEventArea(e) == EditorMouseEventArea.LINE_NUMBERS_AREA && e.getClickCount() == 1) {
-      mySelectionModel.selectLineAtCaret();
-      setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);
-      mySavedSelectionStart = mySelectionModel.getSelectionStart();
-      mySavedSelectionEnd = mySelectionModel.getSelectionEnd();
-      return;
-    }
-
-    if (e.isShiftDown() && !e.isControlDown() && !e.isAltDown()) {
-      if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
-        if (caretOffset < mySavedSelectionStart) {
-          mySelectionModel.setSelection(mySavedSelectionEnd, caretOffset);
-        }
-        else {
-          mySelectionModel.setSelection(mySavedSelectionStart, caretOffset);
-        }
-      }
-      else {
-        mySelectionModel.setSelection(oldSelectionStart, caretOffset);
-      }
-    }
-    else {
-      if (!myMousePressedInsideSelection && (getSelectionModel().hasSelection() || getSelectionModel().hasBlockSelection())) {
-        setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
-        mySelectionModel.setSelection(caretOffset, caretOffset);
-      }
-      else {
-        if (!e.isPopupTrigger()) {
-          switch (e.getClickCount()) {
-            case 2:
-              mySelectionModel.selectWordAtCaret(mySettings.isMouseClickSelectionHonorsCamelWords());
-              setMouseSelectionState(MOUSE_SELECTION_STATE_WORD_SELECTED);
-              mySavedSelectionStart = mySelectionModel.getSelectionStart();
-              mySavedSelectionEnd = mySelectionModel.getSelectionEnd();
-              getCaretModel().moveToOffset(mySavedSelectionEnd);
-              break;
-
-            case 3:
-              mySelectionModel.selectLineAtCaret();
-              setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);
-              mySavedSelectionStart = mySelectionModel.getSelectionStart();
-              mySavedSelectionEnd = mySelectionModel.getSelectionEnd();
-              break;
-          }
-        }
-      }
-    }
   }
 
   private boolean checkIgnore(MouseEvent e, boolean isFinalCheck) {
@@ -3233,12 +3000,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   public EditorColorsScheme getColorsScheme() {
-    assertIsDispatchThread();
+    assertReadAccess();
     return myScheme;
   }
 
   void assertIsDispatchThread() {
     ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(myEditorComponent);
+  }
+  private static void assertReadAccess() {
+    ApplicationManagerEx.getApplicationEx().assertReadAccessAllowed();
   }
 
   public void setVerticalScrollbarOrientation(int type) {
@@ -3683,6 +3453,204 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       TooltipController.getInstance().cancelTooltip(FOLDING_TOOLTIP_GROUP);
+    }
+    private void runMousePressedCommand(final MouseEvent e) {
+      myMousePressedEvent = e;
+      EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
+
+      for (EditorMouseListener mouseListener : myMouseListeners) {
+        mouseListener.mousePressed(event);
+      }
+
+      // On some systems (for example on Linux) popup trigger is MOUSE_PRESSED event.
+      // But this trigger is always consumed by popup handler. In that case we have to
+      // also move caret.
+      if (event.isConsumed() && !(event.getMouseEvent().isPopupTrigger() || event.getArea() == EditorMouseEventArea.EDITING_AREA)) {
+        return;
+      }
+
+      if (myCommandProcessor != null) {
+        Runnable runnable = new Runnable() {
+          public void run() {
+            processMousePressed(e);
+          }
+        };
+        myCommandProcessor.executeCommand(myProject, runnable, "", CommandProcessor.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument());
+      }
+      else {
+        processMousePressed(e);
+      }
+    }
+
+    private void runMouseClickedCommand(final MouseEvent e) {
+      EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
+      for (EditorMouseListener listener : myMouseListeners) {
+        listener.mouseClicked(event);
+        if (event.isConsumed()) {
+          e.consume();
+          return;
+        }
+      }
+    }
+
+    private void runMouseReleasedCommand(final MouseEvent e) {
+      myScrollingTimer.stop();
+      EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
+      for (EditorMouseListener listener : myMouseListeners) {
+        listener.mouseReleased(event);
+        if (event.isConsumed()) {
+          e.consume();
+          return;
+        }
+      }
+
+      if (myCommandProcessor != null) {
+        Runnable runnable = new Runnable() {
+          public void run() {
+            processMouseReleased(e);
+          }
+        };
+        myCommandProcessor.executeCommand(myProject, runnable, "", CommandProcessor.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument());
+      }
+      else {
+        processMouseReleased(e);
+      }
+    }
+
+    private void runMouseEnteredCommand(MouseEvent e) {
+      EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
+      for (EditorMouseListener listener : myMouseListeners) {
+        listener.mouseEntered(event);
+        if (event.isConsumed()) {
+          e.consume();
+          return;
+        }
+      }
+    }
+
+    private void runMouseExitedCommand(MouseEvent e) {
+      EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
+      for (EditorMouseListener listener : myMouseListeners) {
+        listener.mouseExited(event);
+        if (event.isConsumed()) {
+          e.consume();
+          return;
+        }
+      }
+    }
+
+    private void processMousePressed(MouseEvent e) {
+      myInitialMouseEvent = e;
+
+      if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE && System.currentTimeMillis() - myMouseSelectionChangeTimestamp > 1000) {
+        setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
+      }
+
+      int x = e.getX();
+      int y = e.getY();
+
+      if (x < 0) x = 0;
+      if (y < 0) y = 0;
+
+      final EditorMouseEventArea eventArea = getMouseEventArea(e);
+      if (eventArea == EditorMouseEventArea.FOLDING_OUTLINE_AREA) {
+        final FoldRegion range = myGutterComponent.findFoldingAnchorAt(x, y);
+        if (range != null) {
+          final boolean expansion = !range.isExpanded();
+
+          int scrollShift = y - getScrollingModel().getVerticalScrollOffset();
+          Runnable processor = new Runnable() {
+            public void run() {
+              myFoldingModel.flushCaretShift();
+              range.setExpanded(expansion);
+            }
+          };
+          getFoldingModel().runBatchFoldingOperation(processor);
+          y = myGutterComponent.getHeadCenterY(range);
+          getScrollingModel().scrollVertically(y - scrollShift);
+          return;
+        }
+      }
+
+      if (e.getSource() == myGutterComponent) {
+        if (eventArea == EditorMouseEventArea.LINE_MARKERS_AREA || eventArea == EditorMouseEventArea.ANNOTATIONS_AREA || eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA) {
+          myGutterComponent.mousePressed(e);
+          if (e.isConsumed()) return;
+        }
+        x = 0;
+      }
+
+      int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
+      moveCaretToScreenPos(x, y);
+
+      if (e.isPopupTrigger()) return;
+
+      requestFocus();
+
+      int caretOffset = getCaretModel().getOffset();
+
+      myMouseSelectedRegion = myFoldingModel.getFoldingPlaceholderAt(new Point(x, y));
+      myMousePressedInsideSelection = mySelectionModel.hasSelection() && caretOffset >= mySelectionModel.getSelectionStart() &&
+                                      caretOffset <= mySelectionModel.getSelectionEnd();
+
+      if (!myMousePressedInsideSelection && mySelectionModel.hasBlockSelection()) {
+        int[] starts = mySelectionModel.getBlockSelectionStarts();
+        int[] ends = mySelectionModel.getBlockSelectionEnds();
+        for (int i = 0; i < starts.length; i++) {
+          if (caretOffset >= starts[i] && caretOffset < ends[i]) {
+            myMousePressedInsideSelection = true;
+            break;
+          }
+        }
+      }
+
+      if (getMouseEventArea(e) == EditorMouseEventArea.LINE_NUMBERS_AREA && e.getClickCount() == 1) {
+        mySelectionModel.selectLineAtCaret();
+        setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);
+        mySavedSelectionStart = mySelectionModel.getSelectionStart();
+        mySavedSelectionEnd = mySelectionModel.getSelectionEnd();
+        return;
+      }
+
+      if (e.isShiftDown() && !e.isControlDown() && !e.isAltDown()) {
+        if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
+          if (caretOffset < mySavedSelectionStart) {
+            mySelectionModel.setSelection(mySavedSelectionEnd, caretOffset);
+          }
+          else {
+            mySelectionModel.setSelection(mySavedSelectionStart, caretOffset);
+          }
+        }
+        else {
+          mySelectionModel.setSelection(oldSelectionStart, caretOffset);
+        }
+      }
+      else {
+        if (!myMousePressedInsideSelection && (getSelectionModel().hasSelection() || getSelectionModel().hasBlockSelection())) {
+          setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
+          mySelectionModel.setSelection(caretOffset, caretOffset);
+        }
+        else {
+          if (!e.isPopupTrigger()) {
+            switch (e.getClickCount()) {
+              case 2:
+                mySelectionModel.selectWordAtCaret(mySettings.isMouseClickSelectionHonorsCamelWords());
+                setMouseSelectionState(MOUSE_SELECTION_STATE_WORD_SELECTED);
+                mySavedSelectionStart = mySelectionModel.getSelectionStart();
+                mySavedSelectionEnd = mySelectionModel.getSelectionEnd();
+                getCaretModel().moveToOffset(mySavedSelectionEnd);
+                break;
+
+              case 3:
+                mySelectionModel.selectLineAtCaret();
+                setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);
+                mySavedSelectionStart = mySelectionModel.getSelectionStart();
+                mySavedSelectionEnd = mySelectionModel.getSelectionEnd();
+                break;
+            }
+          }
+        }
+      }
     }
   }
 
@@ -4241,5 +4209,45 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void putInfo(Map<String, String> info) {
     final VisualPosition visual = getCaretModel().getVisualPosition();
     info.put("caret", visual.getLine() + ":" + visual.getColumn());
+  }
+
+  private class MyScrollPane extends JScrollPane2 {
+    protected void processMouseWheelEvent(MouseWheelEvent e) {
+      if (mySettings.isWheelFontChangeEnabled()) {
+        boolean changeFontSize = SystemInfo.isMac
+                                 ? !e.isControlDown() && e.isMetaDown() && !e.isAltDown() && !e.isShiftDown()
+                                 : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
+        if (changeFontSize) {
+          setFontSize(myScheme.getEditorFontSize() + e.getWheelRotation());
+          return;
+        }
+      }
+
+      super.processMouseWheelEvent(e);
+    }
+  }
+
+  private class MyHeaderPanel extends JPanel {
+    private int myOldHeight = 0;
+
+    private MyHeaderPanel() {
+      super(new BorderLayout());
+    }
+
+    public void revalidate() {
+      myOldHeight = getHeight();
+      super.revalidate();
+    }
+
+    protected void validateTree() {
+      int height = myOldHeight;
+      super.validateTree();
+      height -= getHeight();
+
+      if (height != 0) {
+        myVerticalScrollBar.setValue(myVerticalScrollBar.getValue() - height);
+      }
+      myOldHeight = getHeight();
+    }
   }
 }

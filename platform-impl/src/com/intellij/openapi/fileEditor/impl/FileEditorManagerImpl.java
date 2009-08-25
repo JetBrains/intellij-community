@@ -41,7 +41,6 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -55,7 +54,9 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -139,7 +140,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public JComponent getPreferredFocusedComponent() {
-    assertDispatchThread();
+    assertReadAccess();
     final EditorWindow window = getSplitters().getCurrentWindow();
     if (window != null) {
       final EditorWithProviderComposite editor = window.getSelectedEditor();
@@ -766,7 +767,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public Editor getSelectedTextEditor() {
-    assertDispatchThread();
+    assertReadAccess();
 
     final EditorWindow currentWindow = getSplitters().getCurrentWindow();
     if (currentWindow != null) {
@@ -823,7 +824,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   @NotNull
   public Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull final VirtualFile file) {
-    assertDispatchThread();
+    assertReadAccess();
 
     final EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
     if (composite != null) {
@@ -841,7 +842,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   @NotNull
   public FileEditor[] getEditors(@NotNull VirtualFile file) {
-    assertDispatchThread();
+    assertReadAccess();
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
 
     final EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
@@ -874,7 +875,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   @NotNull
   public FileEditor[] getAllEditors() {
-    assertDispatchThread();
+    assertReadAccess();
     final ArrayList<FileEditor> result = new ArrayList<FileEditor>();
     final EditorWithProviderComposite[] editorsComposites = getSplitters().getEditorsComposites();
     for (EditorWithProviderComposite editorsComposite : editorsComposites) {
@@ -1044,6 +1045,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   private static void assertDispatchThread() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+  }
+  private static void assertReadAccess() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
   }
 
   public void fireSelectionChanged(final EditorComposite oldSelectedComposite, final EditorComposite newSelectedComposite) {

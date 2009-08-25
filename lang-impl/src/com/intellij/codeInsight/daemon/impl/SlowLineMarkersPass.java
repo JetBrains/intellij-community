@@ -30,7 +30,7 @@ public class SlowLineMarkersPass extends TextEditorHighlightingPass implements L
   private volatile Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
 
   public SlowLineMarkersPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Document document, int startOffset, int endOffset) {
-    super(project, document);
+    super(project, document, false);
     myFile = file;
     myStartOffset = startOffset;
     myEndOffset = endOffset;

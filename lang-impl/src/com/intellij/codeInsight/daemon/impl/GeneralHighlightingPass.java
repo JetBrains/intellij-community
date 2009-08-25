@@ -86,7 +86,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                  int startOffset,
                                  int endOffset,
                                  boolean updateAll) {
-    super(project, document, IN_PROGRESS_ICON, PRESENTABLE_NAME, file);
+    super(project, document, IN_PROGRESS_ICON, PRESENTABLE_NAME, file, true);
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myUpdateAll = updateAll;
@@ -562,8 +562,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     List<Problem> problems = convertToProblems(getHighlights(), file, myHasErrorElement);
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
 
-    HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(getDocument(), HighlightSeverity.ERROR, project);
-    if (errors.length == 0 || isWholeFileHighlighting()) {
+    List<HighlightInfo> errors = DaemonCodeAnalyzerImpl.getHighlights(getDocument(), HighlightSeverity.ERROR, project);
+    if (errors.isEmpty() || isWholeFileHighlighting()) {
       wolf.reportProblems(file, problems);
     }
     else {

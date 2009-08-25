@@ -43,7 +43,8 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
                          int startOffset,
                          int endOffset,
                          boolean updateAll) {
-    super(project, document, GeneralHighlightingPass.IN_PROGRESS_ICON, GeneralHighlightingPass.PRESENTABLE_NAME, file);
+    super(project, document, GeneralHighlightingPass.IN_PROGRESS_ICON, GeneralHighlightingPass.PRESENTABLE_NAME, file,
+          false);
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myUpdateAll = updateAll;

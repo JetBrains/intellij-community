@@ -42,7 +42,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   private static final HighlightInfoType ourWriteHighlightInfoType = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, EditorColors.WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES);
 
   protected IdentifierHighlighterPass(final Project project, final PsiFile file, final Editor editor) {
-    super(project, editor.getDocument());
+    super(project, editor.getDocument(), false);
     myFile = file;
     myEditor = editor;
     myCaretOffset = myEditor.getCaretModel().getOffset();

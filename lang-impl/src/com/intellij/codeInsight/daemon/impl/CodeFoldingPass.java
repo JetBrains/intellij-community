@@ -19,7 +19,7 @@ class CodeFoldingPass extends TextEditorHighlightingPass implements DumbAware {
   private final PsiFile myFile;
 
   CodeFoldingPass(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    super(project, editor.getDocument());
+    super(project, editor.getDocument(), false);
     myEditor = editor;
     myFile = file;
   }

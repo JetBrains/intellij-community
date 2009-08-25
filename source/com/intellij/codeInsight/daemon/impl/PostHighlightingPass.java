@@ -92,7 +92,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
                                @NotNull Document document,
                                int startOffset,
                                int endOffset) {
-    super(project, document);
+    super(project, document, true);
     myFile = file;
     myEditor = editor;
     myStartOffset = startOffset;
@@ -630,9 +630,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (file == null || !codeAnalyzer.isHighlightingAvailable(file) || !(file instanceof PsiJavaFile) || file instanceof JspFile) return false;
 
     if (!codeAnalyzer.isErrorAnalyzingFinished(file)) return false;
-    HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
+    List<HighlightInfo> errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
 
-    return errors.length == 0 && codeAnalyzer.canChangeFileSilently(myFile);
+    return errors.isEmpty() && codeAnalyzer.canChangeFileSilently(myFile);
   }
 
   private static boolean isIntentionalPrivateConstructor(PsiMethod method, PsiClass containingClass) {

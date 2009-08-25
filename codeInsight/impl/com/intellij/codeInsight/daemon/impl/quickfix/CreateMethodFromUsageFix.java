@@ -70,11 +70,11 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     if (document == null) return true;
 
     PsiExpressionList argumentList = call.getArgumentList();
-    HighlightInfo[] errorsInArgList = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.ERROR, project,
+    List<HighlightInfo> errorsInArgList = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.ERROR, project,
                                                                            //strictly inside arg list
                                                                       argumentList.getTextRange().getStartOffset()+1,
                                                                       argumentList.getTextRange().getEndOffset()-1);
-    return errorsInArgList.length != 0;
+    return !errorsInArgList.isEmpty();
   }
 
   protected PsiElement getElement() {
