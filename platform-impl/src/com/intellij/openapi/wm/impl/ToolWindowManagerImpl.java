@@ -37,7 +37,6 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -629,6 +628,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public void hideToolWindow(final String id, final boolean hideSide) {
+    hideToolWindow(id, hideSide, true);
+  }
+
+  public void hideToolWindow(final String id, final boolean hideSide, final boolean moveFocus) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     checkId(id);
     final WindowInfoImpl info = getInfo(id);
@@ -690,7 +693,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       // window stack is enabled.
 
       myActiveStack.remove(id, false); // hidden window should be at the top of stack
-      if (wasActive) {
+      if (wasActive && moveFocus) {
         if (myActiveStack.isEmpty()) {
           activateEditorComponentImpl(commandList, false);
         }

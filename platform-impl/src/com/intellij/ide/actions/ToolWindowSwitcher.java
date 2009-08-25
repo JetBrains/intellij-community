@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleTextAttributes;
@@ -308,8 +309,13 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
           pack();
         }
       } else if (value instanceof ToolWindow) {
-        ToolWindow toolWindow = (ToolWindow)value;
-        toolWindow.hide(null);
+        final ToolWindow toolWindow = (ToolWindow)value;
+        if (twManager instanceof ToolWindowManagerImpl) {
+          ToolWindowManagerImpl manager = (ToolWindowManagerImpl)twManager;
+          manager.hideToolWindow(ids.get(toolWindow), false, false);
+        } else {
+          toolWindow.hide(null);
+        }
       }
     }
 
