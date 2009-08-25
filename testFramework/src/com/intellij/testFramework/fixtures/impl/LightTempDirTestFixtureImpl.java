@@ -6,7 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +18,16 @@ import java.util.List;
  * @author yole
  */
 public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirTestFixture {
+  private final VirtualFile mySourceRoot;
+
+  public LightTempDirTestFixtureImpl() {
+    mySourceRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
+  }
+
+  public LightTempDirTestFixtureImpl(VirtualFile sourceRoot) {
+    mySourceRoot = sourceRoot;
+  }
+
   public VirtualFile copyFile(final VirtualFile file, String targetPath) {
     int pos = targetPath.lastIndexOf('/');
     final String path = pos < 0 ? "" : targetPath.substring(0, pos);
@@ -38,7 +48,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
   public VirtualFile findOrCreateDir(final String path) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {
-        VirtualFile root = LightPlatformTestCase.getSourceRoot();
+        VirtualFile root = mySourceRoot;
         if (path.length() == 0) return root;
         String trimPath = StringUtil.trimStart(path, "/");
         final List<String> dirs = StringUtil.split(trimPath, "/");
@@ -67,7 +77,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
         final VirtualFile from = LocalFileSystem.getInstance().refreshAndFindFileByPath(dataDir);
         assert from != null: "Cannot find testdata directory " + dataDir;
         try {
-          VirtualFile tempDir = LightPlatformTestCase.getSourceRoot();
+          VirtualFile tempDir = mySourceRoot;
           if (targetDir.length() > 0) {
             tempDir = findOrCreateChildDir(tempDir, targetDir);
           }
@@ -105,7 +115,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
   }
 
   public VirtualFile getFile(@NonNls String path) {
-    return LightPlatformTestCase.getSourceRoot().findFileByRelativePath(path);
+    return mySourceRoot.findFileByRelativePath(path);
   }
 
   @NotNull
@@ -139,5 +149,21 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
       }
     });
     return file;
+  }
+
+  public void deleteAll() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final VirtualFile[] children = mySourceRoot.getChildren();
+        for (VirtualFile child : children) {
+          try {
+            child.delete(this);
+          }
+          catch (IOException e) {
+            // ignore
+          }
+        }
+      }
+    });
   }
 }

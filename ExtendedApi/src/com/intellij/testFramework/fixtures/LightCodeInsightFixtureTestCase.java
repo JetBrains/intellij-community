@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.psi.*;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,8 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl());
+    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
+                                                                                    new LightTempDirTestFixtureImpl(LightPlatformTestCase.getSourceRoot()));
 
     myFixture.setUp();
     myFixture.setTestDataPath(getTestDataPath());

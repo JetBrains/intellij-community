@@ -25,14 +25,14 @@ public class FileIndexImplUtil {
   }
 
   public static boolean iterateRecursively(VirtualFile root, VirtualFileFilter filter, ContentIterator iterator){
-    if (!filter.accept(root)) return true;
+    if (!root.isValid() || !filter.accept(root)) return true;
 
     if (!iterator.processFile(root)) return false;
 
     if (root.isDirectory()){
       VirtualFile[] children = root.getChildren();
-      for (VirtualFile aChildren : children) {
-        if (!iterateRecursively(aChildren, filter, iterator)) return false;
+      for (VirtualFile child : children) {
+        if (!iterateRecursively(child, filter, iterator)) return false;
       }
     }
 
