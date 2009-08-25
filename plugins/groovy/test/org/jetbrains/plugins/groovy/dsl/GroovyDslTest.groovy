@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.psi.PsiFile;
 
 /**
  * @author peter
@@ -24,18 +25,23 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/svnPlugins/groovy/testdata/groovy/dsl";
+    "/svnPlugins/groovy/testdata/groovy/dsl"
   }
 
-  public void testCompleteMethod() throws Throwable { doTest(); }
-  public void testCompleteProperty() throws Throwable { doTest(); }
+  public void testCompleteMethod() throws Throwable { doTest() }
+  public void testCompleteProperty() throws Throwable { doTest() }
 
   public void testCompleteClassMethod() throws Throwable {
-    myFixture.addFileToProject("stringEnhancer.gdsl", "enhanceClass(className:\"java.lang.String\") { method name:\"zzz\", type:\"void\", params:[:] }");
-    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+    final PsiFile file = myFixture.addFileToProject("stringEnhancer.gdsl", """
+enhanceClass(className:"java.lang.String") { 
+  method name:"zzz", type:"void", params:[:]
+}
+""");
+    GroovyDslFileIndex.activateFile(file.virtualFile)
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy")
   }
 
   private void doTest() throws Throwable {
-    myFixture.testCompletion(getTestName(false) + ".gdsl", getTestName(false) + "_after.gdsl");
+    myFixture.testCompletion(getTestName(false) + ".gdsl", getTestName(false) + "_after.gdsl")
   }
 }
