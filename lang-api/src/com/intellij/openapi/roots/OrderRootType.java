@@ -17,7 +17,6 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -32,66 +31,38 @@ import java.util.List;
  */
 public class OrderRootType {
   private final String myName;
-  private final String mySdkRootName;
-  private final String myModulePathsName;
-  private final String myOldSdkRootName;
-  private static OrderRootType[] ourPersistentOrderRootTypes = new OrderRootType[0];
   private static boolean ourExtensionsLoaded = false;
 
   public static final ExtensionPointName<OrderRootType> EP_NAME = ExtensionPointName.create("com.intellij.orderRootType");
 
-  protected OrderRootType(@NonNls String name, @NonNls String sdkRootName, @NonNls String modulePathsName, @NonNls final String oldSdkRootName,
-                          boolean persistent) {
+  protected static PersistentOrderRootType[] ourPersistentOrderRootTypes = new PersistentOrderRootType[0];
+
+  protected OrderRootType(@NonNls String name) {
     myName = name;
-    mySdkRootName = sdkRootName;
-    myModulePathsName = modulePathsName;
-    myOldSdkRootName = oldSdkRootName;
-    if (persistent) {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ourPersistentOrderRootTypes = ArrayUtil.append(ourPersistentOrderRootTypes, this);
-    }
   }
 
   /**
    * Classpath.
    */
-  public static final OrderRootType CLASSES_AND_OUTPUT = new OrderRootType("CLASSES_AND_OUTPUT", null, null, null, false);
+  public static final OrderRootType CLASSES_AND_OUTPUT = new OrderRootType("CLASSES_AND_OUTPUT");
 
   /**
    * Classpath for compilation
    */
-  public static final OrderRootType COMPILATION_CLASSES = new OrderRootType("COMPILATION_CLASSES", null, null, null, false);
+  public static final OrderRootType COMPILATION_CLASSES = new OrderRootType("COMPILATION_CLASSES");
 
   /**
    * Classpath without output directories for this module.
    */
-  public static final OrderRootType CLASSES = new OrderRootType("CLASSES", "classPath", null, "classPathEntry", true);
+  public static final OrderRootType CLASSES = new PersistentOrderRootType("CLASSES", "classPath", null, "classPathEntry");
 
   /**
    * Sources.
    */
-  public static final OrderRootType SOURCES = new OrderRootType("SOURCES", "sourcePath", null, "sourcePathEntry", true);
+  public static final OrderRootType SOURCES = new PersistentOrderRootType("SOURCES", "sourcePath", null, "sourcePathEntry");
 
   public String name() {
     return myName;
-  }
-
-  /**
-   * Element name used for storing roots of this type in JDK and library definitions.
-   */
-  public String getSdkRootName() {
-    return mySdkRootName;
-  }
-
-  public String getOldSdkRootName() {
-    return myOldSdkRootName;
-  }
-
-  /**
-   * Element name used for storing roots of this type in module definitions.
-   */
-  public String getModulePathsName() {
-    return myModulePathsName;
   }
 
   /**
@@ -112,6 +83,10 @@ public class OrderRootType {
   }
 
   public static synchronized OrderRootType[] getAllTypes() {
+    return getAllPersistentTypes();
+  }
+
+  public static PersistentOrderRootType[] getAllPersistentTypes() {
     if (!ourExtensionsLoaded) {
       ourExtensionsLoaded = true;
       Extensions.getExtensions(EP_NAME);
@@ -119,11 +94,11 @@ public class OrderRootType {
     return ourPersistentOrderRootTypes;
   }
 
-  public static List<OrderRootType> getSortedRootTypes() {
-    List<OrderRootType> allTypes = new ArrayList<OrderRootType>();
-    Collections.addAll(allTypes, getAllTypes());
-    Collections.sort(allTypes, new Comparator<OrderRootType>() {
-      public int compare(final OrderRootType o1, final OrderRootType o2) {
+  public static List<PersistentOrderRootType> getSortedRootTypes() {
+    List<PersistentOrderRootType> allTypes = new ArrayList<PersistentOrderRootType>();
+    Collections.addAll(allTypes, getAllPersistentTypes());
+    Collections.sort(allTypes, new Comparator<PersistentOrderRootType>() {
+      public int compare(final PersistentOrderRootType o1, final PersistentOrderRootType o2) {
         return o1.getSdkRootName().compareTo(o2.getSdkRootName());
       }
     });

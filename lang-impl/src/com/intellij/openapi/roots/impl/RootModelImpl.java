@@ -64,7 +64,7 @@ public class RootModelImpl implements ModifiableRootModel {
 
   private final Set<ModuleExtension> myExtensions = new TreeSet<ModuleExtension>();
 
-  private final Map<OrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers = new HashMap<OrderRootType, VirtualFilePointerContainer>();
+  private final Map<PersistentOrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers = new HashMap<PersistentOrderRootType, VirtualFilePointerContainer>();
 
   private final RootConfigurationAccessor myConfigurationAccessor;
 
@@ -140,7 +140,7 @@ public class RootModelImpl implements ModifiableRootModel {
 
     myWritable = true;
 
-    for(OrderRootType orderRootType: OrderRootType.getAllTypes()) {
+    for(PersistentOrderRootType orderRootType: OrderRootType.getAllPersistentTypes()) {
       String paths = orderRootType.getModulePathsName();
       if (paths != null) {
         final Element pathsElement = element.getChild(paths);
@@ -219,7 +219,7 @@ public class RootModelImpl implements ModifiableRootModel {
 
   private void copyContainersFrom(RootModelImpl rootModel) {
     myOrderRootPointerContainers.clear();
-    for(OrderRootType orderRootType: OrderRootType.getAllTypes()) {
+    for(PersistentOrderRootType orderRootType: OrderRootType.getAllPersistentTypes()) {
       final VirtualFilePointerContainer otherContainer = rootModel.getOrderRootContainer(orderRootType);
       if (otherContainer != null) {
         myOrderRootPointerContainers.put(orderRootType, otherContainer.clone(getModule(), myVirtualFilePointerListener));
@@ -560,7 +560,7 @@ public class RootModelImpl implements ModifiableRootModel {
       }
     }
 
-    for(OrderRootType orderRootType: myOrderRootPointerContainers.keySet()) {
+    for(PersistentOrderRootType orderRootType: myOrderRootPointerContainers.keySet()) {
       VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);
       if (container != null && container.size() > 0) {
         final Element javaDocPaths = new Element(orderRootType.getModulePathsName());
@@ -1023,7 +1023,7 @@ public class RootModelImpl implements ModifiableRootModel {
     VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);
     if (container == null) {
       container = myFilePointerManager.createContainer(myDisposable, myVirtualFilePointerListener);
-      myOrderRootPointerContainers.put(orderRootType, container);
+      myOrderRootPointerContainers.put((PersistentOrderRootType) orderRootType, container);
     }
     container.clear();
     for (final String url : urls) {

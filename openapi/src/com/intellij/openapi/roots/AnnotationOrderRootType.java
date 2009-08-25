@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class AnnotationOrderRootType extends OrderRootType {
+public class AnnotationOrderRootType extends PersistentOrderRootType {
   /**
    * External annotations path
    */
@@ -19,7 +19,7 @@ public class AnnotationOrderRootType extends OrderRootType {
   }
 
   private AnnotationOrderRootType() {
-    super("ANNOTATIONS", "annotationsPath", "annotation-paths", null, true);
+    super("ANNOTATIONS", "annotationsPath", "annotation-paths", null);
   }
 
   public boolean skipWriteIfEmpty() {

@@ -3,9 +3,9 @@ package com.intellij.openapi.roots;
 /**
  * @author yole
  */
-public class JavadocOrderRootType extends OrderRootType {
+public class JavadocOrderRootType extends PersistentOrderRootType {
   private JavadocOrderRootType() {
-    super("JAVADOC", "javadocPath", "javadoc-paths", "javadocPathEntry", true);
+    super("JAVADOC", "javadocPath", "javadoc-paths", "javadocPathEntry");
   }
 
   /**
