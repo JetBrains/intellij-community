@@ -304,13 +304,18 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         for (StubIndexKey key : affectedIndices) {
           stubIndex.getWriteLock(key).lock();
         }
-        getWriteLock().lock();
 
-        super.updateWithMap(inputId, oldData, newData);
-        updateStubIndices(affectedIndices, inputId, oldStubTree, newStubTree);
+        try {
+          getWriteLock().lock();
+          super.updateWithMap(inputId, oldData, newData);
+          updateStubIndices(affectedIndices, inputId, oldStubTree, newStubTree);
+        }
+        finally {
+          getWriteLock().unlock();
+        }
+
       }
       finally {
-        getWriteLock().unlock();
         for (StubIndexKey key : affectedIndices) {
           stubIndex.getWriteLock(key).unlock();
         }
