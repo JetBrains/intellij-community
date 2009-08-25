@@ -343,18 +343,23 @@ public class XmlUtil {
     //LOG.assertTrue(text.startsWith("&#") && text.endsWith(";"));
     if (text.charAt(1) != '#') {
       text = text.substring(1, text.length() - 1);
-      return XmlTagUtil.getCharacterByEntityName(text).charValue();
+      return XmlTagUtil.getCharacterByEntityName(text);
     }
     text = text.substring(2, text.length() - 1);
-    int code;
-    if (StringUtil.startsWithChar(text, 'x')) {
-      text = text.substring(1);
-      code = Integer.parseInt(text, 16);
+    try {
+      int code;
+      if (StringUtil.startsWithChar(text, 'x')) {
+        text = text.substring(1);
+        code = Integer.parseInt(text, 16);
+      }
+      else {
+        code = Integer.parseInt(text);
+      }
+      return (char)code;
     }
-    else {
-      code = Integer.parseInt(text);
+    catch (NumberFormatException e) {
+      return 0;
     }
-    return (char)code;
   }
 
   public static boolean attributeFromTemplateFramework(@NonNls final String name, final XmlTag tag) {
