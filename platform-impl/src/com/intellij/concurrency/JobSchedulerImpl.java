@@ -70,7 +70,7 @@ public class JobSchedulerImpl extends JobScheduler {
     }
   };
 
-  private static long ourJobsCounter = 0;
+  private static volatile long ourJobsCounter = 0;
 
   public static void execute(Runnable task) {
     ourExecutor.execute(task);
