@@ -365,7 +365,14 @@ public class TestNGRunnableState extends JavaCommandLineState {
             // Running a suite, make a local copy of the suite and apply our custom parameters to it and run that instead.
 
             try {
-              Collection<XmlSuite> suites = new Parser(data.getSuiteName()).parse();
+              Collection<XmlSuite> suites;
+              FileInputStream in = new FileInputStream(data.getSuiteName());
+              try {
+                suites = new Parser(in).parse();
+              }
+              finally {
+                in.close();
+              }
               for (XmlSuite suite : suites) {
                 Map<String, String> params = suite.getParameters();
 

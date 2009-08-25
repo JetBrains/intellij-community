@@ -35,6 +35,7 @@ import org.testng.xml.Parser;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.io.FileInputStream;
 
 public class TestNGConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration, RefactoringListenerProvider {
   //private TestNGResultsContainer resultsContainer;
@@ -227,7 +228,13 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
     }
     else if (data.TEST_OBJECT.equals(TestType.SUITE.getType())) {
       try {
-        new Parser(data.getSuiteName()).parse();//try to parse suite.xml
+        FileInputStream in = new FileInputStream(data.getSuiteName());
+        try {
+          new Parser(in).parse();//try to parse suite.xml
+        }
+        finally {
+          in.close();
+        }
       }
       catch (Exception e) {
         throw new RuntimeConfigurationException("Unable to parse '" + data.getSuiteName() + "' specified");
