@@ -52,6 +52,11 @@ public class OrderRootType {
   public static final OrderRootType COMPILATION_CLASSES = new OrderRootType("COMPILATION_CLASSES");
 
   /**
+   * Classpath for compilation without tests
+   */
+  public static final OrderRootType PRODUCTION_COMPILATION_CLASSES = new OrderRootType("PRODUCTION_COMPILATION_CLASSES");
+
+  /**
    * Classpath without output directories for this module.
    */
   public static final OrderRootType CLASSES = new PersistentOrderRootType("CLASSES", "classPath", null, "classPathEntry");

@@ -110,7 +110,10 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
   VirtualFile[] getFiles(OrderRootType type, Set<Module> processed) {
     if (myModule != null && !processed.contains(myModule) && !myModule.isDisposed()) {
       processed.add(myModule);
-      if (myScope == DependencyScope.RUNTIME && type == OrderRootType.COMPILATION_CLASSES) {
+      if (myScope == DependencyScope.RUNTIME && (type == OrderRootType.COMPILATION_CLASSES || type == OrderRootType.PRODUCTION_COMPILATION_CLASSES)) {
+        return VirtualFile.EMPTY_ARRAY;
+      }
+      if (myScope == DependencyScope.TEST && type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
         return VirtualFile.EMPTY_ARRAY;
       }
       return ((ModuleRootManagerImpl)ModuleRootManager.getInstance(myModule)).getFilesForOtherModules(type, processed);
@@ -128,7 +131,10 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
   public String[] getUrls (OrderRootType rootType, Set<Module> processed) {
     if (myModule != null && !processed.contains(myModule) && !myModule.isDisposed()) {
       processed.add(myModule);
-      if (myScope == DependencyScope.RUNTIME && rootType == OrderRootType.COMPILATION_CLASSES) {
+      if (myScope == DependencyScope.RUNTIME && (rootType == OrderRootType.COMPILATION_CLASSES || rootType == OrderRootType.PRODUCTION_COMPILATION_CLASSES)) {
+        return ArrayUtil.EMPTY_STRING_ARRAY;
+      }
+      if (myScope == DependencyScope.TEST && rootType == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
         return ArrayUtil.EMPTY_STRING_ARRAY;
       }
       return ((ModuleRootManagerImpl)ModuleRootManager.getInstance(myModule)).getUrlsForOtherModules(rootType, processed);

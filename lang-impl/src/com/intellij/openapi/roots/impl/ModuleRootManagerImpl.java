@@ -356,7 +356,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
   String[] getUrlsForOtherModules(OrderRootType rootType, Set<Module> processed) {
     List<String> result = new ArrayList<String>();
-    if (OrderRootType.SOURCES.equals(rootType) || OrderRootType.COMPILATION_CLASSES.equals(rootType)) {
+    if (OrderRootType.SOURCES.equals(rootType) || OrderRootType.COMPILATION_CLASSES.equals(rootType) || OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(rootType)) {
       myRootModel.addExportedUrs(rootType, result, processed);
       return ArrayUtil.toStringArray(result);
     }
@@ -376,7 +376,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     if (files == null) {
       files = new LinkedHashSet<VirtualFilePointer>();
       List<String> result = new ArrayList<String>();
-      if (OrderRootType.SOURCES.equals(rootType) || OrderRootType.COMPILATION_CLASSES.equals(rootType)) {
+      if (OrderRootType.SOURCES.equals(rootType) || OrderRootType.COMPILATION_CLASSES.equals(rootType) || OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(rootType)) {
         myRootModel.addExportedUrs(rootType, result, processed);
       }
       else if (OrderRootType.CLASSES.equals(rootType)) {

@@ -279,13 +279,17 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   @Nullable
   @Override
   public VirtualFile[] getRootPaths(final OrderRootType type) {
-    if (OrderRootType.CLASSES_AND_OUTPUT.equals(type) || OrderRootType.COMPILATION_CLASSES.equals(type)) {
+    if (OrderRootType.CLASSES_AND_OUTPUT.equals(type) ||
+        OrderRootType.COMPILATION_CLASSES.equals(type) || 
+        OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(type)) {
       final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
       VirtualFile outputRoot = getCompilerOutputPath();
       if (outputRoot != null) result.add(outputRoot);
-      final VirtualFile outputPathForTests = getCompilerOutputPathForTests();
-      if (outputPathForTests != null && !outputPathForTests.equals(outputRoot)) {
-        result.add(outputPathForTests);
+      if (!OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(type)) {
+        final VirtualFile outputPathForTests = getCompilerOutputPathForTests();
+        if (outputPathForTests != null && !outputPathForTests.equals(outputRoot)) {
+          result.add(outputPathForTests);
+        }
       }
       return result.toArray(new VirtualFile[result.size()]);
     }
@@ -294,13 +298,17 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
 
   @Override
   public String[] getRootUrls(final OrderRootType type) {
-    if (OrderRootType.CLASSES_AND_OUTPUT.equals(type) || OrderRootType.COMPILATION_CLASSES.equals(type)) {
+    if (OrderRootType.CLASSES_AND_OUTPUT.equals(type) ||
+        OrderRootType.COMPILATION_CLASSES.equals(type) ||
+        OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(type)) {
       final List<String> result = new ArrayList<String>();
       String outputRoot = getCompilerOutputUrl();
       if (outputRoot != null) result.add(outputRoot);
-      final String outputPathForTests = getCompilerOutputUrlForTests();
-      if (outputPathForTests != null && !outputPathForTests.equals(outputRoot)) {
-        result.add(outputPathForTests);
+      if (!OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(type)) {
+        final String outputPathForTests = getCompilerOutputUrlForTests();
+        if (outputPathForTests != null && !outputPathForTests.equals(outputRoot)) {
+          result.add(outputPathForTests);
+        }
       }
       return ArrayUtil.toStringArray(result);
     }

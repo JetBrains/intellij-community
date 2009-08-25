@@ -184,12 +184,13 @@ public class ModuleChunk extends Chunk<Module> {
         if (skip) {
           continue;
         }
-        cpFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES)));
+        if ((mySourcesFilter & TEST_SOURCES) == 0) {
+          cpFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.PRODUCTION_COMPILATION_CLASSES)));
+        }
+        else {
+          cpFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES)));
+        }
       }
-    }
-    if ((mySourcesFilter & TEST_SOURCES) == 0) {
-      // should remove test output dirs (if any) if compiling production classes only
-      cpFiles.removeAll(myContext.getTestOutputDirectories());
     }
     return convertToStringPath(cpFiles);
 
@@ -207,13 +208,14 @@ public class ModuleChunk extends Chunk<Module> {
           break;
         }
         else {
-          cpFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES)));
+          if ((mySourcesFilter & TEST_SOURCES) == 0) {
+            cpFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.PRODUCTION_COMPILATION_CLASSES)));
+          }
+          else {
+            cpFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES)));
+          }
         }
       }
-    }
-    if ((mySourcesFilter & TEST_SOURCES) == 0) {
-      // should remove test output dirs (if any) if compiling production classes only
-      cpFiles.removeAll(myContext.getTestOutputDirectories());
     }
     cpFiles.addAll(jdkFiles);
     return convertToStringPath(cpFiles);

@@ -203,6 +203,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       result.put(rootType, VirtualFilePointerManager.getInstance().createContainer(this));
     }
     result.put(OrderRootType.COMPILATION_CLASSES, result.get(OrderRootType.CLASSES));
+    result.put(OrderRootType.PRODUCTION_COMPILATION_CLASSES, result.get(OrderRootType.CLASSES));
     result.put(OrderRootType.CLASSES_AND_OUTPUT, result.get(OrderRootType.CLASSES));
 
     return result;

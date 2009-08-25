@@ -78,6 +78,12 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
       }
       return myRootContainers.get(OrderRootType.CLASSES).getDirectories();
     }
+    else if (type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
+      if (myScope == DependencyScope.RUNTIME || myScope == DependencyScope.TEST) {
+        return VirtualFile.EMPTY_ARRAY;
+      }
+      return myRootContainers.get(OrderRootType.CLASSES).getDirectories();
+    }
     else if (type == OrderRootType.CLASSES_AND_OUTPUT) {
       return myRootContainers.get(OrderRootType.CLASSES).getDirectories();
     }
@@ -89,6 +95,12 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
     LOG.assertTrue(!getRootModel().getModule().isDisposed());
     if (type == OrderRootType.COMPILATION_CLASSES) {
       if (myScope == DependencyScope.RUNTIME) {
+        return ArrayUtil.EMPTY_STRING_ARRAY;
+      }
+      return myRootContainers.get(OrderRootType.CLASSES).getUrls();
+    }
+    else if (type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
+      if (myScope == DependencyScope.RUNTIME || myScope == DependencyScope.TEST) {
         return ArrayUtil.EMPTY_STRING_ARRAY;
       }
       return myRootContainers.get(OrderRootType.CLASSES).getUrls();
