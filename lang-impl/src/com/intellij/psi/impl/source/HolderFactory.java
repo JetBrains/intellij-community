@@ -14,6 +14,7 @@ public interface HolderFactory {
   DummyHolder createHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context);
   DummyHolder createHolder(@NotNull PsiManager manager, CharTable table, boolean validity);
   DummyHolder createHolder(@NotNull PsiManager manager, PsiElement context);
+  DummyHolder createHolder(@NotNull PsiManager manager, Language language, PsiElement context);
   DummyHolder createHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table);
   DummyHolder createHolder(@NotNull PsiManager manager, PsiElement context, CharTable table);
   DummyHolder createHolder(@NotNull PsiManager manager, final CharTable table, final Language language);

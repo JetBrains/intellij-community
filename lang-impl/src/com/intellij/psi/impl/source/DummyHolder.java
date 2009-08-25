@@ -56,6 +56,10 @@ public class DummyHolder extends PsiFileImpl {
     this(manager, null, null, table, null, language);
   }
 
+  public DummyHolder(final PsiManager manager, final Language language, final PsiElement context) {
+    this(manager, null, context, null, null, language);
+  }
+
   public PsiElement getContext() {
     return myContext;
   }

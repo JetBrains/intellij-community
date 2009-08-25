@@ -31,6 +31,10 @@ public class DummyHolderFactory  {
     return INSTANCE.createHolder(manager, context);
   }
 
+  public static DummyHolder createHolder(@NotNull PsiManager manager, Language language, PsiElement context) {
+    return INSTANCE.createHolder(manager, language, context);
+  }
+
   public static DummyHolder createHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table) {
     return INSTANCE.createHolder(manager, contentElement, context, table);
   }
@@ -54,6 +58,10 @@ public class DummyHolderFactory  {
 
     public DummyHolder createHolder(@NotNull PsiManager manager, PsiElement context) {
       return new DummyHolder(manager, context);
+    }
+
+    public DummyHolder createHolder(@NotNull final PsiManager manager, final Language language, final PsiElement context) {
+      return new DummyHolder(manager, language, context);
     }
 
     public DummyHolder createHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table) {
