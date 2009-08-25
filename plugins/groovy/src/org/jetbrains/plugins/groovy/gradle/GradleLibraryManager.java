@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  */
 public class GradleLibraryManager extends AbstractGroovyLibraryManager {
   public static final Icon GRADLE_ICON = IconLoader.getIcon("/icons/gradle/gradle.png");
-  @NonNls private static final Pattern GRADLE_JAR_FILE_PATTERN = Pattern.compile("gradle-(\\d.*)\\.jar");
+  @NonNls private static final Pattern GRADLE_JAR_FILE_PATTERN = Pattern.compile("gradle-(core-)?(\\d.*)\\.jar");
 
   @NotNull
   @Override
@@ -124,7 +124,7 @@ public class GradleLibraryManager extends AbstractGroovyLibraryManager {
   private static String getGradleJarVersion(VirtualFile file) {
     final Matcher matcher = GRADLE_JAR_FILE_PATTERN.matcher(file.getName());
     if (matcher.matches()) {
-      return matcher.group(1);
+      return matcher.group(2);
     }
     return null;
   }
