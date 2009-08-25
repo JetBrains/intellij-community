@@ -8,9 +8,10 @@
  * Date: Jul 13, 2006
  * Time: 12:55:30 AM
  */
-package com.intellij.codeInsight.daemon;
+package com.intellij.lang.ant;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.lang.ant.validation.AntDuplicateTargetsInspection;
