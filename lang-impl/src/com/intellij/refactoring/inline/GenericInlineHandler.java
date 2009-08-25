@@ -13,8 +13,8 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 
@@ -60,9 +60,13 @@ public class GenericInlineHandler {
 
     final Project project = element.getProject();
     if (!conflicts.isEmpty()) {
-      final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
-      conflictsDialog.show();
-      if (!conflictsDialog.isOK()) return true;
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw new ConflictsFoundInTestException("Refactoring cannot be performed:" + conflicts.iterator().next());
+      } else {
+        final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
+        conflictsDialog.show();
+        if (!conflictsDialog.isOK()) return true;
+      }
     }
 
     HashSet<PsiElement> elements = new HashSet<PsiElement>();
@@ -120,6 +124,12 @@ public class GenericInlineHandler {
     final InlineHandler.Inliner inliner = inliners.get(language);
     if (inliner != null) {
       inliner.inlineReference(reference, element);
+    }
+  }
+
+  public static class ConflictsFoundInTestException extends RuntimeException {
+    public ConflictsFoundInTestException(String message) {
+      super(message);
     }
   }
 }
