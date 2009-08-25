@@ -21,6 +21,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -136,8 +137,10 @@ public class TestNGRunnableState extends JavaCommandLineState {
             final Project project = config.getProject();
             if (project.isDisposed()) return;
             final TestFrameworkRunningModel model = console.getModel();
+            final TestConsoleProperties consoleProperties = console.getProperties();
+            if (consoleProperties == null) return;
+            final String testRunDebugId = consoleProperties.isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
             final TestNGResults resultsView = console.getResultsView();
-            final String testRunDebugId = console.getProperties().isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
             final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
             if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
               toolWindowManager.notifyByBalloon(testRunDebugId,
