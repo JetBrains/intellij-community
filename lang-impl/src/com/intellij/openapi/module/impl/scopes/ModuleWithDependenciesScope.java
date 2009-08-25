@@ -87,10 +87,13 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
             continue;
           }
         }
-        if (!myIncludeTests &&
-            orderEntry instanceof ExportableOrderEntry &&
-            ((ExportableOrderEntry)orderEntry).getScope() == DependencyScope.TEST) {
-          continue;
+        if (orderEntry instanceof ExportableOrderEntry) {
+          if (((ExportableOrderEntry)orderEntry).getScope() == DependencyScope.RUNTIME) {
+            continue;
+          }
+          if (!myIncludeTests && ((ExportableOrderEntry)orderEntry).getScope() == DependencyScope.TEST) {
+            continue;
+          }
         }
         if (myIncludeOtherModules) {
           return true;

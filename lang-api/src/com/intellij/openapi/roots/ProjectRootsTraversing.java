@@ -205,6 +205,17 @@ public class ProjectRootsTraversing {
       }
     };
 
+    public static final Visit<ModuleOrderEntry> RECURSIVE_WITHOUT_TESTS = new Visit<ModuleOrderEntry>() {
+      public void visit(ModuleOrderEntry moduleOrderEntry, TraverseState state, RootPolicy<TraverseState> policy) {
+        if (moduleOrderEntry.getScope() == DependencyScope.TEST) return;
+        Module module = moduleOrderEntry.getModule();
+        if (module == null) return;
+        ModuleRootManager moduleRootManager = state.getCurrentModuleManager();
+        traverseOrder(module, policy, state);
+        state.restoreCurrentModuleManager(moduleRootManager);
+      }
+    };
+
     public static class AddModuleSource implements Visit<ModuleSourceOrderEntry> {
       private boolean myExcludeTests;
 

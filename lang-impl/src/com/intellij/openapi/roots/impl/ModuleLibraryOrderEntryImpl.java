@@ -23,8 +23,7 @@ class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements L
   private final Library myLibrary;
   @NonNls static final String ENTRY_TYPE = "module-library";
   private boolean myExported;
-  private DependencyScope myScope = DependencyScope.COMPILE;
-  @NonNls private static final String EXPORTED_ATTR = "exported";
+ @NonNls private static final String EXPORTED_ATTR = "exported";
 
   //cloning
   private ModuleLibraryOrderEntryImpl(Library library, RootModelImpl rootModel, boolean isExported, DependencyScope scope) {

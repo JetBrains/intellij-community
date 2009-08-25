@@ -23,7 +23,6 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   private String myLibraryName; // is non-null if myLibrary == null
   private String myLibraryLevel; // is non-null if myLibraryLevel == null
   private boolean myExported;
-  @NotNull private DependencyScope myScope = DependencyScope.COMPILE;
   @NonNls static final String ENTRY_TYPE = "library";
   @NonNls private static final String NAME_ATTR = "name";
   @NonNls private static final String LEVEL_ATTR = "level";

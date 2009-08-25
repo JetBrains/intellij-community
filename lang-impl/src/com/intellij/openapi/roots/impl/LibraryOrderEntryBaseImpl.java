@@ -2,11 +2,13 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,6 +24,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   private final MyRootSetChangedListener myRootSetChangedListener = new MyRootSetChangedListener();
   private RootProvider myCurrentlySubscribedRootProvider = null;
   protected final ProjectRootManagerImpl myProjectRootManagerImpl;
+  @NotNull protected DependencyScope myScope = DependencyScope.COMPILE;
 
   LibraryOrderEntryBaseImpl(RootModelImpl rootModel, ProjectRootManagerImpl instanceImpl, VirtualFilePointerManager filePointerManager) {
     super(rootModel);
@@ -69,7 +72,13 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
 
   @NotNull
   public VirtualFile[] getFiles(OrderRootType type) {
-    if (type == OrderRootType.COMPILATION_CLASSES || type == OrderRootType.CLASSES_AND_OUTPUT) {
+    if (type == OrderRootType.COMPILATION_CLASSES) {
+      if (myScope == DependencyScope.RUNTIME) {
+        return VirtualFile.EMPTY_ARRAY;
+      }
+      return myRootContainers.get(OrderRootType.CLASSES).getDirectories();
+    }
+    else if (type == OrderRootType.CLASSES_AND_OUTPUT) {
       return myRootContainers.get(OrderRootType.CLASSES).getDirectories();
     }
     return myRootContainers.get(type).getDirectories();
@@ -78,7 +87,13 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   @NotNull
   public String[] getUrls(OrderRootType type) {
     LOG.assertTrue(!getRootModel().getModule().isDisposed());
-    if (type == OrderRootType.COMPILATION_CLASSES || type == OrderRootType.CLASSES_AND_OUTPUT) {
+    if (type == OrderRootType.COMPILATION_CLASSES) {
+      if (myScope == DependencyScope.RUNTIME) {
+        return ArrayUtil.EMPTY_STRING_ARRAY;
+      }
+      return myRootContainers.get(OrderRootType.CLASSES).getUrls();
+    }
+    else if (type == OrderRootType.CLASSES_AND_OUTPUT) {
       return myRootContainers.get(OrderRootType.CLASSES).getUrls();
     }
     return myRootContainers.get(type).getUrls();
