@@ -54,10 +54,7 @@ class WhiteSpace {
     myEnd = newEndOffset;
     TextRange range = new TextRange(myStart, myEnd);
     myInitial = model.getText(range);
-    if (myInitial != null && myInitial.toString().contains("$")) {
-      System.out.println("Imhere");
-    }
-    
+
     if (!coveredByBlock(model)) {
       InitialInfoBuilder.assertInvalidRanges(myStart,
         myEnd,
