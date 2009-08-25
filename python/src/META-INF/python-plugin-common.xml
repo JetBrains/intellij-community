@@ -69,6 +69,7 @@
 
     <codeInsight.overrideMethod language="Python" implementationClass="com.jetbrains.python.codeInsight.override.PyOverrideMethodsHandler"/>
     <lang.refactoringSupport language="Python" implementationClass="com.jetbrains.python.refactoring.RefactoringProvider"/>
+    <codeInsight.gotoSuper language="Python" implementationClass="com.jetbrains.python.codeInsight.PyGotoSuperHandler"/>
   </extensions>
 
   <extensionPoints>
