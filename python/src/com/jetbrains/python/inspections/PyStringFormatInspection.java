@@ -87,14 +87,12 @@ public class PyStringFormatInspection extends LocalInspectionTool {
       }
 
       private int inspectArguments(@Nullable final PyExpression rightExpression) {
-        final Class[] SIMPLE_RHS_EXPRESSIONS = {
-          PyLiteralExpression.class, PyReferenceExpression.class, PyCallExpression.class, 
-          PySubscriptionExpression.class, PySliceExpression.class
-        };
+        final Class[] SIMPLE_RHS_EXPRESSIONS =
+          {PyLiteralExpression.class, PyReferenceExpression.class, PyCallExpression.class, PySubscriptionExpression.class};
 
-        if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS))
-        {
+        if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (myFormatSpec.get("1") != null) {
+            assert rightExpression != null;
             checkType(rightExpression, myFormatSpec.get("1"));
           }
           return 1;
@@ -140,6 +138,18 @@ public class PyStringFormatInspection extends LocalInspectionTool {
           }
           return expressions.length;
         }
+        else if (rightExpression instanceof PyListLiteralExpression) {
+          if (myFormatSpec.get("1") != null) {
+            simpleCheckType(rightExpression, "str", myFormatSpec.get("1"));
+          }
+          return ((PyListLiteralExpression)rightExpression).getElements().length;
+        }
+        else if (rightExpression instanceof PySliceExpression) {
+          if (myFormatSpec.get("1") != null) {
+            simpleCheckType(rightExpression, "str", myFormatSpec.get("1"));
+          }
+          return 1;
+        }
         return 0;
       }
 
@@ -152,13 +162,20 @@ public class PyStringFormatInspection extends LocalInspectionTool {
         final PyType type = expression.getType();
         if (type != null) {
           final String typeName = type.getName();
-          if (!"str".equals(typeName)) {
-            return;
-          }
-          if (!expextedTypeName.equals(typeName)) {
-            registerProblem(expression, "Unexpected type");
-          }
+          simpleCheckType(expression, typeName, expextedTypeName);
         }
+      }
+
+      private void simpleCheckType(@NotNull final PyExpression expression,
+                                   @Nullable final String typeName,
+                                   @NotNull final String expectedTypeName) {
+        if ("str".equals(expectedTypeName)) {
+          return;
+        }
+        if ("int".equals(typeName) || "float".equals(typeName)) {
+          return;
+        }
+        registerProblem(expression, "Unexpected type");
       }
 
       private void inspectFormat(@NotNull final PyStringLiteralExpression formatExpression) {

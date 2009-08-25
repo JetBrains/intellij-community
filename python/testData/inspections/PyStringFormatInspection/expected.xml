@@ -90,4 +90,24 @@
     <line>36</line>
     <description>Unexpected type</description>
   </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>46</line>
+    <description>Unexpected type</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>47</line>
+    <description>Unexpected type</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>48</line>
+    <description>Unexpected type</description>
+  </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>48</line>
+    <description>Too few arguments for format string</description>
+  </problem>
 </problems>

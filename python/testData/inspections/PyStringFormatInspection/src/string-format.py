@@ -34,6 +34,18 @@ i = "test"
 '%(name)s' % {'name': i}  #ok
 '%s' % i  #ok
 '%f' % i  #Unexpected type
-s = "%s" % "a".upper() # ok
+'%f' % 2  #ok
+s = "%s" % "a".upper() #ok
 x = ['a', 'b', 'c']
-print "%d: %s" % (len(x), ", ".join(x)) # ok
+print "%d: %s" % (len(x), ", ".join(x)) #ok
+m = [1, 2, 3, 4, 5]
+"%d" % m[0]  #ok
+"%d %s" % (m[0], m[4])  #ok
+"%s" % m  #ok
+"%s" % m[1:3]  #ok
+"%d" % m[1:2]  #Unexpected type
+"%d" % m  #Unexpected type
+"%d" % []  #Too few arguments for format string
+#"%s" % []  #ok
+#t = (1, 2, 3, 4, 5)
+#"%d and %d" % t[1:3]  #ok
