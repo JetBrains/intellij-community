@@ -1,10 +1,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.RootPolicy;
-import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -26,6 +23,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   private String myLibraryName; // is non-null if myLibrary == null
   private String myLibraryLevel; // is non-null if myLibraryLevel == null
   private boolean myExported;
+  @NotNull private DependencyScope myScope = DependencyScope.COMPILE;
   @NonNls static final String ENTRY_TYPE = "library";
   @NonNls private static final String NAME_ATTR = "name";
   @NonNls private static final String LEVEL_ATTR = "level";
@@ -50,6 +48,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     super(rootModel, projectRootManager, filePointerManager);
     LOG.assertTrue(ENTRY_TYPE.equals(element.getAttributeValue(OrderEntryFactory.ORDER_ENTRY_TYPE_ATTR)));
     myExported = element.getAttributeValue(EXPORTED_ATTR) != null;
+    myScope = DependencyScope.readExternal(element);
     String level = element.getAttributeValue(LEVEL_ATTR);
     String name = element.getAttributeValue(NAME_ATTR);
     if (name == null) throw new InvalidDataException();
@@ -72,6 +71,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
       myLibrary = that.myLibrary;
     }
     myExported = that.myExported;
+    myScope = that.myScope;
     init(getRootProvider());
     addListeners();
   }
@@ -109,6 +109,15 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
 
   public void setExported(boolean exported) {
     myExported = exported;
+  }
+
+  @NotNull
+  public DependencyScope getScope() {
+    return myScope;
+  }
+
+  public void setScope(@NotNull DependencyScope scope) {
+    myScope = scope;
   }
 
   @Nullable
@@ -163,6 +172,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     if (myExported) {
       element.setAttribute(EXPORTED_ATTR, "");
     }
+    myScope.writeExternal(element);
     element.setAttribute(NAME_ATTR, getLibraryName());
     element.setAttribute(LEVEL_ATTR, libraryLevel);
     rootElement.addContent(element);

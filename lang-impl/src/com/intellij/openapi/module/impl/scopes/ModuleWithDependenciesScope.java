@@ -45,7 +45,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     if (myIncludeOtherModules) {
       myModules = new LinkedHashSet<Module>();
       myModules.add(myModule);
-      Module[] dependencies = ModuleRootManager.getInstance(myModule).getDependencies();
+      Module[] dependencies = ModuleRootManager.getInstance(myModule).getDependencies(myIncludeTests);
       myModules.addAll(Arrays.asList(dependencies));
       for (Module dependency : dependencies) {
         addExportedModules(dependency);
@@ -63,6 +63,9 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
         continue;
       }
       if (orderEntry instanceof ModuleOrderEntry && ((ModuleOrderEntry)orderEntry).isExported()) {
+        if (!myIncludeTests && ((ModuleOrderEntry)orderEntry).getScope() == DependencyScope.TEST) {
+          continue;
+        }
         Module exportedModule = ((ModuleOrderEntry)orderEntry).getModule();
         if (!myModules.contains(exportedModule)) { //could be true in case of circular dependencies
           myModules.add(exportedModule);
@@ -79,11 +82,15 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     for (OrderEntry orderEntry : entries) {
       if (myIncludeLibraries) {
         if (orderEntry instanceof LibraryOrderEntry ||
-            orderEntry instanceof JdkOrderEntry
-           ) {
+            orderEntry instanceof JdkOrderEntry) {
           if (!myProjectFileIndex.isInLibraryClasses(file)) {
             continue;
           }
+        }
+        if (!myIncludeTests &&
+            orderEntry instanceof ExportableOrderEntry &&
+            ((ExportableOrderEntry)orderEntry).getScope() == DependencyScope.TEST) {
+          continue;
         }
         if (myIncludeOtherModules) {
           return true;

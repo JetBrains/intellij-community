@@ -103,6 +103,9 @@ public class ClasspathPanel extends JPanel {
 
     myEntryTable.setDefaultRenderer(TableItem.class, new TableItemRenderer());
     myEntryTable.setDefaultRenderer(Boolean.class, new ExportFlagRenderer(myEntryTable.getDefaultRenderer(Boolean.class)));
+
+    JComboBox scopeEditor = new JComboBox(new EnumComboBoxModel<DependencyScope>(DependencyScope.class));
+    myEntryTable.setDefaultEditor(DependencyScope.class, new DefaultCellEditor(scopeEditor));
     myEntryTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
     new SpeedSearchBase<Table>(myEntryTable) {
@@ -136,13 +139,8 @@ public class ClasspathPanel extends JPanel {
     };
 
 
-    final FontMetrics fontMetrics = myEntryTable.getFontMetrics(myEntryTable.getFont());
-    final int width = fontMetrics.stringWidth(" " + MyTableModel.EXPORT_COLUMN_NAME + " ") + 4;
-    final TableColumn checkboxColumn = myEntryTable.getTableHeader().getColumnModel().getColumn(MyTableModel.EXPORT_COLUMN);
-    checkboxColumn.setWidth(width);
-    checkboxColumn.setPreferredWidth(width);
-    checkboxColumn.setMaxWidth(width);
-    checkboxColumn.setMinWidth(width);
+    setFixedColumnWidth(MyTableModel.EXPORT_COLUMN, MyTableModel.EXPORT_COLUMN_NAME);
+    setFixedColumnWidth(MyTableModel.SCOPE_COLUMN, DependencyScope.COMPILE.toString() + "     ");  // leave space for combobox border
 
     myEntryTable.registerKeyboardAction(
       new ActionListener() {
@@ -204,6 +202,16 @@ public class ClasspathPanel extends JPanel {
     actionGroup.add(navigateAction);
     actionGroup.add(new MyFindUsagesAction());
     PopupHandler.installPopupHandler(myEntryTable, actionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+  }
+
+  private void setFixedColumnWidth(final int columnIndex, final String textToMeasure) {
+    final FontMetrics fontMetrics = myEntryTable.getFontMetrics(myEntryTable.getFont());
+    final int width = fontMetrics.stringWidth(" " + textToMeasure + " ") + 4;
+    final TableColumn checkboxColumn = myEntryTable.getTableHeader().getColumnModel().getColumn(columnIndex);
+    checkboxColumn.setWidth(width);
+    checkboxColumn.setPreferredWidth(width);
+    checkboxColumn.setMaxWidth(width);
+    checkboxColumn.setMinWidth(width);
   }
 
   private void navigate(boolean openLibraryEditor) {
@@ -709,12 +717,19 @@ public class ClasspathPanel extends JPanel {
       }
     }
 
-    public final @Nullable T getEntry() {
-      return myEntry;
+    @Nullable
+    public final DependencyScope getScope() {
+      return myEntry instanceof ExportableOrderEntry ? ((ExportableOrderEntry) myEntry).getScope() : null;
     }
 
-    public final void setEntry(T entry) {
-      myEntry = entry;
+    public final void setScope(DependencyScope scope) {
+      if (myEntry instanceof ExportableOrderEntry) {
+        ((ExportableOrderEntry) myEntry).setScope(scope);
+      }
+    }
+
+    public final @Nullable T getEntry() {
+      return myEntry;
     }
 
     public abstract boolean isRemovable();
@@ -780,8 +795,10 @@ public class ClasspathPanel extends JPanel {
 
   private static class MyTableModel extends AbstractTableModel implements ItemRemovable {
     private static final String EXPORT_COLUMN_NAME = ProjectBundle.message("modules.order.export.export.column");
+    private static final String SCOPE_COLUMN_NAME = ProjectBundle.message("modules.order.export.scope.column");
     public static final int EXPORT_COLUMN = 0;
-    public static final int ITEM_COLUMN = 1;
+    public static final int SCOPE_COLUMN = 1;
+    public static final int ITEM_COLUMN = 2;
     private final List<TableItem> myItems = new ArrayList<TableItem>();
     private final ModifiableRootModel myRootModel;
 
@@ -852,6 +869,9 @@ public class ClasspathPanel extends JPanel {
       if (columnIndex == EXPORT_COLUMN) {
         return item.isExported();
       }
+      if (columnIndex == SCOPE_COLUMN) {
+        return item.getScope();
+      }
       if (columnIndex == ITEM_COLUMN) {
         return item;
       }
@@ -864,11 +884,17 @@ public class ClasspathPanel extends JPanel {
       if (columnIndex == EXPORT_COLUMN) {
         item.setExported(((Boolean)aValue).booleanValue());
       }
+      else if (columnIndex == SCOPE_COLUMN) {
+        item.setScope((DependencyScope) aValue);
+      }
     }
 
     public String getColumnName(int column) {
       if (column == EXPORT_COLUMN) {
         return EXPORT_COLUMN_NAME;
+      }
+      if (column == SCOPE_COLUMN) {
+        return SCOPE_COLUMN_NAME;
       }
       return "";
     }
@@ -877,6 +903,9 @@ public class ClasspathPanel extends JPanel {
       if (column == EXPORT_COLUMN) {
         return Boolean.class;
       }
+      if (column == SCOPE_COLUMN) {
+        return DependencyScope.class;
+      }
       if (column == ITEM_COLUMN) {
         return TableItem.class;
       }
@@ -884,11 +913,11 @@ public class ClasspathPanel extends JPanel {
     }
 
     public int getColumnCount() {
-      return 2;
+      return 3;
     }
 
     public boolean isCellEditable(int row, int column) {
-      if (column == EXPORT_COLUMN) {
+      if (column == EXPORT_COLUMN || column == SCOPE_COLUMN) {
         final TableItem item = myItems.get(row);
         return item != null && item.isExportable();
       }
@@ -936,7 +965,7 @@ public class ClasspathPanel extends JPanel {
     }
   }
 
-  private static interface ChooserDialog<T> extends Disposable {
+  private interface ChooserDialog<T> extends Disposable {
     List<T> getChosenElements();
     void doChoose();
     boolean isOK();

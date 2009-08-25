@@ -810,6 +810,9 @@ public class RootModelImpl implements ModifiableRootModel {
       if (!(((ExportableOrderEntry)orderEntry1).isExported() == ((ExportableOrderEntry)orderEntry2).isExported())) {
         return false;
       }
+      if (!(((ExportableOrderEntry)orderEntry1).getScope() == ((ExportableOrderEntry)orderEntry2).getScope())) {
+        return false;
+      }
     }
     if (orderEntry1 instanceof ModuleOrderEntry) {
       LOG.assertTrue(orderEntry2 instanceof ModuleOrderEntry);
@@ -980,11 +983,20 @@ public class RootModelImpl implements ModifiableRootModel {
 
   @NotNull
   public Module[] getModuleDependencies() {
+    return getModuleDependencies(true);
+  }
+
+  @NotNull
+  public Module[] getModuleDependencies(boolean includeTests) {
     final List<Module> result = new ArrayList<Module>();
 
     for (OrderEntry entry : getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
-        final Module module1 = ((ModuleOrderEntry)entry).getModule();
+        ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
+        if (!includeTests && moduleOrderEntry.getScope() == DependencyScope.TEST) {
+          continue;
+        }
+        final Module module1 = moduleOrderEntry.getModule();
         if (module1 != null) {
           result.add(module1);
         }

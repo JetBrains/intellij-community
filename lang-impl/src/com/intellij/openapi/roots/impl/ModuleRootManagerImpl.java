@@ -320,6 +320,12 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel.getModuleDependencies();
   }
 
+  @NotNull
+  @Override
+  public Module[] getDependencies(boolean includeTests) {
+    return myRootModel.getModuleDependencies(includeTests);
+  }
+
   public boolean isDependsOn(Module module) {
     return myRootModel.isDependsOn(module);
   }

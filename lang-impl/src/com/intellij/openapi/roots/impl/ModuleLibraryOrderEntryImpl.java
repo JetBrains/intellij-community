@@ -12,9 +12,10 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * Library entry for moduler ("in-place") libraries
+ * Library entry for module ("in-place") libraries
  *  @author dsl
  */
 class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements LibraryOrderEntry, ClonableOrderEntry, WritableOrderEntry {
@@ -22,14 +23,16 @@ class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements L
   private final Library myLibrary;
   @NonNls static final String ENTRY_TYPE = "module-library";
   private boolean myExported;
+  private DependencyScope myScope = DependencyScope.COMPILE;
   @NonNls private static final String EXPORTED_ATTR = "exported";
 
   //cloning
-  private ModuleLibraryOrderEntryImpl(Library library, RootModelImpl rootModel, boolean isExported) {
+  private ModuleLibraryOrderEntryImpl(Library library, RootModelImpl rootModel, boolean isExported, DependencyScope scope) {
     super(rootModel, ProjectRootManagerImpl.getInstanceImpl(rootModel.getProject()), VirtualFilePointerManager.getInstance());
     myLibrary = ((LibraryEx)library).cloneLibrary(getRootModel());
     init();
     myExported = isExported;
+    myScope = scope;
   }
 
   ModuleLibraryOrderEntryImpl(RootModelImpl rootModel,
@@ -59,6 +62,7 @@ class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements L
     super(rootModel, projectRootManager, filePointerManager);
     LOG.assertTrue(ENTRY_TYPE.equals(element.getAttributeValue(OrderEntryFactory.ORDER_ENTRY_TYPE_ATTR)));
     myExported = element.getAttributeValue(EXPORTED_ATTR) != null;
+    myScope = DependencyScope.readExternal(element);
     myLibrary = LibraryTableImplUtil.loadLibrary(element, getRootModel());
     init();
   }
@@ -125,7 +129,7 @@ class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements L
   public OrderEntry cloneEntry(RootModelImpl rootModel,
                                ProjectRootManagerImpl projectRootManager,
                                VirtualFilePointerManager filePointerManager) {
-    return new ModuleLibraryOrderEntryImpl(myLibrary, rootModel, myExported);
+    return new ModuleLibraryOrderEntryImpl(myLibrary, rootModel, myExported, myScope);
   }
 
   public void writeExternal(Element rootElement) throws WriteExternalException {
@@ -133,6 +137,7 @@ class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements L
     if (myExported) {
       element.setAttribute(EXPORTED_ATTR, "");
     }
+    myScope.writeExternal(element);
     myLibrary.writeExternal(element);
     rootElement.addContent(element);
   }
@@ -144,6 +149,15 @@ class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements L
 
   public void setExported(boolean value) {
     myExported = value;
+  }
+
+  @NotNull
+  public DependencyScope getScope() {
+    return myScope;
+  }
+
+  public void setScope(@NotNull DependencyScope scope) {
+    myScope = scope;
   }
 
   @Override

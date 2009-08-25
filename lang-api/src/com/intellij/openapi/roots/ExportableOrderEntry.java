@@ -15,10 +15,16 @@
  */
 package com.intellij.openapi.roots;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author dsl
  */
 public interface ExportableOrderEntry extends OrderEntry {
   boolean isExported();
   void setExported(boolean value);
+
+  @NotNull
+  DependencyScope getScope();
+  void setScope(@NotNull DependencyScope scope);
 }

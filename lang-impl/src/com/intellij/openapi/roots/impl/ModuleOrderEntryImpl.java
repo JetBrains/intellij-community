@@ -30,21 +30,25 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
   @NonNls public static final String ENTRY_TYPE = "module";
   @NonNls public static final String MODULE_NAME_ATTR = "module-name";
   @NonNls private static final String EXPORTED_ATTR = "exported";
+  @NonNls private static final String SCOPE_ATTR = "scope";
 
   private Module myModule;
   private String myModuleName; // non-null if myProject is null
   private boolean myExported = false;
+  @NotNull private DependencyScope myScope;
   private MessageBusConnection myConnection;
 
   ModuleOrderEntryImpl(Module module, RootModelImpl rootModel) {
     super(rootModel);
     myModule = module;
+    myScope = DependencyScope.COMPILE;
   }
 
   ModuleOrderEntryImpl(String moduleName, RootModelImpl rootModel) {
     super(rootModel);
     myModuleName = moduleName;
     myModule = null;
+    myScope = DependencyScope.COMPILE;
   }
 
   ModuleOrderEntryImpl(Element element, RootModelImpl rootModel, ModuleManager moduleManager) throws InvalidDataException {
@@ -62,7 +66,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     else {
       myModuleName = null;
     }
-    //addListeners(); // Q????
+    myScope = DependencyScope.readExternal(element);
   }
 
   private ModuleOrderEntryImpl(ModuleOrderEntryImpl that, RootModelImpl rootModel) {
@@ -80,6 +84,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
       myModuleName = that.myModuleName;
     }
     myExported = that.myExported;
+    myScope = that.myScope;
     addListeners();
   }
 
@@ -160,6 +165,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     if (myExported) {
       element.setAttribute(EXPORTED_ATTR, "");
     }
+    myScope.writeExternal(element);
     rootElement.addContent(element);
   }
 
@@ -216,6 +222,16 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     myExported = value;
   }
 
+  @NotNull
+  public DependencyScope getScope() {
+    return myScope;
+  }
+
+  public void setScope(@NotNull DependencyScope scope) {
+    getRootModel().assertWritable();
+    myScope = scope;
+  }
+
   private class MyModuleListener implements ModuleListener {
 
     public MyModuleListener() {
@@ -258,19 +274,4 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
       }
     }
   }
-
-  /*
-  private static boolean circularDependency(Module module,
-                                     final String thisModuleName, final ModuleManager moduleManager) {
-    if (module == null) return false;
-    final String[] dependencyNames = ModuleRootManager.getInstance(module).getDependencyModuleNames();
-    for (int i = 0; i < dependencyNames.length; i++) {
-      String dependencyName = dependencyNames[i];
-      if (dependencyName.equals(thisModuleName)) return true;
-      final Module depModule = moduleManager.findModuleByName(dependencyName);
-      if (circularDependency(depModule, thisModuleName, moduleManager)) return true;
-    }
-    return false;
-  }
-  */
 }

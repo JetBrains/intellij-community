@@ -162,6 +162,8 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   @NotNull Module[] getModuleDependencies();
 
+  @NotNull Module[] getModuleDependencies(boolean includeTests);
+
   boolean isWritable();
 
   void setRootUrls(OrderRootType orderRootType, String[] urls);

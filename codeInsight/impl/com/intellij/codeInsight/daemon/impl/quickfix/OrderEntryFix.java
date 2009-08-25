@@ -260,16 +260,16 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
                                           final PsiReference reference,
                                           @NonNls final String className,
                                           @NonNls final String libVirtFile) {
-    addJarToRoots(libVirtFile, currentModule);
+    addJarToRoots(libVirtFile, currentModule, reference.getElement());
 
     GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
     PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
-    if ( aClass != null && editor != null) {
+    if (aClass != null && editor != null) {
       new AddImportAction(project, reference, editor, aClass).execute();
     }
   }
 
-  public static void addJarToRoots(String libPath, final Module module) {
+  public static void addJarToRoots(String libPath, final Module module, @Nullable PsiElement location) {
     String url = VfsUtil.getUrlForLibraryRoot(new File(libPath));
     VirtualFile libVirtFile = VirtualFileManager.getInstance().findFileByUrl(url);
     assert libVirtFile != null : libPath;
@@ -280,6 +280,15 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     final Library.ModifiableModel libraryModel = jarLibrary.getModifiableModel();
     libraryModel.addRoot(libVirtFile, OrderRootType.CLASSES);
     libraryModel.commit();
+
+    if (location != null) {
+      final VirtualFile vFile = location.getContainingFile().getVirtualFile();
+      if (vFile != null && ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(vFile)) {
+        final LibraryOrderEntry orderEntry = rootModel.findLibraryOrderEntry(jarLibrary);
+        orderEntry.setScope(DependencyScope.TEST);
+      }
+    }
+
     rootModel.commit();
   }
 

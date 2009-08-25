@@ -138,7 +138,7 @@ public class CreateTestDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            OrderEntryFix.addJarToRoots(mySelectedTestDescriptor.getLibraryPath(), myTargetModule);
+            OrderEntryFix.addJarToRoots(mySelectedTestDescriptor.getLibraryPath(), myTargetModule, null);
           }
         });
         myFixLibraryPanel.setVisible(false);

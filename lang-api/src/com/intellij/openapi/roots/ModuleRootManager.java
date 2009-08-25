@@ -77,6 +77,15 @@ public abstract class ModuleRootManager implements ModuleRootModel {
   @NotNull public abstract Module[] getDependencies();
 
   /**
+   * Returns the list of modules on which the current module directly depends. The method does not traverse
+   * the entire dependency structure - dependencies of dependency modules are not included in the returned list.
+   *
+   * @param includeTests whether test-only dependencies should be included
+   * @return the list of module direct dependencies.
+   */
+  @NotNull public abstract Module[] getDependencies(boolean includeTests);
+
+  /**
    * Checks if the current module directly depends on the specified module.
    *
    * @param module the module to ckeck.
