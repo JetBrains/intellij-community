@@ -5,7 +5,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticMethod;
 import org.jetbrains.plugins.groovy.structure.elements.GroovyStructureViewElement;
 import org.jetbrains.plugins.groovy.structure.itemsPresentations.impl.GroovyTypeDefinitionItemPresentation;
@@ -34,7 +33,6 @@ public class GroovyTypeDefinitionStructureViewElement extends GroovyStructureVie
 
     List<PsiMethod> methods = Arrays.asList(typeDefinition.getMethods());
     for (PsiMethod method : typeDefinition.getAllMethods()) {
-      if (method instanceof GrAccessorMethod) continue;
       if (method instanceof GrSyntheticMethod) continue;
 
       if (methods.contains(method)) {
