@@ -41,7 +41,6 @@ public class ChooseRunConfigurationAction extends AnAction {
 
   private Executor myCurrentExecutor;
   private boolean myEditConfiguration;
-  private boolean myDeleteConfiguration;
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -51,13 +50,7 @@ public class ChooseRunConfigurationAction extends AnAction {
     final Executor executor = getDefaultExecutor();
     assert executor != null;
 
-    final ListPopupImpl popup = new ListPopupImpl(new ConfigurationListPopupStep(this, project, String.format("%s", executor.getActionName()))) {
-      @Override
-      protected ListCellRenderer getListElementRenderer() {
-        return new RunListElementRenderer(this);
-      }
-    };
-
+    final RunListPopup popup = new RunListPopup(project, new ConfigurationListPopupStep(this, project, String.format("%s", executor.getActionName())));
     registerActions(popup);
 
     final String adText = getAdText(getAlternateExecutor());
@@ -72,21 +65,30 @@ public class ChooseRunConfigurationAction extends AnAction {
     return "run.configuration.alternate.action.ad";
   }
 
+  protected static boolean canRun(@NotNull final Executor executor, final RunnerAndConfigurationSettingsImpl settings) {
+    return ExecutionUtil.getRunner(executor.getId(), settings) != null;
+  }
+
   @Nullable
   protected String getAdText(final Executor alternateExecutor) {
-    if (alternateExecutor != null && !PropertiesComponent.getInstance().isTrueValue(getAdKey())) {
+    final PropertiesComponent properties = PropertiesComponent.getInstance();
+    if (alternateExecutor != null && !properties.isTrueValue(getAdKey())) {
       return String
         .format("Hold %s to %s", KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke("SHIFT")), alternateExecutor.getActionName());
     }
 
-    if (!PropertiesComponent.getInstance().isTrueValue("run.configuration.edit.ad")) {
+    if (!properties.isTrueValue("run.configuration.edit.ad")) {
       return String.format("Press %s to Edit", KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke("F4")));
+    }
+
+    if (!properties.isTrueValue("run.configuration.delete.ad")) {
+      return String.format("Press %s to Delete configuration", KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke("DELETE")));
     }
 
     return null;
   }
 
-  private void registerActions(final ListPopupImpl popup) {
+  private void registerActions(final RunListPopup popup) {
     popup.registerAction("alternateExecutor", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         myCurrentExecutor = getAlternateExecutor();
@@ -123,13 +125,7 @@ public class ChooseRunConfigurationAction extends AnAction {
 
     popup.registerAction("deleteConfiguration", KeyStroke.getKeyStroke("DELETE"), new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        myDeleteConfiguration = true;
-        try {
-          popup.handleSelect(true);
-        }
-        finally {
-          myDeleteConfiguration = false;
-        }
+        popup.removeSelected();
       }
     });
 
@@ -177,8 +173,9 @@ public class ChooseRunConfigurationAction extends AnAction {
     }
   }
 
-  private void deleteConfiguration(final Project project, final RunnerAndConfigurationSettingsImpl configurationSettings) {
-    // TODO:
+  private static void deleteConfiguration(final Project project, @NotNull final RunnerAndConfigurationSettingsImpl configurationSettings) {
+    final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
+    manager.removeConfiguration(configurationSettings);
   }
 
   @Nullable
@@ -263,7 +260,7 @@ public class ChooseRunConfigurationAction extends AnAction {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (!(o instanceof ItemWrapper)) return false;
 
       ItemWrapper that = (ItemWrapper)o;
 
@@ -289,7 +286,7 @@ public class ChooseRunConfigurationAction extends AnAction {
     }
 
     public boolean available(Executor executor) {
-      return true;
+      return false;
     }
 
     public boolean hasActions() {
@@ -347,11 +344,14 @@ public class ChooseRunConfigurationAction extends AnAction {
 
         @Override
         public PopupStep getNextStep(@NotNull final Project project, @NotNull final ChooseRunConfigurationAction action) {
-          return new ConfigurationActionsStep(project, action, getValue());
+          return new ConfigurationActionsStep(project, action, getValue(), isDynamic());
         }
       };
     }
 
+    public boolean canBeDeleted() {
+      return !isDynamic() && getValue() != null;
+    }
   }
 
   private static final class ConfigurationListPopupStep extends BaseListPopupStep<ItemWrapper> {
@@ -394,13 +394,13 @@ public class ChooseRunConfigurationAction extends AnAction {
       final List<ItemWrapper> result = new ArrayList<ItemWrapper>();
 
       final RunnerAndConfigurationSettingsImpl selectedConfiguration = manager.getSelectedConfiguration();
-      final RunnerAndConfigurationSettingsImpl context = populateWithDynamicRunners(result, project, manager, selectedConfiguration);
+      final List<RunnerAndConfigurationSettingsImpl> contextConfigurations = populateWithDynamicRunners(result, project, manager, selectedConfiguration);
 
       final ConfigurationType[] factories = manager.getConfigurationFactories();
       for (final ConfigurationType factory : factories) {
         final RunnerAndConfigurationSettingsImpl[] configurations = manager.getConfigurationSettings(factory);
         for (final RunnerAndConfigurationSettingsImpl configuration : configurations) {
-          if (configuration != context) { // exclude context configuration
+          if (!contextConfigurations.contains(configuration)) { // exclude context configuration
             final ItemWrapper wrapped = ItemWrapper.wrap(project, configuration);
             if (configuration == selectedConfiguration) {
               wrapped.setMnemonic(1);
@@ -441,11 +441,18 @@ public class ChooseRunConfigurationAction extends AnAction {
               public void run() {
                 final RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
                 if (configuration instanceof RunnerAndConfigurationSettingsImpl) {
-                  ExecutionUtil.executeConfiguration(project, (RunnerAndConfigurationSettingsImpl) configuration, executor, DataManager.getInstance().getDataContext());
+                  if (canRun(executor, (RunnerAndConfigurationSettingsImpl) configuration)) {
+                    ExecutionUtil.executeConfiguration(project, (RunnerAndConfigurationSettingsImpl) configuration, executor, DataManager.getInstance().getDataContext());
+                  }
                 }
               }
             });
           }
+        }
+
+        @Override
+        public boolean available(Executor executor) {
+          return true;
         }
       };
 
@@ -455,87 +462,81 @@ public class ChooseRunConfigurationAction extends AnAction {
       return result.toArray(new ItemWrapper[result.size()]);
     }
 
-    @Nullable
-    private static RunnerAndConfigurationSettingsImpl populateWithDynamicRunners(final List<ItemWrapper> result,
+    @NotNull
+    private static List<RunnerAndConfigurationSettingsImpl> populateWithDynamicRunners(final List<ItemWrapper> result,
                                                                                  final Project project,
                                                                                  final RunManagerEx manager,
                                                                                  final RunnerAndConfigurationSettingsImpl selectedConfiguration) {
+
+      final ArrayList<RunnerAndConfigurationSettingsImpl> contextConfigurations = new ArrayList<RunnerAndConfigurationSettingsImpl>();
       final DataContext dataContext = DataManager.getInstance().getDataContext();
       final ConfigurationContext context = new ConfigurationContext(dataContext);
-      final RunnerAndConfigurationSettingsImpl existing = context.findExisting();
-      if (existing != null && existing == selectedConfiguration) {
-        return null;
-      }
 
-      if (existing == null) {
-        final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferedProducers(context.getLocation(), context);
-        if (producers == null) return null;
+      final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferredProducers(context.getLocation(), context, false);
+      if (producers == null) return Collections.emptyList();
 
-        Collections.sort(producers, new Comparator<RuntimeConfigurationProducer>() {
-          public int compare(final RuntimeConfigurationProducer p1, final RuntimeConfigurationProducer p2) {
-            return p1.getConfigurationType().getDisplayName().compareTo(p2.getConfigurationType().getDisplayName());
+      Collections.sort(producers, new Comparator<RuntimeConfigurationProducer>() {
+        public int compare(final RuntimeConfigurationProducer p1, final RuntimeConfigurationProducer p2) {
+          return p1.getConfigurationType().getDisplayName().compareTo(p2.getConfigurationType().getDisplayName());
+        }
+      });
+
+      final RunnerAndConfigurationSettingsImpl[] preferred = {null};
+
+      int i = 2; // selectedConfiguration == null ? 1 : 2;
+      for (final RuntimeConfigurationProducer producer : producers) {
+        final RunnerAndConfigurationSettingsImpl configuration = producer.getConfiguration();
+        if (configuration != null) {
+          if (selectedConfiguration != null && configuration.equals(selectedConfiguration)) continue;
+          contextConfigurations.add(configuration);
+
+          if (preferred[0] == null) {
+            preferred[0] = configuration;
           }
-        });
 
-        final RunnerAndConfigurationSettingsImpl[] preferred = {null};
-
-        int i = 2; // selectedConfiguration == null ? 1 : 2;
-        for (final RuntimeConfigurationProducer producer : producers) {
-          final RunnerAndConfigurationSettingsImpl configuration = producer.getConfiguration();
-          if (configuration != null) {
-
-            if (preferred[0] == null) {
-              preferred[0] = configuration;
+          //noinspection unchecked
+          final ItemWrapper wrapper = new ItemWrapper(configuration) {
+            @Override
+            public Icon getIcon() {
+              return IconLoader.getTransparentIcon(ExecutionUtil.getConfigurationIcon(project, configuration), 0.3f);
             }
 
-            //noinspection unchecked
-            final ItemWrapper wrapper = new ItemWrapper(configuration) {
-              @Override
-              public Icon getIcon() {
-                return IconLoader.getTransparentIcon(ExecutionUtil.getConfigurationIcon(project, configuration), 0.3f);
-              }
+            @Override
+            public String getText() {
+              return String.format("%s", configuration.getName());
+            }
 
-              @Override
-              public String getText() {
-                return producers.size() == 1
-                       ? String.format("%s", configuration.getName())
-                       : String.format("%s (%s)", configuration.getName(), producer.getConfigurationType().getDisplayName());
-              }
+            @Override
+            public boolean available(Executor executor) {
+              return canRun(executor, configuration);
+            }
 
-              @Override
-              public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
-                manager.setTemporaryConfiguration(configuration);
-                RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
-                ExecutionUtil.executeConfiguration(project, configuration, executor, DataManager.getInstance().getDataContext());
-              }
+            @Override
+            public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
+              manager.setTemporaryConfiguration(configuration);
+              RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
+              ExecutionUtil.executeConfiguration(project, configuration, executor, DataManager.getInstance().getDataContext());
+            }
 
-              @Override
-              public PopupStep getNextStep(@NotNull final Project project, @NotNull final ChooseRunConfigurationAction action) {
-                return new ConfigurationActionsStep(project, action, configuration);
-              }
+            @Override
+            public PopupStep getNextStep(@NotNull final Project project, @NotNull final ChooseRunConfigurationAction action) {
+              return new ConfigurationActionsStep(project, action, configuration, isDynamic());
+            }
 
-              @Override
-              public boolean hasActions() {
-                return true;
-              }
-            };
+            @Override
+            public boolean hasActions() {
+              return true;
+            }
+          };
 
-            wrapper.setDynamic(true);
-            wrapper.setMnemonic(i);
-            result.add(wrapper);
-            i++;
-          }
+          wrapper.setDynamic(true);
+          wrapper.setMnemonic(i);
+          result.add(wrapper);
+          i++;
         }
-
-        return preferred[0];
-      }
-      else {
-        final ItemWrapper wrapper = ItemWrapper.wrap(project, existing, true);
-        wrapper.setMnemonic(2); // selectedConfiguration == null ? 1 : 2);
-        result.add(wrapper);
       }
 
-      return existing;
+      return contextConfigurations;
     }
 
     @Override
@@ -590,19 +591,6 @@ public class ChooseRunConfigurationAction extends AnAction {
         }
       }
 
-      if (myAction.myDeleteConfiguration) {
-        final Object o = wrapper.getValue();
-        if (o instanceof RunnerAndConfigurationSettingsImpl) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              myAction.deleteConfiguration(myProject, (RunnerAndConfigurationSettingsImpl)o);
-            }
-          });
-
-          return FINAL_CHOICE;
-        }
-      }
-
       final Executor executor = myAction.getCurrentExecutor();
       assert executor != null;
 
@@ -644,13 +632,14 @@ public class ChooseRunConfigurationAction extends AnAction {
   private static final class ConfigurationActionsStep extends BaseListPopupStep<ActionWrapper> {
     private ConfigurationActionsStep(@NotNull final Project project,
                                      ChooseRunConfigurationAction action,
-                                     @NotNull final RunnerAndConfigurationSettingsImpl settings) {
-      super("Actions", buildActions(project, action, settings));
+                                     @NotNull final RunnerAndConfigurationSettingsImpl settings, final boolean dynamic) {
+      super("Actions", buildActions(project, action, settings, dynamic));
     }
 
     private static ActionWrapper[] buildActions(@NotNull final Project project,
                                                 final ChooseRunConfigurationAction action,
-                                                @NotNull final RunnerAndConfigurationSettingsImpl settings) {
+                                                @NotNull final RunnerAndConfigurationSettingsImpl settings,
+                                                final boolean dynamic) {
       final List<ActionWrapper> result = new ArrayList<ActionWrapper>();
       final Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
       for (final Executor executor : executors) {
@@ -659,7 +648,9 @@ public class ChooseRunConfigurationAction extends AnAction {
           result.add(new ActionWrapper(executor.getActionName(), executor.getIcon()) {
             @Override
             public void perform() {
-              RunManagerEx.getInstanceEx(project).setSelectedConfiguration(settings);
+              final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
+              if (dynamic) manager.setTemporaryConfiguration(settings);
+              manager.setSelectedConfiguration(settings);
               ExecutionUtil.executeConfiguration(project, settings, executor, DataManager.getInstance().getDataContext());
             }
           });
@@ -669,15 +660,19 @@ public class ChooseRunConfigurationAction extends AnAction {
       result.add(new ActionWrapper("Edit...", EDIT_ICON) {
         @Override
         public void perform() {
+          final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
+          if (dynamic) manager.setTemporaryConfiguration(settings);
           action.editConfiguration(project, settings);
         }
       });
 
-      if (RunManager.getInstance(project).isTemporary(settings.getConfiguration())) {
+      if (RunManager.getInstance(project).isTemporary(settings.getConfiguration()) || dynamic) {
         result.add(new ActionWrapper("Save temp configuration", SAVE_ICON) {
           @Override
           public void perform() {
-            RunManager.getInstance(project).makeStable(settings.getConfiguration());
+            final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
+            if (dynamic) manager.setTemporaryConfiguration(settings);
+            manager.makeStable(settings.getConfiguration());
           }
         });
       }
@@ -771,6 +766,44 @@ public class ChooseRunConfigurationAction extends AnAction {
           myLabel.setDisplayedMnemonicIndex(0);
         } else {
           myLabel.setText("");
+        }
+      }
+    }
+  }
+
+  private static class RunListPopup extends ListPopupImpl {
+    private Project myProject_;
+
+    public RunListPopup(final Project project, ListPopupStep step) {
+      super(step);
+      myProject_ = project;
+    }
+
+    @Override
+    protected ListCellRenderer getListElementRenderer() {
+      return new RunListElementRenderer(this);
+    }
+
+    public void removeSelected() {
+      final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
+      if (!propertiesComponent.isTrueValue("run.configuration.delete.ad")) propertiesComponent.setValue("run.configuration.delete.ad", Boolean.toString(true));
+
+      final int index = getSelectedIndex();
+      if (index == -1) {
+        return;
+      }
+
+      final Object o = getListModel().get(index);
+      if (o != null && o instanceof ItemWrapper && ((ItemWrapper)o).canBeDeleted()) {
+        deleteConfiguration(myProject_, (RunnerAndConfigurationSettingsImpl) ((ItemWrapper)o).getValue());
+        getListModel().deleteItem(o);
+        final List<Object> values = getListStep().getValues();
+        values.remove(o);
+
+        if (index < values.size()){
+          onChildSelectedFor(values.get(index));
+        } else if (index - 1 >= 0) {
+          onChildSelectedFor(values.get(index - 1));
         }
       }
     }
