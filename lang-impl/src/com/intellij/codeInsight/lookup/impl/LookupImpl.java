@@ -203,14 +203,24 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void addItem(LookupElement item) {
+    final double priority = item instanceof LookupItem ? ((LookupItem)item).getPriority() : 0;
+    final Comparable[] weight = getWeight(myItemPreferencePolicy, myElement, item);
+    final LookupItemWeightComparable comparable = new LookupItemWeightComparable(priority, weight);
+
+    final CollectConsumer<LookupElementAction> consumer = new CollectConsumer<LookupElementAction>();
+    for (LookupActionProvider provider : LookupActionProvider.EP_NAME.getExtensions()) {
+      provider.fillActions(item, this, consumer);
+    }
+
     synchronized (myItems) {
       myItems.add(item);
-      addItemWeight(item);
 
-      final CollectConsumer<LookupElementAction> consumer = new CollectConsumer<LookupElementAction>();
-      for (LookupActionProvider provider : LookupActionProvider.EP_NAME.getExtensions()) {
-        provider.fillActions(item, this, consumer);
+      SortedList<LookupElement> list = myItemsMap.get(comparable);
+      if (list == null) {
+        myItemsMap.put(comparable, list = new SortedList<LookupElement>(myComparator));
       }
+      list.add(item);
+
       myItemActions.put(item, consumer.getResult());
     }
     int maxWidth = myCellRenderer.updateMaximumWidth(item);
@@ -222,14 +232,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       final Collection<LookupElementAction> collection = myItemActions.get(element);
       return collection == null ? Collections.<LookupElementAction>emptyList() : collection;
     }
-  }
-
-  private void addItemWeight(final LookupElement item) {
-    final Comparable[] weight = getWeight(myItemPreferencePolicy, myElement, item);
-    final LookupItemWeightComparable key = new LookupItemWeightComparable(item instanceof LookupItem ? ((LookupItem)item).getPriority() : 0, weight);
-    SortedList<LookupElement> list = myItemsMap.get(key);
-    if (list == null) myItemsMap.put(key, list = new SortedList<LookupElement>(myComparator));
-    list.add(item);
   }
 
   @Nullable
@@ -796,8 +798,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         }
       }
       myAdditionalPrefix = "";
-      updateList();
     }
+    updateList();
 
     offset += afterCaret.length();
     setInitialOffset(offset, offset, offset);
