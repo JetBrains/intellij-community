@@ -619,7 +619,7 @@ public class FileManagerImpl implements FileManager {
         new ExternalChangeAction() {
           public void run() {
             if (!vFile.isDirectory()) {
-              PsiFile psiFile = findFile(vFile);
+              PsiFile psiFile = getCachedPsiFile(vFile);
               if (psiFile != null) {
                 PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
                 treeEvent.setParent(parentDir);
