@@ -22,18 +22,18 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="testFramework" />
+    <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../../IDEA_Branches/SelenaMinor/svnPlugins/svn4idea/lib/jna.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/jna.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="testFramework" />
-    <orderEntry type="module" module-name="lang-api" />
   </component>
 </module>
 
