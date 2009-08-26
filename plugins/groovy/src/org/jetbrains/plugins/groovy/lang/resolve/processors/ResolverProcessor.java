@@ -23,6 +23,7 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -97,14 +98,14 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
 
   protected boolean isAccessible(PsiNamedElement namedElement) {
     return !(namedElement instanceof PsiMember) ||
-        org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isAccessible(myPlace, ((PsiMember) namedElement));
+        PsiUtil.isAccessible(myPlace, ((PsiMember) namedElement));
   }
 
   protected boolean isStaticsOK(PsiNamedElement element) {
     if (myCurrentFileResolveContext instanceof GrImportStatement) return true;
 
     if (element instanceof PsiModifierListOwner) {
-      return org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isStaticsOK((PsiModifierListOwner) element, myPlace);
+      return PsiUtil.isStaticsOK((PsiModifierListOwner) element, myPlace);
     }
     return true;
   }
@@ -113,6 +114,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     return myCandidates.toArray(new GroovyResolveResult[myCandidates.size()]);
   }
 
+  @SuppressWarnings({"unchecked"})
   public <T> T getHint(Key<T> hintKey) {
     if (NameHint.KEY == hintKey && myName != null) {
       return (T) this;
