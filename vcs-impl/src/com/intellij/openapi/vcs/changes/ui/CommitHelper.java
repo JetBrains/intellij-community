@@ -137,13 +137,16 @@ public class CommitHelper {
         }
       });
 
-      processor.callSelf();
-
-      appManager.runReadAction(new Runnable() {
-        public void run() {
-          unmarkCommittingDocuments();
-        }
-      });
+      try {
+        processor.callSelf();
+      }
+      finally {
+        appManager.runReadAction(new Runnable() {
+          public void run() {
+            unmarkCommittingDocuments();
+          }
+        });
+      }
 
       processor.doBeforeRefresh();
 
@@ -392,7 +395,7 @@ public class CommitHelper {
     for (Change change : myIncludedChanges) {
       Document doc = ChangesUtil.getFilePath(change).getDocument();
       if (doc != null) {
-        doc.putUserData(ChangeListManagerImpl.DOCUMENT_BEING_COMMITTED_KEY, new Object());
+        doc.putUserData(ChangeListManagerImpl.DOCUMENT_BEING_COMMITTED_KEY, myProject);
         myCommittingDocuments.add(doc);
       }
     }

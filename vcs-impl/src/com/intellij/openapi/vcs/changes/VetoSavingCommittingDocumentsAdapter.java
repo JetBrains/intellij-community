@@ -10,19 +10,24 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.AppTopics;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoListener;
-import com.intellij.openapi.fileEditor.VetoDocumentReloadException;
-import com.intellij.openapi.fileEditor.VetoDocumentSavingException;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class VetoSavingCommittingDocumentsAdapter implements ApplicationComponent, FileDocumentSynchronizationVetoListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.VetoSavingCommittingDocumentsAdapter");
+  private static final Object SAVE_DENIED = new Object();
 
   private final FileDocumentManager myFileDocumentManager;
 
@@ -31,11 +36,15 @@ public class VetoSavingCommittingDocumentsAdapter implements ApplicationComponen
   }
 
   public void beforeDocumentSaving(Document document) throws VetoDocumentSavingException {
-    if (document.getUserData(ChangeListManagerImpl.DOCUMENT_BEING_COMMITTED_KEY) != null) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Vetoing save for " + FileDocumentManager.getInstance().getFile(document).getPath());
-      }
+    final Object beingCommitted = document.getUserData(ChangeListManagerImpl.DOCUMENT_BEING_COMMITTED_KEY);
+    if (beingCommitted == SAVE_DENIED) {
       throw new VetoDocumentSavingException();
+    }
+    if (beingCommitted instanceof Project) {
+      boolean allowSave = showAllowSaveDialog((Project) beingCommitted, Collections.singletonList(document));
+      if (!allowSave) {
+        throw new VetoDocumentSavingException();
+      }
     }
   }
 
@@ -50,9 +59,45 @@ public class VetoSavingCommittingDocumentsAdapter implements ApplicationComponen
 
   public void initComponent() {
     myFileDocumentManager.addFileDocumentSynchronizationVetoer(this);
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+      @Override
+      public void beforeAllDocumentsSaving() {
+        List<Document> documentsToWarn = new ArrayList<Document>();
+        final Document[] unsavedDocuments = myFileDocumentManager.getUnsavedDocuments();
+        Project commitOwnerProject = null;
+        for (Document unsavedDocument : unsavedDocuments) {
+          final Object data = unsavedDocument.getUserData(ChangeListManagerImpl.DOCUMENT_BEING_COMMITTED_KEY);
+          if (data instanceof Project) {
+            commitOwnerProject = (Project) data;
+            documentsToWarn.add(unsavedDocument);
+          }
+        }
+        if (!documentsToWarn.isEmpty()) {
+          boolean allowSave = showAllowSaveDialog(commitOwnerProject, documentsToWarn);
+          for (Document document : documentsToWarn) {
+            document.putUserData(ChangeListManagerImpl.DOCUMENT_BEING_COMMITTED_KEY, allowSave ? null : SAVE_DENIED);
+          }
+        }
+      }
+    });
   }
 
   public void disposeComponent() {
     myFileDocumentManager.removeFileDocumentSynchronizationVetoer(this);
+  }
+
+  private boolean showAllowSaveDialog(Project project, List<Document> documentsToWarn) {
+    StringBuilder messageBuilder = new StringBuilder("The following " + (documentsToWarn.size() == 1 ? "file is" : "files are") +
+                                                     " currently being committed to the VCS. " +
+                                                     "Saving now could cause inconsistent data to be committed.\n");
+    for (Document document : documentsToWarn) {
+      final VirtualFile file = myFileDocumentManager.getFile(document);
+      messageBuilder.append(FileUtil.toSystemDependentName(file.getPath())).append("\n");
+    }
+    messageBuilder.append("Save the ").append(documentsToWarn.size() == 1 ? "file" : "files").append(" now?");
+
+    int rc = Messages.showDialog(project, messageBuilder.toString(), "Save Files During Commit", new String[] { "Save Now", "Postpone Save" },
+                                 0, Messages.getQuestionIcon());
+    return rc == 0;
   }
 }
