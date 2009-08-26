@@ -46,8 +46,8 @@ public class SliceLeafAnalyzer {
     root.update(null);
     root.getLeafExpressions().clear();
     Collection<PsiElement> leaves;
-    if (root.hasDuplicate()) {
-      SliceNode duplicate = root.getDuplicate();
+    SliceNode duplicate = root.getDuplicate();
+    if (duplicate != null) {
       leaves = duplicate.getLeafExpressions();
       //null means other
       //leaves = ContainerUtil.singleton(PsiUtilBase.NULL_PSI_ELEMENT, LEAF_ELEMENT_EQUALITY);

@@ -41,7 +41,7 @@ public class SliceLeafValueRootNode extends AbstractTreeNode<Usage> implements M
     boolean iAmHereToStay = false;
     for (AbstractTreeNode cachedChild : oldRoot.myCachedChildren) {
       SliceNode cachedSliceNode = (SliceNode)cachedChild;
-      if (cachedSliceNode.hasDuplicate()) {
+      if (cachedSliceNode.getDuplicate() != null) {
         // put entire (potentially unbounded) subtree here
         //children.add(cachedSliceNode.copy(withLeaves));
       }

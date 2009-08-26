@@ -11,14 +11,11 @@ import java.util.List;
  * @author cdr
  */
 public class SliceTreeStructure extends AbstractTreeStructureBase {
-  private SliceNode myRoot;
+  private final SliceNode myRoot;
 
-  public SliceTreeStructure(Project project) {
+  public SliceTreeStructure(Project project, SliceNode rootNode) {
     super(project);
-  }
-
-  public void setRoot(final SliceNode root) {
-    myRoot = root;
+    myRoot = rootNode;
   }
 
   public List<TreeStructureProvider> getProviders() {
@@ -39,6 +36,6 @@ public class SliceTreeStructure extends AbstractTreeStructureBase {
 
   @Override
   public boolean isToBuildChildrenInBackground(final Object element) {
-    return true;
+    return true;//!ApplicationManager.getApplication().isUnitTestMode();
   }
 }

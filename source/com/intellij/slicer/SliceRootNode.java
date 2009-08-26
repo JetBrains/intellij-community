@@ -16,22 +16,25 @@ import java.util.Collections;
 /**
  * @author cdr
  */
-public class SliceRootNode extends SliceNode {
-  protected SliceRootNode(@NotNull Project project, @NotNull SliceUsage rootUsage, @NotNull DuplicateMap targetEqualUsages,
-                          SliceTreeBuilder treeBuilder,
-                          AnalysisScope scope) {
-    super(project, new SliceUsage(rootUsage.getElement().getContainingFile(), scope), targetEqualUsages, treeBuilder, Collections.<PsiElement>emptyList());
+public abstract class SliceRootNode extends SliceNode {
+  private final SliceUsage myRootUsage;
 
-    switchToAllLeavesTogether(rootUsage);
+  protected SliceRootNode(@NotNull Project project, @NotNull DuplicateMap targetEqualUsages,
+                          AnalysisScope scope, final SliceUsage rootUsage) {
+    super(project, new SliceUsage(rootUsage.getElement().getContainingFile(), scope), targetEqualUsages, Collections.<PsiElement>emptyList());
+    myRootUsage = rootUsage;
   }
 
   void switchToAllLeavesTogether(SliceUsage rootUsage) {
-    AbstractTreeNode node = new SliceNode(getProject(), rootUsage, targetEqualUsages, myTreeBuilder, getLeafExpressions());
+    AbstractTreeNode node = new SliceNode(getProject(), rootUsage, targetEqualUsages, getTreeBuilder(), getLeafExpressions());
     myCachedChildren = Collections.singletonList(node);
   }
 
   @NotNull
   public Collection<? extends AbstractTreeNode> getChildren() {
+    if (myCachedChildren == null) {
+      switchToAllLeavesTogether(myRootUsage);
+    }
     return myCachedChildren;
   }
 
@@ -52,6 +55,7 @@ public class SliceRootNode extends SliceNode {
       changed = false;
     }
   }
+
 
   @Override
   public void customizeCellRenderer(SliceUsageCellRenderer renderer,

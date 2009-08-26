@@ -7,12 +7,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,22 +25,17 @@ import java.util.List;
  */
 public class SliceNode extends AbstractTreeNode<SliceUsage> implements DuplicateNodeRenderer.DuplicatableNode<SliceNode>, MyColoredTreeCellRenderer {
   protected List<AbstractTreeNode> myCachedChildren;
-  private volatile long storedModificationCount = -1;
-  protected boolean initialized;
+  private boolean initialized;
   private SliceNode duplicate;
   protected final DuplicateMap targetEqualUsages;
-  protected final SliceTreeBuilder myTreeBuilder;
+  private final SliceTreeBuilder myTreeBuilder;
   private final Collection<PsiElement> leafExpressions = new THashSet<PsiElement>(SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
   protected boolean changed;
-  private static final TObjectHashingStrategy<SliceNode> SLICE_NODE_EQUALITY = new TObjectHashingStrategy<SliceNode>() {
-    public int computeHashCode(SliceNode object) {
-      return object.getValue().getUsageInfo().hashCode();
-    }
 
-    public boolean equals(SliceNode o1, SliceNode o2) {
-      return o1.getValue().getUsageInfo().equals(o2.getValue().getUsageInfo());
-    }
-  };
+  protected SliceNode(@NotNull Project project, SliceUsage sliceUsage, @NotNull DuplicateMap targetEqualUsages,
+                      @NotNull Collection<PsiElement> leafExpressions) {
+    this(project, sliceUsage, targetEqualUsages, null, leafExpressions);
+  }
 
   protected SliceNode(@NotNull Project project, SliceUsage sliceUsage, @NotNull DuplicateMap targetEqualUsages,
                       SliceTreeBuilder treeBuilder, @NotNull Collection<PsiElement> leafExpressions) {
@@ -52,10 +45,13 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     this.leafExpressions.addAll(leafExpressions);
   }
 
+  protected SliceTreeBuilder getTreeBuilder() {
+    return myTreeBuilder;
+  }
+
   SliceNode copy(Collection<PsiElement> withLeaves) {
     SliceUsage newUsage = getValue().copy();
-    SliceNode newNode = new SliceNode(getProject(), newUsage, targetEqualUsages, myTreeBuilder, withLeaves);
-    newNode.storedModificationCount = storedModificationCount;
+    SliceNode newNode = new SliceNode(getProject(), newUsage, targetEqualUsages, getTreeBuilder(), withLeaves);
     newNode.initialized = initialized;
     newNode.duplicate = duplicate;
     return newNode;
@@ -73,38 +69,35 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   }
 
   public Collection<? extends AbstractTreeNode> getChildrenUnderProgress(ProgressIndicator progress) {
-    long count = PsiManager.getInstance(getProject()).getModificationTracker().getModificationCount();
-    if (myCachedChildren != null && storedModificationCount == count || !isValid() || myTreeBuilder.splitByLeafExpressions) {
+    if (myCachedChildren != null || !isValid() || getTreeBuilder().splitByLeafExpressions) {
       return myCachedChildren == null ? Collections.<AbstractTreeNode>emptyList() : myCachedChildren;
     }
     myCachedChildren = Collections.synchronizedList(new ArrayList<AbstractTreeNode>());
-    storedModificationCount = count;
     final SliceManager manager = SliceManager.getInstance(getProject());
     manager.runInterruptibly(new Runnable() {
       public void run() {
         Processor<SliceUsage> processor = new Processor<SliceUsage>() {
           public boolean process(SliceUsage sliceUsage) {
             manager.checkCanceled();
-            SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages, myTreeBuilder, getLeafExpressions());
+            SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages, getTreeBuilder(), getLeafExpressions());
             myCachedChildren.add(node);
             return true;
           }
         };
 
-        getValue().processChildren(processor, myTreeBuilder.dataFlowToThis);
+        getValue().processChildren(processor, getTreeBuilder().dataFlowToThis);
       }
     }, new Runnable(){
       public void run() {
         myCachedChildren = null;
-        storedModificationCount = -1;
         changed = true;
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            if (myTreeBuilder.isDisposed()) return;
-            DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(getValue());
+            if (getTreeBuilder().isDisposed()) return;
+            DefaultMutableTreeNode node = getTreeBuilder().getNodeForElement(getValue());
             //myTreeBuilder.getUi().queueBackgroundUpdate(node, (NodeDescriptor)node.getUserObject(), new TreeUpdatePass(node));
-            if (node == null) node = myTreeBuilder.getRootNode();
-            myTreeBuilder.addSubtreeToUpdate(node);
+            if (node == null) node = getTreeBuilder().getRootNode();
+            getTreeBuilder().addSubtreeToUpdate(node);
           }
         });
       }
@@ -138,23 +131,10 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   }
 
   private void initializeDuplicateFlag() {
-    SliceUsage sliceUsage = getValue();
-    Collection<SliceNode> eq = targetEqualUsages.get(sliceUsage);
-    if (eq == null) {
-      eq = new THashSet<SliceNode>(SLICE_NODE_EQUALITY);
-      targetEqualUsages.put(sliceUsage, eq);
-    }
-    eq.remove(this);
-    eq.add(this);
-    if (eq.size() > 1) {
-      duplicate = eq.iterator().next();
-    }
+    SliceNode node = targetEqualUsages.putNodeCheckDupe(this);
+    duplicate = node;
   }
 
-  public boolean hasDuplicate() {
-    return duplicate != null;
-  }
-  
   public SliceNode getDuplicate() {
     return duplicate;
   }
@@ -216,5 +196,20 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     return getValue()==null?"<null>":getValue().toString();
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    SliceNode sliceNode = (SliceNode)o;
+
+    return getValue().equals(sliceNode.getValue());
+  }
+
+  @Override
+  public int hashCode() {
+    return getValue().hashCode();
+  }
 
 }

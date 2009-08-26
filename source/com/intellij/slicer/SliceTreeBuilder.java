@@ -16,31 +16,26 @@ import java.util.Collection;
 /**
  * @author cdr
  */
-public class SliceTreeBuilder extends AbstractTreeBuilder{
+public class SliceTreeBuilder extends AbstractTreeBuilder {
   public boolean splitByLeafExpressions;
   public final boolean dataFlowToThis;
+  private final DuplicateMap myDuplicateMap;
 
-  public SliceTreeBuilder(JTree tree, Project project, boolean dataFlowToThis) {
-    super(tree, (DefaultTreeModel)tree.getModel(), new SliceTreeStructure(project), AlphaComparator.INSTANCE, false);
+  public SliceTreeBuilder(JTree tree, Project project, boolean dataFlowToThis, final SliceNode rootNode, DuplicateMap duplicateMap) {
+    super(tree, (DefaultTreeModel)tree.getModel(), new SliceTreeStructure(project, rootNode), AlphaComparator.INSTANCE, false);
     this.dataFlowToThis = dataFlowToThis;
+    myDuplicateMap = duplicateMap;
     initRootNode();
-  }
-
-  protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    return false;
+    //MessageBusConnection connection = project.getMessageBus().connect(this);
+    //connection.subscribe(ProjectTopics.MODIFICATION_TRACKER,new PsiModificationTracker.Listener() {
+    //  public void modificationCountChanged() {
+    //    refreshAll();
+    //  }
+    //});
   }
 
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     return false;
-  }
-
-  public void setRoot(SliceNode root) {
-    ((SliceTreeStructure)getTreeStructure()).setRoot(root);
-  }
-
-  @Override
-  public void dispose() {
-    super.dispose();
   }
 
   public void switchToSplittedNodes() {
