@@ -12,7 +12,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.xml.XmlTag;
@@ -431,13 +430,13 @@ public class ReplacerImpl {
                parent instanceof PsiAnonymousClass
               ) &&
               prevSibling instanceof PsiJavaToken &&
-              ((PsiJavaToken)prevSibling).getTokenType() == ElementType.COMMA
+              ((PsiJavaToken)prevSibling).getTokenType() == JavaTokenType.COMMA
              ) {
             firstToDelete = prevSibling;
           }
         } else if (element instanceof PsiParameter &&
                    prevSibling instanceof PsiJavaToken &&
-              ((PsiJavaToken)prevSibling).getTokenType() == ElementType.COMMA
+              ((PsiJavaToken)prevSibling).getTokenType() == JavaTokenType.COMMA
           ) {
           firstToDelete = prevSibling;
         }

@@ -15,12 +15,12 @@
  */
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
@@ -115,7 +115,7 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
 
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         PsiElement element = descriptor.getPsiElement();
-        if (element != null && CodeInsightUtil.preparePsiElementsForWrite(element)) {
+        if (element != null && CodeInsightUtilBase.preparePsiElementsForWrite(element)) {
           replacer.replace(replacementInfo);
         }
       }

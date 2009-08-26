@@ -2,7 +2,6 @@ package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
-import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -11,9 +10,9 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
@@ -322,7 +321,7 @@ public class MatcherImpl {
         if (psiElement == null) continue;
         final Language language = psiElement.getLanguage();
 
-        if (language != JspxFileViewProvider.JAVA_HOLDER_METHOD_TREE_LANGUAGE && (language == ourPatternLanguage || language == ourPatternLanguage2)) { // prevent duplicated usages
+        if (language == ourPatternLanguage || language == ourPatternLanguage2) { // prevent duplicated usages
           scheduler.addOneTask(new MatchOneFile(psiElement));
         }
         if (ourOptimizedScope) elementsToScan[i] = null; // to prevent long PsiElement reference

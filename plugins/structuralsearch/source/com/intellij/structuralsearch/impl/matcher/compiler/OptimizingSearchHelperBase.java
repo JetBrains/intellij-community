@@ -1,8 +1,8 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
-import com.intellij.lexer.JavaLexer;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import gnu.trove.THashSet;
 
@@ -14,7 +14,7 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
   private final THashSet<String> scannedComments;
   private final THashSet<String> scannedLiterals;
   protected int scanRequest;
-  private JavaLexer javaLexer;
+  private Lexer javaLexer;
 
   protected final CompileContext context;
 
@@ -38,7 +38,11 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
       boolean isJavaReservedWord = false;
 
       if (context.options.getFileType() == StdFileTypes.JAVA) {
-        if (javaLexer == null) javaLexer = new JavaLexer(LanguageLevel.HIGHEST);
+        if (javaLexer == null) {
+          javaLexer = LanguageParserDefinitions.INSTANCE.forLanguage(
+            StdFileTypes.JAVA.getLanguage()
+          ).createLexer(context.project);
+        }
         javaLexer.start(refname);
         isJavaReservedWord = JavaTokenType.KEYWORD_BIT_SET.contains(javaLexer.getTokenType());
       }
