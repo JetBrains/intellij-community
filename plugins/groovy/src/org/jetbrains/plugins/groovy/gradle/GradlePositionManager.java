@@ -1,0 +1,160 @@
+package org.jetbrains.plugins.groovy.gradle;
+
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.lang.UrlClassLoader;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.ReferenceType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
+import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+
+import java.io.File;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+
+/**
+ * @author John Murph
+ */
+public class GradlePositionManager implements ScriptPositionManagerHelper {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.gradle.GradlePositionManager");
+  private static final Pattern GRADLE_CLASS_PATTERN = Pattern.compile(".*_gradle_.*");
+  private static final Key<CachedValue<ClassLoader>> GRADLE_CLASS_LOADER = Key.create("GRADLE_CLASS_LOADER");
+  private static final Key<CachedValue<FactoryMap<File, String>>> GRADLE_CLASS_NAME = Key.create("GRADLE_CLASS_NAME");
+
+  public boolean isAppropriateRuntimeName(@NotNull final String runtimeName) {
+    return GRADLE_CLASS_PATTERN.matcher(runtimeName).matches();
+  }
+
+  @NotNull
+  public String getOriginalScriptName(ReferenceType refType, @NotNull String runtimeName) {
+    return runtimeName;
+  }
+
+  public boolean isAppropriateScriptFile(@NotNull final PsiFile scriptFile) {
+    return GroovyScriptType.getScriptType((GroovyFile)scriptFile) instanceof GradleScriptType;
+  }
+
+  @NotNull
+  public String getRuntimeScriptName(@NotNull final String originalName, GroovyFile groovyFile) {
+    VirtualFile virtualFile = groovyFile.getVirtualFile();
+    if (virtualFile == null) return "";
+
+    final Module module = ModuleUtil.findModuleForPsiElement(groovyFile);
+    if (module == null) {
+      return "";
+    }
+
+    final File scriptFile = VfsUtil.virtualToIoFile(virtualFile);
+    final String className = PsiManager.getInstance(module.getProject()).getCachedValuesManager()
+      .getCachedValue(module, GRADLE_CLASS_NAME, new ScriptSourceMapCalculator(module), false).get(scriptFile);
+    return className == null ? "" : className;
+  }
+
+  public PsiFile getExtraScriptIfNotFound(ReferenceType refType, @NotNull String runtimeName, Project project) {
+    String sourceFilePath = getScriptForClassName(refType);
+    if (sourceFilePath == null) return null;
+
+    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(sourceFilePath));
+    if (virtualFile == null) return null;
+
+    return PsiManager.getInstance(project).findFile(virtualFile);
+  }
+
+  @Nullable
+  private static String getScriptForClassName(@NotNull ReferenceType refType) {
+    try {
+      final List<String> data = refType.sourcePaths(null);
+      if (!data.isEmpty()) {
+        return data.get(0);
+      }
+    }
+    catch (AbsentInformationException ignored) {
+    }
+    return null;
+  }
+
+  @Nullable
+  private static ClassLoader getGradleClassLoader(final Module module) {
+    final Project project = module.getProject();
+    return PsiManager.getInstance(project).getCachedValuesManager().getCachedValue(module, GRADLE_CLASS_LOADER, new CachedValueProvider<ClassLoader>() {
+        public Result<ClassLoader> compute() {
+          return Result.create(createGradleClassLoader(module), ProjectRootManager.getInstance(project));
+        }
+      }, false);
+  }
+
+  @Nullable
+  private static ClassLoader createGradleClassLoader(Module module) {
+    final VirtualFile sdkHome = GradleLibraryManager.getSdkHome(module);
+    if (sdkHome == null) {
+      return null;
+    }
+
+    List<URL> urls = new ArrayList<URL>();
+    final VirtualFile libDir = sdkHome.findChild("lib");
+    assert libDir != null;
+    for (final VirtualFile child : libDir.getChildren()) {
+      if ("jar".equals(child.getExtension())) {
+        urls.add(VfsUtil.convertToURL(child.getUrl()));
+      }
+    }
+
+    return new UrlClassLoader(urls, null);
+  }
+
+  private static class ScriptSourceMapCalculator implements CachedValueProvider<FactoryMap<File, String>> {
+    private final Module myModule;
+
+    public ScriptSourceMapCalculator(Module module) {
+      myModule = module;
+    }
+
+    public Result<FactoryMap<File, String>> compute() {
+      final FactoryMap<File, String> result = new ConcurrentFactoryMap<File, String>() {
+        @Override
+        protected String create(File scriptFile) {
+          return calcClassName(scriptFile);
+        }
+      };
+      return Result.create(result, ProjectRootManager.getInstance(myModule.getProject()));
+    }
+
+    @Nullable
+    private String calcClassName(File scriptFile) {
+      final ClassLoader loader = getGradleClassLoader(myModule);
+      if (loader != null) {
+        try {
+          final Class<?> fileScriptSource = Class.forName("org.gradle.groovy.scripts.FileScriptSource", true, loader);
+          final Object source = fileScriptSource.getConstructor(String.class, File.class).newInstance("script", scriptFile);
+          return (String)fileScriptSource.getMethod("getClassName").invoke(source);
+        }
+        catch (ClassNotFoundException e) {
+          return null; // old distribution
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
+      return null;
+    }
+  }
+}

@@ -45,6 +45,7 @@
     <libraryManager implementation="org.jetbrains.plugins.groovy.gant.GantLibraryManager" order="last"/>
     <libraryManager implementation="org.jetbrains.plugins.groovy.gradle.GradleLibraryManager" order="last"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
+    <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gradle.GradlePositionManager"/>
 
     <scriptType extensions="gant" descriptorClass="org.jetbrains.plugins.groovy.gant.GantScriptType"/>
     <scriptType extensions="gradle" descriptorClass="org.jetbrains.plugins.groovy.gradle.GradleScriptType"/>
