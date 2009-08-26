@@ -46,8 +46,9 @@ class UndoRedoStacksHolder {
   public UndoableGroup getLastAction(@NotNull DocumentReference r) {
 
     LinkedList<UndoableGroup> documentStack = getStack(r);
-    for (Iterator<UndoableGroup> iterator = myGlobalStack.descendingIterator(); iterator.hasNext();) {
-      UndoableGroup group = iterator.next();
+
+    for (int i = myGlobalStack.size() - 1; i >= 0; i--) {
+      UndoableGroup group = myGlobalStack.get(i);
       if (isSpecial(group)) {
         if (documentStack.isEmpty() || documentStack.getLast().getCommandCounter() < group.getCommandCounter()) {
           return group;
