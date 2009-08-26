@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
@@ -8,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.facets.FacetImporter;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.MavenConstants;
 
 import java.util.List;
 import java.util.Map;
@@ -92,14 +94,21 @@ public class MavenModuleImporter {
   private void configDependencies() {
     for (MavenArtifact artifact : myMavenProject.getDependencies()) {
       boolean isExportable = artifact.isExportable();
+      DependencyScope scope = selectScope(artifact.getScope());
       MavenProject depProject = myMavenTree.findProject(artifact.getMavenId());
       if (depProject != null) {
-        myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(depProject), isExportable);
+        myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(depProject), isExportable, scope);
       }
       else if (myMavenProject.isSupportedDependency(artifact)) {
-        myRootModelAdapter.addLibraryDependency(artifact, isExportable, myModifiableModelsProvider);
+        myRootModelAdapter.addLibraryDependency(artifact, isExportable, scope, myModifiableModelsProvider);
       }
     }
+  }
+
+  private DependencyScope selectScope(String mavenScope) {
+    if (MavenConstants.SCOPE_RUNTIME.equals(mavenScope)) return DependencyScope.RUNTIME;
+    if (MavenConstants.SCOPE_TEST.equals(mavenScope)) return DependencyScope.TEST;
+    return DependencyScope.COMPILE;
   }
 
   private void configLanguageLevel() {

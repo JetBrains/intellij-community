@@ -179,18 +179,13 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     assertUnorderedElementsAreEqual(lib.getUrls(type), paths.toArray(new String[paths.size()]));
   }
 
-  private LibraryOrderEntry getModuleLibDep(String moduleName, String depName) {
-    LibraryOrderEntry lib = null;
+  protected void assertModuleLibDepScope(String moduleName, String depName, DependencyScope scope) {
+    LibraryOrderEntry dep = getModuleLibDep(moduleName, depName);
+    assertEquals(scope, dep.getScope());
+  }
 
-    for (OrderEntry e : getRootManager(moduleName).getOrderEntries()) {
-      if (e instanceof LibraryOrderEntry && e.getPresentableName().equals(depName)) {
-        lib = (LibraryOrderEntry)e;
-      }
-    }
-    assertNotNull("library dependency not found: " + depName
-                  + "\namong: " + collectModuleDepsNames(moduleName, LibraryOrderEntry.class),
-                  lib);
-    return lib;
+  private LibraryOrderEntry getModuleLibDep(String moduleName, String depName) {
+    return getModuleDep(moduleName, depName, LibraryOrderEntry.class);
   }
 
   protected void assertModuleLibDeps(String moduleName, String... expectedDeps) {
@@ -225,6 +220,15 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     assertOrderedElementsAreEqual(collectModuleDepsNames(moduleName, clazz), expectedDeps);
   }
 
+  protected void assertModuleModuleDepScope(String moduleName, String depName, DependencyScope scope) {
+    ModuleOrderEntry dep = getModuleModuleDep(moduleName, depName);
+    assertEquals(scope, dep.getScope());
+  }
+
+  private ModuleOrderEntry getModuleModuleDep(String moduleName, String depName) {
+    return getModuleDep(moduleName, depName, ModuleOrderEntry.class);
+  }
+
   private List<String> collectModuleDepsNames(String moduleName, Class clazz) {
     List<String> actual = new ArrayList<String>();
 
@@ -234,6 +238,20 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       }
     }
     return actual;
+  }
+
+  private <T> T getModuleDep(String moduleName, String depName, Class<T> clazz) {
+    T dep = null;
+
+    for (OrderEntry e : getRootManager(moduleName).getOrderEntries()) {
+      if (clazz.isInstance(e) && e.getPresentableName().equals(depName)) {
+        dep = (T)e;
+      }
+    }
+    assertNotNull("Dependency not found: " + depName
+                  + "\namong: " + collectModuleDepsNames(moduleName, clazz),
+                  dep);
+    return dep;
   }
 
   public void assertProjectLibraries(String... expectedNames) {

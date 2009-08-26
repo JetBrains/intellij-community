@@ -1,10 +1,7 @@
 package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.JavadocOrderRootType;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -299,6 +296,91 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "</dependencies>");
 
     assertModuleModuleDeps("project");
+  }
+
+  public void testDependencyScopes() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>test</groupId>" +
+                  "    <artifactId>foo1</artifactId>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>test</groupId>" +
+                  "    <artifactId>foo2</artifactId>" +
+                  "    <version>1</version>" +
+                  "    <scope>runtime</scope>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>test</groupId>" +
+                  "    <artifactId>foo3</artifactId>" +
+                  "    <version>1</version>" +
+                  "    <scope>test</scope>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertModuleLibDepScope("project", "Maven: test:foo1:1", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project", "Maven: test:foo2:1", DependencyScope.RUNTIME);
+    assertModuleLibDepScope("project", "Maven: test:foo3:1", DependencyScope.TEST);
+  }
+
+  public void testModuleDependencyScopes() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "  <module>m3</module>" +
+                     "  <module>m4</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m3</artifactId>" +
+                          "    <version>1</version>" +
+                          "    <scope>runtime</scope>" +
+                          "  </dependency>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m4</artifactId>" +
+                          "    <version>1</version>" +
+                          "    <scope>test</scope>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>");
+    createModulePom("m3", "<groupId>test</groupId>" +
+                          "<artifactId>m3</artifactId>" +
+                          "<version>1</version>");
+    createModulePom("m4", "<groupId>test</groupId>" +
+                          "<artifactId>m4</artifactId>" +
+                          "<version>1</version>");
+
+    importProject();
+    assertModules("project", "m1", "m2", "m3", "m4");
+
+    assertModuleModuleDepScope("m1", "m2", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("m1", "m3", DependencyScope.RUNTIME);
+    assertModuleModuleDepScope("m1", "m4", DependencyScope.TEST);
   }
 
   public void testOptionalLibraryDependencyIsNotExportable() throws Exception {

@@ -178,7 +178,7 @@ public class MavenRootModelAdapter {
     return new Path(path);
   }
 
-  public void addModuleDependency(String moduleName, boolean isExportable) {
+  public void addModuleDependency(String moduleName, boolean isExportable, DependencyScope scope) {
     Module m = findModuleByName(moduleName);
 
     ModuleOrderEntry e;
@@ -190,6 +190,7 @@ public class MavenRootModelAdapter {
     }
 
     e.setExported(isExportable);
+    e.setScope(scope);
   }
 
   @Nullable
@@ -197,7 +198,10 @@ public class MavenRootModelAdapter {
     return myModuleModel.findModuleByName(moduleName);
   }
 
-  public void addLibraryDependency(MavenArtifact artifact, boolean isExportable, MavenModifiableModelsProvider provider) {
+  public void addLibraryDependency(MavenArtifact artifact,
+                                   boolean isExportable,
+                                   DependencyScope scope,
+                                   MavenModifiableModelsProvider provider) {
     String libraryName = makeLibraryName(artifact);
 
     Library library = provider.getLibraryByName(libraryName);
@@ -211,7 +215,9 @@ public class MavenRootModelAdapter {
     setUrl(libraryModel, OrderRootType.SOURCES, artifact, MavenConstants.SOURCES_CLASSIFIER);
     setUrl(libraryModel, JavadocOrderRootType.getInstance(), artifact, MavenConstants.JAVADOC_CLASSIFIER);
 
-    myRootModel.addLibraryEntry(library).setExported(isExportable);
+    LibraryOrderEntry e = myRootModel.addLibraryEntry(library);
+    e.setExported(isExportable);
+    e.setScope(scope);
 
     removeOldLibraryDependency(artifact);
   }
