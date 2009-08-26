@@ -36,8 +36,9 @@ public class MavenGeneralSettings implements Cloneable {
     return pluginUpdatePolicy;
   }
 
-  public void setPluginUpdatePolicy(@NotNull MavenExecutionOptions.PluginUpdatePolicy pluginUpdatePolicy) {
-    this.pluginUpdatePolicy = pluginUpdatePolicy;
+  public void setPluginUpdatePolicy(MavenExecutionOptions.PluginUpdatePolicy value) {
+    if (value == null) return; // null may come from deserializator
+    this.pluginUpdatePolicy = value;
   }
 
   @NotNull
@@ -45,8 +46,9 @@ public class MavenGeneralSettings implements Cloneable {
     return checksumPolicy;
   }
 
-  public void setChecksumPolicy(@NotNull MavenExecutionOptions.ChecksumPolicy checksumPolicy) {
-    this.checksumPolicy = checksumPolicy;
+  public void setChecksumPolicy(MavenExecutionOptions.ChecksumPolicy value) {
+    if (value == null) return; // null may come from deserializator
+    this.checksumPolicy = value;
   }
 
   @NotNull
@@ -54,24 +56,27 @@ public class MavenGeneralSettings implements Cloneable {
     return failureBehavior;
   }
 
-  public void setFailureBehavior(@NotNull MavenExecutionOptions.FailureMode failureBehavior) {
-    this.failureBehavior = failureBehavior;
+  public void setFailureBehavior(MavenExecutionOptions.FailureMode value) {
+    if (value == null) return; // null may come from deserializator
+    this.failureBehavior = value;
   }
 
   public @NotNull MavenExecutionOptions.LoggingLevel getLoggingLevel() {
     return outputLevel;
   }
 
-  public void setOutputLevel(@NotNull MavenExecutionOptions.LoggingLevel outputLevel) {
-    this.outputLevel = outputLevel;
+  public void setOutputLevel(MavenExecutionOptions.LoggingLevel value) {
+    if (value == null) return; // null may come from deserializator
+    this.outputLevel = value;
   }
 
   public @NotNull MavenExecutionOptions.SnapshotUpdatePolicy getSnapshotUpdatePolicy() {
     return snapshotUpdatePolicy;
   }
 
-  public void setSnapshotUpdatePolicy(@NotNull MavenExecutionOptions.SnapshotUpdatePolicy snapshotUpdatePolicy) {
-    this.snapshotUpdatePolicy = snapshotUpdatePolicy;
+  public void setSnapshotUpdatePolicy(MavenExecutionOptions.SnapshotUpdatePolicy value) {
+    if (value == null) return; // null may come from deserializator
+    this.snapshotUpdatePolicy = value;
   }
 
   public boolean isWorkOffline() {
