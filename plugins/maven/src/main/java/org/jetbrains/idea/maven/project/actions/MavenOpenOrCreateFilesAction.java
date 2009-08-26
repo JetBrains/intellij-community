@@ -65,8 +65,10 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
             MavenUtil.runFileTemplate(project, newFile, getFileTemplate());
           }
           catch (IOException ex) {
-            NotificationsManager.getNotificationsManager()
-              .notify("Cannot create " + file, ex.getMessage(), NotificationType.ERROR, NotificationListener.REMOVE);
+            NotificationsManager.getNotificationsManager().notify("Cannot create " + file.getName(),
+                                                                  ex.getMessage(),
+                                                                  NotificationType.ERROR,
+                                                                  NotificationListener.REMOVE);
           }
         }
       }.execute();

@@ -122,8 +122,10 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
                                                         myWithParent ? id : null);
       }
       catch (IOException e) {
-        NotificationsManager.getNotificationsManager()
-          .notify("Cannot create a module", e.getMessage(), NotificationType.ERROR, NotificationListener.REMOVE);
+        NotificationsManager.getNotificationsManager().notify("Cannot create a module", 
+                                                              e.getMessage(),
+                                                              NotificationType.ERROR,
+                                                              NotificationListener.REMOVE);
       }
     }
 

@@ -9,6 +9,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationsManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -78,36 +79,43 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   }
 
   private void doCreateMavenProject(final Project project, final VirtualFile root) {
-    final VirtualFile[] pom = new VirtualFile[1];
     PsiFile[] psiFiles = myAggregatorProject != null
                          ? new PsiFile[]{getPsiFile(project, myAggregatorProject.getFile())}
                          : PsiFile.EMPTY_ARRAY;
-    new WriteCommandAction.Simple(project, "Create new Maven module", psiFiles) {
-      protected void run() throws Throwable {
+    final VirtualFile pom = new WriteCommandAction<VirtualFile>(project, "Create new Maven module", psiFiles) {
+      @Override
+      protected void run(Result<VirtualFile> result) throws Throwable {
+        VirtualFile file;
         try {
-          pom[0] = root.createChildData(this, MavenConstants.POM_XML);
-          MavenUtil.applyMavenProjectFileTemplate(project, pom[0], myProjectId);
+          file = root.createChildData(this, MavenConstants.POM_XML);
+          MavenUtil.applyMavenProjectFileTemplate(project, file, myProjectId);
+          result.setResult(file);
         }
         catch (IOException e) {
-          NotificationsManager.getNotificationsManager()
-            .notify("Cannot create ", e.getMessage(), NotificationType.ERROR, NotificationListener.REMOVE);
+          MavenLog.LOG.warn(e);
+          NotificationsManager.getNotificationsManager().notify("Cannot create " + MavenConstants.POM_XML + " " + root.getPath(),
+                                                                e.getMessage(),
+                                                                NotificationType.ERROR,
+                                                                NotificationListener.REMOVE);
           return;
         }
 
-        updateProjectPom(project, pom[0]);
+        updateProjectPom(project, file);
 
         if (myAggregatorProject != null) {
           MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, myAggregatorProject.getFile());
           model.getPackaging().setStringValue("pom");
           MavenDomModule module = model.getModules().addModule();
-          module.setValue(getPsiFile(project, pom[0]));
+          module.setValue(getPsiFile(project, file));
         }
       }
-    }.execute();
+    }.execute().getResultObject();
+
+    if (pom == null) return;
 
     if (myAggregatorProject == null) {
       MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-      manager.addManagedFiles(Collections.singletonList(pom[0]));
+      manager.addManagedFiles(Collections.singletonList(pom));
     }
 
     if (myArchetype == null) {
@@ -123,30 +131,32 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     // execute when current dialog is closed (e.g. Project Structure)
     MavenUtil.invokeLater(project, ModalityState.NON_MODAL, new Runnable() {
       public void run() {
-        EditorHelper.openInEditor(getPsiFile(project, pom[0]));
-        if (myArchetype != null) generateFromArchetype(project, pom[0]);
+        EditorHelper.openInEditor(getPsiFile(project, pom));
+        if (myArchetype != null) generateFromArchetype(project, pom);
       }
     });
   }
 
   private void updateProjectPom(final Project project, final VirtualFile pom) {
+    if (myParentProject == null) return;
+
     new WriteCommandAction.Simple(project, "Create new Maven module") {
       protected void run() throws Throwable {
-        if (myParentProject != null) {
-          MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, pom);
-          MavenDomUtil.updateMavenParent(model, myParentProject);
+        MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, pom);
+        if (model == null) return;
 
-          if (myInheritGroupId) {
-            XmlElement el = model.getGroupId().getXmlElement();
-            if (el != null) el.delete();
-          }
-          if (myInheritVersion) {
-            XmlElement el = model.getVersion().getXmlElement();
-            if (el != null) el.delete();
-          }
+        MavenDomUtil.updateMavenParent(model, myParentProject);
 
-          CodeStyleManager.getInstance(project).reformat(getPsiFile(project, pom));
+        if (myInheritGroupId) {
+          XmlElement el = model.getGroupId().getXmlElement();
+          if (el != null) el.delete();
         }
+        if (myInheritVersion) {
+          XmlElement el = model.getVersion().getXmlElement();
+          if (el != null) el.delete();
+        }
+
+        CodeStyleManager.getInstance(project).reformat(getPsiFile(project, pom));
       }
     }.execute();
   }
