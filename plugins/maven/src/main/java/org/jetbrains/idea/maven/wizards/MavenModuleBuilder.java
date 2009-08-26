@@ -5,6 +5,9 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.impl.NotificationsManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModuleType;
@@ -67,54 +70,61 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
     rootModel.inheritSdk();
 
-    final VirtualFile pom;
-    try {
-      pom = root.createChildData(this, MavenConstants.POM_XML);
-      MavenUtil.applyMavenProjectFileTemplate(project, pom, myProjectId);
-    }
-    catch (IOException e) {
-      throw new ConfigurationException(e.getMessage());
-    }
+    MavenUtil.runWhenInitialized(project, new DumbAwareRunnable() {
+      public void run() {
+        doCreateMavenProject(project, root);
+      }
+    });
+  }
 
-    if (myAggregatorProject != null) {
-      new WriteCommandAction.Simple(project,
-                                    "Create new Maven module",
-                                    getPsiFile(project, myAggregatorProject.getFile())) {
-        protected void run() throws Throwable {
+  private void doCreateMavenProject(final Project project, final VirtualFile root) {
+    final VirtualFile[] pom = new VirtualFile[1];
+    PsiFile[] psiFiles = myAggregatorProject != null
+                         ? new PsiFile[]{getPsiFile(project, myAggregatorProject.getFile())}
+                         : PsiFile.EMPTY_ARRAY;
+    new WriteCommandAction.Simple(project, "Create new Maven module", psiFiles) {
+      protected void run() throws Throwable {
+        try {
+          pom[0] = root.createChildData(this, MavenConstants.POM_XML);
+          MavenUtil.applyMavenProjectFileTemplate(project, pom[0], myProjectId);
+        }
+        catch (IOException e) {
+          NotificationsManager.getNotificationsManager()
+            .notify("Cannot create ", e.getMessage(), NotificationType.ERROR, NotificationListener.REMOVE);
+          return;
+        }
+
+        updateProjectPom(project, pom[0]);
+
+        if (myAggregatorProject != null) {
           MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, myAggregatorProject.getFile());
           model.getPackaging().setStringValue("pom");
           MavenDomModule module = model.getModules().addModule();
-          module.setValue(getPsiFile(project, pom));
+          module.setValue(getPsiFile(project, pom[0]));
         }
-      }.execute();
+      }
+    }.execute();
+
+    if (myAggregatorProject == null) {
+      MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+      manager.addManagedFiles(Collections.singletonList(pom[0]));
     }
 
-    updateProjectPom(project, pom);
+    if (myArchetype == null) {
+      try {
+        VfsUtil.createDirectories(root.getPath() + "/src/main/java");
+        VfsUtil.createDirectories(root.getPath() + "/src/test/java");
+      }
+      catch (IOException e) {
+        MavenLog.LOG.info(e);
+      }
+    }
 
-    MavenUtil.runWhenInitialized(project, new DumbAwareRunnable() {
+    // execute when current dialog is closed (e.g. Project Structure)
+    MavenUtil.invokeLater(project, ModalityState.NON_MODAL, new Runnable() {
       public void run() {
-        if (myAggregatorProject == null) {
-          MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-          manager.addManagedFiles(Collections.singletonList(pom));
-        }
-
-        if (myArchetype == null) {
-          try {
-            VfsUtil.createDirectories(root.getPath() + "/src/main/java");
-            VfsUtil.createDirectories(root.getPath() + "/src/test/java");
-          }
-          catch (IOException e) {
-            MavenLog.LOG.info(e);
-          }
-        }
-
-        // execute when current dialog is closed (e.g. Project Structure)
-        MavenUtil.invokeLater(project, ModalityState.NON_MODAL, new Runnable() {
-          public void run() {
-            EditorHelper.openInEditor(getPsiFile(project, pom));
-            if (myArchetype != null) generateFromArchetype(project, pom);
-          }
-        });
+        EditorHelper.openInEditor(getPsiFile(project, pom[0]));
+        if (myArchetype != null) generateFromArchetype(project, pom[0]);
       }
     });
   }
@@ -157,7 +167,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     }
 
     MavenRunnerParameters params = new MavenRunnerParameters(
-        false, workingDir.getPath(), Collections.singletonList("org.apache.maven.plugins:maven-archetype-plugin:generate"), null);
+      false, workingDir.getPath(), Collections.singletonList("org.apache.maven.plugins:maven-archetype-plugin:generate"), null);
 
     MavenRunner runner = MavenRunner.getInstance(project);
     MavenRunnerSettings settings = runner.getState().clone();
