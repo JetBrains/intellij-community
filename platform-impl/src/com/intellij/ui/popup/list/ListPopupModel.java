@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -40,6 +41,15 @@ public class ListPopupModel extends AbstractListModel {
       rebuildLists();
       fireContentsChanged(this, 0, myFilteredList.size());
     }
+  }
+
+  @Nullable
+  public Object get(final int i) {
+    if (i >= 0 && i < myFilteredList.size()) {
+      return myFilteredList.get(i);
+    }
+
+    return null;
   }
 
   private void rebuildLists() {
