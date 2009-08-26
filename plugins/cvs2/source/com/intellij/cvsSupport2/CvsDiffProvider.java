@@ -110,16 +110,24 @@ public class CvsDiffProvider implements DiffProvider{
       }
     };
     final Ref<Boolean> success = new Ref<Boolean>();
-    executor.performActionSync(new CommandCvsHandler(CvsBundle.message("operation.name.get.file.status"), statusOperation),
-                               new CvsOperationExecutorCallback() {
-                                 public void executionFinished(final boolean successfully) {
-                                 }
-                                 public void executionFinishedSuccessfully() {
-                                   success.set(Boolean.TRUE);
-                                 }
-                                 public void executeInProgressAfterAction(final ModalityContext modaityContext) {
-                                 }
-                               });
+    final CvsOperationExecutorCallback callback = new CvsOperationExecutorCallback() {
+      public void executionFinished(final boolean successfully) {
+      }
+
+      public void executionFinishedSuccessfully() {
+        success.set(Boolean.TRUE);
+      }
+
+      public void executeInProgressAfterAction(final ModalityContext modaityContext) {
+      }
+    };
+    final CommandCvsHandler cvsHandler = new CommandCvsHandler(CvsBundle.message("operation.name.get.file.status"), statusOperation) {
+      @Override
+      protected boolean runInReadThread() {
+        return false;
+      }
+    };
+    executor.performActionSync(cvsHandler, callback);
 
     if (Boolean.TRUE.equals(success.get())) {
       if ((statusOperation.getStickyDate() != null) || (statusOperation.getStickyTag() != null)) {
