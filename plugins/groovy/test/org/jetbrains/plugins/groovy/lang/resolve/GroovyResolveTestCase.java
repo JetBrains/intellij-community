@@ -35,6 +35,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
+import java.io.File;
+
 /**
  * @author ven
  */
@@ -68,7 +70,9 @@ public abstract class GroovyResolveTestCase extends LightCodeInsightFixtureTestC
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.copyDirectoryToProject(getTestName(true), "");
+    if (new File(myFixture.getTestDataPath() + "/" + getTestName(true)).exists()) {
+      myFixture.copyDirectoryToProject(getTestName(true), "");
+    }
   }
 
   protected PsiReference configureByFile(@NonNls String filePath) throws Exception{

@@ -24,7 +24,9 @@ import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -608,38 +610,22 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   }
 
   private static void writeVariableDeclarations(StringBuffer text, GrVariableDeclaration variableDeclaration) {
-    GrTypeElement varTypeElement = variableDeclaration.getTypeElementGroovy();
-    String varQualifiedTypeName = getTypeText(varTypeElement);
+    final String type = getTypeText(variableDeclaration.getTypeElementGroovy());
+    final String initializer = getDefaultValueText(type);
 
-    String initValueText = getDefaultValueText(varQualifiedTypeName);
-
-    //append method name
-    PsiModifierList modifierList = variableDeclaration.getModifierList();
-    GrVariable[] variables = variableDeclaration.getVariables();
-    GrVariable variable;
-    int i = 0;
-    while (i < variables.length) {
-      variable = variables[i];
+    final GrModifierList modifierList = variableDeclaration.getModifierList();
+    final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(variableDeclaration.getProject()).getNameHelper();
+    for (final GrVariable variable : variableDeclaration.getVariables()) {
       String name = variable.getName();
-      if (!JavaPsiFacade.getInstance(variable.getProject()).getNameHelper().isIdentifier(name))
+      if (!nameHelper.isIdentifier(name)) {
         continue; //does not have a java image
+      }
 
-      text.append("\n");
-      text.append("  ");
-      writeVariableDefinitionModifiers(text, modifierList, JAVA_MODIFIERS);
+      text.append("\n  ");
+      writeFieldModifiers(text, modifierList, JAVA_MODIFIERS, variable);
 
       //type
-      text.append(varQualifiedTypeName);
-      text.append(" ");
-
-      //var name
-      text.append(name);
-      text.append(" = ");
-
-      text.append(initValueText);
-      text.append(";");
-      text.append("\n");
-      i++;
+      text.append(type).append(" ").append(name).append(" = ").append(initializer).append(";\n");
     }
   }
 
@@ -723,16 +709,22 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     return wasAddedModifiers;
   }
 
-  private static boolean writeVariableDefinitionModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers) {
-    boolean wasAddedModifiers = false;
+  private static void writeFieldModifiers(StringBuffer text, GrModifierList modifierList, String[] modifiers, GrVariable variable) {
+    final boolean isProperty = variable instanceof GrField && !modifierList.hasExplicitVisibilityModifiers() && !(((GrField)variable).getContainingClass().isInterface());
+    if (isProperty) {
+      text.append("private ");
+    }
+
     for (String modifierType : modifiers) {
+      if (isProperty && modifierType.equals(PsiModifier.PUBLIC)) {
+        continue;
+      }
+
       if (modifierList.hasModifierProperty(modifierType)) {
         text.append(modifierType);
         text.append(" ");
-        wasAddedModifiers = true;
       }
     }
-    return wasAddedModifiers;
   }
 
   private static boolean writeTypeDefinitionMethodModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers, boolean isInterface) {

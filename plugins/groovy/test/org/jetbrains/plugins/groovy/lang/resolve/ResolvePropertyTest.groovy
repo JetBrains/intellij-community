@@ -30,7 +30,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author ven
@@ -201,7 +202,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
 
   public void testGrvy747() throws Exception {
     PsiReference ref = configureByFile("grvy747/A.groovy");
-    assertTrue(ref.resolve() instanceof GrAccessorMethod);
+    assertTrue(ref.resolve() instanceof GrField);
   }
 
   public void testClosureCall() throws Exception {
@@ -211,9 +212,8 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
 
   public void testUnderscoredField() throws Exception {
     PsiReference ref = configureByFile("underscoredField/UnderscoredField.groovy");
-    final GrAccessorMethod accessorMethod = assertInstanceOf(ref.resolve(), GrAccessorMethod.class);
-    final GrField field = accessorMethod.getProperty();
-    assertTrue(ref.isReferenceTo(accessorMethod));
+    final GrField field = assertInstanceOf(ref.resolve(), GrField.class);
+    assertTrue(ref.isReferenceTo(field.getGetters()[0]));
     assertTrue(ref.isReferenceTo(field));
   }
 
@@ -229,7 +229,20 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
 
   public void testFieldAssignedInTheSameMethod() throws Exception {
     PsiReference ref = configureByFile("fieldAssignedInTheSameMethod/FieldAssignedInTheSameMethod.groovy");
-    assertInstanceOf(ref.resolve(), GrAccessorMethod.class);
+    assertInstanceOf(ref.resolve(), GrField.class);
+  }
+
+  public void testPrivateFieldAssignment() throws Throwable {
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+                          class Aaaaa {
+                            final def aaa
+
+                            def foo() {
+                              a<caret>aa = 2
+                            }
+                          }""")
+    def reference = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    assertInstanceOf(reference.resolve(), GrField.class)
   }
 
   private void doTest(String fileName) throws Exception {

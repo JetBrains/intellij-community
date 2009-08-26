@@ -71,14 +71,6 @@ public class PropertyRenameHandler implements RenameHandler {
         rename.addElement(setter, setterName);
       }
 
-      final PsiMethod[] getters = myProperty.getGetters();
-      for (PsiMethod getter : getters) {
-        if (!(getter instanceof GrAccessorMethod)) {
-          final String getterName = PropertyUtil.suggestGetterName(newName, getter.getReturnType(), getter.getName());
-          rename.addElement(getter, getterName);
-        }
-      }
-
       rename.run();
     }
 

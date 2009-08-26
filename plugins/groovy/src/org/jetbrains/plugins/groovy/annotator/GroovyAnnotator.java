@@ -27,8 +27,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -58,7 +56,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -67,7 +64,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -728,7 +724,6 @@ public class GroovyAnnotator implements Annotator {
   private static void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {
     boolean isStatic = member.hasModifierProperty(PsiModifier.STATIC);
     Annotation annotation = holder.createInfoAnnotation(refExpr.getReferenceNameElement(), null);
-    if (member instanceof GrAccessorMethod) member = ((GrAccessorMethod)member).getProperty();
 
     if (member instanceof PsiField ) {
       annotation.setTextAttributes(isStatic ? DefaultHighlighter.STATIC_FIELD : DefaultHighlighter.INSTANCE_FIELD);
@@ -1013,19 +1008,6 @@ public class GroovyAnnotator implements Annotator {
         return false;
       }
       return super.execute(element, state);
-    }
-
-    @Override
-    public GroovyResolveResult[] getCandidates() {
-      return ContainerUtil.map2Array(super.getCandidates(), GroovyResolveResult.class, new Function<GroovyResolveResult, GroovyResolveResult>() {
-        public GroovyResolveResult fun(GroovyResolveResult result) {
-          final PsiElement element = result.getElement();
-          if (element instanceof GrAccessorMethod) {
-            return new GroovyResolveResultImpl(((GrAccessorMethod)element).getProperty(), result.getCurrentFileResolveContext(), result.getSubstitutor(), result.isAccessible(), result.isStaticsOK());
-          }
-          return result;
-        }
-      });
     }
 
     @Override

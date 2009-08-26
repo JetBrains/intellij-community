@@ -84,9 +84,9 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
         !hasExplicitVisibilityModifiers()) { //properties are backed by private fields
       PsiElement pParent = parent.getParent().getParent();
       if (!(pParent instanceof PsiClass) || !((PsiClass)pParent).isInterface()) {
-        if (modifier.equals(PsiModifier.PUBLIC)) return false;
+        if (modifier.equals(PsiModifier.PUBLIC)) return true;
         if (modifier.equals(PsiModifier.PROTECTED)) return false;
-        if (modifier.equals(PsiModifier.PRIVATE)) return true;
+        if (modifier.equals(PsiModifier.PRIVATE)) return false;
       }
       else {
         if (modifier.equals(PsiModifier.STATIC)) return true;

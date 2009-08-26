@@ -58,7 +58,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -250,7 +249,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           result = getTypeForObjectGetClass(facade, method);
         } else {
           if (method instanceof GrAccessorMethod) {
-            result = ((GrAccessorMethodImpl) method).getReturnTypeGroovy();
+            result = ((GrAccessorMethod) method).getReturnTypeGroovy();
           } else {
             result = method.getReturnType();
           }
@@ -567,8 +566,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   public boolean isReferenceTo(PsiElement element) {
     if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod) element)) {
-      return getManager().areElementsEquivalent(element, resolve());
+      final PsiElement target = resolve();
+      if (element instanceof GrAccessorMethod && getManager().areElementsEquivalent(((GrAccessorMethod)element).getProperty(), target)) {
+        return true;
+      }
+
+      return getManager().areElementsEquivalent(element, target);
     }
+
     if (element instanceof GrField && ((GrField) element).isProperty()) {
       final PsiElement target = resolve();
       if (getManager().areElementsEquivalent(element, target)) {
@@ -581,7 +586,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         }
       }
       return getManager().areElementsEquivalent(((GrField)element).getSetter(), target);
-    } else if (element instanceof PsiNamedElement && Comparing.equal(((PsiNamedElement) element).getName(), getReferenceName())) {
+    }
+
+    if (element instanceof PsiNamedElement && Comparing.equal(((PsiNamedElement) element).getName(), getReferenceName())) {
       return getManager().areElementsEquivalent(element, resolve());
     }
     return false;

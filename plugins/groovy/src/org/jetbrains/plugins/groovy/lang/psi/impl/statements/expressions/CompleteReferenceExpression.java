@@ -284,13 +284,6 @@ public class CompleteReferenceExpression {
           resolved.processDeclarations(processor, ResolveState.initial(), null, refExpr);
           return;
         }
-        if (resolved instanceof GrAccessorMethod) {
-          PsiType propertyType = ((GrAccessorMethod)resolved).getProperty().getTypeGroovy();
-          if (propertyType != null) {
-            getVariantsFromQualifierType(refExpr, processor, propertyType, project);
-            return;
-          }
-        }
       }
       final PsiClassType type = JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory()
         .createTypeByFQClassName(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME, refExpr.getResolveScope());
