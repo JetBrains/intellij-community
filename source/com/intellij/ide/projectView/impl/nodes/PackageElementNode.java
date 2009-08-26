@@ -31,11 +31,12 @@
  */
 package com.intellij.ide.projectView.impl.nodes;
 
-import com.intellij.coverage.CoverageDataManager;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.ProjectViewNodeDecorator;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -130,9 +131,6 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     final PackageElement value = getValue();
     final PsiPackage aPackage = value.getPackage();
     final String qName = aPackage.getQualifiedName();
-    final CoverageDataManager coverageManager = CoverageDataManager.getInstance(aPackage.getProject());
-    final String coverageString = coverageManager.getPackageCoverageInformationString(qName, value.getModule());
-    presentation.setLocationString(coverageString);
 
     if (!getSettings().isFlattenPackages()
         && getSettings().isHideEmptyMiddlePackages()
@@ -153,6 +151,10 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
 
     presentation.setOpenIcon(Icons.PACKAGE_OPEN_ICON);
     presentation.setClosedIcon(Icons.PACKAGE_ICON);
+
+    for(ProjectViewNodeDecorator decorator: Extensions.getExtensions(ProjectViewNodeDecorator.EP_NAME, myProject)) {
+      decorator.decorate(this, presentation);
+    }
   }
 
   private boolean showFQName(final PsiPackage aPackage) {

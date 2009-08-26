@@ -175,11 +175,11 @@ public class DirectoryNode extends PackageDependenciesNode {
   }
 
   @Override
-  public String getComment(final boolean forceLocation) {
+  public String getComment() {
     if (myDirectory != null && myDirectory.isValid()) {
-      return ProjectViewDirectoryHelper.getInstance(myDirectory.getProject()).getLocationString(myDirectory, forceLocation);
+      return ProjectViewDirectoryHelper.getInstance(myDirectory.getProject()).getLocationString(myDirectory);
     }
-    return super.getComment(forceLocation);
+    return super.getComment();
   }
 
   @Override

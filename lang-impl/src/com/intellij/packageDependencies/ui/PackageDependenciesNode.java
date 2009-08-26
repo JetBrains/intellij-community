@@ -172,7 +172,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
   }
 
   @Nullable
-  public String getComment(final boolean forceLocation){
+  public String getComment() {
     return null;
   }
 

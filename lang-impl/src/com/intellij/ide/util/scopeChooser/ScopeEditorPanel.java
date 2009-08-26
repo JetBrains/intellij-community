@@ -449,7 +449,7 @@ public class ScopeEditorPanel {
           setForeground(node.hasUnmarked() ? PARTIAL_INCLUDED : WHOLE_INCLUDED);
         }
         append(node.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        final String locationString = node.getComment(true);
+        final String locationString = node.getComment();
         if (locationString != null) {
           append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
         }

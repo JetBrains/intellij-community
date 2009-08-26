@@ -54,7 +54,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
       }
     }
     else {
-      data.setLocationString(ProjectViewDirectoryHelper.getInstance(project).getLocationString(psiDirectory, false));
+      data.setLocationString(ProjectViewDirectoryHelper.getInstance(project).getLocationString(psiDirectory));
     }
 
     for (final IconProvider provider : Extensions.getExtensions(IconProvider.EXTENSION_POINT_NAME)) {

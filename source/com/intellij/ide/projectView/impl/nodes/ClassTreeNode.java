@@ -1,12 +1,11 @@
 package com.intellij.ide.projectView.impl.nodes;
 
-import com.intellij.coverage.CoverageDataManager;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.PsiClassChildrenSource;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -53,12 +52,6 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
     final PsiClass aClass = getValue();
     if (aClass != null) {
       data.setPresentableText(aClass.getName());
-      final String qName = aClass.getQualifiedName();
-      if (qName != null) {
-        final CoverageDataManager coverageManager = CoverageDataManager.getInstance(aClass.getProject());
-        final String coverageString = coverageManager.getClassCoverageInformationString(qName);
-        data.setLocationString(coverageString);
-      }
     }
   }
 

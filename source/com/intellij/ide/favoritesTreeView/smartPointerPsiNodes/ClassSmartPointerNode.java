@@ -1,6 +1,5 @@
 package com.intellij.ide.favoritesTreeView.smartPointerPsiNodes;
 
-import com.intellij.coverage.CoverageDataManager;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.PsiClassChildrenSource;
 import com.intellij.ide.projectView.ViewSettings;
@@ -56,11 +55,6 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
     final PsiClass aClass = getPsiClass();
     if (aClass != null) {
       data.setPresentableText(aClass.getName());
-      final String qName = aClass.getQualifiedName();
-      if (qName != null) {
-        final CoverageDataManager coverageManager = CoverageDataManager.getInstance(myProject);
-        data.setLocationString(coverageManager.getClassCoverageInformationString(qName));
-      }
     }
   }
 

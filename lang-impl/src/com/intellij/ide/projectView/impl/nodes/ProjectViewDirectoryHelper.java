@@ -45,7 +45,7 @@ public class ProjectViewDirectoryHelper {
   }
 
   @Nullable
-  public String getLocationString(@NotNull PsiDirectory psiDirectory, boolean forceLocation) {
+  public String getLocationString(@NotNull PsiDirectory psiDirectory) {
     final VirtualFile directory = psiDirectory.getVirtualFile();
     final VirtualFile contentRootForFile = ProjectRootManager.getInstance(myProject)
       .getFileIndex().getContentRootForFile(directory);

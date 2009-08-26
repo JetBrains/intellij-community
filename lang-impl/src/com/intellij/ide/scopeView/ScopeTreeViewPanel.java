@@ -9,6 +9,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.ProjectViewNodeDecorator;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
@@ -366,9 +367,16 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         final PsiElement psiElement = node.getPsiElement();
         textAttributes.setForegroundColor(CopyPasteManager.getInstance().isCutElement(psiElement) ? CopyPasteManager.CUT_COLOR : node.getStatus().getColor());
         append(node.toString(), SimpleTextAttributes.fromTextAttributes(textAttributes));
-        final String locationString = node.getComment(false);
-        if (locationString != null && locationString.length() > 0) {
-          append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+
+        String oldToString = toString();
+        for(ProjectViewNodeDecorator decorator: Extensions.getExtensions(ProjectViewNodeDecorator.EP_NAME, myProject)) {
+          decorator.decorate(node, this);          
+        }
+        if (toString().equals(oldToString)) {   // nothing was decorated
+          final String locationString = node.getComment();
+          if (locationString != null && locationString.length() > 0) {
+            append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+          }
         }
       }
     }

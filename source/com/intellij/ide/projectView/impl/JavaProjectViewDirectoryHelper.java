@@ -4,7 +4,6 @@
  */
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.coverage.CoverageDataManager;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
@@ -27,17 +26,12 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
   }
 
   @Override
-  public String getLocationString(@NotNull final PsiDirectory directory, final boolean forceLocation) {
-    if (!forceLocation) {
-      final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(getProject());
-      final String informationString = coverageDataManager.getDirCoverageInformationString(directory);
-      if (informationString != null) return informationString;
-    }
+  public String getLocationString(@NotNull final PsiDirectory directory) {
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (ProjectRootsUtil.isSourceRoot(directory) && aPackage != null) {   //package prefix
       return aPackage.getQualifiedName();
     }
-    return super.getLocationString(directory, forceLocation);
+    return super.getLocationString(directory);
   }
 
   @Override
