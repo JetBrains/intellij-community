@@ -331,6 +331,10 @@ public class FileReferenceSet {
         list.addAll(roots);
       }
     }
+
+    if (list.size() == 0) {
+      list.addAll(FileReferenceHelperRegistrar.getNotNullHelper(file).getRoots(module));
+    }
     return list;
   }
 
