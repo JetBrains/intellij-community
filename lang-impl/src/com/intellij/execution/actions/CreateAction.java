@@ -54,7 +54,7 @@ public class CreateAction extends BaseRunConfigurationAction {
     }
 
     protected void updateIcon(final Presentation presentation, final ConfigurationContext context) {
-      final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferedProducers(context.getLocation(), context);
+      final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferredProducers(context.getLocation(), context, true);
       if (producers != null && producers.size() == 1) { //hide fuzzy icon when multiple run configurations are possible
         presentation.setIcon(context.getConfiguration().getFactory().getIcon());
       }

@@ -61,7 +61,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     }
   }
 
-  ListPopupModel getListModel() {
+  protected ListPopupModel getListModel() {
     return myListModel;
   }
 
@@ -240,6 +240,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     myList.removeMouseMotionListener(myMouseMotionListener);
     myList.removeMouseListener(myMouseListener);
     super.dispose();
+  }
+
+  protected int getSelectedIndex() {
+    return myList.getSelectedIndex();
   }
 
   public void disposeChildren() {

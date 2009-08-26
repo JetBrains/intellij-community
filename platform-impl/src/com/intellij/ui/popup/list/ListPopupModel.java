@@ -11,12 +11,11 @@ import com.intellij.ui.speedSearch.SpeedSearch;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-class ListPopupModel extends AbstractListModel {
+public class ListPopupModel extends AbstractListModel {
 
-  private final List myOriginalList;
+  private final List<Object> myOriginalList;
   private final List<Object> myFilteredList = new ArrayList<Object>();
 
   private final ElementFilter myFilter;
@@ -30,8 +29,17 @@ class ListPopupModel extends AbstractListModel {
     myFilter = filter;
     myStep = step;
     mySpeedSearch = speedSearch;
-    myOriginalList = Collections.unmodifiableList(step.getValues());
+    myOriginalList = new ArrayList<Object>(step.getValues());
     rebuildLists();
+  }
+
+  public void deleteItem(final Object item) {
+    final int i = myOriginalList.indexOf(item);
+    if (i >= 0) {
+      myOriginalList.remove(i);
+      rebuildLists();
+      fireContentsChanged(this, 0, myFilteredList.size());
+    }
   }
 
   private void rebuildLists() {

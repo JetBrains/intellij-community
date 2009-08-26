@@ -21,11 +21,12 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class ConfigurationContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.ConfigurationContext");
@@ -86,12 +87,12 @@ public class ConfigurationContext {
       return null;
     }
 
-    final List<ConfigurationType> types = new ArrayList<ConfigurationType>();
+    final Set<ConfigurationType> types = new HashSet<ConfigurationType>();
     if (myRuntimeConfiguration != null) {
       types.add(myRuntimeConfiguration.getType());
     }
     else {
-      final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferedProducers(myLocation, this);
+      final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferredProducers(myLocation, this, true);
       if (producers == null) return null;
       for (RuntimeConfigurationProducer producer : producers) {
         types.add(producer.createProducer(myLocation, this).getConfigurationType());

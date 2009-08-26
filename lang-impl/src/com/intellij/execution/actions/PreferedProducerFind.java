@@ -24,12 +24,12 @@ class PreferedProducerFind {
 
   @Nullable
   public static RunnerAndConfigurationSettingsImpl createConfiguration(@NotNull Location location, final ConfigurationContext context) {
-    final RuntimeConfigurationProducer preferedProducer = findPreferedProducer(location, context);
-    return preferedProducer != null ? preferedProducer.getConfiguration() : null;
+    final RuntimeConfigurationProducer preferredProducer = findPreferredProducer(location, context);
+    return preferredProducer != null ? preferredProducer.getConfiguration() : null;
   }
 
   @Nullable
-  public static List<RuntimeConfigurationProducer> findPreferedProducers(final Location location, final ConfigurationContext context) {
+  public static List<RuntimeConfigurationProducer> findPreferredProducers(final Location location, final ConfigurationContext context, final boolean strict) {
     if (location == null) {
       return null;
     }
@@ -58,19 +58,23 @@ class PreferedProducerFind {
     }
     if (producers.isEmpty()) return null;
     Collections.sort(producers, RuntimeConfigurationProducer.COMPARATOR);
-    final RuntimeConfigurationProducer first = producers.get(0);
-    for (Iterator<RuntimeConfigurationProducer> it = producers.iterator(); it.hasNext();) {
-      RuntimeConfigurationProducer producer = it.next();
-      if (producer != first && RuntimeConfigurationProducer.COMPARATOR.compare(producer, first) >= 0) {
-        it.remove();
+
+    if(strict) {
+      final RuntimeConfigurationProducer first = producers.get(0);
+      for (Iterator<RuntimeConfigurationProducer> it = producers.iterator(); it.hasNext();) {
+        RuntimeConfigurationProducer producer = it.next();
+        if (producer != first && RuntimeConfigurationProducer.COMPARATOR.compare(producer, first) >= 0) {
+          it.remove();
+        }
       }
     }
+
     return producers;
   }
 
   @Nullable
-  private static RuntimeConfigurationProducer findPreferedProducer(final Location location, final ConfigurationContext context) {
-    final List<RuntimeConfigurationProducer> producers = findPreferedProducers(location, context);
+  private static RuntimeConfigurationProducer findPreferredProducer(final Location location, final ConfigurationContext context) {
+    final List<RuntimeConfigurationProducer> producers = findPreferredProducers(location, context, true);
     if (producers != null){
       return producers.get(0);
     }

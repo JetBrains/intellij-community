@@ -66,4 +66,6 @@ public abstract class RunManagerEx extends RunManager {
   public abstract RunnerAndConfigurationSettingsImpl findConfigurationByName(@NotNull final String name);
 
   public abstract Collection<RunnerAndConfigurationSettingsImpl> getSortedConfigurations();
+
+  public abstract void removeConfiguration(RunnerAndConfigurationSettingsImpl settings);
 }

@@ -32,7 +32,7 @@ public abstract class BaseRunConfigurationAction extends AnAction {
     final ConfigurationContext context = new ConfigurationContext(dataContext);
     final RunnerAndConfigurationSettingsImpl existing = context.findExisting();
     if (existing == null) {
-      final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferedProducers(context.getLocation(), context);
+      final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferredProducers(context.getLocation(), context, true);
       if (producers == null) return;
       if (producers.size() > 1) {
         final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
@@ -54,7 +54,7 @@ public abstract class BaseRunConfigurationAction extends AnAction {
 
             public PopupStep onChosen(final RuntimeConfigurationProducer producer, final boolean finalChoice) {
               perform(producer, context);
-              return PopupStep.FINAL_CHOICE;
+              return FINAL_CHOICE;
             }
           });
         final InputEvent event = e.getInputEvent();
@@ -70,6 +70,7 @@ public abstract class BaseRunConfigurationAction extends AnAction {
       }
       return;
     }
+    
     perform(context);
   }
 

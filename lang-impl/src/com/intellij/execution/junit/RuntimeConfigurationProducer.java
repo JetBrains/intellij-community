@@ -1,7 +1,6 @@
 package com.intellij.execution.junit;
 
-import com.intellij.execution.Location;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
@@ -32,6 +31,26 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
   public RuntimeConfigurationProducer createProducer(final Location location, final ConfigurationContext context) {
     final RuntimeConfigurationProducer result = clone();
     result.myConfiguration = location != null ? result.createConfigurationByElement(location, context) : null;
+
+    if (result.myConfiguration != null) {
+      final PsiElement psiElement = result.getSourceElement();
+      final Location<PsiElement> _location = PsiLocation.fromPsiElement(psiElement);
+      if (_location != null) {
+        // replace with existing configuration if any
+        final ConfigurationType type = result.myConfiguration.getType();
+        if (type instanceof LocatableConfigurationType) {
+          final RunManagerEx runManager = RunManagerEx.getInstanceEx(context.getProject());
+          final RunnerAndConfigurationSettingsImpl[] configurations = runManager.getConfigurationSettings(type);
+          for (final RunnerAndConfigurationSettingsImpl configuration : configurations) {
+            if (((LocatableConfigurationType)type).isConfigurationByLocation(configuration.getConfiguration(), _location)) {
+              result.myConfiguration = configuration;
+              break;
+            }
+          }
+        }
+      }
+    }
+
     return result;
   }
 
