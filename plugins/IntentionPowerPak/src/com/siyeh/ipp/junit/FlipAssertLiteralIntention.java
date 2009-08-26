@@ -15,14 +15,15 @@
  */
 package com.siyeh.ipp.junit;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
-import com.siyeh.IntentionPowerPackBundle;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class FlipAssertLiteralIntention extends MutablyNamedIntention {
 
@@ -30,8 +31,7 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention {
         final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
-        @NonNls final String fromMethodName =
-                methodExpression.getReferenceName();
+      @NonNls final String fromMethodName = StringUtil.notNullize(methodExpression.getReferenceName());
         @NonNls final String toMethodName;
         if ("assertTrue".equals(fromMethodName)) {
             toMethodName = "assertFalse";
