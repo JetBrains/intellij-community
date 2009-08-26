@@ -62,7 +62,7 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
           try {
             VirtualFile newFile = VfsUtil.createDirectoryIfMissing(file.getParent()).createChildData(this, file.getName());
             virtualFiles.add(newFile);
-            MavenUtil.runFileTemplate(project, newFile, getFileTemplate(), true);
+            MavenUtil.runFileTemplate(project, newFile, getFileTemplate());
           }
           catch (IOException ex) {
             NotificationsManager.getNotificationsManager()

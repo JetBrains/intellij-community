@@ -332,7 +332,7 @@ public class MavenIndex {
       IndexUpdateRequest request = new IndexUpdateRequest(context);
       request.setResourceFetcher(new MavenIndexFetcher(myRepositoryId,
                                                        getRepositoryUrl(),
-                                                       embedder.<WagonManager>getComponent(WagonManager.class),
+                                                       embedder.getComponent(WagonManager.class),
                                                        new TransferListenerAdapter(new MavenProgressIndicator(progress)) {
                                                          @Override
                                                          protected void doUpdateProgress(long downloaded, long total) {

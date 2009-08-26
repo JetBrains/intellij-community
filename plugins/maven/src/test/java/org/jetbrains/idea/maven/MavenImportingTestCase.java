@@ -27,6 +27,7 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.idea.maven.project.MavenException;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.runner.MavenExecutor;
 import org.jetbrains.idea.maven.runner.MavenExternalExecutor;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
@@ -316,9 +317,14 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     readProjects(files, profiles);
     myProjectsManager.waitForResolvingCompletion();
-    // todo replace with myMavenProjectsManager.flushPendingImportRequestsInTests();
     myProjectsManager.scheduleImportInTests(files);
     myProjectsManager.importProjects();
+
+    for (MavenProject each : myProjectsTree.getProjects()) {
+      if (each.hasErrors()) {
+        System.out.println(each + " has problems: " + each.getProblems());
+      }
+    }
   }
 
   protected void readProjects(List<VirtualFile> files, String... profiles) {

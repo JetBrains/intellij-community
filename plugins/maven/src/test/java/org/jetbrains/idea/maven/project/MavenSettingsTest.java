@@ -1,6 +1,8 @@
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.options.Configurable;
 import org.jetbrains.idea.maven.MavenTestCase;
+import org.jetbrains.idea.maven.utils.MavenSettings;
 
 public class MavenSettingsTest extends MavenTestCase {
   public void testCloningGeneralSettingsWithoutListeners() throws Exception {
@@ -45,5 +47,26 @@ public class MavenSettingsTest extends MavenTestCase {
     MavenImportingConfigurable importingConfigurable = new MavenImportingConfigurable(new MavenImportingSettings());
     importingConfigurable.reset();
     assertFalse(importingConfigurable.isModified());
+  }
+
+  public void testNotModifiedAfterCreation() throws Exception {
+    MavenSettings s = new MavenSettings(myProject);
+    s.reset();
+    try {
+      assertFalse(s.isModified());
+    }
+    finally {
+      s.disposeUIResources(); //prevent memory leaks
+    }
+
+    for (Configurable each : s.getConfigurables()) {
+      each.reset();
+      try {
+        assertFalse(each.isModified());
+      }
+      finally {
+        s.disposeUIResources(); //prevent memory leaks
+      }
+    }
   }
 }

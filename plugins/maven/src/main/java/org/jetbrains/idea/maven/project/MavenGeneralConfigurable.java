@@ -18,13 +18,16 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.options.Configurable;
-import org.apache.maven.execution.MavenExecutionRequest;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.embedder.MavenExecutionOptions;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
+import java.util.Arrays;
 
 /**
  * @author Ralf Quebbemann (ralfq@codehaus.org)
@@ -32,52 +35,79 @@ import javax.swing.*;
 public abstract class MavenGeneralConfigurable implements Configurable {
   private JCheckBox checkboxWorkOffline;
   private JPanel panel;
-  private JComboBox comboboxOutputLevel;
+  private JComboBox outputLevelCombo;
   private JCheckBox checkboxProduceExceptionErrorMessages;
-  private JComboBox comboboxChecksumPolicy;
-  private JComboBox comboboxMultiprojectBuildFailPolicy;
-  private JComboBox comboboxPluginUpdatePolicy;
+  private JComboBox checksumPolicyCombo;
+  private JComboBox failPolicyCombo;
+  private JComboBox pluginUpdatePolicyCombo;
   private JCheckBox checkboxUsePluginRegistry;
   private JCheckBox checkboxRecursive;
   private MavenEnvironmentForm mavenPathsForm;
-  private final DefaultComboBoxModel comboboxModelOutputLevel = new DefaultComboBoxModel();
-  private final DefaultComboBoxModel comboboxModelChecksumPolicy = new DefaultComboBoxModel();
-  private final DefaultComboBoxModel comboboxModelMultiprojectBuildFailPolicy = new DefaultComboBoxModel();
-  private final DefaultComboBoxModel comboboxModelPluginUpdatePolicy = new DefaultComboBoxModel();
+  private JComboBox snapshotUpdatePolicyCombo;
+  private final DefaultComboBoxModel outputLevelComboModel = new DefaultComboBoxModel();
+  private final DefaultComboBoxModel checksumPolicyComboModel = new DefaultComboBoxModel();
+  private final DefaultComboBoxModel failPolicyComboModel = new DefaultComboBoxModel();
+  private final DefaultComboBoxModel snapshotUpdatePolicyComboModel = new DefaultComboBoxModel();
+  private final DefaultComboBoxModel pluginUpdatePolicyComboModel = new DefaultComboBoxModel();
 
   protected abstract MavenGeneralSettings getState();
 
   protected MavenGeneralConfigurable() {
-    fillComboboxOutputLevel();
-    fillComboboxChecksumPolicy();
-    fillComboboxFailureBehavior();
-    fillComboboxPluginUpdatePolicy();
+    fillOutputLevelCombobox();
+    fillChecksumPolicyCombobox();
+    fillFailureBehaviorCombobox();
+    fillPluginUpdatePolicyCombobox();
+    fillSnapshotUpdatePolicyCombobox();
   }
 
-  private void fillComboboxFailureBehavior() {
-    ComboBoxUtil.setModel(comboboxMultiprojectBuildFailPolicy, comboboxModelMultiprojectBuildFailPolicy,
-                          new Object[][]{{MavenExecutionRequest.REACTOR_FAIL_FAST, "Stop at first failure"},
-                            {MavenExecutionRequest.REACTOR_FAIL_AT_END, "Fail at the end"},
-                            {MavenExecutionRequest.REACTOR_FAIL_NEVER, "Never fail"}});
+  private void fillOutputLevelCombobox() {
+    ComboBoxUtil.setModel(outputLevelCombo, outputLevelComboModel,
+                          Arrays.asList(MavenExecutionOptions.LoggingLevel.values()),
+                          new Function<MavenExecutionOptions.LoggingLevel, Pair<String, ?>>() {
+                            public Pair<String, MavenExecutionOptions.LoggingLevel> fun(MavenExecutionOptions.LoggingLevel each) {
+                              return Pair.create(each.getDisplayString(), each);
+                            }
+                          });
   }
 
-  private void fillComboboxPluginUpdatePolicy() {
-    ComboBoxUtil.setModel(comboboxPluginUpdatePolicy, comboboxModelPluginUpdatePolicy,
-                          new Object[][]{{true, "Check For Updates"}, {false, "Suppress Checking"}});
+  private void fillFailureBehaviorCombobox() {
+    ComboBoxUtil.setModel(failPolicyCombo, failPolicyComboModel,
+                          Arrays.asList(MavenExecutionOptions.FailureMode.values()),
+                          new Function<MavenExecutionOptions.FailureMode, Pair<String, ?>>() {
+                            public Pair<String, MavenExecutionOptions.FailureMode> fun(MavenExecutionOptions.FailureMode each) {
+                              return Pair.create(each.getDisplayString(), each);
+                            }
+                          });
   }
 
-  private void fillComboboxChecksumPolicy() {
-    ComboBoxUtil.setModel(comboboxChecksumPolicy, comboboxModelChecksumPolicy,
-                          new Object[][]{{"", "No Global Policy"}, {MavenExecutionRequest.CHECKSUM_POLICY_FAIL, "Strict (Fail)"},
-                            {MavenExecutionRequest.CHECKSUM_POLICY_WARN, "Lax (Warn Only)"}});
+  private void fillChecksumPolicyCombobox() {
+    ComboBoxUtil.setModel(checksumPolicyCombo, checksumPolicyComboModel,
+                          Arrays.asList(MavenExecutionOptions.ChecksumPolicy.values()),
+                          new Function<MavenExecutionOptions.ChecksumPolicy, Pair<String, ?>>() {
+                            public Pair<String, MavenExecutionOptions.ChecksumPolicy> fun(MavenExecutionOptions.ChecksumPolicy each) {
+                              return Pair.create(each.getDisplayString(), each);
+                            }
+                          });
   }
 
-  private void fillComboboxOutputLevel() {
-    ComboBoxUtil.setModel(comboboxOutputLevel, comboboxModelOutputLevel,
-                          new Object[][]{{MavenExecutionRequest.LOGGING_LEVEL_DEBUG, "Debug"},
-                            {MavenExecutionRequest.LOGGING_LEVEL_INFO, "Info"}, {MavenExecutionRequest.LOGGING_LEVEL_WARN, "Warn"},
-                            {MavenExecutionRequest.LOGGING_LEVEL_ERROR, "Error"}, {MavenExecutionRequest.LOGGING_LEVEL_FATAL, "Fatal"},
-                            {MavenExecutionRequest.LOGGING_LEVEL_DISABLED, "Disabled"}});
+  private void fillPluginUpdatePolicyCombobox() {
+    ComboBoxUtil.setModel(pluginUpdatePolicyCombo, pluginUpdatePolicyComboModel,
+                          Arrays.asList(MavenExecutionOptions.PluginUpdatePolicy.values()),
+                          new Function<MavenExecutionOptions.PluginUpdatePolicy, Pair<String, ?>>() {
+                            public Pair<String, MavenExecutionOptions.PluginUpdatePolicy> fun(MavenExecutionOptions.PluginUpdatePolicy each) {
+                              return Pair.create(each.getDisplayString(), each);
+                            }
+                          });
+  }
+
+  private void fillSnapshotUpdatePolicyCombobox() {
+    ComboBoxUtil.setModel(snapshotUpdatePolicyCombo, snapshotUpdatePolicyComboModel,
+                          Arrays.asList(MavenExecutionOptions.SnapshotUpdatePolicy.values()),
+                          new Function<MavenExecutionOptions.SnapshotUpdatePolicy, Pair<String, ?>>() {
+                            public Pair<String, MavenExecutionOptions.SnapshotUpdatePolicy> fun(MavenExecutionOptions.SnapshotUpdatePolicy each) {
+                              return Pair.create(each.getDisplayString(), each);
+                            }
+                          });
   }
 
   public JComponent createComponent() {
@@ -110,16 +140,11 @@ public abstract class MavenGeneralConfigurable implements Configurable {
     data.setUsePluginRegistry(checkboxUsePluginRegistry.isSelected());
     data.setNonRecursive(!checkboxRecursive.isSelected());
 
-    Integer level = (Integer)ComboBoxUtil.getSelectedValue(comboboxModelOutputLevel);
-    if (level != null) {
-      data.setOutputLevel(level);
-    }
-    data.setChecksumPolicy(ComboBoxUtil.getSelectedString(comboboxModelChecksumPolicy));
-    data.setFailureBehavior(ComboBoxUtil.getSelectedString(comboboxModelMultiprojectBuildFailPolicy));
-    Boolean policy = (Boolean)ComboBoxUtil.getSelectedValue(comboboxModelPluginUpdatePolicy);
-    if (policy != null) {
-      data.setPluginUpdatePolicy(policy);
-    }
+    data.setOutputLevel((MavenExecutionOptions.LoggingLevel)ComboBoxUtil.getSelectedValue(outputLevelComboModel));
+    data.setChecksumPolicy((MavenExecutionOptions.ChecksumPolicy)ComboBoxUtil.getSelectedValue(checksumPolicyComboModel));
+    data.setFailureBehavior((MavenExecutionOptions.FailureMode)ComboBoxUtil.getSelectedValue(failPolicyComboModel));
+    data.setPluginUpdatePolicy((MavenExecutionOptions.PluginUpdatePolicy)ComboBoxUtil.getSelectedValue(pluginUpdatePolicyComboModel));
+    data.setSnapshotUpdatePolicy((MavenExecutionOptions.SnapshotUpdatePolicy)ComboBoxUtil.getSelectedValue(snapshotUpdatePolicyComboModel));
   }
 
   private void getData(MavenGeneralSettings data) {
@@ -131,10 +156,11 @@ public abstract class MavenGeneralConfigurable implements Configurable {
     checkboxUsePluginRegistry.setSelected(data.isUsePluginRegistry());
     checkboxRecursive.setSelected(!data.isNonRecursive());
 
-    ComboBoxUtil.select(comboboxModelOutputLevel, data.getOutputLevel());
-    ComboBoxUtil.select(comboboxModelChecksumPolicy, data.getChecksumPolicy());
-    ComboBoxUtil.select(comboboxModelMultiprojectBuildFailPolicy, data.getFailureBehavior());
-    ComboBoxUtil.select(comboboxModelPluginUpdatePolicy, data.getPluginUpdatePolicy());
+    ComboBoxUtil.select(outputLevelComboModel, data.getLoggingLevel());
+    ComboBoxUtil.select(checksumPolicyComboModel, data.getChecksumPolicy());
+    ComboBoxUtil.select(failPolicyComboModel, data.getFailureBehavior());
+    ComboBoxUtil.select(pluginUpdatePolicyComboModel, data.getPluginUpdatePolicy());
+    ComboBoxUtil.select(snapshotUpdatePolicyComboModel, data.getSnapshotUpdatePolicy());
   }
 
   @Nls

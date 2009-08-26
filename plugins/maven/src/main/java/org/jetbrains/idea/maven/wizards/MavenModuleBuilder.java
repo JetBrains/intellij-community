@@ -2,8 +2,8 @@ package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -14,6 +14,7 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -45,6 +46,8 @@ import java.util.List;
 import java.util.Map;
 
 public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
+  private static final Icon BIG_ICON = IconLoader.getIcon("/modules/javaModule.png");
+
   private String myContentRootPath;
 
   private MavenProject myAggregatorProject;
@@ -67,7 +70,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     final VirtualFile pom;
     try {
       pom = root.createChildData(this, MavenConstants.POM_XML);
-      MavenUtil.runMavenProjectFileTemplate(project, pom, myProjectId, false);
+      MavenUtil.applyMavenProjectFileTemplate(project, pom, myProjectId);
     }
     catch (IOException e) {
       throw new ConfigurationException(e.getMessage());
@@ -191,32 +194,32 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   }
 
   @Override
-  public String getPresentableName() {
-    return MavenModuleType.MAVEN_MODULE;
+  public String getBuilderId() {
+    return getClass().getName();
   }
 
   @Override
-  public String getBuilderId() {
-    return MavenModuleType.MAVEN_MODULE_ID;
+  public String getPresentableName() {
+    return "Maven Module";
+  }
+
+  @Override
+  public String getDescription() {
+    return "Creates a blank Maven module or from Maven Archetype";
+  }
+
+  @Override
+  public Icon getBigIcon() {
+    return BIG_ICON;
+  }
+
+  public ModuleType getModuleType() {
+    return StdModuleTypes.JAVA;
   }
 
   @Override
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
     return new ModuleWizardStep[]{new MavenModuleWizardStep(wizardContext.getProject(), this)};
-  }
-
-  @Override
-  public Icon getBigIcon() {
-    return MavenModuleType.BIG_ICON;
-  }
-
-  @Override
-  public String getDescription() {
-    return MavenModuleType.DESCRIPTION;
-  }
-
-  public ModuleType getModuleType() {
-    return StdModuleTypes.JAVA;
   }
 
   public MavenProject findPotentialParentProject(Project project) {

@@ -1,11 +1,12 @@
 package org.jetbrains.idea.maven;
 
 import org.jetbrains.idea.maven.embedder.MavenConsole;
+import org.jetbrains.idea.maven.embedder.MavenExecutionOptions;
 import com.intellij.execution.process.ProcessHandler;
 
 public class NullMavenConsole extends MavenConsole {
   public NullMavenConsole() {
-    super(0, false);
+    super(MavenExecutionOptions.LoggingLevel.DISABLED, false);
   }
 
   public boolean canPause() {

@@ -77,6 +77,9 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
                   "  </repository>" +
                   "</repositories>");
 
+    myIndicesFixture.getProjectIndicesManager().scheduleUpdateAll();
+    assertUnorderedElementsAreEqual(myIndicesFixture.getProjectIndicesManager().getGroupIds(), "test", "jmock");
+
     updateSettingsXmlFully("<settings>" +
                            "  <mirrors>" +
                            "    <mirror>" +

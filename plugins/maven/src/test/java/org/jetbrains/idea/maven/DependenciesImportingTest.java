@@ -907,9 +907,38 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertTrue(file.exists());
   }
 
+  public void testUsingMirrors() throws Exception {
+    setRepositoryPath(myDir.getPath() + "/repo");
+    String mirrorPath = FileUtil.toSystemIndependentName(myDir.getPath() + "/mirror");
+
+    updateSettingsXmlFully("<settings>" +
+                           "  <mirrors>" +
+                           "    <mirror>" +
+                           "      <id>foo</id>" +
+                           "      <url>file://" +mirrorPath + "</url>" +
+                           "      <mirrorOf>*</mirrorOf>" +
+                           "    </mirror>" +
+                           "  </mirrors>" +
+                           "</settings>");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>4.0</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertFalse(new File(getRepositoryFile(), "junit").exists());
+    assertTrue(myProjectsTree.findProject(myProjectPom).hasUnresolvedArtifacts());
+  }
+
   public void testArtifactTypeProvidedByExtensionPlugin() throws Exception {
     // This test ensures that we download all necessary extension plugins.
-
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -928,24 +957,12 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "<build>" +
                   "  <plugins>" +
                   "    <plugin>" +
-                  "      <groupId>info.flex-mojos</groupId>" +
-                  "      <artifactId>flex-compiler-mojo</artifactId>" +
-                  "      <version>2.0M10</version>" +
+                  "      <groupId>org.sonatype.flexmojos</groupId>" +
+                  "      <artifactId>flexmojos-maven-plugin</artifactId>" +
                   "      <extensions>true</extensions>" +
                   "    </plugin>" +
                   "  </plugins>" +
-                  "</build>" +
-
-                  "<repositories>" +
-                  "  <repository>" +
-                  "    <id>flex-mojos-repository</id>" +
-                  "    <url>http://svn.sonatype.org/flexmojos/repository/</url>" +
-                  "    <releases>" +
-                  "      <enabled>true</enabled>" +
-                  "    </releases>" +
-                  "  </repository>" +
-                  "</repositories>");
-    resolveDependenciesAndImport();
+                  "</build>");
 
     // flex plugin handles 'resource-bundle' dependencies in a special way.
     //
@@ -956,6 +973,33 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959-en_US.rb-sources.jar!/",
                        "jar://" + getRepositoryPath() +
                        "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959-en_US.rb-javadoc.jar!/");
+  }
+
+  public void testCanResolveDependenciesWhenExtensionPluginNotFound() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>4.0</version>" +
+                  "  </dependency>" +
+                  "</dependencies>" +
+
+                  "<build>" +
+                  " <plugins>" +
+                  "   <plugin>" +
+                  "     <groupId>xxx</groupId>" +
+                  "     <artifactId>yyy</artifactId>" +
+                  "     <version>1</version>" +
+                  "     <extensions>true</extensions>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    assertModuleLibDep("project", "Maven: junit:junit:4.0");
   }
 
   public void testDoNotRemoveLibrariesOnImportIfProjectWasNotChanged() throws Exception {

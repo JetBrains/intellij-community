@@ -1,12 +1,12 @@
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.LibraryOrderEntry;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 
@@ -709,7 +709,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     m2.delete(this);
 
-    configConfirmationForYesAnswer(); // should update deps even if module is not removed
+    configConfirmationForYesAnswer();// should update deps even if module is not removed
 
     waitForReadingCompletion();
     resolveDependenciesAndImport();

@@ -23,7 +23,7 @@
     <projectImportProvider implementation="org.jetbrains.idea.maven.wizards.MavenProjectImportProvider"/>
     <projectOpenProcessor implementation="org.jetbrains.idea.maven.wizards.MavenProjectOpenProcessor"/>
     <projectImportBuilder implementation="org.jetbrains.idea.maven.wizards.MavenProjectBuilder"/>
-    <moduleType id="MAVEN_MODULE" implementationClass="org.jetbrains.idea.maven.wizards.MavenModuleType"/>
+    <moduleBuilder builderClass="org.jetbrains.idea.maven.wizards.MavenModuleBuilder"/>
 
     <projectConfigurable implementation="org.jetbrains.idea.maven.utils.MavenSettings" order="last"/>
 

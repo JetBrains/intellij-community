@@ -33,7 +33,7 @@ public class MavenId implements Serializable {
     return myVersion;
   }
 
-  public String getDisplayString() {
+  public String getKey() {
     StringBuilder builder = new StringBuilder();
 
     append(builder, myGroupId);
@@ -41,6 +41,10 @@ public class MavenId implements Serializable {
     append(builder, myVersion);
 
     return builder.toString();
+  }
+
+  public String getDisplayString() {
+    return getKey();
   }
 
   public static void append(StringBuilder builder, String part) {

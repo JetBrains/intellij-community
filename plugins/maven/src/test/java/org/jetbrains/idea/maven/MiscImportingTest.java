@@ -71,10 +71,6 @@ public class MiscImportingTest extends MavenImportingTestCase {
                   "<version>1</version>");
 
     assertRootsChanged(1);
-
-    scheduleResolveAll();
-    resolveDependenciesAndImport();
-    assertRootsChanged(2);
   }
 
   public void testImportingWithLibrariesAndFacetsFiresRootChangesOnlyOnce() throws Exception {
@@ -97,10 +93,6 @@ public class MiscImportingTest extends MavenImportingTestCase {
                   "</dependencies>");
 
     assertRootsChanged(1);
-
-    scheduleResolveAll();
-    resolveDependenciesAndImport();
-    assertRootsChanged(2);
   }
 
   public void testFacetsDoNotFireRootsChanges() throws Exception {
@@ -110,10 +102,6 @@ public class MiscImportingTest extends MavenImportingTestCase {
                   "<packaging>war</packaging>");
 
     assertRootsChanged(1);
-
-    scheduleResolveAll();
-    resolveDependenciesAndImport();
-    assertRootsChanged(2);
   }
 
   public void testDoNotRecreateModulesBeforeResolution() throws Exception {

@@ -6,7 +6,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.WildcardQuery;
-import org.apache.maven.embedder.MavenEmbedderException;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.sonatype.nexus.index.ArtifactInfo;
@@ -52,7 +51,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     });
   }
 
-  private void shutdownIndices() throws MavenEmbedderException {
+  private void shutdownIndices() throws Exception {
     myIndices.close();
     myEmbedder.release();
   }

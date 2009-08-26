@@ -42,7 +42,7 @@ public class MavenConsoleImpl extends MavenConsole {
   public MavenConsoleImpl(String title,
                           Project project,
                           Pair<MavenRunnerParameters, MavenRunnerSettings> parametersAndSettings) {
-    super(getGeneralSettings(project).getOutputLevel(), getGeneralSettings(project).isPrintErrorStackTraces());
+    super(getGeneralSettings(project).getLoggingLevel(), getGeneralSettings(project).isPrintErrorStackTraces());
     myTitle = title;
     myProject = project;
     myConsoleView = createConsoleView();

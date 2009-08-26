@@ -1,12 +1,10 @@
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.application.RuntimeInterruptedException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
@@ -19,6 +17,8 @@ import org.jetbrains.idea.maven.utils.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
 
 public class MavenProjectsTree {
@@ -32,7 +32,9 @@ public class MavenProjectsTree {
   }
 
   private final Object myStateLock = new Object();
-  private final ReentrantWriterPreferenceReadWriteLock myStructureLock = new ReentrantWriterPreferenceReadWriteLock();
+  private final ReentrantReadWriteLock myStructureLock = new ReentrantReadWriteLock();
+  private final Lock myStructureReadLock = myStructureLock.readLock();
+  private final Lock myStructureWriteLock = myStructureLock.writeLock();
 
   // TODO replace with sets
   private volatile List<String> myManagedFilesPaths = new ArrayList<String>();
@@ -48,6 +50,7 @@ public class MavenProjectsTree {
   private final Map<MavenProject, MavenProjectTimestamp> myTimestamps = new THashMap<MavenProject, MavenProjectTimestamp>();
   private final Map<VirtualFile, MavenProject> myVirtualFileToProjectMapping = new THashMap<VirtualFile, MavenProject>();
   private final Map<MavenId, MavenProject> myMavenIdToProjectMapping = new THashMap<MavenId, MavenProject>();
+  private final Map<MavenId, VirtualFile> myMavenIdToFileMapping  = new THashMap<MavenId, VirtualFile>();
   private final Map<MavenProject, List<MavenProject>> myAggregatorToModuleMapping = new THashMap<MavenProject, List<MavenProject>>();
   private final Map<MavenProject, MavenProject> myModuleToAggregatorMapping = new THashMap<MavenProject, MavenProject>();
 
@@ -109,6 +112,7 @@ public class MavenProjectsTree {
         tree.myTimestamps.put(project, timestamp);
         tree.myVirtualFileToProjectMapping.put(project.getFile(), project);
         tree.myMavenIdToProjectMapping.put(project.getMavenId(), project);
+        tree.myMavenIdToFileMapping.put(project.getMavenId(), project.getFile());
         tree.myAggregatorToModuleMapping.put(project, modules);
         for (MavenProject eachModule : modules) {
           tree.myModuleToAggregatorMapping.put(eachModule, project);
@@ -460,6 +464,7 @@ public class MavenProjectsTree {
       try {
         if (!isNew) {
           myMavenIdToProjectMapping.remove(mavenProject.getMavenId());
+          myMavenIdToFileMapping.remove(mavenProject.getMavenId());
         }
       }
       finally {
@@ -472,6 +477,7 @@ public class MavenProjectsTree {
       try {
         myVirtualFileToProjectMapping.put(mavenProject.getFile(), mavenProject);
         myMavenIdToProjectMapping.put(mavenProject.getMavenId(), mavenProject);
+        myMavenIdToFileMapping.put(mavenProject.getMavenId(), mavenProject.getFile());
       }
       finally {
         writeUnlock();
@@ -679,6 +685,7 @@ public class MavenProjectsTree {
       myTimestamps.remove(project);
       myVirtualFileToProjectMapping.remove(project.getFile());
       myMavenIdToProjectMapping.remove(project.getMavenId());
+      myMavenIdToFileMapping.remove(project.getMavenId());
       myAggregatorToModuleMapping.remove(project);
       myModuleToAggregatorMapping.remove(project);
     }
@@ -826,6 +833,16 @@ public class MavenProjectsTree {
     return findProject(new MavenId(artifact));
   }
 
+  public Map<MavenId, VirtualFile> getProjectIdToFileMapping() {
+    readLock();
+    try {
+      return new THashMap<MavenId, VirtualFile>(myMavenIdToFileMapping);
+    }
+    finally {
+      readUnlock();
+    }
+  }
+
   public MavenProject findAggregator(MavenProject project) {
     readLock();
     try {
@@ -915,18 +932,16 @@ public class MavenProjectsTree {
                       MavenConsole console,
                       MavenProgressIndicator process) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(EmbedderKind.EMBEDDER_FOR_DEPENDENCIES_RESOLVE);
-    embedder.customizeForResolve(this, console, process);
-
+    embedder.customizeForResolve(getProjectIdToFileMapping(), console, process);
+    
     try {
       process.checkCanceled();
       process.setText(ProjectBundle.message("maven.resolving.pom", mavenProject.getDisplayName()));
       process.setText2("");
-      Pair<MavenProjectChanges, org.apache.maven.project.MavenProject> resolveResult
-        = mavenProject.resolve(generalSettings,
-                               embedder,
-                               new MavenProjectReader(),
-                               myProjectLocator,
-                               process);
+      Pair<MavenProjectChanges, org.apache.maven.project.MavenProject> resolveResult = mavenProject.resolve(generalSettings,
+                                                                                                            embedder,
+                                                                                                            new MavenProjectReader(),
+                                                                                                            myProjectLocator);
 
       fireProjectResolved(Pair.create(mavenProject, resolveResult.first), resolveResult.second);
     }
@@ -948,7 +963,7 @@ public class MavenProjectsTree {
       for (MavenPlugin each : mavenProject.getPlugins()) {
         process.checkCanceled();
         process.setText(ProjectBundle.message("maven.downloading.pom.plugins", mavenProject.getDisplayName()));
-        embedder.resolvePlugin(each, nativeMavenProject, process);
+        embedder.resolvePlugin(each, nativeMavenProject);
       }
       firePluginsResolved(mavenProject);
     }
@@ -963,7 +978,7 @@ public class MavenProjectsTree {
                              MavenConsole console,
                              MavenProgressIndicator process) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(EmbedderKind.EMBEDDER_FOR_FOLDERS_RESOLVE);
-    embedder.customizeForStrictResolve(this, console, process);
+    embedder.customizeForStrictResolve(getProjectIdToFileMapping(), console, process);
     embeddersManager.clearCachesFor(mavenProject);
 
     try {
@@ -974,8 +989,7 @@ public class MavenProjectsTree {
       Pair<Boolean, MavenProjectChanges> resolveResult = mavenProject.resolveFolders(embedder,
                                                                                      importingSettings,
                                                                                      new MavenProjectReader(),
-                                                                                     console,
-                                                                                     process);
+                                                                                     console);
       if (resolveResult.first) {
         fireFoldersResolved(Pair.create(mavenProject, resolveResult.second));
       }
@@ -1016,7 +1030,7 @@ public class MavenProjectsTree {
                                                   MavenConstants.TYPE_JAR,
                                                   null);
       artifact.setScope(Artifact.SCOPE_COMPILE);
-      embedder.resolve(artifact, mavenProject.getRemoteRepositories(), process);
+      embedder.resolve(artifact, mavenProject.getRemoteRepositories());
       return new MavenArtifact(artifact, mavenProject.getLocalRepository());
     }
     finally {
@@ -1044,29 +1058,19 @@ public class MavenProjectsTree {
   }
 
   private void writeLock() {
-    try {
-      myStructureLock.writeLock().acquire();
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeInterruptedException(e);
-    }
+    myStructureWriteLock.lock();
   }
 
   private void writeUnlock() {
-    myStructureLock.writeLock().release();
+    myStructureWriteLock.unlock();
   }
 
   private void readLock() {
-    try {
-      myStructureLock.readLock().acquire();
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeInterruptedException(e);
-    }
+    myStructureReadLock.lock();
   }
 
   private void readUnlock() {
-    myStructureLock.readLock().release();
+    myStructureReadLock.unlock();
   }
 
   public void addListener(Listener l) {

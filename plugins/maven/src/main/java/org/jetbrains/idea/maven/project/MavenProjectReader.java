@@ -10,32 +10,27 @@ import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilderDriver;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
-import org.apache.maven.execution.DefaultMavenExecutionRequest;
-import org.apache.maven.execution.MavenExecutionRequest;
-import org.apache.maven.execution.MavenExecutionResult;
-import org.apache.maven.extension.ExtensionScanningException;
 import org.apache.maven.model.*;
 import org.apache.maven.profiles.activation.*;
-import org.apache.maven.profiles.injection.DefaultProfileInjector;
-import org.apache.maven.project.InvalidProjectModelException;
-import org.apache.maven.project.JBMavenProjectHelper;
+import org.apache.maven.project.*;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
+import org.apache.maven.project.injection.DefaultProfileInjector;
+import org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator;
 import org.apache.maven.project.interpolation.ModelInterpolationException;
-import org.apache.maven.project.interpolation.ModelInterpolator;
+import org.apache.maven.project.interpolation.StringSearchModelInterpolator;
 import org.apache.maven.project.path.DefaultPathTranslator;
 import org.apache.maven.project.path.PathTranslator;
 import org.apache.maven.project.validation.ModelValidationResult;
-import org.apache.maven.reactor.MissingModuleException;
+import org.codehaus.plexus.context.ContextException;
+import org.codehaus.plexus.context.DefaultContext;
+import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
@@ -288,8 +283,6 @@ public class MavenProjectReader {
     List<Profile> activated = new ArrayList<Profile>();
     List<Profile> activeByDefault = new ArrayList<Profile>();
 
-    ProfileActivationContext context = new DefaultProfileActivationContext(MavenUtil.getSystemProperties(), true);
-
     List<Profile> rawProfiles = model.getProfiles();
     List<Profile> expandedProfiles = null;
 
@@ -307,21 +300,13 @@ public class MavenProjectReader {
         activeByDefault.add(eachRawProfile);
       }
 
-      ProfileActivator[] activators = new ProfileActivator[]{
-        new FileProfileActivator(),
-        new SystemPropertyProfileActivator(),
-        new JdkPrefixProfileActivator(),
-        new OperatingSystemProfileActivator()
-      };
-
       // expand only if necessary
       if (expandedProfiles == null) expandedProfiles = expandProperties(model, basedir).getProfiles();
       Profile eachExpandedProfile = expandedProfiles.get(i);
 
-      for (ProfileActivator eachActivator : activators) {
+      for (ProfileActivator eachActivator : getProfileActivators()) {
         try {
-          if (eachActivator.canDetermineActivation(eachExpandedProfile, context)
-              && eachActivator.isActive(eachExpandedProfile, context)) {
+          if (eachActivator.canDetermineActivation(eachExpandedProfile) && eachActivator.isActive(eachExpandedProfile)) {
             activated.add(eachRawProfile);
           }
         }
@@ -338,6 +323,26 @@ public class MavenProjectReader {
     }
 
     return result;
+  }
+
+  private ProfileActivator[] getProfileActivators() {
+    SystemPropertyProfileActivator sysPropertyActivator = new SystemPropertyProfileActivator();
+    DefaultContext context = new DefaultContext();
+    context.put("SystemProperties", MavenEmbedderFactory.collectSystemProperties());
+    try {
+      sysPropertyActivator.contextualize(context);
+    }
+    catch (ContextException e) {
+      MavenLog.LOG.error(e);
+      return new ProfileActivator[0];
+    }
+
+    return new ProfileActivator[]{
+      new FileProfileActivator(),
+      sysPropertyActivator,
+      new JdkPrefixProfileActivator(),
+      new OperatingSystemProfileActivator()
+    };
   }
 
   private void repairModelHeader(Model model) {
@@ -494,16 +499,20 @@ public class MavenProjectReader {
   }
 
   private Model expandProperties(Model model, File basedir) {
-    ModelInterpolator interpolator = new CustomModelInterpolator(new DefaultPathTranslator());
-
-    Map context = MavenEmbedderFactory.collectSystemProperties();
-    Map overrideContext = new THashMap();
-
     try {
-      model = interpolator.interpolate(model, context, overrideContext, basedir, false);
+      AbstractStringBasedModelInterpolator interpolator = new StringSearchModelInterpolator(new DefaultPathTranslator());
+      interpolator.initialize();
+
+      Properties context = MavenEmbedderFactory.collectSystemProperties();
+
+      ProjectBuilderConfiguration config = new DefaultProjectBuilderConfiguration().setExecutionProperties(context);
+      model = interpolator.interpolate(model, basedir, config, false);
     }
     catch (ModelInterpolationException e) {
       MavenLog.LOG.warn(e);
+    }
+    catch (InitializationException e) {
+      MavenLog.LOG.error(e);
     }
 
     return model;
@@ -518,19 +527,16 @@ public class MavenProjectReader {
 
   public MavenProjectReaderResult resolveProject(MavenGeneralSettings generalSettings,
                                                  MavenEmbedderWrapper embedder,
-                                                 VirtualFile f,
+                                                 VirtualFile file,
                                                  List<String> activeProfiles,
-                                                 MavenProjectReaderProjectLocator locator,
-                                                 MavenProgressIndicator process) throws MavenProcessCanceledException {
+                                                 MavenProjectReaderProjectLocator locator) throws MavenProcessCanceledException {
     MavenProject mavenProject = null;
     boolean isValid = true;
     List<MavenProjectProblem> problems = new ArrayList<MavenProjectProblem>();
     Set<MavenId> unresolvedArtifactsIds = new THashSet<MavenId>();
 
-    String path = f.getPath();
-
     try {
-      Pair<MavenProject, Set<MavenId>> result = doResolveProject(embedder, path, activeProfiles, problems, process);
+      Pair<MavenProject, Set<MavenId>> result = doResolveProject(embedder, file, activeProfiles, problems);
       mavenProject = result.first;
       unresolvedArtifactsIds = result.second;
     }
@@ -557,30 +563,28 @@ public class MavenProjectReader {
       if (problems.isEmpty()) {
         problems.add(new MavenProjectProblem(ProjectBundle.message("maven.project.problem.syntaxError"), true));
       }
-      mavenProject = readProject(generalSettings, f, activeProfiles, locator).nativeMavenProject;
+      mavenProject = readProject(generalSettings, file, activeProfiles, locator).nativeMavenProject;
     }
 
     return new MavenProjectReaderResult(isValid,
                                         activeProfiles,
                                         problems,
                                         unresolvedArtifactsIds,
-                                        new File(embedder.getLocalRepository()),
+                                        embedder.getLocalRepositoryFile(),
                                         mavenProject);
   }
 
   private Pair<MavenProject, Set<MavenId>> doResolveProject(MavenEmbedderWrapper embedder,
-                                                            String path,
+                                                            VirtualFile file,
                                                             List<String> profiles,
-                                                            List<MavenProjectProblem> problems,
-                                                            MavenProgressIndicator p) throws MavenProcessCanceledException {
-    MavenExecutionRequest request = createRequest(embedder, path, profiles);
-    Pair<MavenExecutionResult, Set<MavenId>> result = embedder.resolveProject(request, p);
-    validate(result.first, problems);
-    return Pair.create(result.first.getProject(), result.second);
+                                                            List<MavenProjectProblem> problems) throws MavenProcessCanceledException {
+    MavenExecutionResult result = embedder.resolveProject(file, profiles);
+    validate(result, problems);
+    return Pair.create(result.getMavenProject(), result.getUnresolvedArtifactIds());
   }
 
   private boolean validate(MavenExecutionResult r, List<MavenProjectProblem> problems) {
-    for (Exception each : (List<Exception>)r.getExceptions()) {
+    for (Exception each : r.getExceptions()) {
       MavenLog.LOG.info(each);
 
       if (each instanceof InvalidProjectModelException) {
@@ -594,27 +598,6 @@ public class MavenProjectReader {
           problems.add(new MavenProjectProblem(each.getCause().getMessage(), true));
         }
       }
-      else if (each instanceof MissingModuleException) {
-        problems.add(new MavenProjectProblem(ProjectBundle.message("maven.project.problem.missingModule",
-                                                                   ((MissingModuleException)each).getModuleName()), false));
-      }
-      else if (each instanceof ExtensionScanningException) {
-        String causeMessage;
-
-        if (each.getCause() instanceof ProjectBuildingException) {
-          if (each.getCause().getCause() != null) {
-            causeMessage = each.getCause().getCause().getMessage();
-          }
-          else {
-            causeMessage = each.getCause().getMessage();
-          }
-        }
-        else {
-          causeMessage = each.getMessage();
-        }
-
-        problems.add(new MavenProjectProblem(causeMessage, true));
-      }
       else if (each instanceof ProjectBuildingException) {
         String causeMessage = each.getCause() != null
                               ? each.getCause().getMessage()
@@ -627,13 +610,14 @@ public class MavenProjectReader {
     }
 
     List<Exception> ee = new ArrayList<Exception>();
-    ArtifactResolutionResult resolutionResult = r.getArtifactResolutionResult();
-    if (resolutionResult != null) {
-      ee.addAll(resolutionResult.getCircularDependencyExceptions());
-      ee.addAll(resolutionResult.getMetadataResolutionExceptions());
-      ee.addAll(resolutionResult.getVersionRangeViolations());
-      ee.addAll(resolutionResult.getErrorArtifactExceptions());
-    }
+    // todo todo 
+    //ArtifactResolutionResult resolutionResult = r.getArtifactResolutionResult();
+    //if (resolutionResult != null) {
+    //  ee.addAll(resolutionResult.getCircularDependencyExceptions());
+    //  ee.addAll(resolutionResult.getMetadataResolutionExceptions());
+    //  ee.addAll(resolutionResult.getVersionRangeViolations());
+    //  ee.addAll(resolutionResult.getErrorArtifactExceptions());
+    //}
 
     for (Exception each : ee) {
       problems.add(new MavenProjectProblem(each.getMessage(), false));
@@ -645,31 +629,27 @@ public class MavenProjectReader {
 
   public MavenProjectReaderResult generateSources(MavenEmbedderWrapper embedder,
                                                   MavenImportingSettings importingSettings,
-                                                  VirtualFile f,
+                                                  VirtualFile file,
                                                   List<String> profiles,
-                                                  MavenConsole console,
-                                                  MavenProgressIndicator p) throws MavenProcessCanceledException {
+                                                  MavenConsole console) throws MavenProcessCanceledException {
     try {
-      MavenExecutionRequest request = createRequest(embedder, f.getPath(), profiles);
-      request.setGoals(Arrays.asList(importingSettings.getUpdateFoldersOnImportPhase()));
+      MavenExecutionResult result = embedder.execute(file, profiles, Arrays.asList(importingSettings.getUpdateFoldersOnImportPhase()));
 
-      Pair<MavenExecutionResult, Set<MavenId>> result = embedder.execute(request, p);
-
-      if (result.first.hasExceptions()) {
-        MavenConsoleHelper.printExecutionExceptions(console, result.first);
+      if (result.hasExceptions()) {
+        MavenConsoleHelper.printExecutionExceptions(console, result);
       }
 
       List<MavenProjectProblem> problems = new ArrayList<MavenProjectProblem>();
-      if (!validate(result.first, problems)) return null;
+      if (!validate(result, problems)) return null;
 
-      MavenProject project = result.first.getProject();
+      MavenProject project = result.getMavenProject();
       if (project == null) return null;
 
       return new MavenProjectReaderResult(true,
                                           profiles,
                                           problems,
-                                          result.second,
-                                          new File(embedder.getLocalRepository()),
+                                          result.getUnresolvedArtifactIds(),
+                                          embedder.getLocalRepositoryFile(),
                                           project);
     }
     catch (MavenProcessCanceledException e) {
@@ -680,21 +660,6 @@ public class MavenProjectReader {
       MavenLog.LOG.warn(e);
       return null;
     }
-  }
-
-  private MavenExecutionRequest createRequest(MavenEmbedderWrapper embedder,
-                                              String path,
-                                              List<String> profiles) {
-    MavenExecutionRequest req = new DefaultMavenExecutionRequest();
-
-    req.setPomFile(path);
-    req.setRecursive(false);
-    req.setSettings(embedder.getEmbedder().getSettings());
-    req.setProxies(embedder.getEmbedder().getSettings().getProxies());
-
-    if (profiles != null) req.addActiveProfiles(profiles);
-
-    return req;
   }
 
   private Pair<Element, Boolean> readXml(VirtualFile file) {

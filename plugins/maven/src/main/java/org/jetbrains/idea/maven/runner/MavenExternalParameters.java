@@ -25,13 +25,11 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.text.StringUtil;
-import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
-import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
-import org.jetbrains.idea.maven.runner.RunnerBundle;
+import org.jetbrains.idea.maven.embedder.MavenExecutionOptions;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -214,35 +212,20 @@ public class MavenExternalParameters {
     if (!coreSettings.isUsePluginRegistry()) {
       cmdList.add("--no-plugin-registry");
     }
-    if (coreSettings.getOutputLevel() == MavenExecutionRequest.LOGGING_LEVEL_DEBUG) {
+    if (coreSettings.getLoggingLevel() == MavenExecutionOptions.LoggingLevel.DEBUG) {
       cmdList.add("--debug");
     }
-
     if (coreSettings.isNonRecursive()) {
       cmdList.add("--non-recursive");
     }
-
     if (coreSettings.isPrintErrorStackTraces()) {
       cmdList.add("--errors");
     }
 
-    cmdList.add("--" + coreSettings.getFailureBehavior());
-
-    if (coreSettings.getPluginUpdatePolicy()) {
-      cmdList.add("--check-plugin-updates");
-    }
-    else {
-      cmdList.add("--no-plugin-updates");
-    }
-
-    if (coreSettings.getChecksumPolicy().length() != 0) {
-      if (coreSettings.getChecksumPolicy().equals(MavenExecutionRequest.CHECKSUM_POLICY_FAIL)) {
-        cmdList.add("--strict-checksums");
-      }
-      else {
-        cmdList.add("--lax-checksums");
-      }
-    }
+    cmdList.add(coreSettings.getFailureBehavior().getCommandLineOption());
+    cmdList.add(coreSettings.getPluginUpdatePolicy().getCommandLineOption());
+    cmdList.add(coreSettings.getChecksumPolicy().getCommandLineOption());
+    cmdList.add(coreSettings.getSnapshotUpdatePolicy().getCommandLineOption());
 
     addOption(cmdList, "s", coreSettings.getMavenSettingsFile());
   }

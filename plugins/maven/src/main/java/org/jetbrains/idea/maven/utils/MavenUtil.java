@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
@@ -222,18 +223,22 @@ public class MavenUtil {
     return "<img src=\"" + url + "\"> ";
   }
 
-  public static void runMavenProjectFileTemplate(Project project,
-                                                 VirtualFile file,
-                                                 MavenId projectId,
-                                                 boolean interactive) throws IOException {
-    runMavenProjectWithParentFileTemplate(project, file, projectId, null, interactive);
+  public static void applyMavenProjectFileTemplate(Project project, VirtualFile file, MavenId projectId) throws IOException {
+    runOrApplyMavenProjectFileTemplate(project, file, projectId, null, false);
   }
 
   public static void runMavenProjectWithParentFileTemplate(Project project,
                                                            VirtualFile file,
                                                            MavenId projectId,
-                                                           MavenId parentId,
-                                                           boolean interactive) throws IOException {
+                                                           MavenId parentId) throws IOException {
+    runOrApplyMavenProjectFileTemplate(project, file, projectId, parentId, true);
+  }
+
+  private static void runOrApplyMavenProjectFileTemplate(Project project,
+                                                         VirtualFile file,
+                                                         MavenId projectId,
+                                                         MavenId parentId,
+                                                         boolean interactive) throws IOException {
     Properties properties = new Properties();
     Properties conditions = new Properties();
     properties.setProperty("GROUP_ID", projectId.getGroupId());
@@ -245,22 +250,21 @@ public class MavenUtil {
       properties.setProperty("PARENT_ARTIFACT_ID", parentId.getArtifactId());
       properties.setProperty("PARENT_VERSION", parentId.getVersion());
     }
-    runFileTemplate(project, file, MavenFileTemplateGroupFactory.MAVEN_PROJECT_XML_TEMPLATE, properties, conditions, interactive);
+    runOrApplyFileTemplate(project, file, MavenFileTemplateGroupFactory.MAVEN_PROJECT_XML_TEMPLATE, properties, conditions, interactive);
   }
 
   public static void runFileTemplate(Project project,
                                      VirtualFile file,
-                                     String templateName,
-                                     boolean interactive) throws IOException {
-    runFileTemplate(project, file, templateName, new Properties(), new Properties(), interactive);
+                                     String templateName) throws IOException {
+    runOrApplyFileTemplate(project, file, templateName, new Properties(), new Properties(), true);
   }
 
-  public static void runFileTemplate(Project project,
-                                     VirtualFile file,
-                                     String templateName,
-                                     Properties properties,
-                                     Properties conditions,
-                                     boolean interactive) throws IOException {
+  private static void runOrApplyFileTemplate(Project project,
+                                             VirtualFile file,
+                                             String templateName,
+                                             Properties properties,
+                                             Properties conditions,
+                                             boolean interactive) throws IOException {
     FileTemplateManager manager = FileTemplateManager.getInstance();
     FileTemplate fileTemplate = manager.getJ2eeTemplate(templateName);
     Properties allProperties = manager.getDefaultProperties();
@@ -278,18 +282,22 @@ public class MavenUtil {
     matcher.appendTail(builder);
     text = builder.toString();
 
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
-    Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-
     TemplateImpl template = (TemplateImpl)TemplateManager.getInstance(project).createTemplate("", "", text);
     for (int i = 0; i < template.getSegmentsCount(); i++) {
       if (i == template.getEndSegmentNumber()) continue;
       String name = template.getSegmentName(i);
       String value = "\"" + properties.getProperty(name, "") + "\"";
-      template.addVariable(name, value, value, interactive);
+      template.addVariable(name, value, value, true);
     }
 
-    TemplateManager.getInstance(project).startTemplate(editor, template);
+    if (interactive) {
+      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
+      Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+      TemplateManager.getInstance(project).startTemplate(editor, template);
+    }
+    else {
+      VfsUtil.saveText(file, template.getTemplateText());
+    }
   }
 
   public static <T extends Collection<Pattern>> T collectPattern(String text, T result) {

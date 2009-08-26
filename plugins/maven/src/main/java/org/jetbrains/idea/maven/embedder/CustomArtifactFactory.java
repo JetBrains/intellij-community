@@ -1,21 +1,14 @@
 package org.jetbrains.idea.maven.embedder;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.factory.ArtifactFactory;
-import org.apache.maven.artifact.factory.DefaultArtifactFactory;
-import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
 import org.apache.maven.artifact.versioning.VersionRange;
-import org.codehaus.plexus.personality.plexus.lifecycle.phase.Contextualizable;
-import org.codehaus.plexus.context.Context;
-import org.codehaus.plexus.context.ContextException;
+import org.apache.maven.project.artifact.ProjectArtifactFactory;
+import org.apache.maven.project.MavenProject;
 
-import java.lang.reflect.Field;
+public class CustomArtifactFactory extends ProjectArtifactFactory {
+  private static final VersionRange UNKNOWN_VERSION_RANGE = VersionRange.createFromVersion("unknown");
 
-public class CustomArtifactFactory implements ArtifactFactory, Contextualizable{
   private boolean myCustomized;
-
-  private ArtifactFactory myWrapee = new DefaultArtifactFactory();
-  private ArtifactHandlerManager artifactHandlerManager;
 
   public void customize() {
     myCustomized = true;
@@ -25,66 +18,74 @@ public class CustomArtifactFactory implements ArtifactFactory, Contextualizable{
     myCustomized = false;
   }
 
-  public void contextualize(Context context) throws ContextException {
-    try {
-      Field f = myWrapee.getClass().getDeclaredField("artifactHandlerManager");
-      f.setAccessible(true);
-      f.set(myWrapee, artifactHandlerManager);
-    }
-    catch (NoSuchFieldException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
+  @Override
   public Artifact createArtifact(String groupId, String artifactId, String version, String scope, String type) {
-      return wrap(myWrapee.createArtifact(checkValue(groupId), checkValue(artifactId), checkVersion(version), scope, type));
+      return wrap(super.createArtifact(checkValue(groupId), checkValue(artifactId), checkVersion(version), scope, type));
   }
 
+  @Override
   public Artifact createArtifactWithClassifier(String groupId, String artifactId, String version, String type, String classifier) {
-      return wrap(myWrapee.createArtifactWithClassifier(checkValue(groupId), checkValue(artifactId), checkVersion(version), type, classifier));
+      return wrap(super.createArtifactWithClassifier(checkValue(groupId), checkValue(artifactId), checkVersion(version), type, classifier));
   }
 
+  @Override
   public Artifact createDependencyArtifact(String groupId, String artifactId, VersionRange versionRange, String type, String classifier, String scope) {
-      return wrap(myWrapee.createDependencyArtifact(checkValue(groupId), checkValue(artifactId), checkVersionRange(versionRange), type, classifier, scope));
+      return wrap(super.createDependencyArtifact(checkValue(groupId), checkValue(artifactId), checkVersionRange(versionRange), type, classifier, scope));
   }
 
+  @Override
   public Artifact createDependencyArtifact(String groupId, String artifactId, VersionRange versionRange, String type, String classifier, String scope, boolean optional) {
-      return wrap(myWrapee.createDependencyArtifact(checkValue(groupId), checkValue(artifactId), checkVersionRange(versionRange), type, classifier, scope, optional));
+      return wrap(super.createDependencyArtifact(checkValue(groupId), checkValue(artifactId), checkVersionRange(versionRange), type, classifier, scope, optional));
   }
 
+  @Override
   public Artifact createDependencyArtifact(String groupId, String artifactId, VersionRange versionRange, String type, String classifier, String scope, String inheritedScope) {
-      return wrap(myWrapee.createDependencyArtifact(checkValue(groupId), checkValue(artifactId), checkVersionRange(versionRange), type, classifier, scope, inheritedScope));
+      return wrap(super.createDependencyArtifact(checkValue(groupId), checkValue(artifactId), checkVersionRange(versionRange), type, classifier, scope, inheritedScope));
   }
 
+  @Override
   public Artifact createDependencyArtifact(String groupId, String artifactId, VersionRange versionRange, String type, String classifier, String scope, String inheritedScope, boolean optional) {
-      return wrap(myWrapee.createDependencyArtifact(checkValue(groupId), checkValue(artifactId), checkVersionRange(versionRange), type, classifier, scope, inheritedScope, optional));
+      return wrap(super.createDependencyArtifact(checkValue(groupId), checkValue(artifactId), checkVersionRange(versionRange), type, classifier, scope, inheritedScope, optional));
   }
 
+  @Override
   public Artifact createBuildArtifact(String groupId, String artifactId, String version, String packaging) {
-      return wrap(myWrapee.createBuildArtifact(checkValue(groupId), checkValue(artifactId), checkVersion(version), packaging));
+      return wrap(super.createBuildArtifact(checkValue(groupId), checkValue(artifactId), checkVersion(version), packaging));
   }
 
+  @Override
   public Artifact createProjectArtifact(String groupId, String artifactId, String version) {
-      return wrap(myWrapee.createProjectArtifact(checkValue(groupId), checkValue(artifactId), checkVersion(version)));
+      return wrap(super.createProjectArtifact(checkValue(groupId), checkValue(artifactId), checkVersion(version)));
   }
 
+  @Override
   public Artifact createParentArtifact(String groupId, String artifactId, String version) {
-      return wrap(myWrapee.createParentArtifact(checkValue(groupId), checkValue(artifactId), checkVersion(version)));
+      return wrap(super.createParentArtifact(checkValue(groupId), checkValue(artifactId), checkVersion(version)));
   }
 
+  @Override
   public Artifact createPluginArtifact(String groupId, String artifactId, VersionRange versionRange) {
-      return wrap(myWrapee.createPluginArtifact(checkValue(groupId), checkValue(artifactId), checkVersionRange(versionRange)));
+      return wrap(super.createPluginArtifact(checkValue(groupId), checkValue(artifactId), checkVersionRange(versionRange)));
   }
 
+  @Override
   public Artifact createProjectArtifact(String groupId, String artifactId, String version, String scope) {
-      return wrap(myWrapee.createProjectArtifact(checkValue(groupId), checkValue(artifactId), checkVersion(version), scope));
+      return wrap(super.createProjectArtifact(checkValue(groupId), checkValue(artifactId), checkVersion(version), scope));
   }
 
+  @Override
   public Artifact createExtensionArtifact(String groupId, String artifactId, VersionRange versionRange) {
-      return wrap(myWrapee.createExtensionArtifact(checkValue(groupId), checkValue(artifactId), checkVersionRange(versionRange)));
+      return wrap(super.createExtensionArtifact(checkValue(groupId), checkValue(artifactId), checkVersionRange(versionRange)));
+  }
+
+  @Override
+  public Artifact create(MavenProject project) {
+    return wrap(super.create(project));
+  }
+
+  @Override
+  public Artifact create(MavenProject project, String type, String classifier, boolean optional) {
+    return wrap(super.create(project, type, classifier, optional));
   }
 
   private Artifact wrap(Artifact a) {
@@ -101,6 +102,6 @@ public class CustomArtifactFactory implements ArtifactFactory, Contextualizable{
   }
 
   private VersionRange checkVersionRange(VersionRange range) {
-    return range == null ? VersionRange.createFromVersion("unknown") : range;
+    return range == null ? UNKNOWN_VERSION_RANGE : range;
   }
 }

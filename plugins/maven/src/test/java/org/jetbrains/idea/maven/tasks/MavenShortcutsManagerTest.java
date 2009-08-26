@@ -63,7 +63,7 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    assertKeymapDoesNotContain(myProjectPom, "org.apache.maven.plugins:maven-surefire-plugin:2.4.2:test");
+    assertKeymapDoesNotContain(myProjectPom, "org.apache.maven.plugins:maven-surefire-plugin:2.4.3:test");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -74,12 +74,13 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
                   "    <plugin>" +
                   "      <groupId>org.apache.maven.plugins</groupId>" +
                   "      <artifactId>maven-surefire-plugin</artifactId>" +
+                  "      <version>2.4.3</version>" +
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
     resolvePlugins();
 
-    assertKeymapContains(myProjectPom, "org.apache.maven.plugins:maven-surefire-plugin:2.4.2:test");
+    assertKeymapContains(myProjectPom, "org.apache.maven.plugins:maven-surefire-plugin:2.4.3:test");
   }
 
   public void testActionWhenSeveralSimilarPlugins() throws Exception {
@@ -96,16 +97,18 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
                   "    <plugin>" +
                   "      <groupId>org.apache.maven.plugins</groupId>" +
                   "      <artifactId>maven-surefire-plugin</artifactId>" +
+                  "      <version>2.4.3</version>" +
                   "    </plugin>" +
                   "    <plugin>" +
                   "      <groupId>org.apache.maven.plugins</groupId>" +
                   "      <artifactId>maven-surefire-plugin</artifactId>" +
+                  "      <version>2.4.3</version>" +
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
     resolvePlugins();
 
-    assertKeymapContains(myProjectPom, "org.apache.maven.plugins:maven-surefire-plugin:2.4.2:test");
+    assertKeymapContains(myProjectPom, "org.apache.maven.plugins:maven-surefire-plugin:2.4.3:test");
   }
 
   public void testRefreshingOnProjectAddition() throws Exception {

@@ -325,6 +325,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                                          "<groupId>test</groupId>" +
                                          "<artifactId>parent</artifactId>" +
                                          "<version>1</version>" +
+                                         "<packaging>pom</packaging>" +
 
                                          "<dependencies>" +
                                          "  <dependency>" +
@@ -352,29 +353,29 @@ public class StructureImportingTest extends MavenImportingTestCase {
   }
 
   public void testParentInRemoteRepository() throws Exception {
-    String pathToJUnit = "junit/junit/4.0";
-    File junitDir = new File(getRepositoryPath(), pathToJUnit);
+    String pathToJUnit = "asm/asm-parent/3.0";
+    File parentDir = new File(getRepositoryPath(), pathToJUnit);
 
     removeFromLocalRepository(pathToJUnit);
-    assertFalse(junitDir.exists());
+    assertFalse(parentDir.exists());
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
                      "<parent>" +
-                     "  <groupId>junit</groupId>" +
-                     "  <artifactId>junit</artifactId>" +
-                     "  <version>4.0</version>" +
+                     "  <groupId>asm</groupId>" +
+                     "  <artifactId>asm-parent</artifactId>" +
+                     "  <version>3.0</version>" +
                      "</parent>");
 
     importProject();
     assertModules("project");
 
-    assertTrue(junitDir.exists());
+    assertTrue(parentDir.exists());
 
-    assertEquals("junit", myProjectsTree.getRootProjects().get(0).getParentId().getArtifactId());
-    assertTrue(new File(junitDir, "junit-4.0.pom").exists());
+    assertEquals("asm-parent", myProjectsTree.getRootProjects().get(0).getParentId().getArtifactId());
+    assertTrue(new File(parentDir, "asm-parent-3.0.pom").exists());
   }
 
   public void testCreatingModuleGroups() throws Exception {
@@ -863,25 +864,25 @@ public class StructureImportingTest extends MavenImportingTestCase {
                      "  </dependency>" +
                      "</dependencies>");
 
-    createProfilesXmlOldStyle("<profile>" +
-                              "  <id>one</id>" +
-                              "  <activation>" +
-                              "    <activeByDefault>false</activeByDefault>" +
-                              "  </activation>" +
-                              "  <properties>" +
-                              "    <junit.version>4.0</junit.version>" +
-                              "  </properties>" +
-                              "</profile>" +
+    createProfilesXml("<profile>" +
+                      "  <id>one</id>" +
+                      "  <activation>" +
+                      "    <activeByDefault>false</activeByDefault>" +
+                      "  </activation>" +
+                      "  <properties>" +
+                      "    <junit.version>4.0</junit.version>" +
+                      "  </properties>" +
+                      "</profile>" +
 
-                              "<profile>" +
-                              "  <id>two</id>" +
-                              "  <activation>" +
-                              "    <activeByDefault>false</activeByDefault>" +
-                              "  </activation>" +
-                              "  <properties>" +
-                              "    <junit.version>3.8.1</junit.version>" +
-                              "  </properties>" +
-                              "</profile>");
+                      "<profile>" +
+                      "  <id>two</id>" +
+                      "  <activation>" +
+                      "    <activeByDefault>false</activeByDefault>" +
+                      "  </activation>" +
+                      "  <properties>" +
+                      "    <junit.version>3.8.1</junit.version>" +
+                      "  </properties>" +
+                      "</profile>");
 
     importProjectWithProfiles("one");
     assertModules("project");
@@ -892,6 +893,10 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModules("project");
 
     assertModuleLibDeps("project", "Maven: junit:junit:3.8.1");
+  }
+
+  public void testProjectWithOldProfilesXmlFile() throws Exception {
+    ignore(); // not supported by 2.2
   }
 
   public void testProjectWithProfilesXmlWithNewRootTagFile() throws Exception {
@@ -908,24 +913,24 @@ public class StructureImportingTest extends MavenImportingTestCase {
                      "</dependencies>");
 
     createProfilesXml("<profile>" +
-                              "  <id>one</id>" +
-                              "  <activation>" +
-                              "    <activeByDefault>false</activeByDefault>" +
-                              "  </activation>" +
-                              "  <properties>" +
-                              "    <junit.version>4.0</junit.version>" +
-                              "  </properties>" +
-                              "</profile>" +
+                      "  <id>one</id>" +
+                      "  <activation>" +
+                      "    <activeByDefault>false</activeByDefault>" +
+                      "  </activation>" +
+                      "  <properties>" +
+                      "    <junit.version>4.0</junit.version>" +
+                      "  </properties>" +
+                      "</profile>" +
 
-                              "<profile>" +
-                              "  <id>two</id>" +
-                              "  <activation>" +
-                              "    <activeByDefault>false</activeByDefault>" +
-                              "  </activation>" +
-                              "  <properties>" +
-                              "    <junit.version>3.8.1</junit.version>" +
-                              "  </properties>" +
-                              "</profile>");
+                      "<profile>" +
+                      "  <id>two</id>" +
+                      "  <activation>" +
+                      "    <activeByDefault>false</activeByDefault>" +
+                      "  </activation>" +
+                      "  <properties>" +
+                      "    <junit.version>3.8.1</junit.version>" +
+                      "  </properties>" +
+                      "</profile>");
 
     importProjectWithProfiles("one");
     assertModules("project");
@@ -951,20 +956,20 @@ public class StructureImportingTest extends MavenImportingTestCase {
                      "  </dependency>" +
                      "</dependencies>");
 
-    createProfilesXmlOldStyle("<profile>" +
-                              "  <id>one</id>" +
-                              "  <activation>" +
-                              "    <activeByDefault>true</activeByDefault>" +
-                              "  </activation>" +
-                              "  <properties>" +
-                              "    <junit.version>4.0</junit.version>" +
-                              "  </properties>" +
-                              "</profile>");
+    createProfilesXml("<profile>" +
+                      "  <id>one</id>" +
+                      "  <activation>" +
+                      "    <activeByDefault>true</activeByDefault>" +
+                      "  </activation>" +
+                      "  <properties>" +
+                      "    <junit.version>4.0</junit.version>" +
+                      "  </properties>" +
+                      "</profile>");
 
     importProject();
     assertModules("project");
 
-    assertModuleLibDep("project", "Maven: junit:junit:4.0");
+    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
   }
 
   public void testRefreshFSAfterImport() throws Exception {

@@ -44,8 +44,8 @@ public abstract class MavenConsole {
     LEVEL_TO_PREFIX.put(level, prefix);
   }
 
-  public MavenConsole(int outputLevel, boolean printStrackTrace) {
-    myOutputLevel = outputLevel;
+  public MavenConsole(MavenExecutionOptions.LoggingLevel outputLevel, boolean printStrackTrace) {
+    myOutputLevel = outputLevel.getLevel();
     myPrintStrackTrace = printStrackTrace;
   }
 

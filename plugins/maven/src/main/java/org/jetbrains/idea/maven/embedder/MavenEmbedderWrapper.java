@@ -2,100 +2,300 @@ package org.jetbrains.idea.maven.embedder;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import org.apache.maven.MavenTools;
+import com.intellij.openapi.vfs.VirtualFile;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import org.apache.maven.Maven;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
+import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
+import org.apache.maven.artifact.manager.DefaultWagonManager;
 import org.apache.maven.artifact.manager.WagonManager;
+import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
+import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
+import org.apache.maven.artifact.repository.DefaultArtifactRepository;
+import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
+import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
+import org.apache.maven.artifact.resolver.ArtifactResolutionException;
+import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
-import org.apache.maven.embedder.*;
+import org.apache.maven.execution.DefaultMavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionRequest;
-import org.apache.maven.execution.MavenExecutionResult;
+import org.apache.maven.execution.ReactorManager;
 import org.apache.maven.extension.ExtensionManager;
+import org.apache.maven.model.Extension;
+import org.apache.maven.model.Plugin;
+import org.apache.maven.monitor.event.DefaultEventDispatcher;
 import org.apache.maven.monitor.event.DefaultEventMonitor;
+import org.apache.maven.monitor.event.EventDispatcher;
+import org.apache.maven.plugin.PluginManager;
+import org.apache.maven.profiles.DefaultProfileManager;
+import org.apache.maven.profiles.ProfileManager;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.MavenProjectBuilder;
-import org.apache.maven.project.interpolation.ModelInterpolator;
-import org.apache.maven.project.workspace.ProjectWorkspace;
-import org.apache.maven.workspace.MavenWorkspaceStore;
+import org.apache.maven.project.*;
+import org.apache.maven.project.artifact.ProjectArtifactFactory;
+import org.apache.maven.settings.Mirror;
+import org.apache.maven.settings.Proxy;
+import org.apache.maven.settings.Server;
+import org.apache.maven.settings.Settings;
+import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusContainer;
+import org.codehaus.plexus.PlexusContainerException;
 import org.codehaus.plexus.component.repository.ComponentDescriptor;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.sonatype.plexus.components.sec.dispatcher.SecDispatcher;
+import org.sonatype.plexus.components.sec.dispatcher.SecDispatcherException;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class MavenEmbedderWrapper {
-  private final MavenEmbedder myEmbedder;
+  private final DefaultPlexusContainer myContainer;
+  private final Settings mySettings;
+  private final MavenLogger myLogger;
+  private final ArtifactRepository myLocalRepository;
 
-  public MavenEmbedderWrapper(MavenEmbedder embedder) {
-    myEmbedder = embedder;
+  private volatile MavenProgressIndicator myCurrentIndicator;
+
+  // TODO TODO : release all components after getComponent!!!!!!!!!!!!!!!!!!!!!!!!
+
+  public MavenEmbedderWrapper(@NotNull DefaultPlexusContainer container,
+                              @NotNull Settings settings,
+                              @NotNull MavenLogger logger,
+                              @NotNull MavenGeneralSettings generalSettings) {
+    myContainer = container;
+    mySettings = settings;
+    myLogger = logger;
+    myLocalRepository = createLocalRepository(generalSettings);
+    configureContainer();
+
+    loadSettings();
   }
 
-  public Pair<MavenExecutionResult, Set<MavenId>> resolveProject(MavenExecutionRequest request,
-                                                                 MavenProgressIndicator p) throws MavenProcessCanceledException {
-    return doExecute(request, new RequestExecutor() {
-      public MavenExecutionResult execute(MavenExecutionRequest request) {
-        return myEmbedder.readProjectWithDependencies(request);
+  private void loadSettings() {
+    // copied from DefaultMaven.resolveParamaters
+    // copied because using original code spoils something in the container and configuration are get messed and not picked up.
+    DefaultWagonManager wagonManager = (DefaultWagonManager)getComponent(WagonManager.class);
+    wagonManager.setHttpUserAgent("Apache-Maven/2.2");
+
+    Proxy proxy = mySettings.getActiveProxy();
+    if (proxy != null && proxy.getHost() != null) {
+      String pass = decrypt(proxy.getPassword());
+      wagonManager.addProxy(proxy.getProtocol(), proxy.getHost(), proxy.getPort(), proxy.getUsername(), pass, proxy.getNonProxyHosts());
+    }
+
+    for (Object each : mySettings.getServers()) {
+      Server server = (Server)each;
+
+      String passWord = decrypt(server.getPassword());
+      String passPhrase = decrypt(server.getPassphrase());
+
+      wagonManager.addAuthenticationInfo(server.getId(), server.getUsername(), passWord,
+                                         server.getPrivateKey(), passPhrase);
+
+      wagonManager.addPermissionInfo(server.getId(), server.getFilePermissions(),
+                                     server.getDirectoryPermissions());
+
+      if (server.getConfiguration() != null) {
+        wagonManager.addConfiguration(server.getId(), (Xpp3Dom)server.getConfiguration());
       }
-    }, p);
+    }
+
+    for (Object each : mySettings.getMirrors()) {
+      Mirror mirror = (Mirror)each;
+      wagonManager.addMirror(mirror.getId(), mirror.getMirrorOf(), mirror.getUrl());
+    }
+    // end copied from DefaultMaven.resolveParamaters
   }
 
-  private Set<MavenId> retrieveUnresolvedArtifactIds() {
-    return this.<CustomWagonManager>getComponent(WagonManager.class).retrieveUnresolvedIds();
+  private String decrypt(String pass) {
+    try {
+      pass = getComponent(SecDispatcher.class, "maven").decrypt(pass);
+    }
+    catch (SecDispatcherException e) {
+      MavenLog.LOG.warn(e);
+    }
+    return pass;
   }
 
-  public void resolve(final Artifact artifact, final List<MavenRemoteRepository> remoteRepositories, MavenProgressIndicator process)
+  private ArtifactRepository createLocalRepository(MavenGeneralSettings generalSettings) {
+    ArtifactRepositoryLayout layout = getComponent(ArtifactRepositoryLayout.class, "default");
+    ArtifactRepositoryFactory factory = getComponent(ArtifactRepositoryFactory.class);
+
+    String url = mySettings.getLocalRepository();
+    if (!url.startsWith("file:")) url = "file://" + url;
+
+    ArtifactRepository localRepository = new DefaultArtifactRepository("local", url, layout);
+
+    boolean snapshotPolicySet = mySettings.isOffline();
+    if (!snapshotPolicySet && generalSettings.getSnapshotUpdatePolicy() == MavenExecutionOptions.SnapshotUpdatePolicy.ALWAYS_UPDATE) {
+      factory.setGlobalUpdatePolicy(ArtifactRepositoryPolicy.UPDATE_POLICY_ALWAYS);
+    }
+    factory.setGlobalChecksumPolicy(ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN);
+
+    return localRepository;
+  }
+
+  public MavenExecutionResult resolveProject(@NotNull final VirtualFile file,
+                                             @NotNull final List<String> activeProfiles) throws MavenProcessCanceledException {
+    return doExecute(new Executor<MavenExecutionResult>() {
+      public MavenExecutionResult execute() throws Exception {
+        //loadSettings();
+
+        MavenExecutionRequest request = createRequest(file, activeProfiles, Collections.EMPTY_LIST);
+        ProjectBuilderConfiguration config = request.getProjectBuilderConfiguration();
+
+        request.getGlobalProfileManager().loadSettingsProfiles(mySettings);
+
+        ProfileManager globalProfileManager = request.getGlobalProfileManager();
+        globalProfileManager.loadSettingsProfiles(request.getSettings());
+
+        List<Exception> exceptions = new ArrayList<Exception>();
+        MavenProject project = null;
+        try {
+          // copied from DefaultMavenProjectBuilder.buildWithDependencies
+          MavenProjectBuilder builder = getComponent(MavenProjectBuilder.class);
+          project = builder.build(new File(file.getPath()), config);
+          builder.calculateConcreteState(project, config, false);
+
+          // copied from DefaultLifecycleExecutor.execute
+          findExtensions(project);
+          // end copied from DefaultLifecycleExecutor.execute
+
+          Artifact projectArtifact = project.getArtifact();
+          Map managedVersions = project.getManagedVersionMap();
+          ArtifactMetadataSource metadataSource = getComponent(ArtifactMetadataSource.class);
+          project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
+
+          ArtifactResolver resolver = getComponent(ArtifactResolver.class);
+          ArtifactResolutionResult result = resolver.resolveTransitively(project.getDependencyArtifacts(),
+                                                                         projectArtifact, managedVersions,
+                                                                         myLocalRepository,
+                                                                         project.getRemoteArtifactRepositories(),
+                                                                         metadataSource);
+          project.setArtifacts(result.getArtifacts());
+          // end copied from DefaultMavenProjectBuilder.buildWithDependencies
+        }
+        catch (ProjectBuildingException e) {
+          exceptions.add(e);
+        }
+        catch (ArtifactResolutionException e) {
+          exceptions.add(e);
+        }
+        catch (ArtifactNotFoundException e) {
+          exceptions.add(e);
+        }
+
+        return new MavenExecutionResult(project, retrieveUnresolvedArtifactIds(), exceptions);
+      }
+    });
+  }
+
+  private void findExtensions(MavenProject project) {
+    // end copied from DefaultLifecycleExecutor.findExtensions
+    ExtensionManager extensionManager = getComponent(ExtensionManager.class);
+    for (Object each : project.getBuildExtensions()) {
+      try {
+        extensionManager.addExtension((Extension)each, project, myLocalRepository);
+      }
+      catch (PlexusContainerException e) {
+      }
+      catch (ArtifactResolutionException e) {
+      }
+      catch (ArtifactNotFoundException e) {
+      }
+    }
+    extensionManager.registerWagons();
+
+    Map handlers = findArtifactTypeHandlers(project);
+    getComponent(ArtifactHandlerManager.class).addHandlers(handlers);
+  }
+
+  private Map findArtifactTypeHandlers(MavenProject project) {
+    // end copied from DefaultLifecycleExecutor.findExtensions
+    Map result = new HashMap();
+    for (Object each : project.getBuildPlugins()) {
+      Plugin eachPlugin = (Plugin)each;
+
+      if (eachPlugin.isExtensions()) {
+        try {
+          PluginManager pluginManager = getComponent(PluginManager.class);
+          pluginManager.verifyPlugin(eachPlugin, project, mySettings, myLocalRepository);
+          result.putAll(pluginManager.getPluginComponents(eachPlugin, ArtifactHandler.ROLE));
+        }
+        catch (Exception e) {
+          MavenLog.LOG.info(e);
+          continue;
+        }
+
+        for (Object o : result.values()) {
+          ArtifactHandler handler = (ArtifactHandler)o;
+          if (project.getPackaging().equals(handler.getPackaging())) {
+            project.getArtifact().setArtifactHandler(handler);
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  public void resolve(@NotNull final Artifact artifact, @NotNull final List<MavenRemoteRepository> remoteRepositories)
     throws MavenProcessCanceledException {
     doExecute(new Executor<Object>() {
       public Object execute() throws Exception {
         try {
-          myEmbedder.resolve(artifact, convertRepositories(remoteRepositories), myEmbedder.getLocalRepository());
+          getComponent(ArtifactResolver.class).resolve(artifact, convertRepositories(remoteRepositories), myLocalRepository);
         }
         catch (Exception e) {
           MavenLog.LOG.info(e);
         }
         return null;
       }
-    }, process);
+    });
   }
 
   private List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) {
-    MavenTools tools = getComponent(MavenTools.class);
-
     List<ArtifactRepository> result = new ArrayList<ArtifactRepository>();
     for (MavenRemoteRepository each : repositories) {
       try {
-        result.add(tools.buildArtifactRepository(each.toRepository()));
+        ArtifactRepositoryFactory factory = getComponent(ArtifactRepositoryFactory.class);
+        result.add(ProjectUtils.buildArtifactRepository(each.toRepository(), factory, getContainer()));
       }
       catch (InvalidRepositoryException e) {
         MavenLog.LOG.warn(e);
       }
     }
-
     return result;
   }
 
-  public boolean resolvePlugin(final MavenPlugin plugin, final MavenProject nativeMavenProject, MavenProgressIndicator process)
+  public boolean resolvePlugin(@NotNull final MavenPlugin plugin, @NotNull final MavenProject nativeMavenProject)
     throws MavenProcessCanceledException {
     return doExecute(new Executor<Boolean>() {
       public Boolean execute() throws Exception {
         try {
-          JBMavenEmbedderHelper.verifyPlugin(plugin, nativeMavenProject, myEmbedder);
+          Plugin mavenPlugin = new Plugin();
+          mavenPlugin.setGroupId(plugin.getGroupId());
+          mavenPlugin.setArtifactId(plugin.getArtifactId());
+          mavenPlugin.setVersion(plugin.getVersion());
+          getComponent(PluginManager.class).verifyPlugin(mavenPlugin, nativeMavenProject, mySettings, myLocalRepository);
         }
         catch (Exception e) {
           MavenLog.LOG.info(e);
@@ -103,83 +303,106 @@ public class MavenEmbedderWrapper {
         }
         return true;
       }
-    }, process).booleanValue();
+    });
   }
 
   public Artifact createArtifact(String groupId, String artifactId, String version, String type, String classifier) {
-    return myEmbedder.createArtifactWithClassifier(groupId,
-                                                   artifactId,
-                                                   version,
-                                                   type,
-                                                   classifier);
+    return getComponent(ArtifactFactory.class).createArtifactWithClassifier(groupId,
+                                                                            artifactId,
+                                                                            version,
+                                                                            type,
+                                                                            classifier);
   }
 
-  public <T> T getComponent(Class<? super T> clazz) {
-    try {
-      return (T)myEmbedder.getPlexusContainer().lookup(clazz.getName());
-    }
-    catch (ComponentLookupException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public <T> T getComponent(Class<? super T> clazz, String roleHint) {
-    try {
-      return (T)myEmbedder.getPlexusContainer().lookup(clazz.getName(), roleHint);
-    }
-    catch (ComponentLookupException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public Pair<MavenExecutionResult, Set<MavenId>> execute(MavenExecutionRequest request, MavenProgressIndicator p)
+  @NotNull
+  public MavenExecutionResult execute(@NotNull final VirtualFile file,
+                                      @NotNull final List<String> activeProfiles,
+                                      @NotNull final List<String> goals)
     throws MavenProcessCanceledException {
-    request.addEventMonitor(new DefaultEventMonitor(new PlexusLoggerAdapter(myEmbedder.getLogger())));
-    return doExecute(request, new RequestExecutor() {
-      public MavenExecutionResult execute(MavenExecutionRequest request) {
-        return myEmbedder.execute(request);
+    return doExecute(new Executor<MavenExecutionResult>() {
+      public MavenExecutionResult execute() throws Exception {
+        MavenExecutionRequest request = createRequest(file, activeProfiles, goals);
+        Maven maven = getComponent(Maven.class);
+        Method method = maven.getClass().getDeclaredMethod("doExecute", MavenExecutionRequest.class, EventDispatcher.class);
+        method.setAccessible(true);
+        ReactorManager reactor = (ReactorManager)method.invoke(maven, request, request.getEventDispatcher());
+        return new MavenExecutionResult(reactor.getTopLevelProject(), retrieveUnresolvedArtifactIds(), Collections.EMPTY_LIST);
       }
-    }, p);
+    });
   }
 
-  public String getLocalRepository() {
-    return myEmbedder.getLocalRepository().getBasedir();
+  private MavenExecutionRequest createRequest(VirtualFile virtualFile, List<String> profiles, List<String> goals) {
+    Properties executionProperties = getExecutionProperties();
+
+    DefaultEventDispatcher dispatcher = new DefaultEventDispatcher();
+    dispatcher.addEventMonitor(new DefaultEventMonitor(myLogger));
+
+    MavenExecutionRequest result = new DefaultMavenExecutionRequest(myLocalRepository,
+                                                                    mySettings,
+                                                                    dispatcher, goals,
+                                                                    virtualFile.getParent().getPath(),
+                                                                    createProfileManager(profiles, executionProperties),
+                                                                    executionProperties,
+                                                                    new Properties(), true);
+
+    result.setPomFile(virtualFile.getPath());
+    result.setRecursive(false);
+
+    return result;
   }
 
-  public MavenEmbedder getEmbedder() {
-    return myEmbedder;
+  private Properties getExecutionProperties() {
+    return MavenEmbedderFactory.collectSystemProperties();
+  }
+
+  private ProfileManager createProfileManager(List<String> activeProfiles, Properties executionProperties) {
+    ProfileManager profileManager = new DefaultProfileManager(getContainer(), executionProperties);
+    profileManager.explicitlyActivate(activeProfiles);
+    return profileManager;
+  }
+
+  private Set<MavenId> retrieveUnresolvedArtifactIds() {
+    Set<MavenId> result = new THashSet<MavenId>();
+    ((CustomWagonManager)getComponent(WagonManager.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);
+    ((CustomArtifactResolver)getComponent(ArtifactResolver.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);
+    return result;
+  }
+
+  public File getLocalRepositoryFile() {
+    return new File(myLocalRepository.getBasedir());
+  }
+
+  public <T> T getComponent(Class<T> clazz) {
+    try {
+      return (T)getContainer().lookup(clazz.getName());
+    }
+    catch (ComponentLookupException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public <T> T getComponent(Class<T> clazz, String roleHint) {
+    try {
+      return (T)getContainer().lookup(clazz.getName(), roleHint);
+    }
+    catch (ComponentLookupException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public PlexusContainer getContainer() {
+    return myContainer;
   }
 
   public void release() {
-    try {
-      myEmbedder.stop();
-    }
-    catch (MavenEmbedderException e) {
-      MavenLog.LOG.info(e);
-    }
+    myContainer.dispose();
   }
 
   private interface Executor<T> {
     T execute() throws Exception;
   }
 
-  private interface RequestExecutor {
-    MavenExecutionResult execute(MavenExecutionRequest request) throws Exception;
-  }
-
-  private Pair<MavenExecutionResult, Set<MavenId>> doExecute(final MavenExecutionRequest request,
-                                                             final RequestExecutor executor,
-                                                             final MavenProgressIndicator p) throws MavenProcessCanceledException {
-    return doExecute(new Executor<Pair<MavenExecutionResult, Set<MavenId>>>() {
-      public Pair<MavenExecutionResult, Set<MavenId>> execute() throws Exception {
-        request.setTransferListener(new TransferListenerAdapter(p));
-        MavenExecutionResult executionResult = executor.execute(request);
-        return Pair.create(executionResult, retrieveUnresolvedArtifactIds());
-      }
-    }, p);
-  }
-
-  private <T> T doExecute(final Executor<T> executor, MavenProgressIndicator p) throws MavenProcessCanceledException {
+  private <T> T doExecute(final Executor<T> executor) throws MavenProcessCanceledException {
     final Ref<T> result = new Ref<T>();
     final boolean[] cancelled = new boolean[1];
     final Throwable[] exception = new Throwable[1];
@@ -198,8 +421,9 @@ public class MavenEmbedderWrapper {
       }
     });
 
+    MavenProgressIndicator indicator = myCurrentIndicator;
     while (true) {
-      p.checkCanceled();
+      indicator.checkCanceled();
       try {
         future.get(50, TimeUnit.MILLISECONDS);
       }
@@ -217,50 +441,48 @@ public class MavenEmbedderWrapper {
 
     if (cancelled[0]) throw new MavenProcessCanceledException();
     if (exception[0] != null) {
-      if (exception[0] instanceof RuntimeException) throw (RuntimeException)exception[0];
-      throw new RuntimeException(exception[0]);
+      throw getRethrowable(exception[0]);
     }
 
     return result.get();
   }
 
-  public void customizeForResolve(MavenConsole console,
-                                  MavenProgressIndicator process) {
+  private RuntimeException getRethrowable(Throwable throwable) {
+    if (throwable instanceof InvocationTargetException) throwable = throwable.getCause();
+    if (throwable instanceof RuntimeException) return (RuntimeException)throwable;
+    return new RuntimeException(throwable);
+  }
+
+  public void customizeForResolve(MavenConsole console, MavenProgressIndicator process) {
     doCustomize(null, false, console, process);
   }
 
-  public void customizeForResolve(
-    MavenProjectsTree tree,
-    MavenConsole console,
-    MavenProgressIndicator process) {
-    doCustomize(tree, false, console, process);
+  public void customizeForResolve(Map<MavenId, VirtualFile> projectIdToFileMap, MavenConsole console, MavenProgressIndicator process) {
+    doCustomize(projectIdToFileMap, false, console, process);
   }
 
-  public void customizeForStrictResolve(MavenProjectsTree tree,
+  public void customizeForStrictResolve(Map<MavenId, VirtualFile> projectIdToFileMap,
                                         MavenConsole console,
                                         MavenProgressIndicator process) {
-    doCustomize(tree, true, console, process);
+    doCustomize(projectIdToFileMap, true, console, process);
   }
 
-  private void doCustomize(MavenProjectsTree tree,
-                           boolean failOnUnresolved,
+  private void doCustomize(Map<MavenId, VirtualFile> projectIdToFileMap,
+                           boolean strict,
                            MavenConsole console,
                            MavenProgressIndicator process) {
-    this.<CustomArtifactFactory>getComponent(ArtifactFactory.class).customize();
-    if (tree != null) {
-      this.<CustomArtifactResolver>getComponent(ArtifactResolver.class).customize(tree);
-    }
-    this.<CustomWagonManager>getComponent(WagonManager.class).customize(failOnUnresolved);
-    this.<CustomExtensionManager>getComponent(ExtensionManager.class).customize();
-
+    ((CustomArtifactFactory)getComponent(ArtifactFactory.class)).customize();
+    ((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).customize();
+    ((CustomArtifactResolver)getComponent(ArtifactResolver.class)).customize(projectIdToFileMap, strict);
+    ((CustomWagonManager)getComponent(WagonManager.class)).customize(strict);
+    //this.<CustomExtensionManager>getComponent(ExtensionManager.class).customize();
+    //
     setConsoleAndLogger(console, process);
   }
 
   private void setConsoleAndLogger(MavenConsole console, MavenProgressIndicator process) {
-    ((MavenConsoleLogger)myEmbedder.getLogger()).setConsole(console);
-
-    myEmbedder.getDefaultRequest().setTransferListener(
-      process == null ? null : new TransferListenerAdapter(process));
+    myCurrentIndicator = process;
+    myLogger.setConsole(console);
 
     WagonManager wagon = getComponent(WagonManager.class);
     wagon.setDownloadMonitor(process == null ? null : new TransferListenerAdapter(process));
@@ -269,37 +491,54 @@ public class MavenEmbedderWrapper {
   public void reset() {
     setConsoleAndLogger(null, null);
 
-    this.<CustomArtifactFactory>getComponent(ArtifactFactory.class).reset();
-    this.<CustomArtifactResolver>getComponent(ArtifactResolver.class).reset();
-    this.<CustomWagonManager>getComponent(WagonManager.class).reset();
-    this.<CustomArtifactHandlerManager>getComponent(ArtifactHandlerManager.class).reset();
-    this.<CustomExtensionManager>getComponent(ExtensionManager.class).reset();
+    ((CustomArtifactFactory)getComponent(ArtifactFactory.class)).reset();
+    ((CustomArtifactResolver)getComponent(ArtifactResolver.class)).reset();
+    ((CustomWagonManager)getComponent(WagonManager.class)).reset();
+    //this.<CustomArtifactHandlerManager>getComponent(ArtifactHandlerManager.class).reset();
+    //this.<CustomExtensionManager>getComponent(ExtensionManager.class).reset();
   }
 
-  public static ContainerCustomizer createCustomizer(final Map<Object, Object> context) {
-    return new ContainerCustomizer() {
-      public void customize(PlexusContainer c) {
-        for (Map.Entry each : context.entrySet()) {
-          c.addContextValue(each.getKey(), each.getValue());
-        }
-        setImplementation(c, MavenTools.class, CustomMavenTools.class);
-        setImplementation(c, ProjectWorkspace.class, CustomProjectWorkspace.class);
-        setImplementation(c, MavenWorkspaceStore.class, CustomWorkspaceStore.class);
-        setImplementation(c, ModelInterpolator.class, CustomModelInterpolator.class);
-        setImplementation(c, MavenProjectBuilder.class, CustomProjectBuilder.class);
-        setImplementation(c, ArtifactFactory.class, CustomArtifactFactory.class);
-        setImplementation(c, ArtifactHandlerManager.class, CustomArtifactHandlerManager.class);
-        setImplementation(c, ArtifactResolver.class, CustomArtifactResolver.class);
-        setImplementation(c, ExtensionManager.class, CustomExtensionManager.class);
-        setImplementation(c, WagonManager.class, CustomWagonManager.class);
-      }
+  public void clearCaches() {
+    MavenProjectBuilder builder = getComponent(MavenProjectBuilder.class);
+    try {
+      Field field = builder.getClass().getDeclaredField("rawProjectCache");
+      field.setAccessible(true);
+      //((HashMap)field.get(builder)).remove(project.getMavenId().getKey());
+      field.set(builder, new THashMap());
+      field = builder.getClass().getDeclaredField("processedProjectCache");
+      field.setAccessible(true);
+      //((HashMap)field.get(builder)).remove(project.getMavenId().getKey());
+      field.set(builder, new THashMap());
+    }
+    catch (NoSuchFieldException e) {
+      MavenLog.LOG.error(e);
+    }
+    catch (IllegalAccessException e) {
+      MavenLog.LOG.error(e);
+    }
+  }
 
-      private <T> void setImplementation(PlexusContainer container,
-                                         Class<T> componentClass,
-                                         Class<? extends T> implementationClass) {
-        ComponentDescriptor d = container.getComponentDescriptor(componentClass.getName());
-        d.setImplementation(implementationClass.getName());
-      }
-    };
+  private void configureContainer() {
+    //for (Map.Entry each : context.entrySet()) {
+    //  c.addContextValue(each.getKey(), each.getValue());
+    //}
+    //setImplementation(c, MavenTools.class, CustomMavenTools.class);
+    //setImplementation(c, ProjectWorkspace.class, CustomProjectWorkspace.class);
+    //setImplementation(c, MavenWorkspaceStore.class, CustomWorkspaceStore.class);
+    //setImplementation(c, ModelInterpolator.class, CustomModelInterpolator.class);
+    //setImplementation(c, MavenProjectBuilder.class, CustomProjectBuilder.class);
+    setImplementation(ArtifactFactory.class, CustomArtifactFactory.class);
+    setImplementation(ProjectArtifactFactory.class, CustomArtifactFactory.class);
+    //setImplementation(c, ArtifactHandlerManager.class, CustomArtifactHandlerManager.class);
+    setImplementation(ArtifactResolver.class, CustomArtifactResolver.class);
+    //setImplementation(c, ExtensionManager.class, CustomExtensionManager.class);
+    setImplementation(WagonManager.class, CustomWagonManager.class);
+  }
+
+  private <T> void setImplementation(Class<T> componentClass,
+                                     Class<? extends T> implementationClass) {
+    ComponentDescriptor d = myContainer.getComponentDescriptor(componentClass.getName());
+    d.setImplementation(implementationClass.getName());
   }
 }
+

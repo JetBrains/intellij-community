@@ -418,15 +418,13 @@ public class MavenProject {
   public Pair<MavenProjectChanges, org.apache.maven.project.MavenProject> resolve(MavenGeneralSettings generalSettings,
                                                                                   MavenEmbedderWrapper embedder,
                                                                                   MavenProjectReader reader,
-                                                                                  MavenProjectReaderProjectLocator locator,
-                                                                                  MavenProgressIndicator process)
+                                                                                  MavenProjectReaderProjectLocator locator)
     throws MavenProcessCanceledException {
     MavenProjectReaderResult result = reader.resolveProject(generalSettings,
                                                             embedder,
                                                             getFile(),
                                                             getActiveProfilesIds(),
-                                                            locator,
-                                                            process);
+                                                            locator);
     MavenProjectChanges changes = set(result, false, result.isValid, false);
     return Pair.create(changes, result.nativeMavenProject);
   }
@@ -434,14 +432,12 @@ public class MavenProject {
   public Pair<Boolean, MavenProjectChanges> resolveFolders(MavenEmbedderWrapper embedder,
                                                            MavenImportingSettings importingSettings,
                                                            MavenProjectReader reader,
-                                                           MavenConsole console,
-                                                           MavenProgressIndicator p) throws MavenProcessCanceledException {
+                                                           MavenConsole console) throws MavenProcessCanceledException {
     MavenProjectReaderResult result = reader.generateSources(embedder,
                                                              importingSettings,
                                                              getFile(),
                                                              getActiveProfilesIds(),
-                                                             console,
-                                                             p);
+                                                             console);
     if (result == null || !result.isValid) return Pair.create(false, MavenProjectChanges.NONE);
     MavenProjectChanges changes = setFolders(result);
     return Pair.create(true, changes);

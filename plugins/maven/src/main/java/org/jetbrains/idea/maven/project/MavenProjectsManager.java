@@ -321,7 +321,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       @Override
       public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                   org.apache.maven.project.MavenProject nativeMavenProject) {
-        if (!shouldSchedule(projectWithChanges)) return;
+        if (!shouldScheduleImport(projectWithChanges)) return;
 
         if (projectWithChanges.first.hasUnresolvedPlugins()) {
           schedulePluginsResolving(projectWithChanges.first, nativeMavenProject);
@@ -331,7 +331,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
       @Override
       public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-        if (!shouldSchedule(projectWithChanges)) return;
+        if (!shouldScheduleImport(projectWithChanges)) return;
         scheduleForNextImport(projectWithChanges);
       }
     });
@@ -347,7 +347,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     myFoldersResolvingProcessor.addListener(l);
   }
 
-  private boolean shouldSchedule(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+  private boolean shouldScheduleImport(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
     return !projectWithChanges.first.hasErrors() && projectWithChanges.second.hasChanges();
   }
 

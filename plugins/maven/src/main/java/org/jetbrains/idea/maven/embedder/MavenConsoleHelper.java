@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.embedder;
 
-import org.apache.maven.execution.MavenExecutionResult;
 import org.jetbrains.idea.maven.runner.RunnerBundle;
 
 import java.util.List;

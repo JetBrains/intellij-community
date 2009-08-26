@@ -119,8 +119,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
         MavenUtil.runMavenProjectWithParentFileTemplate(project,
                                                         modulePom,
                                                         new MavenId(groupId, artifactId, version),
-                                                        myWithParent ? id : null,
-                                                        true);
+                                                        myWithParent ? id : null);
       }
       catch (IOException e) {
         NotificationsManager.getNotificationsManager()

@@ -334,6 +334,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
                                      "<groupId>test</groupId>" +
                                      "<artifactId>p1</artifactId>" +
                                      "<version>1</version>" +
+                                     "<packaging>pom</packaging>" +
 
                                      "<repositories>" +
                                      "  <repository>" +

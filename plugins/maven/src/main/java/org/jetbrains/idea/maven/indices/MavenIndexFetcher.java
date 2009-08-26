@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.indices;
 
-import org.apache.maven.artifact.manager.CredentialsDataSourceException;
 import org.apache.maven.artifact.manager.WagonManager;
 import org.apache.maven.artifact.repository.DefaultArtifactRepository;
 import org.apache.maven.wagon.ConnectionException;
@@ -46,11 +45,6 @@ public class MavenIndexFetcher implements ResourceFetcher {
       myWagon.connect(repository,
                       myWagonManager.getAuthenticationInfo(repository.getId()),
                       myWagonManager.getProxy(repository.getProtocol()));
-    }
-    catch (CredentialsDataSourceException e) {
-      IOException newEx = new IOException("Credentials exception connecting to " + repository);
-      newEx.initCause(e);
-      throw newEx;
     }
     catch (AuthenticationException e) {
       IOException newEx = new IOException("Authentication exception connecting to " + repository);

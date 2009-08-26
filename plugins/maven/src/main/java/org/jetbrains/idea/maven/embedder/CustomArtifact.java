@@ -19,12 +19,17 @@ import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class CustomArtifact implements Artifact {
-  private static final Map<String, File> ourCache = new THashMap<String, File>();
+  private static final Map<String, File> ourStubCache = new THashMap<String, File>();
+  private static final ReentrantReadWriteLock ourCacheLock = new ReentrantReadWriteLock();
+  private static final Lock ourCacheReadLock = ourCacheLock.readLock();
+  private static final Lock ourCacheWriteLock = ourCacheLock.writeLock();
 
   private final Artifact myWrapee;
-  private boolean isStub;
+  private volatile boolean isStub;
 
   public CustomArtifact(Artifact a) {
     myWrapee = a;
@@ -79,13 +84,27 @@ public class CustomArtifact implements Artifact {
 
     isStub = true;
 
-    f = ourCache.get(getId());
+    ourCacheReadLock.lock();
+    try {
+      f = ourStubCache.get(getId());
+    }
+    finally {
+      ourCacheReadLock.unlock();
+    }
+
     if (f != null) {
       myWrapee.setFile(f);
       return;
     }
 
+    ourCacheWriteLock.lock();
     try {
+      f = ourStubCache.get(getId());
+      if (f != null) {
+        myWrapee.setFile(f);
+        return;
+      }
+
       f = FileUtil.createTempFile("idea.maven.stub", ".pom");
       f.deleteOnExit();
 
@@ -100,15 +119,19 @@ public class CustomArtifact implements Artifact {
         w.println("<version>" + getVersion() + "</version>");
         w.println("</project>");
         w.flush();
-      } finally {
+      }
+      finally {
         s.close();
       }
 
       myWrapee.setFile(f);
-      ourCache.put(getId(), f);
+      ourStubCache.put(getId(), f);
     }
     catch (IOException e) {
       MavenLog.LOG.warn(e);
+    }
+    finally {
+      ourCacheWriteLock.unlock();
     }
   }
 
@@ -136,11 +159,15 @@ public class CustomArtifact implements Artifact {
     return myWrapee.getDependencyConflictId();
   }
 
+  public ArtifactMetadata getMetadata(Class<?> metadataClass) {
+    return myWrapee.getMetadata(metadataClass);
+  }
+
   public void addMetadata(ArtifactMetadata metadata) {
     myWrapee.addMetadata(metadata);
   }
 
-  public Collection getMetadataList() {
+  public Collection<ArtifactMetadata> getMetadataList() {
     return myWrapee.getMetadataList();
   }
 
@@ -176,11 +203,11 @@ public class CustomArtifact implements Artifact {
     return myWrapee.getArtifactHandler();
   }
 
-  public List getDependencyTrail() {
+  public List<String> getDependencyTrail() {
     return myWrapee.getDependencyTrail();
   }
 
-  public void setDependencyTrail(List dependencyTrail) {
+  public void setDependencyTrail(List<String> dependencyTrail) {
     myWrapee.setDependencyTrail(dependencyTrail);
   }
 
@@ -236,11 +263,11 @@ public class CustomArtifact implements Artifact {
     myWrapee.setRelease(release);
   }
 
-  public List getAvailableVersions() {
+  public List<ArtifactVersion> getAvailableVersions() {
     return myWrapee.getAvailableVersions();
   }
 
-  public void setAvailableVersions(List versions) {
+  public void setAvailableVersions(List<ArtifactVersion> versions) {
     myWrapee.setAvailableVersions(versions);
   }
 
@@ -260,7 +287,7 @@ public class CustomArtifact implements Artifact {
     return myWrapee.isSelectedVersionKnown();
   }
 
-  public int compareTo(Object o) {
+  public int compareTo(Artifact o) {
     return myWrapee.compareTo(o);
   }
 
@@ -271,6 +298,7 @@ public class CustomArtifact implements Artifact {
 
   @Override
   public boolean equals(Object obj) {
+    if (obj instanceof CustomArtifact) obj = ((CustomArtifact)obj).myWrapee;
     return myWrapee.equals(obj);
   }
 

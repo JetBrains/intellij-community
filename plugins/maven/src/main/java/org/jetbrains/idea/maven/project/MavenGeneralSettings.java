@@ -4,80 +4,82 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenExecutionOptions;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 @SuppressWarnings({"UnusedDeclaration"})
 public class MavenGeneralSettings implements Cloneable {
   private boolean workOffline = false;
-  @NotNull private String mavenHome = "";
-  @NotNull private String mavenSettingsFile = "";
-  @NotNull private String localRepository = "";
+  private String mavenHome = "";
+  private String mavenSettingsFile = "";
+  private String localRepository = "";
   private boolean printErrorStackTraces = false;
   private boolean usePluginRegistry = false;
   private boolean nonRecursive = false;
-  private int outputLevel = MavenExecutionRequest.LOGGING_LEVEL_INFO;
-  @NotNull private String checksumPolicy = MavenExecutionRequest.CHECKSUM_POLICY_FAIL;
-  @NotNull private String failureBehavior = MavenExecutionRequest.REACTOR_FAIL_FAST;
-  private boolean pluginUpdatePolicy = false;
+  private MavenExecutionOptions.LoggingLevel outputLevel = MavenExecutionOptions.LoggingLevel.INFO;
+  private MavenExecutionOptions.ChecksumPolicy checksumPolicy = MavenExecutionOptions.ChecksumPolicy.FAIL;
+  private MavenExecutionOptions.FailureMode failureBehavior = MavenExecutionOptions.FailureMode.FAST;
+  private MavenExecutionOptions.SnapshotUpdatePolicy snapshotUpdatePolicy = MavenExecutionOptions.SnapshotUpdatePolicy.ALWAYS_UPDATE;
+  private MavenExecutionOptions.PluginUpdatePolicy pluginUpdatePolicy = MavenExecutionOptions.PluginUpdatePolicy.DO_NOT_UPDATE;
 
   private File myEffectiveLocalRepositoryCache;
 
   private List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
 
-  public boolean getPluginUpdatePolicy() {
+  public @NotNull MavenExecutionOptions.PluginUpdatePolicy getPluginUpdatePolicy() {
     return pluginUpdatePolicy;
   }
 
-  public void setPluginUpdatePolicy(boolean pluginUpdatePolicy) {
+  public void setPluginUpdatePolicy(@NotNull MavenExecutionOptions.PluginUpdatePolicy pluginUpdatePolicy) {
     this.pluginUpdatePolicy = pluginUpdatePolicy;
   }
 
   @NotNull
-  public String getChecksumPolicy() {
+  public MavenExecutionOptions.ChecksumPolicy getChecksumPolicy() {
     return checksumPolicy;
   }
 
-  public void setChecksumPolicy(@Nullable String checksumPolicy) {
-    if (checksumPolicy != null) {
-      this.checksumPolicy = checksumPolicy;
-    }
+  public void setChecksumPolicy(@NotNull MavenExecutionOptions.ChecksumPolicy checksumPolicy) {
+    this.checksumPolicy = checksumPolicy;
   }
 
   @NotNull
-  public String getFailureBehavior() {
+  public MavenExecutionOptions.FailureMode getFailureBehavior() {
     return failureBehavior;
   }
 
-  public void setFailureBehavior(@Nullable String failureBehavior) {
-    if (failureBehavior != null) {
-      this.failureBehavior = failureBehavior;
-    }
+  public void setFailureBehavior(@NotNull MavenExecutionOptions.FailureMode failureBehavior) {
+    this.failureBehavior = failureBehavior;
+  }
+
+  public @NotNull MavenExecutionOptions.LoggingLevel getLoggingLevel() {
+    return outputLevel;
+  }
+
+  public void setOutputLevel(@NotNull MavenExecutionOptions.LoggingLevel outputLevel) {
+    this.outputLevel = outputLevel;
+  }
+
+  public @NotNull MavenExecutionOptions.SnapshotUpdatePolicy getSnapshotUpdatePolicy() {
+    return snapshotUpdatePolicy;
+  }
+
+  public void setSnapshotUpdatePolicy(@NotNull MavenExecutionOptions.SnapshotUpdatePolicy snapshotUpdatePolicy) {
+    this.snapshotUpdatePolicy = snapshotUpdatePolicy;
   }
 
   public boolean isWorkOffline() {
     return workOffline;
   }
 
-  public void setWorkOffline(final boolean workOffline) {
+  public void setWorkOffline(boolean workOffline) {
     this.workOffline = workOffline;
-  }
-
-  public int getOutputLevel() {
-    return outputLevel;
-  }
-
-  void setOutputLevel(int outputLevel) {
-    this.outputLevel = outputLevel;
   }
 
   @NotNull
@@ -115,6 +117,11 @@ public class MavenGeneralSettings implements Cloneable {
       myEffectiveLocalRepositoryCache = null;
       firePathChanged();
     }
+  }
+
+  @Nullable
+  public File getEffectiveMavenHome() {
+    return MavenEmbedderFactory.resolveMavenHomeDirectory(getMavenHome());
   }
 
   @NotNull
@@ -202,6 +209,7 @@ public class MavenGeneralSettings implements Cloneable {
     if (nonRecursive != that.nonRecursive) return false;
     if (outputLevel != that.outputLevel) return false;
     if (pluginUpdatePolicy != that.pluginUpdatePolicy) return false;
+    if (snapshotUpdatePolicy != that.snapshotUpdatePolicy) return false;
     if (printErrorStackTraces != that.printErrorStackTraces) return false;
     if (usePluginRegistry != that.usePluginRegistry) return false;
     if (workOffline != that.workOffline) return false;
@@ -223,10 +231,11 @@ public class MavenGeneralSettings implements Cloneable {
     result = 31 * result + (printErrorStackTraces ? 1 : 0);
     result = 31 * result + (usePluginRegistry ? 1 : 0);
     result = 31 * result + (nonRecursive ? 1 : 0);
-    result = 31 * result + outputLevel;
+    result = 31 * result + outputLevel.hashCode();
     result = 31 * result + checksumPolicy.hashCode();
     result = 31 * result + failureBehavior.hashCode();
-    result = 31 * result + (pluginUpdatePolicy ? 1 : 0);
+    result = 31 * result + pluginUpdatePolicy.hashCode();
+    result = 31 * result + snapshotUpdatePolicy.hashCode();
     return result;
   }
 

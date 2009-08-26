@@ -4,13 +4,14 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
-import org.apache.maven.embedder.MavenEmbedder;
+import org.apache.maven.artifact.manager.WagonManager;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
-import org.codehaus.plexus.PlexusContainer;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.sonatype.nexus.index.*;
 import org.sonatype.nexus.index.context.IndexingContext;
+import org.sonatype.nexus.index.updater.IndexUpdateRequest;
 import org.sonatype.nexus.index.updater.IndexUpdater;
 
 import java.io.File;
@@ -22,7 +23,7 @@ import java.util.List;
 
 public class NexusIndexerTest extends MavenIndicesTestCase {
   private MavenCustomRepositoryHelper myRepositoryHelper;
-  private MavenEmbedder myEmbedder;
+  private MavenEmbedderWrapper myEmbedder;
   private NexusIndexer myIndexer;
   private IndexUpdater myUpdater;
   private File myIndexDir;
@@ -32,11 +33,10 @@ public class NexusIndexerTest extends MavenIndicesTestCase {
     super.setUp();
     myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, "local1_index", "local1", "remote");
 
-    myEmbedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings(), Collections.EMPTY_MAP).getEmbedder();
+    myEmbedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings(), Collections.EMPTY_MAP);
 
-    PlexusContainer p = myEmbedder.getPlexusContainer();
-    myIndexer = (NexusIndexer)p.lookup(NexusIndexer.class);
-    myUpdater = (IndexUpdater)p.lookup(IndexUpdater.class);
+    myIndexer = myEmbedder.getComponent(NexusIndexer.class);
+    myUpdater = myEmbedder.getComponent(IndexUpdater.class);
 
     assertNotNull(myIndexer);
     assertNotNull(myUpdater);
@@ -50,7 +50,7 @@ public class NexusIndexerTest extends MavenIndicesTestCase {
     for (IndexingContext c : myIndexer.getIndexingContexts().values()) {
       myIndexer.removeIndexingContext(c, false);
     }
-    myEmbedder.stop();
+    myEmbedder.release();
     super.tearDown();
   }
 
@@ -67,8 +67,13 @@ public class NexusIndexerTest extends MavenIndicesTestCase {
   }
 
   public void testDownloading() throws Exception {
-    IndexingContext c = addContext("remote", myIndexDir, null, "file:///" + myRepositoryHelper.getTestDataPath("remote"));
-    myUpdater.fetchAndUpdateIndex(c, new NullTransferListener());
+    String id = "remote";
+    String url = "file:///" + myRepositoryHelper.getTestDataPath("remote");
+    IndexingContext c = addContext(id, myIndexDir, null, url);
+
+    IndexUpdateRequest request = new IndexUpdateRequest(c);
+    request.setResourceFetcher(new MavenIndexFetcher(id, url, myEmbedder.getComponent(WagonManager.class), new NullTransferListener()));
+    myUpdater.fetchAndUpdateIndex(request);
 
     assertSearchWorks();
   }

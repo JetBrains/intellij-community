@@ -1,8 +1,11 @@
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 public class ComboBoxUtil {
 
@@ -28,19 +31,12 @@ public class ComboBoxUtil {
     model.addElement(new Item(value, label));
   }
 
-  public static void addToModel(DefaultComboBoxModel model, Object[][] array) {
-    for (Object[] objects : array) {
-      addToModel(model, objects[0], String.valueOf(objects[1]));
-    }
-  }
-
-  public static void initModel(DefaultComboBoxModel model, Object[][] array) {
+  public static <T> void setModel(JComboBox comboBox, DefaultComboBoxModel model, List<T> values, Function<T, Pair<String, ?>> func) {
     model.removeAllElements();
-    addToModel(model, array);
-  }
-
-  public static void setModel(JComboBox comboBox, DefaultComboBoxModel model, Object[][] array) {
-    initModel(model, array);
+    for (T each : values) {
+      Pair<String, ?> pair = func.fun(each);
+      addToModel(model, pair.second, pair.first);
+    }
     comboBox.setModel(model);
   }
 

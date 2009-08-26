@@ -5,7 +5,15 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.maven.embedder.*;
+import org.apache.maven.settings.MavenSettingsBuilder;
+import org.apache.maven.settings.RuntimeInfo;
+import org.apache.maven.settings.Settings;
+import org.codehaus.classworlds.ClassWorld;
+import org.codehaus.plexus.DefaultPlexusContainer;
+import org.codehaus.plexus.PlexusContainer;
+import org.codehaus.plexus.PlexusContainerException;
+import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -190,42 +198,80 @@ public class MavenEmbedderFactory {
     return Arrays.asList(phases);
   }
 
-  public static MavenEmbedderWrapper createEmbedder(MavenGeneralSettings settings, Map context) {
-    Configuration configuration = new DefaultConfiguration();
-
-    configuration.setConfigurationCustomizer(MavenEmbedderWrapper.createCustomizer(context));
-    configuration.setClassLoader(settings.getClass().getClassLoader());
-    configuration.setLocalRepository(settings.getEffectiveLocalRepository());
-
-    MavenEmbedderLogger logger = new MavenConsoleLogger();
-    logger.setThreshold(settings.getOutputLevel());
-    configuration.setMavenEmbedderLogger(logger);
-
-    File userSettingsFile = resolveUserSettingsFile(settings.getMavenSettingsFile());
-    if (userSettingsFile != null) {
-      configuration.setUserSettingsFile(userSettingsFile);
-    }
-
-    File globalSettingsFile = resolveGlobalSettingsFile(settings.getMavenHome());
-    if (globalSettingsFile != null) {
-      configuration.setGlobalSettingsFile(globalSettingsFile);
-    }
-
-    configuration.setSystemProperties(collectSystemProperties());
-
-    validate(configuration);
-
-    System.setProperty(PROP_MAVEN_HOME, settings.getMavenHome());
+  public static MavenEmbedderWrapper createEmbedder(MavenGeneralSettings generalSettings, Map context) {
+    DefaultPlexusContainer container = new DefaultPlexusContainer();
+    container.setClassWorld(new ClassWorld("plexus.core", generalSettings.getClass().getClassLoader()));
+    CustomLoggerManager loggerManager = new CustomLoggerManager(generalSettings.getLoggingLevel());
+    container.setLoggerManager(loggerManager);
 
     try {
-      MavenEmbedder e = new MavenEmbedder(configuration);
-      e.getSettings().setUsePluginRegistry(settings.isUsePluginRegistry());
-      return new MavenEmbedderWrapper(e);
+      container.initialize();
+      container.start();
     }
-    catch (MavenEmbedderException e) {
-      MavenLog.LOG.info(e);
+    catch (PlexusContainerException e) {
+      MavenLog.LOG.error(e);
       throw new RuntimeException(e);
     }
+
+    File mavenHome = generalSettings.getEffectiveMavenHome();
+    if (mavenHome != null) {
+      System.setProperty(PROP_MAVEN_HOME, mavenHome.getPath());
+    }
+
+    Settings settings = buildSettings(container, generalSettings);
+
+    return new MavenEmbedderWrapper(container, settings, loggerManager.getLogger(), generalSettings);
+  }
+
+  private static Settings buildSettings(PlexusContainer container, MavenGeneralSettings generalSettings) {
+    File file = generalSettings.getEffectiveGlobalSettingsIoFile();
+    if (file != null) {
+      System.setProperty(MavenSettingsBuilder.ALT_GLOBAL_SETTINGS_XML_LOCATION, file.getPath());
+    }
+
+    Settings settings = null;
+
+    try {
+      // todo use custom builder and pass env variables.
+      MavenSettingsBuilder settingsBuilder = (MavenSettingsBuilder)container.lookup(MavenSettingsBuilder.ROLE);
+
+      File userSettingsFile = generalSettings.getEffectiveUserSettingsIoFile();
+      if (userSettingsFile != null && userSettingsFile.exists() && !userSettingsFile.isDirectory()) {
+        settings = settingsBuilder.buildSettings(userSettingsFile, false);
+      }
+
+      if (settings == null) {
+        settings = settingsBuilder.buildSettings();
+      }
+    }
+    catch (ComponentLookupException e) {
+      MavenLog.LOG.error(e);
+    }
+    catch (IOException e) {
+      MavenLog.LOG.warn(e);
+    }
+    catch (XmlPullParserException e) {
+      MavenLog.LOG.warn(e);
+    }
+
+    if (settings == null) {
+      settings = new Settings();
+    }
+
+    File localRepository = generalSettings.getEffectiveLocalRepository();
+    if (localRepository != null) {
+      settings.setLocalRepository(localRepository.getPath());
+    }
+
+    settings.setOffline(generalSettings.isWorkOffline());
+    settings.setInteractiveMode(false);
+    settings.setUsePluginRegistry(generalSettings.isUsePluginRegistry());
+
+    RuntimeInfo runtimeInfo = new RuntimeInfo(settings);
+    runtimeInfo.setPluginUpdateOverride(generalSettings.getPluginUpdatePolicy() == MavenExecutionOptions.PluginUpdatePolicy.UPDATE);
+    settings.setRuntimeInfo(runtimeInfo);
+
+    return settings;
   }
 
   public static Properties collectSystemProperties() {
@@ -243,26 +289,7 @@ public class MavenEmbedderFactory {
     return mySystemPropertiesCache;
   }
 
-  private static void validate(Configuration configuration) {
-    ConfigurationValidationResult result = null;
-    try {
-      result = MavenEmbedder.validateConfiguration(configuration);
-    }
-    catch (Exception e) {
-      MavenLog.LOG.warn(e);
-
-      configuration.setGlobalSettingsFile(null);
-      configuration.setUserSettingsFile(null);
-      return;
-    }
-
-    if (!result.isValid()) {
-      if (result.getGlobalSettingsException() != null) {
-        configuration.setGlobalSettingsFile(null);
-      }
-      if (result.getUserSettingsException() != null) {
-        configuration.setUserSettingsFile(null);
-      }
-    }
+  public static void resetSystemPropertiesCacheInTests() {
+    mySystemPropertiesCache = null;
   }
 }

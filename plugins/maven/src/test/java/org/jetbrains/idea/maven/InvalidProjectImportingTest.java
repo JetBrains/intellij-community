@@ -211,7 +211,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertModules("project");
 
     MavenProject root = getRootProjects().get(0);
-    assertProblems(root, "Cannot find ArtifactRepositoryLayout instance for: nothing");
+    assertProblems(root, "Cannot find layout implementation corresponding to: 'nothing' for remote repository with id: 'test'.");
   }
 
   public void testDoNotFailIfRepositoryHasEmptyLayout() throws Exception {

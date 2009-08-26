@@ -3,10 +3,8 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SoftValueHashMap;
 import gnu.trove.THashMap;
-import org.jetbrains.idea.maven.embedder.CustomWorkspaceStore;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.embedder.MavenSharedCache;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -35,16 +33,29 @@ public class MavenEmbeddersManager {
   }
 
   public synchronized void clearCaches() {
-    ((MavenSharedCache)myContext.get(CustomWorkspaceStore.SHARED_CACHE)).clear();
+    // todo todo
+    //((MavenSharedCache)myContext.get(CustomWorkspaceStore.SHARED_CACHE)).clear();
+    for (MavenEmbedderWrapper each : myEmbeddersInUse.values()) {
+      each.clearCaches();
+    }
+    for (Object eachKey : myPools.keySet()) {
+      LinkedList<MavenEmbedderWrapper> eachPool = myPools.get(eachKey);
+      if (eachPool == null) continue; // collected
+      for (MavenEmbedderWrapper each : eachPool) {
+        each.clearCaches();
+      }
+    }
   }
 
   public synchronized void clearCachesFor(MavenProject project) {
-    ((MavenSharedCache)myContext.get(CustomWorkspaceStore.SHARED_CACHE)).clearCachesFor(project);
+    // todo todo
+    //((MavenSharedCache)myContext.get(CustomWorkspaceStore.SHARED_CACHE)).clearCachesFor(project);
   }
 
   private synchronized void resetContext() {
     myContext = new THashMap();
-    myContext.put(CustomWorkspaceStore.SHARED_CACHE, new MavenSharedCache());
+    // todo todo
+    //myContext.put(CustomWorkspaceStore.SHARED_CACHE, new MavenSharedCache());
   }
 
   public MavenEmbedderWrapper getEmbedder(Object id) {

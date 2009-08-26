@@ -4,12 +4,12 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.util.Key;
-import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
+import org.jetbrains.idea.maven.embedder.MavenExecutionOptions;
 
 public class SoutMavenConsole extends MavenConsole {
   public SoutMavenConsole() {
-    super(MavenExecutionRequest.LOGGING_LEVEL_DEBUG, true);
+    super(MavenExecutionOptions.LoggingLevel.DEBUG, true);
   }
 
   public boolean canPause() {

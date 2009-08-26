@@ -7,6 +7,8 @@ import org.apache.maven.model.Build;
 import org.apache.maven.model.Parent;
 import org.apache.maven.model.Resource;
 import org.jetbrains.idea.maven.MavenTestCase;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.Arrays;
@@ -915,8 +917,6 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testActivatingProfilesByJdk() throws Exception {
-    System.setProperty("maven.test.property", "foo");
-
     createProjectPom("<name>${prop1}</name>" +
                      "<packaging>${prop2}</packaging>" +
 
@@ -924,7 +924,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "  <profile>" +
                      "    <id>one</id>" +
                      "    <activation>" +
-                     "      <jdk>1.5+</jdk>" +
+                     "      <jdk>[1.5,)</jdk>" +
                      "    </activation>" +
                      "    <properties>" +
                      "      <prop1>value1</prop1>" +
@@ -933,7 +933,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "  <profile>" +
                      "    <id>two</id>" +
                      "    <activation>" +
-                     "      <jdk>!1.5+</jdk>" +
+                     "      <jdk>(,1.5)</jdk>" +
                      "    </activation>" +
                      "    <properties>" +
                      "      <prop2>value2</prop2>" +
@@ -948,6 +948,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
   public void testActivatingProfilesByProperty() throws Exception {
     System.setProperty("maven.test.property", "foo");
+    MavenEmbedderFactory.resetSystemPropertiesCacheInTests();
 
     createProjectPom("<name>${prop1}</name>" +
                      "<packaging>${prop2}</packaging>" +
@@ -971,6 +972,44 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "      <property>" +
                      "        <name>maven.test.property</name>" +
                      "        <value>bar</value>" +
+                     "      </property>" +
+                     "    </activation>" +
+                     "    <properties>" +
+                     "      <prop2>value2</prop2>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    assertEquals("value1", p.getName());
+    assertEquals("${prop2}", p.getPackaging());
+  }
+
+  public void testActivatingProfilesByEnvProperty() throws Exception {
+    String value = MavenUtil.getEnvProperties().getProperty("TMP");
+
+    createProjectPom("<name>${prop1}</name>" +
+                     "<packaging>${prop2}</packaging>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <activation>" +
+                     "      <property>" +
+                     "        <name>env.TMP</name>" +
+                     "        <value>" + value + "</value>" +
+                     "      </property>" +
+                     "    </activation>" +
+                     "    <properties>" +
+                     "      <prop1>value1</prop1>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <activation>" +
+                     "      <property>" +
+                     "        <name>ffffff</name>" +
+                     "        <value>ffffff</value>" +
                      "      </property>" +
                      "    </activation>" +
                      "    <properties>" +

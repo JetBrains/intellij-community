@@ -1,7 +1,6 @@
 package org.jetbrains.idea.maven.embedder;
 
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.manager.DefaultWagonManager;
 import org.apache.maven.artifact.metadata.ArtifactMetadata;
@@ -9,87 +8,70 @@ import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
 import org.apache.maven.wagon.TransferFailedException;
 import org.apache.maven.wagon.WagonException;
-import org.jetbrains.idea.maven.project.MavenId;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class CustomWagonManager extends DefaultWagonManager {
-  private boolean myFailOnUnresolved = true;
-  private Set<MavenId> myUnresolvedIds = new THashSet<MavenId>();
+  private UnresolvedArtifactsCollector myUnresolvedCollector;
 
-  private boolean myInProcess = false;
-  private Map<String, CachedValue> myCache = new THashMap<String, CachedValue>();
+  private final ThreadLocal<Boolean> myInBatchResolve = new ThreadLocal<Boolean>();
+  private final Map<String, Boolean> myResolutionCache = new THashMap<String, Boolean>();
+
+  private final ReentrantReadWriteLock myCacheLock = new ReentrantReadWriteLock();
+  private final Lock myCacheReadLock = myCacheLock.readLock();
+  private final Lock myCacheWriteLock = myCacheLock.writeLock();
 
   public void customize(boolean failOnUnresolved) {
-    myFailOnUnresolved = failOnUnresolved;
+    myUnresolvedCollector = new UnresolvedArtifactsCollector(failOnUnresolved);
   }
 
   public void reset() {
-    myFailOnUnresolved = true;
+    // todo todo clear cache too??
+    myUnresolvedCollector = null;
   }
 
-  public Set<MavenId> retrieveUnresolvedIds() {
-    Set<MavenId> result = myUnresolvedIds;
-    myUnresolvedIds = new THashSet<MavenId>();
-    return result;
+  public UnresolvedArtifactsCollector getUnresolvedCollector() {
+    return myUnresolvedCollector;
   }
 
   @Override
-  public void getArtifact(Artifact artifact, List remoteRepositories, boolean force)
-    throws TransferFailedException, ResourceDoesNotExistException {
-    if (myInProcess) {
-      super.getArtifact(artifact, remoteRepositories, force);
-      return;
-    }
-
-    myInProcess = true;
+  public void getArtifact(Artifact artifact, List remoteRepositories) throws TransferFailedException, ResourceDoesNotExistException {
+    myInBatchResolve.set(Boolean.TRUE);
     try {
       if (!takeFromCache(artifact)) {
         try {
-          super.getArtifact(artifact, remoteRepositories, force);
+          super.getArtifact(artifact, remoteRepositories);
         }
         catch (WagonException ignore) {
         }
         cache(artifact);
+        myUnresolvedCollector.collectAndSetResolved(artifact);
       }
-      setResolved(artifact);
     }
     finally {
-      myInProcess = false;
+      myInBatchResolve.set(Boolean.FALSE);
     }
   }
 
   @Override
-  public void getArtifact(Artifact artifact, ArtifactRepository repository)
-    throws TransferFailedException, ResourceDoesNotExistException {
-    getArtifact(artifact, repository, true);
-  }
-
-  @Override
-  public void getArtifact(Artifact artifact, ArtifactRepository repository, boolean force)
-    throws TransferFailedException, ResourceDoesNotExistException {
-    if (myInProcess) {
-      super.getArtifact(artifact, repository, force);
+  public void getArtifact(Artifact artifact, ArtifactRepository repository) throws TransferFailedException, ResourceDoesNotExistException {
+    if (myInBatchResolve.get() == Boolean.TRUE) {
+      super.getArtifact(artifact, repository);
       return;
     }
 
-    myInProcess = true;
-    try {
-      if (!takeFromCache(artifact)) {
-        try {
-          super.getArtifact(artifact, repository, force);
-        }
-        catch (WagonException ignore) {
-        }
-        cache(artifact);
+    if (!takeFromCache(artifact)) {
+      try {
+        super.getArtifact(artifact, repository);
       }
-      setResolved(artifact);
-    }
-    finally {
-      myInProcess = false;
+      catch (WagonException ignore) {
+      }
+      cache(artifact);
+      myUnresolvedCollector.collectAndSetResolved(artifact);
     }
   }
 
@@ -111,24 +93,45 @@ public class CustomWagonManager extends DefaultWagonManager {
   }
 
   private boolean takeFromCache(Artifact artifact) {
-    CachedValue cached = myCache.get(getKey(artifact));
-    if (cached == null) return false;
+    String key = getKey(artifact);
 
-    boolean fileWasDeleted = cached.wasResolved && !artifact.getFile().exists();
-    if (fileWasDeleted) return false; // need to resolve again
+    Boolean wasResolved;
+    myCacheReadLock.lock();
+    try {
+      wasResolved = myResolutionCache.get(key);
+      if (wasResolved == null) return false;
+    }
+    finally {
+      myCacheReadLock.unlock();
+    }
 
-    artifact.setResolved(cached.wasResolved);
+    boolean fileWasDeleted = wasResolved && !artifact.getFile().exists();
+    if (fileWasDeleted) {
+      myCacheWriteLock.lock();
+      try {
+        myResolutionCache.remove(key);
+      }
+      finally {
+        myCacheWriteLock.unlock();
+      }
+      return false; // need to resolve again
+    }
+
+    artifact.setResolved(wasResolved);
 
     return true;
   }
 
-  private void setResolved(Artifact artifact) {
-    if (!artifact.isResolved()) myUnresolvedIds.add(new MavenId(artifact));
-    if (!myFailOnUnresolved) artifact.setResolved(true);
-  }
-
   private void cache(Artifact artifact) {
-    myCache.put(getKey(artifact), new CachedValue(artifact.isResolved()));
+    String key = getKey(artifact);
+
+    myCacheWriteLock.lock();
+    try {
+      myResolutionCache.put(key, artifact.isResolved());
+    }
+    finally {
+      myCacheWriteLock.unlock();
+    }
   }
 
   private String getKey(Artifact artifact) {
@@ -137,13 +140,5 @@ public class CustomWagonManager extends DefaultWagonManager {
            + ":" + artifact.getType()
            + ":" + artifact.getVersion()
            + ":" + artifact.getClassifier();
-  }
-
-  private static class CachedValue {
-    boolean wasResolved;
-
-    public CachedValue(boolean wasResolved) {
-      this.wasResolved = wasResolved;
-    }
   }
 }
