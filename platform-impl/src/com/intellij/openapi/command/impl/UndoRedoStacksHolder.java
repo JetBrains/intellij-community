@@ -9,11 +9,9 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 class UndoRedoStacksHolder {
@@ -42,6 +40,37 @@ class UndoRedoStacksHolder {
 
   public LinkedList<UndoableGroup> getStack(@NotNull DocumentReference r) {
     return r.getFile() != null ? getStackForFile(r) : getStackForDocument(r);
+  }
+
+  @Nullable
+  public UndoableGroup getLastAction(@NotNull DocumentReference r) {
+
+    LinkedList<UndoableGroup> documentStack = getStack(r);
+    for (Iterator<UndoableGroup> iterator = myGlobalStack.descendingIterator(); iterator.hasNext();) {
+      UndoableGroup group = iterator.next();
+      if (isSpecial(group)) {
+        if (documentStack.isEmpty() || documentStack.getLast().getCommandCounter() < group.getCommandCounter()) {
+          return group;
+        } else {
+          return documentStack.getLast();
+        }
+      }
+    }
+    return documentStack.isEmpty() ? null : documentStack.getLast();
+  }
+
+  public boolean hasUndoableActions(@NotNull DocumentReference r) {
+    if (!getStack(r).isEmpty()) return true;
+    for (UndoableGroup group : myGlobalStack) {
+      if (isSpecial(group)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isSpecial(UndoableGroup group) {
+    return group.isComplex() && group.getAffectedDocuments().isEmpty();
   }
 
   private LinkedList<UndoableGroup> getStackForFile(DocumentReference r) {

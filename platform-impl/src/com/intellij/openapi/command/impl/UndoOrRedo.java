@@ -30,7 +30,7 @@ abstract class UndoOrRedo {
   public UndoOrRedo(UndoManagerImpl manager, FileEditor editor) throws NothingToUndoException {
     myManager = manager;
     myEditor = editor;
-    myUndoableGroup = getStack().getLast();
+    myUndoableGroup = getLastAction();
   }
 
   protected abstract UndoRedoStacksHolder getStackHolder();
@@ -179,17 +179,17 @@ abstract class UndoOrRedo {
                                        Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE;
   }
 
-    protected abstract String getActionName(String commandName);
+  protected abstract String getActionName(String commandName);
 
-    private void addLastToReverseStacks() {
-      Collection<LinkedList<UndoableGroup>> stacks = getStacks(getReverseStackHolder());
-      for (LinkedList<UndoableGroup> linkedList : stacks) {
-        linkedList.addLast(myUndoableGroup);
-      }
-      if (myUndoableGroup.isComplex()) {
-        getReverseStackHolder().getGlobalStack().addLast(myUndoableGroup);
-      }
+  private void addLastToReverseStacks() {
+    Collection<LinkedList<UndoableGroup>> stacks = getStacks(getReverseStackHolder());
+    for (LinkedList<UndoableGroup> linkedList : stacks) {
+      linkedList.addLast(myUndoableGroup);
     }
+    if (myUndoableGroup.isComplex()) {
+      getReverseStackHolder().getGlobalStack().addLast(myUndoableGroup);
+    }
+  }
 
   private Collection<DocumentReference> getDocumentsReferences() {
     return myUndoableGroup.getAffectedDocuments();
@@ -270,22 +270,22 @@ abstract class UndoOrRedo {
 
   public static class NothingToUndoException extends Exception {}
 
-  private LinkedList<UndoableGroup> getStack() throws NothingToUndoException {
+  private UndoableGroup getLastAction() throws NothingToUndoException {
     final DocumentReference[] documents = myEditor == null? null : myManager.getDocumentReferences(myEditor);
     if (documents == null || documents.length == 0) {
-      return getStackHolder().getGlobalStack();
+      return getStackHolder().getGlobalStack().getLast();
     }
     else {
       long recentDocumentTimeStamp = -1;
-      LinkedList<UndoableGroup> result = null;
+      UndoableGroup result = null;
       for (DocumentReference docRef : documents) {
-        LinkedList<UndoableGroup> stack = getStackHolder().getStack(docRef);
-        if (!stack.isEmpty()) {
+        UndoableGroup action = getStackHolder().getLastAction(docRef);
+        if (action != null) {
           long modificationStamp;
           Document doc = docRef.getDocument();
           modificationStamp = doc != null ? doc.getModificationStamp() : docRef.getFile().getTimeStamp();
           if (recentDocumentTimeStamp < modificationStamp) {
-            result = stack;
+            result = action;
             recentDocumentTimeStamp = modificationStamp;
           }
         }

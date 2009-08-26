@@ -429,13 +429,12 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (documentReferences.length != 0) {
       for (DocumentReference ref : documentReferences) {
         if (shouldCheckMerger) {
-          if (myMerger != null && myMerger.hasChangesOf(ref)) {
+          if (myMerger != null && (myMerger.hasChangesOf(ref) || myMerger.isComplex() && myMerger.getAffectedDocuments().isEmpty())) {
             return true;
           }
         }
 
-        LinkedList localStack = stackHolder.getStack(ref);
-        if (!localStack.isEmpty()) {
+        if (stackHolder.hasUndoableActions(ref)) {
           return true;
         }
       }

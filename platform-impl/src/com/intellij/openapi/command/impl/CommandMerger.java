@@ -157,7 +157,7 @@ public class CommandMerger {
     }
 
     if (myIsComplex) {
-      if (!group.getAffectedDocuments().isEmpty()) {
+      if (!group.getAffectedDocuments().isEmpty() || group.isComplex()) {
         myManager.getUndoStacksHolder().addToGlobalStack(group);
       }
     }
