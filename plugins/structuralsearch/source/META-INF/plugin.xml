@@ -1,0 +1,31 @@
+<idea-plugin>
+  <name>Structural Search</name>
+  <description>Searching / replacing source code in terms of syntax (query / replace code by example :-).
+    </description>
+  <version>9.0</version>
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <extensions defaultExtensionNs="com.intellij">
+      <inspectionToolProvider implementation="com.intellij.structuralsearch.inspection.highlightTemplate.SSRInspectionsLoader"/>
+  </extensions>
+  
+  <project-components>
+      <component>
+        <implementation-class>com.intellij.structuralsearch.plugin.StructuralSearchPlugin</implementation-class>
+        <option name="workspace" value="true" />
+        <skipForDummyProject/>
+      </component>
+  </project-components>
+
+  <actions>
+      <group id="StructuralSearchActions">
+        <action id="StructuralSearchPlugin.StructuralSearchAction" class="com.intellij.structuralsearch.plugin.StructuralSearchAction">
+          <add-to-group group-id="SearchMenu" anchor="after" relative-to-action="ReplaceInPath"/>
+        </action>
+
+        <action id="StructuralSearchPlugin.StructuralReplaceAction" class="com.intellij.structuralsearch.plugin.StructuralReplaceAction">
+          <add-to-group group-id="SearchMenu" anchor="after" relative-to-action="StructuralSearchPlugin.StructuralSearchAction"/>
+        </action>
+      </group>
+
+  </actions>
+</idea-plugin>
