@@ -297,10 +297,12 @@ public class GroovyPositionManager implements PositionManager {
     String packageName = groovyFile.getPackageName();
     String plainName = vFile.getNameWithoutExtension();
     String fileName = plainName;
-    for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
-      if (helper.isAppropriateScriptFile(groovyFile)) {
-        fileName = helper.getRuntimeScriptName(plainName, groovyFile);
-        break;
+    if (groovyFile.isScript()) {
+      for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
+        if (helper.isAppropriateScriptFile(groovyFile)) {
+          fileName = helper.getRuntimeScriptName(plainName, groovyFile);
+          break;
+        }
       }
     }
     qName = packageName.length() > 0 ? packageName + "." + fileName : fileName;
