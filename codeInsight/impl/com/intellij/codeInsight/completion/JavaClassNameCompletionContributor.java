@@ -86,34 +86,24 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
         if (afterNew) {
           final PsiExpression expr = PsiTreeUtil.getContextOfType(insertedElement, PsiExpression.class, true);
           if (expr != null) {
-            final ExpectedTypeInfo[] expectedInfos =
-                ApplicationManager.getApplication().runReadAction(new Computable<ExpectedTypeInfo[]>() {
-                  public ExpectedTypeInfo[] compute() {
-                    return ExpectedTypesProvider.getInstance(project).getExpectedTypes(expr, true);
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                for (final ExpectedTypeInfo info : ExpectedTypesProvider.getInstance(project).getExpectedTypes(expr, true)) {
+                  final PsiType type = info.getType();
+                  final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+                  if (psiClass != null) {
+                    result.addElement(AllClassesGetter.createLookupItem(psiClass));
                   }
-                });
-            for (final ExpectedTypeInfo info : expectedInfos) {
-              final PsiType type = info.getType();
-              final PsiClass psiClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-                public PsiClass compute() {
-                  return PsiUtil.resolveClassInType(type);
-                }
-              });
-              if (psiClass != null) {
-                result.addElement(AllClassesGetter.createLookupItem(psiClass));
-              }
-              final PsiType defaultType = info.getDefaultType();
-              if (!defaultType.equals(type)) {
-                final PsiClass defClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-                  public PsiClass compute() {
-                    return PsiUtil.resolveClassInType(defaultType);
+                  final PsiType defaultType = info.getDefaultType();
+                  if (!defaultType.equals(type)) {
+                    final PsiClass defClass = PsiUtil.resolveClassInType(defaultType);
+                    if (defClass != null) {
+                      result.addElement(AllClassesGetter.createLookupItem(defClass));
+                    }
                   }
-                });
-                if (defClass != null) {
-                  result.addElement(AllClassesGetter.createLookupItem(defClass));
                 }
               }
-            }
+            });
           }
         }
 
