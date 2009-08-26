@@ -643,16 +643,6 @@
 
     <!-- ****************************************************************** -->
 
-    <group id="StructuralSearchActions">
-      <action id="StructuralSearchPlugin.StructuralSearchAction" class="com.intellij.structuralsearch.plugin.StructuralSearchAction">
-        <add-to-group group-id="SearchMenu" anchor="after" relative-to-action="ReplaceInPath"/>
-      </action>
-
-      <action id="StructuralSearchPlugin.StructuralReplaceAction" class="com.intellij.structuralsearch.plugin.StructuralReplaceAction">
-        <add-to-group group-id="SearchMenu" anchor="after" relative-to-action="StructuralSearchPlugin.StructuralSearchAction"/>
-      </action>
-    </group>
-
     <group id="WelcomeScreen.QuickStart.IDEA">
       <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction"
         icon="/general/createNewProject.png"/>
