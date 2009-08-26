@@ -13,7 +13,6 @@
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="UsageView" />
     <orderEntry type="module" module-name="codeInsight-openapi" />
-    <orderEntry type="module" module-name="codeInsight-impl" />
     <orderEntry type="module" module-name="inspections-openapi" />
     <orderEntry type="module" module-name="inspections-impl" />
     <orderEntry type="module" module-name="xml" />
