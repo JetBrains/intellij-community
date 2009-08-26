@@ -7,10 +7,11 @@ import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
-public class AutoIndentLinesAction extends BaseCodeInsightAction{
+public class AutoIndentLinesAction extends BaseCodeInsightAction implements DumbAware {
   protected CodeInsightActionHandler getHandler() {
     return new AutoIndentLinesHandler();
   }

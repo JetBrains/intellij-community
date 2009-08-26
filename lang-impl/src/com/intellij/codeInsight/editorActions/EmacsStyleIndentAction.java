@@ -9,14 +9,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
-public class EmacsStyleIndentAction extends BaseCodeInsightAction{
+public class EmacsStyleIndentAction extends BaseCodeInsightAction implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.actions.EmacsStyleIndentAction");
 

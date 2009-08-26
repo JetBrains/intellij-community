@@ -6,7 +6,9 @@ import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,7 +17,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 
-public class ReformatCodeAction extends AnAction {
+public class ReformatCodeAction extends AnAction implements DumbAware {
   private static final @NonNls String HELP_ID = "editing.codeReformatting";
 
   public void actionPerformed(AnActionEvent event) {
@@ -41,7 +43,7 @@ public class ReformatCodeAction extends AnAction {
         final ReformatFilesDialog reformatFilesDialog = new ReformatFilesDialog(project);
         reformatFilesDialog.show();
         if (!reformatFilesDialog.isOK()) return;
-        if (reformatFilesDialog.optimizeImports()) {
+        if (reformatFilesDialog.optimizeImports() && !DumbService.getInstance(project).isDumb()) {
           new ReformatAndOptimizeImportsProcessor(project, convertToPsiFiles(files, project)).run();
         }
         else {
@@ -67,7 +69,7 @@ public class ReformatCodeAction extends AnAction {
         LayoutProjectCodeDialog dialog = new LayoutProjectCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), text, true);
         dialog.show();
         if (!dialog.isOK()) return;
-        if (dialog.isOptimizeImports()) {
+        if (dialog.isOptimizeImports() && !DumbService.getInstance(project).isDumb()) {
           if (moduleContext != null) {
             new ReformatAndOptimizeImportsProcessor(project, moduleContext).run();
           }
