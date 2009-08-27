@@ -198,7 +198,7 @@ public class MavenEmbedderFactory {
     return Arrays.asList(phases);
   }
 
-  public static MavenEmbedderWrapper createEmbedder(MavenGeneralSettings generalSettings, Map context) {
+  public static MavenEmbedderWrapper createEmbedder(MavenGeneralSettings generalSettings) {
     DefaultPlexusContainer container = new DefaultPlexusContainer();
     container.setClassWorld(new ClassWorld("plexus.core", generalSettings.getClass().getClassLoader()));
     CustomLoggerManager loggerManager = new CustomLoggerManager(generalSettings.getLoggingLevel());
@@ -232,16 +232,15 @@ public class MavenEmbedderFactory {
     Settings settings = null;
 
     try {
-      // todo use custom builder and pass env variables.
-      MavenSettingsBuilder settingsBuilder = (MavenSettingsBuilder)container.lookup(MavenSettingsBuilder.ROLE);
+      MavenSettingsBuilder builder = (MavenSettingsBuilder)container.lookup(MavenSettingsBuilder.ROLE);
 
       File userSettingsFile = generalSettings.getEffectiveUserSettingsIoFile();
       if (userSettingsFile != null && userSettingsFile.exists() && !userSettingsFile.isDirectory()) {
-        settings = settingsBuilder.buildSettings(userSettingsFile, false);
+        settings = builder.buildSettings(userSettingsFile, false);
       }
 
       if (settings == null) {
-        settings = settingsBuilder.buildSettings();
+        settings = builder.buildSettings();
       }
     }
     catch (ComponentLookupException e) {

@@ -4,7 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import gnu.trove.THashMap;
+import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.apache.maven.Maven;
 import org.apache.maven.artifact.Artifact;
@@ -74,8 +74,6 @@ public class MavenEmbedderWrapper {
   private final ArtifactRepository myLocalRepository;
 
   private volatile MavenProgressIndicator myCurrentIndicator;
-
-  // TODO TODO : release all components after getComponent!!!!!!!!!!!!!!!!!!!!!!!!
 
   public MavenEmbedderWrapper(@NotNull DefaultPlexusContainer container,
                               @NotNull Settings settings,
@@ -475,8 +473,7 @@ public class MavenEmbedderWrapper {
     ((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).customize();
     ((CustomArtifactResolver)getComponent(ArtifactResolver.class)).customize(projectIdToFileMap, strict);
     ((CustomWagonManager)getComponent(WagonManager.class)).customize(strict);
-    //this.<CustomExtensionManager>getComponent(ExtensionManager.class).customize();
-    //
+
     setConsoleAndLogger(console, process);
   }
 
@@ -494,21 +491,37 @@ public class MavenEmbedderWrapper {
     ((CustomArtifactFactory)getComponent(ArtifactFactory.class)).reset();
     ((CustomArtifactResolver)getComponent(ArtifactResolver.class)).reset();
     ((CustomWagonManager)getComponent(WagonManager.class)).reset();
-    //this.<CustomArtifactHandlerManager>getComponent(ArtifactHandlerManager.class).reset();
-    //this.<CustomExtensionManager>getComponent(ExtensionManager.class).reset();
   }
 
   public void clearCaches() {
+    withProjectCachesDo(new Function<Map, Object>() {
+      public Object fun(Map map) {
+        map.clear();
+        return null;
+      }
+    });
+  }
+
+  public void clearCachesFor(final org.jetbrains.idea.maven.project.MavenProject mavenProject) {
+    withProjectCachesDo(new Function<Map, Object>() {
+      public Object fun(Map map) {
+        map.remove(mavenProject.getMavenId().getKey());
+        return null;
+      }
+    });
+  }
+
+  private void withProjectCachesDo(Function<Map, ?> func) {
     MavenProjectBuilder builder = getComponent(MavenProjectBuilder.class);
+    Field field;
     try {
-      Field field = builder.getClass().getDeclaredField("rawProjectCache");
+      field = builder.getClass().getDeclaredField("rawProjectCache");
       field.setAccessible(true);
-      //((HashMap)field.get(builder)).remove(project.getMavenId().getKey());
-      field.set(builder, new THashMap());
+      func.fun(((Map)field.get(builder)));
+
       field = builder.getClass().getDeclaredField("processedProjectCache");
       field.setAccessible(true);
-      //((HashMap)field.get(builder)).remove(project.getMavenId().getKey());
-      field.set(builder, new THashMap());
+      func.fun(((Map)field.get(builder)));
     }
     catch (NoSuchFieldException e) {
       MavenLog.LOG.error(e);
@@ -519,19 +532,9 @@ public class MavenEmbedderWrapper {
   }
 
   private void configureContainer() {
-    //for (Map.Entry each : context.entrySet()) {
-    //  c.addContextValue(each.getKey(), each.getValue());
-    //}
-    //setImplementation(c, MavenTools.class, CustomMavenTools.class);
-    //setImplementation(c, ProjectWorkspace.class, CustomProjectWorkspace.class);
-    //setImplementation(c, MavenWorkspaceStore.class, CustomWorkspaceStore.class);
-    //setImplementation(c, ModelInterpolator.class, CustomModelInterpolator.class);
-    //setImplementation(c, MavenProjectBuilder.class, CustomProjectBuilder.class);
     setImplementation(ArtifactFactory.class, CustomArtifactFactory.class);
     setImplementation(ProjectArtifactFactory.class, CustomArtifactFactory.class);
-    //setImplementation(c, ArtifactHandlerManager.class, CustomArtifactHandlerManager.class);
     setImplementation(ArtifactResolver.class, CustomArtifactResolver.class);
-    //setImplementation(c, ExtensionManager.class, CustomExtensionManager.class);
     setImplementation(WagonManager.class, CustomWagonManager.class);
   }
 

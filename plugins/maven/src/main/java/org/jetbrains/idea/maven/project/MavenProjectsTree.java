@@ -24,13 +24,6 @@ import java.util.regex.Pattern;
 public class MavenProjectsTree {
   private static final String STORAGE_VERSION = MavenProjectsTree.class.getSimpleName() + ".5";
 
-  enum EmbedderKind {
-    EMBEDDER_FOR_DEPENDENCIES_RESOLVE,
-    EMBEDDER_FOR_PLUGINS_RESOLVE,
-    EMBEDDER_FOR_FOLDERS_RESOLVE,
-    EMBEDDER_FOR_DOWNLOAD
-  }
-
   private final Object myStateLock = new Object();
   private final ReentrantReadWriteLock myStructureLock = new ReentrantReadWriteLock();
   private final Lock myStructureReadLock = myStructureLock.readLock();
@@ -931,7 +924,7 @@ public class MavenProjectsTree {
                       MavenEmbeddersManager embeddersManager,
                       MavenConsole console,
                       MavenProgressIndicator process) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(EmbedderKind.EMBEDDER_FOR_DEPENDENCIES_RESOLVE);
+    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.EmbedderKind.FOR_DEPENDENCIES_RESOLVE);
     embedder.customizeForResolve(getProjectIdToFileMapping(), console, process);
     
     try {
@@ -955,9 +948,9 @@ public class MavenProjectsTree {
                              MavenEmbeddersManager embeddersManager,
                              MavenConsole console,
                              MavenProgressIndicator process) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(EmbedderKind.EMBEDDER_FOR_PLUGINS_RESOLVE);
+    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.EmbedderKind.FOR_PLUGINS_RESOLVE);
     embedder.customizeForResolve(console, process);
-    embeddersManager.clearCachesFor(mavenProject);
+    embedder.clearCachesFor(mavenProject);
 
     try {
       for (MavenPlugin each : mavenProject.getPlugins()) {
@@ -977,9 +970,9 @@ public class MavenProjectsTree {
                              MavenEmbeddersManager embeddersManager,
                              MavenConsole console,
                              MavenProgressIndicator process) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(EmbedderKind.EMBEDDER_FOR_FOLDERS_RESOLVE);
+    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.EmbedderKind.FOR_FOLDERS_RESOLVE);
     embedder.customizeForStrictResolve(getProjectIdToFileMapping(), console, process);
-    embeddersManager.clearCachesFor(mavenProject);
+    embedder.clearCachesFor(mavenProject);
 
     try {
       process.checkCanceled();
@@ -1003,7 +996,7 @@ public class MavenProjectsTree {
                                 MavenEmbeddersManager embeddersManager,
                                 MavenConsole console,
                                 MavenProgressIndicator process) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(EmbedderKind.EMBEDDER_FOR_DOWNLOAD);
+    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.EmbedderKind.FOR_DOWNLOAD);
     embedder.customizeForResolve(console, process);
 
     try {
@@ -1020,7 +1013,7 @@ public class MavenProjectsTree {
                                         MavenEmbeddersManager embeddersManager,
                                         MavenConsole console,
                                         MavenProgressIndicator process) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(EmbedderKind.EMBEDDER_FOR_DOWNLOAD);
+    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.EmbedderKind.FOR_DOWNLOAD);
     embedder.customizeForResolve(console, process);
 
     try {

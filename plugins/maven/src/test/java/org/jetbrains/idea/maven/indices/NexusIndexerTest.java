@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class NexusIndexerTest extends MavenIndicesTestCase {
@@ -33,7 +32,7 @@ public class NexusIndexerTest extends MavenIndicesTestCase {
     super.setUp();
     myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, "local1_index", "local1", "remote");
 
-    myEmbedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings(), Collections.EMPTY_MAP);
+    myEmbedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings());
 
     myIndexer = myEmbedder.getComponent(NexusIndexer.class);
     myUpdater = myEmbedder.getComponent(IndexUpdater.class);

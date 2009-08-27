@@ -97,7 +97,7 @@ public class MavenIndicesManager implements ApplicationComponent {
     if (myIndices != null) return;
 
     MavenGeneralSettings defaultSettings = new MavenGeneralSettings();
-    myEmbedder = MavenEmbedderFactory.createEmbedder(defaultSettings, Collections.EMPTY_MAP);
+    myEmbedder = MavenEmbedderFactory.createEmbedder(defaultSettings);
     myIndices = new MavenIndices(myEmbedder, getIndicesDir(), new MavenIndex.IndexListener() {
       public void indexIsBroken(MavenIndex index) {
         scheduleUpdate(null, Collections.singletonList(index), false);
@@ -253,7 +253,7 @@ public class MavenIndicesManager implements ApplicationComponent {
               protected void run(Result<MavenEmbedderWrapper> result) throws Throwable {
                 if (!projectOrNull.isDisposed()) {
                   MavenGeneralSettings settings = MavenProjectsManager.getInstance(projectOrNull).getGeneralSettings();
-                  result.setResult(MavenEmbedderFactory.createEmbedder(settings, Collections.EMPTY_MAP));
+                  result.setResult(MavenEmbedderFactory.createEmbedder(settings));
                 }
               }
             }.execute().getResultObject();

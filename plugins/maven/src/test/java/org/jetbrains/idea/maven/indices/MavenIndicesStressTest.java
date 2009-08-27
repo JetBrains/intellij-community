@@ -6,7 +6,6 @@ import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,7 +19,7 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
     helper.copy("local2", "local1");
     //setRepositoryPath(fixture.getTestDataPath("local1"));
 
-    final MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings(), Collections.EMPTY_MAP);
+    final MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings());
     File indicesDir = new File(myDir, "indices");
 
     final MavenIndices indices = new MavenIndices(embedder, indicesDir, this);
@@ -80,7 +79,7 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
     helper.copy("local2", "local1");
     setRepositoryPath(helper.getTestDataPath("local1"));
 
-    MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings(), Collections.EMPTY_MAP);
+    MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings());
     File indicesDir = new File(myDir, "indices");
 
     MavenIndices indices = new MavenIndices(embedder, indicesDir, this);

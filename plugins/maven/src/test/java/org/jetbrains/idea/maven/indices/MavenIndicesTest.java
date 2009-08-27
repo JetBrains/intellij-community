@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class MavenIndicesTest extends MavenIndicesTestCase {
@@ -42,7 +41,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
   }
 
   private void initIndices(String relativeDir) {
-    myEmbedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings(), Collections.EMPTY_MAP);
+    myEmbedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings());
     myIndicesDir = new File(myDir, relativeDir);
     myIndices = new MavenIndices(myEmbedder, myIndicesDir, new MavenIndex.IndexListener() {
       public void indexIsBroken(MavenIndex index) {

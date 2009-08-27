@@ -609,22 +609,7 @@ public class MavenProjectReader {
       }
     }
 
-    List<Exception> ee = new ArrayList<Exception>();
-    // todo todo 
-    //ArtifactResolutionResult resolutionResult = r.getArtifactResolutionResult();
-    //if (resolutionResult != null) {
-    //  ee.addAll(resolutionResult.getCircularDependencyExceptions());
-    //  ee.addAll(resolutionResult.getMetadataResolutionExceptions());
-    //  ee.addAll(resolutionResult.getVersionRangeViolations());
-    //  ee.addAll(resolutionResult.getErrorArtifactExceptions());
-    //}
-
-    for (Exception each : ee) {
-      problems.add(new MavenProjectProblem(each.getMessage(), false));
-      MavenLog.LOG.info(each);
-    }
-
-    return ee.isEmpty();
+    return problems.isEmpty();
   }
 
   public MavenProjectReaderResult generateSources(MavenEmbedderWrapper embedder,

@@ -31,7 +31,7 @@ public class MavenEmbedderWrapperTest extends MavenImportingTestCase {
 
   private void initEmbedder() {
     if (myEmbedder != null) releaseEmbedder();
-    myEmbedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings(), Collections.EMPTY_MAP);
+    myEmbedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings());
   }
 
   private void releaseEmbedder() {
