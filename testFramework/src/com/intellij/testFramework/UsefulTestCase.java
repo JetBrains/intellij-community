@@ -330,8 +330,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected String getTestName(boolean lowercaseFirstLetter) {
     String name = getName();
-    Assert.assertTrue(name.startsWith("test"));
-    name = name.substring("test".length());
+    name = StringUtil.trimStart(name, "test");
     if (StringUtil.isEmpty(name)) {
       return "";
     }
