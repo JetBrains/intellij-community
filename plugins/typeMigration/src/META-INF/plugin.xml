@@ -1,0 +1,20 @@
+<idea-plugin>
+  <name>Type Migration</name>
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.changeVariableTypeQuickFixProvider
+        implementation="com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider"/>
+    <intentionAction>
+      <className>com.intellij.refactoring.typeMigration.intentions.ConvertFieldToAtomicIntention</className>
+    </intentionAction>
+  </extensions>
+  <actions>
+    <group id="Type Migration">
+      <action id="ChangeTypeSignature"
+              class="com.intellij.refactoring.typeMigration.actions.ChangeTypeSignatureAction"
+              text="T_ype Migration..."
+              description="Change type of the return type of the method, field, parameter, variable or class type argumeants and correct all references"/>
+      <add-to-group group-id="RefactoringMenu1" relative-to-action="ChangeSignature" anchor="after"/>
+    </group>
+  </actions>
+  <depends>Structural Search</depends>
+</idea-plugin>
