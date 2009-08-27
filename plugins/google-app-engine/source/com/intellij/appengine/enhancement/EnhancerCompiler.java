@@ -15,13 +15,15 @@ import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,12 +38,16 @@ import java.util.List;
  */
 public class EnhancerCompiler implements ClassPostProcessingCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.appengine.enhancement.EnhancerCompiler");
+  private Project myProject;
+
+  public EnhancerCompiler(Project project) {
+    myProject = project;
+  }
 
   @NotNull
   public ProcessingItem[] getProcessingItems(CompileContext context) {
     List<ProcessingItem> items = new ArrayList<ProcessingItem>();
-    final Module[] affectedModules = context.getCompileScope().getAffectedModules();
-    for (Module module : affectedModules) {
+    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
       for (AppEngineFacet facet : FacetManager.getInstance(module).getFacetsByType(AppEngineFacet.ID)) {
         if (facet.getConfiguration().isRunEnhancerOnMake()) {
           final VirtualFile outputRoot = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
@@ -64,7 +70,7 @@ public class EnhancerCompiler implements ClassPostProcessingCompiler {
     else if (StdFileTypes.CLASS.equals(file.getFileType())) {
       final VirtualFile sourceFile = ((CompileContextEx)context).getSourceFileByOutputFile(file);
       if (sourceFile != null && facet.shouldRunEnhancerFor(sourceFile)) {
-        items.add(new ClassFileItem(file, facet));
+        items.add(new ClassFileItem(file, sourceFile, facet));
       }
     }
   }
@@ -74,7 +80,9 @@ public class EnhancerCompiler implements ClassPostProcessingCompiler {
     MultiValuesMap<AppEngineFacet, ClassFileItem> itemsByFacet = new MultiValuesMap<AppEngineFacet, ClassFileItem>();
     for (ProcessingItem item : items) {
       final ClassFileItem classFileItem = (ClassFileItem)item;
-      itemsByFacet.put(classFileItem.getFacet(), classFileItem);
+      if (context.getCompileScope().belongs(classFileItem.getSourceFile().getUrl())) {
+        itemsByFacet.put(classFileItem.getFacet(), classFileItem);
+      }
     }
 
     List<ProcessingItem> processed = new ArrayList<ProcessingItem>();
@@ -148,11 +156,14 @@ public class EnhancerCompiler implements ClassPostProcessingCompiler {
 
   private static void clearClasspath(PathsList classPath, PathsList clearedClasspath) {
     for (String filePath : classPath.getPathList()) {
-      final VirtualFile root = JarFileSystem.getInstance().findFileByPath(
-        FileUtil.toSystemIndependentName(filePath) + JarFileSystem.JAR_SEPARATOR);
-      if (root == null || !LibraryUtil.isClassAvailableInLibrary(new VirtualFile[]{root}, "org.objectweb.asm.ClassReader")) {
-        clearedClasspath.add(filePath);
+      if (filePath.endsWith(".jar")) {
+        final VirtualFile root =
+          JarFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(filePath) + JarFileSystem.JAR_SEPARATOR);
+        if (root != null && LibraryUtil.isClassAvailableInLibrary(new VirtualFile[]{root}, "org.objectweb.asm.ClassReader")) {
+          continue;
+        }
       }
+      clearedClasspath.add(filePath);
     }
   }
 

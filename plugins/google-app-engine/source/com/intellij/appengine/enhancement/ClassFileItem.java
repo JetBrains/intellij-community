@@ -11,17 +11,23 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class ClassFileItem implements FileProcessingCompiler.ProcessingItem {
-  private final VirtualFile myFile;
+  private final VirtualFile myClassFile;
+  private final VirtualFile mySourceFile;
   private final AppEngineFacet myFacet;
 
-  public ClassFileItem(VirtualFile file, AppEngineFacet facet) {
-    myFile = file;
+  public ClassFileItem(VirtualFile classFile, VirtualFile sourceFile, AppEngineFacet facet) {
+    myClassFile = classFile;
+    mySourceFile = sourceFile;
     myFacet = facet;
   }
 
   @NotNull
   public VirtualFile getFile() {
-    return myFile;
+    return myClassFile;
+  }
+
+  public VirtualFile getSourceFile() {
+    return mySourceFile;
   }
 
   public AppEngineFacet getFacet() {
@@ -29,6 +35,6 @@ public class ClassFileItem implements FileProcessingCompiler.ProcessingItem {
   }
 
   public ValidityState getValidityState() {
-    return new TimestampValidityState(myFile.getTimeStamp());
+    return new TimestampValidityState(myClassFile.getTimeStamp());
   }
 }
