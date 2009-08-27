@@ -306,7 +306,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           myDataDir = getDataRootDir(testName);
           myOriginalSourceDir = myDataDir.findFileByRelativePath(getSourceDirRelativePath());
 
-          File dir = createTempDir("compiler" + testName.toUpperCase() + "_");
+          File dir = createTempDirectory();
           myModuleRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
           mySourceDir = createSourcesDir();
           myClassesDir = createOutputDir();
