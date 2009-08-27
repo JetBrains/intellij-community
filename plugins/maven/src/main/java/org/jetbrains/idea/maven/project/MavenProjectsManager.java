@@ -722,7 +722,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     wrapper.set(new Runnable() {
       public void run() {
         if (!StartupManagerEx.getInstanceEx(myProject).postStartupActivityPassed()) {
-          mySchedulesQueue.queue(new Update(MavenProjectsManager.this) {
+          mySchedulesQueue.queue(new Update(runnable) { // should not remove previously schedules tasks
             public void run() {
               wrapper.get().run();
             }
