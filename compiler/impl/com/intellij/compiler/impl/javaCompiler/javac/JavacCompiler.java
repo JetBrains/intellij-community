@@ -39,9 +39,24 @@ public class JavacCompiler extends ExternalCompiler {
   private final List<File> myTempFiles = new ArrayList<File>();
   @NonNls private static final String JAVAC_MAIN_CLASS_OLD = "sun.tools.javac.Main";
   @NonNls public static final String JAVAC_MAIN_CLASS = "com.sun.tools.javac.Main";
+  private boolean myAnnotationProcessorMode = false;
 
   public JavacCompiler(Project project) {
     myProject = project;
+  }
+
+  public boolean isAnnotationProcessorMode() {
+    return myAnnotationProcessorMode;
+  }
+
+  /**
+   * @param annotationProcessorMode
+   * @return previous value
+   */
+  public boolean setAnnotationProcessorMode(boolean annotationProcessorMode) {
+    final boolean oldValue = myAnnotationProcessorMode;
+    myAnnotationProcessorMode = annotationProcessorMode;
+    return oldValue;
   }
 
   public boolean checkCompiler(final CompileScope scope) {
@@ -98,8 +113,7 @@ public class JavacCompiler extends ExternalCompiler {
 
   @NotNull
   @NonNls
-  public String getId() // used for externalization
-  {
+  public String getId() { // used for externalization
     return "Javac";
   }
 
@@ -168,7 +182,7 @@ public class JavacCompiler extends ExternalCompiler {
     final boolean isVersion1_4 = CompilerUtil.isOfVersion(versionString, "1.4");
     final boolean isVersion1_5 = CompilerUtil.isOfVersion(versionString, "1.5") || CompilerUtil.isOfVersion(versionString, "5.0");
     final boolean isVersion1_5_or_higher = isVersion1_5 || !(isVersion1_0 || isVersion1_1 || isVersion1_2 || isVersion1_3 || isVersion1_4);
-
+    final int versionIndex = isVersion1_0? 0 : isVersion1_1? 1 : isVersion1_2? 2 : isVersion1_3? 3 : isVersion1_4? 4 : isVersion1_5? 5 : 6;
 
     JavaSdkType sdkType = (JavaSdkType)jdk.getSdkType();
 
@@ -189,7 +203,7 @@ public class JavacCompiler extends ExternalCompiler {
     }
 
     final List<String> additionalOptions =
-      addAdditionalSettings(commandLine, javacSettings, isVersion1_0, isVersion1_1, isVersion1_2, isVersion1_3, isVersion1_4);
+      addAdditionalSettings(commandLine, javacSettings, myAnnotationProcessorMode, versionIndex);
 
     CompilerUtil.addLocaleOptions(commandLine, false);
 
@@ -211,7 +225,7 @@ public class JavacCompiler extends ExternalCompiler {
       commandLine.add(JAVAC_MAIN_CLASS);
     }
 
-    addCommandLineOptions(chunk, commandLine, outputPath, jdk, isVersion1_0, isVersion1_1, myTempFiles, true, true);
+    addCommandLineOptions(chunk, commandLine, outputPath, jdk, isVersion1_0, isVersion1_1, myTempFiles, true, true, myAnnotationProcessorMode);
 
     commandLine.addAll(additionalOptions);
 
@@ -249,24 +263,39 @@ public class JavacCompiler extends ExternalCompiler {
     }
   }
 
-  public static List<String> addAdditionalSettings(List<String> commandLine, JavacSettings javacSettings,
-                                             boolean version1_0,
-                                             boolean version1_1,
-                                             boolean version1_2,
-                                             boolean version1_3,
-                                             boolean version1_4) {
+  public static List<String> addAdditionalSettings(List<String> commandLine, JavacSettings javacSettings, boolean isAnnotationProcessing, int versionIndex) {
     final List<String> additionalOptions = new ArrayList<String>();
     StringTokenizer tokenizer = new StringTokenizer(javacSettings.getOptionsString(), " ");
+    if (versionIndex < 6) {
+      isAnnotationProcessing = false; // makes no sense for these versions
+    }
+    if (isAnnotationProcessing) {
+      additionalOptions.add("-Xprefer:source");
+      additionalOptions.add("-implicit:none");
+      additionalOptions.add("-proc:only");
+      // todo: temporary!
+      //additionalOptions.add("-processor");
+      //additionalOptions.add("CheckNamesProcessor");
+      //additionalOptions.add("org.apache.openjpa.persistence.meta.AnnotationProcessor6");
+    }
     while (tokenizer.hasMoreTokens()) {
       @NonNls String token = tokenizer.nextToken();
-      if (version1_0) {
+      if (versionIndex == 0) {
         if ("-deprecation".equals(token)) {
           continue; // not supported for this version
         }
       }
-      if (version1_0 || version1_1 || version1_2 || version1_3 || version1_4) {
+      if (versionIndex <= 4) {
         if ("-Xlint".equals(token)) {
           continue; // not supported in these versions
+        }
+      }
+      if (isAnnotationProcessing) {
+        if (token.startsWith("-proc:")) {
+          continue;
+        }
+        if (token.startsWith("-implicit:")) {
+          continue;
         }
       }
       if (token.startsWith("-J-")) {
@@ -282,7 +311,8 @@ public class JavacCompiler extends ExternalCompiler {
   public static void addCommandLineOptions(ModuleChunk chunk, @NonNls List<String> commandLine, String outputPath, Sdk jdk,
                                            boolean version1_0,
                                            boolean version1_1,
-                                           List<File> tempFiles, boolean addSourcePath, boolean useTempFile) throws IOException {
+                                           List<File> tempFiles, boolean addSourcePath, boolean useTempFile,
+                                           boolean isAnnotationProcessingMode) throws IOException {
 
     LanguageLevel languageLevel = chunk.getLanguageLevel();
     CompilerUtil.addSourceCommandLineSwitch(jdk, languageLevel, commandLine);
@@ -312,6 +342,11 @@ public class JavacCompiler extends ExternalCompiler {
       commandLine.add("\"\"");
     }
 
+    if (isAnnotationProcessingMode) {
+      // todo: come up with some solution about the path for generated sources
+      commandLine.add("-s");
+      commandLine.add(outputPath.replace('/', File.separatorChar));
+    }
     commandLine.add("-d");
     commandLine.add(outputPath.replace('/', File.separatorChar));
   }

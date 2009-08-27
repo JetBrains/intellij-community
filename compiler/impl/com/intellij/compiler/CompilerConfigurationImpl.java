@@ -68,7 +68,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   public int DEPLOY_AFTER_MAKE = Options.SHOW_DIALOG;
 
   private final Collection<BackendCompiler> myRegisteredCompilers = new ArrayList<BackendCompiler>();
-  private BackendCompiler JAVAC_EXTERNAL_BACKEND;
+  private JavacCompiler JAVAC_EXTERNAL_BACKEND;
   private final Perl5Matcher myPatternMatcher = new Perl5Matcher();
 
   {
@@ -164,7 +164,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   public void projectClosed() {
   }
 
-  public BackendCompiler getJavacCompiler() {
+  public JavacCompiler getJavacCompiler() {
     return JAVAC_EXTERNAL_BACKEND;
   }
 

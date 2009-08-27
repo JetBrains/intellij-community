@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * @see CompilerManager#compile(CompileScope, CompileStatusNotification, boolean)
  */
 public interface CompileScope extends UserDataHolder {
+  CompileScope[] EMPTY_ARRAY = new CompileScope[0];
   /**
    * Returns the list of files within the scope.
    *

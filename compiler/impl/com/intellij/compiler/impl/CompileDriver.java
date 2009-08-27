@@ -65,6 +65,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
@@ -97,7 +98,17 @@ public class CompileDriver {
     }
   };
   private CompilerFilter myCompilerFilter = CompilerFilter.ALL;
-  
+  private static CompilerFilter SOURCE_PROCESSING_ONLY = new CompilerFilter() {
+    public boolean acceptCompiler(Compiler compiler) {
+      return compiler instanceof SourceProcessingCompiler;
+    }
+  };
+  private static CompilerFilter ALL_EXCEPT_SOURCE_PROCESSING = new CompilerFilter() {
+    public boolean acceptCompiler(Compiler compiler) {
+      return !SOURCE_PROCESSING_ONLY.acceptCompiler(compiler);
+    }
+  };
+
   private OutputPathFinder myOutputFinder; // need this for updating zip archives (experimental feature) 
 
   private Set<File> myAllOutputDirectories;
@@ -129,11 +140,11 @@ public class CompileDriver {
   }
 
   public void rebuild(CompileStatusNotification callback) {
-    doRebuild(callback, null, true, addAdditionalRoots(new ProjectCompileScope(myProject)));
+    doRebuild(callback, null, true, addAdditionalRoots(new ProjectCompileScope(myProject), ALL_EXCEPT_SOURCE_PROCESSING));
   }
 
   public void make(CompileScope scope, CompileStatusNotification callback) {
-    scope = addAdditionalRoots(scope);
+    scope = addAdditionalRoots(scope, ALL_EXCEPT_SOURCE_PROCESSING);
     if (validateCompilerConfiguration(scope, false)) {
       startup(scope, false, false, callback, null, true, false);
     }
@@ -143,7 +154,7 @@ public class CompileDriver {
     if (LOG.isDebugEnabled()) {
       LOG.debug("isUpToDate operation started");
     }
-    scope = addAdditionalRoots(scope);
+    scope = addAdditionalRoots(scope, ALL_EXCEPT_SOURCE_PROCESSING);
 
     final CompilerTask task = new CompilerTask(myProject, true, "", true);
     final CompileContextImpl compileContext =
@@ -271,16 +282,8 @@ public class CompileDriver {
     }
   }
 
-  private CompileScope addAdditionalRoots(CompileScope originalScope) {
-    CompileScope scope = originalScope;
-    final Set<Module> affected = new HashSet<Module>(Arrays.asList(originalScope.getAffectedModules()));
-    for (Map.Entry<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> entry : myGenerationCompilerModuleToOutputDirMap.entrySet()) {
-      final Module module = entry.getKey().getSecond();
-      if (affected.contains(module)) {
-        final Pair<VirtualFile, VirtualFile> outputs = entry.getValue();
-        scope = new CompositeScope(scope, new FileSetCompileScope(Arrays.asList(outputs.getFirst(), outputs.getSecond()), new Module[]{module}));
-      }
-    }
+  private CompileScope addAdditionalRoots(CompileScope originalScope, final CompilerFilter filter) {
+    CompileScope scope = attachIntermediateOutputDirectories(originalScope, filter);
 
     final AdditionalCompileScopeProvider[] scopeProviders = Extensions.getExtensions(AdditionalCompileScopeProvider.EXTENSION_POINT_NAME);
     CompileScope baseScope = scope;
@@ -288,6 +291,19 @@ public class CompileDriver {
       final CompileScope additionalScope = scopeProvider.getAdditionalScope(baseScope);
       if (additionalScope != null) {
         scope = new CompositeScope(scope, additionalScope);
+      }
+    }
+    return scope;
+  }
+
+  private CompileScope attachIntermediateOutputDirectories(CompileScope originalScope, CompilerFilter filter) {
+    CompileScope scope = originalScope;
+    final Set<Module> affected = new HashSet<Module>(Arrays.asList(originalScope.getAffectedModules()));
+    for (Map.Entry<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> entry : myGenerationCompilerModuleToOutputDirMap.entrySet()) {
+      final Module module = entry.getKey().getSecond();
+      if (affected.contains(module) && filter.acceptCompiler(entry.getKey().getFirst())) {
+        final Pair<VirtualFile, VirtualFile> outputs = entry.getValue();
+        scope = new CompositeScope(scope, new FileSetCompileScope(Arrays.asList(outputs.getFirst(), outputs.getSecond()), new Module[]{module}));
       }
     }
     return scope;
@@ -618,6 +634,17 @@ public class CompileDriver {
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, SourceInstrumentingCompiler.class,
                                                       FILE_PROCESSING_COMPILER_ADAPTER_FACTORY, forceCompile, true, onlyCheckStatus);
 
+        didSomething |= invokeFileProcessingCompilers(compilerManager, context, SourceProcessingCompiler.class,
+                                                      FILE_PROCESSING_COMPILER_ADAPTER_FACTORY, forceCompile, true, onlyCheckStatus);
+
+        final CompileScope intermediateSources = attachIntermediateOutputDirectories(new CompositeScope(CompileScope.EMPTY_ARRAY) {
+          @NotNull
+          public Module[] getAffectedModules() {
+            return context.getCompileScope().getAffectedModules();
+          }
+        }, SOURCE_PROCESSING_ONLY);
+        context.addScope(intermediateSources);
+
         didSomething |= translate(context, compilerManager, forceCompile, isRebuild, trackDependencies, onlyCheckStatus);
 
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassInstrumentingCompiler.class,
@@ -852,7 +879,6 @@ public class CompileDriver {
                                                 boolean forceCompile,
                                                 final boolean checkScope,
                                                 final boolean onlyCheckStatus) throws ExitException {
-    LOG.assertTrue(FileProcessingCompiler.class.isAssignableFrom(fileProcessingCompilerClass));
     boolean didSomething = false;
     final FileProcessingCompiler[] compilers = compilerManager.getCompilers(fileProcessingCompilerClass, myCompilerFilter);
     if (compilers.length > 0) {
@@ -864,7 +890,21 @@ public class CompileDriver {
               throw new ExitException(ExitStatus.CANCELLED);
             }
 
-            final boolean processedSomething = processFiles(factory.create(context, compiler), forceCompile, checkScope, onlyCheckStatus, cacheUpdater);
+            CompileContextEx _context = context;
+            if (compiler instanceof IntermediateOutputCompiler) {
+              final IntermediateOutputCompiler _compiler = (IntermediateOutputCompiler)compiler;
+              _context = new CompileContextExProxy(context) {
+                public VirtualFile getModuleOutputDirectory(final Module module) {
+                  return getGenerationOutputDir(_compiler, module, false);
+                }
+
+                public VirtualFile getModuleOutputDirectoryForTests(final Module module) {
+                  return getGenerationOutputDir(_compiler, module, true);
+                }
+              };
+            }
+
+            final boolean processedSomething = processFiles(factory.create(_context, compiler), forceCompile, checkScope, onlyCheckStatus, cacheUpdater);
 
             if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
               throw new ExitException(ExitStatus.ERRORS);

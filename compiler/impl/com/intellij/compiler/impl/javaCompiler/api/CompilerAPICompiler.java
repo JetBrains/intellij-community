@@ -118,9 +118,9 @@ public class CompilerAPICompiler implements BackendCompiler {
           List<String> commandLine = new ArrayList<String>();
           JavacSettings javacSettings = CompilerAPISettings.getInstance(myProject);
           final List<String> additionalOptions =
-            JavacCompiler.addAdditionalSettings(commandLine, javacSettings, false, false, false, false, false);
+            JavacCompiler.addAdditionalSettings(commandLine, javacSettings, false, 6);
 
-          JavacCompiler.addCommandLineOptions(chunk, commandLine, outputDir, chunk.getJdk(), false,false, null, false, false);
+          JavacCompiler.addCommandLineOptions(chunk, commandLine, outputDir, chunk.getJdk(), false,false, null, false, false, false);
           commandLine.addAll(additionalOptions);
           return commandLine;
         }

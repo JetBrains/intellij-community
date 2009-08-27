@@ -879,24 +879,26 @@ public class BackendCompilerWrapper {
   private final Map<Module, String> myModuleToTestsOutput = new HashMap<Module, String>();
 
   private String getTestsOutputDir(final Module module) {
-      if (myModuleToTestsOutput.containsKey(module)) {
-        return myModuleToTestsOutput.get(module);
-      }
-      final String out = CompilerPaths.getModuleOutputPath(module, true);
-      myModuleToTestsOutput.put(module, out);
-      return out;
+    if (myModuleToTestsOutput.containsKey(module)) {
+      return myModuleToTestsOutput.get(module);
     }
+    final VirtualFile outputDirectory = myCompileContext.getModuleOutputDirectoryForTests(module);
+    final String out = outputDirectory != null? outputDirectory.getPath() : null;
+    myModuleToTestsOutput.put(module, out);
+    return out;
+  }
 
   private final Map<Module, String> myModuleToOutput = new HashMap<Module, String>();
 
   private String getOutputDir(final Module module) {
-      if (myModuleToOutput.containsKey(module)) {
-        return myModuleToOutput.get(module);
-      }
-      final String out = CompilerPaths.getModuleOutputPath(module, false);
-      myModuleToOutput.put(module, out);
-      return out;
+    if (myModuleToOutput.containsKey(module)) {
+      return myModuleToOutput.get(module);
     }
+    final VirtualFile outputDirectory = myCompileContext.getModuleOutputDirectory(module);
+    final String out = outputDirectory != null? outputDirectory.getPath() : null;
+    myModuleToOutput.put(module, out);
+    return out;
+  }
 
   private int myProcessedFilesCount = 0;
   private int myTotalFilesToCompile = 0;

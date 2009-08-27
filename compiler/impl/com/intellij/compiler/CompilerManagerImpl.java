@@ -52,7 +52,9 @@ public class CompilerManagerImpl extends CompilerManager {
 
     // predefined compilers
     addTranslatingCompiler(new JavaCompiler(myProject), new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA)), new HashSet<FileType>(Arrays.asList(StdFileTypes.CLASS)));
-    addCompiler(new ResourceCompiler(myProject, compilerConfiguration));
+    // todo: enable compiler later
+    //addCompiler(new AnnotationProcessingCompiler(project));
+    addCompiler(new ResourceCompiler(project, compilerConfiguration));
     addCompiler(new RmicCompiler());
     addCompiler(new IncrementalPackagingCompiler());
     if (ArtifactManager.useArtifacts() || ApplicationManager.getApplication().isUnitTestMode()) {

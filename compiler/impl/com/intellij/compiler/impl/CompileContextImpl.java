@@ -114,7 +114,15 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   public boolean isGenerated(VirtualFile file) {
-    return myGeneratedSources.contains(FileBasedIndex.getFileId(file));
+    if (myGeneratedSources.contains(FileBasedIndex.getFileId(file))) {
+      return true;
+    }
+    for (final VirtualFile root : myRootToModuleMap.keySet()) {
+      if (VfsUtil.isAncestor(root, file, false)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void updateZippedOuput(String outputDir, String relativePath) throws IOException {
