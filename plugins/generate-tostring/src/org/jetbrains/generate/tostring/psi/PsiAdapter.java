@@ -133,7 +133,7 @@ public abstract class PsiAdapter {
      * @return true if field is a primitve array type.
      */
     public boolean isPrimitiveArrayType(PsiType type) {
-        return isPrimitiveType(type) && isArray(type);
+        return type instanceof PsiArrayType && isPrimitiveType(((PsiArrayType) type).getComponentType());
     }
 
     /**
@@ -143,10 +143,7 @@ public abstract class PsiAdapter {
      * @return true if it's an Object array type.
      */
     public boolean isObjectArrayType(PsiType type) {
-        if (isPrimitiveType(type))
-            return false;
-
-        return type.getCanonicalText().indexOf("[]") > 0;
+        return type instanceof PsiArrayType && !isPrimitiveType(((PsiArrayType) type).getComponentType());
     }
 
     /**
