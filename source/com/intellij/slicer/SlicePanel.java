@@ -74,7 +74,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
       }
     };
 
-    builder[0] = new SliceTreeBuilder(myTree, project, dataFlowToThis, rootNode, targetEqualUsages);
+    builder[0] = new SliceTreeBuilder(myTree, project, dataFlowToThis, rootNode);
     builder[0].setCanYieldUpdate(!ApplicationManager.getApplication().isUnitTestMode());
 
     Disposer.register(this, builder[0]);
