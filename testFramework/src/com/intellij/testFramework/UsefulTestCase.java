@@ -183,11 +183,13 @@ public abstract class UsefulTestCase extends TestCase {
   }
   
   public static <T> void assertSameElements(Collection<? extends T> collection, T... expected) {
-    if (collection.size() != expected.length || !new HashSet<T>(Arrays.asList(expected)).equals(new HashSet<T>(collection))) {
+    assertSameElements(collection, Arrays.asList(expected));
+  }
+  public static <T> void assertSameElements(Collection<? extends T> collection, Collection<T> expected) {
+    if (collection.size() != expected.size() || !new HashSet<T>(expected).equals(new HashSet<T>(collection))) {
       Assert.assertEquals(toString(expected, "\n"), toString(collection, "\n"));
-      Assert.assertEquals(new HashSet<T>(Arrays.asList(expected)), new HashSet<T>(collection));
+      Assert.assertEquals(new HashSet<T>(expected), new HashSet<T>(collection));
     }
-
   }
 
   public static String toString(Object[] collection, String separator) {
@@ -298,7 +300,7 @@ public abstract class UsefulTestCase extends TestCase {
       System.out.println("\n" + entry.getKey().getName() + "\n");
       final StackTraceElement[] value = entry.getValue();
       for (final StackTraceElement stackTraceElement : value) {
-        System.out.println(stackTraceElement);
+        System.out.println(" at "+stackTraceElement);
       }
     }
   }
@@ -330,6 +332,9 @@ public abstract class UsefulTestCase extends TestCase {
     String name = getName();
     Assert.assertTrue(name.startsWith("test"));
     name = name.substring("test".length());
+    if (StringUtil.isEmpty(name)) {
+      return "";
+    }
     if (lowercaseFirstLetter) {
       name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }
@@ -412,6 +417,25 @@ public abstract class UsefulTestCase extends TestCase {
     }
     catch (Throwable e) {
       // Way to go...
+    }
+  }
+
+  static void checkAllTimersAreDisposed() throws Exception {
+    Class<?> aClass = Class.forName("javax.swing.TimerQueue");
+
+    Method inst = aClass.getDeclaredMethod("sharedInstance");
+    inst.setAccessible(true);
+    Object queue = inst.invoke(null);
+    Field field = aClass.getDeclaredField("firstTimer");
+    field.setAccessible(true);
+    Object firstTimer = field.get(queue);
+    if (firstTimer != null) {
+      try {
+        fail("Not disposed Timer: "+firstTimer.toString()+"; queue:"+queue);
+      }
+      finally {
+        field.set(queue, null);
+      }
     }
   }
 }
