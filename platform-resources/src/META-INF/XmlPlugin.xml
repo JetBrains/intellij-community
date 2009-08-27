@@ -253,9 +253,6 @@
 
     <optionsApplicabilityFilter implementation="com.intellij.application.options.XmlOptionsApplicabilityFilter"/>
 
-    <refactoring.extractIncludeHandler language="HTML" implementationClass="com.intellij.refactoring.lang.html.ExtractIncludeFromHTMLHandler"/>
-    <refactoring.extractIncludeHandler language="XHTML" implementationClass="com.intellij.refactoring.lang.html.ExtractIncludeFromHTMLHandler"/>
-
     <metaDataContributor implementation="com.intellij.xml.util.XmlApplicationComponent"/>
 
     <browserSettingsProvider implementation="com.intellij.ide.browsers.BrowserSettingsProviderImpl"/>
@@ -307,27 +304,5 @@
       <action id="WebBrowser.EXPLORER" text="Internet _Explorer" class="com.intellij.ide.browsers.actions.OpenInExplorerAction"/>
       <action id="WebBrowser.OPERA" text="_Opera" class="com.intellij.ide.browsers.actions.OpenInOperaAction"/>
     </group>
-
-    <action id="HtmlAddTableColumnBefore" class="com.intellij.xml.actions.HtmlAddTableColumnBeforeAction"
-            text="Add a new column to the table before the current one" icon="/xml/actions/add_column_before.png">
-      <add-to-group anchor="last" group-id="GenerateGroup"/>
-    </action>
-    <action id="HtmlAddTableColumnAfter" class="com.intellij.xml.actions.HtmlAddTableColumnAfterAction"
-            text="Add a new column to the table after the current one" icon="/xml/actions/add_column_after.png">
-      <add-to-group anchor="last" group-id="GenerateGroup"/>
-    </action>
-
-    <action id="HtmlTableCellNavigateUp" class="com.intellij.xml.actions.navigation.HtmlTableCellNavigateUpAction" text="Navigate to previous table row">
-      <keyboard-shortcut first-keystroke="control shift alt UP" keymap="$default"/>
-    </action>
-    <action id="HtmlTableCellNavigateDown" class="com.intellij.xml.actions.navigation.HtmlTableCellNavigateDownAction" text="Navigate to next table row">
-      <keyboard-shortcut first-keystroke="control shift alt DOWN" keymap="$default"/>
-    </action>
-    <action id="HtmlTableCellNavigateLeft" class="com.intellij.xml.actions.navigation.HtmlTableCellNavigateLeftAction" text="Navigate to previous table column">
-      <keyboard-shortcut first-keystroke="control shift alt LEFT" keymap="$default"/>
-    </action>
-    <action id="HtmlTableCellNavigateRight" class="com.intellij.xml.actions.navigation.HtmlTableCellNavigateRightAction" text="Navigate to next table column">
-      <keyboard-shortcut first-keystroke="control shift alt RIGHT" keymap="$default"/>
-    </action>
   </actions>
 </idea-plugin>

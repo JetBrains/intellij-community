@@ -10,7 +10,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspectio
 public class XmlInspectionToolProvider implements InspectionToolProvider {
   public Class[] getInspectionClasses() {
     return new Class[] {
-      CheckImageSizeInspection.class,
       CheckTagEmptyBodyInspection.class,
       CheckDtdReferencesInspection.class,
       CheckEmptyTagInspection.class,
@@ -22,9 +21,6 @@ public class XmlInspectionToolProvider implements InspectionToolProvider {
       XmlWrongRootElementInspection.class,
       HtmlUnknownTagInspection.class,
       HtmlUnknownAttributeInspection.class,
-      HtmlDeprecatedTagInspection.class,
-      HtmlPresentationalElementInspection.class,
-      HtmlFormInputWithoutLabelInspection.class,
       XmlUnboundNsPrefixInspection.class
     };
   }

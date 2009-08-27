@@ -3,7 +3,6 @@
  */
 package com.intellij.xml.util;
 
-import com.intellij.codeInsight.daemon.impl.analysis.encoding.HtmlHttpEquivEncodingReferenceProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.encoding.XmlEncodingReferenceProvider;
 import com.intellij.patterns.PlatformPatterns;
 import static com.intellij.patterns.StandardPatterns.string;
@@ -42,11 +41,6 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
     URIReferenceProvider uriProvider = new URIReferenceProvider();
     XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, null, dtdReferencesProvider.getSystemReferenceFilter(), uriProvider);
 
-    HtmlReferenceProvider provider = new HtmlReferenceProvider();
-    String[] htmlAttrs = HtmlReferenceProvider.getAttributeValues();
-    ElementFilter htmlFilter = HtmlReferenceProvider.getFilter();
-    boolean caseSensitive1 = false;
-    XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, htmlAttrs, htmlFilter, caseSensitive1, provider);
 
     XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, new String[] { "href" }, new ScopeFilter(
       new ParentElementFilter(
@@ -83,12 +77,6 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
       uriProvider);
 
     XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, null, URIReferenceProvider.ELEMENT_FILTER, true, uriProvider);
-
-    XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, new String[] {"content"}, new ScopeFilter(
-      new ParentElementFilter(
-        new AndFilter(XmlTagFilter.INSTANCE, new XmlTextFilter("meta")), 2
-      )
-    ), true, new HtmlHttpEquivEncodingReferenceProvider());
 
     XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, new String[] {"encoding"}, new ScopeFilter(new ParentElementFilter(new ClassFilter(XmlProcessingInstruction.class))), true,
                                                        new XmlEncodingReferenceProvider());
