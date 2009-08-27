@@ -29,7 +29,7 @@ public class PushDownAction extends BaseRefactoringAction {
     PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
     if (file == null) return null;
     final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(file.getViewProvider().getBaseLanguage());
-    return supportProvider != null ? supportProvider.getPullUpHandler() : null;
+    return supportProvider != null ? supportProvider.getPushDownHandler() : null;
   }
 
   protected boolean isAvailableForLanguage(final Language language) {
