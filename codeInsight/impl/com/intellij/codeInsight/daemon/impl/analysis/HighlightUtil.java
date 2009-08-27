@@ -14,6 +14,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
+import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.diagnostic.Logger;
@@ -389,8 +390,7 @@ public class HighlightUtil {
         }
       }
       if (leftVar != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFix(leftVar, rType));
-        QuickFixAction.registerQuickFixAction(highlightInfo, new TypeMigrationFix(leftVar, rType));
+        registerChangeVariableTypeFixes(leftVar, rType, highlightInfo);
       }
     }
     return highlightInfo;
@@ -422,8 +422,7 @@ public class HighlightUtil {
     int end = variable.getTextRange().getEndOffset();
     HighlightInfo highlightInfo = checkAssignability(lType, rType, initializer, new TextRange(start, end));
     if (highlightInfo != null) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFix(variable, rType));
-      QuickFixAction.registerQuickFixAction(highlightInfo, new TypeMigrationFix(variable, rType));
+      registerChangeVariableTypeFixes(variable, rType, highlightInfo);
     }
     return highlightInfo;
   }
@@ -1963,5 +1962,13 @@ public class HighlightUtil {
     HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, JavaErrorMessages.message("expected.class.or.package"));
     QuickFixAction.registerQuickFixAction(info, new RemoveQualifierFix(qualifier, expression, (PsiClass)resolved));
     return info;
+  }
+
+  public static void registerChangeVariableTypeFixes(PsiVariable parameter, PsiType itemType, HighlightInfo highlightInfo) {
+    for (ChangeVariableTypeQuickFixProvider fixProvider : Extensions.getExtensions(ChangeVariableTypeQuickFixProvider.EP_NAME)) {
+      for (IntentionAction action : fixProvider.getFixes(parameter, itemType)) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, action, null);
+      }
+    }
   }
 }

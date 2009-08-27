@@ -15,8 +15,8 @@ import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -694,8 +694,7 @@ public class GenericsHighlightUtil {
     final PsiType parameterType = parameter.getType();
     HighlightInfo highlightInfo = HighlightUtil.checkAssignability(parameterType, itemType, null, new TextRange(start, end));
     if (highlightInfo != null) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFix(parameter, itemType), null);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new TypeMigrationFix(parameter, itemType), null);
+      HighlightUtil.registerChangeVariableTypeFixes(parameter, itemType, highlightInfo);
     } else {
       highlightInfo = checkRawToGenericAssignment(parameterType, itemType, statement.getIterationParameter());
     }

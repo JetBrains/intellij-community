@@ -221,11 +221,6 @@ public class JavaSdkImpl extends JavaSdk {
     return versionString;
   }
 
-  @Nullable
-  public static String getJdkVersion(final String sdkHome) {
-    return SdkVersionUtil.readVersionFromProcessOutput(sdkHome, new String[] {sdkHome + File.separator + "bin" + File.separator + "java",  "-version"}, "version");
-  }
-
   @NotNull
   public String getComponentName() {
     return getName();

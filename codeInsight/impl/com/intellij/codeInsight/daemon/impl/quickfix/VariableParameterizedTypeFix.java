@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -34,8 +35,7 @@ public class VariableParameterizedTypeFix {
         }
         PsiSubstitutor substitutor = factory.createSubstitutor(map);
         PsiType suggestedType = factory.createType(aClass, substitutor);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFix(variable, suggestedType));
-        QuickFixAction.registerQuickFixAction(highlightInfo, new TypeMigrationFix(variable, suggestedType));
+        HighlightUtil.registerChangeVariableTypeFixes(variable, suggestedType, highlightInfo);
       }
     }
   }

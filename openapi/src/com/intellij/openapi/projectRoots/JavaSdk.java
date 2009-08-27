@@ -17,8 +17,10 @@ package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.projectRoots.impl.SdkVersionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -47,4 +49,8 @@ public abstract class JavaSdk extends SdkType implements JavaSdkType, Applicatio
     return JdkUtil.checkForJre(file);
   }
 
+  @Nullable
+  public static String getJdkVersion(final String sdkHome) {
+    return SdkVersionUtil.readVersionFromProcessOutput(sdkHome, new String[] {sdkHome + File.separator + "bin" + File.separator + "java",  "-version"}, "version");
+  }
 }
