@@ -31,6 +31,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.diff.DiffTree;
+import org.jetbrains.annotations.NotNull;
 
 public class BlockSupportImpl extends BlockSupport {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.text.BlockSupportImpl");
@@ -217,7 +218,7 @@ public class BlockSupportImpl extends BlockSupport {
     sendPsiAfterEvent(fileImpl, oldLength);
   }
 
-  private static void mergeTrees(final PsiFileImpl file, final ASTNode oldRoot, final ASTNode newRoot) {
+  private static void mergeTrees(@NotNull final PsiFileImpl file, @NotNull final ASTNode oldRoot, @NotNull final ASTNode newRoot) {
     //System.out.println("---------------------------------------------------");
     synchronized (PsiLock.LOCK) {
       if (newRoot instanceof FileElement) {
