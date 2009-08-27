@@ -99,7 +99,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       }
 
       public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, PsiElement element) {
-        final LocalInspectionTool localInspectionTool = key == null ? null : myAvailableTools.get(key.toString());
+        final LocalInspectionTool localInspectionTool = myAvailableTools.get(key.toString());
         return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
       }
 
@@ -153,7 +153,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
     catch (Exception e) {
       throw new RuntimeException(e);
-    } 
+    }
   }
 
   protected void disableInspectionTool(String shortName){
@@ -364,7 +364,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       dir = VfsUtil.virtualToIoFile(files[0]);
     }
     else {
-      dir = createTempDir("unitTest");
+      dir = createTempDirectory();
       VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
       addSourceContentToRoots(module, vDir);
     }

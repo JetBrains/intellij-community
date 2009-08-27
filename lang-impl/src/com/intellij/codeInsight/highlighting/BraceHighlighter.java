@@ -11,9 +11,11 @@ import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +56,7 @@ public class BraceHighlighter implements ProjectComponent {
             }
           }
         };
-        eventMulticaster.addCaretListener(myCaretListener);
+        eventMulticaster.addCaretListener(myCaretListener, myProject);
 
         mySelectionListener = new SelectionListener() {
           public void selectionChanged(SelectionEvent e) {
@@ -76,7 +78,7 @@ public class BraceHighlighter implements ProjectComponent {
             }
           }
         };
-        eventMulticaster.addDocumentListener(myDocumentListener);
+        eventMulticaster.addDocumentListener(myDocumentListener, myProject);
 
         myFocusChangeListener = new FocusChangeListener() {
           public void focusLost(Editor editor) {
@@ -98,6 +100,14 @@ public class BraceHighlighter implements ProjectComponent {
             }
           }
         );
+
+        Disposer.register(myProject, new Disposable() {
+          public void dispose() {
+            EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
+            eventMulticaster.removeSelectionListener(mySelectionListener);
+            ((EditorEventMulticasterEx)eventMulticaster).removeFocusChangeListner(myFocusChangeListener);
+          }
+        });
       }
     });
   }
@@ -124,10 +134,5 @@ public class BraceHighlighter implements ProjectComponent {
   }
 
   public void projectClosed() {
-    EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
-    eventMulticaster.removeCaretListener(myCaretListener);
-    eventMulticaster.removeSelectionListener(mySelectionListener);
-    eventMulticaster.removeDocumentListener(myDocumentListener);
-    ((EditorEventMulticasterEx)eventMulticaster).removeFocusChangeListner(myFocusChangeListener);
   }
 }

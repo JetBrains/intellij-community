@@ -71,7 +71,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     myBlockSupport = (BlockSupportImpl)blockSupport;
     mySynchronizer = new PsiToDocumentSynchronizer(this, bus);
     myPsiManager.addPsiTreeChangeListener(mySynchronizer);
-    editorFactory.getEventMulticaster().addDocumentListener(this);
+    editorFactory.getEventMulticaster().addDocumentListener(this, myProject);
   }
 
   public void projectOpened() {
@@ -88,7 +88,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   public void initComponent() { }
 
   public void disposeComponent() {
-    EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(this);
   }
 
   @Nullable

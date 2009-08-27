@@ -33,20 +33,12 @@ import java.awt.*;
 import java.util.*;
 
 public class HighlightManagerImpl extends HighlightManager implements ProjectComponent {
-
   private AnActionListener myAnActionListener;
   private DocumentListener myDocumentListener;
+  private final Project myProject;
 
-  private final Key<Map<RangeHighlighter, HighlightInfo>> HIGHLIGHT_INFO_MAP_KEY = Key.create("HIGHLIGHT_INFO_MAP_KEY");
-
-  static class HighlightInfo {
-    final Editor editor;
-    final int flags;
-
-    public HighlightInfo(Editor editor, int flags) {
-      this.editor = editor;
-      this.flags = flags;
-    }
+  public HighlightManagerImpl(Project project) {
+    myProject = project;
   }
 
   @NotNull
@@ -62,7 +54,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
 
   public void projectOpened() {
     myAnActionListener = new MyAnActionListener();
-    ActionManagerEx.getInstanceEx().addAnActionListener(myAnActionListener);
+    ActionManagerEx.getInstanceEx().addAnActionListener(myAnActionListener, myProject);
 
     myDocumentListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent event) {
@@ -87,12 +79,10 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
         }
       }
     };
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener);
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener, myProject);
   }
 
   public void projectClosed() {
-    ActionManagerEx.getInstanceEx().removeAnActionListener(myAnActionListener);
-    EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(myDocumentListener);
   }
 
   @Nullable
@@ -294,4 +284,19 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
       hideHighlights(editor, HIDE_BY_ANY_KEY);
     }
   }
+
+
+  private final Key<Map<RangeHighlighter, HighlightInfo>> HIGHLIGHT_INFO_MAP_KEY = Key.create("HIGHLIGHT_INFO_MAP_KEY");
+
+  static class HighlightInfo {
+    final Editor editor;
+    final int flags;
+
+    public HighlightInfo(Editor editor, int flags) {
+      this.editor = editor;
+      this.flags = flags;
+    }
+  }
+
+
 }

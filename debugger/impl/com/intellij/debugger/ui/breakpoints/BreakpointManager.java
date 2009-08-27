@@ -324,14 +324,8 @@ public class BreakpointManager implements JDOMExternalizable {
       }
     };
 
-    eventMulticaster.addEditorMouseListener(myEditorMouseListener);
-    eventMulticaster.addDocumentListener(myDocumentListener);
-  }
-
-  public void dispose() {
-    EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
-    eventMulticaster.removeEditorMouseListener(myEditorMouseListener);
-    eventMulticaster.removeDocumentListener(myDocumentListener);
+    eventMulticaster.addEditorMouseListener(myEditorMouseListener, myProject);
+    eventMulticaster.addDocumentListener(myDocumentListener, myProject);
   }
 
   public DialogWrapper createConfigurationDialog(@Nullable Breakpoint initialBreakpoint, @Nullable String selectComponent) {

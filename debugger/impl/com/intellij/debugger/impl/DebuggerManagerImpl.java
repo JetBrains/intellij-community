@@ -131,7 +131,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   public Collection<DebuggerSession> getSessions() {
     synchronized (mySessions) {
       final Collection<DebuggerSession> values = mySessions.values();
-      return (values.size() > 0) ? new ArrayList<DebuggerSession>(values) : Collections.<DebuggerSession>emptyList();
+      return values.size() > 0 ? new ArrayList<DebuggerSession>(values) : Collections.<DebuggerSession>emptyList();
     }
   }
 
@@ -143,7 +143,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   }
 
   public void projectClosed() {
-    myBreakpointManager.dispose();
   }
 
   public void projectOpened() {
@@ -396,7 +395,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     }
 
     final TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(useSockets);
-    final String debugAddress = (debuggerInServerMode && useSockets)? ("127.0.0.1:" + address) : address;
+    final String debugAddress = debuggerInServerMode && useSockets ? "127.0.0.1:" + address : address;
     String debuggeeRunProperties = "transport=" + transportService.transportId() + ",address=" + debugAddress;
     if(debuggerInServerMode) {
       debuggeeRunProperties += ",suspend=y,server=n";
@@ -462,15 +461,13 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     }
 
     final String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
-    return (
-        version == null           ||
-        version.startsWith("1.5") ||
-        version.startsWith("1.4") ||
-        version.startsWith("1.3") ||
-        version.startsWith("1.2") ||
-        version.startsWith("1.1") ||
-        version.startsWith("1.0")
-    );
+    return version == null           ||
+    version.startsWith("1.5") ||
+    version.startsWith("1.4") ||
+    version.startsWith("1.3") ||
+    version.startsWith("1.2") ||
+    version.startsWith("1.1") ||
+    version.startsWith("1.0");
   }
 
   public static RemoteConnection createDebugParameters(final JavaParameters parameters, GenericDebuggerRunnerSettings settings, boolean checkValidity)

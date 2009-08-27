@@ -91,6 +91,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
+        if (myEditor.isDisposed()) return; //tests?
         for (final CompletionContributor contributor : CompletionContributor.forParameters(myParameters)) {
           if (myLookup.getAdvertisementText() != null) return;
           if (!myLookup.isCalculating() && !myLookup.isVisible()) return;

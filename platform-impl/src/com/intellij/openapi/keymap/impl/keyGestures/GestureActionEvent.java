@@ -2,14 +2,14 @@ package com.intellij.openapi.keymap.impl.keyGestures;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionEventVisitor;
+import com.intellij.openapi.actionSystem.ActionManager;
 
 public class GestureActionEvent extends AnActionEvent {
   public GestureActionEvent(KeyboardGestureProcessor processor) {
     super(processor.myContext.actionKey,
           processor.myContext.dataContext,
           processor.myContext.actionPlace,
-          processor.myContext.actionPresentation,
-          processor.getActionManager(),
+          processor.myContext.actionPresentation, ActionManager.getInstance(),
           0);
   }
 

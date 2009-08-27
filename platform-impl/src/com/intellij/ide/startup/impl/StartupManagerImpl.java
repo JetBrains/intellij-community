@@ -199,6 +199,13 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   @TestOnly
+  public void prepareForNextTest() {
+    myActivities.clear();
+    myPostStartupActivities.clear();
+    myPreStartupActivities.clear();
+  }
+
+  @TestOnly
   public void checkCleared() {
     try {
       assert myActivities.isEmpty() : "Activities: "+myActivities;
@@ -206,9 +213,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       assert myPreStartupActivities.isEmpty() : "Pre Activities: "+myPreStartupActivities;
     }
     finally {
-      myActivities.clear();
-      myPostStartupActivities.clear();
-      myPreStartupActivities.clear();
+      prepareForNextTest();
     }
   }
 }

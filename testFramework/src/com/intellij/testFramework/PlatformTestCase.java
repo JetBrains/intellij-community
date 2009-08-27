@@ -82,8 +82,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   public static final long DEFAULT_TEST_TIME = 300L;
   public static long ourTestTime = DEFAULT_TEST_TIME;
   private static final MyThreadGroup MY_THREAD_GROUP = new MyThreadGroup();
-  private static final String ourOriginalTempDir = System.getProperty("java.io.tmpdir");
-  private static int ourTestCount = 0;
+  private static final String ourOriginalTempDir = FileUtil.getTempDirectory();
+  protected EditorListenerTracker myEditorListenerTracker;
+  private String myTempDirPath;
 
   static {
     Logger.setFactory(TestLoggerFactory.getInstance());
@@ -124,11 +125,13 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     LOG.info(getClass().getName() + ".setUp()");
 
-    String tempdirpath = ourOriginalTempDir + "/tsttmp" + ourTestCount + "/";
-    setTmpDir(tempdirpath);
-    new File(tempdirpath).mkdir();
+    myTempDirPath = ourOriginalTempDir + getTestName(true) + "/";
+    setTmpDir(myTempDirPath);
+    new File(myTempDirPath).mkdir();
 
     initApplication();
+
+    myEditorListenerTracker = new EditorListenerTracker();
 
     setUpProject();
     storeSettings();
@@ -192,6 +195,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   protected void runStartupActivities() {
     ((StartupManagerImpl)StartupManager.getInstance(myProject)).runStartupActivities();
+    ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivities();
   }
 
   protected File getIprFile() throws IOException {
@@ -255,6 +259,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected void tearDown() throws Exception {
+    ((StartupManagerImpl)StartupManager.getInstance(getProject())).prepareForNextTest();
+    checkAllTimersAreDisposed();
+
     LookupManager.getInstance(myProject).hideActiveLookup();
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     try {
@@ -277,8 +284,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         }
         LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
-        FileUtil.asyncDelete(new File(ourOriginalTempDir + "/tsttmp" + ourTestCount));
-        ourTestCount++;
+        FileUtil.asyncDelete(new File(myTempDirPath));
 
         setTmpDir(ourOriginalTempDir);
 
@@ -313,6 +319,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       assertEquals(0, allEditors.length);
 
       //cleanTheWorld();
+      myEditorListenerTracker.checkListenersLeak();
     }
     finally {
       myProjectManager = null;
@@ -602,8 +609,13 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected File createTempDirectory() throws IOException {
-    File dir = FileUtil.createTempDirectory("unitTest", null);
+    File dir = FileUtil.createTempDirectory(getTestName(true), null);
     myFilesToDelete.add(dir);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        VirtualFileManager.getInstance().refresh(false);
+      }
+    });
     return dir;
   }
 

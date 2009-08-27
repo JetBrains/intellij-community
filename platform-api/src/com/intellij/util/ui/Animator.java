@@ -17,6 +17,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 
 import javax.swing.*;
 
@@ -61,7 +62,22 @@ public abstract class Animator implements Disposable {
     myForward = forward;
     myCurrentFrame = forward ? 0 : totalFrames;
 
-    myTimer = new Timer(myName, myCycleLength / myTotalFrames) {
+    myTimer = ApplicationManager.getApplication().isUnitTestMode() ?
+              new Timer(myName, myCycleLength / myTotalFrames) {
+                {
+                  dispose();
+                }
+                @Override
+                public boolean isRunning() {
+                  return true;
+                }
+
+                @Override
+                protected void onTimer() throws InterruptedException {
+
+                }
+              }
+              : new Timer(myName, myCycleLength / myTotalFrames) {
       protected void onTimer() throws InterruptedException {
         boolean repaint = true;
         if (!isAnimated()) {

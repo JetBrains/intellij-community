@@ -8,8 +8,10 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -17,11 +19,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class GeneratedCodeFoldingPassFactory implements TextEditorHighlightingPassFactory {
-  private final TextEditorHighlightingPassRegistrar myRegistrar;
+public class GeneratedCodeFoldingPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
 
-  public GeneratedCodeFoldingPassFactory(final TextEditorHighlightingPassRegistrar registrar) {
-    myRegistrar = registrar;
+  public GeneratedCodeFoldingPassFactory(Project project,final TextEditorHighlightingPassRegistrar registrar) {
+    super(project);
+    registrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_FOLDING}, null, false, -1);
   }
 
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
@@ -31,21 +33,8 @@ public class GeneratedCodeFoldingPassFactory implements TextEditorHighlightingPa
     return null;
   }
 
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
   @NonNls @NotNull
   public String getComponentName() {
     return "GeneratedCodeFoldingPassFactory";
-  }
-
-  public void initComponent() {
-    myRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_FOLDING}, null, false, -1);
-  }
-
-  public void disposeComponent() {
   }
 }

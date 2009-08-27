@@ -158,7 +158,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       }
     };
     psiManager.addPsiTreeChangeListener(myChangeListener);
-    virtualFileManager.addVirtualFileListener(myVirtualFileListener);
+    virtualFileManager.addVirtualFileListener(myVirtualFileListener, myProject);
     FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) { //tests?
       fileStatusManager.addFileStatusListener(new FileStatusListener() {
@@ -201,8 +201,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   public void projectClosed() {
-    PsiManager.getInstance(myProject).removePsiTreeChangeListener(myChangeListener);
-    VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
   }
 
   @NotNull

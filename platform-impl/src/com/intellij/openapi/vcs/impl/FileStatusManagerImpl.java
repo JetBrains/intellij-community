@@ -60,12 +60,11 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   }
 
   public void projectClosed() {
-    EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(myDocumentListener);
   }
 
   public void projectOpened() {
     myDocumentListener = new MyDocumentAdapter();
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener);
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener, myProject);
   }
 
   public void disposeComponent() {

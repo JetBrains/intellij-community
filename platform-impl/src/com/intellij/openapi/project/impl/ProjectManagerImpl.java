@@ -50,6 +50,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -309,6 +310,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return filePath;
   }
 
+  @TestOnly
+  public synchronized boolean isDefaultProjectInitialized() {
+    return myDefaultProject != null;
+  }
   @NotNull
   public synchronized Project getDefaultProject() {
     if (myDefaultProject == null) {

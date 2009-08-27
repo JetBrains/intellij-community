@@ -357,9 +357,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected void tearDown() throws Exception {
+    ((StartupManagerImpl)StartupManager.getInstance(getProject())).prepareForNextTest();
+    checkAllTimersAreDisposed();
+
     CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
     checkForSettingsDamage();
     doTearDown();
+
+
     super.tearDown();
   }
 
@@ -609,11 +614,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       SimpleLightProjectDescriptor that = (SimpleLightProjectDescriptor)o;
 
       if (myModuleType != null ? !myModuleType.equals(that.myModuleType) : that.myModuleType != null) return false;
-      if (isJDKChanged(that.getSdk())) {
-        return false;
-      }
-
-      return true;
+      return !isJDKChanged(that.getSdk());
     }
 
     @Override

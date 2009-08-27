@@ -27,9 +27,6 @@ public class ImageOrColorPreviewProjectComponent extends AbstractProjectComponen
     FileEditorManager.getInstance(myProject).addFileEditorManagerListener(new MyFileEditorManagerListener(), myProject);
   }
 
-  public void projectClosed() {
-  }
-
   @NonNls
   @NotNull
   public String getComponentName() {

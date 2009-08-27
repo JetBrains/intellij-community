@@ -33,7 +33,6 @@ package com.intellij.pom.java.impl;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
@@ -51,12 +50,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 
 public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent {
-  private final Project myProject;
   private final PsiManager myPsiManager;
   private final PomModel myPomModel;
 
-  public PomJavaAspectImpl(Project project, PsiManager psiManager, TreeAspect treeAspect, PomModel pomModel) {
-    myProject = project;
+  public PomJavaAspectImpl(PsiManager psiManager, TreeAspect treeAspect, PomModel pomModel) {
     myPsiManager = psiManager;
     myPomModel = pomModel;
     pomModel.registerAspect(PomJavaAspect.class, this, Collections.singleton((PomModelAspect)treeAspect));

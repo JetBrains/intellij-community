@@ -5,8 +5,13 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   private final EventDispatcher<DocumentListener> myDocumentMulticaster = EventDispatcher.create(DocumentListener.class);
@@ -151,5 +156,22 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
 
   public void removeFocusChangeListner(FocusChangeListener listener) {
     myFocusChangeListenerMulticaster.removeListener(listener);
+  }
+
+  @TestOnly
+  public Map<Class, List> getListeners() {
+    Map<Class, List> myCopy = new LinkedHashMap<Class, List>();
+    myCopy.put(DocumentListener.class, new ArrayList(myDocumentMulticaster.getListeners()));
+    myCopy.put(EditReadOnlyListener.class, new ArrayList(myEditReadOnlyMulticaster.getListeners()));
+
+    myCopy.put(EditorMouseListener.class, new ArrayList(myEditorMouseMulticaster.getListeners()));
+    myCopy.put(EditorMouseMotionListener.class, new ArrayList(myEditorMouseMotionMulticaster.getListeners()));
+    myCopy.put(ErrorStripeListener.class, new ArrayList(myErrorStripeMulticaster.getListeners()));
+    myCopy.put(CaretListener.class, new ArrayList(myCaretMulticaster.getListeners()));
+    myCopy.put(SelectionListener.class, new ArrayList(mySelectionMulticaster.getListeners()));
+    myCopy.put(VisibleAreaListener.class, new ArrayList(myVisibleAreaMulticaster.getListeners()));
+    myCopy.put(PropertyChangeListener.class, new ArrayList(myPropertyChangeMulticaster.getListeners()));
+    myCopy.put(FocusChangeListener.class, new ArrayList(myFocusChangeListenerMulticaster.getListeners()));
+    return myCopy;
   }
 }
