@@ -64,10 +64,10 @@ public class PyRefactoringUtil {
 
     // Check if selection breaks AST node in binary expression
     if (parent instanceof PyBinaryExpression) {
-      final String selection =
-        file.getText().substring(element1.getTextOffset(), element2.getTextOffset() + element2.getTextLength());
+      final String selection = file.getText().substring(element1.getTextOffset(), element2.getTextOffset() + element2.getTextLength());
       final PyExpression expression =
-        PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyAssignmentStatement.class, "z=" + selection).getAssignedValue();
+        PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyAssignmentStatement.class, "z=" + selection)
+          .getAssignedValue();
       if (PsiUtilBase.hasErrorElementChild(expression)) {
         return null;
       }

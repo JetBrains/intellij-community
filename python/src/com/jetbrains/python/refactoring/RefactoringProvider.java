@@ -2,6 +2,7 @@ package com.jetbrains.python.refactoring;
 
 import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.jetbrains.python.refactoring.introduce.constant.ConstantIntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.variable.VariableIntroduceHandler;
 
 /**
@@ -14,5 +15,10 @@ public class RefactoringProvider extends DefaultRefactoringSupportProvider {
   @Override
   public RefactoringActionHandler getIntroduceVariableHandler() {
     return new VariableIntroduceHandler();
+  }
+
+  @Override
+  public RefactoringActionHandler getIntroduceConstantHandler() {
+    return new ConstantIntroduceHandler();
   }
 }

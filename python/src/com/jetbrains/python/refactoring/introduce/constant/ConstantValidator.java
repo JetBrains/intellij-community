@@ -1,4 +1,4 @@
-package com.jetbrains.python.refactoring.introduce.variable;
+package com.jetbrains.python.refactoring.introduce.constant;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -10,16 +10,14 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
  * User: Alexey.Ivanov
- * Date: Aug 19, 2009
- * Time: 4:45:40 PM
+ * Date: Aug 25, 2009
+ * Time: 8:29:16 PM
  */
-public class VariableValidator extends IntroduceValidator {
-  @Nullable
+public class ConstantValidator extends IntroduceValidator {
   protected String simpleCheck(String name, PsiElement psiElement) {
     if (psiElement.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE) != null) {
       final Pair<PsiElement,TextRange> data = psiElement.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
@@ -34,7 +32,7 @@ public class VariableValidator extends IntroduceValidator {
     }
 
     if (PyRefactoringUtil.collectScopeVariables(context).contains(name)) {
-      return PyBundle.message("refactoring.introduce.variable.scope.error");
+      return PyBundle.message("refactoring.introduce.constant.scope.error");
     }
     return null;
   }
