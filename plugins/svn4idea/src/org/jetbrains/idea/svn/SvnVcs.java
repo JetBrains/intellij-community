@@ -176,7 +176,7 @@ public class SvnVcs extends AbstractVcs {
   }
 
   public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration, final ChangeListManager changeListManager,
-                final VcsDirtyScopeManager vcsDirtyScopeManager) {
+                final VcsDirtyScopeManager vcsDirtyScopeManager, final StartupManager startupManager) {
     super(project, VCS_NAME);
     LOG.debug("ct");
     myConfiguration = svnConfiguration;
@@ -201,7 +201,8 @@ public class SvnVcs extends AbstractVcs {
 
     if (myProject.isDefault()) {
       myChangeListListener = null;
-    } else {
+    }
+    else {
       upgradeIfNeeded(bus);
 
       myChangeListListener = new SvnChangelistListener(myProject, createChangelistClient());
@@ -214,7 +215,7 @@ public class SvnVcs extends AbstractVcs {
     }
 
     // do one time after project loaded
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
+    startupManager.registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
         postStartup();
 
