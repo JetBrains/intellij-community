@@ -11,4 +11,12 @@ public interface RunJavaConfiguration {
   String getProperty(int property);
 
   Project getProject();
+
+  boolean isAlternativeJrePathEnabled();
+
+  void setAlternativeJrePathEnabled(boolean enabled);
+
+  String getAlternativeJrePath();
+
+  void setAlternativeJrePath(String ALTERNATIVE_JRE_PATH);
 }
