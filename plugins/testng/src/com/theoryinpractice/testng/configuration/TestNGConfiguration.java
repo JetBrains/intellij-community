@@ -163,6 +163,23 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
     return data.getProperty(type, project);
   }
 
+  public boolean isAlternativeJrePathEnabled() {
+     return ALTERNATIVE_JRE_PATH_ENABLED;
+   }
+
+   public void setAlternativeJrePathEnabled(boolean enabled) {
+     this.ALTERNATIVE_JRE_PATH_ENABLED = enabled;
+   }
+
+   public String getAlternativeJrePath() {
+     return ALTERNATIVE_JRE_PATH;
+   }
+
+   public void setAlternativeJrePath(String ALTERNATIVE_JRE_PATH) {
+     this.ALTERNATIVE_JRE_PATH = ALTERNATIVE_JRE_PATH;
+   }
+
+
   public void setClassConfiguration(PsiClass psiclass) {
     setModule(data.setMainClass(psiclass));
     data.TEST_OBJECT = TestType.CLASS.getType();

@@ -257,7 +257,7 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
 
   public void configureClasspath(final JavaParameters javaParameters) throws CantRunException {
     RunConfigurationModule module = getConfigurationModule();
-    final String jreHome = ALTERNATIVE_JRE_PATH_ENABLED ? ALTERNATIVE_JRE_PATH : null;
+    final String jreHome = isAlternativeJrePathEnabled() ? getAlternativeJrePath() : null;
     final int pathType = JavaParameters.JDK_AND_CLASSES_AND_TESTS;
     if (myData.getScope() == TestSearchScope.WHOLE_PROJECT) {
       JavaParametersUtil.configureProject(module.getProject(), javaParameters, pathType, jreHome);
@@ -265,6 +265,22 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
     else {
       JavaParametersUtil.configureModule(module, javaParameters, pathType, jreHome);
     }
+  }
+
+  public boolean isAlternativeJrePathEnabled() {
+    return ALTERNATIVE_JRE_PATH_ENABLED;
+  }
+
+  public void setAlternativeJrePathEnabled(boolean enabled) {
+    this.ALTERNATIVE_JRE_PATH_ENABLED = enabled;
+  }
+
+  public String getAlternativeJrePath() {
+    return ALTERNATIVE_JRE_PATH;
+  }
+
+  public void setAlternativeJrePath(String ALTERNATIVE_JRE_PATH) {
+    this.ALTERNATIVE_JRE_PATH = ALTERNATIVE_JRE_PATH;
   }
 
   public static class Data implements Cloneable {

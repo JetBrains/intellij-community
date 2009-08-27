@@ -93,8 +93,8 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     else if (myModuleWDScope.isSelected()) {
       data.setScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
     }
-    configuration.ALTERNATIVE_JRE_PATH = myAlternativeJREPanel.getPath();
-    configuration.ALTERNATIVE_JRE_PATH_ENABLED = myAlternativeJREPanel.isPathEnabled();
+    configuration.setAlternativeJrePath(myAlternativeJREPanel.getPath());
+    configuration.setAlternativeJrePathEnabled(myAlternativeJREPanel.isPathEnabled());
 
     configuration.getPersistentData().setEnvs(myEnvVariablesComponent.getEnvs());
     configuration.getPersistentData().PASS_PARENT_ENVS = myEnvVariablesComponent.isPassParentEnvs();
@@ -114,7 +114,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     else {
       myWholeProjectScope.setSelected(true);
     }
-    myAlternativeJREPanel.init(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
+    myAlternativeJREPanel.init(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
 
     myEnvVariablesComponent.setEnvs(configuration.getPersistentData().getEnvs());
     myEnvVariablesComponent.setPassParentEnvs(configuration.getPersistentData().PASS_PARENT_ENVS);

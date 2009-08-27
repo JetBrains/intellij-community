@@ -118,7 +118,7 @@ public abstract class TestObject implements JavaCommandLine {
     throws CantRunException {
     int classPathType = JavaParametersUtil.getClasspathType(configurationModule, mainClassName, true);
     JavaParametersUtil.configureModule(configurationModule, parameters, classPathType,
-                                       myConfiguration.ALTERNATIVE_JRE_PATH_ENABLED ? myConfiguration.ALTERNATIVE_JRE_PATH : null);
+                                       myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null);
   }
 
   private static final TestObject NOT_CONFIGURED = new TestObject(null, null, null, null) {
@@ -160,12 +160,12 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException{
-    if (myConfiguration.ALTERNATIVE_JRE_PATH_ENABLED){
-      if (myConfiguration.ALTERNATIVE_JRE_PATH == null ||
-          myConfiguration.ALTERNATIVE_JRE_PATH.length() == 0 ||
-          !JavaSdk.checkForJre(myConfiguration.ALTERNATIVE_JRE_PATH)){
+    if (myConfiguration.isAlternativeJrePathEnabled()){
+      if (myConfiguration.getAlternativeJrePath() == null ||
+          myConfiguration.getAlternativeJrePath().length() == 0 ||
+          !JavaSdk.checkForJre(myConfiguration.getAlternativeJrePath())){
         throw new RuntimeConfigurationWarning(
-          ExecutionBundle.message("jre.path.is.not.valid.jre.home.error.mesage", myConfiguration.ALTERNATIVE_JRE_PATH));
+          ExecutionBundle.message("jre.path.is.not.valid.jre.home.error.mesage", myConfiguration.getAlternativeJrePath()));
       }
     }
   }
