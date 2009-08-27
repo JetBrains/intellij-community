@@ -19,19 +19,11 @@ import java.util.Collection;
 public class SliceTreeBuilder extends AbstractTreeBuilder {
   public boolean splitByLeafExpressions;
   public final boolean dataFlowToThis;
-  private final DuplicateMap myDuplicateMap;
 
-  public SliceTreeBuilder(JTree tree, Project project, boolean dataFlowToThis, final SliceNode rootNode, DuplicateMap duplicateMap) {
+  public SliceTreeBuilder(JTree tree, Project project, boolean dataFlowToThis, final SliceNode rootNode) {
     super(tree, (DefaultTreeModel)tree.getModel(), new SliceTreeStructure(project, rootNode), AlphaComparator.INSTANCE, false);
     this.dataFlowToThis = dataFlowToThis;
-    myDuplicateMap = duplicateMap;
     initRootNode();
-    //MessageBusConnection connection = project.getMessageBus().connect(this);
-    //connection.subscribe(ProjectTopics.MODIFICATION_TRACKER,new PsiModificationTracker.Listener() {
-    //  public void modificationCountChanged() {
-    //    refreshAll();
-    //  }
-    //});
   }
 
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {

@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -17,7 +16,10 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author cdr
@@ -204,7 +206,7 @@ public class SliceUtil {
               argumentList = anon.getArgumentList();
               PsiElement callExp = element.getParent();
               if (!(callExp instanceof PsiCallExpression)) return true;
-              result = ((PsiCallExpression)callExp).resolveMethodGenerics();
+              result = ((PsiCall)callExp).resolveMethodGenerics();
             }
             else {
               if (!(element instanceof PsiCall)) return true;
@@ -264,23 +266,6 @@ public class SliceUtil {
     return substitutor;
   }
 
-  private static PsiSubstitutor rev(PsiSubstitutor substitutor) {
-    Map<PsiTypeParameter,PsiType> map = substitutor.getSubstitutionMap();
-    Map<PsiTypeParameter,PsiType> newMap = new THashMap<PsiTypeParameter, PsiType>();
-
-    for (Map.Entry<PsiTypeParameter, PsiType> entry : map.entrySet()) {
-      PsiTypeParameter typeParameter = entry.getKey();
-      PsiType type = entry.getValue();
-      PsiClass resolved = PsiUtil.resolveClassInType(type);
-      if (resolved instanceof PsiTypeParameter) {
-        PsiTypeParameter res = (PsiTypeParameter)resolved;
-        PsiImmediateClassType revType = new PsiImmediateClassType(typeParameter, substitutor);
-        newMap.put(res, revType);
-
-      }
-    }
-    return PsiSubstitutorImpl.createSubstitutor(newMap);
-  }
   private static PsiSubstitutor unify(PsiSubstitutor substitutor, PsiSubstitutor parentSubstitutor, final Project project) {
     Map<PsiTypeParameter,PsiType> newMap = new THashMap<PsiTypeParameter, PsiType>(substitutor.getSubstitutionMap());
 
