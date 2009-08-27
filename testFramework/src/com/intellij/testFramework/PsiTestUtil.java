@@ -54,9 +54,16 @@ import java.util.Collection;
 
   public static VirtualFile createTestProjectStructure(final Module module,
                                                        final String rootPath,
-                                                       final Collection<File> filesToDelete, final boolean addProjectRoots
-  ) throws Exception {
-    File dir = FileUtil.createTempDirectory("unitTest", null);
+                                                       final Collection<File> filesToDelete,
+                                                       final boolean addProjectRoots) throws Exception {
+    return createTestProjectStructure("unitTest",module, rootPath, filesToDelete, addProjectRoots);
+  }
+  public static VirtualFile createTestProjectStructure(String tempName,
+                                                       final Module module,
+                                                       final String rootPath,
+                                                       final Collection<File> filesToDelete,
+                                                       final boolean addProjectRoots) throws Exception {
+    File dir = FileUtil.createTempDirectory(tempName, null);
     filesToDelete.add(dir);
 
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));

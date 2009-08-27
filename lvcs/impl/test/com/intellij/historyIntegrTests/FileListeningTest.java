@@ -239,7 +239,7 @@ public class FileListeningTest extends IntegrationTestCase {
   }
 
   public void testDeletingBigFiles() throws Exception {
-    File tempDir = createTempDir("temp");
+    File tempDir = createTempDirectory();
     File tempFile = new File(tempDir, "bigFile.txt");
     OutputStream s = new FileOutputStream(tempFile);
     s.write(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1]);

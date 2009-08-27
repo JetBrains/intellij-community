@@ -35,7 +35,7 @@ public class OverlappingSourceRootsTest extends PsiTestCase {
               public void run() {
 
                 try {
-                  File dir = createTempDir("test");
+                  File dir = createTempDirectory();
 
                   myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getPath().replace(File.separatorChar, '/'));
 

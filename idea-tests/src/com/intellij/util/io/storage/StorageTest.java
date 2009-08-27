@@ -4,6 +4,7 @@
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import junit.framework.TestCase;
 
 import java.io.DataInputStream;
@@ -19,8 +20,8 @@ public class StorageTest extends TestCase {
     myStorage = Storage.create(getFileName());
   }
 
-  private static String getFileName() {
-    return System.getProperty("java.io.tmpdir") + File.separatorChar + "storagetest";
+  private String getFileName() {
+    return FileUtil.getTempDirectory() + File.separatorChar + getName();
   }
 
   protected void tearDown() throws Exception {

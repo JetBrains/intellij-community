@@ -61,7 +61,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
     return createFile(myModule, fileName, text);
   }
   protected PsiFile createFile(Module module, String fileName, String text) throws Exception {
-    File dir = createTempDir("unitTest");
+    File dir = createTempDirectory();
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
 
     return createFile(module, vDir, fileName, text);

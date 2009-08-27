@@ -51,7 +51,7 @@ import java.io.File;
 
   protected void setUp() throws Exception {
     super.setUp();
-    myTempDirectory = FileUtil.createTempDirectory("testCopy", "test");
+    myTempDirectory = FileUtil.createTempDirectory(getTestName(true), "test");
     myFilesToDelete.add(getTestContentFile());
     final File testRoot = new File(PathManagerEx.getTestDataPath(), getTestPath());
     assertTrue(testRoot.getAbsolutePath(), testRoot.isDirectory());

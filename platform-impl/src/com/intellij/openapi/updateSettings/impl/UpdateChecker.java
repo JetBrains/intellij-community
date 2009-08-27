@@ -359,7 +359,7 @@ public final class UpdateChecker {
     OutputStream out = null;
 
     String patchFileName = "jetbrains.patch.jar." + platform;
-    File patchFile = new File(System.getProperty("java.io.tmpdir"), patchFileName);
+    File patchFile = new File(FileUtil.getTempDirectory(), patchFileName);
     
     try {
       connection = new URL(new URL(getPatchesUrl()), fileName).openConnection();
