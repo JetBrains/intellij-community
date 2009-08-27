@@ -14,7 +14,6 @@
     <orderEntry type="module" module-name="UsageView" />
     <orderEntry type="module" module-name="codeInsight-openapi" />
     <orderEntry type="module" module-name="inspections-openapi" />
-    <orderEntry type="module" module-name="inspections-impl" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="module" module-name="platform-api" />
