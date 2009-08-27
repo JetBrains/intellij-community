@@ -5,8 +5,10 @@ import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.lang.ElementsHandler;
+import com.intellij.refactoring.lang.LanguageExtractInclude;
 
 
 public class PushDownAction extends BaseRefactoringAction {
@@ -24,12 +26,9 @@ public class PushDownAction extends BaseRefactoringAction {
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {
-    final Language language = LangDataKeys.LANGUAGE.getData(dataContext);
-    if (language != null) {
-      return LanguageRefactoringSupport.INSTANCE.forLanguage(language).getPushDownHandler();
-    }
-
-    return null;
+    PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
+    if (file == null) return null;
+    return LanguageExtractInclude.INSTANCE.forLanguage(file.getViewProvider().getBaseLanguage());
   }
 
   protected boolean isAvailableForLanguage(final Language language) {
