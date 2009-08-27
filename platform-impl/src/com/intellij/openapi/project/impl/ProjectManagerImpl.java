@@ -854,7 +854,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
 
     for (ProjectManagerListener listener : myListeners) {
-      listener.projectClosing(project);
+      try {
+        listener.projectClosing(project);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
   }
 
@@ -893,7 +898,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
 
     for (ProjectManagerListener listener : myListeners) {
-      listener.projectOpened(project);
+      try {
+        listener.projectOpened(project);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
   }
 
@@ -903,7 +913,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
 
     for (ProjectManagerListener listener : myListeners) {
-      listener.projectClosed(project);
+      try {
+        listener.projectClosed(project);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
   }
 
