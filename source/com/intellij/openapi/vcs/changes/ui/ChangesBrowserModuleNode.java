@@ -23,7 +23,7 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
   public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
     final Module module = (Module)userObject;
 
-    renderer.append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.append(module.isDisposed() ? "" : module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     appendCount(renderer);
     renderer.setIcon(module.getModuleType().getNodeIcon(expanded));
   }
