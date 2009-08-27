@@ -34,11 +34,11 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     return createFileFromText(name, fileType, text, modificationStamp, physical, true);
   }
 
-  public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull String text) {
+  public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text) {
     return createFileFromText(name, language, text, true, true);
   }
 
-  public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull String text, boolean physical,
+  public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text, boolean physical,
                                     final boolean markAsCopy) {
     return trySetupPsiForFile(new LightVirtualFile(name, language, text), language, physical, markAsCopy);
   }

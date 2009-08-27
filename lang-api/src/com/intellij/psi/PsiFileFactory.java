@@ -37,9 +37,9 @@ public abstract class PsiFileFactory {
   public abstract PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
                                       long modificationStamp, boolean physical, boolean markAsCopy);
 
-  public abstract PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull String text);
+  public abstract PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text);
 
-  public abstract PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull String text,
+  public abstract PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
                                              boolean physical, boolean markAsCopy);
 
   public abstract PsiFile createFileFromText(FileType fileType, String fileName, CharSequence chars, int startOffset, int endOffset);
