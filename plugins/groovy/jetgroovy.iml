@@ -29,6 +29,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="Ant" level="project" />
+    <orderEntry type="module" module-name="refactoring-impl" />
   </component>
 </module>
 
