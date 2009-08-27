@@ -22,6 +22,7 @@ public class AppEngineFacetConfiguration implements FacetConfiguration, Persiste
   private String mySdkHomePath = "";
   private boolean myRunEnhancerOnMake = false;
   private List<String> myFilesToEnhance = new ArrayList<String>();
+  private PersistenceApi myPersistenceApi = PersistenceApi.JDO;
 
   public FacetEditorTab[] createEditorTabs(FacetEditorContext editorContext, FacetValidatorsManager validatorsManager) {
     return new FacetEditorTab[] {
@@ -44,6 +45,7 @@ public class AppEngineFacetConfiguration implements FacetConfiguration, Persiste
     mySdkHomePath = FileUtil.toSystemIndependentName(state.getSdkHomePath());
     myRunEnhancerOnMake = state.isRunEnhancerOnMake();
     myFilesToEnhance = state.getFilesToEnhance();
+    myPersistenceApi = state.getPersistenceApi();
   }
 
   @Tag("sdk-home-path")
@@ -64,6 +66,15 @@ public class AppEngineFacetConfiguration implements FacetConfiguration, Persiste
   @AbstractCollection(surroundWithTag = false, elementTag = "file", elementValueAttribute = "path")
   public List<String> getFilesToEnhance() {
     return myFilesToEnhance;
+  }
+
+  @Tag("persistence-api")
+  public PersistenceApi getPersistenceApi() {
+    return myPersistenceApi;
+  }
+
+  public void setPersistenceApi(PersistenceApi persistenceApi) {
+    myPersistenceApi = persistenceApi;
   }
 
   public void setFilesToEnhance(List<String> filesToEnhance) {

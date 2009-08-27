@@ -28,6 +28,7 @@ public class AppEngineUtil {
   public static final Icon APP_ENGINE_ICON = IconLoader.getIcon("/icons/appEngine.png");
   @NonNls public static final String APPENGINE_WEB_XML_NAME = "appengine-web.xml";
   @NonNls public static final String JDO_CONFIG_XML_NAME = "jdoconfig.xml";
+  @NonNls public static final String JPA_CONFIG_XML_NAME = "persistence.xml";
 
   private AppEngineUtil() {
   }

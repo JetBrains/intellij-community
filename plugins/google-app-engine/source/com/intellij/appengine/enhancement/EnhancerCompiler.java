@@ -17,9 +17,12 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -97,27 +100,36 @@ public class EnhancerCompiler implements ClassPostProcessingCompiler {
       final JavaParameters javaParameters = new JavaParameters();
       new ReadAction() {
         protected void run(final Result result) throws Throwable {
+          final JavaParameters tempJavaParameters = new JavaParameters();
           context.getProgressIndicator().setText2("'" + facet.getModule().getName() + "' module, '" + facet.getWebFacet().getName() + "' facet, processing " + items.size() + " classes...");
-          javaParameters.configureByModule(facet.getModule(), JavaParameters.JDK_AND_CLASSES);
-          javaParameters.getClassPath().addFirst(sdk.getToolsApiJarFile().getAbsolutePath());
+          tempJavaParameters.configureByModule(facet.getModule(), JavaParameters.JDK_AND_CLASSES);
+          final PathsList classPath = tempJavaParameters.getClassPath();
+          classPath.addFirst(sdk.getToolsApiJarFile().getAbsolutePath());
+          clearClasspath(classPath, javaParameters.getClassPath());
 
           final ParametersList vmParameters = javaParameters.getVMParametersList();
           vmParameters.add("-Xmx256m");
 
           final ParametersList programParameters = javaParameters.getProgramParametersList();
+          programParameters.add("-api");
+          programParameters.add(facet.getConfiguration().getPersistenceApi().getName());
           programParameters.add("-v");
           for (ClassFileItem item : items) {
             programParameters.add(FileUtil.toSystemDependentName(item.getFile().getPath()));
           }
 
           javaParameters.setMainClass("com.google.appengine.tools.enhancer.Enhance");
+
+          javaParameters.setCharset(tempJavaParameters.getCharset());
+          javaParameters.setEnv(tempJavaParameters.getEnv());
+          javaParameters.setJdk(tempJavaParameters.getJdk());
         }
       }.execute().throwException();
 
 
       final GeneralCommandLine commandLine = CommandLineBuilder.createFromJavaParameters(javaParameters);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("starting enchancer: " + commandLine.getCommandLineString());
+        LOG.debug("starting enhancer: " + commandLine.getCommandLineString());
       }
       final Process process = commandLine.createProcess();
       EnhancerProcessHandler handler = new EnhancerProcessHandler(process, commandLine.getCommandLineString(), context);
@@ -132,6 +144,16 @@ public class EnhancerCompiler implements ClassPostProcessingCompiler {
       LOG.info(e);
     }
     return context.getMessageCount(CompilerMessageCategory.ERROR) == 0;
+  }
+
+  private static void clearClasspath(PathsList classPath, PathsList clearedClasspath) {
+    for (String filePath : classPath.getPathList()) {
+      final VirtualFile root = JarFileSystem.getInstance().findFileByPath(
+        FileUtil.toSystemIndependentName(filePath) + JarFileSystem.JAR_SEPARATOR);
+      if (root == null || !LibraryUtil.isClassAvailableInLibrary(new VirtualFile[]{root}, "org.objectweb.asm.ClassReader")) {
+        clearedClasspath.add(filePath);
+      }
+    }
   }
 
   public ValidityState createValidityState(DataInput in) throws IOException {

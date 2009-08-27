@@ -39,6 +39,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   private JButton myAddButton;
   private JList myFilesList;
   private JButton myRemoveButton;
+  private JComboBox myPersistenceApiComboBox;
   private AppEngineSdkEditor mySdkEditor;
   private DefaultListModel myFilesListModel;
 
@@ -80,6 +81,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
         updateButtons();
       }
     });
+    PersistenceApiComboboxUtil.setComboboxModel(myPersistenceApiComboBox, false);
     updateButtons();
   }
 
@@ -87,10 +89,8 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true);
     descriptor.getRoots().clear();
     final ModuleRootModel rootModel = myContext.getRootModel();
-    if (rootModel != null) {
-      for (VirtualFile file : rootModel.getSourceRoots()) {
-        descriptor.addRoot(file);
-      }
+    for (VirtualFile file : rootModel.getSourceRoots()) {
+      descriptor.addRoot(file);
     }
     final VirtualFile[] files =
         FileChooserFactory.getInstance().createFileChooser(descriptor, myContext.getProject()).choose(null, myContext.getProject());
@@ -117,7 +117,8 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   public boolean isModified() {
     return myRunEnhancerOnMakeCheckBox.isSelected() != myFacetConfiguration.isRunEnhancerOnMake()
            || !mySdkEditor.getPath().equals(myFacetConfiguration.getSdkHomePath())
-           || !getConfiguredFiles().equals(myFacetConfiguration.getFilesToEnhance());
+           || !getConfiguredFiles().equals(myFacetConfiguration.getFilesToEnhance())
+           || PersistenceApiComboboxUtil.getSelectedApi(myPersistenceApiComboBox) != myFacetConfiguration.getPersistenceApi();
   }
 
   private List<String> getConfiguredFiles() {
@@ -132,6 +133,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     myFacetConfiguration.setSdkHomePath(mySdkEditor.getPath());
     myFacetConfiguration.setRunEnhancerOnMake(myRunEnhancerOnMakeCheckBox.isSelected());
     myFacetConfiguration.setFilesToEnhance(getConfiguredFiles());
+    myFacetConfiguration.setPersistenceApi(PersistenceApiComboboxUtil.getSelectedApi(myPersistenceApiComboBox));
   }
 
   public void reset() {
@@ -142,6 +144,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     myFilesListModel.removeAllElements();
     fillFilesList(myFacetConfiguration.getFilesToEnhance());
     myRunEnhancerOnMakeCheckBox.setSelected(myFacetConfiguration.isRunEnhancerOnMake());
+    myPersistenceApiComboBox.setSelectedItem(myFacetConfiguration.getPersistenceApi().getName());
   }
 
   private void fillFilesList(final List<String> paths) {

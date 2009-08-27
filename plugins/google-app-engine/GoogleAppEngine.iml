@@ -22,6 +22,8 @@
     <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="J2EE" />
     <orderEntry type="module" module-name="web-impl" />
+    <orderEntry type="module" module-name="jpa-openapi" />
+    <orderEntry type="module" module-name="jpa-impl" />
   </component>
 </module>
 
