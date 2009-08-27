@@ -39,16 +39,7 @@ public class RefreshQueueImpl extends RefreshQueue {
       final boolean hasWriteAction = app.isWriteAccessAllowed();
       if (isEDT || hasWriteAction) {
         session.scan();
-        if (hasWriteAction) {
-          session.fireEvents();
-        }
-        else {
-          app.runWriteAction(new Runnable() {
-            public void run() {
-              session.fireEvents();
-            }
-          });
-        }
+        session.fireEvents(hasWriteAction);
       }
       else {
         if (((ApplicationEx)app).holdsReadLock()) {
@@ -80,11 +71,7 @@ public class RefreshQueueImpl extends RefreshQueue {
           app.invokeLater(new DumbAwareRunnable() {
             public void run() {
               if (app.isDisposed()) return;
-              app.runWriteAction(new Runnable() {
-                public void run() {
-                  session.fireEvents();
-                }
-              });
+              session.fireEvents(false);
             }
           }, modality);
         }

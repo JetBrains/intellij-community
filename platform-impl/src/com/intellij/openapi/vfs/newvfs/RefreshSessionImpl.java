@@ -32,6 +32,7 @@ public class RefreshSessionImpl extends RefreshSession {
   private List<VirtualFile> myWorkQueue = new ArrayList<VirtualFile>();
   private List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
   private final Semaphore mySemaphore = new Semaphore();
+  private volatile boolean iHaveEventsToFire;
 
   public RefreshSessionImpl(final boolean isAsync, boolean reqursively,
                             final Runnable finishRunnable,
@@ -71,6 +72,7 @@ public class RefreshSessionImpl extends RefreshSession {
     // TODO: indicator in the status bar...
     List<VirtualFile> workQueue = myWorkQueue;
     myWorkQueue = new ArrayList<VirtualFile>();
+    boolean hasEventsToFire = myFinishRunnable != null || !myEvents.isEmpty();
 
     if (!workQueue.isEmpty()) {
       ((LocalFileSystemImpl)LocalFileSystem.getInstance()).markSuspicousFilesDirty(workQueue);
@@ -83,38 +85,54 @@ public class RefreshSessionImpl extends RefreshSession {
 
         RefreshWorker worker = new RefreshWorker(file, myIsRecursive);
         worker.scan();
-        myEvents.addAll(worker.getEvents());
+        List<VFileEvent> events = worker.getEvents();
+        myEvents.addAll(events);
+        if (!events.isEmpty()) hasEventsToFire = true;
       }
     }
+    iHaveEventsToFire = hasEventsToFire;
   }
 
-  public void fireEvents() {
+  public void fireEvents(boolean hasWriteAction) {
     try {
-      if (myEvents.isEmpty() && myFinishRunnable == null) return;
+      if (!iHaveEventsToFire) return;
 
-      final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
-
-      manager.fireBeforeRefreshStart(myIsAsync);
-      try {
-        while (!myWorkQueue.isEmpty() || !myEvents.isEmpty()) {
-          ManagingFS.getInstance().processEvents(mergeEventsAndReset());
-          scan();
-        }
-        notifyCacheUpdaters();
+      if (hasWriteAction) {
+        fireEventsInWriteAction();
       }
-      finally {
-        try {
-          manager.fireAfterRefreshFinish(myIsAsync);
-        }
-        finally {
-          if (myFinishRunnable != null) {
-            myFinishRunnable.run();
+      else {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            fireEventsInWriteAction();
           }
-        }
+        });
       }
     }
     finally {
       mySemaphore.up();
+    }
+  }
+
+  private void fireEventsInWriteAction() {
+    final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
+
+    manager.fireBeforeRefreshStart(myIsAsync);
+    try {
+      while (!myWorkQueue.isEmpty() || !myEvents.isEmpty()) {
+        ManagingFS.getInstance().processEvents(mergeEventsAndReset());
+        scan();
+      }
+      notifyCacheUpdaters();
+    }
+    finally {
+      try {
+        manager.fireAfterRefreshFinish(myIsAsync);
+      }
+      finally {
+        if (myFinishRunnable != null) {
+          myFinishRunnable.run();
+        }
+      }
     }
   }
 

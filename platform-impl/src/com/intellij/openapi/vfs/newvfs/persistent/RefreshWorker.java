@@ -120,7 +120,7 @@ public class RefreshWorker {
       scheduleDeletion(child);
       scheduleCreation(file, child.getName(), uptodateisDirectory);
     }
-    else if ((myIsRecursive || !currentIsDirectory)) {
+    else if (myIsRecursive || !currentIsDirectory) {
       myRefreshQueue.addLast(child);
     }
   }
