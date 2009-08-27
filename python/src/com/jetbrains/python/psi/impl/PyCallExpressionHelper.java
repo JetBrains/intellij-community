@@ -65,8 +65,8 @@ public class PyCallExpressionHelper {
         if (resolved != null) {
           EnumSet<PyCallExpression.Flag> flags = EnumSet.noneOf(PyCallExpression.Flag.class);
           int implicit_offset = 0;
-          //boolean is_inst = isByInstance();
-          if (isByInstance(us)) implicit_offset += 1;
+          boolean is_by_instance = isByInstance(us);
+          if (is_by_instance) implicit_offset += 1;
           if (resolved instanceof PyFunction) {
             PyFunction meth = (PyFunction)resolved; // constructor call?
             if (PyNames.INIT.equals(meth.getName())) implicit_offset += 1;
@@ -85,6 +85,7 @@ public class PyCallExpressionHelper {
                   }
                   else if (PyNames.CLASSMETHOD.equals(deconame)) {
                     flags.add(PyCallExpression.Flag.CLASSMETHOD);
+                    if (! is_by_instance) implicit_offset += 1; // Both Foo.method() and foo.method() have implicit the first arg 
                   }
                   // else could be custom decorator processing
                 }
