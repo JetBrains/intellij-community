@@ -15,23 +15,21 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks;
 
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiParameter;
 
 /**
  * @author ilyas
  */
 public interface GrClosableBlock extends GrExpression, GrCodeBlock, GrParametersOwner {
-  @NonNls String GROOVY_LANG_CLOSURE = "groovy.lang.Closure";
-  @NonNls String IT_PARAMETER_NAME = "it";
+  String GROOVY_LANG_CLOSURE = "groovy.lang.Closure";
+  String OWNER_NAME = "owner";
+  String IT_PARAMETER_NAME = "it";
 
   GrParameterList getParameterList();
 
