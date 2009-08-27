@@ -386,6 +386,7 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
+    <group id="EditorContextBarMenu">
+    </group>
   </actions>
 </component>
-

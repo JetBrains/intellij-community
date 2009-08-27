@@ -291,18 +291,5 @@
       <action id="NewXhtmlType" class="com.intellij.ide.actions.CreateXhtmlAction" text="XHTML File"/>
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
     </group>
-
-    <action id="WebOpenInAction" class="com.intellij.ide.browsers.actions.WebOpenInAction" text="Web preview...">
-      <keyboard-shortcut keymap="$default" first-keystroke="alt F2"/>
-      <add-to-group group-id="CodeEditorViewGroup" anchor="after" relative-to-action="SelectIn"/>
-    </action>
-
-    <group id="WebOpenInActionGroup" description="Open In...">
-      <action id="WebBrowser.FIREFOX" text="_Firefox" class="com.intellij.ide.browsers.actions.OpenInFirefoxAction"/>
-      <action id="WebBrowser.CHROME" text="_Chrome" class="com.intellij.ide.browsers.actions.OpenInChromeAction"/>
-      <action id="WebBrowser.SAFARI" text="_Safari" class="com.intellij.ide.browsers.actions.OpenInSafariAction"/>
-      <action id="WebBrowser.EXPLORER" text="Internet _Explorer" class="com.intellij.ide.browsers.actions.OpenInExplorerAction"/>
-      <action id="WebBrowser.OPERA" text="_Opera" class="com.intellij.ide.browsers.actions.OpenInOperaAction"/>
-    </group>
   </actions>
 </idea-plugin>

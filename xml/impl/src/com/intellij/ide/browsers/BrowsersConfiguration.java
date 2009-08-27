@@ -1,11 +1,6 @@
 package com.intellij.ide.browsers;
 
-import com.intellij.ide.browsers.actions.WebOpenInAction;
 import com.intellij.ide.browsers.firefox.FirefoxSettings;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -168,7 +163,6 @@ public class BrowsersConfiguration implements ApplicationComponent, PersistentSt
   }
 
   public void initComponent() {
-    installBrowserActions();
   }
 
   public void disposeComponent() {
@@ -236,21 +230,5 @@ public class BrowsersConfiguration implements ApplicationComponent, PersistentSt
     }
 
     Runtime.getRuntime().exec(ArrayUtil.mergeArrays(command, parameters, String.class));
-  }
-
-  private static void installBrowserActions() {
-    final ActionManager actionManager = ActionManager.getInstance();
-    AnAction actionGroup = actionManager.getAction("EditorContextBarMenu");
-    if (actionGroup == null) {
-      actionGroup = new DefaultActionGroup();
-      actionManager.registerAction("EditorContextBarMenu", actionGroup);
-    }
-
-    if (actionGroup instanceof DefaultActionGroup) {
-      final AnAction anAction = actionManager.getAction(WebOpenInAction.ACTION_GROUP);
-      if (anAction != null && anAction instanceof DefaultActionGroup) {
-        ((DefaultActionGroup)actionGroup).addAll((ActionGroup)anAction);
-      }
-    }
   }
 }
