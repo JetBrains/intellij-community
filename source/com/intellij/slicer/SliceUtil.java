@@ -289,8 +289,8 @@ public class SliceUtil {
       PsiType type = entry.getValue();
       PsiClass resolved = PsiUtil.resolveClassInType(type);
       if (!parentSubstitutor.getSubstitutionMap().containsKey(typeParameter)) continue;
-      PsiType parentType = parentSubstitutor.substitute(typeParameter);
-      
+      PsiType parentType = parentSubstitutor.substitute(parentSubstitutor.substitute(typeParameter));
+
       if (resolved instanceof PsiTypeParameter) {
         PsiTypeParameter res = (PsiTypeParameter)resolved;
         newMap.put(res, parentType);
