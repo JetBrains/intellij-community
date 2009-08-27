@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 public class PythonNamesValidator implements NamesValidator {
   private static final PythonLexer ourLexer = new PythonLexer();
 
-  public boolean isKeyword(@NotNull final String name, final Project project) {
+  public synchronized boolean isKeyword(@NotNull final String name, final Project project) {
     ourLexer.start(name);
     if (!PyTokenTypes.KEYWORDS.contains(ourLexer.getTokenType())) {
       return false;
@@ -24,7 +24,7 @@ public class PythonNamesValidator implements NamesValidator {
     return ourLexer.getTokenType() == null;
   }
 
-  public boolean isIdentifier(@NotNull final String name, final Project project) {
+  public synchronized boolean isIdentifier(@NotNull final String name, final Project project) {
     ourLexer.start(name);
     if (ourLexer.getTokenType() != PyTokenTypes.IDENTIFIER) {
       return false;
