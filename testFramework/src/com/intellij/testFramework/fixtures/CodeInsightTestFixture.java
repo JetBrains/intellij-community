@@ -208,6 +208,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   PsiFile configureByText(FileType fileType, @NonNls String text) throws IOException;
 
+  PsiFile configureByText(String fileName, @NonNls String text) throws IOException;
+
   /**
    * Compares current file against the given one.
    *

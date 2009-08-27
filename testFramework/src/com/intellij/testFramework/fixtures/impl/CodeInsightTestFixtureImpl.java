@@ -901,6 +901,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return myFile;
   }
 
+  public PsiFile configureByText(String fileName, @NonNls String text) throws IOException {
+    return configureByText(FileTypeManager.getInstance().getFileTypeByFileName(fileName), text);
+  }
+
   public Document getDocument(final PsiFile file) {
     assertInitialized();
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
