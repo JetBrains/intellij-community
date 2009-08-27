@@ -13,7 +13,7 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.ui.VisibilityPanel;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.ParameterTablePanel;
-import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;

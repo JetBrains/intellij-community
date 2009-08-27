@@ -13,7 +13,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;

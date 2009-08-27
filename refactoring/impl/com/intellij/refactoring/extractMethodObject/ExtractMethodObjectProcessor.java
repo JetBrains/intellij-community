@@ -32,7 +32,7 @@ import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.usageView.UsageInfo;

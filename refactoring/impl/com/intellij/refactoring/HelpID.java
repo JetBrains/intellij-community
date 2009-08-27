@@ -57,7 +57,6 @@ public class HelpID {
   public static final String SAFE_DELETE_OVERRIDING           = "refactoring.safeDelete.overridingMethods";
   public static final String EJB_RENAME                 = "refactoring.rename.ejbRename";
   public static final String TYPE_COOK                  = "refactoring.generify";
-  public static final String TYPE_MIGRATION             = "refactoring.migrateType";
   public static final String CONVERT_TO_INSTANCE_METHOD = "refactoring.convertToInstanceMethod";
   public static final String METHOD_DUPLICATES          = "refactoring.replaceMethodCodeDuplicates";
   public static final String CHANGE_CLASS_SIGNATURE     = "refactoring.changeClassSignature";

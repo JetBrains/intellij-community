@@ -26,6 +26,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

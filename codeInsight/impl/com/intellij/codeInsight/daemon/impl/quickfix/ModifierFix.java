@@ -16,7 +16,7 @@ import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

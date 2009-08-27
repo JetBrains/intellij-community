@@ -354,7 +354,7 @@ public class HighlightUtil {
   static HighlightInfo checkAssignmentOperatorApplicable(PsiAssignmentExpression assignment) {
     PsiJavaToken operationSign = assignment.getOperationSign();
     IElementType eqOpSign = operationSign.getTokenType();
-    IElementType opSign = convertEQtoOperation(eqOpSign);
+    IElementType opSign = TypeConversionUtil.convertEQtoOperation(eqOpSign);
     if (opSign == null) return null;
     HighlightInfo errorResult = null;
     if (!TypeConversionUtil.isBinaryOperatorApplicable(opSign, assignment.getLExpression(), assignment.getRExpression(), true)) {
@@ -366,44 +366,6 @@ public class HighlightUtil {
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, assignment, message);
     }
     return errorResult;
-  }
-
-  public static IElementType convertEQtoOperation(IElementType eqOpSign) {
-    IElementType opSign = null;
-    if (eqOpSign == JavaTokenType.ANDEQ) {
-      opSign = JavaTokenType.AND;
-    }
-    else if (eqOpSign == JavaTokenType.ASTERISKEQ) {
-      opSign = JavaTokenType.ASTERISK;
-    }
-    else if (eqOpSign == JavaTokenType.DIVEQ) {
-      opSign = JavaTokenType.DIV;
-    }
-    else if (eqOpSign == JavaTokenType.GTGTEQ) {
-      opSign = JavaTokenType.GTGT;
-    }
-    else if (eqOpSign == JavaTokenType.GTGTGTEQ) {
-      opSign = JavaTokenType.GTGTGT;
-    }
-    else if (eqOpSign == JavaTokenType.LTLTEQ) {
-      opSign = JavaTokenType.LTLT;
-    }
-    else if (eqOpSign == JavaTokenType.MINUSEQ) {
-      opSign = JavaTokenType.MINUS;
-    }
-    else if (eqOpSign == JavaTokenType.OREQ) {
-      opSign = JavaTokenType.OR;
-    }
-    else if (eqOpSign == JavaTokenType.PERCEQ) {
-      opSign = JavaTokenType.PERC;
-    }
-    else if (eqOpSign == JavaTokenType.PLUSEQ) {
-      opSign = JavaTokenType.PLUS;
-    }
-    else if (eqOpSign == JavaTokenType.XOREQ) {
-      opSign = JavaTokenType.XOR;
-    }
-    return opSign;
   }
 
 

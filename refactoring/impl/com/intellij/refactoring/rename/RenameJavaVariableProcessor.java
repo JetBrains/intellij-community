@@ -10,6 +10,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -192,7 +193,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   private static void addOverriddenAndImplemented(PsiClass aClass, PsiMethod methodPrototype, String newName,
                                            final Map<PsiElement, String> allRenames) {
     final HashSet<PsiClass> superClasses = new HashSet<PsiClass>();
-    RefactoringHierarchyUtil.getSuperClasses(aClass, superClasses, true);
+    InheritanceUtil.getSuperClasses(aClass, superClasses, true);
     superClasses.add(aClass);
 
     for (PsiClass superClass : superClasses) {

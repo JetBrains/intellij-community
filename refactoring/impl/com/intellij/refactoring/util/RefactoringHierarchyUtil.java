@@ -10,6 +10,7 @@ package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -95,7 +96,7 @@ public class RefactoringHierarchyUtil {
    */
   public static ArrayList<PsiClass> createBasesList(PsiClass subClass, boolean includeNonProject, boolean sortAlphabetically) {
     LinkedHashSet<PsiClass> bases = new LinkedHashSet<PsiClass>();
-    getSuperClasses(subClass, bases, includeNonProject);
+    InheritanceUtil.getSuperClasses(subClass, bases, includeNonProject);
 
     if (!subClass.isInterface()) {
       final PsiManager manager = subClass.getManager();
@@ -140,31 +141,6 @@ public class RefactoringHierarchyUtil {
     }
     else {
       return subClass.getManager().areElementsEquivalent(subClass, elementClass);
-    }
-  }
-
-  /**
-   * Gets all superclasses. Classes are added to result in DFS order
-   * @param aClass
-   * @param results
-   * @param includeNonProject
-   */
-  public static void getSuperClasses(PsiClass aClass, Set<PsiClass> results, boolean includeNonProject) {
-    getSuperClassesOfList(aClass.getSuperTypes(), results, includeNonProject);
-  }
-
-  private static void getSuperClassesOfList(PsiClassType[] types, Set<PsiClass> results,
-                                                     boolean includeNonProject) {
-    for (PsiClassType type : types) {
-      PsiClass resolved = type.resolve();
-      if (resolved != null) {
-        if (!results.contains(resolved)) {
-          if (includeNonProject || resolved.getManager().isInProject(resolved)) {
-            results.add(resolved);
-          }
-          getSuperClasses(resolved, results, includeNonProject);
-        }
-      }
     }
   }
 

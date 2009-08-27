@@ -431,7 +431,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     else {
       thisAccessExpr = null;
     }
-    ChangeContextUtil.decodeContextInfo(anchorParent, thisClass, thisAccessExpr);
+    ChangeContextUtil.decodeContextInfo(anchorParent, thisClass, thisAccessExpr);//todo super should be encoded decoded as well
 
     if (thisVar != null) {
       inlineParmOrThisVariable(thisVar, false);

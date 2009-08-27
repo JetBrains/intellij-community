@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import com.intellij.ui.DuplicateNodeRenderer;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 

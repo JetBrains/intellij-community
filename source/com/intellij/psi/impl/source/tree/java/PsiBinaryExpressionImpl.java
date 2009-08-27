@@ -14,7 +14,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements PsiBinaryExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiBinaryExpressionImpl");
@@ -52,7 +51,7 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
     else {
       PsiType rType = rOperand.getType();
       PsiType lType = lOperand.getType();
-      result = getType(lType, rType, SourceTreeToPsiMap.psiElementToTree(param.getOperationSign()).getElementType());
+      result = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, SourceTreeToPsiMap.psiElementToTree(param.getOperationSign()).getElementType());
     }
     return result;
   }
@@ -115,51 +114,5 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
     return "PsiBinaryExpression:" + getText();
   }
 
-  @Nullable
-  public static PsiType getType(PsiType lType, PsiType rType, IElementType sign) {
-    if (sign == JavaTokenType.PLUS) {
-      // evaluate right argument first, since '+-/*%' is left associative and left operand tends to be bigger
-      if (rType == null) return null;
-      if (rType.equalsToText("java.lang.String")) {
-        return rType;
-      }
-      if (lType == null) return null;
-      if (lType.equalsToText("java.lang.String")) {
-        return lType;
-      }
-      return TypeConversionUtil.unboxAndBalanceTypes(lType, rType);
-    }
-    if (sign == JavaTokenType.MINUS || sign == JavaTokenType.ASTERISK || sign == JavaTokenType.DIV || sign == JavaTokenType.PERC) {
-      if (lType == null && rType == null) return null;
-      return TypeConversionUtil.unboxAndBalanceTypes(lType, rType);
-    }
-    if (sign == JavaTokenType.LTLT || sign == JavaTokenType.GTGT || sign == JavaTokenType.GTGTGT) {
-      if (PsiType.BYTE.equals(lType) || PsiType.CHAR.equals(lType) || PsiType.SHORT.equals(lType)) {
-        return PsiType.INT;
-      }
-      return lType;
-    }
-    if (sign == JavaTokenType.EQEQ ||
-        sign == JavaTokenType.NE ||
-        sign == JavaTokenType.LT ||
-        sign == JavaTokenType.GT ||
-        sign == JavaTokenType.LE ||
-        sign == JavaTokenType.GE ||
-        sign == JavaTokenType.OROR ||
-        sign == JavaTokenType.ANDAND) {
-      return PsiType.BOOLEAN;
-    }
-    if (sign == JavaTokenType.OR || sign == JavaTokenType.XOR || sign == JavaTokenType.AND) {
-      if (lType instanceof PsiClassType) lType = PsiPrimitiveType.getUnboxedType(lType);
-      if (rType instanceof PsiClassType) rType = PsiPrimitiveType.getUnboxedType(rType);
-
-      if (lType == null && rType == null) return null;
-      if (PsiType.BOOLEAN.equals(lType) || PsiType.BOOLEAN.equals(rType)) return PsiType.BOOLEAN;
-      if (PsiType.LONG.equals(lType) || PsiType.LONG.equals(rType)) return PsiType.LONG;
-      return PsiType.INT;
-    }
-    LOG.assertTrue(false);
-    return null;
-  }
 }
 

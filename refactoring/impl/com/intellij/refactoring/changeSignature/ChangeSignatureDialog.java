@@ -27,6 +27,7 @@ import com.intellij.refactoring.util.*;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.ui.Table;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NonNls;

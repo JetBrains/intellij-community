@@ -94,4 +94,29 @@ public class InheritanceUtil {
       }
     });
   }
+
+  /**
+   * Gets all superclasses. Classes are added to result in DFS order
+   * @param aClass
+   * @param results
+   * @param includeNonProject
+   */
+  public static void getSuperClasses(PsiClass aClass, Set<PsiClass> results, boolean includeNonProject) {
+    getSuperClassesOfList(aClass.getSuperTypes(), results, includeNonProject);
+  }
+
+  public static void getSuperClassesOfList(PsiClassType[] types, Set<PsiClass> results,
+                                                     boolean includeNonProject) {
+    for (PsiClassType type : types) {
+      PsiClass resolved = type.resolve();
+      if (resolved != null) {
+        if (!results.contains(resolved)) {
+          if (includeNonProject || resolved.getManager().isInProject(resolved)) {
+            results.add(resolved);
+          }
+          getSuperClasses(resolved, results, includeNonProject);
+        }
+      }
+    }
+  }
 }

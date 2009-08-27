@@ -12,7 +12,7 @@ import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ParameterTablePanel;
-import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;

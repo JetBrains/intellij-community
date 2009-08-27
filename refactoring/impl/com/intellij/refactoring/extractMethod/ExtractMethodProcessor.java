@@ -46,6 +46,7 @@ import com.intellij.refactoring.util.duplicates.VariableReturnValue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

@@ -1,4 +1,4 @@
-package com.intellij.slicer;
+package com.intellij.ui;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +18,6 @@ public class DuplicateNodeRenderer {
     //duplicate nodes are painted gray
     @Nullable T getDuplicate();
 
-    boolean hasDuplicate();
   }
 
   public static void paintDuplicateNodesBackground(Graphics g, JTree tree) {
@@ -36,7 +35,8 @@ public class DuplicateNodeRenderer {
         Object userObject = node.getUserObject();
         if (!(userObject instanceof DuplicatableNode)) break;
         DuplicatableNode duplicatableNode = (DuplicatableNode)userObject;
-        if (!duplicatableNode.hasDuplicate()) break;
+        Object duplicate = duplicatableNode.getDuplicate();
+        if (duplicate == null) break;
         accumPath = accumRect == null ? path : accumPath.getParentPath();
         accumRect = union(tree.getPathBounds(accumPath), accumRect);
         node = (DefaultMutableTreeNode)node.getParent();

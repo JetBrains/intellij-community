@@ -31,6 +31,7 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -896,7 +897,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
   private Set<PsiClass> getAllBases() {
     HashSet<PsiClass> temp = new HashSet<PsiClass>();
-    RefactoringHierarchyUtil.getSuperClasses(myBaseClass, temp, true);
+    InheritanceUtil.getSuperClasses(myBaseClass, temp, true);
     temp.add(myBaseClass);
     return Collections.unmodifiableSet(temp);
   }
@@ -1143,7 +1144,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
           PsiClass resolved = implementsType.resolve();
           if (resolved != null && !myManager.areElementsEquivalent(resolved, myBaseClass)) {
             result.add(resolved);
-            RefactoringHierarchyUtil.getSuperClasses(resolved, result, true);
+            InheritanceUtil.getSuperClasses(resolved, result, true);
           }
         }
 

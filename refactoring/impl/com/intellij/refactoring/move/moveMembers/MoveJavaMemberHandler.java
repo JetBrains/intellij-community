@@ -7,7 +7,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.EnumConstantsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;

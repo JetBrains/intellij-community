@@ -10,7 +10,7 @@ package com.intellij.refactoring.ui;
 
 import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
