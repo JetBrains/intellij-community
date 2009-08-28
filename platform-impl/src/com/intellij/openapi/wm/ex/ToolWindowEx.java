@@ -25,5 +25,4 @@ public interface ToolWindowEx extends ToolWindow {
    */
   ToolWindowType getInternalType();
 
-  void ensureContentInitialized();
 }

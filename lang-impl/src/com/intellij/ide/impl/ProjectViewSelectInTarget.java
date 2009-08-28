@@ -9,6 +9,7 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -20,6 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,25 +35,36 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
   }
 
   protected final void select(final Object selector, final VirtualFile virtualFile, final boolean requestFocus) {
-    final ProjectView projectView = ProjectView.getInstance(myProject);
-    ToolWindowManager windowManager=ToolWindowManager.getInstance(myProject);
+    select(myProject, selector, getMinorViewId(), mySubId, virtualFile, requestFocus);
+  }
+
+  public static ActionCallback select(@NotNull Project project,
+                            final Object toSelect,
+                            @Nullable final String viewId,
+                            @Nullable final String subviewId,
+                            final VirtualFile virtualFile,
+                            final boolean requestFocus) {
+    final ActionCallback result = new ActionCallback();
+
+
+    final ProjectView projectView = ProjectView.getInstance(project);
+    ToolWindowManager windowManager=ToolWindowManager.getInstance(project);
     final ToolWindowEx projectViewToolWindow = (ToolWindowEx) windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
-    projectViewToolWindow.ensureContentInitialized();
     final Runnable runnable = new Runnable() {
       public void run() {
         if (requestFocus) {
-          projectView.changeView(getMinorViewId(), mySubId);
+          projectView.changeView(viewId, subviewId);
         }
-        projectView.select(selector, virtualFile, requestFocus);
+
+        projectView.selectCB(toSelect, virtualFile, requestFocus).notify(result);
       }
     };
-    if (requestFocus) {
-      projectViewToolWindow.activate(runnable, false);
-    }
-    else {
-      runnable.run();
-    }
+
+    projectViewToolWindow.activate(runnable, false);
+
+    return result;
   }
+
 
   @NotNull
   public Collection<SelectInTarget> getSubTargets(SelectInContext context) {

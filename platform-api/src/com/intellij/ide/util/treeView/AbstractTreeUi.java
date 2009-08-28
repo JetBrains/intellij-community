@@ -1872,6 +1872,10 @@ class AbstractTreeUi {
     return myRootNodeWasInitialized;
   }
 
+  private boolean isRootNodeBuilt() {
+    return myRootNodeWasInitialized && isNodeBeingBuilt(myRootNode);
+  }
+
   public void select(final Object[] elements, @Nullable final Runnable onDone) {
     select(elements, onDone, false);
   }
@@ -1969,13 +1973,17 @@ class AbstractTreeUi {
           addNext(elementsToSelect, 0, onDone, originalRows, deferred);
         }
         else {
-          myDeferredSelections.clear();
-          myDeferredSelections.add(new Runnable() {
-            public void run() {
-              select(elementsToSelect, onDone, false, true);
-            }
-          });
+          addToDeferred(elementsToSelect, onDone);
         }
+      }
+    });
+  }
+
+  private void addToDeferred(final Object[] elementsToSelect, final Runnable onDone) {
+    myDeferredSelections.clear();
+    myDeferredSelections.add(new Runnable() {
+      public void run() {
+        select(elementsToSelect, onDone, false, true);
       }
     });
   }
@@ -2198,12 +2206,16 @@ class AbstractTreeUi {
       }
     }
     else {
-      myDeferredExpansions.add(new Runnable() {
-        public void run() {
-          _expand(element, onDone, parentsOnly, false);
-        }
-      });
+      deferExpansion(element, onDone, parentsOnly);
     }
+  }
+
+  private void deferExpansion(final Object element, final Runnable onDone, final boolean parentsOnly) {
+    myDeferredExpansions.add(new Runnable() {
+      public void run() {
+        _expand(element, onDone, parentsOnly, false);
+      }
+    });
   }
 
   private void processExpand(final DefaultMutableTreeNode toExpand,

@@ -1,15 +1,12 @@
 package com.intellij.psi.impl.file;
 
-import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -67,11 +64,6 @@ public class PsiJavaDirectoryImpl extends PsiDirectoryImpl {
   }
 
   public void navigate(final boolean requestFocus) {
-    final ToolWindowEx window = (ToolWindowEx)ToolWindowManager.getInstance(getProject()).getToolWindow(ToolWindowId.PROJECT_VIEW);
-    window.ensureContentInitialized();
-    final ProjectView projectView = ProjectView.getInstance(getProject());
-    projectView.changeView(ProjectViewPane.ID);
-    projectView.getProjectViewPaneById(ProjectViewPane.ID).select(this, getVirtualFile(), requestFocus);
-    window.activate(null);
+    ProjectViewSelectInTarget.select(getProject(), this, ProjectViewPane.ID, null, getVirtualFile(), requestFocus);
   }
 }

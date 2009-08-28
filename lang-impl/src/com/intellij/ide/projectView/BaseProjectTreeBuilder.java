@@ -174,7 +174,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
                                                      final AbstractTreeNode root,
                                                      final Object element,
                                                      final Condition<AbstractTreeNode> nonStopCondition) {
-    final AsyncResult<AbstractTreeNode> async = new AsyncResult<AbstractTreeNode>();
+    final AsyncResult<AbstractTreeNode> async = new AsyncResult<AbstractTreeNode>(); 
 
     if (root.canRepresent(element)) {
       expand(root, new Runnable() {
