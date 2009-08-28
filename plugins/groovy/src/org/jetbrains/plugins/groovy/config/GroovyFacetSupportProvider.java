@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.config.ui.GroovyFacetEditor;
  */
 public class GroovyFacetSupportProvider extends FrameworkSupportProvider {
   protected GroovyFacetSupportProvider() {
-    super("Groovy", "Groovy et al");
+    super("Groovy", "Groovy");
   }
 
   @Override
