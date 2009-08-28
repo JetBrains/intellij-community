@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
-import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
 
@@ -40,7 +40,7 @@ public class ReachingDefsTest extends LightCodeInsightFixtureTestCase {
   public void testWhile1() throws Throwable { doTest(); }
 
   public void doTest() throws Exception {
-    final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + getTestName(true) + ".test");
+    final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     String text = data.get(0);
 
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, text);

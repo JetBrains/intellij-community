@@ -17,7 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.formatter;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
 
@@ -111,7 +111,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testAnnotationOnSeparateLine() throws Throwable { doTest(); }
 
   public void doTest() throws Throwable {
-    final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + getTestName(true) + ".test");
+    final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     checkFormatting(data.get(0), data.get(1));
   }
 

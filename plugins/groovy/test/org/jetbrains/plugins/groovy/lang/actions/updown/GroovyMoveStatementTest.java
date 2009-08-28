@@ -24,8 +24,8 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManager;
-import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 
 import java.util.List;
 
@@ -87,7 +87,7 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void doTest(final String actionId) throws Exception {
-    final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + getTestName(true) + ".test");
+    final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
 
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
 

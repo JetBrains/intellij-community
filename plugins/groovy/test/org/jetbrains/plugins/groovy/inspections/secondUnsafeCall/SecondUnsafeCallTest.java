@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.inspections.secondUnsafeCall;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.secondUnsafeCall.SecondUnsafeCallInspection;
-import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
 
@@ -34,7 +34,7 @@ public class SecondUnsafeCallTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void doTest() throws Exception {
-    final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + "/" + getTestName(true) + ".test");
+    final List<String> data = TestUtils.readInput(getTestDataPath() + "/" + getTestName(true) + ".test");
 
     myFixture.configureByText("a.groovy", data.get(0));
     myFixture.enableInspections(new SecondUnsafeCallInspection());

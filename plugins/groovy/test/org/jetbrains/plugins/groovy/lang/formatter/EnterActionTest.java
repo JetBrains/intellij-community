@@ -17,8 +17,8 @@
 package org.jetbrains.plugins.groovy.lang.formatter;
 
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.jetbrains.plugins.groovy.lang.formatter.GroovyFormatterTestCase;
-import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 
 import java.util.List;
 
@@ -34,7 +34,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
 
 
   private void doTest() throws Throwable {
-    final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + getTestName(true) + ".test");
+    final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
     myFixture.type('\n');
     myFixture.checkResult(data.get(1));

@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.lang.formatter;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -38,7 +38,7 @@ public class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
   }
 
   private void doTest() throws Throwable {
-    final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + getTestName(true) + ".test");
+    final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     String input = data.get(0);
     while (true) {
       final Matcher matcher = PATTERN.matcher(input);

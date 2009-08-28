@@ -4,7 +4,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -21,7 +21,7 @@ public abstract class OverridingTester extends CodeInsightFixtureTestCase {
 
   public void doTest() throws Throwable {
     final String testFile = getTestName(true) + ".test";
-    final List<String> strings = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + "/" + testFile);
+    final List<String> strings = TestUtils.readInput(getTestDataPath() + "/" + testFile);
     GroovyFileBase psiFile = (GroovyFileBase) myFixture.addFileToProject("foo.groovy", strings.get(0));
 
     StringBuffer buffer = new StringBuffer();

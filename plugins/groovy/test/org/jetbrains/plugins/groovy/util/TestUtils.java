@@ -131,4 +131,36 @@ public abstract class TestUtils {
     String inputString = input.toArray(new String[input.size()])[0];
     return new String[]{inputString, result};
   }
+
+  public static List<String> readInput(String filePath) throws IOException {
+    String content = new String(FileUtil.loadFileText(new File(filePath)));
+    Assert.assertNotNull(content);
+
+    List<String> input = new ArrayList<String>();
+
+    int separatorIndex;
+    content = StringUtil.replace(content, "\r", ""); // for MACs
+
+    // Adding input  before -----
+    while ((separatorIndex = content.indexOf("-----")) >= 0) {
+      input.add(content.substring(0, separatorIndex - 1));
+      content = content.substring(separatorIndex);
+      while (StringUtil.startsWithChar(content, '-')) {
+        content = content.substring(1);
+      }
+      if (StringUtil.startsWithChar(content, '\n')) {
+        content = content.substring(1);
+      }
+    }
+    // Result - after -----
+    if (content.endsWith("\n")) {
+      content = content.substring(0, content.length() - 1);
+    }
+    input.add(content);
+
+    Assert.assertTrue("No data found in source file", input.size() > 0);
+    Assert.assertNotNull("Test output points to null", input.size() > 1);
+
+    return input;
+  }
 }

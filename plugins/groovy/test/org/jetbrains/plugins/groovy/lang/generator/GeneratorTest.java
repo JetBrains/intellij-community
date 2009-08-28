@@ -12,7 +12,6 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
-import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.BufferedReader;
@@ -72,7 +71,7 @@ public void testArrayType1() throws Throwable { doTest(); }
 
 
     final String relTestPath = getTestName(true) + ".test";
-    final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + "/" + relTestPath);
+    final List<String> data = TestUtils.readInput(getTestDataPath() + "/" + relTestPath);
 
     final TempDirTestFixture tempDirFixture = myFixture.getTempDirFixture();
 

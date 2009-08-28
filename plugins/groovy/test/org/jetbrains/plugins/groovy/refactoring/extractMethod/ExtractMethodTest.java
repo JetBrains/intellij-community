@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
-import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.IOException;
@@ -40,7 +39,7 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   }
 
   private List<String> readInput() throws IOException {
-    return SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + getTestName(true) + ".test");
+    return TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
   }
 
   private void doTest() throws Exception {

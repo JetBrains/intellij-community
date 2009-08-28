@@ -7,7 +7,6 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.annotator.intentions.ChangeExtendsImplementsQuickFix;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
@@ -34,7 +33,7 @@ public class ImplementsExtendsQuickFixTest extends LightCodeInsightFixtureTestCa
 
 
     public void doTest() throws Exception {
-      final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + getTestName(true) + ".test");
+      final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
       String fileText = data.get(0);
       final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(getProject(), fileText);
       assert psiFile instanceof GroovyFileBase;

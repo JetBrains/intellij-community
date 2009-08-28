@@ -8,7 +8,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.CompositeCompletionData;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -19,7 +19,7 @@ import java.util.List;
 public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase {
 
   protected void doTest() throws Throwable {
-    final List<String> stringList = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + "/" + getTestName(true) + ".test");
+    final List<String> stringList = TestUtils.readInput(getTestDataPath() + "/" + getTestName(true) + ".test");
     final String fileName = getTestName(true) + "." + getExtension();
     myFixture.addFileToProject(fileName, stringList.get(0));
     myFixture.configureByFile(fileName);

@@ -4,8 +4,8 @@ import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ import java.util.List;
  */
 public abstract class SurroundTestCase extends LightGroovyTestCase {
   protected void doTest(Surrounder surrounder) throws Exception {
-    final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + "/" + getTestName(true) + ".test");
+    final List<String> data = TestUtils.readInput(getTestDataPath() + "/" + getTestName(true) + ".test");
     final String fileText = data.get(0);
     myFixture.configureByText("a.groovy", fileText);
 

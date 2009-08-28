@@ -10,7 +10,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import junit.framework.Assert;
-import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
@@ -32,7 +31,7 @@ public class StubsTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void doTest() throws Exception {
-    final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + "/" + getTestName(true) + ".test");
+    final List<String> data = TestUtils.readInput(getTestDataPath() + "/" + getTestName(true) + ".test");
     String fileText = data.get(0);
 
     PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(getProject(), fileText);

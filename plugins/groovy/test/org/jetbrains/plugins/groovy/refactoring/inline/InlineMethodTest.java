@@ -23,7 +23,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.refactoring.inline.GenericInlineHandler;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
@@ -35,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
-import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.IOException;
@@ -102,7 +100,7 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
   }
 
   public static void doInlineTest(final JavaCodeInsightTestFixture fixture, final String testFile, boolean withCaret) throws IOException {
-    final List<String> data = SimpleGroovyFileSetTestCase.readInput(testFile);
+    final List<String> data = TestUtils.readInput(testFile);
     String fileText = data.get(0);
 
     int startOffset = fileText.indexOf(BEGIN_MARKER);

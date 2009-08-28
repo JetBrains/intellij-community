@@ -7,7 +7,6 @@ package org.jetbrains.plugins.groovy.lang.parser;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.IOException;
@@ -28,7 +27,7 @@ public abstract class GroovyParsingTestCase extends LightCodeInsightFixtureTestC
   }
 
   protected void doTest(String fileName) throws IOException {
-    final List<String> list = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + "/" + fileName);
+    final List<String> list = TestUtils.readInput(getTestDataPath() + "/" + fileName);
 
     final String input = list.get(0);
     final String output = list.get(1);
