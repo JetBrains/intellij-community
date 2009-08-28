@@ -40,6 +40,7 @@ import com.intellij.util.EventDispatcher;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.changes.GitChangeProvider;
 import git4idea.changes.GitCommittedChangeListProvider;
+import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
@@ -191,6 +192,7 @@ public class GitVcs extends AbstractVcs {
     myUpdateEnvironment = new GitUpdateEnvironment(myProject);
     myMergeProvider = new GitMergeProvider(myProject);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
+    myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
   }
 
   /**
@@ -614,5 +616,16 @@ public class GitVcs extends AbstractVcs {
 
   public static VcsKey getKey() {
     return ourKey;
+  }
+
+  @Override
+  public VcsType getType() {
+    return VcsType.distibuted;
+  }
+
+  private final GitOutgoingChangesProvider myOutgoingChangesProvider;
+  @Override
+  protected VcsOutgoingChangesProvider getOutgoingProviderImpl() {
+    return myOutgoingChangesProvider;
   }
 }

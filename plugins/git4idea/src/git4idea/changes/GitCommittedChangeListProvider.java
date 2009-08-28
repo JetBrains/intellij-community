@@ -13,12 +13,11 @@ import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import git4idea.GitBranch;
 import git4idea.GitRemote;
 import git4idea.GitUtil;
-import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.commands.StringScanner;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +25,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -120,52 +118,44 @@ public class GitCommittedChangeListProvider implements CachingCommittedChangesPr
   /**
    * {@inheritDoc}
    */
-  public List<CommittedChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, int maxCount)
+  public List<CommittedChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount)
     throws VcsException {
-    ArrayList<CommittedChangeList> rc = new ArrayList<CommittedChangeList>();
     GitRepositoryLocation l = (GitRepositoryLocation)location;
-    Long beforeRev = settings.getChangeBeforeFilter();
-    Long afterRev = settings.getChangeBeforeFilter();
-    Date beforeDate = settings.getDateBeforeFilter();
-    Date afterDate = settings.getDateBeforeFilter();
-    String author = settings.getUserFilter();
+    final Long beforeRev = settings.getChangeBeforeFilter();
+    final Long afterRev = settings.getChangeBeforeFilter();
+    final Date beforeDate = settings.getDateBeforeFilter();
+    final Date afterDate = settings.getDateBeforeFilter();
+    final String author = settings.getUserFilter();
     VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(l.getRoot());
     if (root == null) {
       throw new VcsException("The repository does not exists anymore: " + l.getRoot());
     }
-    GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitHandler.LOG);
-    h.addParameters("--pretty=format:%x0C%n" + GitChangeUtils.COMMITTED_CHANGELIST_FORMAT);
-    if (!StringUtil.isEmpty(author)) {
-      h.addParameters("--author=" + author);
-    }
-    if (beforeDate != null) {
-      h.addParameters("--before=" + GitUtil.gitTime(beforeDate));
-    }
-    if (afterDate != null) {
-      h.addParameters("--after=" + GitUtil.gitTime(afterDate));
-    }
-    if (maxCount != getUnlimitedCountValue()) {
-      h.addParameters("-n" + maxCount);
-    }
-    if (beforeRev != null && afterRev != null) {
-      h.addParameters(GitUtil.formatLongRev(afterRev) + ".." + GitUtil.formatLongRev(beforeRev));
-    }
-    else if (beforeRev != null) {
-      h.addParameters(GitUtil.formatLongRev(beforeRev));
-    }
-    else if (afterRev != null) {
-      h.addParameters(GitUtil.formatLongRev(afterRev) + "..");
-    }
-    String output = h.run();
-    StringScanner s = new StringScanner(output);
-    while (s.hasMoreData() && s.startsWith('\u000C')) {
-      s.nextLine();
-      rc.add(GitChangeUtils.parseChangeList(myProject, root, s));
-    }
-    if (s.hasMoreData()) {
-      throw new IllegalStateException("More input is avaialble: " + s.line());
-    }
-    return rc;
+
+    return GitUtil.getLocalCommittedChanges(myProject, root, new Consumer<GitSimpleHandler>() {
+      public void consume(GitSimpleHandler h) {
+        if (!StringUtil.isEmpty(author)) {
+          h.addParameters("--author=" + author);
+        }
+        if (beforeDate != null) {
+          h.addParameters("--before=" + GitUtil.gitTime(beforeDate));
+        }
+        if (afterDate != null) {
+          h.addParameters("--after=" + GitUtil.gitTime(afterDate));
+        }
+        if (maxCount != getUnlimitedCountValue()) {
+          h.addParameters("-n" + maxCount);
+        }
+        if (beforeRev != null && afterRev != null) {
+          h.addParameters(GitUtil.formatLongRev(afterRev) + ".." + GitUtil.formatLongRev(beforeRev));
+        }
+        else if (beforeRev != null) {
+          h.addParameters(GitUtil.formatLongRev(beforeRev));
+        }
+        else if (afterRev != null) {
+          h.addParameters(GitUtil.formatLongRev(afterRev) + "..");
+        }
+      }
+    });
   }
 
 

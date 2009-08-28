@@ -25,11 +25,17 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsUtil;
+import git4idea.changes.GitChangeUtils;
+import git4idea.commands.GitHandler;
+import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.StringScanner;
 import git4idea.config.GitConfigUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -261,8 +267,8 @@ public class GitUtil {
    * @return timestamp as {@link Date} object
    */
   public static Date parseTimestamp(String value) {
-    return new Date(Long.parseLong(value.trim()) * 1000);
-  }
+      return new Date(Long.parseLong(value.trim()) * 1000);
+    }
 
   /**
    * Get git roots from content roots
@@ -619,5 +625,26 @@ public class GitUtil {
     }
     // try shorter paths paths
     return getPossibleBase(file, n - 1, path);
+  }
+
+  public static List<CommittedChangeList> getLocalCommittedChanges(final Project project, final VirtualFile root,
+                                                                   final Consumer<GitSimpleHandler> parametersSpecifier) throws VcsException {
+    final List<CommittedChangeList> rc = new ArrayList<CommittedChangeList>();
+
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.LOG);
+    h.setNoSSH(true);
+    h.addParameters("--pretty=format:%x0C%n" + GitChangeUtils.COMMITTED_CHANGELIST_FORMAT);
+    parametersSpecifier.consume(h);
+
+    String output = h.run();
+    StringScanner s = new StringScanner(output);
+    while (s.hasMoreData() && s.startsWith('\u000C')) {
+      s.nextLine();
+      rc.add(GitChangeUtils.parseChangeList(project, root, s));
+    }
+    if (s.hasMoreData()) {
+      throw new IllegalStateException("More input is avaialble: " + s.line());
+    }
+    return rc;
   }
 }
