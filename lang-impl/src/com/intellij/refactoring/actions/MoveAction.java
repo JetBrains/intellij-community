@@ -20,6 +20,10 @@ public class MoveAction extends BaseRefactoringAction {
     }
   };
 
+  public MoveAction() {
+    setInjectedContext(true);
+  }
+
   public boolean isAvailableInEditorOnly() {
     return false;
   }
