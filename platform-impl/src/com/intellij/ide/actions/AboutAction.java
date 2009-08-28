@@ -4,22 +4,22 @@ import com.intellij.Patches;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.license.LicenseManager;
-import com.intellij.ide.license.ui.LicenseUrls;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.AnimatingSurface;
+import com.intellij.ui.LicenseeInfoProvider;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Properties;
 
 public class AboutAction extends AnAction implements DumbAware {
+  @NonNls private static final String COMPANY_URL = "http://www.jetbrains.com/";      // TODO move to ApplicationInfo.xml
+
   public void update(AnActionEvent e) {
     e.getPresentation().setVisible(!SystemInfo.isMacSystemMenu);
     e.getPresentation().setDescription("Show information about " + ApplicationNamesInfo.getInstance().getFullProductName());
@@ -179,8 +181,11 @@ public class AboutAction extends AnAction implements DumbAware {
       myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.build.number", ideInfo.getBuildNumber())));
       myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.build.date", DateFormat.getDateInstance(DateFormat.LONG).format(cal.getTime()))));
       myLines.add(new AboutBoxLine(""));
-      myLines.add(new AboutBoxLine(LicenseManager.getInstance().licensedToMessage(), true, false));
-      myLines.add(new AboutBoxLine(LicenseManager.getInstance().licensedRestrictionsMessage()));
+      LicenseeInfoProvider provider = LicenseeInfoProvider.getInstance();
+      if (provider != null) {
+        myLines.add(new AboutBoxLine(provider.getLicensedToMessage(), true, false));
+        myLines.add(new AboutBoxLine(provider.getLicenseRestrictionsMessage()));
+      }
       myLines.add(new AboutBoxLine(""));
 
       {
@@ -195,12 +200,12 @@ public class AboutAction extends AnAction implements DumbAware {
       myLines.add(new AboutBoxLine(""));
       //noinspection HardCodedStringLiteral
       myLines.add(new AboutBoxLine("JetBrains s.r.o.", true, false));
-      myLines.add(new AboutBoxLine(LicenseUrls.getCompanyUrl(), true, true));
+      myLines.add(new AboutBoxLine(COMPANY_URL, true, true));
       addMouseListener(new MouseAdapter() {
         public void mousePressed(MouseEvent event) {
           if (inLink) {
             event.consume();
-            BrowserUtil.launchBrowser(LicenseUrls.getCompanyUrl());
+            BrowserUtil.launchBrowser(COMPANY_URL);
           }
         }
       });

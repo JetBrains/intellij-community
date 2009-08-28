@@ -1,6 +1,5 @@
 package com.intellij.ui;
 
-import com.intellij.ide.license.LicenseManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.UIUtil;
@@ -34,8 +33,11 @@ public class Splash extends JWindow {
     if (ApplicationInfoImpl.getShadowInstance().showLicenseeInfo()) {
       g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, 11));
       g.setColor(textColor);
-      g.drawString(LicenseManager.getInstance().licensedToMessage(), x + 20, y + height - 52);
-      g.drawString(LicenseManager.getInstance().licensedRestrictionsMessage(), x + 20, y + height - 32);
+      LicenseeInfoProvider provider = LicenseeInfoProvider.getInstance();
+      if (provider != null) {
+        g.drawString(provider.getLicensedToMessage(), x + 20, y + height - 52);
+        g.drawString(provider.getLicenseRestrictionsMessage(), x + 20, y + height - 32);
+      }
       return true;
     }
     return false;
