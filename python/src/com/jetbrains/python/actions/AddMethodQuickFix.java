@@ -49,7 +49,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
     String item_name = myIdentifier;
     if (cls != null && item_name != null) {
       PyStatementList cls_stmt_list = cls.getStatementList();
-      if (!CodeInsightUtilBase.preparePsiElementForWrite(problem_elt)) {
+      if (!CodeInsightUtilBase.preparePsiElementForWrite(cls_stmt_list)) {
         return;
       }
       Language language = cls.getLanguage();
