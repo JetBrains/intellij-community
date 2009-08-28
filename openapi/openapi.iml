@@ -41,7 +41,6 @@
     <orderEntry type="library" exported="" name="microba" level="project" />
     <orderEntry type="module" module-name="jsp-openapi" exported="" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
-    <orderEntry type="module" module-name="lvcs-openapi" exported="" />
     <orderEntry type="module" module-name="xml-openapi" exported="" />
     <orderEntry type="module" module-name="platform-api" exported="" />
     <orderEntry type="module" module-name="lang-api" exported="" />

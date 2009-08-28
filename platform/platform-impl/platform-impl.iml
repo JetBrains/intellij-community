@@ -24,7 +24,6 @@
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module" module-name="boot" />
     <orderEntry type="module" module-name="bootstrap" />
-    <orderEntry type="module" module-name="lvcs-openapi" />
     <orderEntry type="library" exported="" name="commons-codec" level="project" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="library" name="XmlRPC" level="project" />
@@ -42,6 +41,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
+    <orderEntry type="module" module-name="lvcs-api" exported="" />
   </component>
 </module>
 
