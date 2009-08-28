@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.ide.impl.PatchProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.impl.convert.ProjectConversionUtil;
+import com.intellij.conversion.ConversionListener;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -235,13 +236,13 @@ public class InspectionApplication {
     }
   }
 
-  private ProjectConversionUtil.ConversionListener createConversionListener() {
-    return new ProjectConversionUtil.ConversionListener() {
+  private ConversionListener createConversionListener() {
+    return new ConversionListener() {
       public void conversionNeeded() {
         logMessageLn(1, InspectionsBundle.message("inspection.application.project.has.older.format.and.will.be.converted"));
       }
 
-      public void succesfullyConverted(final File backupDir) {
+      public void successfullyConverted(final File backupDir) {
         logMessageLn(1, InspectionsBundle.message(
           "inspection.application.project.was.succesfully.converted.old.project.files.were.saved.to.0",
                                                   backupDir.getAbsolutePath()));

@@ -4,8 +4,9 @@
 
 package com.intellij.ide.impl.convert;
 
+import com.intellij.conversion.ConversionListener;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.impl.convert.ui.ProjectConversionWizard;
+import com.intellij.ide.impl.convert.ui.OldProjectConversionWizard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -16,10 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.*;
 
 /**
  * @author nik
@@ -96,7 +94,7 @@ public class ProjectConversionUtil {
       }
 
       final File file = backupAndConvert(converter);
-      listener.succesfullyConverted(file);
+      listener.successfullyConverted(file);
       return true;
     }
     catch (QualifiedJDomException e) {
@@ -131,7 +129,7 @@ public class ProjectConversionUtil {
       }
 
       String projectName = FileUtil.getNameWithoutExtension(new File(projectFilePath));
-      ProjectConversionWizard wizard = new ProjectConversionWizard(converter, projectName, action == ProjectConversionAction.FORCE_CONVERSION);
+      OldProjectConversionWizard wizard = new OldProjectConversionWizard(converter, projectName, action == ProjectConversionAction.FORCE_CONVERSION);
       wizard.show();
       if (!wizard.isOK()) {
         return ProjectConversionResult.DO_NOT_OPEN;
@@ -164,7 +162,7 @@ public class ProjectConversionUtil {
     return backup; 
   }
 
-  public static File backupFiles(final File[] files, final File parentDir) throws IOException {
+  public static File backupFiles(final Collection<File> files, final File parentDir) throws IOException {
     final String dirName = FileUtil.createSequentFileName(parentDir, PROJECT_FILES_BACKUP, "");
     File backupDir = new File(parentDir, dirName);
     backupDir.mkdirs();
@@ -177,7 +175,7 @@ public class ProjectConversionUtil {
   public static File backupAndConvert(final ProjectConverter converter) throws IOException, QualifiedJDomException {
     final File[] files = converter.getAffectedFiles();
     final File parentDir = converter.getBaseDirectory();
-    File backupDir = backupFiles(files, parentDir);
+    File backupDir = backupFiles(Arrays.asList(files), parentDir);
     converter.convert();
     return backupDir;
   }
@@ -218,10 +216,4 @@ public class ProjectConversionUtil {
     }
   }
 
-  public interface ConversionListener {
-    void conversionNeeded();
-    void succesfullyConverted(File backupDir);
-    void error(String message);
-    void cannotWriteToFiles(final List<File> readonlyFiles);
-  }
 }

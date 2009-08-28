@@ -14,6 +14,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -172,6 +173,16 @@ public class JDomConvertingUtil {
       }
     }
     root.addContent(component);
+  }
+
+  @NotNull
+  public static List<Element> getChildren(@NotNull Element parent) {
+    return parent.getChildren();
+  }
+
+  @NotNull
+  public static List<Element> getChildren(@NotNull Element parent, @NotNull String name) {
+    return parent.getChildren(name);
   }
 
   @Nullable
