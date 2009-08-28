@@ -18,6 +18,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.extractInterface.ExtractClassUtil;
 import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ExtractSuperclassHandler implements RefactoringActionHandler, ExtractSuperclassDialog.Callback {
+public class ExtractSuperclassHandler implements RefactoringActionHandler, ExtractSuperclassDialog.Callback, ElementsHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler");
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("extract.superclass.title");
@@ -157,4 +158,8 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     return RefactoringBundle.message("extract.superclass.command.name", newName, UsageViewUtil.getDescriptiveName(subclass));
   }
 
+  public boolean isEnabledOnElements(PsiElement[] elements) {
+    return elements.length == 1 && elements[0] instanceof PsiClass && !((PsiClass) elements[0]).isInterface()
+      &&!((PsiClass)elements[0]).isEnum();
+  }
 }

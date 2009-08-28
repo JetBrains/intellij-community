@@ -5,6 +5,6 @@ import com.intellij.refactoring.RefactoringActionHandler;
 /**
  * @author yole
  */
-public interface ExtractIncludeHandler extends RefactoringActionHandler {
+public interface TitledHandler extends RefactoringActionHandler {
   String getActionTitle();
 }

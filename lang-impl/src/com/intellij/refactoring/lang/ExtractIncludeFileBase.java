@@ -40,7 +40,7 @@ import java.util.List;
 /**
  * @author ven
  */
-public abstract class ExtractIncludeFileBase<T extends PsiElement> implements ExtractIncludeHandler {
+public abstract class ExtractIncludeFileBase<T extends PsiElement> implements TitledHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.lang.ExtractIncludeFileBase");
   private static final String REFACTORING_NAME = RefactoringBundle.message("extract.include.file.title");
   protected PsiFile myIncludingFile;

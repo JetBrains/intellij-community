@@ -1,24 +1,26 @@
 package com.intellij.lang.java;
 
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
-import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
-import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
+import com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler;
+import com.intellij.refactoring.extractInterface.ExtractInterfaceHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
+import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
+import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
+import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
-public class JavaRefactoringSupportProvider implements RefactoringSupportProvider {
+public class JavaRefactoringSupportProvider extends DefaultRefactoringSupportProvider {
   public boolean isSafeDeleteAvailable(PsiElement element) {
     return element instanceof PsiClass || element instanceof PsiMethod || element instanceof PsiField ||
            (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod) ||
@@ -35,6 +37,7 @@ public class JavaRefactoringSupportProvider implements RefactoringSupportProvide
 
   public boolean doInplaceRenameFor(final PsiElement element, final PsiElement context) {
     return mayRenameInplace(element, context);
+    
   }
 
   public RefactoringActionHandler getIntroduceVariableHandler() {
@@ -56,6 +59,14 @@ public class JavaRefactoringSupportProvider implements RefactoringSupportProvide
 
   public RefactoringActionHandler getPushDownHandler() {
     return new JavaPushDownHandler();
+  }
+
+  public RefactoringActionHandler getExtractModuleHandler() {
+    return new ExtractInterfaceHandler();
+  }
+
+  public RefactoringActionHandler getExtractSuperClassHandler() {
+    return new ExtractSuperclassHandler();
   }
 
   public static boolean mayRenameInplace(PsiElement elementToRename, final PsiElement nameSuggestionContext) {

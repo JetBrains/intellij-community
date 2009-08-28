@@ -58,6 +58,14 @@ public class DefaultRefactoringSupportProvider implements RefactoringSupportProv
     return null;
   }
 
+  public RefactoringActionHandler getExtractModuleHandler() {
+    return null;
+  }
+
+  public RefactoringActionHandler getExtractSuperClassHandler() {
+    return null;
+  }
+
   public boolean doInplaceRenameFor(final PsiElement element, final PsiElement context) {
     return false;
   }

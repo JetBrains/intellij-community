@@ -74,10 +74,22 @@ public interface RefactoringSupportProvider {
   @Nullable RefactoringActionHandler getPullUpHandler();
 
   /**
-   * @return  handler for pulling up members in this language
+   * @return  handler for pushing down members in this language
    * @see com.intellij.refactoring.RefactoringActionHandler
    */
   @Nullable RefactoringActionHandler getPushDownHandler();
+
+  /**
+   * @return  handler for extracting members to some module in this language
+   * @see com.intellij.refactoring.RefactoringActionHandler
+   */
+  @Nullable RefactoringActionHandler getExtractModuleHandler();
+
+  /**
+   * @return  handler for extracting super class in this language
+   * @see com.intellij.refactoring.RefactoringActionHandler
+   */
+  @Nullable RefactoringActionHandler getExtractSuperClassHandler();
 
   boolean doInplaceRenameFor(PsiElement element, PsiElement context);
 }

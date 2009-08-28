@@ -14,6 +14,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperClassUtil;
+import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.JavaDocPolicy;
@@ -22,7 +23,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtractInterfaceHandler implements RefactoringActionHandler {
+public class ExtractInterfaceHandler implements RefactoringActionHandler, ElementsHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractInterface.ExtractInterfaceHandler");
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("extract.interface.title");
@@ -123,4 +124,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
     return RefactoringBundle.message("extract.interface.command.name", myInterfaceName, UsageViewUtil.getDescriptiveName(myClass));
   }
 
+  public boolean isEnabledOnElements(PsiElement[] elements) {
+    return elements.length == 1 && elements[0] instanceof PsiClass;
+  }
 }
