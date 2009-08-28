@@ -53,7 +53,7 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
     model.getOrCreateModifiableArtifact(artifact).setName(newName);
     model.commit();
-    return model.getArtifactByOriginal(artifact);
+    return artifact;
   }
 
   protected Artifact addArtifact(String name) {

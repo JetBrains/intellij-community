@@ -93,6 +93,7 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
     final Artifact newArtifact = assertOneElement(getArtifacts());
     assertEquals("qqq", newArtifact.getName());
     assertEquals("/aaa", newArtifact.getOutputPath());
+    assertSame(newArtifact, artifact);
   }
 
 
@@ -120,8 +121,8 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
     }
 
     @Override
-    public void artifactChanged(@NotNull Artifact original, Artifact modified) {
-      myMessages.append("changed:").append(original.getName()).append("->").append(modified.getName()).append(";");
+    public void artifactChanged(@NotNull Artifact artifact, @NotNull String oldName) {
+      myMessages.append("changed:").append(oldName).append("->").append(artifact.getName()).append(";");
     }
 
     public String clearMessages() {
