@@ -997,7 +997,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                            "  <mirrors>" +
                            "    <mirror>" +
                            "      <id>foo</id>" +
-                           "      <url>file://" +mirrorPath + "</url>" +
+                           "      <url>file://" + mirrorPath + "</url>" +
                            "      <mirrorOf>*</mirrorOf>" +
                            "    </mirror>" +
                            "  </mirrors>" +

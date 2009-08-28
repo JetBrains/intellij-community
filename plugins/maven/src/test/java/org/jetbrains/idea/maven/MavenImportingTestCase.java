@@ -28,10 +28,7 @@ import org.jetbrains.idea.maven.project.MavenException;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.runner.MavenExecutor;
-import org.jetbrains.idea.maven.runner.MavenExternalExecutor;
-import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
-import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
+import org.jetbrains.idea.maven.runner.*;
 
 import java.io.File;
 import java.io.IOException;

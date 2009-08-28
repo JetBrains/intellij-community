@@ -377,6 +377,11 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     }
   }
 
+  @TestOnly
+  public MavenEmbeddersManager getEmbeddersManagerInTests() {
+    return myEmbeddersManager;
+  }
+
   private boolean isInitialized() {
     return isInitialized.get();
   }
