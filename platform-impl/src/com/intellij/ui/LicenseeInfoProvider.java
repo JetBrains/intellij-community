@@ -12,4 +12,5 @@ public abstract class LicenseeInfoProvider {
 
   public abstract String getLicensedToMessage();
   public abstract String getLicenseRestrictionsMessage();
+  public abstract boolean isEvaluationLicense();
 }
