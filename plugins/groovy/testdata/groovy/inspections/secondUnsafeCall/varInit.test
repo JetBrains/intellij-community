@@ -1,0 +1,3 @@
+def a = a?.b().<caret>c
+-----
+def a = a?.b()?.c

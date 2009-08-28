@@ -1,0 +1,3 @@
+println a?.b.<caret>c
+-----
+println a?.b?.c
