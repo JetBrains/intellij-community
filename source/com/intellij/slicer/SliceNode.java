@@ -73,7 +73,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     if (myCachedChildren != null || !isValid() || getTreeBuilder().splitByLeafExpressions) {
       return myCachedChildren == null ? Collections.<AbstractTreeNode>emptyList() : myCachedChildren;
     }
-    myCachedChildren = Collections.synchronizedList(new ArrayList<AbstractTreeNode>());
+    final List<AbstractTreeNode> children = Collections.synchronizedList(new ArrayList<AbstractTreeNode>());
     final SliceManager manager = SliceManager.getInstance(getProject());
     manager.runInterruptibly(new Runnable() {
       public void run() {
@@ -81,7 +81,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
           public boolean process(SliceUsage sliceUsage) {
             manager.checkCanceled();
             SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages, getTreeBuilder(), getLeafExpressions());
-            myCachedChildren.add(node);
+            children.add(node);
             return true;
           }
         };
@@ -90,7 +90,6 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
       }
     }, new Runnable(){
       public void run() {
-        myCachedChildren = null;
         changed = true;
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
@@ -103,6 +102,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
         });
       }
     }, progress);
+    myCachedChildren = children;
     return myCachedChildren;
   }
 
@@ -119,7 +119,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
 
   protected void update(PresentationData presentation) {
     if (!initialized) {
-      initializeDuplicateFlag();
+      duplicate = targetEqualUsages.putNodeCheckDupe(this);
       initialized = true;
     }
     if (presentation != null) {
@@ -129,11 +129,6 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
         presentation.setTooltip("Duplicate node");
       }
     }
-  }
-
-  private void initializeDuplicateFlag() {
-    SliceNode node = targetEqualUsages.putNodeCheckDupe(this);
-    duplicate = node;
   }
 
   public SliceNode getDuplicate() {
