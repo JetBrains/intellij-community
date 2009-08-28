@@ -407,9 +407,23 @@ public abstract class AbstractVcs extends StartedActivated {
     return myKey;
   }
 
+  public VcsType getType() {
+    return VcsType.centralized;
+  }
+
   // todo ?
   public boolean checkImmediateParentsBeforeCommit() {
     return false;
+  }
+
+  @Nullable
+  protected VcsOutgoingChangesProvider getOutgoingProviderImpl() {
+    return null;
+  }
+
+  @Nullable
+  public final VcsOutgoingChangesProvider getOutgoingChangesProvider() {
+    return VcsType.centralized.equals(getType()) ? null : getOutgoingProviderImpl();
   }
 }
 
