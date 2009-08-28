@@ -21,7 +21,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.Alarm;
-import com.intellij.util.ProfilingUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -343,11 +342,6 @@ public class IdeEventQueue extends EventQueue {
   public void dispatchEvent(final AWTEvent e) {
     long t = 0;
 
-    if (DEBUG) {
-      t = System.currentTimeMillis();
-      ProfilingUtil.startCPUProfiling();
-    }
-
     boolean wasInputEvent = myIsInInputEvent;
     myIsInInputEvent = e instanceof InputEvent || e instanceof InputMethodEvent || e instanceof WindowEvent || e instanceof ActionEvent;
     AWTEvent oldEvent = myCurrentEvent;
@@ -369,13 +363,7 @@ public class IdeEventQueue extends EventQueue {
       if (DEBUG) {
         final long processTime = System.currentTimeMillis() - t;
         if (processTime > 100) {
-          final String path = ProfilingUtil.captureCPUSnapshot();
-
           LOG.debug("Long event: " + processTime + "ms - " + toDebugString(e));
-          LOG.debug("Snapshot taken: " + path);
-        }
-        else {
-          ProfilingUtil.stopCPUProfiling();
         }
       }
     }

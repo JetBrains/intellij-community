@@ -38,7 +38,6 @@ import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.Alarm;
-import com.intellij.util.ProfilingUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.fs.IFile;
@@ -805,10 +804,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           });
 
           project[0] = null; // Let it go.
-
-          if (takeMemorySnapshot) {
-            ProfilingUtil.forceCaptureMemorySnapshot();
-          }
 
           ProjectUtil.openProject(location, null, true);
         }

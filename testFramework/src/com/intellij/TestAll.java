@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.testFramework.*;
-import com.intellij.util.ProfilingUtil;
 import junit.framework.*;
 
 import java.io.File;
@@ -237,7 +236,6 @@ public class TestAll implements Test {
           try {
             mySavingMemorySnapshot = true;
             System.out.println("OutOfMemoryError detected. Saving memory snapshot started");
-            ProfilingUtil.captureMemorySnapshot("allTests");
           }
           finally {
             System.out.println("Saving memory snapshot finished");
@@ -262,8 +260,6 @@ public class TestAll implements Test {
         long total = runtime.totalMemory();
         long free = runtime.freeMemory();
         String errorMessage = "Too much memory used. Total: " + total + " free: " + free + " used: " + (total - free) + "\n";
-        String message = ProfilingUtil.forceCaptureMemorySnapshot();
-        if (message != null) errorMessage += message;
         addErrorMessage(testResult, errorMessage);
       }
     }
