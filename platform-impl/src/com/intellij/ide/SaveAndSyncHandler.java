@@ -99,20 +99,21 @@ public class SaveAndSyncHandler implements ApplicationComponent {
     
     if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
       FileDocumentManager.getInstance().saveAllDocuments();
-    }
-    Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
-    for (Project project : openProjects) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("save project: " + project);
+
+      Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
+      for (Project project : openProjects) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("save project: " + project);
+        }
+        project.save();
       }
-      project.save();
-    }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("save application settings");
-    }
-    ApplicationManagerEx.getApplicationEx().saveSettings();
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("exit: save()");
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("save application settings");
+      }
+      ApplicationManagerEx.getApplicationEx().saveSettings();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("exit: save()");
+      }
     }
   }
 
