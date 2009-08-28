@@ -1,5 +1,6 @@
 package com.jetbrains.python.actions;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.Language;
@@ -10,7 +11,6 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameterList;
-import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +35,9 @@ public class AddSelfQuickFix implements LocalQuickFix {
     PsiElement problem_elt = descriptor.getPsiElement();
     if (problem_elt instanceof PyParameterList) {
       final PyParameterList param_list = (PyParameterList)problem_elt;
-      PyUtil.ensureWritable(problem_elt);
+      if (!CodeInsightUtilBase.preparePsiElementForWrite(problem_elt)) {
+        return;
+      }
       Language language = problem_elt.getLanguage();
       if (language instanceof PythonLanguage) {
         final PythonLanguage pythonLanguage = (PythonLanguage)language;
