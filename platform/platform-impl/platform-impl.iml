@@ -22,17 +22,6 @@
     <orderEntry type="module" module-name="plugins-management" exported="" />
     <orderEntry type="library" name="picocontainer" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/jh.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/../lib/src/jhsrc.jar!/src" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="boot" />
     <orderEntry type="module" module-name="bootstrap" />
     <orderEntry type="module" module-name="lvcs-openapi" />
@@ -41,6 +30,17 @@
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="library" name="commons-net" level="project" />
     <orderEntry type="library" name="CGLIB" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../../lib/jh.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/../../../lib/src/jhsrc.jar!/src" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>
 

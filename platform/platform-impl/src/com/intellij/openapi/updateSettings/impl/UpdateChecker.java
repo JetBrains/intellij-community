@@ -10,7 +10,6 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.reporter.ConnectionException;
-import com.intellij.licensecommon.license.LicenseDataImpl;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -57,6 +56,8 @@ import java.util.concurrent.TimeoutException;
  */
 public final class UpdateChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker");
+
+  public static String ADDITIONAL_REQUEST_OPTIONS = "";
 
   public static enum DownloadPatchResult {
     SUCCESS, FAILED, CANCELED
@@ -251,7 +252,7 @@ public final class UpdateChecker {
       public void run() {
         try {
           HttpConfigurable.getInstance().prepareURL(url);
-          final URL requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuildNumber() + hackedParameter());
+          final URL requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuildNumber() + ADDITIONAL_REQUEST_OPTIONS);
           final InputStream inputStream = requestUrl.openStream();
           try {
             document[0] = JDOMUtil.loadDocument(inputStream);
@@ -282,12 +283,6 @@ public final class UpdateChecker {
 
     if (exception[0] != null) throw exception[0];
     return document[0];
-  }
-
-  private static String hackedParameter() {
-    if (!LicenseDataImpl.HACKED) return "";
-
-    return "&version=" + ApplicationInfo.getInstance().getMajorVersion();
   }
 
   public static void showNoUpdatesDialog(boolean enableLink, final List<PluginDownloader> updatePlugins) {
