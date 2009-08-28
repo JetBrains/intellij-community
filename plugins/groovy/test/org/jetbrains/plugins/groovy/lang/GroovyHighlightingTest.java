@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnI
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection;
+import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection;
 
 import java.io.IOException;
 
@@ -131,4 +132,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testUnassigned2() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
   public void testUnassigned3() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
   public void testUnassignedTryFinally() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
+  
+  public void testUnusedVariable() throws Exception { doTest(new UnusedDefInspection()); }
+  public void testDefinitionUsedInClosure() throws Exception { doTest(new UnusedDefInspection()); }
+  public void testDefinitionUsedInClosure2() throws Exception { doTest(new UnusedDefInspection()); }
 }
