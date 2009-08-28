@@ -4,6 +4,8 @@
 
 package com.intellij.ide.dnd;
 
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.AwtVisitor;
@@ -18,8 +20,6 @@ import java.awt.dnd.MouseDragGestureRecognizer;
 import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,12 +41,10 @@ public class DnDEnabler implements Activatable, Disposable {
   private final DnDAware myDnDSource;
   private MouseListener myOriginalDragGestureRecognizer;
 
-  private final PropertyChangeListener myPropertyChangeListener = new PropertyChangeListener() {
-    public void propertyChange(PropertyChangeEvent evt) {
-      if ("UI".equals(evt.getPropertyName())) {
-        // todo[spleaner]: does default listeners are recreated onSetUI() and what 'bout custom listeners??
-        onSetUI();
-      }
+  private LafManagerListener myLafManagerListener = new LafManagerListener() {
+    public void lookAndFeelChanged(LafManager source) {
+      // todo[spleaner]: does default listeners are recreated onSetUI() and what 'bout custom listeners??
+      onSetUI();
     }
   };
   private MouseListener myTooltipListener1;
@@ -56,7 +54,7 @@ public class DnDEnabler implements Activatable, Disposable {
     myDnDSource = source;
     final Component component = source.getComponent();
 
-    component.addPropertyChangeListener(myPropertyChangeListener);
+    LafManager.getInstance().addLafManagerListener(myLafManagerListener);
 
     final UiNotifyConnector connector = new UiNotifyConnector(component, this);// todo: disposable???
     Disposer.register(this, connector);
@@ -66,7 +64,7 @@ public class DnDEnabler implements Activatable, Disposable {
   }
 
   public void dispose() {
-    myDnDSource.getComponent().removePropertyChangeListener(myPropertyChangeListener);
+    LafManager.getInstance().removeLafManagerListener(myLafManagerListener);
     myOriginalDragGestureRecognizer = null;
   }
 
@@ -115,8 +113,7 @@ public class DnDEnabler implements Activatable, Disposable {
       moveBefore.setAccessible(true);
       myTooltipListener2 = (MouseListener)moveBefore.get(manager);
     }
-    catch (Exception e) {
-      return;
+    catch (Exception ignored) {
     }
   }
 
