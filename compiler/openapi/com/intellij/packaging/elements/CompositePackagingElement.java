@@ -94,4 +94,9 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
       child.computeIncrementalCompilerInstructions(creator, resolvingContext, compilerContext, artifactType);
     }
   }
+
+  public void removeAllChildren() {
+    myChildren.clear();
+    myUnmodifiableChildren = null;
+  }
 }

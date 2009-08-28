@@ -119,4 +119,14 @@ public class ArtifactImpl implements ModifiableArtifact {
   public ArtifactProperties<?> getProperties(@NotNull ArtifactPropertiesProvider provider) {
     return myProperties.get(provider);
   }
+
+  public void copyFrom(ArtifactImpl modified) {
+    myName = modified.getName();
+    myOutputPath = modified.getOutputPath();
+    myBuildOnMake = modified.isBuildOnMake();
+    myRootElement = modified.getRootElement();
+    myClearOutputDirectoryOnRebuild = modified.isClearOutputDirectoryOnRebuild();
+    myProperties = modified.myProperties;
+    myArtifactType = modified.getArtifactType();
+  }
 }

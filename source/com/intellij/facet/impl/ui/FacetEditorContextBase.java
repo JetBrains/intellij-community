@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,6 +81,9 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
   public UserDataHolder getSharedModuleData() {
     return mySharedModuleData;
   }
+
+  @NotNull
+  public abstract PackagingEditorContext getPackagingEditorContext();
 
   @Nullable
   public <T> T getUserData(final Key<T> key) {

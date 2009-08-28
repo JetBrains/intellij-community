@@ -1,11 +1,12 @@
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.*;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -17,9 +18,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.Collection;
 
 /**
  * @author nik
@@ -216,22 +217,22 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
 
       Set<ArtifactImpl> removed = new THashSet<ArtifactImpl>(myModel.myArtifactsList);
       List<ArtifactImpl> added = new ArrayList<ArtifactImpl>();
-      List<ArtifactImpl> changed = new ArrayList<ArtifactImpl>();
+      List<Pair<ArtifactImpl, String>> changed = new ArrayList<Pair<ArtifactImpl, String>>();
 
-      List<ArtifactImpl> newArtifacts = new ArrayList<ArtifactImpl>();
       for (ArtifactImpl artifact : allArtifacts) {
         final boolean isAdded = !removed.remove(artifact);
-        final ArtifactImpl newArtifact = artifactModel.getArtifactByOriginal(artifact);
+        final ArtifactImpl modifiableCopy = artifactModel.getModifiableCopy(artifact);
         if (isAdded) {
-          added.add(newArtifact);
+          added.add(artifact);
         }
-        else if (artifactModel.isChanged(artifact)) {
-          changed.add(artifact);
+        else if (modifiableCopy != null && !modifiableCopy.equals(artifact)) {
+          final String oldName = artifact.getName();
+          artifact.copyFrom(modifiableCopy);
+          changed.add(Pair.create(artifact, oldName));
         }
-        newArtifacts.add(newArtifact);
       }
 
-      myModel.setArtifactsList(newArtifacts);
+      myModel.setArtifactsList(allArtifacts);
       final ArtifactListener publisher = myProject.getMessageBus().syncPublisher(TOPIC);
       for (ArtifactImpl artifact : added) {
         publisher.artifactAdded(artifact);
@@ -239,8 +240,8 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       for (ArtifactImpl artifact : removed) {
         publisher.artifactRemoved(artifact);
       }
-      for (ArtifactImpl artifact : changed) {
-        publisher.artifactChanged(artifact, artifactModel.getArtifactByOriginal(artifact));
+      for (Pair<ArtifactImpl, String> pair : changed) {
+        publisher.artifactChanged(pair.getFirst(), pair.getSecond());
       }
     }
     finally {

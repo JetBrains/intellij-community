@@ -4,6 +4,7 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -127,9 +128,9 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
     myArtifactManager.commit(this);
   }
 
-  public boolean isChanged(@NotNull ArtifactImpl artifact) {
-    final ArtifactImpl modifiable = myArtifact2ModifiableCopy.get(artifact);
-    return modifiable != null && !modifiable.equals(artifact);
+  @Nullable
+  public ArtifactImpl getModifiableCopy(ArtifactImpl artifact) {
+    return myArtifact2ModifiableCopy.get(artifact);
   }
 
   public List<ArtifactImpl> getOriginalArtifacts() {

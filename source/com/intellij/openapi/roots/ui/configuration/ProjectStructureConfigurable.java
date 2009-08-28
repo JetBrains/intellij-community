@@ -203,6 +203,10 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     }
   }
 
+  public ArtifactsStructureConfigurable getArtifactsStructureConfigurable() {
+    return myArtifactsStructureConfigurable;
+  }
+
   private void addFacetsConfig() {
     addConfigurable(myFacetStructureConfigurable);
   }

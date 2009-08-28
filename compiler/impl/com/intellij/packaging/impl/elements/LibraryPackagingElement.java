@@ -97,6 +97,11 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     return myName;
   }
 
+  @Override
+  public String toString() {
+    return "lib:" + myName + "(" + myLevel + ")";
+  }
+
   public void setName(String name) {
     myName = name;
   }

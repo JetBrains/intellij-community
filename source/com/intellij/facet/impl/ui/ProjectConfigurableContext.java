@@ -14,9 +14,11 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.ui.PackagingEditorContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,5 +75,11 @@ public abstract class ProjectConfigurableContext extends FacetEditorContextBase 
 
   public VirtualFile[] getLibraryFiles(Library library, OrderRootType rootType) {
     return getContainer().getLibraryFiles(library, rootType);
+  }
+
+  @NotNull
+  @Override
+  public PackagingEditorContext getPackagingEditorContext() {
+    return ProjectStructureConfigurable.getInstance(getProject()).getArtifactsStructureConfigurable().getPackagingEditorContext();
   }
 }

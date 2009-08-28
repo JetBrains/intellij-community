@@ -26,12 +26,11 @@ public class ArtifactPointerManagerImpl extends ArtifactPointerManager {
       }
 
       @Override
-      public void artifactChanged(@NotNull Artifact original, Artifact modified) {
-        final String oldName = original.getName();
+      public void artifactChanged(@NotNull Artifact artifact, @NotNull String oldName) {
         final ArtifactPointerImpl pointer = myPointers.get(oldName);
         if (pointer != null) {
-          pointer.setArtifact(modified);
-          final String newName = modified.getName();
+          pointer.setArtifact(artifact);
+          final String newName = artifact.getName();
           if (!newName.equals(oldName)) {
             pointer.setName(newName);
             myPointers.remove(oldName);

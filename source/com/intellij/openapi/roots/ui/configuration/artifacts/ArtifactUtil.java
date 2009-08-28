@@ -78,7 +78,7 @@ public class ArtifactUtil {
     return processPackagingElements(artifact.getRootElement(), type, processor, resolvingContext, processSubstituions, artifact.getArtifactType());
   }
 
-  public static <E extends PackagingElement<?>> boolean processPackagingElements(final CompositePackagingElement<?> rootElement, @Nullable PackagingElementType<E> type,
+  public static <E extends PackagingElement<?>> boolean processPackagingElements(final PackagingElement<?> rootElement, @Nullable PackagingElementType<E> type,
                                                                                  @NotNull PackagingElementProcessor<E> processor,
                                                                                  final @NotNull PackagingElementResolvingContext resolvingContext,
                                                                                  final boolean processSubstituions,

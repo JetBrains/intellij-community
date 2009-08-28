@@ -12,6 +12,6 @@ public class ArtifactAdapter implements ArtifactListener {
   public void artifactRemoved(@NotNull Artifact artifact) {
   }
 
-  public void artifactChanged(@NotNull Artifact original, Artifact modified) {
+  public void artifactChanged(@NotNull Artifact artifact, @NotNull String oldName) {
   }
 }

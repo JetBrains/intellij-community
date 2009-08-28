@@ -127,6 +127,7 @@ public class SourceItemsTree implements DnDSource, Disposable{
   private static class SourceItemsTreeStructure extends SimpleTreeStructure {
     private final ArtifactEditorContext myEditorContext;
     private final ArtifactEditorImpl myArtifactsEditor;
+    private SourceItemsTreeRoot myRoot;
 
     public SourceItemsTreeStructure(ArtifactEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
       myEditorContext = editorContext;
@@ -135,7 +136,10 @@ public class SourceItemsTree implements DnDSource, Disposable{
 
     @Override
     public Object getRootElement() {
-      return new SourceItemsTreeRoot(myEditorContext, myArtifactsEditor);
+      if (myRoot == null) {
+        myRoot = new SourceItemsTreeRoot(myEditorContext, myArtifactsEditor);
+      }
+      return myRoot;
     }
   }
 }

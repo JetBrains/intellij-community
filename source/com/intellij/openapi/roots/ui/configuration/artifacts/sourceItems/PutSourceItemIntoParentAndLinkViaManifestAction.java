@@ -12,12 +12,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.impl.elements.ArchivePackagingElement;
-import com.intellij.packaging.impl.elements.FileCopyPackagingElement;
+import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.ui.ArtifactEditor;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,21 +93,11 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends AnAction {
     }
 
     final CompositePackagingElement<?> grandParent = parentsInfo.getGrandparentElement();
-    final List<String> classpath = new ArrayList<String>();
+    List<String> classpath = new ArrayList<String>();
     for (PackagingSourceItem item : items) {
       final List<? extends PackagingElement<?>> elements = item.createElements(context);
       grandParent.addOrFindChildren(elements);
-      ArtifactUtil.processElements(elements, context, artifact.getArtifactType(), new Processor<PackagingElement<?>>() {
-        public boolean process(PackagingElement<?> element) {
-          if (element instanceof FileCopyPackagingElement) {
-            classpath.add(((FileCopyPackagingElement)element).getOutputFileName());
-          }
-          else if (element instanceof ArchivePackagingElement) {
-            classpath.add(((ArchivePackagingElement)element).getName());
-          }
-          return true;
-        }
-      });
+      classpath.addAll(ManifestFileUtil.getClasspathForElements(elements, context, artifact.getArtifactType()));
     }
     final ArtifactEditor parentArtifactEditor = context.getOrCreateEditor(parentsInfo.getParentArtifact());
     parentArtifactEditor.addToClasspath(parentsInfo.getParentElement(), classpath);

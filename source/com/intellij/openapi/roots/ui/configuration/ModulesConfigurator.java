@@ -30,10 +30,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.Chunk;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.GraphGenerator;
-import com.intellij.packaging.artifacts.Artifact;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -276,7 +278,15 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     final ProjectBuilder builder = runModuleWizard(parent);
     if (builder != null ) {
       final List<Module> modules = new ArrayList<Module>();
-      final List<Module> commitedModules = builder.commit(myProject, myModuleModel, this);
+      final List<Module> commitedModules;
+      if (builder instanceof ProjectImportBuilder<?>) {
+        final ModifiableArtifactModel artifactModel =
+            ProjectStructureConfigurable.getInstance(myProject).getArtifactsStructureConfigurable().getModifiableArtifactModel();
+        commitedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, this, artifactModel);
+      }
+      else {
+        commitedModules = builder.commit(myProject, myModuleModel, this);
+      }
       if (commitedModules != null) {
         modules.addAll(commitedModules);
       }

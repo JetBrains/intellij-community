@@ -226,9 +226,15 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   @NotNull
   @Override
   public PackagingElement<?> createParentDirectories(@NotNull String relativeOutputPath, @NotNull PackagingElement<?> element) {
+    return createParentDirectories(relativeOutputPath, Collections.singletonList(element)).get(0);
+  }
+
+  @NotNull
+  @Override
+  public List<? extends PackagingElement<?>> createParentDirectories(@NotNull String relativeOutputPath, @NotNull List<? extends PackagingElement<?>> elements) {
     relativeOutputPath = StringUtil.trimStart(relativeOutputPath, "/");
     if (relativeOutputPath.length() == 0) {
-      return element;
+      return elements;
     }
     int slash = relativeOutputPath.indexOf('/');
     if (slash == -1) slash = relativeOutputPath.length();
@@ -236,8 +242,8 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     String pathTail = relativeOutputPath.substring(slash);
     final DirectoryPackagingElement root = createDirectory(rootName);
     final CompositePackagingElement<?> last = getOrCreateDirectory(root, pathTail);
-    last.addOrFindChild(element);
-    return root;
+    last.addOrFindChildren(elements);
+    return Collections.singletonList(root);
   }
 
   private static class DirectoryElementType extends CompositePackagingElementType<DirectoryPackagingElement> {

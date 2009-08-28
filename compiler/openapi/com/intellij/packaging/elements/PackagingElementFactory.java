@@ -66,6 +66,9 @@ public abstract class PackagingElementFactory {
   @NotNull
   public abstract PackagingElement<?> createParentDirectories(@NotNull String relativeOutputPath, @NotNull PackagingElement<?> element);
 
+  @NotNull
+  public abstract List<? extends PackagingElement<?>> createParentDirectories(@NotNull String relativeOutputPath, @NotNull List<? extends PackagingElement<?>> elements);
+
 
   @NotNull
   public abstract CompositePackagingElementType<?>[] getCompositeElementTypes();

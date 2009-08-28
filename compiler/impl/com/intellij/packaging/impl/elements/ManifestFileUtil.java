@@ -1,14 +1,16 @@
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.openapi.compiler.make.ManifestBuilder;
+import com.intellij.openapi.deployment.DeploymentUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
+import com.intellij.openapi.roots.ui.configuration.artifacts.PackagingElementProcessor;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.compiler.make.ManifestBuilder;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
@@ -19,14 +21,14 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import java.util.jar.Attributes;
-import java.util.List;
-import java.util.ArrayList;
-import java.io.InputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 
 /**
  * @author nik
@@ -168,5 +170,27 @@ public class ManifestFileUtil {
       path = null;
     }
     return new ManifestFileConfiguration(classpath, mainClass, path);
+  }
+
+  public static List<String> getClasspathForElements(List<? extends PackagingElement<?>> elements, PackagingElementResolvingContext context, final ArtifactType artifactType) {
+    final List<String> classpath = new ArrayList<String>();
+    final PackagingElementProcessor<PackagingElement<?>> processor = new PackagingElementProcessor<PackagingElement<?>>() {
+      @Override
+      public boolean process(@NotNull List<CompositePackagingElement<?>> parents, @NotNull PackagingElement<?> element) {
+        if (element instanceof FileCopyPackagingElement) {
+          final String fileName = ((FileCopyPackagingElement)element).getOutputFileName();
+          classpath.add(DeploymentUtil.appendToPath(getPathFromRoot(parents, "/"), fileName));
+        }
+        else if (element instanceof ArchivePackagingElement) {
+          final String archiveName = ((ArchivePackagingElement)element).getName();
+          classpath.add(DeploymentUtil.appendToPath(getPathFromRoot(parents, "/"), archiveName));
+        }
+        return true;
+      }
+    };
+    for (PackagingElement<?> element : elements) {
+      ArtifactUtil.processPackagingElements(element, null, processor, context, true, artifactType);
+    }
+    return classpath;
   }
 }
