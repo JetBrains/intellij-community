@@ -87,19 +87,6 @@ public class InitializationUtils{
         return assignmentCount == 1;
     }
 
-    private static boolean blockFails(@Nullable PsiCodeBlock block){
-        if(block == null){
-            return false;
-        }
-        final PsiStatement[] statements = block.getStatements();
-        for(PsiStatement statement : statements){
-            if(ExceptionUtils.statementThrowsException(statement)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private static boolean statementAssignsVariableOrFails(
             @Nullable PsiStatement statement, PsiVariable variable,
             @NotNull Set<MethodSignature> checkedMethods, boolean strict){
@@ -294,7 +281,8 @@ public class InitializationUtils{
         final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
         for(final PsiCodeBlock catchBlock : catchBlocks){
             if (strict) {
-                initializedInTryAndCatch &= blockFails(catchBlock);
+                initializedInTryAndCatch &=
+                        ExceptionUtils.blockThrowsException(catchBlock);
             } else {
                 initializedInTryAndCatch &= blockAssignsVariableOrFails(
                         catchBlock, variable,

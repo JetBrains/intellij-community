@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,7 @@ import java.util.Set;
 
 public class ExceptionUtils{
 
-    private ExceptionUtils(){
-        super();
-    }
+    private ExceptionUtils(){}
 
     private static final Set<String> s_genericExceptionTypes =
             new HashSet<String>(4);
@@ -112,12 +110,12 @@ public class ExceptionUtils{
         }
     }
 
-    private static boolean blockThrowsException(PsiCodeBlock block){
+    public static boolean blockThrowsException(@Nullable PsiCodeBlock block){
         if(block == null){
             return false;
         }
         final PsiStatement[] statements = block.getStatements();
-        for(final PsiStatement statement : statements){
+        for(PsiStatement statement : statements){
             if(statementThrowsException(statement)){
                 return true;
             }
