@@ -9,6 +9,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-api" />
+    <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
   </component>
 </module>
 
