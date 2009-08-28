@@ -14,10 +14,10 @@ Groovy script
       <empty list>
     PsiWhiteSpace(' ')
     PsiElement(wrong token)('#')
-    PsiErrorElement:',' expected
+    PsiErrorElement:',' or ']' expected
       <empty list>
     PsiElement(:)(':')
-    PsiErrorElement:',' expected
+    PsiErrorElement:',' or ']' expected
       <empty list>
     PsiWhiteSpace(' ')
     Literal

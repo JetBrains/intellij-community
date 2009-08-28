@@ -171,4 +171,27 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   public void testNoArrowClosure() throws Throwable { doTest(); }
 
+  public void testPropertyAccessError() throws Throwable {
+    checkParsing "a[b{}}", """Groovy script
+  Property by index
+    Reference expression
+      PsiElement(identifier)('a')
+    Arguments
+      PsiElement([)('[')
+      Method call
+        Reference expression
+          PsiElement(identifier)('b')
+        Arguments
+          <empty list>
+        Closable block
+          PsiElement({)('{')
+          Parameter list
+            <empty list>
+          PsiElement(})('}')
+      PsiErrorElement:',' or ']' expected
+        <empty list>
+  PsiErrorElement:';' or new line expected
+    PsiElement(})('}')"""
+  }
+
 }

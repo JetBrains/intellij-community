@@ -12,7 +12,7 @@ Groovy script
       PsiElement(()('(')
       Reference expression
         PsiElement(identifier)('Map')
-      PsiErrorElement:',' expected
+      PsiErrorElement:',' or ')' expected
         <empty list>
       PsiWhiteSpace(' ')
       Reference expression

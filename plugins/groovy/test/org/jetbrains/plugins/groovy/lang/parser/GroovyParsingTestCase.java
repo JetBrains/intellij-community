@@ -30,8 +30,14 @@ public abstract class GroovyParsingTestCase extends LightCodeInsightFixtureTestC
   protected void doTest(String fileName) throws IOException {
     final List<String> list = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + "/" + fileName);
 
-    final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(getProject(), list.get(0));
+    final String input = list.get(0);
+    final String output = list.get(1);
+    checkParsing(input, output);
+  }
+
+  protected void checkParsing(String input, String output) {
+    final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(getProject(), input);
     String psiTree = DebugUtil.psiToString(psiFile, false);
-    assertEquals(list.get(1).trim(), psiTree.trim());
+    assertEquals(output.trim(), psiTree.trim());
   }
 }

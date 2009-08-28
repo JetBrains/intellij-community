@@ -122,7 +122,13 @@ public class GroovyParser implements PsiParser {
     ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
     if (!ParserUtils.getToken(builder, GroovyTokenTypes.mRPAREN, GroovyBundle.message("rparen.expected"))) {
-      while (!builder.eof() && !GroovyTokenTypes.mNLS.equals(builder.getTokenType()) && !GroovyTokenTypes.mRPAREN.equals(builder.getTokenType())) {
+      final IElementType type = builder.getTokenType();
+      while (!builder.eof()) {
+        if (GroovyTokenTypes.mNLS.equals(type) || GroovyTokenTypes.mRPAREN.equals(type) ||
+            GroovyTokenTypes.mLCURLY.equals(type) || GroovyTokenTypes.mRCURLY.equals(type)) {
+          break;
+        }
+
         builder.advanceLexer();
         builder.error(GroovyBundle.message("rparen.expected"));
       }

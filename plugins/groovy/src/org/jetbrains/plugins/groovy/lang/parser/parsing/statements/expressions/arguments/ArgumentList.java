@@ -50,7 +50,7 @@ public class ArgumentList implements GroovyElementTypes {
       if (!hasFirstArg) {
         ParserUtils.getToken(builder, mCOMMA);
       } else {
-        ParserUtils.getToken(builder, mCOMMA, GroovyBundle.message("comma.expected"));
+        ParserUtils.getToken(builder, mCOMMA, "',' or '" + closingBrace + "' expected");
       }
       ParserUtils.getToken(builder, mNLS);
       if (!argumentParse(builder, closingBrace, parser)) {
