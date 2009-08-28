@@ -6,13 +6,13 @@ package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection;
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection;
 
 import java.io.IOException;
 
@@ -33,7 +33,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
-  private void doTest(LocalInspectionTool... tools) throws Throwable {
+  private void doTest(LocalInspectionTool... tools) throws Exception {
     myFixture.enableInspections(tools);
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy");
   }
@@ -120,4 +120,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testUnresolvedMethodCallWithTwoDeclarations() throws Throwable{
     doTest();
   }
+  
+  public void testUnresolvedAccess() throws Exception { doTest(new GroovyUnresolvedAccessInspection()); }
+  public void testUntypedAccess() throws Exception { doTest(new GroovyUntypedAccessInspection()); }
 }
