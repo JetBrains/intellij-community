@@ -85,11 +85,13 @@ public final class ToolWindowImpl implements ToolWindowEx {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myToolWindowManager.activateToolWindow(myId, forced, autoFocusContents);
 
-    getActivation().doWhenDone(new Runnable() {
-      public void run() {
-        myToolWindowManager.invokeLater(runnable);
-      }
-    });
+    if (runnable != null) {
+      getActivation().doWhenDone(new Runnable() {
+        public void run() {
+          myToolWindowManager.invokeLater(runnable);
+        }
+      });
+    }
   }
 
   public final boolean isActive() {
@@ -100,11 +102,13 @@ public final class ToolWindowImpl implements ToolWindowEx {
   public final void show(final Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myToolWindowManager.showToolWindow(myId);
-    getActivation().doWhenDone(new Runnable() {
-      public void run() {
-        myToolWindowManager.invokeLater(runnable);
-      }
-    });
+    if (runnable != null) {
+      getActivation().doWhenDone(new Runnable() {
+        public void run() {
+          myToolWindowManager.invokeLater(runnable);
+        }
+      });
+    }
   }
 
   public final void hide(final Runnable runnable) {
