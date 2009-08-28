@@ -100,7 +100,7 @@ public class PullUpHelper {
           final PsiMember movedElement = (PsiMember)myTargetSuperClass.add(methodCopy);
           CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(method.getProject());
           if (styleSettings.INSERT_OVERRIDE_ANNOTATION) {
-            if ((PsiUtil.isLanguageLevel5OrHigher(mySourceClass) && !myTargetSuperClass.isInterface()) || PsiUtil.isLanguageLevel6OrHigher(mySourceClass)) {
+            if (PsiUtil.isLanguageLevel5OrHigher(mySourceClass) && !myTargetSuperClass.isInterface() || PsiUtil.isLanguageLevel6OrHigher(mySourceClass)) {
               new AddAnnotationFix("java.lang.Override", method).invoke(method.getProject(), null, mySourceClass.getContainingFile());
             }
           }
@@ -153,13 +153,8 @@ public class PullUpHelper {
                                             RefactoringUtil.removeFromReferenceList(sourceReferenceList, aClass) :
                                             RefactoringUtil.findReferenceToClass(sourceReferenceList, aClass);
           if (ref != null) {
-            final PsiReferenceList referenceList;
-            if (!myTargetSuperClass.isInterface()) {
-              referenceList = myTargetSuperClass.getImplementsList();
-            }
-            else {
-              referenceList = myTargetSuperClass.getExtendsList();
-            }
+            final PsiReferenceList referenceList =
+              myTargetSuperClass.isInterface() ? myTargetSuperClass.getExtendsList() : myTargetSuperClass.getImplementsList();
             assert referenceList != null;
             referenceList.add(ref);
           }
@@ -222,7 +217,7 @@ public class PullUpHelper {
     public final Set<PsiParameter> usedParameters;
     public final List<PsiElement> statementsToRemove;
 
-    public Initializer(PsiExpression initializer, Set<PsiField> movedFieldsUsed, Set<PsiParameter> usedParameters, List<PsiElement> statementsToRemove) {
+    private Initializer(PsiExpression initializer, Set<PsiField> movedFieldsUsed, Set<PsiParameter> usedParameters, List<PsiElement> statementsToRemove) {
       this.initializer = initializer;
       this.movedFieldsUsed = movedFieldsUsed;
       this.statementsToRemove = statementsToRemove;
@@ -376,7 +371,6 @@ public class PullUpHelper {
 
   @Nullable
   private PsiExpression hasCommonInitializer(PsiExpression commonInitializer, PsiMethod subConstructor, PsiField field, ArrayList<PsiElement> statementsToRemove) {
-    PsiExpression commonInitializerCandidate = null;
     final PsiCodeBlock body = subConstructor.getBody();
     if (body == null) return null;
     final PsiStatement[] statements = body.getStatements();
@@ -387,6 +381,7 @@ public class PullUpHelper {
     //
     // There should be no usages before that initializer, and there should be
     // no write usages afterwards.
+    PsiExpression commonInitializerCandidate = null;
     for (PsiStatement statement : statements) {
       boolean doLookup = true;
       if (statement instanceof PsiExpressionStatement) {
@@ -395,7 +390,7 @@ public class PullUpHelper {
           final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
           final PsiExpression lExpression = assignmentExpression.getLExpression();
           if (lExpression instanceof PsiReferenceExpression) {
-            final PsiReferenceExpression lRef = ((PsiReferenceExpression)lExpression);
+            final PsiReferenceExpression lRef = (PsiReferenceExpression)lExpression;
             if (lRef.getQualifierExpression() == null || lRef.getQualifierExpression() instanceof PsiThisExpression) {
               final PsiElement resolved = lRef.resolve();
               if (resolved == field) {
@@ -457,7 +452,7 @@ public class PullUpHelper {
 
     private final Set<PsiParameter> myUsedParameters = new HashSet<PsiParameter>();
 
-    public ParametersAndMovedFieldsUsedCollector(HashSet<PsiField> movedFields) {
+    private ParametersAndMovedFieldsUsedCollector(HashSet<PsiField> movedFields) {
       myMovedFields = movedFields;
       myUsedFields = new HashSet<PsiField>();
     }
@@ -507,10 +502,10 @@ public class PullUpHelper {
       if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
         final PsiElement resolved = referenceElement.resolve();
         if (!(resolved instanceof PsiParameter)) {
-          PsiClass containingClass = null;
           if (resolved instanceof PsiClass && ((PsiClass) resolved).hasModifierProperty(PsiModifier.STATIC)) {
             return;
           }
+          PsiClass containingClass = null;
           if (resolved instanceof PsiMember && !((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) {
             containingClass = ((PsiMember) resolved).getContainingClass();
           }
@@ -594,7 +589,7 @@ public class PullUpHelper {
     ArrayList<PsiClass> myRefereeClasses;
     private final Set<PsiMember> myMovedMembers;
 
-    public StaticReferencesCollector(Set<PsiMember> movedMembers) {
+    private StaticReferencesCollector(Set<PsiMember> movedMembers) {
       super(mySourceClass);
       myMovedMembers = movedMembers;
       myReferees = new ArrayList<PsiElement>();
@@ -667,7 +662,7 @@ public class PullUpHelper {
     @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       if(expression.getQualifierExpression() instanceof PsiSuperExpression) {
         PsiElement resolved = expression.resolve();
-        if (resolved == null || (resolved instanceof PsiMethod && shouldFixSuper((PsiMethod) resolved))) {
+        if (resolved == null || resolved instanceof PsiMethod && shouldFixSuper((PsiMethod) resolved)) {
           mySupersToDelete.add(expression.getQualifierExpression());
         }
       }
@@ -684,7 +679,7 @@ public class PullUpHelper {
     private boolean shouldFixSuper(PsiMethod method) {
       for (PsiMember element : myMembersAfterMove) {
         if (element instanceof PsiMethod) {
-          PsiMethod member = ((PsiMethod)element);
+          PsiMethod member = (PsiMethod)element;
           // if there is such member among moved members, super qualifier
           // should not be removed
           final PsiManager manager = method.getManager();
@@ -696,10 +691,7 @@ public class PullUpHelper {
       }
 
       final PsiMethod methodFromSuper = myTargetSuperClass.findMethodBySignature(method, false);
-      if(methodFromSuper != null) {
-        return false;
-      }
-      return true;
+      return methodFromSuper == null;
     }
 
     public void fixSupers() throws IncorrectOperationException {
