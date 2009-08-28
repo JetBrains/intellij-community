@@ -15,6 +15,7 @@
  */
 package com.intellij.util.io;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.DataInput;
@@ -76,7 +77,7 @@ public class IOUtil {
     return new byte[STRING_LENGTH_THRESHOLD + STRING_HEADER_SIZE];
   }
 
-  public static void writeUTFFast(final byte[] buffer, final DataOutput storage, final String value) throws IOException {
+  public static void writeUTFFast(final byte[] buffer, final DataOutput storage, @NotNull final String value) throws IOException {
     int len = value.length();
     if (len < STRING_LENGTH_THRESHOLD && isAscii(value)) {
       buffer[0] = (byte)len;
