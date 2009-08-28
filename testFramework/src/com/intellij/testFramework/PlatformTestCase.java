@@ -83,7 +83,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   public static long ourTestTime = DEFAULT_TEST_TIME;
   private static final MyThreadGroup MY_THREAD_GROUP = new MyThreadGroup();
   private static final String ourOriginalTempDir = FileUtil.getTempDirectory();
-  protected EditorListenerTracker myEditorListenerTracker;
+  private EditorListenerTracker myEditorListenerTracker;
   private String myTempDirPath;
 
   static {

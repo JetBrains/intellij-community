@@ -33,8 +33,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.EditorListenerTracker;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
+import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +62,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   private final Set<File> myFilesToDelete = new HashSet<File>();
   private IdeaTestApplication myApplication;
   private final Set<ModuleFixtureBuilder> myModuleFixtureBuilders = new THashSet<ModuleFixtureBuilder>();
+  private EditorListenerTracker myEditorListenerTracker;
 
   protected void addModuleFixtureBuilder(ModuleFixtureBuilder builder) {
     myModuleFixtureBuilders.add(builder);
@@ -70,9 +73,14 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
     initApplication();
     setUpProject();
+
+    myEditorListenerTracker = new EditorListenerTracker();
   }
 
   public void tearDown() throws Exception {
+    ((StartupManagerImpl)StartupManager.getInstance(getProject())).prepareForNextTest();
+    checkAllTimersAreDisposed();
+
     for (ModuleFixtureBuilder moduleFixtureBuilder: myModuleFixtureBuilders) {
       moduleFixtureBuilder.getFixture().tearDown();
     }
@@ -108,8 +116,12 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       editorFactory.releaseEditor(editor);
     }
     assert 0 == editorFactory.getAllEditors().length : "There are unrealeased editors";
+    CompletionProgressIndicator.cleanupForNextTest();
 
     super.tearDown();
+
+    myEditorListenerTracker.checkListenersLeak();
+    
   }
 
 

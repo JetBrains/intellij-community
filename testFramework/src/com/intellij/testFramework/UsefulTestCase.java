@@ -419,7 +419,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  static void checkAllTimersAreDisposed() throws Exception {
+  protected static void checkAllTimersAreDisposed() throws Exception {
     Class<?> aClass = Class.forName("javax.swing.TimerQueue");
 
     Method inst = aClass.getDeclaredMethod("sharedInstance");
