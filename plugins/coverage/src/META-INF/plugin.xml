@@ -1,0 +1,11 @@
+<idea-plugin>
+  <name>Coverage</name>
+  <depends optional="true">TestNG-J</depends>
+  <extensions defaultExtensionNs="com.intellij">
+    <runConfigurationExtension implementation="com.intellij.execution.coverage.CoverageRunConfigurationExtension"/>
+    <testActionProvider implementation="com.intellij.coverage.actions.TrackCoverageActionProvider"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.theoryinpractice.testng">
+    <listener implementation="org.testng.IDEACoverageListener"/>
+  </extensions>
+</idea-plugin>
