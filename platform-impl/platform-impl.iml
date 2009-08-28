@@ -17,28 +17,8 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="jna" level="project" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/alloy.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="platform-api" exported="" />
     <orderEntry type="library" name="Mac" level="project" />
-    <orderEntry type="module" module-name="license_common" />
-    <orderEntry type="library" name="LicenseServerAPI" level="project" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/exe4jlib.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="plugins-management" exported="" />
     <orderEntry type="library" name="picocontainer" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
@@ -51,15 +31,6 @@
         <SOURCES>
           <root url="jar://$MODULE_DIR$/../lib/src/jhsrc.jar!/src" />
         </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/JLmgr.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="boot" />
