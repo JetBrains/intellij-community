@@ -335,7 +335,7 @@ public abstract class MavenTestCase extends TestCase {
   }
 
   private void setFileContent(VirtualFile file, String content) throws IOException {
-    file.setBinaryContent(content.getBytes(), -1, file.getTimeStamp() + 1);
+    file.setBinaryContent(content.getBytes(), -1, file.getTimeStamp() + 1000);
   }
 
   protected void assertPathEquals(String expected, String actual) {

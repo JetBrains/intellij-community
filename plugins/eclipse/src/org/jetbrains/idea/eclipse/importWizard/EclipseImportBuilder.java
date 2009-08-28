@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.Function;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -166,8 +167,10 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     return true;
   }
 
-  public List<Module> commit(final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
-    
+  @Override
+  public List<Module> commit(final Project project, ModifiableModuleModel model, ModulesProvider modulesProvider,
+                             ModifiableArtifactModel artifactModel) {
+
     final Collection<String> unknownLibraries = new TreeSet<String>();
     final Collection<String> unknownJdks = new TreeSet<String>();
     final Set<String> refsToModules = new HashSet<String>();

@@ -8,6 +8,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenUIModifiableModelsProvider;
@@ -61,7 +62,11 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     return true;
   }
 
-  public List<Module> commit(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
+  @Override
+  public List<Module> commit(Project project,
+                             ModifiableModuleModel model,
+                             ModulesProvider modulesProvider,
+                             ModifiableArtifactModel artifactModel) {
     MavenWorkspaceSettings settings = project.getComponent(MavenWorkspaceSettingsComponent.class).getState();
 
     settings.generalSettings = getGeneralSettings();
@@ -74,7 +79,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
     boolean isFromUI = model != null;
     return manager.importProjects(isFromUI
-                                  ? new MavenUIModifiableModelsProvider(project, model, modulesProvider)
+                                  ? new MavenUIModifiableModelsProvider(project, model, modulesProvider, artifactModel)
                                   : new MavenDefaultModifiableModelsProvider(project));
   }
 

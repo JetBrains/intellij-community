@@ -10,18 +10,28 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.facet.ModifiableFacetModel;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 public class MavenUIModifiableModelsProvider extends MavenBaseModifiableModelsProvider {
   private final ModifiableModuleModel myModel;
   private final ModulesProvider myModulesProvider;
+  private final ModifiableArtifactModel myModifiableArtifactModel;
   private final LibrariesModifiableModel myLibrariesModel;
 
-  public MavenUIModifiableModelsProvider(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
+  public MavenUIModifiableModelsProvider(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider, ModifiableArtifactModel modifiableArtifactModel) {
+    super(project);
     myModel = model;
     myModulesProvider = modulesProvider;
+    myModifiableArtifactModel = modifiableArtifactModel;
 
     ProjectLibrariesConfigurable configurable = ProjectLibrariesConfigurable.getInstance(project);
     myLibrariesModel = (LibrariesModifiableModel)configurable.getModelProvider(true).getModifiableModel();
+  }
+
+  @Override
+  protected ModifiableArtifactModel doGetArtifactModel() {
+    return myModifiableArtifactModel;
   }
 
   @Override
@@ -61,6 +71,11 @@ public class MavenUIModifiableModelsProvider extends MavenBaseModifiableModelsPr
   }
 
   public void commit() {
+    MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
+      public void run() {
+        processExternalArtifactDependencies();
+      }
+    });
   }
 
   public void dispose() {

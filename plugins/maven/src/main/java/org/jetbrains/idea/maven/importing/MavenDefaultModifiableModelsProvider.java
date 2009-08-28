@@ -15,18 +15,28 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import com.intellij.packaging.artifacts.ArtifactManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.Collection;
 
 public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableModelsProvider {
-  private final Project myProject;
   private final LibraryTable.ModifiableModel myLibrariesModel;
   private volatile long myCommitTime;
 
   public MavenDefaultModifiableModelsProvider(Project project) {
-    myProject = project;
+    super(project);
     myLibrariesModel = ProjectLibraryTable.getInstance(myProject).getModifiableModel();
+  }
+
+  @Override
+  protected ModifiableArtifactModel doGetArtifactModel() {
+    return new ReadAction<ModifiableArtifactModel>() {
+      protected void run(final Result<ModifiableArtifactModel> result) {
+        result.setResult(ArtifactManager.getInstance(myProject).createModifiableModel());
+      }
+    }.execute().getResultObject();
   }
 
   @Override
@@ -78,6 +88,7 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
 
     MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
       public void run() {
+        processExternalArtifactDependencies();
         // all rootChanges will be merged and postponed until writeAction finishes.
         for (Library.ModifiableModel each : myLibraryModels.values()) {
           each.commit();
@@ -90,6 +101,9 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
 
         for (ModifiableFacetModel each : myFacetModels.values()) {
           each.commit();
+        }
+        if (myArtifactModel != null) {
+          myArtifactModel.commit();
         }
       }
     });
