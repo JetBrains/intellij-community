@@ -25,41 +25,18 @@ import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.testFramework.fixtures.impl.JavaTestFixtureFactoryImpl;
 import com.intellij.util.Query;
-import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 
 import java.util.Collection;
 
 /**
  * @author ven
  */
-public class FindUsagesTest extends UsefulTestCase {
-  protected CodeInsightTestFixture myFixture;
-
-  protected void setUp() throws Exception {
-    super.setUp();
-    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-    fixtureFactory.registerFixtureBuilder(JavaModuleFixtureBuilder.class, JavaTestFixtureFactoryImpl.MyJavaModuleFixtureBuilderImpl.class);
-    final TestFixtureBuilder<IdeaProjectTestFixture> builder = fixtureFactory.createFixtureBuilder();
-    myFixture = fixtureFactory.createCodeInsightFixture(builder.getFixture());
-    final JavaModuleFixtureBuilder moduleBuilder = builder.addModule(JavaModuleFixtureBuilder.class);
-    moduleBuilder.addJdk(TestUtils.getMockJdkHome());
-    myFixture.setTestDataPath(TestUtils.getTestDataPath() + "/findUsages" + "/" + getTestName(true));
-    moduleBuilder.addContentRoot(myFixture.getTempDirPath()).addSourceRoot("");
-    myFixture.setUp();
-  }
-
-  protected void tearDown() throws Exception {
-    myFixture.tearDown();
-    myFixture = null;
-    super.tearDown();
+public class FindUsagesTest extends LightGroovyTestCase {
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/findUsages/" + getTestName(true) + "/";
   }
 
   private void doConstructorTest(String filePath, int expectedCount) throws Throwable {
