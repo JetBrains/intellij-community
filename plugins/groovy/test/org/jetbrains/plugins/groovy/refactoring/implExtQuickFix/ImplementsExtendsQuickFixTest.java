@@ -3,7 +3,7 @@ package org.jetbrains.plugins.groovy.refactoring.implExtQuickFix;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.annotator.intentions.ChangeExtendsImplementsQuickFix;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -16,7 +16,7 @@ import java.util.List;
  * User: Dmitry.Krasilschikov
  * Date: 11.10.2007
  */
-public class ImplementsExtendsQuickFixTest extends JavaCodeInsightFixtureTestCase {
+public class ImplementsExtendsQuickFixTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

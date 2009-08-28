@@ -16,18 +16,16 @@
 
 package org.jetbrains.plugins.groovy.refactoring.move;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.move.moveMembers.MoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -40,7 +38,7 @@ import java.util.LinkedHashSet;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyMoveMembersTest extends JavaCodeInsightFixtureTestCase {
+public class GroovyMoveMembersTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return "/svnPlugins/groovy/testData/refactoring/move/moveMembers/";
@@ -139,16 +137,8 @@ public class GroovyMoveMembersTest extends JavaCodeInsightFixtureTestCase {
 
     final MockMoveMembersOptions options = new MockMoveMembersOptions(targetClass.getQualifiedName(), memberSet);
     options.setMemberVisibility(null);
-    final Application application = ApplicationManager.getApplication();
-    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
-      public void run() {
-        application.runWriteAction(new Runnable() {
-          public void run() {
-            new MoveMembersProcessor(myFixture.getProject(), null, options).run();
-          }
-        });
-      }
-    }, "", null);
+    new MoveMembersProcessor(myFixture.getProject(), null, options).run();
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 

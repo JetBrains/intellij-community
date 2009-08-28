@@ -15,12 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang;
 
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 /**
  * @author peter
  */
-public class GroovyEditingTest extends JavaCodeInsightFixtureTestCase {
+public class GroovyEditingTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return "/svnPlugins/groovy/testdata/editing/";

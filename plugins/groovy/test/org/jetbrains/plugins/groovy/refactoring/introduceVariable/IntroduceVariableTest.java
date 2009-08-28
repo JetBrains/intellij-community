@@ -19,7 +19,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -38,7 +39,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class IntroduceVariableTest extends JavaCodeInsightFixtureTestCase {
+public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
@@ -109,7 +110,7 @@ public class IntroduceVariableTest extends JavaCodeInsightFixtureTestCase {
 
     introduceVariableBase.runRefactoring(selectedExpr, myEditor, ((GroovyPsiElement) tempContainer),
         occurences, varName, varType, replaceAllOccurences, varDecl);
-
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
 
     result = myEditor.getDocument().getText();
     int caretOffset = myEditor.getCaretModel().getOffset();

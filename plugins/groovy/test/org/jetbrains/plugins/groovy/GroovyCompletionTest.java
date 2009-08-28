@@ -17,11 +17,12 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyCompletionTest extends LightGroovyTestCase {
+public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return "/svnPlugins/groovy/testdata/groovy/completion/";

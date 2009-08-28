@@ -17,16 +17,17 @@
 package org.jetbrains.plugins.groovy.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
 import com.intellij.refactoring.introduceParameter.Util;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 
@@ -34,7 +35,7 @@ import org.jetbrains.annotations.NonNls;
  * @author Maxim.Medvedev
  *         Date: Apr 17, 2009 5:49:35 PM
  */
-public class IntroduceParameterTest extends JavaCodeInsightFixtureTestCase {
+public class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return "/svnPlugins/groovy/testdata/refactoring/introduceParameter/" + getTestName(true) + '/';
@@ -47,6 +48,7 @@ public class IntroduceParameterTest extends JavaCodeInsightFixtureTestCase {
     final String javaClass = getTestName(false) + "MyClass.java";
     myFixture.configureByFiles(javaClass, beforeGroovy);
     executeRefactoring(true, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters);
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     myFixture.checkResultByFile(beforeGroovy, afterGroovy, true);
   }
 

@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.refactoring.inline.GenericInlineHandler;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -43,7 +44,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class InlineMethodTest extends JavaCodeInsightFixtureTestCase {
+public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
   public static final String CARET_MARKER = "<caret>";
   public static final String BEGIN_MARKER = "<begin>";
   public static final String END_MARKER = "<end>";

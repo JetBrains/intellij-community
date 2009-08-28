@@ -5,6 +5,7 @@
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
@@ -18,7 +19,7 @@ import java.io.IOException;
 /**
  * @author peter
  */
-public class GroovyHighlightingTest extends LightGroovyTestCase {
+public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return "/svnPlugins/groovy/testdata/highlighting/";

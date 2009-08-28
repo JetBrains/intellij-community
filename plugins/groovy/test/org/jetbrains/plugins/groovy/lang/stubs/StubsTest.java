@@ -8,11 +8,9 @@ import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import junit.framework.Assert;
-import junit.framework.Test;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
-import org.jetbrains.plugins.groovy.util.PathUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
@@ -20,21 +18,24 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class StubsTest extends SimpleGroovyFileSetTestCase {
-  @NonNls
-  private static final String DATA_PATH = PathUtil.getDataPath(StubsTest.class);
+public class StubsTest extends LightCodeInsightFixtureTestCase {
+  
+  public void testConfig_object() throws Throwable { doTest(); }
+  public void testSlurper() throws Throwable { doTest(); }
+  public void testStub1() throws Throwable { doTest(); }
+  public void testStub_field1() throws Throwable { doTest(); }
+  public void testStub_method1() throws Throwable { doTest(); }
 
-  public StubsTest() {
-    super(System.getProperty("path") != null ?
-            System.getProperty("path") :
-            DATA_PATH
-    );
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/groovy/stubs";
   }
 
-  public String transform(String testName, String[] data) throws Exception {
+  public void doTest() throws Exception {
+    final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + "/" + getTestName(true) + ".test");
+    String fileText = data.get(0);
 
-    String fileText = data[0];
-    PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
+    PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(getProject(), fileText);
 
     ASTNode node = psiFile.getNode();
     Assert.assertNotNull(node);
@@ -44,17 +45,10 @@ public class StubsTest extends SimpleGroovyFileSetTestCase {
     IStubFileElementType stubFileType = (IStubFileElementType) type;
     StubBuilder builder = stubFileType.getBuilder();
     StubElement element = builder.buildStubTree(psiFile);
-    String stubTree = getStubTree(element);
-    //System.out.println("------------------------ " + testName + " ------------------------");
-    //System.out.println(stubTree);
-    //System.out.println("");
-    return stubTree;
-  }
-
-  private static String getStubTree(StubElement element) {
     StringBuffer buffer = new StringBuffer();
     getStubsTreeImpl(element, buffer, "");
-    return buffer.toString();
+    String stubTree = buffer.toString().trim();
+    assertEquals(data.get(1), stubTree);
   }
 
   private static void getStubsTreeImpl(StubElement element, StringBuffer buffer, String offset) {
@@ -69,7 +63,4 @@ public class StubsTest extends SimpleGroovyFileSetTestCase {
     }
   }
 
-  public static Test suite() {
-    return new StubsTest();
-  }
 }

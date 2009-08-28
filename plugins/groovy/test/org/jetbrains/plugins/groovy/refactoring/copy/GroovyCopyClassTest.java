@@ -19,12 +19,13 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.copy.CopyClassesHandler;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 
 /**
  * @author peter
  */
-public class GroovyCopyClassTest extends LightGroovyTestCase {
+public class GroovyCopyClassTest extends LightCodeInsightFixtureTestCase {
 
   protected String getBasePath() {
     return "/svnPlugins/groovy/testdata/refactoring/copy/";

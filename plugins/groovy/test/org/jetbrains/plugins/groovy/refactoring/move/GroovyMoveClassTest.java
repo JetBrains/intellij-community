@@ -29,7 +29,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import junit.framework.AssertionFailedError;
 
 import java.io.File;
@@ -42,7 +42,7 @@ import java.util.Comparator;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyMoveClassTest extends JavaCodeInsightFixtureTestCase {
+public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
   protected String getBasePath() {
     return "/svnPlugins/groovy/testdata/refactoring/move/moveClass/";
   }
@@ -147,6 +147,7 @@ public class GroovyMoveClassTest extends JavaCodeInsightFixtureTestCase {
     File expectedRoot = new File(getTestDataPath() + testName + "/after");
     //VirtualFile expectedRoot = LocalFileSystem.getInstance().findFileByPath(getTestDataPath() + testName + "/after");
     getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+    FileDocumentManager.getInstance().saveAllDocuments();
 
     VirtualFileManager.getInstance().refresh(false);
     assertDirsEquals(expectedRoot, actualRoot);

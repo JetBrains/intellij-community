@@ -15,37 +15,39 @@
  */
 package org.jetbrains.plugins.groovy.inspections.secondUnsafeCall;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import junit.framework.Test;
-import org.jetbrains.plugins.groovy.annotator.inspections.SecondUnsafeCallQuickFix;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.secondUnsafeCall.SecondUnsafeCallInspection;
-import org.jetbrains.plugins.groovy.inspections.InspectionTestCase;
-import org.jetbrains.plugins.groovy.util.PathUtil;
+import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
+
+import java.util.List;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 15.11.2007
  */
-public class SecondUnsafeCallTest extends InspectionTestCase {
-  protected static final String DATA_PATH = PathUtil.getDataPath(SecondUnsafeCallTest.class);
+public class SecondUnsafeCallTest extends LightCodeInsightFixtureTestCase {
 
-  public SecondUnsafeCallTest () {
-    super(System.getProperty("path") != null ?
-        System.getProperty("path") :
-        DATA_PATH
-    );
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/groovy/inspections/secondUnsafeCall";
   }
 
-  public LocalQuickFix getLocalQuickFix() {
-    return new SecondUnsafeCallQuickFix();
+  public void doTest() throws Exception {
+    final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + "/" + getTestName(true) + ".test");
+
+    myFixture.configureByText("a.groovy", data.get(0));
+    myFixture.enableInspections(new SecondUnsafeCallInspection());
+    final IntentionAction action = myFixture.findSingleIntention("Second unsafe call");
+    myFixture.launchAction(action);
+
+    myFixture.checkResult(data.get(1));
   }
 
-  public LocalInspectionTool getLocalInspectionTool() {
-    return new SecondUnsafeCallInspection();
-  }
+  public void test4Calls() throws Throwable { doTest(); }
+  public void testMethodCall() throws Throwable { doTest(); }
+  public void testMethodsCalls() throws Throwable { doTest(); }
+  public void testSecondUnsafeCall1() throws Throwable { doTest(); }
+  public void testVarInit() throws Throwable { doTest(); }
 
-  public static Test suite(){
-    return new SecondUnsafeCallTest();
-  }
 }

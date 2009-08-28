@@ -21,13 +21,14 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
 
 /**
  * @author ilyas
  */
-public class OptimizeImportsTest extends LightGroovyTestCase {
+public class OptimizeImportsTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

@@ -15,12 +15,9 @@
 
 package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -30,55 +27,53 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class ExtractMethodTest extends JavaCodeInsightFixtureTestCase {
+public class ExtractMethodTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
     return "/svnPlugins/groovy/testdata/groovy/refactoring/extractMethod/";
   }
 
-  private String processFile(String fileText) throws IncorrectOperationException, InvalidDataException, IOException {
+  private void doAntiTest(String errorMessage) throws Exception {
+    GroovyExtractMethodHandler handler = configureFromText(readInput().get(0));
+    assertFalse(handler.invokeOnEditor(getProject(), myFixture.getEditor(), myFixture.getFile()));
+    assertEquals(errorMessage, handler.getInvokeResult());
+  }
+
+  private List<String> readInput() throws IOException {
+    return SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + getTestName(true) + ".test");
+  }
+
+  private void doTest() throws Exception {
+    final List<String> data = readInput();
+    GroovyExtractMethodHandler handler = configureFromText(data.get(0));
+    assertTrue(handler.invokeOnEditor(getProject(), myFixture.getEditor(), myFixture.getFile()));
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+    myFixture.checkResult(data.get(1));
+  }
+
+  private GroovyExtractMethodHandler configureFromText(String fileText) throws IOException {
     int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER);
     fileText = TestUtils.removeBeginMarker(fileText);
     int endOffset = fileText.indexOf(TestUtils.END_MARKER);
     fileText = TestUtils.removeEndMarker(fileText);
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
 
-    final Editor myEditor = myFixture.getEditor();
-    myEditor.getSelectionModel().setSelection(startOffset, endOffset);
-    GroovyExtractMethodHandler handler = new GroovyExtractMethodHandler();
-    boolean invoked = handler.invokeOnEditor(getProject(), myEditor, myFixture.getFile());
-
-    String result = invoked ? myEditor.getDocument().getText() : "FAILED: " + handler.getInvokeResult();
-    int caretOffset = myEditor.getCaretModel().getOffset();
-    return invoked ? result.substring(0, caretOffset) + TestUtils.CARET_MARKER + result.substring(caretOffset) : result;
-  }
-
-
-  public void doTest() throws Exception {
-    final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + getTestName(true) + ".test");
-
-    String fileText = data.get(0);
-    String result = processFile(fileText);
-    assertEquals(data.get(1), result);
-  }
-
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.addLibraryJars("GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR);
+    myFixture.getEditor().getSelectionModel().setSelection(startOffset, endOffset);
+    return new GroovyExtractMethodHandler();
   }
 
   public void testClos_em() throws Throwable { doTest(); }
   public void testEm1() throws Throwable { doTest(); }
   public void testEnum1() throws Throwable { doTest(); }
-  public void testErr1() throws Throwable { doTest(); }
+  public void testErr1() throws Throwable { doAntiTest("There are multiple output values for the selected code fragment"); }
   public void testExpr1() throws Throwable { doTest(); }
   public void testExpr2() throws Throwable { doTest(); }
   public void testExpr3() throws Throwable { doTest(); }
   public void testInput1() throws Throwable { doTest(); }
   public void testInput2() throws Throwable { doTest(); }
   public void testInter1() throws Throwable { doTest(); }
-  public void testInter2() throws Throwable { doTest(); }
-  public void testInter3() throws Throwable { doTest(); }
+  public void testInter2() throws Throwable { doAntiTest("Refactoring is not supported when return statement interrupts the execution flow"); }
+  public void testInter3() throws Throwable { doAntiTest("Refactoring is not supported when return statement interrupts the execution flow"); }
   public void testInter4() throws Throwable { doTest(); }
   public void testMeth_em1() throws Throwable { doTest(); }
   public void testMeth_em2() throws Throwable { doTest(); }
@@ -88,7 +83,7 @@ public class ExtractMethodTest extends JavaCodeInsightFixtureTestCase {
   public void testRet1() throws Throwable { doTest(); }
   public void testRet2() throws Throwable { doTest(); }
   public void testRet3() throws Throwable { doTest(); }
-  public void testRet4() throws Throwable { doTest(); }
+  public void testRet4() throws Throwable { doAntiTest("Refactoring is not supported when return statement interrupts the execution flow"); }
   public void testVen1() throws Throwable { doTest(); }
   public void testVen2() throws Throwable { doTest(); }
   public void testVen3() throws Throwable { doTest(); }
