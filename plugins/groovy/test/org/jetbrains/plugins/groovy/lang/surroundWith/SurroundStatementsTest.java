@@ -1,16 +1,7 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith;
 
-import com.intellij.lang.surroundWith.Surrounder;
-import junit.framework.Test;
-import junit.framework.TestSuite;
-import org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovySurrounderByClosure;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open.*;
-import org.jetbrains.plugins.groovy.util.PathUtil;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -18,37 +9,23 @@ import java.util.Map;
  */
 
 
-public class SurroundStatementsTest extends TestSuite {
-  private static final Map<Class, String> surroundersOfStmtToPathsMap = new HashMap<Class, String>();
+public class SurroundStatementsTest extends SurroundTestCase {
 
-  static {
-    {
-      String stmtsPrefix = "statements" + File.separator;
-      surroundersOfStmtToPathsMap.put(GroovyWithIfSurrounder.class, stmtsPrefix + "if");
-      surroundersOfStmtToPathsMap.put(GroovyWithTryCatchFinallySurrounder.class, stmtsPrefix + "try_catch_finally");
-      surroundersOfStmtToPathsMap.put(GroovyWithTryFinallySurrounder.class, stmtsPrefix + "try_finally");
-      surroundersOfStmtToPathsMap.put(GroovyWithWithStatementsSurrounder.class, stmtsPrefix + "with");
-      surroundersOfStmtToPathsMap.put(GroovyWithIfElseSurrounder.class, stmtsPrefix + "if_else");
-      surroundersOfStmtToPathsMap.put(GroovyWithTryCatchSurrounder.class, stmtsPrefix + "try_catch");
-      surroundersOfStmtToPathsMap.put(GroovyWithWhileSurrounder.class, stmtsPrefix + "while");
-      surroundersOfStmtToPathsMap.put(GroovySurrounderByClosure.class, stmtsPrefix + "closure");
-      surroundersOfStmtToPathsMap.put(GroovyWithShouldFailWithTypeStatementsSurrounder.class, stmtsPrefix + "shouldFailWithType");
-    }
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/groovy/surround/statements/";
   }
 
-  public SurroundStatementsTest() {
-    Surrounder[] surrounders = GroovyStmtsSurroundDescriptor.getStmtsSurrounders();
+  public void testClosure1() throws Exception { doTest(new GroovySurrounderByClosure()); }
+  public void testClosure2() throws Exception { doTest(new GroovySurrounderByClosure()); }
+  public void testClosure3() throws Exception { doTest(new GroovySurrounderByClosure()); }
+  public void testIf1() throws Exception { doTest(new GroovyWithIfSurrounder()); }
+  public void testIf_else1() throws Exception { doTest(new GroovyWithIfElseSurrounder()); }
+  public void testShouldFailWithType() throws Exception { doTest(new GroovyWithShouldFailWithTypeStatementsSurrounder()); }
+  public void testTry_catch1() throws Exception { doTest(new GroovyWithTryCatchSurrounder()); }
+  public void testTry_catch_finally() throws Exception { doTest(new GroovyWithTryCatchFinallySurrounder()); }
+  public void testTry_finally1() throws Exception { doTest(new GroovyWithTryFinallySurrounder()); }
+  public void testWhile1() throws Exception { doTest(new GroovyWithWhileSurrounder()); }
+  public void testWith2() throws Exception { doTest(new GroovyWithWithStatementsSurrounder()); }
 
-    String path;
-    for (Surrounder surrounder : surrounders) {
-      path = surroundersOfStmtToPathsMap.get(surrounder.getClass());
-//      addTest(new SurroundWithTestStmts((DATA_PATH.endsWith("/") ? DATA_PATH : DATA_PATH + File.separator) + path, surrounder));
-      String dataPath = PathUtil.getDataPath(SurroundStatementsTest.class);
-      addTest(new SurroundWithTestItem((dataPath.endsWith("/") ? dataPath : dataPath + File.separator) + path, surrounder));
-    }
-  }
-
-  public static Test suite() {
-    return new SurroundStatementsTest();
-  }
 }

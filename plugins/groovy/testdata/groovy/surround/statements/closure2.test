@@ -1,5 +1,5 @@
 def a() {
-    <selection>call()<selection>
+    <selection>call()</selection>
 }
 
 def call() {

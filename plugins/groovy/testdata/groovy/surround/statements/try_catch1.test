@@ -1,4 +1,4 @@
-<selection>foo()<selection>
+<selection>foo()</selection>
 -----
 try {
   foo()

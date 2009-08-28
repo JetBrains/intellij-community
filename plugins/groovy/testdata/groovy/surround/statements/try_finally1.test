@@ -1,4 +1,4 @@
-<selection>println "foo"<selection>
+<selection>println "foo"</selection>
 -----
 try {
   println "foo"
