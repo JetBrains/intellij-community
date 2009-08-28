@@ -9,7 +9,6 @@
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
@@ -91,7 +90,6 @@ public class Util {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length == 0) return new TIntArrayList();
 
-    PsiSearchHelper helper = method.getManager().getSearchHelper();
     PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
     final PsiMethod[] allMethods = ArrayUtil.append(overridingMethods, method);
 
