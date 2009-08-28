@@ -53,7 +53,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   public void testClosureOwner() throws Exception {
     PsiReference ref = configureByFile("closureOwner/A.groovy");
     PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrVariable);
+    assertInstanceOf(resolved, GrVariable);
     assertEquals(((PsiClassType) ((GrVariable) resolved).getTypeGroovy()).getCanonicalText(), "W");
   }
 
@@ -137,7 +137,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   public void testUndefinedVar1() throws Exception {
     PsiReference ref = configureByFile("undefinedVar1/A.groovy");
     PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrReferenceExpression);
+    assertInstanceOf(resolved, GrReferenceExpression);
     GrTopStatement statement = ((GroovyFileBase) resolved.getContainingFile()).getTopStatements()[2];
     assertTrue(resolved.equals(((GrAssignmentExpression) statement).getLValue()));
   }
@@ -243,6 +243,20 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                           }""")
     def reference = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
     assertInstanceOf(reference.resolve(), GrField.class)
+  }
+
+  public void testOverriddenGetter() throws Throwable {
+    myFixture.configureByText("a.groovy", """interface Foo {
+                                              def getFoo()
+                                            }
+                                            interface Bar extends Foo {
+                                              def getFoo()
+                                            }
+
+                                            Bar b
+                                            b.fo<caret>o""")
+    def reference = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    assertEquals("Bar", assertInstanceOf(reference.resolve(), GrMethod.class).containingClass.name)
   }
 
   private void doTest(String fileName) throws Exception {

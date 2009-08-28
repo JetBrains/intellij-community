@@ -20,15 +20,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -36,38 +33,41 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.EnumSet;
-import java.util.Iterator;
-import java.util.Set;
 
 /**
  * @author ven
  */
 public class PropertyResolverProcessor extends ResolverProcessor {
+  private GroovyResolveResult myProperty = null;
 
   public PropertyResolverProcessor(String name, PsiElement place) {
     super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, PsiType.EMPTY_ARRAY);
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
-    if (myName != null && element instanceof PsiMethod && !(element instanceof GrAccessorMethod) && myPlace instanceof GroovyPsiElement) {
+    if (myName != null && element instanceof PsiMethod && !(element instanceof GrAccessorMethod)) {
       PsiMethod method = (PsiMethod) element;
-      boolean lValue = PsiUtil.isLValue((GroovyPsiElement) myPlace);
+      boolean lValue = myPlace instanceof GroovyPsiElement && PsiUtil.isLValue((GroovyPsiElement) myPlace);
       if (!lValue && GroovyPropertyUtils.isSimplePropertyGetter(method, myName) ||
           lValue && GroovyPropertyUtils.isSimplePropertySetter(method, myName)) {
         if (method instanceof GrMethod && isFieldReferenceInSameClass(method, myName)) {
           return true;
         }
 
+        myCandidates.clear();
         super.execute(element, state);
+        return false;
       }
-      return true;
-    }
-
-    if (myName == null || myName.equals(((PsiNamedElement) element).getName())) {
+    } else if (myName == null || myName.equals(((PsiNamedElement) element).getName())) {
       if (element instanceof GrField && ((GrField) element).isProperty()) {
-        boolean isAccessible = isAccessible((PsiNamedElement) element);
-        boolean isStaticsOK = isStaticsOK((PsiNamedElement) element);
-        myCandidates.add(new GroovyResolveResultImpl(element, myCurrentFileResolveContext, state.get(PsiSubstitutor.KEY), isAccessible, isStaticsOK));
+        if (myProperty == null) {
+          boolean isAccessible = isAccessible((PsiNamedElement) element);
+          boolean isStaticsOK = isStaticsOK((PsiNamedElement) element);
+
+          PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
+          substitutor = substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
+          myProperty = new GroovyResolveResultImpl(element, myCurrentFileResolveContext, substitutor, isAccessible, isStaticsOK);
+        }
         return true;
       }
       return super.execute(element, state);
@@ -92,30 +92,15 @@ public class PropertyResolverProcessor extends ResolverProcessor {
   }
 
   public GroovyResolveResult[] getCandidates() {
-    final Set<String> propertyNames = new THashSet<String>();
-    for (GroovyResolveResult candidate : myCandidates) {
-      final PsiElement element = candidate.getElement();
-      if (element instanceof PsiMethod) {
-        ContainerUtil.addIfNotNull(GroovyPropertyUtils.getPropertyName((PsiMethod)element), propertyNames);
+    if (myProperty != null) {
+      if (myCandidates.isEmpty()) {
+        myCandidates.add(myProperty);
       }
-    }
 
-    for (Iterator<GroovyResolveResult> iterator = myCandidates.iterator(); iterator.hasNext();) {
-      GroovyResolveResult result = iterator.next();
-      final PsiElement element = result.getElement();
-      if (element instanceof PsiField && propertyNames.contains(((PsiField)element).getName())) {
-        iterator.remove();
-      }
+      myProperty = null;
     }
 
     return super.getCandidates();
-  }
-
-  private boolean inSameClass(GrMethod element) {
-    if (PsiTreeUtil.getParentOfType(myPlace, GrTypeDefinition.class) != element.getContainingClass() ||
-      !(myPlace instanceof GrReferenceExpression)) return false;
-    final GrExpression qual = ((GrReferenceExpression)myPlace).getQualifierExpression();
-    return qual == null || qual instanceof GrThisReferenceExpression;
   }
 
   public <T> T getHint(Key<T> hintKey) {
