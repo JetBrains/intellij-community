@@ -1,9 +1,8 @@
 package com.intellij.ide.ui;
 
-import com.incors.plaf.alloy.AlloyBedouin;
-import com.incors.plaf.alloy.AlloyIdea;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
@@ -204,8 +203,14 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       return laf;
     }
     else {
-      UIManager.LookAndFeelInfo alloy = findLaf(SystemInfo.isWindows ? AlloyIdea.class.getName() : AlloyBedouin.class.getName());
-      return alloy != null ? alloy : findLaf(IDEA_LAF_CLASSNAME);
+      String defaultLafName = StartupUtil.getDefaultLAF();
+      if (defaultLafName != null) {
+        UIManager.LookAndFeelInfo defaultLaf = findLaf(defaultLafName);
+        if (defaultLaf != null) {
+          return defaultLaf;
+        }
+      }
+      return findLaf(IDEA_LAF_CLASSNAME);
     }
   }
 

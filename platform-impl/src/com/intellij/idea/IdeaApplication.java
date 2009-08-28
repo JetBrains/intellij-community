@@ -1,6 +1,5 @@
 package com.intellij.idea;
 
-import com.incors.plaf.alloy.*;
 import com.intellij.ExtensionPoints;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.impl.ProjectUtil;
@@ -37,7 +36,7 @@ import java.util.List;
 public class IdeaApplication {
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication");
 
-  private final String[] myArgs;
+  protected final String[] myArgs;
   private boolean myPerformProjectLoad = true;
   private static IdeaApplication ourInstance;
   private ApplicationStarter myStarter;
@@ -106,17 +105,7 @@ public class IdeaApplication {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void initAlloy() {
-    AlloyLookAndFeel.setProperty("alloy.licenseCode", "4#JetBrains#1ou2uex#6920nk");
-    AlloyLookAndFeel.setProperty("alloy.isToolbarEffectsEnabled", "false");
-    if (SystemInfo.isWindows) {
-      UIManager.installLookAndFeel(AlloyIdea.NAME, AlloyIdea.class.getName());
-    }
-    UIManager.installLookAndFeel(AlloyDefault.NAME, AlloyDefault.class.getName());
-    UIManager.installLookAndFeel(AlloyBedouin.NAME, AlloyBedouin.class.getName());
-    UIManager.installLookAndFeel(AlloyAcid.NAME, AlloyAcid.class.getName());
-    UIManager.installLookAndFeel(AlloyGlass.NAME, AlloyGlass.class.getName());
-
+  private static void initLAF() {
     if (SystemInfo.isMac) {
       UIManager.put("Panel.opaque", Boolean.TRUE);
       UIManager.installLookAndFeel("Quaqua", "ch.randelshofer.quaqua.QuaquaLookAndFeel");
@@ -129,14 +118,14 @@ public class IdeaApplication {
     }
   }
 
-  private class IdeStarter implements ApplicationStarter {
+  protected class IdeStarter implements ApplicationStarter {
     private Splash mySplash;
     public String getCommandName() {
       return null;
     }
 
     public void premain(String[] args) {
-      if (MainImpl.shouldShowSplash(args)) {
+      if (StartupUtil.shouldShowSplash(args)) {
         final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
         final Object splashScreen = getSplashScreen();
         if (splashScreen == null) {
@@ -152,7 +141,7 @@ public class IdeaApplication {
           updateSplashScreen(appInfo, splashScreen);
         }
       }
-      initAlloy();
+      initLAF();
     }
 
     private void updateSplashScreen(ApplicationInfoEx appInfo, Object splashScreen) {
