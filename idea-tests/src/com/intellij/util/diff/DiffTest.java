@@ -1,6 +1,5 @@
 package com.intellij.util.diff;
 
-import com.intellij.util.ProfilingUtil;
 import com.intellij.util.ArrayUtil;
 import junit.framework.TestCase;
 
@@ -60,9 +59,7 @@ public class DiffTest extends TestCase {
     }
     Diff.buildChanges(first.toArray(), second.toArray());
     long start = System.currentTimeMillis();
-    ProfilingUtil.operationStarted("diffPerfomance");
     Diff.buildChanges(first.toArray(), second.toArray());
-    ProfilingUtil.operationFinished("diffPerfomance");
     System.out.println("Duration: " +(System.currentTimeMillis() - start));
   }
 
