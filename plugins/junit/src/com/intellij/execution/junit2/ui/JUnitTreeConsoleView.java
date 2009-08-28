@@ -35,7 +35,6 @@ import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ProfilingUtil;
 
 import javax.swing.*;
 
@@ -79,7 +78,6 @@ public class JUnitTreeConsoleView extends BaseTestsOutputConsoleView {
   }
 
   private void attachTo(final PacketExtractorBase outPacketExtractor, final PacketExtractorBase errPacketExtractor, final ProcessHandler process, final DeferedActionsQueue queue) {
-    ProfilingUtil.operationStarted("junitInit");
     final TestingStatus testingStatus = new TestingStatus(queue);
     testingStatus.setInputConsumer(new SystemOutput(myConsolePanel.getPrinter()));
     myConsolePanel.onProcessStarted(process);
@@ -108,7 +106,6 @@ public class JUnitTreeConsoleView extends BaseTestsOutputConsoleView {
         testStateUpdater.setRoot(test);
         myModel.onUIBuilt();
         new TreeCollapser().setModel(myModel);
-        ProfilingUtil.operationFinished("junitInit");
       }
     };
   }
