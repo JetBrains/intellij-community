@@ -122,7 +122,7 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
           public void run() {
             new CorruptedProjectFilesDialog(myProject, myCorruptedFiles).show();
           }
-        });
+        }, myProject);
 
       }
 

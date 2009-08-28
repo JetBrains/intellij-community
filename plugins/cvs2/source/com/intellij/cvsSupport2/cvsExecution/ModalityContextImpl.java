@@ -1,10 +1,12 @@
 package com.intellij.cvsSupport2.cvsExecution;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 
 /**
  * author: lesya
@@ -23,14 +25,14 @@ public class ModalityContextImpl implements ModalityContext {
     myIsForTemporaryConfiguration = forTemp;
   }
 
-  public void runInDispatchThread(Runnable action) {
+  public void runInDispatchThread(Runnable action, Project project) {
     Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode() || application.isDispatchThread()) {
       action.run();
     }
     else {
       ModalityState modalityState = getCurrentModalityState();
-      application.invokeAndWait(action, modalityState);
+      PeriodicalTasksCloser.invokeAndWaitInterruptedWhenClosing(project, action, modalityState);
     }
   }
 

@@ -150,7 +150,7 @@ public class CvsOperationExecutor {
 
     if (doNotShowProgress()) {
       cvsAction.run();
-      myExecutor.runInDispatchThread(finish);
+      myExecutor.runInDispatchThread(finish, myProject);
     }
     else {
       PerformInBackgroundOption backgroundOption = handler.getBackgroundOption(myProject);
@@ -201,7 +201,7 @@ public class CvsOperationExecutor {
         }
 
       }
-    });
+    }, myProject);
   }
 
   private static void setText(String text) {

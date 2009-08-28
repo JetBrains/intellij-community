@@ -4,8 +4,10 @@
 
 package com.intellij.cvsSupport2.cvsExecution;
 
+import com.intellij.openapi.project.Project;
+
 public interface ModalityContext {
-  void runInDispatchThread(Runnable action);
+  void runInDispatchThread(Runnable action, Project project);
 
   boolean isForTemporaryConfiguration();
 }
