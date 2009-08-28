@@ -4,8 +4,10 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.HashSet;
@@ -124,6 +126,107 @@ public class PyRefactoringUtil {
       }
     });
     return variables;
+  }
+
+  @Nullable
+  public static PsiElement findExpressionInRange(@NotNull final PsiFile file, int startOffset, int endOffset) {
+    PsiElement element1 = file.findElementAt(startOffset);
+    PsiElement element2 = file.findElementAt(endOffset - 1);
+    if (element1 instanceof PsiWhiteSpace) {
+      startOffset = element1.getTextRange().getEndOffset();
+      element1 = file.findElementAt(startOffset);
+    }
+    if (element2 instanceof PsiWhiteSpace) {
+      endOffset = element2.getTextRange().getStartOffset();
+      element2 = file.findElementAt(endOffset - 1);
+    }
+    if (element1 == null || element2 == null) {
+      return null;
+    }
+    return getSelectedExpression(file.getProject(), file, element1, element2);
+  }
+
+  @NotNull
+  public static PsiElement[] findStatementsInRange(@NotNull final PsiFile file, int startOffset, int endOffset) {
+    PsiElement element1 = file.findElementAt(startOffset);
+    PsiElement element2 = file.findElementAt(endOffset - 1);
+    if (element1 instanceof PsiWhiteSpace) {
+      startOffset = element1.getTextRange().getEndOffset();
+      element1 = file.findElementAt(startOffset);
+    }
+    if (element2 instanceof PsiWhiteSpace) {
+      endOffset = element2.getTextRange().getStartOffset();
+      element2 = file.findElementAt(endOffset - 1);
+    }
+    if (element1 == null || element2 == null) {
+      return PsiElement.EMPTY_ARRAY;
+    }
+
+    PsiElement parent = PsiTreeUtil.findCommonParent(element1, element2);
+    if (parent == null) {
+      return PsiElement.EMPTY_ARRAY;
+    }
+
+    while (true) {
+      if (parent instanceof PyStatement) {
+        parent = parent.getParent();
+        break;
+      }
+      if (parent instanceof PyStatementList) {
+        break;
+      }
+      if (parent == null || parent instanceof PsiFile) {
+        return PsiElement.EMPTY_ARRAY;
+      }
+      parent = parent.getParent();
+    }
+
+    if (!parent.equals(element1)) {
+      while (!parent.equals(element1.getParent())) {
+        element1 = element1.getParent();
+      }
+    }
+    if (startOffset != element1.getTextRange().getStartOffset()) {
+      return PsiElement.EMPTY_ARRAY;
+    }
+
+    if (!parent.equals(element2)) {
+      while (!parent.equals(element2.getParent())) {
+        element2 = element2.getParent();
+      }
+    }
+    if (endOffset != element2.getTextRange().getEndOffset()) {
+      return PsiElement.EMPTY_ARRAY;
+    }
+
+    if (element1 instanceof PyFunction || element1 instanceof PyClass) {
+      return PsiElement.EMPTY_ARRAY;
+    }
+    if (element2 instanceof PyFunction || element2 instanceof PyClass) {
+      return PsiElement.EMPTY_ARRAY;
+    }
+
+    PsiElement[] children = parent.getChildren();
+    ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+    boolean flag = false;
+    for (PsiElement child : children) {
+      if (child.equals(element1)) {
+        flag = true;
+      }
+      if (flag && !(child instanceof PsiWhiteSpace)) {
+        array.add(child);
+      }
+      if (child.equals(element2)) {
+        break;
+      }
+    }
+
+    for (PsiElement element : array) {
+      if (!(element instanceof PyStatement || element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
+        return PsiElement.EMPTY_ARRAY;
+      }
+    }
+    return array.toArray(new PsiElement[array.size()]);
   }
 
   private PyRefactoringUtil() {

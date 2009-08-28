@@ -12,6 +12,8 @@
     <lang.findUsagesProvider language="Python" implementationClass="com.jetbrains.python.PythonFindUsagesProvider"/>
     <lang.formatter language="Python" implementationClass="com.jetbrains.python.PythonFormattingModelBuilder"/>
     <lang.namesValidator language="Python" implementationClass="com.jetbrains.python.refactoring.PythonNamesValidator"/>
+    <lang.surroundDescriptor language="Python" implementationClass="com.jetbrains.python.refactoring.surround.PyStatementSurroundDescriptor"/>
+    <lang.surroundDescriptor language="Python" implementationClass="com.jetbrains.python.refactoring.surround.PyExpressionSurroundDescriptor"/>
     <lang.psiStructureViewFactory language="Python" implementationClass="com.jetbrains.python.structureView.PyStructureViewFactory"/>
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.PythonDocumentationProvider"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
