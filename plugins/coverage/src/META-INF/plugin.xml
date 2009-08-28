@@ -15,4 +15,14 @@
       <option name="workspace" value="true"/>
     </component>
   </project-components>
+  <actions>
+    <group id="CoverageMenu">
+      <action id="SwitchCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction" text="Code Co_verage Data"/>
+      <action id="GenerateCoverageReport" class="com.intellij.coverage.actions.GenerateCoverageReportAction" text="_Generate Coverage Report"/>
+      <separator/>
+
+      <add-to-group group-id="AnalyzeMenu" anchor="before" relative-to-action="ShowPackageDeps"/>
+    </group>
+
+  </actions>
 </idea-plugin>
