@@ -100,7 +100,7 @@ public class ResourceCompiler implements TranslatingCompiler {
       }
     });
 
-    final Set<String> outputsToRefresh = new HashSet<String>();
+    final Set<String> rootsToRefresh = new HashSet<String>();
     // do actual copy outside of read action to reduce the time the application is locked on it
     int idx = 0;
     final int total = copyCommands.size();
@@ -113,7 +113,8 @@ public class ResourceCompiler implements TranslatingCompiler {
       context.getProgressIndicator().setFraction((idx++) * 1.0 / total);
       context.getProgressIndicator().setText2("Copying " + command.getFromPath() + "...");
       try {
-        final MyOutputItem outputItem = command.copy(outputsToRefresh);
+        rootsToRefresh.add(command.getOutputPath());
+        final MyOutputItem outputItem = command.copy();
         addToMap(processed, command.getOutputPath(), outputItem);
       }
       catch (IOException e) {
@@ -129,13 +130,13 @@ public class ResourceCompiler implements TranslatingCompiler {
     CompilerUtil.logDuration("Copying resources TOTAL", stop - start);
     CompilerUtil.logDuration("\tCopying resources (actual copying)", CopyCommand.ourCopyingTime);
 
-    if (!outputsToRefresh.isEmpty()) {
+    if (!rootsToRefresh.isEmpty()) {
       final List<File> dirs = new ArrayList<File>();
-      for (String path : outputsToRefresh) {
+      for (String path : rootsToRefresh) {
         dirs.add(new File(path));
       }
       CompilerUtil.refreshIODirectories(dirs);
-      outputsToRefresh.clear();
+      rootsToRefresh.clear();
     }
 
     for (Iterator<Map.Entry<String, Collection<OutputItem>>> it = processed.entrySet().iterator(); it.hasNext();) {
@@ -169,7 +170,7 @@ public class ResourceCompiler implements TranslatingCompiler {
       mySourceFile = sourceFile;
     }
 
-    public MyOutputItem copy(Collection<String> filesToRefresh) throws IOException {
+    public MyOutputItem copy() throws IOException {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Copying " + myFromPath + " to " + myToPath);
       }
@@ -177,7 +178,6 @@ public class ResourceCompiler implements TranslatingCompiler {
       final long start = System.currentTimeMillis();
       FileUtil.copyContent(new File(myFromPath), targetFile);
       ourCopyingTime += (System.currentTimeMillis() - start);
-      filesToRefresh.add(myOutputPath);
       return new MyOutputItem(myToPath, mySourceFile);
     }
 
