@@ -229,10 +229,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (isDummy) {
       throw new UnsupportedOperationException("Dummy project is deprecated and shall not be used anymore.");
     }
-    final ProjectImpl project = isDefault ? new DefaultProject(this, filePath, isOptimiseTestLoadSpeed, projectName) : new ProjectImpl(this, filePath, false, isOptimiseTestLoadSpeed, projectName);
+    final ProjectImpl project = isDefault ? new DefaultProject(this, filePath, isOptimiseTestLoadSpeed, projectName) :
+                                new ProjectImpl(this, filePath, isOptimiseTestLoadSpeed, projectName);
 
     if (additionalPicoContainerComponents != null) {
-        project.getPicoContainer().registerComponentInstance(additionalPicoContainerComponents.first, additionalPicoContainerComponents.second);
+      project.getPicoContainer().registerComponentInstance(additionalPicoContainerComponents.first, additionalPicoContainerComponents.second);
     }
 
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);

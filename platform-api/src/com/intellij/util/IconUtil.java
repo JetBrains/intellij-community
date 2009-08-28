@@ -41,7 +41,7 @@ public class IconUtil {
     private final Project myProject;
     private final int myFlags;
 
-    public FileIconKey(final VirtualFile file, final Project project, final int flags) {
+    private FileIconKey(final VirtualFile file, final Project project, final int flags) {
       myFile = file;
       myProject = project;
       myFlags = flags;
@@ -89,7 +89,7 @@ public class IconUtil {
         int flags = key.getFlags();
         Project project = key.getProject();
 
-        if (!file.isValid() || (project != null && project.isDisposed())) return null;
+        if (!file.isValid() || project != null && project.isDisposed()) return null;
 
         Icon providersIcon = getProvidersIcon(file, flags, project);
         Icon icon = providersIcon == null ? file.getIcon() : providersIcon;

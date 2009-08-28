@@ -56,7 +56,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   public boolean myOptimiseTestLoadSpeed;
   @NonNls public static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
-  private final boolean myDefault;
   @NonNls private static final String DEPRECATED_MESSAGE = "Deprecated method usage: {0}.\n" +
            "This method will cease to exist in IDEA 7.0 final release.\n" +
            "Please contact plugin developers for plugin update.";
@@ -70,20 +69,18 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   public static Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
 
-  protected ProjectImpl(ProjectManagerImpl manager, String filePath, boolean isDefault, boolean isOptimiseTestLoadSpeed, String projectName) {
+  protected ProjectImpl(ProjectManagerImpl manager, String filePath, boolean isOptimiseTestLoadSpeed, String projectName) {
     super(ApplicationManager.getApplication());
     putUserData(CREATION_TIME, System.nanoTime());
 
     getPicoContainer().registerComponentInstance(Project.class, this);
-
-    myDefault = isDefault;
 
     getStateStore().setProjectFilePath(filePath);
 
     myOptimiseTestLoadSpeed = isOptimiseTestLoadSpeed;
 
     myManager = manager;
-    myName = isDefault ? TEMPLATE_PROJECT_NAME : projectName == null ? getStateStore().getProjectName() : projectName;
+    myName = isDefault() ? TEMPLATE_PROJECT_NAME : projectName == null ? getStateStore().getProjectName() : projectName;
   }
 
   protected void boostrapPicoContainer() {
@@ -102,7 +99,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
       public ComponentAdapter getDelegate() {
         if (myDelegate == null) {
 
-          final Class storeClass = projectStoreClassProvider.getProjectStoreClass(myDefault);
+          final Class storeClass = projectStoreClassProvider.getProjectStoreClass(isDefault());
           myDelegate = new CachingComponentAdapter(
             new ConstructorInjectionComponentAdapter(storeClass, storeClass, null, true));
         }
@@ -278,7 +275,12 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     Extensions.disposeArea(this);
     myManager = null;
     myProjectManagerListener = null;
+
     super.dispose();
+
+    if (!application.isDisposed()) {
+      application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).afterProjectClosed(this);
+    }
   }
 
   private void projectOpened() {
@@ -334,14 +336,14 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   }
 
   public boolean isDefault() {
-    return myDefault;
+    return false;
   }
 
   @Override
    public String toString() {
     return "Project "
            + (isDisposed() ? "(Disposed) " : "")
-           + (myDefault ? "(Default) " : "'" + getLocation()+"'")
+           + (isDefault() ? "(Default) " : "'" + getLocation()+"'")
       ;
   }
 }

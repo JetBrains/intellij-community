@@ -5,6 +5,8 @@ package com.intellij.ui;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -13,6 +15,7 @@ import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.MessageHandler;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.lang.reflect.Method;
@@ -43,11 +46,21 @@ public class IconDeferrerImpl extends IconDeferrer {
       }
 
       public void after(final List<? extends VFileEvent> events) {
-        synchronized (LOCK) {
-          myIconsCache.clear();
-        }
+        clear();
       }
     });
+    connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
+      @Override
+      public void afterProjectClosed(@NotNull Project project) {
+        clear();
+      }
+    });
+  }
+
+  private void clear() {
+    synchronized (LOCK) {
+      myIconsCache.clear();
+    }
   }
 
   private void invalidateAllIcons() {
