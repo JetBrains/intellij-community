@@ -89,7 +89,7 @@ public abstract class InterruptibleActivity {
         break;
       }
       catch (InterruptedException e) {
-        LOG.error(e); // Shall not happen
+        //LOG.error(e); // Shall not happen
       }
       catch (ExecutionException e) {
         throw new RuntimeException(e);
