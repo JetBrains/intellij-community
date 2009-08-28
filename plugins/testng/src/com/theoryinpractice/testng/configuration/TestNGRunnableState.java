@@ -8,20 +8,17 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.coverage.CoverageDataManager;
-import com.intellij.coverage.CoverageSuite;
-import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestSearchScope;
-import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -64,9 +61,10 @@ import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.testng.IDEACoverageListener;
 import org.testng.TestNG;
 import org.testng.TestNGCommandLineArgs;
+import org.testng.IDEATestNGListener;
+import org.testng.RemoteTestNGStarter;
 import org.testng.annotations.AfterClass;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.xml.LaunchSuite;
@@ -89,7 +87,6 @@ public class TestNGRunnableState extends JavaCommandLineState {
   private final IDEARemoteTestRunnerClient client;
   private int port;
   private String debugPort;
-  private CoverageSuite myCurrentCoverageSuite;
   private File myTempFile;
 
   public TestNGRunnableState(ExecutionEnvironment environment, TestNGConfiguration config) {
@@ -121,16 +118,14 @@ public class TestNGRunnableState extends JavaCommandLineState {
   public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
     final TestNGConsoleView console = new TestNGConsoleView(config, runnerSettings, myConfigurationPerRunnerSettings);
     console.initUI();
-    ProcessHandler processHandler = startProcess();
+    OSProcessHandler processHandler = startProcess();
+    for(RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+        ext.handleStartProcess(config, processHandler);
+      }
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(final ProcessEvent event) {
         client.stopTest();
-
-        if (myCurrentCoverageSuite != null) {
-          CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(config.getProject());
-          coverageDataManager.coverageGathered(myCurrentCoverageSuite);
-        }
 
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
@@ -194,7 +189,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     javaParameters.getVMParametersList().add("-ea");
     javaParameters.setMainClass("org.testng.RemoteTestNGStarter");
     javaParameters.setWorkingDirectory(config.getProperty(RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY));
-    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(IDEACoverageListener.class));
+    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(RemoteTestNGStarter.class));
 
     //the next few lines are awkward for a reason, using compareTo for some reason causes a JVM class verification error!
     Module module = config.getConfigurationModule().getModule();
@@ -210,9 +205,6 @@ public class TestNGRunnableState extends JavaCommandLineState {
     javaParameters.getClassPath().add(is15 ? PathUtil.getJarPathForClass(AfterClass.class) : //testng-jdk15.jar
                                       new File(PathManager.getPreinstalledPluginsPath(), "testng/lib-jdk14/testng-jdk14.jar")
                                         .getPath());//todo !do not hard code lib name!
-    final boolean hasIDEACoverageEnabled = config.isCoverageEnabled() && config.getCoverageRunner() instanceof IDEACoverageRunner;
-
-
     // Configure rest of jars
     JavaParametersUtil.configureConfiguration(javaParameters, config);
     Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectJdk() : ModuleRootManager.getInstance(module).getSdk();
@@ -224,11 +216,8 @@ public class TestNGRunnableState extends JavaCommandLineState {
     JavaSdkUtil.addRtJar(javaParameters.getClassPath());
 
     // Append coverage parameters if appropriate
-    if ((!(runnerSettings.getData() instanceof DebuggingRunnerData) || config.getCoverageRunner() instanceof IDEACoverageRunner) &&
-        config.isCoverageEnabled()) {
-      myCurrentCoverageSuite = CoverageDataManager.getInstance(project).addCoverageSuite(config);
-      LOG.info("Added coverage data with name '" + myCurrentCoverageSuite.getPresentableName() + "'");
-      config.appendCoverageArgument(javaParameters);
+    for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+      ext.updateJavaParameters(config, javaParameters, getRunnerSettings());
     }
 
     LOG.info("Test scope is: " + config.getPersistantData().getScope());
@@ -260,9 +249,11 @@ public class TestNGRunnableState extends JavaCommandLineState {
     if (data.TEST_LISTENERS != null && !data.TEST_LISTENERS.isEmpty()) {
       buf.append(StringUtil.join(data.TEST_LISTENERS, ";"));
     }
-    if (hasIDEACoverageEnabled) {
+
+    for (Object o : Extensions.getExtensions(IDEATestNGListener.EP_NAME)) {
       if (buf.length() > 0) buf.append(";");
-      buf.append(IDEACoverageListener.class.getName());
+      buf.append(o.getClass().getName());
+      javaParameters.getClassPath().add(PathUtil.getJarPathForClass(o.getClass()));
     }
     if (buf.length() > 0) javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.LISTENER_COMMAND_OPT, buf.toString());
 

@@ -10,7 +10,6 @@ import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
@@ -22,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.io.FileInputStream;
 
-public class TestNGConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration, RefactoringListenerProvider {
+public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule> implements RunJavaConfiguration, RefactoringListenerProvider {
   //private TestNGResultsContainer resultsContainer;
   protected TestData data;
   protected transient Project project;
@@ -100,10 +100,6 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
 
   public TestData getPersistantData() {
     return data;
-  }
-
-  protected boolean isMergeDataByDefault() {
-    return false;
   }
 
   @Override
@@ -209,7 +205,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<TestNGConfiguration> group = new SettingsEditorGroup<TestNGConfiguration>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new TestNGConfigurationEditor(getProject()));
-    group.addEditor(ExecutionBundle.message("coverage.tab.title"), new TestNGCoverageConfigurationEditor(getProject()));
+    RunConfigurationExtension.appendEditors(this, group);
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel());
     return group;
   }
@@ -264,6 +260,9 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
   public void readExternal(Element element) throws InvalidDataException {
     PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
+    for (RunConfigurationExtension extension : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+      extension.readExternal(this, element);
+    }
     readModule(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(getPersistantData(), element);
@@ -293,6 +292,9 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
+    for (RunConfigurationExtension extension : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+      extension.writeExternal(this, element);
+    }
     writeModule(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(getPersistantData(), element);

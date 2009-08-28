@@ -16,13 +16,9 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.LocatableConfigurationType;
-import com.intellij.execution.Location;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -30,7 +26,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,11 +45,7 @@ public class JUnitConfigurationType implements LocatableConfigurationType {
 
       @Override
       public Icon getIcon(@NotNull final RunConfiguration configuration) {
-        if (configuration instanceof JUnitConfiguration && ((JUnitConfiguration) configuration).isCoverageEnabled()) {
-          return LayeredIcon.create(getIcon(), CoverageEnabledConfiguration.WITH_COVERAGE_CONFIGURATION);
-        } else {
-          return getIcon();
-        }
+        return RunConfigurationExtension.getIcon((JUnitConfiguration)configuration, getIcon());
       }
     };
   }

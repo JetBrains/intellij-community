@@ -42,4 +42,6 @@
       <add-to-group anchor="last" group-id="TestStatisticsTablePopupMenu"/>
     </group>
   </actions>
+
+  <depends optional="true">Coverage</depends>
 </idea-plugin>

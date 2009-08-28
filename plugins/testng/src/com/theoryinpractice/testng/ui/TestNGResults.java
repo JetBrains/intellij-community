@@ -125,7 +125,9 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
   @Override
   protected ToolbarPanel createToolbarPanel() {
-    return new TestNGToolbarPanel(getProperties(), this, myRunnerSettings, myConfigurationSettings);
+    final ToolbarPanel panel = new ToolbarPanel(getProperties(), myRunnerSettings, myConfigurationSettings, this);
+    panel.setModel(this);
+    return panel;
   }
 
   public TestConsoleProperties getProperties() {

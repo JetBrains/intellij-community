@@ -16,7 +16,6 @@
 
 package com.intellij.execution.junit2.ui.actions;
 
-import com.intellij.coverage.actions.TrackCoverageAction;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
@@ -28,7 +27,6 @@ import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.ToolbarPanel;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
@@ -39,7 +37,6 @@ import javax.swing.*;
 
 public class JUnitToolbarPanel extends ToolbarPanel {
   @NonNls protected static final String TEST_SUITE_CLASS_NAME = "junit.framework.TestSuite";
-  private TrackCoverageAction myTrackCoverageAction;
 
   public JUnitToolbarPanel(final TestConsoleProperties properties,
                       final RunnerSettings runnerSettings,
@@ -48,18 +45,10 @@ public class JUnitToolbarPanel extends ToolbarPanel {
     super(properties, runnerSettings, configurationSettings, parentComponent);
   }
 
-  protected void appendAdditionalActions(final DefaultActionGroup actionGroup, final TestConsoleProperties properties, final RunnerSettings runnerSettings,
-                                         final ConfigurationPerRunnerSettings configurationSettings,
-                                         JComponent parent) {
-    myTrackCoverageAction = new TrackCoverageAction(properties);
-    actionGroup.addAction(myTrackCoverageAction).setAsSecondary(true);
-  }
-
 
   public void setModel(final TestFrameworkRunningModel model) {
     super.setModel(model);
     final JUnitRunningModel jUnitModel = (JUnitRunningModel)model;
-    myTrackCoverageAction.setModel(jUnitModel);
     JUnitActions.installAutoscrollToFirstDefect(jUnitModel);
     RunningTestTracker.install(jUnitModel);
     jUnitModel.addListener(new LvcsLabeler(jUnitModel));

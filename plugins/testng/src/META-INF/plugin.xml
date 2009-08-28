@@ -21,7 +21,9 @@
       <standardResourceProvider implementation="com.theoryinpractice.testng.TestNGPlugin"/>
       <overrideImplementsAnnotationsHandler implementation="com.theoryinpractice.testng.intention.OverrideImplementsTestNGAnnotationsHandler"/>
     </extensions>
-
+    <extensionPoints >
+      <extensionPoint qualifiedName="com.theoryinpractice.testng.listener" interface="org.testng.IDEATestNGListener"/>
+    </extensionPoints>
 
     <change-notes>
         <![CDATA[

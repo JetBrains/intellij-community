@@ -16,7 +16,10 @@
 
 package com.intellij.execution.junit2.states;
 
-import com.intellij.execution.junit2.*;
+import com.intellij.execution.junit2.TestProxy;
+import com.intellij.execution.junit2.TestProxyParent;
+import com.intellij.execution.junit2.TestRoot;
+import com.intellij.execution.junit2.TestRootImpl;
 import com.intellij.execution.junit2.segments.ObjectReader;
 import com.intellij.execution.junit2.segments.PacketConsumer;
 import com.intellij.execution.testframework.Filter;
@@ -25,7 +28,10 @@ import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import com.intellij.util.containers.HashMap;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class TestStateUpdater implements PacketConsumer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.states.TestStateUpdater");

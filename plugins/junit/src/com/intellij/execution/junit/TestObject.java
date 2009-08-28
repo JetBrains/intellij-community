@@ -17,9 +17,7 @@
 package com.intellij.execution.junit;
 
 import com.intellij.ExtensionPoints;
-import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
-import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit2.ui.JUnitTreeConsoleView;
@@ -50,6 +48,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -186,10 +185,10 @@ public abstract class TestObject implements JavaCommandLine {
     }
 
     JavaSdkUtil.addRtJar(myJavaParameters.getClassPath());
+    myJavaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
     myJavaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
-    if ((!(myRunnerSettings.getData() instanceof DebuggingRunnerData) || myConfiguration.getCoverageRunner() instanceof IDEACoverageRunner) && myConfiguration.isCoverageEnabled()) {
-      myCurrentCoverageSuite = CoverageDataManager.getInstance(myProject).addCoverageSuite(myConfiguration);
-      myConfiguration.appendCoverageArgument(myJavaParameters);
+    for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+      ext.updateJavaParameters(myConfiguration, myJavaParameters, myRunnerSettings);
     }
   }
 
@@ -230,17 +229,16 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
   private ProcessHandler startProcess(final JUnitTreeConsoleView consoleView) throws ExecutionException {
-    final ProcessHandler handler = JUnitProcessHandler.runJava(getJavaParameters(), myProject);
+    final JUnitProcessHandler handler = JUnitProcessHandler.runJava(getJavaParameters(), myProject);
+    for(RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+        ext.handleStartProcess(myConfiguration, handler);
+      }
     handler.addProcessListener(new ProcessAdapter() {
       public void processTerminated(final ProcessEvent event) {
         if (myTempFile != null) {
           myTempFile.delete();
         }
-        final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(myProject);
-        if (myCurrentCoverageSuite != null) {
-          coverageDataManager.coverageGathered(myCurrentCoverageSuite);
-        }
-
+        
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             if (myProject.isDisposed()) return;

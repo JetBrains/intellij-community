@@ -20,8 +20,6 @@ import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
-import com.intellij.execution.junit.coverage.JUnitCoverageConfigurable;
 import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -39,9 +37,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.ui.classFilter.ClassFilter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +49,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class JUnitConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration, RefactoringListenerProvider {
+public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule> implements RunJavaConfiguration, RefactoringListenerProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.JUnitConfiguration");
   public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
 
@@ -79,7 +77,7 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
   }
 
   public void setUpCoverageFilters() {
-    if (getCoveragePatterns() == null) {
+    /*if (getCoveragePatterns() == null) {      todo
       final Data persistentData = getPersistentData();
       String pattern = null;
       final String mainClassName = persistentData.getMainClassName();
@@ -98,13 +96,13 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
       if (pattern != null && pattern.length() > 0) {
         setCoveragePatterns(new ClassFilter[]{new ClassFilter(pattern + ".*")});
       }
-    }
+    }*/
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<JUnitConfiguration> group = new SettingsEditorGroup<JUnitConfiguration>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new JUnitConfigurable(getProject()));
-    group.addEditor(ExecutionBundle.message("coverage.tab.title"), new JUnitCoverageConfigurable(getProject()));
+    RunConfigurationExtension.appendEditors(this, group);
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel());
     return group;
   }
@@ -233,13 +231,12 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
     return myData.getTestObject(getProject(), this);
   }
 
-  protected boolean isMergeDataByDefault() {
-    return false;
-  }
-
   public void readExternal(final Element element) throws InvalidDataException {
     PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
+    for (RunConfigurationExtension extension : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+      extension.readExternal(this, element);
+    }
     readModule(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(getPersistentData(), element);
@@ -248,6 +245,9 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
 
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
+    for (RunConfigurationExtension extension : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+      extension.writeExternal(this, element);
+    }
     writeModule(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(getPersistentData(), element);
