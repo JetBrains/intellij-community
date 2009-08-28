@@ -8,7 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="Annotations" />
     <orderEntry type="module" module-name="resources" />
     <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="module" module-name="xdebugger-openapi" exported="" />
