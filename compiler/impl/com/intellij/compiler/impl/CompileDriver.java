@@ -451,8 +451,6 @@ public class CompileDriver {
             if (callback != null) {
               callback.finished(_status == ExitStatus.CANCELLED, errorCount, warningCount, compileContext);
             }
-
-            ProfilingUtil.operationFinished("make");
           }
         }, ModalityState.NON_MODAL);
       }
