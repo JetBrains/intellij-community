@@ -10,24 +10,19 @@ import gnu.trove.THashSet;
  * @author max
  */
 public class CharTableImpl implements CharTable {
-  private final static int INTERN_THRESHOLD = 40; // 40 or more characters long tokens won't be interned.
-  private final static CharSequenceHashingStrategy HASHER = new CharSequenceHashingStrategy();
-  private final static MyTHashSet staticEntries = new MyTHashSet();
+  private static final int INTERN_THRESHOLD = 40; // 40 or more characters long tokens won't be interned.
+  private static final CharSequenceHashingStrategy HASHER = new CharSequenceHashingStrategy();
+  private static final MyTHashSet staticEntries = new MyStaticTHashSet();
   private final MyTHashSet entries = new MyTHashSet();
 
   public CharSequence intern(final CharSequence text) {
     if (text.length() > INTERN_THRESHOLD) return createSequence(text);
-    int idx;
 
-    /*
-    synchronized(staticEntries) {
-      idx = staticEntries.index(text);
-      if (idx >= 0) {
-        //noinspection NonPrivateFieldAccessedInSynchronizedContext
-        return staticEntries.get(idx);
-      }
+    int idx = staticEntries.index(text);
+    if (idx >= 0) {
+      //noinspection NonPrivateFieldAccessedInSynchronizedContext
+      return staticEntries.get(idx);
     }
-    */
 
     synchronized(this) {
       idx = entries.index(text);
@@ -62,9 +57,9 @@ public class CharTableImpl implements CharTable {
     }
   }
   
-  private final static class MyTHashSet extends THashSet<CharSequence> {
-    public MyTHashSet() {
-      super(10, 0.9f, CharTableImpl.HASHER);
+  private static class MyTHashSet extends THashSet<CharSequence> {
+    private MyTHashSet() {
+      super(10, 0.9f, HASHER);
     }
 
     public int index(final CharSequence obj) {
@@ -76,87 +71,101 @@ public class CharTableImpl implements CharTable {
     }
   }
 
-  static {
-    CharTableImpl.staticIntern("==" );
-    CharTableImpl.staticIntern("!=" );
-    CharTableImpl.staticIntern("||" );
-    CharTableImpl.staticIntern("++" );
-    CharTableImpl.staticIntern("--" );
+  private static class MyStaticTHashSet extends MyTHashSet {{
+    add("==" );
+    add("!=" );
+    add("||" );
+    add("++" );
+    add("--" );
 
-    CharTableImpl.staticIntern("<" );
-    CharTableImpl.staticIntern("<=" );
-    CharTableImpl.staticIntern("<<=" );
-    CharTableImpl.staticIntern("<<" );
-    CharTableImpl.staticIntern(">" );
-    CharTableImpl.staticIntern("&" );
-    CharTableImpl.staticIntern("&&" );
+    add("<" );
+    add("<=" );
+    add("<<=" );
+    add("<<" );
+    add(">" );
+    add("&" );
+    add("&&" );
 
-    CharTableImpl.staticIntern("+=" );
-    CharTableImpl.staticIntern("-=" );
-    CharTableImpl.staticIntern("*=" );
-    CharTableImpl.staticIntern("/=" );
-    CharTableImpl.staticIntern("&=" );
-    CharTableImpl.staticIntern("|=" );
-    CharTableImpl.staticIntern("^=" );
-    CharTableImpl.staticIntern("%=" );
+    add("+=" );
+    add("-=" );
+    add("*=" );
+    add("/=" );
+    add("&=" );
+    add("|=" );
+    add("^=" );
+    add("%=" );
 
-    CharTableImpl.staticIntern("("   );
-    CharTableImpl.staticIntern(")"   );
-    CharTableImpl.staticIntern("{"   );
-    CharTableImpl.staticIntern("}"   );
-    CharTableImpl.staticIntern("["   );
-    CharTableImpl.staticIntern("]"   );
-    CharTableImpl.staticIntern(";"   );
-    CharTableImpl.staticIntern(","   );
-    CharTableImpl.staticIntern("..." );
-    CharTableImpl.staticIntern("."   );
+    add("("   );
+    add(")"   );
+    add("{"   );
+    add("}"   );
+    add("["   );
+    add("]"   );
+    add(";"   );
+    add(","   );
+    add("..." );
+    add("."   );
 
-    CharTableImpl.staticIntern("=" );
-    CharTableImpl.staticIntern("!" );
-    CharTableImpl.staticIntern("~" );
-    CharTableImpl.staticIntern("?" );
-    CharTableImpl.staticIntern(":" );
-    CharTableImpl.staticIntern("+" );
-    CharTableImpl.staticIntern("-" );
-    CharTableImpl.staticIntern("*" );
-    CharTableImpl.staticIntern("/" );
-    CharTableImpl.staticIntern("|" );
-    CharTableImpl.staticIntern("^" );
-    CharTableImpl.staticIntern("%" );
-    CharTableImpl.staticIntern("@" );
+    add("=" );
+    add("!" );
+    add("~" );
+    add("?" );
+    add(":" );
+    add("+" );
+    add("-" );
+    add("*" );
+    add("/" );
+    add("|" );
+    add("^" );
+    add("%" );
+    add("@" );
 
-    CharTableImpl.staticIntern(" " );
-    CharTableImpl.staticIntern("\n" );
-    CharTableImpl.staticIntern("\n  " );
-    CharTableImpl.staticIntern("\n    " );
-    CharTableImpl.staticIntern("\n      " );
-    CharTableImpl.staticIntern("\n        " );
-    CharTableImpl.staticIntern("\n          " );
-    CharTableImpl.staticIntern("\n            " );
-    CharTableImpl.staticIntern("\n              " );
-    CharTableImpl.staticIntern("\n                " );
+    add(" " );
+    add("  " );
+    add("   " );
+    add("    " );
+    add("     " );
+    add("      " );
+    add("       " );
+    add("        " );
+    add("         " );
+    add("          " );
+    add("           " );
+    add("            " );
+    add("             " );
+    add("              " );
+    add("               " );
+    add("\n" );
+    add("\n  " );
+    add("\n    " );
+    add("\n      " );
+    add("\n        " );
+    add("\n          " );
+    add("\n            " );
+    add("\n              " );
+    add("\n                " );
 
-    CharTableImpl.staticIntern("<");
-    CharTableImpl.staticIntern(">");
-    CharTableImpl.staticIntern("</");
-    CharTableImpl.staticIntern("/>");
-    CharTableImpl.staticIntern("\"");
-    CharTableImpl.staticIntern("\'");
-    CharTableImpl.staticIntern("<![CDATA[");
-    CharTableImpl.staticIntern("]]>");
-    CharTableImpl.staticIntern("<!--");
-    CharTableImpl.staticIntern("-->");
-    CharTableImpl.staticIntern("<!DOCTYPE");
-    CharTableImpl.staticIntern("SYSTEM");
-    CharTableImpl.staticIntern("PUBLIC");
-    CharTableImpl.staticIntern("<?");
-    CharTableImpl.staticIntern("?>");
+    add("<");
+    add(">");
+    add("</");
+    add("/>");
+    add("\"");
+    add("\'");
+    add("<![CDATA[");
+    add("]]>");
+    add("<!--");
+    add("-->");
+    add("<!DOCTYPE");
+    add("SYSTEM");
+    add("PUBLIC");
+    add("<?");
+    add("?>");
 
-    CharTableImpl.staticIntern("<%");
-    CharTableImpl.staticIntern("%>");
-    CharTableImpl.staticIntern("<%=");
-    CharTableImpl.staticIntern("<%@");
-    CharTableImpl.staticIntern("${");
-    CharTableImpl.staticIntern("");
-  }
+    add("<%");
+    add("%>");
+    add("<%=");
+    add("<%@");
+    add("${");
+    add("");
+  }}
 }
