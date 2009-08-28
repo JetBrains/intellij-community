@@ -1,52 +1,48 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith;
 
+import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.lang.surroundWith.Surrounder;
-import junit.framework.Test;
-import junit.framework.TestSuite;
-import org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.GroovyWithParenthesisExprSurrounder;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.GroovyWithTypeCastSurrounder;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.GroovyWithWithExprSurrounder;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithIfElseExprSurrounder;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithIfExprSurrounder;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithWhileExprSurrounder;
-import org.jetbrains.plugins.groovy.util.PathUtil;
+import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 01.06.2007
  */
-public class SurroundExpressionTest extends TestSuite {
-  private static final Map<String, String> surroundersOfExprToPathsMap = new HashMap<String, String>();
+public class SurroundExpressionTest extends LightCodeInsightFixtureTestCase {
 
-  static {
-    {
-      String exprPrefix = "/expr" + File.separator;
-      surroundersOfExprToPathsMap.put(GroovyWithIfExprSurrounder.class.getCanonicalName(), exprPrefix + "if");
-      surroundersOfExprToPathsMap.put(GroovyWithIfElseExprSurrounder.class.getCanonicalName(), exprPrefix + "if_else");
-      surroundersOfExprToPathsMap.put(GroovyWithWhileExprSurrounder.class.getCanonicalName(), exprPrefix + "while");
-      surroundersOfExprToPathsMap.put(GroovyWithParenthesisExprSurrounder.class.getCanonicalName(), exprPrefix + "brackets");
-      surroundersOfExprToPathsMap.put(GroovyWithWithExprSurrounder.class.getCanonicalName(), exprPrefix + "with");
-      surroundersOfExprToPathsMap.put(GroovyWithTypeCastSurrounder.class.getCanonicalName(), exprPrefix + "type_cast");
-    }
+  public void testBrackets1() throws Exception { doTest(new GroovyWithParenthesisExprSurrounder()); }
+  public void testIf1() throws Exception { doTest(new GroovyWithIfExprSurrounder()); }
+  public void testIf_else1() throws Exception { doTest(new GroovyWithIfElseExprSurrounder()); }
+  public void testType_cast1() throws Exception { doTest(new GroovyWithTypeCastSurrounder()); }
+  public void testWhile1() throws Exception { doTest(new GroovyWithWhileExprSurrounder()); }
+  public void testWith2() throws Exception { doTest(new GroovyWithWithExprSurrounder()); }
+
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/groovy/surround/expr/";
   }
 
-  public SurroundExpressionTest() {
-    Surrounder[] surrounders = GroovyStmtsSurroundDescriptor.getExprSurrounders();
+  public void doTest(Surrounder surrounder) throws Exception {
+    final List<String> data = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + "/" + getTestName(true) + ".test");
+    final String fileText = data.get(0);
+    myFixture.configureByText("a.groovy", fileText);
 
-    String path;
-    for (Surrounder surrounder : surrounders) {
-      path = surroundersOfExprToPathsMap.get(surrounder.getClass().getCanonicalName());
-      String dataPath = PathUtil.getDataPath(SurroundExpressionTest.class);
-      addTest(new SurroundWithTestItem((dataPath.endsWith("/") ? dataPath : dataPath + File.separator) + path, surrounder));
-    }
+    SurroundWithHandler.invoke(getProject(), myFixture.getEditor(), myFixture.getFile(), surrounder);
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+    PsiUtil.reformatCode(myFixture.getFile());
+
+    myFixture.checkResult(data.get(1));
   }
 
-  public static Test suite() {
-    return new SurroundExpressionTest();
-  }
 }
