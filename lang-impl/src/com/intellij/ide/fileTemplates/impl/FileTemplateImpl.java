@@ -45,15 +45,11 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
   private boolean myReadOnly = false;
   private boolean myAdjust = true;
 
-
-  private boolean myIsInternal = false;
+ private boolean myIsInternal = false;
 
   /** Creates new template. This template is marked as 'new', i.e. it will be saved to new file at IDEA end. */
-  FileTemplateImpl(String content, @NotNull String name, @NotNull String extension){
-    if(content != null){
-      content = StringUtil.convertLineSeparators(content);
-    }
-    myContent = content;
+  FileTemplateImpl(@NotNull String content, @NotNull String name, @NotNull String extension){
+    myContent = StringUtil.convertLineSeparators(content);
     myName = replaceFileSeparatorChar(name);
     myExtension = extension;
     myModified = true;
@@ -98,52 +94,58 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
     return FileTemplateUtil.calculateAttributes(content, properties, false);
   }
 
-  public boolean isDefault(){
+  public synchronized boolean isDefault(){
     return myReadOnly;
   }
 
   @NotNull
   public String getDescription(){
     try {
-      return myDescription != null ? VfsUtil.loadText(VirtualFileManager.getInstance().findFileByUrl(myDescription)) : "";
+      String description;
+      synchronized (this) {
+        description = myDescription;
+      }
+      if (description == null) return "";
+      VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(description);
+      LOG.assertTrue(virtualFile != null, "Unable to find description at '" + description + "'");
+      return VfsUtil.loadText(virtualFile);
     }
     catch (IOException e) {
       return "";
     }
   }
 
-  void setDescription(VirtualFile file){
+  synchronized void setDescription(VirtualFile file){
     myDescription = file.getUrl();
   }
 
   @NotNull
-  public String getName(){
+  public synchronized String getName(){
     return myName;
   }
 
-  public boolean isJavaClassTemplate(){
+  public synchronized boolean isJavaClassTemplate(){
     FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(myExtension);
     return fileType.equals(StdFileTypes.JAVA);
   }
 
   @NotNull
-  public String getExtension(){
+  public synchronized String getExtension(){
     return myExtension;
   }
 
   @NotNull
   public String getText(){
-    String text = "";
     try{
-      text = getContent();
+      return getContent();
     }
     catch (IOException e){
       LOG.error("Unable to read template \""+myName+"\"", e);
+      return "";
     }
-    return text;
   }
 
-  public void setText(String text){
+  public synchronized void setText(String text){
     // for read-only template we will save it later in user-defined templates
     if(text == null){
       text = "";
@@ -161,7 +163,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
     }
   }
 
-  boolean isModified(){
+  synchronized boolean isModified(){
     return myModified;
   }
 
@@ -178,7 +180,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
 
   /** Removes template file.
    */
-  void removeFromDisk() {
+  synchronized void removeFromDisk() {
     if (!myReadOnly && myTemplateFile != null && myTemplateFile.delete()) {
       myModified = false;
     }
@@ -188,20 +190,24 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
    *  If template was not modified, it is not saved.
    */
   void writeExternal(File defaultDir) throws IOException{
-    if (!myModified && !myRenamed) {
-      return;
+    File templateFile;
+    synchronized (this) {
+      if (!myModified && !myRenamed) {
+        return;
+      }
+      if(myRenamed){
+        LOG.assertTrue(myTemplateFile != null);
+        LOG.assertTrue(myTemplateFile.delete());
+        myTemplateFile = null;
+        myRenamed = false;
+      }
+      templateFile = myReadOnly ? null : myTemplateFile;
+      if(templateFile == null){
+        LOG.assertTrue(defaultDir.isDirectory());
+        templateFile = new File(defaultDir, myName+"."+myExtension);
+      }
     }
-    if(myRenamed){
-      LOG.assertTrue(myTemplateFile != null);
-      LOG.assertTrue(myTemplateFile.delete());
-      myTemplateFile = null;
-      myRenamed = false;
-    }
-    File templateFile = myReadOnly ? null : myTemplateFile;
-    if(templateFile == null){
-      LOG.assertTrue(defaultDir.isDirectory());
-      templateFile = new File(defaultDir, myName+"."+myExtension);
-    }
+
     FileOutputStream fileOutputStream = new FileOutputStream(templateFile);
     OutputStreamWriter outputStreamWriter;
     try{
@@ -232,8 +238,10 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
 //    }
 //    bufferedWriter.close();
 //    fileWriter.close();
-    myModified = false;
-    myTemplateFile = templateFile;
+    synchronized (this) {
+      myModified = false;
+      myTemplateFile = templateFile;
+    }
   }
 
   @NotNull
@@ -252,27 +260,36 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
 
   @NotNull
   private String getContent() throws IOException{
-    if(myContent == null){
-      if(myTemplateFile != null){
-        myContent = StringUtil.convertLineSeparators(readExternal(myTemplateFile));
+    String content;
+    File templateIOFile;
+    String templateURL;
+    synchronized (this) {
+      content = myContent;
+      templateIOFile = myTemplateFile;
+      templateURL = myTemplateURL;
+    }
+    if(content == null) {
+      if(templateIOFile != null){
+        content = StringUtil.convertLineSeparators(readExternal(templateIOFile));
       }
-      else if(myTemplateURL != null){
-        VirtualFile templateFile = VirtualFileManager.getInstance().findFileByUrl(myTemplateURL);
-        if (templateFile != null) {
-          myContent = StringUtil.convertLineSeparators(readExternal(templateFile));
+      else {
+        if(templateURL != null){
+          VirtualFile templateFile = VirtualFileManager.getInstance().findFileByUrl(templateURL);
+          content = templateFile == null ? "" : StringUtil.convertLineSeparators(readExternal(templateFile));
         }
-        else {
-          myContent = "";
+        else{
+          content = "";
         }
       }
-      else{
-        myContent = "";
+      synchronized (this) {
+        myContent = content;
       }
     }
-    return myContent;
+
+    return content;
   }
 
-  void invalidate(){
+  synchronized void invalidate(){
     if(!myReadOnly){
       if(myTemplateFile != null || myTemplateURL != null){
         myContent = null;
@@ -280,11 +297,11 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
     }
   }
 
-  boolean isNew(){
+  synchronized boolean isNew(){
     return myTemplateFile == null && myTemplateURL == null;
   }
 
-  public void setName(@NotNull String name){
+  public synchronized void setName(@NotNull String name){
     name = replaceFileSeparatorChar(name.trim());
     if(!myName.equals(name)){
       LOG.assertTrue(!myReadOnly);
@@ -294,7 +311,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
     }
   }
 
-  public void setExtension(@NotNull String extension){
+  public synchronized void setExtension(@NotNull String extension){
     extension = extension.trim();
     if(!myExtension.equals(extension)){
       LOG.assertTrue(!myReadOnly);
@@ -304,23 +321,32 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
     }
   }
 
-  public boolean isAdjust(){
+  public synchronized boolean isAdjust(){
     return myAdjust;
   }
 
-  public void setAdjust(boolean adjust){
+  public synchronized void setAdjust(boolean adjust){
     myAdjust = adjust;
   }
 
   public void resetToDefault() {
     LOG.assertTrue(!isDefault());
-    VirtualFile file = FileTemplateManagerImpl.getInstance().getDefaultTemplate(myName, myExtension);
+    String name;
+    String extension;
+    synchronized (this) {
+      name = myName;
+      extension = myExtension;
+    }
+    VirtualFile file = FileTemplateManagerImpl.getInstance().getDefaultTemplate(name, extension);
     if (file == null) return;
     try {
       String text = readExternal(file);
       setText(text);
-      myReadOnly = true;
-    } catch (IOException e) {
+      synchronized (this) {
+        myReadOnly = true;
+      }
+    }
+    catch (IOException e) {
       LOG.error ("Error reading template");
     }
   }
@@ -339,11 +365,11 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
     return buffer.toString();
   }
 
-  public void setInternal(boolean isInternal) {
-    myIsInternal = true;
+  public synchronized void setInternal(boolean isInternal) {
+    myIsInternal = isInternal;
   }
 
-  public boolean isInternal() {
+  public synchronized boolean isInternal() {
     return myIsInternal;
   }
 }

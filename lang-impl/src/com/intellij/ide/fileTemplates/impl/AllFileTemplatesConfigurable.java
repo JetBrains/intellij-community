@@ -22,6 +22,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -51,10 +52,10 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
   private FileTemplateConfigurable myEditor;
   private boolean myModified = false;
   private JComponent myEditorComponent;
-  private final static int TEMPLATE_ID = 0;
-  private final static int PATTERN_ID = 1;
-  private final static int CODE_ID = 2;
-  private final static int J2EE_ID = 3;
+  private static final int TEMPLATE_ID = 0;
+  private static final int PATTERN_ID = 1;
+  private static final int CODE_ID = 2;
+  private static final int J2EE_ID = 3;
   private static final Icon ourIcon = IconLoader.getIcon("/general/fileTemplates.png");
   private FileTemplateTab[] myTabs;
   private static final String TEMPLATES_TITLE = IdeBundle.message("tab.filetemplates.templates");
@@ -84,7 +85,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     createTemplate(IdeBundle.message("template.unnamed"), ext, "");
   }
 
-  private FileTemplate createTemplate(String prefName, @NonNls String extension, String content) {
+  private FileTemplate createTemplate(@NotNull String prefName, @NotNull @NonNls String extension, @NotNull String content) {
     FileTemplate[] templates = myCurrentTab.getTemplates();
     ArrayList<String> names = new ArrayList<String>(templates.length);
     for (FileTemplate template : templates) {
@@ -113,6 +114,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     for (FileTemplate template : templates) {
       names.add(template.getName());
     }
+    @SuppressWarnings({"UnresolvedPropertyKey"})
     String nameTemplate = IdeBundle.message("template.copy.N.of.T");
     String name = MessageFormat.format(nameTemplate, "", selected.getName());
     int i = 0;
@@ -704,7 +706,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     myJ2eeTemplatesList = null;
   }
 
-  public void createNewTemplate(String preferredName, String extension, String text) {
+  public void createNewTemplate(@NotNull String preferredName, @NotNull String extension, @NotNull String text) {
     createTemplate(preferredName, extension, text);
   }
 
