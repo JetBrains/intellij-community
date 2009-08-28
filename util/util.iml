@@ -2,9 +2,9 @@
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/testSource" isTestSource="true" />
+    <content url="file://$MODULE_DIR$/../community/util">
+      <sourceFolder url="file://$MODULE_DIR$/../community/util/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../community/util/testSource" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -21,12 +21,12 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="Annotations" exported="" />
     <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="library" exported="" name="NanoXML" level="project" />
     <orderEntry type="library" name="picocontainer" level="project" />
     <orderEntry type="module" module-name="platform-resources_eng" />
     <orderEntry type="library" name="OroMatcher" level="project" />
+    <orderEntry type="module" module-name="annotations" exported="" />
   </component>
   <component name="copyright">
     <Base>
