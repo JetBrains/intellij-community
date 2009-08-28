@@ -1,62 +1,32 @@
 package org.jetbrains.plugins.groovy.intentions.style.parameterToEntry;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import junit.framework.Assert;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.lang.formatter.GroovyFormatterTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.*;
 
 /**
  * @author ilyas
  */
-public class ParameterToMapEntryTest extends UsefulTestCase {
-
-  protected CodeInsightTestFixture myFixture;
-  protected Project myProject;
-
-
-  protected void setUp() throws Exception {
-    super.setUp();
-    final TestFixtureBuilder<IdeaProjectTestFixture> builder = JavaTestFixtureFactory.createFixtureBuilder();
-    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(builder.getFixture());
-    final JavaModuleFixtureBuilder moduleBuilder = builder.addModule(JavaModuleFixtureBuilder.class);
-    moduleBuilder.addJdk(TestUtils.getMockJdkHome());
-    myFixture.setTestDataPath(TestUtils.getTestDataPath() + "/paramToMap" + "/" + getTestName(true));
-    moduleBuilder.addContentRoot(myFixture.getTempDirPath()).addSourceRoot("");
-    myFixture.setUp();
-
-    myProject = myFixture.getProject();
-    storeSettings();
-    setSettings();
+public class ParameterToMapEntryTest extends GroovyFormatterTestCase {
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/paramToMap/" + getTestName(true) + "/";
   }
 
+  /*
   @Override
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
-    return CodeStyleSettingsManager.getSettings(myProject);
+    return CodeStyleSettingsManager.getSettings(getProject());
   }
-
-  @Override
-  protected void tearDown() throws Exception {
-    CodeStyleSettingsManager.getInstance(myProject).dropTemporarySettings();
-    checkForSettingsDamage();
-    myFixture.tearDown();
-    super.tearDown();
-  }
+  */
 
   public void testParam1() throws Throwable {
     doTestImpl("A.groovy");
@@ -104,6 +74,7 @@ public class ParameterToMapEntryTest extends UsefulTestCase {
 
     // Launch it!
     intention.processIntention(element);
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     final String result = file.getText();
     //System.out.println(result);
     String expected = getExpectedResult(filePath);
@@ -114,7 +85,7 @@ public class ParameterToMapEntryTest extends UsefulTestCase {
     Assert.assertTrue(filePath.endsWith(".groovy"));
     String testFilePath = StringUtil.trimEnd(filePath, "groovy") + "test";
 
-    final File file = new File(TestUtils.getTestDataPath() + "/paramToMap" + "/" + getTestName(true) + "/" + testFilePath);
+    final File file = new File(getTestDataPath() + testFilePath);
     assertTrue(file.exists());
     String expected = "";
 
@@ -137,11 +108,4 @@ public class ParameterToMapEntryTest extends UsefulTestCase {
     return expected;
   }
 
-  private void setSettings() {
-    CodeStyleSettings mySettings = getCurrentCodeStyleSettings().clone();
-    mySettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).INDENT_SIZE = 2;
-    mySettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).CONTINUATION_INDENT_SIZE = 4;
-    mySettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).TAB_SIZE = 2;
-    CodeStyleSettingsManager.getInstance(myProject).setTemporarySettings(mySettings);
-  }
 }
