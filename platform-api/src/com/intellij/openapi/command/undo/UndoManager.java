@@ -51,4 +51,5 @@ public abstract class UndoManager {
   public abstract void dropHistory();
 
   public abstract void markCommandAsNonUndoable(@Nullable VirtualFile affectedFile);
+  public abstract void markCurrentCommandAsComplex();
 }

@@ -220,4 +220,7 @@ public class CommandMerger {
     }
   }
 
+  void markAsComplex() {
+    myIsComplex = true;
+  }
 }

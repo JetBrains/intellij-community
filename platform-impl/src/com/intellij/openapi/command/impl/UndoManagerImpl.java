@@ -219,6 +219,11 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     });
   }
 
+  @Override
+  public void markCurrentCommandAsComplex() {
+    myCurrentMerger.markAsComplex();
+  }
+
   public void invalidateAllComplexCommands() {
     dropMergers();
 

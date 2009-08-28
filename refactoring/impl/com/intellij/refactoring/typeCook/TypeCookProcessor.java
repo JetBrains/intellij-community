@@ -1,6 +1,5 @@
 package com.intellij.refactoring.typeCook;
 
-import com.intellij.openapi.command.undo.DummyComplexUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
@@ -8,8 +7,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.typeCook.deductive.builder.Result;
 import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
+import com.intellij.refactoring.typeCook.deductive.builder.Result;
 import com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
@@ -94,7 +93,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
 
     myResult.apply (victims);
 
-    UndoManager.getInstance(myProject).undoableActionPerformed(new DummyComplexUndoableAction()); // force confirmation dialog for undo
+    UndoManager.getInstance(myProject).markCurrentCommandAsComplex();
     WindowManager.getInstance().getStatusBar(myProject).setInfo(myResult.getReport());
   }
 

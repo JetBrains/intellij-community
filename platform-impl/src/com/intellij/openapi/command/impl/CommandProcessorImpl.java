@@ -3,7 +3,6 @@ package com.intellij.openapi.command.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.*;
-import com.intellij.openapi.command.undo.DummyComplexUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -276,7 +275,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
 
   public void markCurrentCommandAsComplex(Project project) {
     UndoManager manager = project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
-    manager.undoableActionPerformed(new DummyComplexUndoableAction());
+    manager.markCurrentCommandAsComplex();
   }
 
   private void fireCommandStarted() {
