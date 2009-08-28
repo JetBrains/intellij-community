@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ProfilingUtil;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.Collections;
@@ -68,13 +67,13 @@ public abstract class MavenPerformanceTest extends MavenImportingTestCase {
   }
 
   private void measure(long expected, Runnable r) {
-    ProfilingUtil.startCPUProfiling();
+    //ProfilingUtil.startCPUProfiling();
     long before = System.currentTimeMillis();
     r.run();
     long after = System.currentTimeMillis();
     long timing = after - before;
-    System.out.println(getName() + ": " + timing + " ->" + ProfilingUtil.captureCPUSnapshot());
-    ProfilingUtil.stopCPUProfiling();
+    //System.out.println(getName() + ": " + timing + " ->" + ProfilingUtil.captureCPUSnapshot());
+    //ProfilingUtil.stopCPUProfiling();
     assertTrue(timing < expected);
   }
 }
