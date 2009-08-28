@@ -11,7 +11,6 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="Trove4j" level="project" />
-    <orderEntry type="module" module-name="UsageView" />
     <orderEntry type="module" module-name="codeInsight-openapi" />
     <orderEntry type="module" module-name="inspections-openapi" />
     <orderEntry type="module" module-name="xml" />
