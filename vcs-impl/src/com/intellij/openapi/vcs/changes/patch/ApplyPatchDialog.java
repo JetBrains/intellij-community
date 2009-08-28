@@ -144,7 +144,7 @@ public class ApplyPatchDialog extends DialogWrapper {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     myChangeListChooser.setChangeLists(changeListManager.getChangeListsCopy());
     myChangeListChooser.setDefaultSelection(changeListManager.getDefaultChangeList());
-
+    myChangeListChooser.init(project);
     init();
     updateOKAction();
     myShowDiffButton.addActionListener(new ActionListener() {

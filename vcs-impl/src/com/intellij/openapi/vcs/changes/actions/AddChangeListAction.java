@@ -14,8 +14,8 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -23,34 +23,23 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.NewChangelistDialog;
-import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport;
-import com.intellij.openapi.extensions.Extensions;
 
 public class AddChangeListAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    try {
-      NewChangelistDialog dlg = new NewChangelistDialog(project);
-      dlg.show();
-      if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-        String name = dlg.getName();
-        if (name.length() == 0) {
-          name = getUniqueName(project);
-        }
+    NewChangelistDialog dlg = new NewChangelistDialog(project);
+    dlg.show();
+    if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+      String name = dlg.getName();
+      if (name.length() == 0) {
+        name = getUniqueName(project);
+      }
 
-        final LocalChangeList list = ChangeListManager.getInstance(project).addChangeList(name, dlg.getDescription());
-        if (dlg.isNewChangelistActive()) {
-          ChangeListManager.getInstance(project).setDefaultChangeList(list);
-        }
-        for (EditChangelistSupport support : Extensions.getExtensions(EditChangelistSupport.EP_NAME, project)) {
-          support.changelistCreated(list);
-        }              
+      final LocalChangeList list = ChangeListManager.getInstance(project).addChangeList(name, dlg.getDescription());
+      if (dlg.isNewChangelistActive()) {
+        ChangeListManager.getInstance(project).setDefaultChangeList(list);
       }
-    }
-    finally {
-      for (EditChangelistSupport support : Extensions.getExtensions(EditChangelistSupport.EP_NAME, project)) {
-        support.disposeControls();
-      }
+      dlg.getPanel().changelistCreatedOrChanged(list);
     }
   }
 

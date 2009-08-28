@@ -4,11 +4,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.LocalChangeListImpl;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,15 +25,17 @@ public class EditChangelistDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     myList = list;
-    myPanel = new EditChangelistPanel(((LocalChangeListImpl) list).getEditHandler(),
-                                      new Consumer<Boolean>() {
-                                        public void consume(final Boolean aBoolean) {
-                                          setOKActionEnabled(Boolean.TRUE.equals(aBoolean));
-                                        }
-                                      });
+    myPanel = new EditChangelistPanel(((LocalChangeListImpl) list).getEditHandler()) {
+      @Override
+      protected void nameChanged(String errorMessage) {
+        setOKActionEnabled(!StringUtil.isEmptyOrSpaces(myPanel.getName()));
+      }
+    };
     myPanel.setName(list.getName());
     myPanel.setDescription(list.getComment());
-    myPanel.installSupport(project);
+    myPanel.init(project, list);
+    myPanel.getMakeActiveCheckBox().setSelected(myList.isDefault());
+    myPanel.getMakeActiveCheckBox().setEnabled(!myList.isDefault());
     setTitle(VcsBundle.message("changes.dialog.editchangelist.title"));
     init();
   }
@@ -65,6 +67,10 @@ public class EditChangelistDialog extends DialogWrapper {
         clManager.editComment(myList.getName(), newDescription);
       }
     }
+    if (!myList.isDefault() && myPanel.getMakeActiveCheckBox().isSelected()) {
+      ChangeListManager.getInstance(myProject).setDefaultChangeList(myList);  
+    }
+    myPanel.changelistCreatedOrChanged(myList);
     super.doOKAction();
   }
 

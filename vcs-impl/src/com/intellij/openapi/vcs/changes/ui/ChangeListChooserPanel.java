@@ -4,14 +4,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,19 +38,26 @@ public class ChangeListChooserPanel extends JPanel {
     myOkEnabledListener = okEnabledListener;
     add(myPanel, BorderLayout.CENTER);
 
-    myExisitingsCombo.setRenderer(new ColoredListCellRenderer() {
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        if (value != null) {
-          append(((ChangeList)value).getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        }
-      }
-    });
-
     myRbExisting.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
         updateEnabledItems();
       }
     });
+  }
+
+  public void init(final Project project) {
+
+    myExisitingsCombo.setRenderer(new ColoredListCellRenderer() {
+
+      private final IssueLinkRenderer myLinkRenderer = new IssueLinkRenderer(project, this);
+      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        if (value instanceof LocalChangeList) {
+          myLinkRenderer.appendTextWithLinks(((LocalChangeList)value).getName(),
+                                             ((LocalChangeList)value).isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+      }
+    });
+    myNewListPanel.init(project, null);
   }
 
   public void setChangeLists(Collection<? extends ChangeList> changeLists) {
@@ -94,7 +102,10 @@ public class ChangeListChooserPanel extends JPanel {
       return (LocalChangeList)myExisitingsCombo.getSelectedItem();
     }
     else {
-      return ChangeListManager.getInstance(project).addChangeList(myNewListPanel.getName(), myNewListPanel.getDescription());
+      LocalChangeList changeList =
+        ChangeListManager.getInstance(project).addChangeList(myNewListPanel.getName(), myNewListPanel.getDescription());
+      myNewListPanel.changelistCreatedOrChanged(changeList);
+      return changeList;
     }
   }
 
@@ -122,12 +133,12 @@ public class ChangeListChooserPanel extends JPanel {
   }
 
   private void createUIComponents() {
-    myNewListPanel = new EditChangelistPanel(myHandler, new Consumer<Boolean>() {
-      public void consume(final Boolean aBoolean) {
-        final boolean enabled = myRbExisting.isSelected() ||
-                                ((! myRbExisting.isSelected()) && aBoolean);
-        myOkEnabledListener.consume(enabled);
+    myNewListPanel = new EditChangelistPanel(myHandler) {
+
+      @Override
+      protected void nameChanged(String errorMessage) {
+        myOkEnabledListener.consume(errorMessage == null);
       }
-    });
+    };
   }
 }

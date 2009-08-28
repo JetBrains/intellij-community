@@ -36,11 +36,14 @@ public class ChangeListChooser extends DialogWrapper {
         break;
       }
     }
+
     myPanel = new ChangeListChooserPanel(null, new Consumer<Boolean>() {
       public void consume(final Boolean aBoolean) {
         setOKActionEnabled(aBoolean);
       }
     });
+
+    myPanel.init(project);
     myPanel.setChangeLists(changelists);
     myPanel.setDefaultSelection(defaultSelection);
 

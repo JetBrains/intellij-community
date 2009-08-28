@@ -1,7 +1,11 @@
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -15,7 +19,6 @@ public interface EditChangelistSupport {
 
   void installSearch(JTextComponent name, JTextComponent comment);
 
-  void addControls(JPanel bottomPanel);
+  Consumer<LocalChangeList> addControls(JPanel bottomPanel, @Nullable LocalChangeList initial);
   void changelistCreated(LocalChangeList changeList);
-  void disposeControls();
 }
