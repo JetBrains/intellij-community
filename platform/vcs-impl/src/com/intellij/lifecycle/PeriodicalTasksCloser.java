@@ -1,5 +1,9 @@
 package com.intellij.lifecycle;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -8,7 +12,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -90,6 +98,56 @@ public class PeriodicalTasksCloser implements ProjectManagerListener {
         throw new ProcessCanceledException();
       }
       return component;
+    }
+  }
+
+  public static void invokeAndWaitInterruptedWhenClosing(final Project project, final Runnable runnable, final ModalityState modalityState) {
+    final Ref<Boolean> start = new Ref<Boolean>(Boolean.TRUE);
+    final Application application = ApplicationManager.getApplication();
+    LOG.assertTrue(! application.isDispatchThread());
+
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    Runnable runnable1 = new Runnable() {
+      public void run() {
+        try {
+          runnable.run();
+        }
+        finally {
+          semaphore.up();
+        }
+      }
+
+      @NonNls
+      public String toString() {
+        return "PeriodicalTaskCloser's invoke and wait [" + runnable.toString() + "]";
+      }
+    };
+    LaterInvocator.invokeLater(runnable1, modalityState, new Condition<Object>() {
+      public boolean value(Object o) {
+        synchronized (start) {
+          return ! start.get();
+        }
+      }
+    });
+
+    while (true) {
+      if (semaphore.waitFor(1000)) {
+        return;
+      }
+      final Ref<Boolean> fire = new Ref<Boolean>();
+      synchronized (ourLock) {
+        final Boolean state = myStates.get(project);
+        if (! Boolean.TRUE.equals(state)) {
+          fire.set(Boolean.TRUE);
+        }
+        if (Boolean.TRUE.equals(fire.get())) {
+          synchronized (start) {
+            start.set(Boolean.FALSE);
+            return;
+          }
+        }
+      }
     }
   }
 }
