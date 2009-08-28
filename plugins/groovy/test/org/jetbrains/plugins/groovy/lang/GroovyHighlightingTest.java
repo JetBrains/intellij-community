@@ -13,6 +13,7 @@ import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspec
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection;
+import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection;
 
 import java.io.IOException;
 
@@ -125,4 +126,9 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   
   public void testUnresolvedAccess() throws Exception { doTest(new GroovyUnresolvedAccessInspection()); }
   public void testUntypedAccess() throws Exception { doTest(new GroovyUntypedAccessInspection()); }
+  
+  public void testUnassigned1() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
+  public void testUnassigned2() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
+  public void testUnassigned3() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
+  public void testUnassignedTryFinally() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
 }
