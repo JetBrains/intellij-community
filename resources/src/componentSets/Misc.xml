@@ -19,11 +19,7 @@
       <implementation-class>com.intellij.javadoc.JavadocGenerationManager</implementation-class>
       <skipForDummyProject/>
     </component>
-    <component>
-      <interface-class>com.intellij.coverage.CoverageDataManager</interface-class>
-      <implementation-class>com.intellij.coverage.CoverageDataManagerImpl</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
+    
 
   </project-components>
 
