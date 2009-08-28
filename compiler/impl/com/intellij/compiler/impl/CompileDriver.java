@@ -2118,16 +2118,20 @@ public class CompileDriver {
     }
 
     public void flushPostponedItems() {
+      final TranslatingCompilerFilesMonitor filesMonitor = TranslatingCompilerFilesMonitor.getInstance();
       try {
         for (Map.Entry<String, Collection<TranslatingCompiler.OutputItem>> entry : myPostponedItems.entrySet()) {
           final String outputDir = entry.getKey();
           final Collection<TranslatingCompiler.OutputItem> items = entry.getValue();
-          TranslatingCompilerFilesMonitor.getInstance().update(myContext, outputDir, items, VirtualFile.EMPTY_ARRAY);
+          filesMonitor.update(myContext, outputDir, items, VirtualFile.EMPTY_ARRAY);
         }
       }
       catch (IOException e) {
         LOG.info(e);
         myContext.requestRebuildNextTime(e.getMessage());
+      }
+      finally {
+        filesMonitor.updateOutputRootsLayout(myContext.getProject());
       }
     }
   }

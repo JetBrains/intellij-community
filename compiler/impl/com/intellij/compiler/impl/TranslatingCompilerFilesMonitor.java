@@ -21,7 +21,9 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -67,7 +69,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private static final FileAttribute ourOutputFileAttribute = new FileAttribute("_make_output_file_info_", 3);
 
   private final TIntObjectHashMap<TIntHashSet> mySourcesToRecompile = new TIntObjectHashMap<TIntHashSet>(); // ProjectId->set of source file paths
-  private PersistentHashMap<Integer, TIntHashSet> myOutputRootsStorage; // ProjectId->set of ids for output directories
+  private PersistentHashMap<Integer, TIntObjectHashMap<Pair<Integer, Integer>>> myOutputRootsStorage; // ProjectId->map[moduleId->Pair(outputDirId, testOutputDirId)]
   private final TIntObjectHashMap<Map<String, SourceUrlClassNamePair>> myOutputsToDelete = new TIntObjectHashMap<Map<String, SourceUrlClassNamePair>>(); // Map: projectId -> Map{output path -> [sourceUrl; classname]}
   private final SLRUCache<Project, File> myGeneratedDataPaths = new SLRUCache<Project, File>(8, 8) {
     @NotNull
@@ -80,26 +82,26 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       return CompilerPaths.getGeneratedDataDirectory(project);
     }
   };
-  private final SLRUCache<Integer, TIntHashSet> myProjectOutputRoots = new SLRUCache<Integer, TIntHashSet>(2, 2) {
-    protected void onDropFromCache(Integer key, TIntHashSet value) {
+  private final SLRUCache<Integer, TIntObjectHashMap<Pair<Integer, Integer>>> myProjectOutputRoots = new SLRUCache<Integer, TIntObjectHashMap<Pair<Integer, Integer>>>(2, 2) {
+    protected void onDropFromCache(Integer key, TIntObjectHashMap<Pair<Integer, Integer>> value) {
       try {
         myOutputRootsStorage.put(key, value);
       }
       catch (IOException e) {
-        LOG.error(e);
+        LOG.info(e);
       }
     }
 
     @NotNull
-    public TIntHashSet createValue(Integer key) {
-      TIntHashSet set = null;
+    public TIntObjectHashMap<Pair<Integer, Integer>> createValue(Integer key) {
+      TIntObjectHashMap<Pair<Integer, Integer>> map = null;
       try {
-        set = myOutputRootsStorage.get(key);
+        map = myOutputRootsStorage.get(key);
       }
       catch (IOException e) {
-        LOG.error(e);
+        LOG.info(e);
       }
-      return set != null? set : new TIntHashSet();
+      return map != null? map : new TIntObjectHashMap<Pair<Integer, Integer>>();
     }
   };
   private final ProjectManager myProjectManager;
@@ -301,9 +303,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       });
     }
-    
-    if (outputRoot != null) {
-      registerOutputRoot(project, outputRoot);
+  }
+
+  public void updateOutputRootsLayout(Project project) {
+    final TIntObjectHashMap<Pair<Integer, Integer>> map = buildOutputRootsLayout(project);
+    synchronized (myProjectOutputRoots) {
+      myProjectOutputRoots.put(getProjectId(project), map);
     }
   }
 
@@ -365,21 +370,43 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
+  private TIntObjectHashMap<Pair<Integer, Integer>> buildOutputRootsLayout(Project project) {
+    final TIntObjectHashMap<Pair<Integer, Integer>> map = new TIntObjectHashMap<Pair<Integer, Integer>>();
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      final CompilerModuleExtension manager = CompilerModuleExtension.getInstance(module);
+      if (manager != null) {
+        final VirtualFile output = manager.getCompilerOutputPath();
+        final int first = output != null? Math.abs(getFileId(output)) : -1;
+        final VirtualFile testsOutput = manager.getCompilerOutputPathForTests();
+        final int second = testsOutput != null? Math.abs(getFileId(testsOutput)) : -1;
+        map.put(getModuleId(module), new Pair<Integer, Integer>(first, second));
+      }
+    }
+    return map;
+  }
+
   private void initOutputRootsFile(File rootsFile) throws IOException {
-    myOutputRootsStorage = new PersistentHashMap<Integer, TIntHashSet>(rootsFile, new EnumeratorIntegerDescriptor(), new DataExternalizer<TIntHashSet>() {
-      public void save(DataOutput out, TIntHashSet value) throws IOException {
-        for (final TIntIterator it = value.iterator(); it.hasNext();) {
-          DataInputOutputUtil.writeINT(out, it.next());
+    myOutputRootsStorage = new PersistentHashMap<Integer, TIntObjectHashMap<Pair<Integer, Integer>>>(rootsFile, new EnumeratorIntegerDescriptor(), new DataExternalizer<TIntObjectHashMap<Pair<Integer, Integer>>>() {
+      public void save(DataOutput out, TIntObjectHashMap<Pair<Integer, Integer>> value) throws IOException {
+        for (final TIntObjectIterator<Pair<Integer, Integer>> it = value.iterator(); it.hasNext();) {
+          it.advance();
+          DataInputOutputUtil.writeINT(out, it.key());
+          final Pair<Integer, Integer> pair = it.value();
+          DataInputOutputUtil.writeINT(out, pair.first);
+          DataInputOutputUtil.writeINT(out, pair.second);
         }
       }
 
-      public TIntHashSet read(DataInput in) throws IOException {
+      public TIntObjectHashMap<Pair<Integer, Integer>> read(DataInput in) throws IOException {
         final DataInputStream _in = (DataInputStream)in;
-        final TIntHashSet set = new TIntHashSet();
+        final TIntObjectHashMap<Pair<Integer, Integer>> map = new TIntObjectHashMap<Pair<Integer, Integer>>();
         while (_in.available() > 0) {
-          set.add(DataInputOutputUtil.readINT(_in));
+          final int key = DataInputOutputUtil.readINT(_in);
+          final int first = DataInputOutputUtil.readINT(_in);
+          final int second = DataInputOutputUtil.readINT(_in);
+          map.put(key, new Pair<Integer, Integer>(first, second));
         }
-        return set;
+        return map;
       }
     });
   }
@@ -495,6 +522,16 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private static int getProjectId(Project project) {
     try {
       return FSRecords.getNames().enumerate(project.getLocationHash());
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+    return -1;
+  }
+
+  private static int getModuleId(Module module) {
+    try {
+      return FSRecords.getNames().enumerate(module.getName());
     }
     catch (IOException e) {
       LOG.info(e);
@@ -809,33 +846,36 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-  private void markOldOutputRoots(final Project project, final Set<VirtualFile> roots) throws IOException {
+  private void markOldOutputRoots(final Project project, final TIntObjectHashMap<Pair<Integer, Integer>> currentLayout) {
     final int projectId = getProjectId(project);
-    final int[] currentRoots = new int[roots.size()];
-    int index = 0;
-    for (VirtualFile root : roots) {
-      currentRoots[index++] = getFileId(root);
-    }
 
-    final TIntHashSet oldRoots;
+    final TIntHashSet rootsToMark = new TIntHashSet();
     synchronized (myProjectOutputRoots) {
-      oldRoots = new TIntHashSet(myProjectOutputRoots.get(projectId).toArray());
+      final TIntObjectHashMap<Pair<Integer, Integer>> oldLayout = myProjectOutputRoots.get(projectId);
+      for (final TIntObjectIterator<Pair<Integer, Integer>> it = oldLayout.iterator(); it.hasNext();) {
+        it.advance();
+        final Pair<Integer, Integer> currentRoots = currentLayout.get(it.key());
+        final Pair<Integer, Integer> oldRoots = it.value();
+        if (shouldMark(oldRoots.first, currentRoots != null? currentRoots.first : -1)) {
+          rootsToMark.add(oldRoots.first);
+        }
+        if (shouldMark(oldRoots.second, currentRoots != null? currentRoots.second : -1)) {
+          rootsToMark.add(oldRoots.second);
+        }
+      }
     }
-    oldRoots.removeAll(currentRoots);
 
-    for (TIntIterator it = oldRoots.iterator(); it.hasNext();) {
+    for (TIntIterator it = rootsToMark.iterator(); it.hasNext();) {
       final int id = it.next();
       final VirtualFile outputRoot = findFileById(id);
       if (outputRoot != null) {
         processOldOutputRoot(projectId, outputRoot);
       }
     }
+  }
 
-    synchronized (myProjectOutputRoots) {
-      final TIntHashSet cachedRoots = myProjectOutputRoots.get(projectId);
-      cachedRoots.clear();
-      cachedRoots.addAll(currentRoots);
-    }
+  private boolean shouldMark(Integer oldOutputRoot, Integer currentOutputRoot) {
+    return oldOutputRoot != null && oldOutputRoot.intValue() > 0 && !Comparing.equal(oldOutputRoot, currentOutputRoot);
   }
 
   private void processOldOutputRoot(int projectId, VirtualFile outputRoot) {
@@ -854,15 +894,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         if (srcFile != null) {
           addSourceForRecompilation(projectId, srcFile, null);
         }
-      }
-    }
-  }
-
-  private void registerOutputRoot(Project project, String outputRoot) throws IOException {
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(outputRoot);
-    if (vFile != null) {
-      synchronized (myProjectOutputRoots) {
-        myProjectOutputRoots.get(getProjectId(project)).add(getFileId(vFile));
       }
     }
   }
@@ -906,12 +937,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
           myRootsBefore = null;
 
-          try {
-            markOldOutputRoots(project, getAllOutputRoots(project));
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
+          markOldOutputRoots(project, buildOutputRootsLayout(project));
         }
       });
 
@@ -964,12 +990,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                 }
               }
               
-              try {
-                markOldOutputRoots(project, getAllOutputRoots(project));
-              }
-              catch (IOException e) {
-                LOG.error(e);
-              }
+              markOldOutputRoots(project, buildOutputRootsLayout(project));
             }
           }.queue();
         }
@@ -982,24 +1003,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         mySourcesToRecompile.remove(getProjectId(project));
       }
     }
-  }
-
-  private Set<VirtualFile> getAllOutputRoots(Project project) {
-    final Set<VirtualFile> allDirs = new HashSet<VirtualFile>();
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      final CompilerModuleExtension manager = CompilerModuleExtension.getInstance(module);
-      if (manager != null) {
-        final VirtualFile output = manager.getCompilerOutputPath();
-        if (output != null) {
-          allDirs.add(output);
-        }
-        final VirtualFile testsOutput = manager.getCompilerOutputPathForTests();
-        if (testsOutput != null) {
-          allDirs.add(testsOutput);
-        }
-      }
-    }
-    return allDirs;
   }
 
   private class MyVfsListener extends VirtualFileAdapter {
