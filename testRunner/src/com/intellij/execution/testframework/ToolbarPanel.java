@@ -18,16 +18,20 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.config.ToggleBooleanProperty;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 
 public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposable {
   protected final TestTreeExpander myTreeExpander = new TestTreeExpander();
   protected final FailedTestsNavigator myOccurenceNavigator;
   protected final ScrollToTestSourceAction myScrollToSource;
+
+  private ArrayList<ToggleModelAction> myActions = new ArrayList<ToggleModelAction>();
 
   public ToolbarPanel(final TestConsoleProperties properties,
                       final RunnerSettings runnerSettings,
@@ -76,6 +80,11 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
 
     actionGroup.addAction(new ShowStatisticsAction(properties)).setAsSecondary(true);
 
+    for (ToggleModelActionProvider actionProvider : Extensions.getExtensions(ToggleModelActionProvider.EP_NAME)) {
+      final ToggleModelAction toggleModelAction = actionProvider.createToggleModelAction(properties);
+      myActions.add(toggleModelAction);
+      actionGroup.add(toggleModelAction);
+    }
     appendAdditionalActions(actionGroup, properties, runnerSettings, configurationSettings, parent);
 
     add(ActionManager.getInstance().
@@ -93,6 +102,9 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     myScrollToSource.setModel(model);
     myTreeExpander.setModel(model);
     myOccurenceNavigator.setModel(model);
+    for (ToggleModelAction action : myActions) {
+      action.setModel(model);
+    }
   }
 
   public boolean hasNextOccurence() {
@@ -122,4 +134,5 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   public void dispose() {
     myScrollToSource.setModel(null);    
   }
+
 }

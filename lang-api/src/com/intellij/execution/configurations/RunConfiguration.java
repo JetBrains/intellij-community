@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.configurations;
 
-import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -41,11 +40,6 @@ public interface RunConfiguration extends RunProfile, JDOMExternalizable, Clonea
   SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(ProgramRunner runner);
 
   RunConfiguration clone();
-
-  @Nullable
-  Object getExtensionSettings(Class<? extends RunConfigurationExtension> extensionClass);
-
-  void setExtensionSettings(Class<? extends RunConfigurationExtension> extensionClass, Object value);
 
   int getUniqueID();
 }

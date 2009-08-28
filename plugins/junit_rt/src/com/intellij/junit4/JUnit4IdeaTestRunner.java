@@ -1,5 +1,6 @@
-package com.intellij.rt.junit4;
+package com.intellij.junit4;
 
+import com.intellij.junit.IDEAJUnitCoverageListener;
 import com.intellij.rt.execution.junit.DeafStream;
 import com.intellij.rt.execution.junit.IdeaTestRunner;
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistryEx;
@@ -65,23 +66,13 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
 
       runner.addListener(myTestsListener);
       try {
-        final Object data =
-          Class.forName("com.intellij.rt.coverage.data.ProjectData").getMethod("getProjectData", new Class[0]).invoke(null, new Object[0]);
-        if (data != null) {
-          runner.addListener(new RunListener() {
-            public void testStarted(Description description) {
-              ((com.intellij.rt.coverage.data.ProjectData)data).testStarted(JUnit4ReflectionUtil.getClassName(description) + "." + JUnit4ReflectionUtil.getMethodName(description));
-            }
-
-            public void testFinished(Description description) {
-              ((com.intellij.rt.coverage.data.ProjectData)data).testEnded(JUnit4ReflectionUtil.getClassName(description) + "." + JUnit4ReflectionUtil.getMethodName(description));
-            }
-
-          });
+        final RunListener listener = IDEAJUnitCoverageListener.class.newInstance().getRunListener();
+        if (listener != null) {
+          runner.addListener(listener);
         }
       }
-      catch (Throwable e) {
-        //coverage was not enabled
+      catch (Exception e) {
+        //do nothing
       }
 
       long startTime = System.currentTimeMillis();

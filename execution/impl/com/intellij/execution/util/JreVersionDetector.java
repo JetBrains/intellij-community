@@ -6,7 +6,7 @@
  */
 package com.intellij.execution.util;
 
-import com.intellij.execution.application.ApplicationConfiguration;
+import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -18,15 +18,11 @@ public class JreVersionDetector {
   private String myLastAlternativeJrePath = null; //awful hack
   private boolean myLastIsJre50;
 
-  public boolean isJre50Configured(final ApplicationConfiguration configuration) {
-    return isJre50Configured(configuration, configuration.ALTERNATIVE_JRE_PATH_ENABLED, configuration.ALTERNATIVE_JRE_PATH);
-  }
-
-  public boolean isJre50Configured(final ModuleBasedConfiguration configuration, final boolean altPathEnabled, final String jrePath) {
-    if (altPathEnabled) {
-      if (jrePath.equals(myLastAlternativeJrePath)) return myLastIsJre50;
-      myLastAlternativeJrePath = jrePath;
-      final String versionString = JavaSdkImpl.getJdkVersion(jrePath);
+  public <T extends ModuleBasedConfiguration & RunJavaConfiguration> boolean isJre50Configured(final T configuration) {
+    if (configuration.isAlternativeJrePathEnabled()) {
+      if (configuration.getAlternativeJrePath().equals(myLastAlternativeJrePath)) return myLastIsJre50;
+      myLastAlternativeJrePath = configuration.getAlternativeJrePath();
+      final String versionString = JavaSdkImpl.getJdkVersion(myLastAlternativeJrePath);
       myLastIsJre50 = versionString != null && isJre50(versionString);
       return myLastIsJre50;
     } else {

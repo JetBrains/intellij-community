@@ -1,18 +1,12 @@
 package com.intellij.execution.application;
 
-import com.intellij.coverage.CoverageDataManager;
-import com.intellij.coverage.CoverageSuite;
-import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.components.PathMacroManager;
@@ -39,7 +33,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class ApplicationConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration, SingleClassConfiguration, RefactoringListenerProvider {
+public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule> implements RunJavaConfiguration, SingleClassConfiguration, RefactoringListenerProvider {
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.application.ApplicationConfiguration");
 
   public String MAIN_CLASS_NAME;
@@ -74,7 +68,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<ApplicationConfiguration> group = new SettingsEditorGroup<ApplicationConfiguration>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new ApplicationConfigurable2(getProject()));
-    group.addEditor(ExecutionBundle.message("coverage.tab.title"), new ApplicationCoverageConfigurable(getProject()));
+    RunConfigurationExtension.appendEditors(this, group);
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel());
     return group;
   }
@@ -179,11 +173,6 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
    }
 
 
-  @Override
-  public boolean canHavePerTestCoverage() {
-    return false;
-  }
-
   private String getWorkingDirectory() {
     return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
   }
@@ -196,13 +185,12 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
     return new ApplicationConfiguration(getName(), getProject(), ApplicationConfigurationType.getInstance());
   }
 
-  protected boolean isMergeDataByDefault() {
-    return true;
-  }
-
   public void readExternal(final Element element) throws InvalidDataException {
     PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
+    for (RunConfigurationExtension extension : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+      extension.readExternal(this, element);
+    }
     DefaultJDOMExternalizer.readExternal(this, element);
     readModule(element);
     EnvironmentVariablesComponent.readExternal(element, getEnvs());
@@ -210,6 +198,9 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
 
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
+    for (RunConfigurationExtension extension : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+      extension.writeExternal(this, element);
+    }
     DefaultJDOMExternalizer.writeExternal(this, element);
     writeModule(element);
     EnvironmentVariablesComponent.writeExternal(element, getEnvs());
@@ -225,8 +216,6 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
   }
 
   private class MyJavaCommandLineState extends JavaCommandLineState {
-    private CoverageSuite myCurrentCoverageSuite;
-
     public MyJavaCommandLineState(final ExecutionEnvironment environment) {
       super(environment);
     }
@@ -240,15 +229,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
 
       params.setMainClass(MAIN_CLASS_NAME);
       for(RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-        if (ext instanceof JavaRunConfigurationExtension) {
-          ((JavaRunConfigurationExtension)ext).updateJavaParameters(ApplicationConfiguration.this, params);
-        }
-      }
-
-      if ((!(getRunnerSettings().getData() instanceof DebuggingRunnerData) || getCoverageRunner() instanceof IDEACoverageRunner) && isCoverageEnabled()) {
-        final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(getProject());
-        myCurrentCoverageSuite = coverageDataManager.addCoverageSuite(ApplicationConfiguration.this);
-        appendCoverageArgument(params);
+        ext.updateJavaParameters(ApplicationConfiguration.this, params, getRunnerSettings());
       }
 
       return params;
@@ -260,15 +241,6 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
       for(RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
         ext.handleStartProcess(ApplicationConfiguration.this, handler);
       }
-
-      handler.addProcessListener(new ProcessAdapter() {
-        public void processTerminated(final ProcessEvent event) {
-          final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(getProject());
-          if (myCurrentCoverageSuite != null) {
-            coverageDataManager.coverageGathered(myCurrentCoverageSuite);
-          }
-        }
-      });
 
       return handler;
     }

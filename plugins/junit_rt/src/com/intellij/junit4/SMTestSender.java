@@ -2,7 +2,7 @@
  * User: anna
  * Date: 03-Jun-2009
  */
-package com.intellij.rt.junit4;
+package com.intellij.junit4;
 
 import org.junit.runner.Description;
 import org.junit.runner.Result;

@@ -18,7 +18,6 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.options.SettingsEditor;
@@ -98,12 +97,6 @@ public class UnknownRunConfiguration implements RunConfiguration {
     }
   }
 
-  public Object getExtensionSettings(final Class<? extends RunConfigurationExtension> extensionClass) {
-    return null;
-  }
-
-  public void setExtensionSettings(final Class<? extends RunConfigurationExtension> extensionClass, final Object value) {
-  }
 
   public int getUniqueID() {
     return System.identityHashCode(this);

@@ -22,7 +22,6 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -178,14 +177,6 @@ public class AbstractRerunFailedTestsAction extends AnAction {
 
     public RunConfiguration clone() {
       return myConfiguration.clone();
-    }
-
-    public Object getExtensionSettings(final Class<? extends RunConfigurationExtension> extensionClass) {
-      return myConfiguration.getExtensionSettings(extensionClass);
-    }
-
-    public void setExtensionSettings(final Class<? extends RunConfigurationExtension> extensionClass, final Object value) {
-      myConfiguration.setExtensionSettings(extensionClass, value);
     }
 
     public int getUniqueID() {

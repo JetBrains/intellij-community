@@ -16,11 +16,11 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.diagnostic.logging.LogConsole;
-import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -28,14 +28,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author dyoma
  */
-public abstract class RunConfigurationBase implements RunConfiguration {
+public abstract class RunConfigurationBase extends UserDataHolderBase implements RunConfiguration {
   private final ConfigurationFactory myFactory;
   private final Project myProject;
   private String myName = "";
@@ -45,22 +43,10 @@ public abstract class RunConfigurationBase implements RunConfiguration {
   @NonNls private static final String LOG_FILE = "log_file";
   @NonNls private static final String PREDEFINED_LOG_FILE_ELEMENT = "predefined_log_file";
 
-  private final Map<Class<? extends RunConfigurationExtension>, Object> myExtensionSettings =
-    new HashMap<Class<? extends RunConfigurationExtension>, Object>();
-
   protected RunConfigurationBase(Project project, ConfigurationFactory factory, String name) {
     myProject = project;
     myFactory = factory;
     myName = name;
-  }
-
-  @Nullable
-  public Object getExtensionSettings(Class<? extends RunConfigurationExtension> extensionClass) {
-    return myExtensionSettings.get(extensionClass);
-  }
-
-  public void setExtensionSettings(Class<? extends RunConfigurationExtension> extensionClass, Object value) {
-    myExtensionSettings.put(extensionClass, value);
   }
 
   public int getUniqueID() {
@@ -101,15 +87,11 @@ public abstract class RunConfigurationBase implements RunConfiguration {
   }
 
   public RunConfiguration clone() {
-    try {
-      final RunConfigurationBase runConfiguration = (RunConfigurationBase)super.clone();
-      runConfiguration.myLogFiles = new ArrayList<LogFileOptions>(myLogFiles);
-      runConfiguration.myPredefinedLogFiles = new ArrayList<PredefinedLogFile>(myPredefinedLogFiles);
-      return runConfiguration;
-    }
-    catch (CloneNotSupportedException e) {
-      return null;
-    }
+    final RunConfigurationBase runConfiguration = (RunConfigurationBase)super.clone();
+    runConfiguration.myLogFiles = new ArrayList<LogFileOptions>(myLogFiles);
+    runConfiguration.myPredefinedLogFiles = new ArrayList<PredefinedLogFile>(myPredefinedLogFiles);
+    copyCopyableDataTo(runConfiguration);
+    return runConfiguration;
   }
 
   public @Nullable LogFileOptions getOptionsForPredefinedLogFile(PredefinedLogFile predefinedLogFile) {

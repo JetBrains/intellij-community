@@ -1,4 +1,4 @@
-package com.intellij.rt.junit3;
+package com.intellij.junit3;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

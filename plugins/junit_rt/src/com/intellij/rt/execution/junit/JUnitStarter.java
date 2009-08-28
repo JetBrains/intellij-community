@@ -1,7 +1,7 @@
 package com.intellij.rt.execution.junit;
 
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
-import com.intellij.rt.junit3.JUnit3IdeaTestRunner;
+import com.intellij.junit3.JUnit3IdeaTestRunner;
 import junit.textui.TestRunner;
 
 import java.io.*;
@@ -143,8 +143,8 @@ public class JUnitStarter {
 
   private static Class getAgentClass(boolean isJUnit4) throws ClassNotFoundException {
     return isJUnit4
-           ? Class.forName("com.intellij.rt.junit4.JUnit4IdeaTestRunner")
-           : Class.forName("com.intellij.rt.junit3.JUnit3IdeaTestRunner");
+           ? Class.forName("com.intellij.junit4.JUnit4IdeaTestRunner")
+           : Class.forName("com.intellij.junit3.JUnit3IdeaTestRunner");
 
   }
 }

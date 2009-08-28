@@ -22,15 +22,36 @@
 
       <option name="ADDED_LINES_COLOR" value="edfced"/>
       <option name="MODIFIED_LINES_COLOR" value="fcf2f2"/>
-
-      <option name="LINE_FULL_COVERAGE" value="ccffcc"/>
-      <option name="LINE_PARTIAL_COVERAGE" value="ffffcc"/>
-      <option name="LINE_NONE_COVERAGE" value="ffcccc"/>
       <option name="CONSOLE_BACKGROUND_KEY" value="ffffff" />
     </colors>
 
     <attributes>
+      <option name="LINE_FULL_COVERAGE">
+        <value>
+          <option name="FOREGROUND" value="ccffcc"/>
+          <option name="BACKGROUND"/>
+          <option name="EFFECT_COLOR"/>
+          <option name="FONT_TYPE" value="1"/>
+        </value>
 
+      </option>
+      <option name="LINE_PARTIAL_COVERAGE">
+        <value>
+          <option name="FOREGROUND" value="ffffcc"/>
+          <option name="BACKGROUND"/>
+          <option name="EFFECT_COLOR"/>
+          <option name="FONT_TYPE" value="1"/>
+        </value>
+
+      </option>
+      <option name="LINE_NONE_COVERAGE">
+        <value>
+          <option name="FOREGROUND" value="ffcccc"/>
+          <option name="BACKGROUND"/>
+          <option name="EFFECT_COLOR"/>
+          <option name="FONT_TYPE" value="1"/>
+        </value>
+      </option>
       <option name="JAVA_STRING">
         <value>
           <option name="FOREGROUND" value="008000"/>

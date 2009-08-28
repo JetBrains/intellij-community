@@ -2,7 +2,7 @@
  * User: anna
  * Date: 05-Jun-2009
  */
-package com.intellij.rt.junit4;
+package com.intellij.junit4;
 
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistryEx;
 import com.intellij.rt.execution.junit.segments.Packet;

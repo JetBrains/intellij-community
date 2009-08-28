@@ -4,10 +4,10 @@
 
 package com.intellij.uiDesigner.snapShooter;
 
-import com.intellij.execution.JavaRunConfigurationExtension;
+import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -16,7 +16,10 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.AreaInstance;
+import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.Navigatable;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.LwComponent;
@@ -26,7 +29,9 @@ import com.intellij.xml.util.XmlStringUtil;
 import com.jgoodies.forms.layout.FormLayout;
 import gnu.trove.THashMap;
 import org.jdom.Document;
+import org.jdom.Element;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
@@ -34,17 +39,17 @@ import java.util.TreeSet;
 /**
  * @author yole
  */
-public class SnapShooterConfigurationExtension implements JavaRunConfigurationExtension {
-  public void updateJavaParameters(final RunConfiguration configuration, final JavaParameters params) {
+public class SnapShooterConfigurationExtension extends RunConfigurationExtension {
+  @Override
+  public <T extends ModuleBasedConfiguration & RunJavaConfiguration> void updateJavaParameters(T configuration, JavaParameters params, RunnerSettings runnerSettings) {
     if (!(configuration instanceof ApplicationConfiguration)) {
       return;
     }
     ApplicationConfiguration appConfiguration = (ApplicationConfiguration) configuration;
-    SnapShooterConfigurationSettings settings =
-      (SnapShooterConfigurationSettings)appConfiguration.getExtensionSettings(SnapShooterConfigurationExtension.class);
+    SnapShooterConfigurationSettings settings = appConfiguration.getUserData(SnapShooterConfigurationSettings.SNAP_SHOOTER_KEY);
     if (settings == null) {
       settings = new SnapShooterConfigurationSettings();
-      appConfiguration.setExtensionSettings(SnapShooterConfigurationExtension.class, settings);
+      appConfiguration.putUserData(SnapShooterConfigurationSettings.SNAP_SHOOTER_KEY, settings);
     }
     if (appConfiguration.ENABLE_SWING_INSPECTOR) {
       try {
@@ -82,9 +87,8 @@ public class SnapShooterConfigurationExtension implements JavaRunConfigurationEx
     }
   }
 
-  public void handleStartProcess(final RunConfiguration configuration, final OSProcessHandler handler) {
-    SnapShooterConfigurationSettings settings =
-      (SnapShooterConfigurationSettings)configuration.getExtensionSettings(SnapShooterConfigurationExtension.class);
+  public void handleStartProcess(final ModuleBasedConfiguration configuration, final OSProcessHandler handler) {
+    SnapShooterConfigurationSettings settings = configuration.getUserData(SnapShooterConfigurationSettings.SNAP_SHOOTER_KEY);
     if (settings != null) {
       final Runnable runnable = settings.getNotifyRunnable();
       if (runnable != null) {
@@ -96,5 +100,30 @@ public class SnapShooterConfigurationExtension implements JavaRunConfigurationEx
         });
       }
     }
+  }
+
+  @Override
+  public <T extends ModuleBasedConfiguration & RunJavaConfiguration> SettingsEditor createEditor(T configuration) {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public String getEditorTitle() {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public <T extends ModuleBasedConfiguration & RunJavaConfiguration> Icon getIcon(T runConfiguration) {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public void readExternal(ModuleBasedConfiguration runConfiguration, Element element) throws InvalidDataException {
+
+  }
+
+  @Override
+  public void writeExternal(ModuleBasedConfiguration runConfiguration, Element element) throws WriteExternalException {
+
   }
 }

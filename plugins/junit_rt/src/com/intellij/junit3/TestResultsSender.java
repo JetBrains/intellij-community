@@ -1,4 +1,4 @@
-package com.intellij.rt.junit3;
+package com.intellij.junit3;
 
 import com.intellij.rt.execution.junit.*;
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistryEx;

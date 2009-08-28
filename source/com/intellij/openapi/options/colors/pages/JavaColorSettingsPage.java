@@ -102,10 +102,8 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
   };
 
   private static final ColorDescriptor[] ourColorDescriptors = new ColorDescriptor[]{
-    new ColorDescriptor(OptionsBundle.message("options.java.color.descriptor.method.separator.color"), CodeInsightColors.METHOD_SEPARATORS_COLOR, ColorDescriptor.Kind.FOREGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.java.color.descriptor.full.coverage"), CodeInsightColors.LINE_FULL_COVERAGE, ColorDescriptor.Kind.FOREGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.java.color.descriptor.partial.coverage"), CodeInsightColors.LINE_PARTIAL_COVERAGE, ColorDescriptor.Kind.FOREGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.java.color.descriptor.none.coverage"), CodeInsightColors.LINE_NONE_COVERAGE, ColorDescriptor.Kind.FOREGROUND)
+    new ColorDescriptor(OptionsBundle.message("options.java.color.descriptor.method.separator.color"), CodeInsightColors.METHOD_SEPARATORS_COLOR, ColorDescriptor.Kind.FOREGROUND)
+
   };
 
   @NonNls private static final Map<String, TextAttributesKey> ourTags = new HashMap<String, TextAttributesKey>();
@@ -159,6 +157,9 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.info"), CodeInsightColors.INFO_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.problems"), CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.duplicate"), CodeInsightColors.DUPLICATE_FROM_SERVER));
+    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.color.descriptor.full.coverage"), CodeInsightColors.LINE_FULL_COVERAGE));
+    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.color.descriptor.partial.coverage"), CodeInsightColors.LINE_PARTIAL_COVERAGE));
+    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.color.descriptor.none.coverage"), CodeInsightColors.LINE_NONE_COVERAGE));
     for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
       for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {
         final TextAttributesKey attributesKey = highlightInfoType.getAttributesKey();

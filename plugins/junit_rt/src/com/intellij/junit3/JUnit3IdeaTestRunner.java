@@ -1,10 +1,13 @@
-package com.intellij.rt.junit3;
+package com.intellij.junit3;
 
+import com.intellij.junit.IDEAJUnitCoverageListener;
 import com.intellij.rt.execution.junit.DeafStream;
 import com.intellij.rt.execution.junit.IdeaTestRunner;
 import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
-import junit.framework.*;
+import junit.framework.Test;
+import junit.framework.TestListener;
+import junit.framework.TestResult;
 import junit.textui.ResultPrinter;
 import junit.textui.TestRunner;
 
@@ -49,30 +52,14 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
     TestResult testResult = super.createTestResult();
     testResult.addListener(myTestsListener);
     try {
-      final Object data = Class.forName("com.intellij.rt.coverage.data.ProjectData").getMethod("getProjectData", new Class[0]).invoke(null, new Object[0]);
-      if (data != null) {
-        testResult.addListener(new TestListener() {
-          public void addError(final Test test, final Throwable t) {}
-          public void addFailure(final Test test, final AssertionFailedError t) {}
-
-          public void startTest(final Test test) {
-            if (test instanceof TestCase) {
-              ((com.intellij.rt.coverage.data.ProjectData)data).testStarted(test.getClass().getName() + "." + ((TestCase)test).getName());
-            }
-          }
-
-          public void endTest(final Test test) {
-            if (test instanceof TestCase) {
-              ((com.intellij.rt.coverage.data.ProjectData)data).testEnded(test.getClass().getName() + "." + ((TestCase)test).getName());
-            }
-          }
-        });
+      final TestListener listener = IDEAJUnitCoverageListener.class.newInstance().getTestListener();
+      if (listener != null) {
+        testResult.addListener(listener);
       }
     }
-    catch (Throwable e) {
-      //coverage was not enabled
+    catch (Exception e) {
+      //do nothing
     }
-
     return testResult;
   }
 
