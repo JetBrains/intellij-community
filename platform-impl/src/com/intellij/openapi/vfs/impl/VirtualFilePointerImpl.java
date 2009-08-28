@@ -85,9 +85,11 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   }
 
   public void throwNotDisposedError(String msg) throws RuntimeException {
+    Throwable trace = getUserData(CREATE_TRACE);
     throw new RuntimeException(msg+"\n" +
                                "url=" + this +
-                               "\nCreation trace:\n", getUserData(CREATE_TRACE));
+                               "\nCreation trace " + (trace==null?"null":"some")+
+                               "\n", trace);
   }
 
   public int incrementUsageCount() {
