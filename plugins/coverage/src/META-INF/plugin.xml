@@ -1,9 +1,15 @@
 <idea-plugin>
   <name>Coverage</name>
   <depends optional="true">TestNG-J</depends>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.coverageRunner" interface="com.intellij.coverage.CoverageRunner"/>
+  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationExtension implementation="com.intellij.execution.coverage.CoverageRunConfigurationExtension"/>
     <testActionProvider implementation="com.intellij.coverage.actions.TrackCoverageActionProvider"/>
+    <coverageRunner implementation="com.intellij.coverage.EmmaCoverageRunner"/>
+    <!--<coverageRunner implementation="com.intellij.coverage.CoberturaCoverageRunner"/>-->
+    <coverageRunner implementation="com.intellij.coverage.IDEACoverageRunner"/>
   </extensions>
   <extensions defaultExtensionNs="com.theoryinpractice.testng">
     <listener implementation="org.testng.IDEACoverageListener"/>
