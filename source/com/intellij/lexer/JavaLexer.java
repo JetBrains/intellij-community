@@ -5,7 +5,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ProfilingUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -401,7 +400,6 @@ public class JavaLexer extends LexerBase {
   }
 
   public static void main(String[] args) throws IOException {
-    ProfilingUtil.startCPUProfiling();
     File root = new File(args[0]);
 
     Stats stats = new Stats();
@@ -409,7 +407,6 @@ public class JavaLexer extends LexerBase {
 
     System.out.println("Scanned " + stats.files + " files, total of " + stats.lines + " lines in " + (stats.time / 1000000) + " ms.");
     System.out.println("Size:" + stats.bytes);
-    ProfilingUtil.captureCPUSnapshot();
 
   }
 

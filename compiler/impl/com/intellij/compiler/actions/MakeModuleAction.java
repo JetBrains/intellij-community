@@ -6,7 +6,6 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ProfilingUtil;
 
 public class MakeModuleAction extends CompileActionBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.actions.MakeModuleAction");
@@ -22,8 +21,6 @@ public class MakeModuleAction extends CompileActionBase {
       modules = new Module[]{module};
     }
     try {
-      ProfilingUtil.operationStarted("make");
-
       CompilerManager.getInstance(project).make(modules[0].getProject(), modules, null);
     }
     catch (Exception e) {

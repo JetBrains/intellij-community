@@ -11,12 +11,9 @@ import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ProfilingUtil;
 
 public class CompileProjectAction extends CompileActionBase {
   protected void doAction(DataContext dataContext, final Project project) {
-    ProfilingUtil.operationStarted("make");
-
     CompilerManager.getInstance(project).rebuild(new CompileStatusNotification() {
       public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
         if (!aborted && LocalHistoryConfiguration.getInstance().ADD_LABEL_ON_PROJECT_COMPILATION) {

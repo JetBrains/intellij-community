@@ -6,12 +6,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ProfilingUtil;
 
 public class CompileDirtyAction extends CompileActionBase {
 
   protected void doAction(DataContext dataContext, Project project) {
-    ProfilingUtil.operationStarted("make");
     CompilerManager.getInstance(project).make(null);
   }
 
