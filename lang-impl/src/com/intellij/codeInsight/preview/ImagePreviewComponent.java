@@ -1,21 +1,13 @@
-package com.intellij.html.preview;
+package com.intellij.codeInsight.preview;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.css.CssTerm;
-import com.intellij.psi.css.impl.CssTermTypes;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.patterns.PlatformPatterns;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
@@ -100,51 +92,7 @@ public class ImagePreviewComponent extends JPanel {
     return false;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  @Nullable
-  public static JComponent getPreviewComponent(@NotNull final PsiElement element) {
-    if (PlatformPatterns.psiElement().withParent(PlatformPatterns.psiElement(PsiLiteralExpression.class)).accepts(element)) {
-      final PsiLiteralExpression psiLiteralExpression = (PsiLiteralExpression) element.getParent();
-      if (psiLiteralExpression != null) {
-        return _getPreviewComponent(psiLiteralExpression);
-      }
-    }
-
-    CssTerm term = PsiTreeUtil.getParentOfType(element, CssTerm.class, false);
-    if (term != null && CssTermTypes.URI == term.getTermType()) {
-      PsiElement parent = element;
-      while (parent != term) {
-        final JComponent c = _getPreviewComponent(parent);
-        if (c != null) {
-          return c;
-        }
-
-        parent = parent.getParent();
-      }
-    }
-    else if (element.getParent() instanceof XmlAttributeValue) {
-      final PsiElement attributeValue = element.getParent();
-      if (attributeValue.getParent() instanceof XmlAttribute) {
-        XmlAttribute attribute = (XmlAttribute)attributeValue.getParent();
-        String attrName = attribute.getName();
-        if ("background".equals(attrName) || "src".equals(attrName) || "href".equals(attrName)) {
-          PsiElement parent = element;
-          while (parent != attribute) {
-            final JComponent c = _getPreviewComponent(parent);
-            if (c != null) {
-              return c;
-            }
-
-            parent = parent.getParent();
-          }
-        }
-      }
-    }
-
-    return null;
-  }
-
-  private static JComponent _getPreviewComponent(final PsiElement parent) {
+  public static JComponent getPreviewComponent(final PsiElement parent) {
     final PsiReference[] references = parent.getReferences();
     for (final PsiReference reference : references) {
       final PsiElement fileItem = reference.resolve();

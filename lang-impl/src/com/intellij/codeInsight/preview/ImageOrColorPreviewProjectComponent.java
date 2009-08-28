@@ -1,16 +1,14 @@
-package com.intellij.html.preview;
+package com.intellij.codeInsight.preview;
 
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.css.CssFile;
-import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +54,11 @@ public class ImageOrColorPreviewProjectComponent extends AbstractProjectComponen
       if (provider == null) return false;
       
       for (final PsiFile psiFile : provider.getAllFiles()) {
-        if (psiFile instanceof XmlFile || psiFile instanceof CssFile || psiFile instanceof PsiJavaFile) return true;
+        for(PreviewHintProvider hintProvider: Extensions.getExtensions(PreviewHintProvider.EP_NAME)) {
+          if (hintProvider.isSupportedFile(psiFile)) {
+            return true;
+          }
+        }
       }
 
       return false;

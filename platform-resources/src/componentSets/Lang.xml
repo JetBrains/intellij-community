@@ -206,6 +206,12 @@
       <implementation-class>com.intellij.openapi.vcs.changes.VcsEventWatcher</implementation-class>
       <skipForDummyProject/>
     </component>
+
+    <component>
+      <interface-class>com.intellij.codeInsight.preview.ImageOrColorPreviewProjectComponent</interface-class>
+      <implementation-class>com.intellij.codeInsight.preview.ImageOrColorPreviewProjectComponent</implementation-class>
+      <skipForDummyProject/>
+    </component>
   </project-components>
 
   <module-components>

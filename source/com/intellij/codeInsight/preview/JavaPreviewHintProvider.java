@@ -1,56 +1,24 @@
-package com.intellij.html.preview;
+package com.intellij.codeInsight.preview;
 
-import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.css.impl.util.CssUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ArrayUtil;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.xml.util.ColorSampleLookupValue;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
 /**
- * @author spleaner
+ * @author yole
  */
-public class ColorPreviewComponent extends JComponent {
-  private final Color myColor;
-
-  private ColorPreviewComponent(final String hexValue, final Color color) {
-    myColor = color;
-    setOpaque(true);
-
-/*    if (hexValue != null) {
-      final JLabel label = new JLabel('#' + hexValue);
-      label.setFont(UIUtil.getToolTipFont());
-      label.setForeground(Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null)[2] >= 0.5f ? Color.BLACK : Color.WHITE);
-      add(label, BorderLayout.SOUTH);
-    } */
+public class JavaPreviewHintProvider implements PreviewHintProvider {
+  public boolean isSupportedFile(PsiFile file) {
+    return file instanceof PsiJavaFile;
   }
 
-  public void paintComponent(final Graphics g) {
-    final Graphics2D g2 = (Graphics2D)g;
-
-    final Rectangle r = getBounds();
-
-    g2.setPaint(myColor);
-    g2.fillRect(1, 1, r.width - 2, r.height - 2);
-
-    g2.setPaint(Color.BLACK);
-    g2.drawRect(0, 0, r.width - 1, r.height - 1);
-  }
-
-  public Dimension getPreferredSize() {
-    return new Dimension(70, 25);
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  @Nullable
-  public static JComponent getPreviewComponent(@NotNull final PsiElement element) {
+  public JComponent getPreviewComponent(@NotNull PsiElement element) {
     final PsiNewExpression psiNewExpression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
 
     if (psiNewExpression != null) {
@@ -143,44 +111,10 @@ public class ColorPreviewComponent extends JComponent {
       }
     }
 
-
-    if (element.getParent() instanceof XmlAttributeValue) {
-      final PsiElement parentParent = element.getParent().getParent();
-
-      if (parentParent instanceof XmlAttribute) {
-        final XmlAttribute attribute = (XmlAttribute)parentParent;
-        final String attrName = attribute.getName().toLowerCase();
-
-        if ("alink".equals(attrName) ||
-            "link".equals(attrName) ||
-            "text".equals(attrName) ||
-            "vlink".equals(attrName) ||
-            attrName.indexOf("color") >= 0) {
-          String s = element.getText();  // TODO: support [#FFF, #FFF]
-
-          if (s.length() > 0) {
-            final String hexColor = (s.charAt(0) == '#') ? s : ColorSampleLookupValue.getHexCodeForColorName(s.toLowerCase());
-            if (hexColor != null) {
-              try {
-                return new ColorPreviewComponent(null, Color.decode("0x" + hexColor.substring(1)));
-              }
-              catch (NumberFormatException e) {
-                return null;
-              }
-            }
-          }
-        }
-      }
-    }
-    else {
-      final Color color = CssUtil.getColor(element);
-      if (color != null) {
-        try {
-          return new ColorPreviewComponent(null, color);
-        }
-        catch (NumberFormatException e) {
-          return null;
-        }
+    if (PlatformPatterns.psiElement().withParent(PlatformPatterns.psiElement(PsiLiteralExpression.class)).accepts(element)) {
+      final PsiLiteralExpression psiLiteralExpression = (PsiLiteralExpression) element.getParent();
+      if (psiLiteralExpression != null) {
+        return ImagePreviewComponent.getPreviewComponent(psiLiteralExpression);
       }
     }
 

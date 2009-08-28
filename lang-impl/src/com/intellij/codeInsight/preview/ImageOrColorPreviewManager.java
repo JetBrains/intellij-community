@@ -1,15 +1,16 @@
-package com.intellij.html.preview;
+package com.intellij.codeInsight.preview;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
@@ -163,16 +164,18 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
 
   @Nullable
   private static LightweightHint getHint(@NotNull PsiElement element) {
-    try {
-      JComponent preview = ColorPreviewComponent.getPreviewComponent(element);
-      if (preview == null) {
-        preview = ImagePreviewComponent.getPreviewComponent(element);
+    for(PreviewHintProvider hintProvider: Extensions.getExtensions(PreviewHintProvider.EP_NAME)) {
+      JComponent preview;
+      try {
+        preview = hintProvider.getPreviewComponent(element);
       }
-
-      return preview == null ? null : new LightweightHint(preview);
-    }
-    catch (Exception e) {
-      LOG.error(e);
+      catch(Exception e) {
+        LOG.error(e);
+        continue;
+      }
+      if (preview != null) {
+        return new LightweightHint(preview);
+      }
     }
 
     return null;
