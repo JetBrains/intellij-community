@@ -16,7 +16,6 @@
 
 package com.intellij.psi.util;
 
-import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
@@ -84,7 +83,7 @@ public class PsiMethodUtil {
 
   @Nullable
   public static PsiMethod findMainInClass(final PsiClass aClass) {
-    if (!ConfigurationUtil.MAIN_CLASS.value(aClass)) return null;
+    if (!MAIN_CLASS.value(aClass)) return null;
     for (JavaMainMethodProvider provider : myProviders) {
       if (provider.isApplicable(aClass)) {
         return provider.findMainInClass(aClass);
