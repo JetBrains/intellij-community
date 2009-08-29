@@ -138,6 +138,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="compiler-tests" scope="TEST" />
     <orderEntry type="module" module-name="execution-openapi" />
+    <orderEntry type="module" module-name="graph-openapi" />
   </component>
   <component name="copyright">
     <Base>
