@@ -7,10 +7,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="compiler-openapi" />
+    <orderEntry type="module" module-name="compiler-openapi" exported="" />
     <orderEntry type="module" module-name="idea" />
     <orderEntry type="library" name="OroMatcher" level="project" />
-    <orderEntry type="module" module-name="Annotations" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="openapi" />
