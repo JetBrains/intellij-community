@@ -12,7 +12,6 @@
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="codeInsight-openapi" />
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ACTIVE_VCS_NAME" value="svn" />
