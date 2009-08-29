@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="ExtendedApi" />
+    <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="module" module-name="python" />
     <orderEntry type="module" module-name="codeInsight-tests" />
     <orderEntry type="library" name="JUnit3" level="project" />
