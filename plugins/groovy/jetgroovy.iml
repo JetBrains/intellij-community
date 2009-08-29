@@ -31,6 +31,7 @@
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="module" module-name="refactoring-impl" />
     <orderEntry type="module" module-name="compiler-openapi" />
+    <orderEntry type="module" module-name="execution-openapi" />
   </component>
 </module>
 

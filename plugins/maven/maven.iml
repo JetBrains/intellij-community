@@ -137,6 +137,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="compiler-tests" scope="TEST" />
+    <orderEntry type="module" module-name="execution-openapi" />
   </component>
   <component name="copyright">
     <Base>

@@ -34,6 +34,7 @@
     <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="module" module-name="lvcs-impl" />
     <orderEntry type="module" module-name="jam-support-impl" />
+    <orderEntry type="module" module-name="execution-openapi" />
   </component>
 </module>
 

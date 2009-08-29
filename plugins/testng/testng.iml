@@ -41,6 +41,7 @@
     <orderEntry type="module" module-name="testng_rt" />
     <orderEntry type="module" module-name="java-i18n" />
     <orderEntry type="module" module-name="testFramework-java" />
+    <orderEntry type="module" module-name="execution-openapi" />
   </component>
   <component name="copyright">
     <Base>
