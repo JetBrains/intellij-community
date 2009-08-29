@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="refactoring-impl" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="properties" />
+    <orderEntry type="module" module-name="execution-openapi" />
   </component>
   <component name="copyright">
     <Base>
