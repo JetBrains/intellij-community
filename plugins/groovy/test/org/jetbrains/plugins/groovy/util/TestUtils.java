@@ -77,17 +77,6 @@ public abstract class TestUtils {
     return TEST_DATA_PATH;
   }
 
-  /**
-   * Removes CARET_MARKER from file text
-   *
-   * @param text
-   * @return
-   */
-  public static String removeCaretMarker(String text) {
-    int index = text.indexOf(CARET_MARKER);
-    return text.substring(0, index) + text.substring(index + CARET_MARKER.length());
-  }
-
   public static String removeBeginMarker(String text) {
     int index = text.indexOf(BEGIN_MARKER);
     return text.substring(0, index) + text.substring(index + BEGIN_MARKER.length());
@@ -96,40 +85,6 @@ public abstract class TestUtils {
   public static String removeEndMarker(String text) {
     int index = text.indexOf(END_MARKER);
     return text.substring(0, index) + text.substring(index + END_MARKER.length());
-  }
-
-  public static String[] getInputAndResult(File myTestFile) throws IOException {
-    String content = new String(FileUtil.loadFileText(myTestFile));
-    Assert.assertNotNull(content);
-
-    List<String> input = new ArrayList<String>();
-
-    int separatorIndex;
-    content = StringUtil.replace(content, "\r", ""); // for MACs
-
-    // Adding input  before -----
-    while ((separatorIndex = content.indexOf("-----")) >= 0) {
-      input.add(content.substring(0, separatorIndex - 1));
-      content = content.substring(separatorIndex);
-      while (StringUtil.startsWithChar(content, '-') ||
-          StringUtil.startsWithChar(content, '\n')) {
-        content = content.substring(1);
-      }
-    }
-    // Result - after -----
-    String result = content;
-    while (StringUtil.startsWithChar(result, '-') ||
-        StringUtil.startsWithChar(result, '\n') ||
-        StringUtil.startsWithChar(result, '\r')) {
-      result = result.substring(1);
-    }
-
-    Assert.assertTrue("No data found in source file", input.size() > 0);
-    Assert.assertNotNull(result);
-    Assert.assertNotNull(input);
-
-    String inputString = input.toArray(new String[input.size()])[0];
-    return new String[]{inputString, result};
   }
 
   public static List<String> readInput(String filePath) throws IOException {
