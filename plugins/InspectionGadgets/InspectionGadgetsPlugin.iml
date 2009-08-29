@@ -17,7 +17,7 @@
     <orderEntry type="module" module-name="refactoring-impl" />
     <orderEntry type="module" module-name="codeInsight-impl" />
     <orderEntry type="module" module-name="inspections-impl" />
-    <orderEntry type="module" module-name="ExtendedApi" />
+    <orderEntry type="module" module-name="testFramework-java" />
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ACTIVE_VCS_NAME" value="svn" />

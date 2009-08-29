@@ -31,7 +31,7 @@
     <orderEntry type="module" module-name="codeInsight-impl" />
     <orderEntry type="module" module-name="xslt-rt" />
     <orderEntry type="library" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="ExtendedApi" />
+    <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="module" module-name="lvcs-impl" />
     <orderEntry type="module" module-name="jam-support-impl" />
   </component>

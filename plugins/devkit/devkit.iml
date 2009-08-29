@@ -31,7 +31,7 @@
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="lvcs-impl" />
     <orderEntry type="module" module-name="jam-support-impl" />
-    <orderEntry type="module" module-name="ExtendedApi" />
+    <orderEntry type="module" module-name="testFramework-java" />
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ACTIVE_VCS_NAME" value="svn" />

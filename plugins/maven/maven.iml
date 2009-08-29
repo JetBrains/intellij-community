@@ -126,7 +126,7 @@
     <orderEntry type="module" module-name="FlexSupport" />
     <orderEntry type="module" module-name="jetgroovy" />
     <orderEntry type="module" module-name="xml" />
-    <orderEntry type="module" module-name="ExtendedApi" />
+    <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>

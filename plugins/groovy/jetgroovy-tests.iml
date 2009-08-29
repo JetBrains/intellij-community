@@ -31,7 +31,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="ExtendedApi" />
+    <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="library" name="Groovy" level="project" />
   </component>
 </module>
