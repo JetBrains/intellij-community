@@ -15,7 +15,6 @@
  */
 package com.intellij.peer;
 
-import com.intellij.execution.runners.ProcessProxyFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.PsiBuilder;
@@ -54,8 +53,6 @@ public abstract class PeerFactory {
 
   @Deprecated
   public abstract DialogWrapperPeerFactory getDialogWrapperPeerFactory();
-
-  public abstract ProcessProxyFactory getProcessProxyFactory();
 
   @Deprecated
   public abstract PackageSetFactory getPackageSetFactory();

@@ -1,6 +1,5 @@
 package com.intellij.peer.impl;
 
-import com.intellij.execution.runners.ProcessProxyFactory;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.lang.ASTNode;
@@ -38,13 +37,13 @@ import com.intellij.ui.*;
 import com.intellij.ui.TextComponent;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.errorView.ErrorViewFactory;
+import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.Function;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.ui.treeStructure.treetable.TreeTable;
 import org.apache.xmlrpc.IdeaAwareWebServer;
 import org.apache.xmlrpc.IdeaAwareXmlRpcServer;
 import org.apache.xmlrpc.WebServer;
@@ -66,10 +65,6 @@ public class PeerFactoryImpl extends PeerFactory {
 
   public DialogWrapperPeerFactory getDialogWrapperPeerFactory() {
     return DialogWrapperPeerFactory.getInstance();
-  }
-
-  public ProcessProxyFactory getProcessProxyFactory() {
-    return ProcessProxyFactory.getInstance();
   }
 
   public PackageSetFactory getPackageSetFactory() {
