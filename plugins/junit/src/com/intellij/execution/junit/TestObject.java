@@ -17,7 +17,6 @@
 package com.intellij.execution.junit;
 
 import com.intellij.ExtensionPoints;
-import com.intellij.coverage.CoverageSuite;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit2.ui.JUnitTreeConsoleView;
@@ -69,7 +68,6 @@ public abstract class TestObject implements JavaCommandLine {
   private final RunnerSettings myRunnerSettings;
   private final ConfigurationPerRunnerSettings myConfigurationSettings;
   protected File myTempFile = null;
-  private CoverageSuite myCurrentCoverageSuite;
 
   public static TestObject fromString(final String id,
                                       final Project project,
