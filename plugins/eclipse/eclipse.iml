@@ -18,6 +18,7 @@
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="idea-tests" />
     <orderEntry type="module" module-name="testFramework-java" />
+    <orderEntry type="module" module-name="compiler-openapi" />
   </component>
   <component name="copyright">
     <Base>
