@@ -28,28 +28,22 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager;
-import org.jetbrains.plugins.groovy.config.GroovyFacetConfiguration;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import javax.swing.*;
 
 /**
- * @author ilyas
+ * @author peter
  */
 public class GroovyFacetTab extends FacetEditorTab {
 
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.config.ui.GroovyFacetTab");
 
   private JPanel myPanel;
-  private JRadioButton myCompile;
-  private JRadioButton myCopyToOutput;
   private JPanel myManagedLibrariesPanel;
-
   private final ManagedLibrariesEditor myManagedLibrariesEditor;
-  private final GroovyFacetConfiguration myConfiguration;
 
-  public GroovyFacetTab(final FacetEditorContext editorContext, GroovyFacetConfiguration configuration, FacetValidatorsManager validatorsManager) {
-    myConfiguration = configuration;
+  public GroovyFacetTab(final FacetEditorContext editorContext, FacetValidatorsManager validatorsManager) {
     myManagedLibrariesEditor = new ManagedLibrariesEditor(editorContext, validatorsManager, AbstractGroovyLibraryManager.EP_NAME);
 
     myManagedLibrariesPanel.add(myManagedLibrariesEditor.getComponent());
@@ -72,24 +66,13 @@ public class GroovyFacetTab extends FacetEditorTab {
   }
 
   public boolean isModified() {
-    if (myCompile.isSelected() != myConfiguration.isCompileGroovyFiles()) {
-      return true;
-    }
     return false;
   }
 
-  @Override
-  public String getHelpTopic() {
-    return super.getHelpTopic();
-  }
-
   public void apply() throws ConfigurationException {
-    myConfiguration.setCompileGroovyFiles(myCompile.isSelected());
   }
-
 
   public void reset() {
-    (myConfiguration.isCompileGroovyFiles() ? myCompile : myCopyToOutput).setSelected(true);
     myManagedLibrariesEditor.updateLibraryList();
   }
 

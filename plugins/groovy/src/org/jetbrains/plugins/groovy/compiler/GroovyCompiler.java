@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.util.HashSet;
@@ -79,11 +78,6 @@ public class GroovyCompiler extends GroovyCompilerBase {
       final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
       if (sdk == null || !(sdk.getSdkType() instanceof JavaSdkType)) {
         nojdkModules.add(module);
-        continue;
-      }
-
-      final GroovyFacet facet = GroovyFacet.getInstance(module);
-      if (facet != null && !facet.getConfiguration().isCompileGroovyFiles()) {
         continue;
       }
 
