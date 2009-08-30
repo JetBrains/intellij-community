@@ -20,7 +20,6 @@
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="compiler-impl" />
     <orderEntry type="module" module-name="refactoring-impl" />
-    <orderEntry type="module" module-name="refactoring-openapi" />
     <orderEntry type="module" module-name="icons" />
     <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
