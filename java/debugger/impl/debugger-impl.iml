@@ -7,9 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="Annotations" />
     <orderEntry type="module" module-name="idea" />
-    <orderEntry type="module" module-name="debugger-openapi" />
+    <orderEntry type="module" module-name="debugger-openapi" exported="" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="codeInsight-impl" />
@@ -19,6 +18,7 @@
     <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="compiler-openapi" />
+    <orderEntry type="module" module-name="idea_rt" />
   </component>
   <component name="copyright">
     <Base>
