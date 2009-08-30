@@ -942,8 +942,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
                     body)){
                 return false;
             }
-            return body != null &&
-                    !VariableAccessUtils.variableIsAssigned(collection, body);
+            return !VariableAccessUtils.variableIsAssigned(collection, body);
         } else if(resolved instanceof PsiMethod){
             return isIndexVariableOnlyUsedAsListIndex(null, indexVariable,
                     body);
@@ -1014,13 +1013,14 @@ public class ForCanBeForeachInspection extends BaseInspection{
     }
 
     private static boolean isIndexVariableOnlyUsedAsIndex(
-            PsiVariable arrayVariable, PsiVariable indexVar,
-            PsiStatement body){
+            @NotNull PsiVariable arrayVariable,
+            @NotNull PsiVariable indexVariable,
+            @Nullable PsiStatement body){
         if(body == null){
             return true;
         }
         final VariableOnlyUsedAsIndexVisitor visitor =
-                new VariableOnlyUsedAsIndexVisitor(arrayVariable, indexVar);
+                new VariableOnlyUsedAsIndexVisitor(arrayVariable, indexVariable);
         body.accept(visitor);
         return visitor.isIndexVariableUsedOnlyAsIndex();
     }

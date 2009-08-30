@@ -25,7 +25,10 @@ public class VariableAccessUtils{
     private VariableAccessUtils(){}
 
     public static boolean variableIsAssignedFrom(@NotNull PsiVariable variable,
-                                                 @NotNull PsiElement context){
+                                                 @Nullable PsiElement context){
+        if (context == null) {
+            return false;
+        }
         final VariableAssignedFromVisitor visitor =
                 new VariableAssignedFromVisitor(variable);
         context.accept(visitor);
@@ -33,7 +36,10 @@ public class VariableAccessUtils{
     }
 
     public static boolean variableIsPassedAsMethodArgument(
-            @NotNull PsiVariable variable, @NotNull PsiElement context) {
+            @NotNull PsiVariable variable, @Nullable PsiElement context) {
+        if (context == null) {
+            return false;
+        }
         final VariablePassedAsArgumentVisitor visitor =
                 new VariablePassedAsArgumentVisitor(variable);
         context.accept(visitor);
@@ -41,7 +47,10 @@ public class VariableAccessUtils{
     }
 
     public static boolean variableIsUsedInArrayInitializer(
-            @NotNull PsiVariable variable, @NotNull PsiElement context) {
+            @NotNull PsiVariable variable, @Nullable PsiElement context) {
+        if (context == null) {
+            return false;
+        }
         final VariableUsedInArrayInitializerVisitor visitor =
                 new VariableUsedInArrayInitializerVisitor(variable);
         context.accept(visitor);
@@ -49,7 +58,10 @@ public class VariableAccessUtils{
     }
 
     public static boolean variableIsAssigned(
-            @NotNull PsiVariable variable, @NotNull PsiElement context) {
+            @NotNull PsiVariable variable, @Nullable PsiElement context) {
+        if (context == null) {
+            return false;
+        }
         final VariableAssignedVisitor visitor =
                 new VariableAssignedVisitor(variable, true);
         context.accept(visitor);
@@ -57,8 +69,11 @@ public class VariableAccessUtils{
     }
 
     public static boolean variableIsAssigned(
-            @NotNull PsiVariable variable, @NotNull PsiElement context,
+            @NotNull PsiVariable variable, @Nullable PsiElement context,
             boolean recurseIntoClasses) {
+        if (context == null) {
+            return false;
+        }
         final VariableAssignedVisitor visitor =
                 new VariableAssignedVisitor(variable, recurseIntoClasses);
         context.accept(visitor);
@@ -66,7 +81,10 @@ public class VariableAccessUtils{
     }
 
     public static boolean variableIsReturned(
-            @NotNull PsiVariable variable, @NotNull PsiElement context) {
+            @NotNull PsiVariable variable, @Nullable PsiElement context) {
+        if (context == null) {
+            return false;
+        }
         final VariableReturnedVisitor visitor =
                 new VariableReturnedVisitor(variable);
         context.accept(visitor);
@@ -74,7 +92,10 @@ public class VariableAccessUtils{
     }
 
     public static boolean variableValueIsUsed(
-            @NotNull PsiVariable variable, @NotNull PsiElement context) {
+            @NotNull PsiVariable variable, @Nullable PsiElement context) {
+        if (context == null) {
+            return false;
+        }
         final VariableValueUsedVisitor visitor =
                 new VariableValueUsedVisitor(variable);
         context.accept(visitor);
@@ -82,7 +103,10 @@ public class VariableAccessUtils{
     }
 
     public static boolean arrayContentsAreAccessed(
-            @NotNull PsiVariable variable, @NotNull PsiElement context) {
+            @NotNull PsiVariable variable, @Nullable PsiElement context) {
+        if (context == null) {
+            return false;
+        }
         final ArrayContentsAccessedVisitor visitor =
                 new ArrayContentsAccessedVisitor(variable);
         context.accept(visitor);
@@ -90,7 +114,10 @@ public class VariableAccessUtils{
     }
 
     public static boolean arrayContentsAreAssigned(
-            @NotNull PsiVariable variable, @NotNull PsiElement context) {
+            @NotNull PsiVariable variable, @Nullable PsiElement context) {
+        if (context == null) {
+            return false;
+        }
         final ArrayContentsAssignedVisitor visitor =
                 new ArrayContentsAssignedVisitor(variable);
         context.accept(visitor);
@@ -98,7 +125,10 @@ public class VariableAccessUtils{
     }
 
     public static boolean variableIsUsedInInnerClass(
-            @NotNull PsiVariable variable, @NotNull PsiElement context) {
+            @NotNull PsiVariable variable, @Nullable PsiElement context) {
+        if (context == null) {
+            return false;
+        }
         final VariableUsedInInnerClassVisitor visitor =
                 new VariableUsedInInnerClassVisitor(variable);
         context.accept(visitor);
@@ -190,15 +220,18 @@ public class VariableAccessUtils{
     }
 
     public static boolean variableIsUsed(@NotNull PsiVariable variable,
-                                         @NotNull PsiElement context){
+                                         @Nullable PsiElement context){
+        if (context == null) {
+            return false;
+        }
         final VariableUsedVisitor visitor =
                 new VariableUsedVisitor(variable);
         context.accept(visitor);
         return visitor.isUsed();
     }
 
-    public static boolean variableIsIncremented(PsiVariable variable,
-                                                PsiStatement statement) {
+    public static boolean variableIsIncremented(
+            @NotNull PsiVariable variable, @Nullable PsiStatement statement) {
         if (!(statement instanceof PsiExpressionStatement)) {
             return false;
         }
@@ -270,7 +303,10 @@ public class VariableAccessUtils{
 
     public static boolean variableIsAssignedBeforeReference(
             @NotNull PsiReferenceExpression referenceExpression,
-            @NotNull PsiElement context) {
+            @Nullable PsiElement context) {
+        if (context == null) {
+            return false;
+        }
         final PsiElement target = referenceExpression.resolve();
         if (!(target instanceof PsiVariable)) {
             return false;
