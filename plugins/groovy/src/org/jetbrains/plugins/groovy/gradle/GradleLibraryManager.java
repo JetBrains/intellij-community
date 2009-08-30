@@ -54,6 +54,10 @@ public class GradleLibraryManager extends AbstractGroovyLibraryManager {
 
   @Override
   public boolean isSDKHome(@NotNull VirtualFile file) {
+    return isGradleSdkHome(file);
+  }
+
+  public static boolean isGradleSdkHome(VirtualFile file) {
     final VirtualFile lib = file.findChild("lib");
     if (lib == null) {
       return false;
