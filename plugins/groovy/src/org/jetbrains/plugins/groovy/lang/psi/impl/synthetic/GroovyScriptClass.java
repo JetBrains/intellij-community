@@ -319,7 +319,9 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     for (GrTopLevelDefintion defintion : myFile.getTopLevelDefinitions()) {
-      if (!ResolveUtil.processElement(processor, defintion)) return false;
+      if (!(defintion instanceof PsiClass)) {
+        if (!ResolveUtil.processElement(processor, defintion)) return false;
+      }
     }
 
     final PsiClass scriptClass = getSuperClass();
