@@ -127,4 +127,19 @@ public class FieldMayBeFinal {
             result = "";
         }
     }
+
+    static class FalsePositive {
+        private int i = 1;
+        private final int j = i++;
+        private int k;
+
+        FalsePositive(java.util.Collection c) {
+            k = 0;
+            for (Object o : c) {
+                k = 10;
+            }
+        }
+    }
+
+
 }

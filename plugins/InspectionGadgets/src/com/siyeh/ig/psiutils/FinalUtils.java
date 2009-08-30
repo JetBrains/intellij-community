@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
@@ -437,7 +438,53 @@ public class FinalUtils {
             if (condition != null) {
                 condition.accept(this);
             }
-            // todo finish me.
+            final Project project = statement.getProject();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiConstantEvaluationHelper helper =
+                    psiFacade.getConstantEvaluationHelper();
+            final Object constant = helper.computeConstantExpression(condition);
+            final PsiStatement thenBranch = statement.getThenBranch();
+            final PsiStatement elseBranch = statement.getElseBranch();
+            if (constant == Boolean.TRUE) {
+                if (thenBranch != null) {
+                    final AssignmentCountVisitor visitor =
+                            new AssignmentCountVisitor(variable);
+                    thenBranch.accept(visitor);
+                    assignmentCount += visitor.getAssignmentCount();
+                }
+            } else if (constant == Boolean.FALSE) {
+                if (elseBranch != null) {
+                    final AssignmentCountVisitor visitor =
+                            new AssignmentCountVisitor(variable);
+                    elseBranch.accept(visitor);
+                    assignmentCount += visitor.getAssignmentCount();
+                }
+            } else {
+                final int thenAssignmentCount;
+                if (thenBranch != null) {
+                    final AssignmentCountVisitor visitor =
+                            new AssignmentCountVisitor(variable);
+                    thenBranch.accept(visitor);
+                    thenAssignmentCount = visitor.getAssignmentCount();
+                } else {
+                    thenAssignmentCount = 0;
+                }
+                final int elseAssignmentCount;
+                if (elseBranch != null) {
+                    final AssignmentCountVisitor visitor =
+                            new AssignmentCountVisitor(variable);
+                    elseBranch.accept(visitor);
+                    elseAssignmentCount = visitor.getAssignmentCount();
+                } else {
+                    elseAssignmentCount = 0;
+                }
+                if (thenAssignmentCount != elseAssignmentCount ||
+                        thenAssignmentCount > 1) {
+                    assignmentCount += 2;
+                } else {
+                    assignmentCount += thenAssignmentCount;
+                }
+            }
         }
 
         /**
