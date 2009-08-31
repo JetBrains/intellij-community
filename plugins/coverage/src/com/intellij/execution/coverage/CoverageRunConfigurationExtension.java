@@ -78,4 +78,9 @@ public class CoverageRunConfigurationExtension extends RunConfigurationExtension
   public void writeExternal(ModuleBasedConfiguration runConfiguration, Element element) throws WriteExternalException {
     CoverageEnabledConfiguration.get(runConfiguration).writeExternal(element);
   }
+
+  @Override
+  public <T extends ModuleBasedConfiguration & RunJavaConfiguration> void patchConfiguration(T runJavaConfiguration) {
+    CoverageEnabledConfiguration.get(runJavaConfiguration).setUpCoverageFilters(runJavaConfiguration.getRunClass(), runJavaConfiguration.getPackage());
+  }
 }

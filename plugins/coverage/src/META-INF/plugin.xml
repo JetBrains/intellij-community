@@ -1,6 +1,7 @@
 <idea-plugin>
   <name>Coverage</name>
   <depends optional="true">TestNG-J</depends>
+  <depends optional="true">JUnit</depends>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.coverageRunner" interface="com.intellij.coverage.CoverageRunner"/>
   </extensionPoints>
@@ -11,6 +12,7 @@
     <!--<coverageRunner implementation="com.intellij.coverage.CoberturaCoverageRunner"/>-->
     <coverageRunner implementation="com.intellij.coverage.IDEACoverageRunner"/>
     <projectViewNodeDecorator implementation="com.intellij.coverage.CoverageProjectViewNodeDecorator"/>
+    <junitListener implementation="com.intellij.junit.IDEAJUnitCoverageListener"/>
   </extensions>
   <extensions defaultExtensionNs="com.theoryinpractice.testng">
     <listener implementation="org.testng.IDEACoverageListener"/>

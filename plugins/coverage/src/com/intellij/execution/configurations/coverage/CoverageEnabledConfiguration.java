@@ -278,4 +278,24 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
     }
     return configuration;
   }
+
+   public void setUpCoverageFilters(String className, String packageName) {
+    if (getCoveragePatterns() == null) {
+      String pattern = null;
+      if (className != null && className.length() > 0) {
+        int index = className.lastIndexOf('.');
+        if (index >= 0) {
+          pattern = className.substring(0, index);
+        }
+      }
+      else if (packageName != null) {
+        pattern = packageName;
+      }
+
+
+      if (pattern != null && pattern.length() > 0) {
+        setCoveragePatterns(new ClassFilter[]{new ClassFilter(pattern + ".*")});
+      }
+    }
+  }
 }
