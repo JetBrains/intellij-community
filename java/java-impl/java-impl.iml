@@ -18,6 +18,7 @@
     <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="module" module-name="idea_rt" />
   </component>
   <component name="copyright">
     <Base>
