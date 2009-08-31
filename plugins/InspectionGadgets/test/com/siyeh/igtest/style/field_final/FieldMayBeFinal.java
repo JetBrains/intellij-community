@@ -128,18 +128,20 @@ public class FieldMayBeFinal {
         }
     }
 
-    static class FalsePositive {
-        private int i = 1;
+    static class IncrementInInitializers {
+        private int i = 0;
         private final int j = i++;
-        private int k;
+    }
 
-        FalsePositive(java.util.Collection c) {
-            k = 0;
-            for (Object o : c) {
-                k = 10;
+    static class AssigmentInForeach {
+        private boolean b;
+        private boolean c;
+
+        AssigmentInForeach(int[] is) {
+            b = false;
+            for (int i : is) {
+                b = c = i == 10;
             }
         }
     }
-
-
 }
