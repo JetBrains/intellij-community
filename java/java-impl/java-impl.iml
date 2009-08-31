@@ -7,12 +7,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="Annotations" />
     <orderEntry type="library" name="Trove4j" level="project" />
-    <orderEntry type="module" module-name="refactoring-impl" />
     <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="library" name="commons-collections" level="project" />
