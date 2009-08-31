@@ -182,6 +182,22 @@ public class ProjectRootsTraversing {
       return traverseState;
     }
 
+    public Visit<ModuleSourceOrderEntry> getVisitSource() {
+      return myVisitSource;
+    }
+
+    public Visit<OrderEntry> getVisitJdk() {
+      return myVisitJdk;
+    }
+
+    public Visit<OrderEntry> getVisitLibrary() {
+      return myVisitLibrary;
+    }
+
+    public Visit<ModuleOrderEntry> getVisitModule() {
+      return myVisitModule;
+    }
+
     public interface Visit<T extends OrderEntry> {
       void visit(T entry, TraverseState state, RootPolicy<TraverseState> policy);
     }
