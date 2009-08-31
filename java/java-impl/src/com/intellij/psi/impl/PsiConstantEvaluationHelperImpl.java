@@ -15,6 +15,7 @@ public class PsiConstantEvaluationHelperImpl extends PsiConstantEvaluationHelper
   }
 
   public Object computeConstantExpression(PsiElement expression, boolean throwExceptionOnOverflow) {
+    if (expression == null) return null;
     ConstantExpressionEvaluator expressionEvaluator = LanguageConstantExpressionEvaluator.INSTANCE.forLanguage(expression.getLanguage());
     assert expressionEvaluator != null;
 
@@ -23,6 +24,7 @@ public class PsiConstantEvaluationHelperImpl extends PsiConstantEvaluationHelper
 
   @Override
   public Object computeExpression(final PsiExpression expression, final boolean throwExceptionOnOverflow, final AuxEvaluator auxEvaluator) {
+    if (expression == null) return null;
     ConstantExpressionEvaluator expressionEvaluator = LanguageConstantExpressionEvaluator.INSTANCE.forLanguage(expression.getLanguage());
     assert expressionEvaluator != null;
     return expressionEvaluator.computeExpression(expression, throwExceptionOnOverflow, auxEvaluator);
