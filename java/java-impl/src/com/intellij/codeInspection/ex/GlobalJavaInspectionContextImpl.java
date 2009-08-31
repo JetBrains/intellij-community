@@ -12,7 +12,6 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.deadCode.DeadCodeInspection;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.ide.util.projectWizard.JdkChooserPanel;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +23,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ProjectSettingsService;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -93,7 +93,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
       while (isBadSdk(project, modules)) {
         Messages.showMessageDialog(project, InspectionsBundle.message("inspection.no.jdk.error.message"),
                                    CommonBundle.message("title.error"), Messages.getErrorIcon());
-        final Sdk projectJdk = JdkChooserPanel.chooseAndSetJDK(project);
+        final Sdk projectJdk = ProjectSettingsService.getInstance(project).chooseAndSetSdk();
         if (projectJdk == null) return false;
       }
     }

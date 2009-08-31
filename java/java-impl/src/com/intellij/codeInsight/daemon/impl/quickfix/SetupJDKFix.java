@@ -10,7 +10,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.util.projectWizard.JdkChooserPanel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -19,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.ui.ProjectSettingsService;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +47,7 @@ public class SetupJDKFix implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, final PsiFile file) {
-    Sdk projectJdk = JdkChooserPanel.chooseAndSetJDK(project);
+    Sdk projectJdk = ProjectSettingsService.getInstance(project).chooseAndSetSdk();
     if (projectJdk == null) return;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {

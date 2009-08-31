@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.ui.ProjectSettingsService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -42,7 +42,7 @@ public class ShowModulePropertiesFix implements IntentionAction {
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    ModulesConfigurator.showDialog(project, myModuleName, null, false);
+    ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(myModuleName, null, false);
   }
 
   public boolean startInWriteAction() {
