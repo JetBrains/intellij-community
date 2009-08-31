@@ -6,8 +6,10 @@ import com.intellij.facet.FacetManagerImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.impl.convert.JDomConvertingUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.module.impl.ModuleImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -29,6 +31,11 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
     return myModuleName;
   }
 
+  @Nullable
+  public String getModuleType() {
+    return myRootElement.getAttributeValue(ModuleImpl.ELEMENT_TYPE);
+  }
+
   @NotNull
   public File getModuleFile() {
     return myFile;
@@ -46,5 +53,9 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
       }
     }
     return elements;
+  }
+
+  public void setModuleType(@NotNull String moduleType) {
+    myRootElement.setAttribute(ModuleImpl.ELEMENT_TYPE, moduleType);
   }
 }
