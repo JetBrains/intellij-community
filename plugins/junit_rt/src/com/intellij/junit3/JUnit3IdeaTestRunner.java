@@ -2,11 +2,10 @@ package com.intellij.junit3;
 
 import com.intellij.rt.execution.junit.DeafStream;
 import com.intellij.rt.execution.junit.IdeaTestRunner;
+import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
-import junit.framework.Test;
-import junit.framework.TestListener;
-import junit.framework.TestResult;
+import junit.framework.*;
 import junit.textui.ResultPrinter;
 import junit.textui.TestRunner;
 
@@ -56,7 +55,24 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
     testResult.addListener(myTestsListener);
     try {
       for (String listener : myListeners) {
-        testResult.addListener((TestListener)Class.forName(listener).newInstance());
+        final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName(listener).newInstance();
+        testResult.addListener(new TestListener() {
+          public void addError(Test test, Throwable t) {}
+
+          public void addFailure(Test test, AssertionFailedError t) {}
+
+          public void endTest(Test test) {
+            if (test instanceof TestCase) {
+              junitListener.testFinished(test.getClass().getName(), ((TestCase)test).getName());
+            }
+          }
+
+          public void startTest(Test test) {
+            if (test instanceof TestCase) {
+              junitListener.testStarted(test.getClass().getName(), ((TestCase)test).getName());
+            }
+          }
+        });
       }
     }
     catch (Exception e) {

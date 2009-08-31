@@ -4,9 +4,10 @@
  */
 package com.intellij.rt.execution.junit;
 
-import junit.framework.TestListener;
-import org.junit.runner.notification.RunListener;
+public interface IDEAJUnitListener {
+  String EP_NAME = "com.intellij.junitListener";
 
-public abstract class IDEAJUnitListener extends RunListener implements TestListener {
-  public static final String EP_NAME = "com.intellij.junitListener";
+  void testStarted(String className, String methodName);
+  void testFinished(String className, String methodName);
+
 }

@@ -1,6 +1,7 @@
 package com.intellij.junit4;
 
 import com.intellij.rt.execution.junit.DeafStream;
+import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.IdeaTestRunner;
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistryEx;
 import com.intellij.rt.execution.junit.segments.Packet;
@@ -65,7 +66,18 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
 
       runner.addListener(myTestsListener);
       for (String listener : listeners) {
-        runner.addListener((RunListener)Class.forName(listener).newInstance());
+        final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName(listener).newInstance();
+        runner.addListener(new RunListener(){
+          @Override
+          public void testStarted(Description description) throws Exception {
+            junitListener.testStarted(JUnit4ReflectionUtil.getClassName(description), JUnit4ReflectionUtil.getMethodName(description));
+          }
+
+          @Override
+          public void testFinished(Description description) throws Exception {
+            junitListener.testFinished(JUnit4ReflectionUtil.getClassName(description), JUnit4ReflectionUtil.getMethodName(description));
+          }
+        });
       }
       long startTime = System.currentTimeMillis();
       Result result = runner.run(request/*.sortWith(new Comparator() {
