@@ -1,6 +1,5 @@
 package com.intellij.junit3;
 
-import com.intellij.junit.IDEAJUnitCoverageListener;
 import com.intellij.rt.execution.junit.DeafStream;
 import com.intellij.rt.execution.junit.IdeaTestRunner;
 import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
@@ -11,15 +10,19 @@ import junit.framework.TestResult;
 import junit.textui.ResultPrinter;
 import junit.textui.TestRunner;
 
+import java.util.ArrayList;
+
 public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
   private TestListener myTestsListener;
   private JUnit3OutputObjectRegistry myRegistry;
+  private ArrayList<String> myListeners;
 
   public JUnit3IdeaTestRunner() {
     super(DeafStream.DEAF_PRINT_STREAM);
   }
 
-  public int startRunnerWithArgs(String[] args) {
+  public int startRunnerWithArgs(String[] args, ArrayList<String> listeners) {
+    myListeners = listeners;
     try {
       Test suite = TestRunnerUtil.getTestSuite(this, args);
       TestResult result = doRun(suite);
@@ -52,9 +55,8 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
     TestResult testResult = super.createTestResult();
     testResult.addListener(myTestsListener);
     try {
-      final TestListener listener = IDEAJUnitCoverageListener.class.newInstance().getTestListener();
-      if (listener != null) {
-        testResult.addListener(listener);
+      for (String listener : myListeners) {
+        testResult.addListener((TestListener)Class.forName(listener).newInstance());
       }
     }
     catch (Exception e) {

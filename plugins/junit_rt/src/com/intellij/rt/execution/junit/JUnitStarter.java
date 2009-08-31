@@ -1,11 +1,13 @@
 package com.intellij.rt.execution.junit;
 
-import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import com.intellij.junit3.JUnit3IdeaTestRunner;
+import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import junit.textui.TestRunner;
 
 import java.io.*;
+import java.util.List;
 import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  * Before rename or move
@@ -25,7 +27,9 @@ public class JUnitStarter {
       String arg = args[i];
       argList.addElement(arg);
     }
-    boolean isJUnit4 = removeVersionParameters(argList);
+
+    final ArrayList<String> listeners = new ArrayList<String>();
+    boolean isJUnit4 = processParameters(argList, listeners);
 
     if (!canWorkWithJUnitVersion(err, isJUnit4)) {
       err.flush();
@@ -38,11 +42,11 @@ public class JUnitStarter {
 
     String[] array = new String[argList.size()];
     argList.copyInto(array);
-    int exitCode = prepareStreamsAndStart(array, isJUnit4, out, err);
+    int exitCode = prepareStreamsAndStart(array, isJUnit4, listeners, out, err);
     System.exit(exitCode);
   }
 
-  private static boolean removeVersionParameters(Vector args) {
+  private static boolean processParameters(Vector args, final List<String> listeners) {
     boolean isJunit4 = false;
     Vector result = new Vector(args.size());
     for (int i = 0; i < args.size(); i++) {
@@ -54,7 +58,21 @@ public class JUnitStarter {
         isJunit4 = true;
       }
       else {
-        if (arg.startsWith("@")) {
+        if (arg.startsWith("@@")) {
+          if (new File(arg.substring(2)).exists()) {
+            try {
+              final BufferedReader reader = new BufferedReader(new FileReader(arg.substring(2)));
+              String line;
+              while ((line = reader.readLine()) != null) {
+                listeners.add(line);
+              }
+            }
+            catch (Exception e) {
+              e.printStackTrace();
+            }
+          }
+          continue;
+        } else if (arg.startsWith("@")) {
           while(new File(arg.substring(1)).length() == 0); //wait for test cases
           try {
             BufferedReader reader = new BufferedReader(new FileReader(arg.substring(1)));
@@ -119,7 +137,8 @@ public class JUnitStarter {
     new TestRunner().setPrinter(new JUnit3IdeaTestRunner.MockResultPrinter());
   }
 
-  private static int prepareStreamsAndStart(String[] args, final boolean isJUnit4, SegmentedOutputStream out, SegmentedOutputStream err) {
+  private static int prepareStreamsAndStart(String[] args, final boolean isJUnit4, ArrayList<String> listeners, SegmentedOutputStream out,
+                                            SegmentedOutputStream err) {
     PrintStream oldOut = System.out;
     PrintStream oldErr = System.err;
     int result;
@@ -128,7 +147,7 @@ public class JUnitStarter {
       System.setErr(new PrintStream(err));
       IdeaTestRunner testRunner = (IdeaTestRunner)getAgentClass(isJUnit4).newInstance();
       testRunner.setStreams(out, err);
-      result = testRunner.startRunnerWithArgs(args);
+      result = testRunner.startRunnerWithArgs(args, listeners);
     }
     catch (Exception e) {
       e.printStackTrace(System.err);

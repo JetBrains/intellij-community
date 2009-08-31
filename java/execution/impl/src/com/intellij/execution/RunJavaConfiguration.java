@@ -1,6 +1,7 @@
 package com.intellij.execution;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 public interface RunJavaConfiguration {
   int VM_PARAMETERS_PROPERTY = 0;
@@ -19,4 +20,11 @@ public interface RunJavaConfiguration {
   String getAlternativeJrePath();
 
   void setAlternativeJrePath(String ALTERNATIVE_JRE_PATH);
+
+  @Nullable
+  String getRunClass();
+
+  @Nullable
+  String getPackage();
+
 }

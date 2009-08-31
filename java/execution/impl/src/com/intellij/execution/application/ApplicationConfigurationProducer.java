@@ -2,6 +2,7 @@ package com.intellij.execution.application;
 
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
+import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
@@ -53,6 +54,7 @@ public class ApplicationConfigurationProducer extends JavaRuntimeConfigurationPr
     configuration.MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(aClass);
     configuration.setName(configuration.getGeneratedName());
     setupConfigurationModule(context, configuration);
+    RunConfigurationExtension.patchCreatedConfiguration(configuration);
     copyStepsBeforeRun(project, configuration);
     return settings;
   }

@@ -70,4 +70,12 @@ public abstract class RunConfigurationExtension {
   public abstract void readExternal(ModuleBasedConfiguration runConfiguration, Element element) throws InvalidDataException;
 
   public abstract void writeExternal(ModuleBasedConfiguration runConfiguration, Element element) throws WriteExternalException;
+
+  public abstract <T extends ModuleBasedConfiguration & RunJavaConfiguration> void patchConfiguration(T runJavaConfiguration);
+
+  public static <T extends ModuleBasedConfiguration & RunJavaConfiguration> void patchCreatedConfiguration(T configuration) {
+    for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
+      extension.patchConfiguration(configuration);
+    }
+  }
 }

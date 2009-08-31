@@ -156,6 +156,17 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     }
   }
 
+  @Nullable
+  public String getRunClass() {
+    return MAIN_CLASS_NAME;
+  }
+
+  @Nullable
+  public String getPackage() {
+    return null;
+  }
+
+
   public boolean isAlternativeJrePathEnabled() {
      return ALTERNATIVE_JRE_PATH_ENABLED;
    }

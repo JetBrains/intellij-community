@@ -1,6 +1,5 @@
 package com.intellij.junit4;
 
-import com.intellij.junit.IDEAJUnitCoverageListener;
 import com.intellij.rt.execution.junit.DeafStream;
 import com.intellij.rt.execution.junit.IdeaTestRunner;
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistryEx;
@@ -42,7 +41,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
     packet.send();
   }
 
-  public int startRunnerWithArgs(String[] args) {
+  public int startRunnerWithArgs(String[] args, ArrayList<String> listeners) {
     try {
       final JUnitCore runner = new JUnitCore();
 
@@ -65,16 +64,9 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
       }
 
       runner.addListener(myTestsListener);
-      try {
-        final RunListener listener = IDEAJUnitCoverageListener.class.newInstance().getRunListener();
-        if (listener != null) {
-          runner.addListener(listener);
-        }
+      for (String listener : listeners) {
+        runner.addListener((RunListener)Class.forName(listener).newInstance());
       }
-      catch (Exception e) {
-        //do nothing
-      }
-
       long startTime = System.currentTimeMillis();
       Result result = runner.run(request/*.sortWith(new Comparator() {
         public int compare(Object d1, Object d2) {

@@ -126,4 +126,8 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
   public void writeExternal(ModuleBasedConfiguration runConfiguration, Element element) throws WriteExternalException {
 
   }
+
+  @Override
+  public <T extends ModuleBasedConfiguration & RunJavaConfiguration> void patchConfiguration(T runJavaConfiguration) {
+  }
 }
