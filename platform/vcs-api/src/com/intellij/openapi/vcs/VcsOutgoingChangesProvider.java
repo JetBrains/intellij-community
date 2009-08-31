@@ -6,5 +6,5 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.util.List;
 
 public interface VcsOutgoingChangesProvider <T extends CommittedChangeList> extends VcsProviderMarker {
-  List<T> getOutgoingChanges(final VirtualFile vcsRoot) throws VcsException;
+  List<T> getOutgoingChanges(final VirtualFile vcsRoot, final boolean findRemote) throws VcsException;
 }
