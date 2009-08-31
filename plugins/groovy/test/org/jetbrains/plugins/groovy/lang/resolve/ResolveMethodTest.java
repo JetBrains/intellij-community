@@ -488,4 +488,18 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertNotNull(type);
     assertTrue(type.equalsToText(CommonClassNames.JAVA_LANG_STRING));
   }
+  
+  public void testQualifiedSuperMethod() throws Exception {
+    PsiReference ref = configureByFile("qualifiedSuperMethod/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof GrMethod);
+    assertEquals("SuperClass", ((GrMethod) resolved).getContainingClass().getName());
+  }
+
+  public void testQualifiedThisMethod() throws Exception {
+    PsiReference ref = configureByFile("qualifiedThisMethod/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof GrMethod);
+    assertEquals("OuterClass", ((GrMethod) resolved).getContainingClass().getName());
+  }
 }

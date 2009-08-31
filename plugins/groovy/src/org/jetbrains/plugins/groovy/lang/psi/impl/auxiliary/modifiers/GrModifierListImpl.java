@@ -111,7 +111,7 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
       if (modifier.equals(PsiModifier.NATIVE)) return findChildByType(GroovyElementTypes.kNATIVE) != null;
     }
 
-    if (!(getParent() instanceof GrTypeDefinition)) {
+    if (!(parent instanceof GrTypeDefinition)) {
       //check how type def annotations influent on members annotation
       ASTNode classDefNode = TreeUtil.findParent(getNode(), GroovyElementTypes.CLASS_DEFINITION);
       if (classDefNode != null) {
@@ -135,6 +135,10 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
           }
         }
       }
+    }
+
+    if (parent instanceof GrTypeDefinition && PsiModifier.STATIC.equals(modifier)) {
+      if (((GrTypeDefinition)parent).getContainingClass() == null) return true;
     }
 
     return false;

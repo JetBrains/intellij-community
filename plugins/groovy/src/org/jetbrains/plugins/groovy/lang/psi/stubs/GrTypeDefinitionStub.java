@@ -21,6 +21,8 @@ public interface GrTypeDefinitionStub extends NamedStub<GrTypeDefinition> {
   String[] getAnnotations();
 
   boolean isAnonymous();
+  boolean isAnonymousInQualifiedNew();
+
   boolean isInterface();
   boolean isEnum();
   boolean isAnnotationType();

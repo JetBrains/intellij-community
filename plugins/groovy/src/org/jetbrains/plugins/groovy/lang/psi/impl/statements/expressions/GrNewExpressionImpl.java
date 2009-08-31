@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrArrayDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
@@ -107,6 +108,16 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     final GrAnonymousClassDefinition anonymous = getAnonymousClassDefinition();
     if (anonymous != null) return anonymous.getArgumentListGroovy();
     return super.getArgumentList();
+  }
+
+  @Nullable
+  public GrExpression getQualifier() {
+    final PsiElement[] children = getChildren();
+    for (PsiElement child : children) {
+      if (child instanceof GrExpression) return (GrExpression)child;
+      if (PsiKeyword.NEW.equals(child.getText())) return null;
+    }
+    return null;
   }
 
   public GrCodeReferenceElement getReferenceElement() {

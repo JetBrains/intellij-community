@@ -15,9 +15,7 @@
 
 package org.jetbrains.plugins.groovy.lang.completion.filters.classdef;
 
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.filters.ElementFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -31,30 +29,36 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
  */
 public class ImplementsFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
-    if (context.getParent() != null &&
-        !(context.getParent() instanceof GrImplementsClause)) {
-      PsiElement elem = context.getParent().getPrevSibling();
-      while (elem != null &&
-          (elem instanceof PsiWhiteSpace ||
-              elem instanceof PsiComment ||
-              GroovyElementTypes.mNLS.equals(elem.getNode().getElementType()))) {
-        elem = elem.getPrevSibling();
-      }
-
-      if (elem instanceof GrEnumTypeDefinition ||
-          (elem instanceof GrClassDefinition)) {
-        PsiElement[] children = elem.getChildren();
-        for (PsiElement child : children) {
-          if (child instanceof GrImplementsClause ||
-              child instanceof GrTypeDefinitionBody) {
-            return false;
-          }
-        }
-        return true;
-      }
+    if (context.getParent() == null || context.getParent() instanceof GrImplementsClause) {
       return false;
     }
-    return false;
+    PsiElement elem = context.getParent();
+    if (elem instanceof GrTypeDefinitionBody) {
+      elem = skipWhitespaces(context.getPrevSibling());
+    }
+    else {
+      elem = skipWhitespaces(elem.getPrevSibling());
+    }
+
+    if (!(elem instanceof GrEnumTypeDefinition) && (!(elem instanceof GrClassDefinition))) {
+      return false;
+    }
+    PsiElement[] children = elem.getChildren();
+    for (PsiElement child : children) {
+      if (child instanceof GrImplementsClause || child instanceof GrTypeDefinitionBody) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static PsiElement skipWhitespaces(PsiElement elem) {
+    while (elem != null &&
+           elem.getNode() != null &&
+           GroovyElementTypes.WHITE_SPACES_OR_COMMENTS.contains(elem.getNode().getElementType())) {
+      elem = elem.getPrevSibling();
+    }
+    return elem;
   }
 
   public boolean isClassAcceptable(Class hintClass) {

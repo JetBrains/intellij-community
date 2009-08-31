@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterList;
@@ -86,18 +87,18 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  public static boolean parseClosableBlock(PsiBuilder builder, GroovyParser parser) {
+  public static GroovyElementType parseClosableBlock(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     if (!ParserUtils.getToken(builder, mLCURLY)) {
       marker.drop();
-      return false;
+      return WRONGWAY;
     }
     ParserUtils.getToken(builder, mNLS);
     closableBlockParamsOpt(builder, parser);
     parser.parseBlockBody(builder);
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
     marker.done(CLOSABLE_BLOCK);
-    return true;
+    return CLOSABLE_BLOCK;
   }
 
 

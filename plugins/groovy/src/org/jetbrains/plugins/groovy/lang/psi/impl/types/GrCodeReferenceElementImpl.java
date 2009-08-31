@@ -21,6 +21,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +32,9 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -92,7 +95,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     PACKAGE_FQ,
     CLASS_FQ,
     CLASS_OR_PACKAGE_FQ,
-    STATIC_MEMBER_FQ
+    STATIC_MEMBER_FQ,
+    CLASS_IN_QUALIFIED_NEW
   }
 
   @Nullable
@@ -120,6 +124,14 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
       } else {
         return forCompletion || importStatement.isOnDemand() ? CLASS_OR_PACKAGE_FQ : CLASS_FQ;
       }
+    }
+    else if (parent instanceof GrNewExpression || parent instanceof GrAnonymousClassDefinition) {
+      if (parent instanceof GrAnonymousClassDefinition) {
+        parent = parent.getParent();
+      }
+      assert parent instanceof GrNewExpression;
+      final GrNewExpression newExpression = (GrNewExpression)parent;
+      if (newExpression.getQualifier() != null) return CLASS_IN_QUALIFIED_NEW;
     }
 
     return CLASS;
@@ -358,7 +370,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
                 }
               }
             } else if ((kind == CLASS || kind == CLASS_OR_PACKAGE) && qualifierResolved instanceof PsiClass) {
-              PsiClass[] classes = ((PsiClass) qualifierResolved).getInnerClasses();
+              PsiClass[] classes = ((PsiClass) qualifierResolved).getAllInnerClasses();
               for (final PsiClass aClass : classes) {
                 if (refName.equals(aClass.getName())) {
                   boolean isAccessible = PsiUtil.isAccessible(ref, aClass);
@@ -409,6 +421,32 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
               return result.toArray(new GroovyResolveResult[result.size()]);
             }
           }
+          break;
+        }
+        case CLASS_IN_QUALIFIED_NEW: {
+          if (ref.getParent() instanceof GrCodeReferenceElement) return GroovyResolveResult.EMPTY_ARRAY;
+          final GrNewExpression newExpression = PsiTreeUtil.getParentOfType(ref, GrNewExpression.class);
+          assert newExpression != null;
+          final GrExpression qualifier = newExpression.getQualifier();
+          assert qualifier != null;
+
+          final PsiType type = qualifier.getType();
+          if (!(type instanceof PsiClassType)) break;
+
+          final PsiClassType classType = (PsiClassType)type;
+          final PsiClass psiClass = classType.resolve();
+          if (psiClass == null) break;
+
+          final PsiClass[] allInnerClasses = psiClass.getAllInnerClasses();
+          ArrayList<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
+          PsiResolveHelper helper = JavaPsiFacade.getInstance(ref.getProject()).getResolveHelper();
+
+          for (final PsiClass innerClass : allInnerClasses) {
+            if (refName.equals(innerClass.getName())) {
+              result.add(new GroovyResolveResultImpl(innerClass, helper.isAccessible(innerClass, ref, null)));
+            }
+          }
+          return result.toArray(new GroovyResolveResult[result.size()]);
         }
       }
 
@@ -429,7 +467,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     if (results.length == 0) {
       return GroovyResolveResult.EMPTY_ARRAY;
     }
-    
+
     return (GroovyResolveResult[])results;
   }
 }

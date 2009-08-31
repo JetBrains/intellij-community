@@ -4,8 +4,12 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author ilyas
  */
 public interface GrThisReferenceExpression extends GrExpression {
+  @Nullable
+  GrReferenceExpression getQualifier();
 }

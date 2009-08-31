@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
@@ -36,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
  * @date: 18.03.2007
  */
 public interface GrTypeDefinition extends GrTopStatement, NavigatablePsiElement, PsiClass, GrTopLevelDefintion, GrMemberOwner,
-                                          GrDocCommentOwner {
+                                          GrDocCommentOwner, GrMember {
   String DEFAULT_BASE_CLASS_NAME = "groovy.lang.GroovyObject";
 
   GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];

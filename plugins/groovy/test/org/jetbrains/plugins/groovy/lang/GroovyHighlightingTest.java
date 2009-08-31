@@ -11,9 +11,9 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAss
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
+import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection;
-import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection;
 
 import java.io.IOException;
@@ -136,4 +136,9 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testUnusedVariable() throws Exception { doTest(new UnusedDefInspection()); }
   public void testDefinitionUsedInClosure() throws Exception { doTest(new UnusedDefInspection()); }
   public void testDefinitionUsedInClosure2() throws Exception { doTest(new UnusedDefInspection()); }
+  public void testDuplicateInnerClass() throws Throwable{doTest();}
+
+  public void testThisInStaticContext() throws Throwable {doTest();}
+  public void testSuperWithNotEnclosingClass() throws Throwable {doTest();}
+  public void testThisWithWrongQualifier() throws Throwable {doTest();}
 }

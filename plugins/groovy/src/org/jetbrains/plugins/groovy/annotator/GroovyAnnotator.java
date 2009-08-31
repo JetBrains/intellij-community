@@ -111,7 +111,10 @@ public class GroovyAnnotator implements Annotator {
       checkVariableDeclaration(holder, (GrVariableDeclaration)element);
     }
     else if (element instanceof GrVariable) {
-      if (element instanceof GrMember) highlightMember(holder, ((GrMember)element));
+      if (element instanceof GrMember) {
+        highlightMember(holder, ((GrMember)element));
+        checkStaticDeclarationsInInnerClass((GrMember)element, holder);
+      }
       checkVariable(holder, (GrVariable)element);
     }
     else if (element instanceof GrAssignmentExpression) {
@@ -139,6 +142,9 @@ public class GroovyAnnotator implements Annotator {
       //todo: if reference isn't resolved it construct package definition
       checkPackageReference(holder, (GrPackageDefinition)element);
     }
+    else if (element instanceof GrThisReferenceExpression || element instanceof GrSuperReferenceExpression) {
+      checkThisOrSuperReferenceExpression(((GrExpression)element), holder);
+    }
     else if (element instanceof GroovyFile) {
       final GroovyFile file = (GroovyFile)element;
       if (file.isScript()) {
@@ -155,6 +161,56 @@ public class GroovyAnnotator implements Annotator {
         GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile)element.getContainingFile());
       }
     }
+  }
+
+  private static void checkThisOrSuperReferenceExpression(GrExpression expression, AnnotationHolder holder) {
+    final GrReferenceExpression qualifier = expression instanceof GrThisReferenceExpression
+                                            ? ((GrThisReferenceExpression)expression).getQualifier()
+                                            : ((GrSuperReferenceExpression)expression).getQualifier();
+    if (qualifier == null) {
+      final GrMethod method = PsiTreeUtil.getParentOfType(expression, GrMethod.class);
+      if (method != null && method.hasModifierProperty(PsiModifier.STATIC)) {
+        holder.createErrorAnnotation(expression, GroovyBundle.message("cannot.reference.nonstatic", expression.getText()));
+      }
+    }
+    else {
+      final PsiElement resolved = qualifier.resolve();
+      if (resolved instanceof PsiClass) {
+        if (PsiTreeUtil.isAncestor(resolved, expression, true)) {
+          if (!PsiUtil.hasEnclosingInstanceInScope((PsiClass)resolved, expression, true)) {
+            holder.createErrorAnnotation(expression, GroovyBundle.message("cannot.reference.nonstatic", expression.getText()));
+          }
+        } else {
+          holder.createErrorAnnotation(expression, GroovyBundle.message("is.not.enclosing.class", ((PsiClass)resolved).getQualifiedName()));
+        }
+      }
+      else {
+        holder.createErrorAnnotation(qualifier, GroovyBundle.message("unknown.class", qualifier.getText()));
+      }
+    }
+  }
+
+  private static void checkStaticDeclarationsInInnerClass(GrMember classMember, AnnotationHolder holder) {
+    final PsiClass containingClass = classMember.getContainingClass();
+    if (containingClass == null) return;
+    if (com.intellij.psi.util.PsiUtil.isInnerClass(containingClass)) {
+      if (classMember.hasModifierProperty(PsiModifier.STATIC)) {
+        final PsiElement modifier = findModifierStatic(classMember);
+        if (modifier != null) {
+          holder.createErrorAnnotation(modifier, GroovyBundle.message("cannot.have.static.declarations"));
+        }
+      }
+    }
+  }
+
+  private static PsiElement findModifierStatic(GrMember grMember) {
+    final PsiElement[] modifiers = grMember.getModifierList().getModifiers();
+    for (PsiElement modifier : modifiers) {
+      if (PsiModifier.STATIC.equals(modifier.getText())) {
+        return modifier;
+      }
+    }
+    return null;
   }
 
   private static void checkGrDocReferenceElement(AnnotationHolder holder, PsiElement element) {
@@ -371,6 +427,9 @@ public class GroovyAnnotator implements Annotator {
               holder.createErrorAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("not.abstract.method.should.have.body"));
             }
           }
+          if (isMethodStatic) {
+            checkStaticDeclarationsInInnerClass(method, holder);
+          }
         }
       }
   }
@@ -423,6 +482,8 @@ public class GroovyAnnotator implements Annotator {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("modifier.transient.not.allowed.here"));
       }
     }
+
+    checkStaticDeclarationsInInnerClass(typeDefinition, holder); 
   }
 
   private static void checkAccessModifiers(AnnotationHolder holder, @NotNull PsiModifierList modifierList) {
@@ -528,10 +589,6 @@ public class GroovyAnnotator implements Annotator {
       annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
     }
 
-    if (typeDefinition.getParent() instanceof GrTypeDefinitionBody && !typeDefinition.isEnum()) {
-      holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), "Inner classes are not supported in Groovy");
-    }
-
     final GrImplementsClause implementsClause = typeDefinition.getImplementsClause();
     final GrExtendsClause extendsClause = typeDefinition.getExtendsClause();
 
@@ -547,17 +604,20 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private static void checkDuplicateClass(GrTypeDefinition typeDefinition, AnnotationHolder holder) {
+    final PsiClass containingClass = typeDefinition.getContainingClass();
+    if (containingClass != null) {
+      final String containingClassName = containingClass.getName();
+      if (containingClassName != null && containingClassName.equals(typeDefinition.getName())) {
+        holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(),
+                                     GroovyBundle.message("duplicate.inner.class", typeDefinition.getName()));
+      }
+    }
     final String qName = typeDefinition.getQualifiedName();
     if (qName != null) {
       final PsiClass[] classes =
         JavaPsiFacade.getInstance(typeDefinition.getProject()).findClasses(qName, typeDefinition.getResolveScope());
       if (classes.length > 1) {
-        final PsiFile file = typeDefinition.getContainingFile();
-        String packageName = "<default package>";
-        if (file instanceof GroovyFile) {
-          final String name = ((GroovyFile)file).getPackageName();
-          if (name.length() > 0) packageName = name;
-        }
+        String packageName = getPackageName(typeDefinition);
 
         if (!isScriptGeneratedClass(classes)) {
           holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(),
@@ -569,6 +629,16 @@ public class GroovyAnnotator implements Annotator {
         }
       }
     }
+  }
+
+  private static String getPackageName(GrTypeDefinition typeDefinition) {
+    final PsiFile file = typeDefinition.getContainingFile();
+    String packageName = "<default package>";
+    if (file instanceof GroovyFile) {
+      final String name = ((GroovyFile)file).getPackageName();
+      if (name.length() > 0) packageName = name;
+    }
+    return packageName;
   }
 
   private static boolean isScriptGeneratedClass(PsiClass[] allClasses) {
@@ -866,6 +936,16 @@ public class GroovyAnnotator implements Annotator {
           holder.createErrorAnnotation(refElement, message);
         }
         return;
+      }
+      if (newExpression.getQualifier() != null) {
+        if (clazz.hasModifierProperty(PsiModifier.STATIC)) {
+          holder.createErrorAnnotation(newExpression, GroovyBundle.message("qualified.new.of.static.class"));
+        }
+      } else {
+        final PsiClass outerClass = clazz.getContainingClass();
+        if (com.intellij.psi.util.PsiUtil.isInnerClass(clazz) && !PsiUtil.hasEnclosingInstanceInScope(outerClass, newExpression, true)) {
+          holder.createErrorAnnotation(newExpression, GroovyBundle.message("cannot.reference.nonstatic", clazz.getQualifiedName()));
+        }
       }
     }
 

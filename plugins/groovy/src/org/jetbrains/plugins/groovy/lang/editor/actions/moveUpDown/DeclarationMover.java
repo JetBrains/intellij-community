@@ -124,12 +124,13 @@ public class DeclarationMover extends LineMover {
       }
     }
 
-    PsiElement member = PsiTreeUtil.getParentOfType(first, GrMember.class, false);
-    if (member == null) {
-      final GrDocComment comment = PsiTreeUtil.getParentOfType(first, GrDocComment.class, false);
-      if (comment != null) {
-        member = comment.getOwner();
-      }
+    PsiElement member;
+    final GrDocComment comment = PsiTreeUtil.getParentOfType(first, GrDocComment.class, false);
+    if (comment != null) {
+      member = comment.getOwner();
+    }
+    else {
+      member = PsiTreeUtil.getParentOfType(first, GrMember.class, false);
     }
     if (member == null) {
       member = PsiTreeUtil.getParentOfType(first, GrTypeDefinition.class, false);

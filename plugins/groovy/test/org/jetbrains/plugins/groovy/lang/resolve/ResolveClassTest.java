@@ -101,6 +101,9 @@ public class ResolveClassTest extends GroovyResolveTestCase {
 
   public void testImportStaticFromJavaUtil() throws Throwable { doTest(); }
   public void testInnerEnum() throws Throwable { doTest(); }
+  public void testInnerClass()throws Throwable {doTest();}
+  public void testInnerClassInSubclass()throws Throwable {doTest();}
+  public void testInnerClassUsageInsideOuterSubclass() throws Throwable{doTest();}
 
   private void doTest() throws Exception {
     doTest(getTestName(true) + "/" + getTestName(false) + ".groovy");

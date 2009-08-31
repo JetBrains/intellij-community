@@ -26,6 +26,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
  * @author ilyas
  */
 public interface GrNewExpression extends GrCallExpression {
+  @Nullable
+  GrExpression getQualifier();
+
   GrCodeReferenceElement getReferenceElement();
 
   GroovyResolveResult[] multiResolveConstructor();

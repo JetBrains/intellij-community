@@ -22,13 +22,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
@@ -37,27 +36,25 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  */
 public class ModifiersFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
-    if (GroovyCompletionUtil.asSimpleVariable(context) ||
-        GroovyCompletionUtil.asTypedMethod(context)) {
+    if (GroovyCompletionUtil.asSimpleVariable(context) || GroovyCompletionUtil.asTypedMethod(context)) {
       return true;
     }
-    if (context.getParent() instanceof GrReferenceElement &&
-        context.getParent().getParent() instanceof GrTypeElement) {
-      PsiElement parent = context.getParent().getParent().getParent();
+    final PsiElement contextParent = context.getParent();
+    if (contextParent instanceof GrReferenceElement && contextParent.getParent() instanceof GrTypeElement) {
+      PsiElement parent = contextParent.getParent().getParent();
       if (parent instanceof GrVariableDeclaration &&
-          (parent.getParent() instanceof GrTypeDefinitionBody ||
-          parent.getParent() instanceof GroovyFile)
-          || parent instanceof GrMethod) {
-        GrModifierList list = ((GrMembersDeclaration) parent).getModifierList();
-        for (PsiElement modifier : list.getModifiers()) {
-          if (!(modifier instanceof GrAnnotation)) return false;
-          if ("def".equals(modifier.getText())) return false;
-        }
+          (parent.getParent() instanceof GrTypeDefinitionBody || parent.getParent() instanceof GroovyFile) || parent instanceof GrMethod) {
         return true;
       }
     }
-    if (context.getParent() instanceof GrExpression &&
-        context.getParent().getParent() instanceof GroovyFile &&
+    if (contextParent instanceof GrField) {
+      final GrVariable variable = (GrVariable)contextParent;
+      if (variable.getTypeElementGroovy() == null) {
+        return true;
+      }
+    }
+    if (contextParent instanceof GrExpression &&
+        contextParent.getParent() instanceof GroovyFile &&
         GroovyCompletionUtil.isNewStatement(context, false)) {
       return true;
     }
@@ -65,17 +62,16 @@ public class ModifiersFilter implements ElementFilter {
       return true;
     }
     final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
-    if (leaf != null &&
-        GroovyCompletionUtil.isNewStatement(context, false)) {
+    if (leaf != null && GroovyCompletionUtil.isNewStatement(context, false)) {
       PsiElement parent = leaf.getParent();
       if (parent instanceof GroovyFile) {
         return true;
       }
     }
-    return context.getParent() instanceof GrExpression &&
-        context.getParent().getParent() instanceof GrApplicationStatement &&
-        context.getParent().getParent().getParent() instanceof GroovyFile &&
-        GroovyCompletionUtil.isNewStatement(context, false);
+    return contextParent instanceof GrExpression &&
+           contextParent.getParent() instanceof GrApplicationStatement &&
+           contextParent.getParent().getParent() instanceof GroovyFile &&
+           GroovyCompletionUtil.isNewStatement(context, false);
   }
 
   public boolean isClassAcceptable(Class hintClass) {

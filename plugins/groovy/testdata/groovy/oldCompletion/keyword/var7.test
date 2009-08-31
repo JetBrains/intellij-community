@@ -10,6 +10,7 @@ class A  {
   }
 }
 -----
+abstract
 boolean
 byte
 char
@@ -18,5 +19,13 @@ final
 float
 int
 long
+native
+private
+protected
+public
 short
+static
+strictfp
+transient
 void
+volatile

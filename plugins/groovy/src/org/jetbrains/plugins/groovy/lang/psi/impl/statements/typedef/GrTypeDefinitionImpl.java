@@ -51,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -105,14 +106,13 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @Nullable
   public String getQualifiedName() {
-    PsiElement parent = getParent();
-    if (parent instanceof GrTypeDefinitionBody) {
-      final PsiElement clazz = parent.getParent();
-      if (clazz instanceof GrTypeDefinition) {
-        return ((GrTypeDefinition)clazz).getQualifiedName() + "." + getName();
-      }
+    final PsiClass containingClass = getContainingClass();
+    if (containingClass != null) {
+      return containingClass.getQualifiedName() + "." + getName();
     }
-    else if (parent instanceof GroovyFile) {
+
+    PsiElement parent = getParent();
+    if (parent instanceof GroovyFile) {
       String packageName = ((GroovyFile)parent).getPackageName();
       return packageName.length() > 0 ? packageName + "." + getName() : getName();
     }
@@ -231,7 +231,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
-                                     PsiElement lastParent,
+                                     @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
     return GrClassImplUtil.processDeclarations(this, processor, state, lastParent, place);
   }
@@ -239,6 +239,11 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 //  @NotNull
   public String getName() {
     return PsiImplUtil.getName(this);
+  }
+
+  @Override
+  public boolean isEquivalentTo(PsiElement another) {
+    return GrClassImplUtil.isClassEquivalentTo(this, another);
   }
 
   //Fake java class implementation
@@ -486,6 +491,14 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @Nullable
   public PsiClass getContainingClass() {
+    PsiElement parent = getParent();
+    if (parent instanceof GrTypeDefinitionBody) {
+      final PsiElement pparent = parent.getParent();
+      if (pparent instanceof PsiClass) {
+        return (PsiClass)pparent;
+      }
+    }
+
     return null;
   }
 
@@ -508,8 +521,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
   }
 
   @Nullable
-  public PsiModifierList getModifierList() {
-    return (PsiModifierList)findChildByType(GroovyElementTypes.MODIFIERS);
+  public GrModifierList getModifierList() {
+    return (GrModifierList)findChildByType(GroovyElementTypes.MODIFIERS);
   }
 
   public boolean hasModifierProperty(@NonNls @NotNull String name) {

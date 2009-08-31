@@ -2,7 +2,7 @@
  * Copyright (c) 2000-2005 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package org.jetbrains.plugins.groovy.lang.parser;
+package org.jetbrains.plugins.groovy.lang.parser
 
 /**
  * @author peter
@@ -193,5 +193,8 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   PsiErrorElement:';' or new line expected
     PsiElement(})('}')"""
   }
-
+  public void testthis$qualifiedThis() throws Throwable {doTest();}
+  public void testsuper$qualifiedSuper() throws Throwable {doTest();}
+  public void testthis$this() throws Throwable {doTest();}
+  public void testsuper$super() throws Throwable {doTest();}
 }

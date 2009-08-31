@@ -40,15 +40,15 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -417,8 +417,10 @@ public class PsiUtil {
               PsiClass javaLangClass = JavaPsiFacade.getInstance(place.getProject()).findClass("java.lang.Class", place.getResolveScope());
               if (javaLangClass != null) {
                 PsiClass containingClass = ((PsiMember)owner).getContainingClass();
-                if (containingClass == null || //default groovy method
-                    InheritanceUtil.isInheritorOrSelf(javaLangClass, containingClass, true)) {
+                if ((containingClass == null && !(owner instanceof PsiClass))|| //default groovy method
+                    InheritanceUtil.isInheritorOrSelf(javaLangClass, containingClass, true) ||
+                    (owner instanceof PsiClass && containingClass != null) //inner classes
+                ) {
                   return true;
                 }
               }
@@ -752,5 +754,22 @@ public class PsiUtil {
   public static boolean isMethodCall(GrMethodCallExpression call, String methodName) {
     final GrExpression expression = call.getInvokedExpression();
     return expression instanceof GrReferenceExpression && methodName.equals(expression.getText().trim());
+  }
+
+  public static boolean hasEnclosingInstanceInScope(PsiClass clazz, PsiElement scope, boolean isSuperClassAccepted) {
+    PsiElement place = scope;
+    while (place != null && place != clazz && !(place instanceof PsiFile)) {
+      if (place instanceof PsiClass) {
+        if (isSuperClassAccepted) {
+          if (InheritanceUtil.isInheritorOrSelf((PsiClass)place, clazz, true)) return true;
+        }
+        else {
+          if (clazz.getManager().areElementsEquivalent(place, clazz)) return true;
+        }
+      }
+      if (place instanceof PsiModifierListOwner && ((PsiModifierListOwner)place).hasModifierProperty(PsiModifier.STATIC)) return false;
+      place = place.getParent();
+    }
+    return place == clazz;
   }
 }

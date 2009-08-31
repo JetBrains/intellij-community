@@ -261,7 +261,7 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
     public boolean satisfiedBy(PsiElement element) {
       if (element instanceof GrNewExpression) {
         GrNewExpression newExpression = (GrNewExpression)element;
-        if (newExpression.getAnonymousClassDefinition() != null) return true;
+        if (newExpression.getQualifier() == null && newExpression.getAnonymousClassDefinition() != null) return true;
       }
       return false;
     }

@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
@@ -63,7 +64,13 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   }
 
   public boolean isInQualifiedNew() {
-    return false;
+    final GrTypeDefinitionStub stub = getStub();
+    if (stub != null) {
+      return stub.isAnonymousInQualifiedNew();
+    }
+
+    final PsiElement parent = getParent();
+    return parent instanceof GrNewExpression && ((GrNewExpression)parent).getQualifier() != null;
   }
 
   @NotNull
@@ -104,10 +111,17 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
 
   @NotNull
   public PsiClassType getBaseClassType() {
-    if (myCachedBaseType == null) {
-      myCachedBaseType = new SoftReference<PsiClassType>(createClassType());
+    if (isInQualifiedNew()) {
+      return createClassType();
     }
-    return myCachedBaseType.get();
+
+    PsiClassType type = null;
+    if (myCachedBaseType != null) type = myCachedBaseType.get();
+    if (type != null) return type;
+
+    type = createClassType();
+    myCachedBaseType = new SoftReference<PsiClassType>(type);
+    return type;
   }
 
   @Nullable

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
@@ -29,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class RegexConstructorExpression implements GroovyElementTypes {
 
-  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
+  public static GroovyElementType parse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker sMarker = builder.mark();
     if (ParserUtils.getToken(builder, mREGEX_BEGIN)) {
@@ -38,7 +39,7 @@ public class RegexConstructorExpression implements GroovyElementTypes {
           builder.error(GroovyBundle.message("identifier.or.block.expected"));
         }
         sMarker.done(REGEX);
-        return true;
+        return REGEX;
       } else {
         while (ParserUtils.getToken(builder, mREGEX_CONTENT)) {
           if (!regexConstructorValuePart(builder, parser)) break;
@@ -47,11 +48,11 @@ public class RegexConstructorExpression implements GroovyElementTypes {
           builder.error(GroovyBundle.message("identifier.or.block.expected"));
         }
         sMarker.done(REGEX);
-        return true;
+        return REGEX;
       }
     } else {
       sMarker.drop();
-      return false;
+      return WRONGWAY;
     }
   }
 

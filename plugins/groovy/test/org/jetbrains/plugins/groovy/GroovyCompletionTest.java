@@ -200,4 +200,33 @@ public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testGroovyDocParameter() throws Throwable {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "xx", "xy");
   }
+
+  public void testInnerClassExtendsImplementsCompletion()throws Throwable{
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "extends", "implements");
+  }
+
+  public void testInnerClassCompletion() throws Throwable {
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "Inner1", "Inner2");
+  }
+
+  public void testInnerClassInStaticMethodCompletion() throws Throwable {
+    doSmartTest();
+  }
+
+
+  public void testQualifiedThisCompletion() throws Throwable {
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "foo1", "foo2");
+  }
+
+  public void testQualifiedSuperCompletion() throws Throwable {
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "foo1", "foo2");
+  }
+
+  public void testThisKeywordCompletionAfterClassName1() throws Throwable {
+    doBasicTest();
+  }
+  
+  public void testThisKeywordCompletionAfterClassName2() throws Throwable {
+    doBasicTest();
+  }
 }
