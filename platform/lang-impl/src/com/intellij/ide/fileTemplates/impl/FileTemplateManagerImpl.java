@@ -495,34 +495,28 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     synchronized (LOCK) {
       LOG.assertTrue(myInternalTemplatesManager != null);
       //noinspection HardCodedStringLiteral
-      String actualTemplateName = ApplicationManager.getApplication().isUnitTestMode() ? templateName + "ForTest" : templateName;
-      FileTemplateImpl template = (FileTemplateImpl)myInternalTemplatesManager.getTemplate(actualTemplateName);
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        String text = getTestClassTemplateText(templateName);
+        FileTemplateImpl template = new FileTemplateImpl(normalizeText(text), templateName + "ForTest", "java");
+        template.setInternal(true);
+        return template;
+      }
+
+      FileTemplateImpl template = (FileTemplateImpl)myInternalTemplatesManager.getTemplate(templateName);
 
       if (template == null) {
-        template = (FileTemplateImpl)getTemplate(actualTemplateName);
+        template = (FileTemplateImpl)getTemplate(templateName);
       }
+      
       if (template == null) {
-        template = (FileTemplateImpl)getJ2eeTemplate(actualTemplateName); // Hack to be able to register class templates from the plugin.
+        template = (FileTemplateImpl)getJ2eeTemplate(templateName); // Hack to be able to register class templates from the plugin.
         if (template != null) {
           template.setAdjust(true);
         }
         else {
-          String text;
-          if (ApplicationManager.getApplication().isUnitTestMode()) {
-            text = getTestClassTemplateText(templateName);
-          }
-          else {
-            text = getDefaultClassTemplateText(templateName);
-          }
+          String text = normalizeText(getDefaultClassTemplateText(templateName));
 
-          text = StringUtil.convertLineSeparators(text);
-          text = StringUtil.replace(text, "$NAME$", "${NAME}");
-          text = StringUtil.replace(text, "$PACKAGE_NAME$", "${PACKAGE_NAME}");
-          text = StringUtil.replace(text, "$DATE$", "${DATE}");
-          text = StringUtil.replace(text, "$TIME$", "${TIME}");
-          text = StringUtil.replace(text, "$USER$", "${USER}");
-
-          template = (FileTemplateImpl)myInternalTemplatesManager.addTemplate(actualTemplateName, "java");
+          template = (FileTemplateImpl)myInternalTemplatesManager.addTemplate(templateName, "java");
           template.setText(text);
         }
       }
@@ -530,6 +524,16 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       template.setInternal(true);
       return template;
     }
+  }
+
+  private static String normalizeText(String text) {
+    text = StringUtil.convertLineSeparators(text);
+    text = StringUtil.replace(text, "$NAME$", "${NAME}");
+    text = StringUtil.replace(text, "$PACKAGE_NAME$", "${PACKAGE_NAME}");
+    text = StringUtil.replace(text, "$DATE$", "${DATE}");
+    text = StringUtil.replace(text, "$TIME$", "${TIME}");
+    text = StringUtil.replace(text, "$USER$", "${USER}");
+    return text;
   }
 
   @NonNls
@@ -876,11 +880,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
 
     public void addTemplate(@NotNull FileTemplate newTemplate) {
       String newName = newTemplate.getName();
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        if (newName.endsWith("ForTest")) {
-          throw new RuntimeException("Do not register *ForTest templates in tests!");
-        }
-      }
 
       for (FileTemplate template : myTemplatesList) {
         if (template == newTemplate) {
