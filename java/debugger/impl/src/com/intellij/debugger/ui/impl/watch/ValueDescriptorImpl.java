@@ -49,6 +49,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   private boolean myIsDirty = false;
   private boolean myIsLvalue = false;
   private boolean myIsExpandable;
+  public static final int MAX_DISPLAY_LABEL_LENGTH = 128;
 
   protected ValueDescriptorImpl(Project project, Value value) {
     myProject = project;
@@ -217,13 +218,23 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         buf.append("null");
       }
       else {
-        if(label.length() > 1 && StringUtil.startsWithChar(label, '\"') && StringUtil.endsWithChar(label, '\"')) {
+        final boolean isQuoted = label.length() > 1 && StringUtil.startsWithChar(label, '\"') && StringUtil.endsWithChar(label, '\"');
+        if(isQuoted) {
+          label = label.substring(1, label.length() - 1);
           buf.append('"');
-          buf.append(DebuggerUtils.translateStringValue(label.substring(1, label.length() - 1)));
-          buf.append('"');
+        }
+        if (label.length() > MAX_DISPLAY_LABEL_LENGTH) {
+          label = DebuggerUtils.translateStringValue(label.substring(0, MAX_DISPLAY_LABEL_LENGTH));
+          buf.append(label);
+          if (!label.endsWith("...")) {
+            buf.append("...");
+          }
         }
         else {
           buf.append(DebuggerUtils.translateStringValue(label));
+        }
+        if (isQuoted) {
+          buf.append('"');
         }
       }
       return buf.toString();
