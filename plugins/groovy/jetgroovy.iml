@@ -32,6 +32,7 @@
     <orderEntry type="module" module-name="refactoring-impl" />
     <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="execution-openapi" />
+    <orderEntry type="module" module-name="idea-ui" />
   </component>
 </module>
 
