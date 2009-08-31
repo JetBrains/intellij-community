@@ -19,6 +19,8 @@
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="module" module-name="idea_rt" />
+    <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="compiler-openapi" />
   </component>
   <component name="copyright">
     <Base>

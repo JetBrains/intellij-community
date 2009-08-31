@@ -29,6 +29,8 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="idea-ui" />
   </component>
   <component name="copyright">
     <Base>

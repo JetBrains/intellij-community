@@ -33,15 +33,15 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -59,7 +59,10 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.*;
+import com.intellij.util.Chunk;
+import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.OrderedSet;
@@ -1739,7 +1742,7 @@ public class CompileDriver {
       }
     }
     if (!modulesWithoutJdkAssigned.isEmpty()) {
-      showNotSpecifiedError("error.jdk.not.specified", modulesWithoutJdkAssigned, ClasspathEditor.NAME);
+      showNotSpecifiedError("error.jdk.not.specified", modulesWithoutJdkAssigned, ProjectBundle.message("modules.classpath.title"));
       return false;
     }
 
@@ -1955,7 +1958,7 @@ public class CompileDriver {
   }
 
   private void showConfigurationDialog(String moduleNameToSelect, String tabNameToSelect) {
-    ModulesConfigurator.showDialog(myProject, moduleNameToSelect, tabNameToSelect, false);
+    ProjectSettingsService.getInstance(myProject).showModuleConfigurationDialog(moduleNameToSelect, tabNameToSelect, false);
   }
 
   private static VirtualFile lookupVFile(final IntermediateOutputCompiler compiler, final Module module, final boolean forTestSources) {

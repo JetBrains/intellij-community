@@ -18,7 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.ui.ProjectSettingsService;
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;

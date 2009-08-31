@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="properties" />
     <orderEntry type="module" module-name="execution-openapi" />
+    <orderEntry type="module" module-name="idea-ui" />
   </component>
   <component name="copyright">
     <Base>

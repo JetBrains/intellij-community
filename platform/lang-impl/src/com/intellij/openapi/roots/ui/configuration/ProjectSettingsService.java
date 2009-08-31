@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -29,5 +30,12 @@ public class ProjectSettingsService {
 
   public boolean processModulesMoved(final Module[] modules, @Nullable final ModuleGroup targetGroup) {
     return false;
+  }
+
+  public void showModuleConfigurationDialog(@Nullable String moduleToSelect, @Nullable String tabNameToSelect, boolean showModuleWizard) {
+  }
+
+  public Sdk chooseAndSetSdk() {
+    return null;
   }
 }

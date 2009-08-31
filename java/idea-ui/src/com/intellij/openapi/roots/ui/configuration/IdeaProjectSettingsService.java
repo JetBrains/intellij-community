@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
+import com.intellij.ide.util.projectWizard.JdkChooserPanel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -9,6 +10,7 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -59,5 +61,15 @@ public class IdeaProjectSettingsService extends ProjectSettingsService {
       return true;
     }
     return false;
+  }
+
+  @Override
+  public void showModuleConfigurationDialog(String moduleToSelect, String tabNameToSelect, boolean showModuleWizard) {
+    ModulesConfigurator.showDialog(myProject, moduleToSelect, tabNameToSelect, showModuleWizard);
+  }
+
+  @Override
+  public Sdk chooseAndSetSdk() {
+    return JdkChooserPanel.chooseAndSetJDK(myProject);
   }
 }
