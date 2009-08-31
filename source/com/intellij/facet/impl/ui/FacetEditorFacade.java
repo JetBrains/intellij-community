@@ -31,7 +31,4 @@ public interface FacetEditorFacade {
 
   @Nullable
   FacetInfo getParent(final FacetInfo facet);
-
-  boolean isProjectVersionSupportsFacetAddition(final FacetType type);
-
 }

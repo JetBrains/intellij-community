@@ -412,9 +412,6 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
   protected List<Facet> removeFacet(final Facet facet) {
-    if (!ProjectFileVersion.getInstance(myProject).isFacetDeletionEnabled(facet.getTypeId(), true)) {
-      return Collections.emptyList();
-    }
     return myContext.myModulesConfigurator.getFacetsConfigurator().removeFacet(facet);
   }
 

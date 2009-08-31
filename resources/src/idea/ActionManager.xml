@@ -71,9 +71,6 @@
     <action id="TemplateProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
       <add-to-group group-id="FileSettingsGroup" anchor="last"/>
     </action>
-    <action id="ConvertProject" class="com.intellij.ide.impl.convert.ConvertProjectAction">
-      <add-to-group group-id="FileSettingsGroup" anchor="last"/>
-    </action>
 
     <action id="ShowProjectStructureSettings" class="com.intellij.ide.actions.ShowStructureSettingsAction" icon="/general/projectStructure.png">
       <add-to-group group-id="FileMainSettingsGroup" anchor="after" relative-to-action="ShowSettings"/>

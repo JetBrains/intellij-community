@@ -1,6 +1,5 @@
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.ide.impl.convert.ProjectConversionHelper;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.StateStorage;
@@ -80,12 +79,6 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     }
 
     protected void load(@NotNull final Element rootElement) throws IOException {
-      final ProjectConversionHelper conversionHelper = getConversionHelper(myModule);
-      if (conversionHelper != null) {
-        conversionHelper.convertModuleRootToNewFormat(rootElement, myModule.getName());
-        PathMacroManager.getInstance(myModule).expandPaths(rootElement);
-      }
-
       super.load(rootElement);
 
       final List attributes = rootElement.getAttributes();
@@ -103,11 +96,6 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       Set<String> options = myOptions.keySet();
       for (String option : options) {
         root.setAttribute(option, myOptions.get(option));
-      }
-
-      final ProjectConversionHelper conversionHelper = getConversionHelper(myModule);
-      if (conversionHelper != null) {
-        conversionHelper.convertModuleRootToOldFormat(root, myModule.getName());
       }
 
       //need be last for compat reasons
@@ -145,12 +133,6 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     public String getOptionValue(final String optionName) {
       return myOptions.get(optionName);
     }
-  }
-
-
-  @Nullable
-  private static ProjectConversionHelper getConversionHelper(Module module) {
-    return (ProjectConversionHelper)module.getProject().getPicoContainer().getComponentInstance(ProjectConversionHelper.class);
   }
 
   public void setModuleFilePath(@NotNull final String filePath) {

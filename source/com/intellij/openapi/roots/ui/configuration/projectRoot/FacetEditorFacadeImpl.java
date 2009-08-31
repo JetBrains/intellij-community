@@ -8,7 +8,6 @@ import com.intellij.facet.*;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.FacetEditorFacade;
 import com.intellij.facet.impl.ui.FacetTreeModel;
-import com.intellij.ide.impl.convert.ProjectFileVersion;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -130,14 +129,6 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
   public FacetInfo getParent(final FacetInfo facetInfo) {
     final Module module = getFacetConfigurator().getFacet(facetInfo).getModule();
     return getFacetConfigurator().getTreeModel(module).getParent(facetInfo);
-  }
-
-  public boolean isProjectVersionSupportsFacetAddition(final FacetType type) {
-    final ProjectFileVersion instance = ProjectFileVersion.getInstance(myStructureConfigurable.getProject());
-    if (!instance.isFacetAdditionEnabled(type.getId(), true)) {
-      return false;
-    }
-    return true;
   }
 
   private ProjectFacetsConfigurator getFacetConfigurator() {

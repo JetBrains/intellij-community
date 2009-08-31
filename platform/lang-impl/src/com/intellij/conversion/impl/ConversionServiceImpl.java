@@ -121,7 +121,7 @@ public class ConversionServiceImpl extends ConversionService {
     }
     catch (CannotConvertException e) {
       LOG.info(e);
-      Messages.showErrorDialog("Cannot convert project: " + e.getMessage(),
+      Messages.showErrorDialog(IdeBundle.message("error.cannot.convert.project", e.getMessage()),
                                IdeBundle.message("title.cannot.convert.project"));
       return false;
     }

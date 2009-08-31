@@ -188,9 +188,6 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     if (!myDetectionInProgress && detector.getVirtualFileFilter().accept(virtualFile)) {
       try {
         myDetectionInProgress = true;
-        if (!ProjectFileVersion.getInstance(myProject).isFacetAdditionEnabled(detector.getFacetType().getId(), false)) {
-          return facets;
-        }
         FacetInfo2<Module> facet = detector.detectFacet(virtualFile, myPsiManager);
 
         if (facet != null) {

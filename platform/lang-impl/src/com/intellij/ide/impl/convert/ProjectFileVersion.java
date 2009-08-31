@@ -4,10 +4,7 @@
 
 package com.intellij.ide.impl.convert;
 
-import com.intellij.facet.FacetTypeId;
 import com.intellij.openapi.project.Project;
-
-import java.io.IOException;
 
 /**
  * @author nik
@@ -18,13 +15,4 @@ public abstract class ProjectFileVersion {
   }
 
 
-  public abstract boolean isFacetAdditionEnabled(FacetTypeId<?> facetType, final boolean showErrorMessage);
-
-  public abstract boolean isFacetDeletionEnabled(FacetTypeId<?> facetType, final boolean showErrorMessage);
-
-  public abstract boolean isConverted();
-
-  public abstract boolean convert() throws IOException;
-
-  public abstract void showNotAllowedMessage();
 }

@@ -31,10 +31,6 @@ public class AddFacetAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    if (!myEditor.isProjectVersionSupportsFacetAddition(myType)) {
-      return;
-    }
-
     FacetInfo parent = myEditor.getSelectedFacetInfo();
     final Collection<FacetInfo> facetInfos = myEditor.getFacetsByType(myType);
     String facetName = myType.getDefaultFacetName();
