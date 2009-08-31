@@ -6,7 +6,8 @@ package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyConstantIfStatementInspection.ConstantIfStatementVisitor
-import org.jetbrains.plugins.groovy.codeInspection.control.GroovyConstantIfStatementInspection;
+import org.jetbrains.plugins.groovy.codeInspection.control.GroovyConstantIfStatementInspection
+import org.jetbrains.plugins.groovy.codeInspection.gpath.GroovySetterCallCanBePropertyAccessInspection;
 
 /**
  * @author peter
@@ -25,6 +26,21 @@ public class GroovyFixesTest extends LightCodeInsightFixtureTestCase {
 if (true) {
   aaa
 }"""
+  }
+
+  public void testShallowChangeToGroovyStylePropertyAccess() throws Throwable {
+    myFixture.enableInspections new GroovySetterCallCanBePropertyAccessInspection()
+    myFixture.configureByText "a.groovy", """class GroovyClasss {
+  def initializer
+  def foo() {
+    setInitializer({
+      <caret>println "hello"
+    })
+  }
+}
+
+"""
+    assertEmpty myFixture.filterAvailableIntentions("Change to Groovy-style property reference")
   }
 
 }
