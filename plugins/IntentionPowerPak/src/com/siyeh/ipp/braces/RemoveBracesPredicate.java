@@ -46,7 +46,7 @@ class RemoveBracesPredicate implements PsiElementPredicate
         }
         final PsiFile file = element.getContainingFile();
         //this intention doesn't work in JSP files, as it can't tell about tags
-        // inside the braeces
+        // inside the braces
         return !JspPsiUtil.isInJspFile(file);
     }
 }
