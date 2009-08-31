@@ -38,6 +38,7 @@ enhanceClass(className:"java.lang.String") {
 }
 """);
     GroovyDslFileIndex.activateUntilModification(file.virtualFile)
+    GroovyDslFileIndex.ifYouSeeThisCallFailsThenOurCompilationIsWorking()
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy")
   }
 
