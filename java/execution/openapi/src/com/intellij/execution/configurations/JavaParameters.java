@@ -18,6 +18,7 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -34,12 +35,12 @@ public class JavaParameters extends SimpleJavaParameters {
 
   public String getJdkPath() throws CantRunException {
     final Sdk jdk = getJdk();
-    if(jdk == null) {
+    if (jdk == null) {
       throw new CantRunException(ExecutionBundle.message("no.jdk.specified..error.message"));
     }
 
     final String jdkHome = jdk.getHomeDirectory().getPresentableUrl();
-    if(jdkHome == null || jdkHome.length() == 0) {
+    if (jdkHome == null || jdkHome.length() == 0) {
       throw new CantRunException(ExecutionBundle.message("home.directory.not.specified.for.jdk.error.message"));
     }
     return jdkHome;
@@ -59,7 +60,7 @@ public class JavaParameters extends SimpleJavaParameters {
       setJdk(jdk);
     }
 
-    if((classPathType & CLASSES_ONLY) == 0) {
+    if ((classPathType & CLASSES_ONLY) == 0) {
       return;
     }
 
@@ -67,7 +68,8 @@ public class JavaParameters extends SimpleJavaParameters {
     if (encoding != null) {
       setCharset(encoding);
     }
-    ProjectRootsTraversing.collectRoots(module, (classPathType & TESTS_ONLY) != 0 ? ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE : ProjectClasspathTraversing.FULL_CLASSPATH_WITHOUT_TESTS, getClassPath());
+
+    ProjectRootsTraversing.collectRoots(module, getPolicy(null, module, classPathType), getClassPath());
   }
 
   public void configureByModule(final Module module, final int classPathType) throws CantRunException {
@@ -86,7 +88,7 @@ public class JavaParameters extends SimpleJavaParameters {
     return jdk;
   }
 
-  public void configureByProject(final Project project, final int classPathType, final Sdk jdk ) throws CantRunException {
+  public void configureByProject(final Project project, final int classPathType, final Sdk jdk) throws CantRunException {
     if ((classPathType & JDK_ONLY) != 0) {
       if (jdk == null) {
         throw CantRunException.noJdkConfigured();
@@ -98,6 +100,22 @@ public class JavaParameters extends SimpleJavaParameters {
       return;
     }
 
-    ProjectRootsTraversing.collectRoots(project, (classPathType & TESTS_ONLY) != 0 ? ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE : ProjectClasspathTraversing.FULL_CLASSPATH_WITHOUT_TESTS, getClassPath());
+    ProjectRootsTraversing.collectRoots(project, getPolicy(project, null, classPathType), getClassPath());
+  }
+
+  private ProjectRootsTraversing.RootTraversePolicy getPolicy(Project project, Module module, int classPathType) {
+    ProjectRootsTraversing.RootTraversePolicy result = (classPathType & TESTS_ONLY) != 0
+                                                       ? ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE
+                                                       : ProjectClasspathTraversing.FULL_CLASSPATH_WITHOUT_TESTS;
+
+    for (JavaClasspathPolicyExtender each : Extensions.getExtensions(JavaClasspathPolicyExtender.EP_NAME)) {
+      if (project == null) {
+        result = each.extend(module, result);
+      }
+      else {
+        result = each.extend(project, result);
+      }
+    }
+    return result;
   }
 }
