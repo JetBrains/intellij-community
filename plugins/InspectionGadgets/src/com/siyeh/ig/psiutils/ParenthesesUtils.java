@@ -29,25 +29,25 @@ public class ParenthesesUtils{
 
     private ParenthesesUtils(){}
 
-    private static final int PARENTHESIZED_PRECEDENCE = 0;
-    private static final int LITERAL_PRECEDENCE = 0;
+    public static final int PARENTHESIZED_PRECEDENCE = 0;
+    public static final int LITERAL_PRECEDENCE = 0;
     public static final int METHOD_CALL_PRECEDENCE = 1;
-    private static final int POSTFIX_PRECEDENCE = 2;
+    public static final int POSTFIX_PRECEDENCE = 2;
     public static final int PREFIX_PRECEDENCE = 3;
     public static final int TYPE_CAST_PRECEDENCE = 4;
     public static final int MULTIPLICATIVE_PRECEDENCE = 5;
     public static final int ADDITIVE_PRECEDENCE = 6;
     public static final int SHIFT_PRECEDENCE = 7;
-    private static final int RELATIONAL_PRECEDENCE = 8;
-    private static final int EQUALITY_PRECEDENCE = 9;
-    private static final int BINARY_AND_PRECEDENCE = 10;
-    private static final int BINARY_XOR_PRECEDENCE = 11;
-    private static final int BINARY_OR_PRECEDENCE = 12;
+    public static final int RELATIONAL_PRECEDENCE = 8;
+    public static final int EQUALITY_PRECEDENCE = 9;
+    public static final int BINARY_AND_PRECEDENCE = 10;
+    public static final int BINARY_XOR_PRECEDENCE = 11;
+    public static final int BINARY_OR_PRECEDENCE = 12;
     public static final int AND_PRECEDENCE = 13;
     public static final int OR_PRECEDENCE = 14;
     public static final int CONDITIONAL_PRECEDENCE = 15;
-    private static final int ASSIGNMENT_PRECEDENCE = 16;
-    private static final int NUM_PRECEDENCES = 17;
+    public static final int ASSIGNMENT_PRECEDENCE = 16;
+    public static final int NUM_PRECEDENCES = 17;
 
     private static final Map<IElementType, Integer> s_binaryOperatorPrecedence =
             new HashMap<IElementType, Integer>(NUM_PRECEDENCES);
