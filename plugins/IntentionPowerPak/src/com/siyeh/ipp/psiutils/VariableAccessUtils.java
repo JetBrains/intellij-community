@@ -25,16 +25,15 @@ public class VariableAccessUtils {
     private VariableAccessUtils() {
     }
 
-    public static boolean isComparisonWithVariable(
-            @Nullable PsiExpression expression,
-            @NotNull PsiVariable variable) {
+    public static boolean isVariableCompared(
+            @NotNull PsiVariable variable, @Nullable PsiExpression expression) {
         if (!(expression instanceof PsiBinaryExpression)) {
             return false;
         }
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression)expression;
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        if (!ComparisonUtils.isComparison(sign)) {
+        final IElementType tokenType = binaryExpression.getOperationTokenType();
+        if (!ComparisonUtils.isComparison(tokenType)) {
             return false;
         }
         final PsiExpression lhs = binaryExpression.getLOperand();
@@ -50,9 +49,8 @@ public class VariableAccessUtils {
         return false;
     }
 
-    public static boolean isIncrementOfVariable(
-            @Nullable PsiStatement statement,
-            @NotNull PsiVariable variable) {
+    public static boolean isVariableIncrementOrDecremented(
+            @NotNull PsiVariable variable, @Nullable PsiStatement statement) {
         if (!(statement instanceof PsiExpressionStatement)) {
             return false;
         }
@@ -65,7 +63,8 @@ public class VariableAccessUtils {
                     (PsiPrefixExpression)expression;
             final PsiJavaToken sign = prefixExpression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
-            if (!tokenType.equals(JavaTokenType.PLUSPLUS)) {
+            if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
+                    !tokenType.equals(JavaTokenType.MINUSMINUS)) {
                 return false;
             }
             final PsiExpression operand = prefixExpression.getOperand();
@@ -75,7 +74,8 @@ public class VariableAccessUtils {
                     (PsiPostfixExpression)expression;
             final PsiJavaToken sign = postfixExpression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
-            if (!tokenType.equals(JavaTokenType.PLUSPLUS)) {
+            if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
+                    !tokenType.equals(JavaTokenType.MINUSMINUS)) {
                 return false;
             }
             final PsiExpression operand = postfixExpression.getOperand();
@@ -98,6 +98,12 @@ public class VariableAccessUtils {
                 }
                 final PsiBinaryExpression binaryExpression =
                         (PsiBinaryExpression) rhs;
+                final IElementType token =
+                        binaryExpression.getOperationTokenType();
+                if (!token.equals(JavaTokenType.PLUS) &&
+                        !token.equals(JavaTokenType.MINUS)) {
+                    return false;
+                }
                 PsiExpression lOperand = binaryExpression.getLOperand();
                 lOperand = ParenthesesUtils.stripParentheses(lOperand);
                 PsiExpression rOperand = binaryExpression.getROperand();
@@ -107,7 +113,8 @@ public class VariableAccessUtils {
                 } else if (evaluatesToVariable(lOperand, variable)) {
                     return true;
                 }
-            } else if (tokenType == JavaTokenType.PLUSEQ) {
+            } else if (tokenType == JavaTokenType.PLUSEQ ||
+                    tokenType == JavaTokenType.MINUSEQ) {
                 return true;
             }
         }

@@ -51,18 +51,17 @@ public class ReverseForLoopDirectionPredicate implements PsiElementPredicate {
         if (!(declaredElement instanceof PsiLocalVariable)) {
             return false;
         }
-        final PsiLocalVariable localVariable =
-                (PsiLocalVariable)declaredElement;
-        final PsiType type = localVariable.getType();
+        final PsiVariable variable = (PsiVariable)declaredElement;
+        final PsiType type = variable.getType();
         if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {
             return false;
         }
         final PsiExpression condition = forStatement.getCondition();
-        if (!VariableAccessUtils.isComparisonWithVariable(condition,
-                localVariable)) {
+        if (!VariableAccessUtils.isVariableCompared(variable, condition)) {
             return false;
         }
         final PsiStatement update = forStatement.getUpdate();
-        return VariableAccessUtils.isIncrementOfVariable(update, localVariable);
+        return VariableAccessUtils.isVariableIncrementOrDecremented(variable,
+                update);
     }
 }

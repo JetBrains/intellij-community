@@ -15,9 +15,11 @@
  */
 package com.siyeh.ipp.psiutils;
 
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,37 +30,37 @@ import java.util.Set;
 
 public class ComparisonUtils{
 
-    private static final Set<String> comparisons =
-            new HashSet<String>(6);
-    private static final Map<String, String> flippedComparisons =
-            new HashMap<String, String>(6);
-    private static final Map<String, String> negatedComparisons =
-            new HashMap<String, String>(6);
+    private static final Set<IElementType> comparisons =
+            new HashSet<IElementType>(6);
+    private static final Map<IElementType, String> flippedComparisons =
+            new HashMap<IElementType, String>(6);
+    private static final Map<IElementType, String> negatedComparisons =
+            new HashMap<IElementType, String>(6);
 
     private ComparisonUtils(){
     }
 
     static {
-        comparisons.add("==");
-        comparisons.add("!=");
-        comparisons.add(">");
-        comparisons.add("<");
-        comparisons.add(">=");
-        comparisons.add("<=");
+        comparisons.add(JavaTokenType.EQEQ);
+        comparisons.add(JavaTokenType.NE);
+        comparisons.add(JavaTokenType.GT);
+        comparisons.add(JavaTokenType.LT);
+        comparisons.add(JavaTokenType.GE);
+        comparisons.add(JavaTokenType.LE);
 
-        flippedComparisons.put("==", "==");
-        flippedComparisons.put("!=", "!=");
-        flippedComparisons.put(">", "<");
-        flippedComparisons.put("<", ">");
-        flippedComparisons.put(">=", "<=");
-        flippedComparisons.put("<=", ">=");
+        flippedComparisons.put(JavaTokenType.EQEQ, "==");
+        flippedComparisons.put(JavaTokenType.NE, "!=");
+        flippedComparisons.put(JavaTokenType.GT, "<");
+        flippedComparisons.put(JavaTokenType.LT, ">");
+        flippedComparisons.put(JavaTokenType.GE, "<=");
+        flippedComparisons.put(JavaTokenType.LE, ">=");
 
-        negatedComparisons.put("==", "!=");
-        negatedComparisons.put("!=", "==");
-        negatedComparisons.put(">", "<=");
-        negatedComparisons.put("<", ">=");
-        negatedComparisons.put(">=", "<");
-        negatedComparisons.put("<=", ">");
+        negatedComparisons.put(JavaTokenType.EQEQ, "!=");
+        negatedComparisons.put(JavaTokenType.NE, "==");
+        negatedComparisons.put(JavaTokenType.GT, "<=");
+        negatedComparisons.put(JavaTokenType.LT, ">=");
+        negatedComparisons.put(JavaTokenType.GE, "<");
+        negatedComparisons.put(JavaTokenType.LE, ">");
     }
 
     public static boolean isComparison(@Nullable PsiExpression expression){
@@ -67,22 +69,29 @@ public class ComparisonUtils{
         }
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression) expression;
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        return isComparison(sign);
+        final IElementType tokenType = binaryExpression.getOperationTokenType();
+        return isComparison(tokenType);
     }
 
-    public static boolean isComparison(@NotNull PsiJavaToken sign) {
-        final String text = sign.getText();
-        return comparisons.contains(text);
+    public static boolean isComparison(@NotNull IElementType tokenType){
+        return comparisons.contains(tokenType);
     }
 
     public static String getFlippedComparison(@NotNull PsiJavaToken sign){
-        final String text = sign.getText();
+        final IElementType text = sign.getTokenType();
+        return getFlippedComparison(text);
+    }
+
+    public static String getFlippedComparison(IElementType text){
         return flippedComparisons.get(text);
     }
 
     public static String getNegatedComparison(@NotNull PsiJavaToken sign){
-        final String text = sign.getText();
-        return negatedComparisons.get(text);
+        final IElementType tokenType = sign.getTokenType();
+        return getNegatedComparison(tokenType);
+    }
+
+    public static String getNegatedComparison(IElementType tokenType){
+        return negatedComparisons.get(tokenType);
     }
 }
