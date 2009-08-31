@@ -15,13 +15,11 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals;
 
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * @author ilyas
  */
-public interface GrLiteral extends GrExpression {
-
-  @Nullable Object getValue();
+public interface GrLiteral extends GrExpression, PsiLiteral {
 }

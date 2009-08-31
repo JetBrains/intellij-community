@@ -15,14 +15,17 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
+import com.intellij.psi.impl.ConstantExpressionEvaluator;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiConstantEvaluationHelper;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-public class GroovyConstantExpressionEvaluator {
+public class GroovyConstantExpressionEvaluator implements ConstantExpressionEvaluator {
 
   @Nullable
   public static Object evaluate(@Nullable GrExpression expression) {
@@ -32,4 +35,13 @@ public class GroovyConstantExpressionEvaluator {
     return null;
   }
 
+  public Object computeConstantExpression(PsiElement expression, boolean throwExceptionOnOverflow) {
+    return evaluate((GrExpression)expression);
+  }
+
+  public Object computeExpression(PsiElement expression,
+                                  boolean throwExceptionOnOverflow,
+                                  @Nullable PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
+    return evaluate((GrExpression)expression);
+  }
 }
