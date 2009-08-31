@@ -325,22 +325,17 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     LOG.assertTrue(occurrences.length > 0);
     GrStatement anchorElement = (GrStatement)GroovyRefactoringUtil.calculatePositionToInsertBefore(tempContainer, selectedExpr, occurrences, replaceAllOccurrences);
     LOG.assertTrue(anchorElement != null);
-    PsiElement realContainer;
-    if (anchorElement.equals(tempContainer)) {
-      realContainer = tempContainer.getParent();
-    } else {
-      realContainer = tempContainer;
-    }
+    PsiElement realContainer = anchorElement.getParent();
 
     assert GroovyRefactoringUtil.isAppropriateContainerForIntroduceVariable(realContainer);
 
-    if (!GroovyRefactoringUtil.isLoopOrForkStatement(realContainer)) {
+    if (!(realContainer instanceof GrLoopStatement)) {
       if (realContainer instanceof GrStatementOwner) {
         GrStatementOwner block = (GrStatementOwner) realContainer;
         varDecl = (GrVariableDeclaration) block.addStatementBefore(varDecl, (GrStatement) anchorElement);
       }
     } else {
-      GrStatement tempStatement = ((GrStatement) anchorElement);
+      GrStatement tempStatement = anchorElement;
       // To replace branch body correctly
       boolean inThenIfBranch = realContainer instanceof GrIfStatement &&
           anchorElement.equals(((GrIfStatement) realContainer).getThenBranch());
@@ -401,8 +396,8 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
                                            @NotNull PsiElement context,
                                            @NotNull GrVariableDeclaration definition) throws IncorrectOperationException {
     if (context.equals(expr.getParent()) &&
-        !GroovyRefactoringUtil.isLoopOrForkStatement(context)) {
-      definition = (GrVariableDeclaration) expr.replaceWithStatement(definition);
+        !(context instanceof GrLoopStatement) && !(context instanceof GrClosableBlock)) {
+      definition = expr.replaceWithStatement(definition);
       if (expr.equals(selectedExpr)) {
         refreshPositionMarker(definition);
       }

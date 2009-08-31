@@ -26,8 +26,8 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -55,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueSta
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -84,18 +85,19 @@ public abstract class GroovyRefactoringUtil {
   @Nullable
   public static PsiElement getEnclosingContainer(PsiElement place) {
     PsiElement parent = place.getParent();
-    while (parent != null &&
-        !(parent instanceof GrDeclarationHolder) &&
-        !isLoopOrForkStatement(parent)) {
+    while (true) {
+      if (parent == null) {
+        return null;
+      }
+      if (parent instanceof GrDeclarationHolder && !(parent instanceof GrClosableBlock && parent.getParent() instanceof GrString)) {
+        return parent;
+      }
+      if (parent instanceof GrLoopStatement) {
+        return parent;
+      }
+
       parent = parent.getParent();
     }
-    return parent;
-  }
-
-  public static boolean isLoopOrForkStatement(PsiElement elem) {
-    return elem instanceof GrForStatement ||
-        elem instanceof GrWhileStatement ||
-        elem instanceof GrIfStatement;
   }
 
   @Nullable
@@ -142,9 +144,9 @@ public abstract class GroovyRefactoringUtil {
       }
     };
 
-    if (isLoopOrForkStatement(scope)) {
+    if (scope instanceof GrLoopStatement) {
       PsiElement son = expr;
-      while (son.getParent() != null && !isLoopOrForkStatement(son.getParent())) {
+      while (son.getParent() != null && !(son.getParent() instanceof GrLoopStatement)) {
         son = son.getParent();
       }
       assert scope.equals(son.getParent());
@@ -196,8 +198,7 @@ public abstract class GroovyRefactoringUtil {
     return tempContainer instanceof GrOpenBlock ||
         tempContainer instanceof GrClosableBlock ||
         tempContainer instanceof GroovyFileBase ||
-        tempContainer instanceof GrCaseSection ||
-        isLoopOrForkStatement(tempContainer);
+        tempContainer instanceof GrCaseSection || tempContainer instanceof GrLoopStatement;
   }
 
   /**
