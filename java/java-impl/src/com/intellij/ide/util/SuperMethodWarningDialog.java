@@ -1,4 +1,3 @@
-
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;

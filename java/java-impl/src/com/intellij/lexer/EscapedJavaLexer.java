@@ -1,4 +1,3 @@
-
 package com.intellij.lexer;
 
 import com.intellij.pom.java.LanguageLevel;

@@ -29,7 +29,7 @@
  * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
  *
  */
-package com.intellij.projectView;
+package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
