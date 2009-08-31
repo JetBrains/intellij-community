@@ -19,7 +19,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
@@ -29,12 +28,9 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigur
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
-import com.intellij.util.Chunk;
-import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.GraphGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -191,24 +187,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     for (ModuleEditor moduleEditor : myModuleEditors) {
       models.put(moduleEditor.getModule(), moduleEditor.getModifiableRootModel());
     }
-    return createGraphGenerator(models);
-  }
-
-  private static GraphGenerator<ModifiableRootModel> createGraphGenerator(final Map<Module, ModifiableRootModel> models) {
-    return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<ModifiableRootModel>() {
-      public Collection<ModifiableRootModel> getNodes() {
-        return models.values();
-      }
-
-      public Iterator<ModifiableRootModel> getIn(final ModifiableRootModel model) {
-        final Module[] modules = model.getModuleDependencies();
-        final List<ModifiableRootModel> dependencies = new ArrayList<ModifiableRootModel>();
-        for (Module module : modules) {
-          dependencies.add(models.get(module));
-        }
-        return dependencies.iterator();
-      }
-    }));
+    return ModuleCompilerUtil.createGraphGenerator(models);
   }
 
   public void apply() throws ConfigurationException {
@@ -499,46 +478,4 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
   }
 
-  /**
-   * @return pair of modules which become circular after adding dependency, or null if all remains OK
-   */
-  @Nullable
-  public static Pair<Module, Module> addingDependencyFormsCircularity(final Module currentModule, Module toDependOn) {
-    assert currentModule != toDependOn;
-    // whatsa lotsa of @&#^%$ codes-a!
-
-    final Map<Module, ModifiableRootModel> models = new LinkedHashMap<Module, ModifiableRootModel>();
-    Project project = currentModule.getProject();
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-      models.put(module, model);
-    }
-    ModifiableRootModel currentModel = models.get(currentModule);
-    ModifiableRootModel toDependOnModel = models.get(toDependOn);
-    Collection<Chunk<ModifiableRootModel>> nodesBefore = buildChunks(models);
-    for (Chunk<ModifiableRootModel> chunk : nodesBefore) {
-      if (chunk.containsNode(toDependOnModel) && chunk.containsNode(currentModel)) return null; // they circular already
-    }
-
-    try {
-      currentModel.addModuleOrderEntry(toDependOn);
-      Collection<Chunk<ModifiableRootModel>> nodesAfter = buildChunks(models);
-      for (Chunk<ModifiableRootModel> chunk : nodesAfter) {
-        if (chunk.containsNode(toDependOnModel) && chunk.containsNode(currentModel)) {
-          Iterator<ModifiableRootModel> nodes = chunk.getNodes().iterator();
-          return Pair.create(nodes.next().getModule(), nodes.next().getModule());
-        }
-      }
-    }
-    finally {
-      for (ModifiableRootModel model : models.values()) {
-        model.dispose();
-      }
-    }
-    return null;
-  }
-
-  private static Collection<Chunk<ModifiableRootModel>> buildChunks(final Map<Module, ModifiableRootModel> models) {
-    return ModuleCompilerUtil.toChunkGraph(createGraphGenerator(models)).getNodes();
-  }
 }

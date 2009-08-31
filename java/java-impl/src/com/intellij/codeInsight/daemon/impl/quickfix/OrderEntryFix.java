@@ -18,7 +18,6 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -28,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.compiler.ModuleCompilerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -190,7 +190,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
                 }
               }
             };
-            final Pair<Module, Module> circularModules = ModulesConfigurator.addingDependencyFormsCircularity(currentModule, classModule);
+            final Pair<Module, Module> circularModules = ModuleCompilerUtil.addingDependencyFormsCircularity(currentModule, classModule);
             if (circularModules == null) {
               doit.run();
             }
