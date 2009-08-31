@@ -1,19 +1,18 @@
 package com.intellij.ide.structureView.impl.java;
 
-import com.intellij.ide.util.treeView.smartTree.*;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
 import gnu.trove.THashMap;
-
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Collections;
-
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
 
 public class PropertiesGrouper implements Grouper{
   @NonNls public static final String ID = "SHOW_PROPERTIES";
