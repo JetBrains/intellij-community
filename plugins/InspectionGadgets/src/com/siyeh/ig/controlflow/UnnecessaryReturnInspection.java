@@ -17,7 +17,6 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -69,7 +68,7 @@ public class UnnecessaryReturnInspection extends BaseInspection {
         @Override public void visitReturnStatement(
                 @NotNull PsiReturnStatement statement) {
             super.visitReturnStatement(statement);
-          if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+          if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
             return;
           }
             final PsiMethod method =

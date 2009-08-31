@@ -543,7 +543,7 @@ public class TooBroadScopeInspection extends BaseInspection
                     return;
                 }
             }
-            if (insertionPoint != null && PsiUtil.isInJspFile(insertionPoint))
+            if (insertionPoint != null && JspPsiUtil.isInJspFile(insertionPoint))
             {
                 PsiElement elementBefore = insertionPoint.getPrevSibling();
                 elementBefore = PsiTreeUtil.skipSiblingsBackward(elementBefore,

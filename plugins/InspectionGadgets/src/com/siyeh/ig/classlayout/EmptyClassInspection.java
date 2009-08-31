@@ -16,7 +16,6 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -72,7 +71,7 @@ public class EmptyClassInspection extends BaseInspection {
         @Override public void visitClass(@NotNull PsiClass aClass) {
             //don't call super, to prevent drilldown
 
-            if (PsiUtil.isInJspFile(aClass.getContainingFile())) {
+            if (JspPsiUtil.isInJspFile(aClass.getContainingFile())) {
                 return;
             }
             if (aClass.isInterface() || aClass.isEnum() ||

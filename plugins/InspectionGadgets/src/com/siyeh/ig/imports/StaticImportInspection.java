@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -273,7 +272,7 @@ public class StaticImportInspection extends BaseInspection {
             if(!(aClass.getParent() instanceof PsiJavaFile)){
                 return;
             }
-          if (PsiUtil.isInJspFile(aClass.getContainingFile())) {
+          if (JspPsiUtil.isInJspFile(aClass.getContainingFile())) {
             return;
           }
             final PsiJavaFile file = (PsiJavaFile) aClass.getParent();

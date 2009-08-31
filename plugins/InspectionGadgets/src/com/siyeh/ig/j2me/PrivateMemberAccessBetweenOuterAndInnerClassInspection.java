@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -96,7 +95,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
 
         @Override public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression expression){
-            if (PsiUtil.isInJspFile(expression)) {
+            if (JspPsiUtil.isInJspFile(expression)) {
                 // disable for jsp files IDEADEV-12957
                 return;
             }

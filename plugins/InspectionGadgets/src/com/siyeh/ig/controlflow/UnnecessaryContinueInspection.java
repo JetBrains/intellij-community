@@ -16,7 +16,6 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -56,7 +55,7 @@ public class UnnecessaryContinueInspection extends BaseInspection {
 
         @Override public void visitContinueStatement(
                 @NotNull PsiContinueStatement statement) {
-          if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+          if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
             return;
           }
             final PsiStatement continuedStatement =

@@ -18,7 +18,6 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -116,7 +115,7 @@ public class EmptyCatchBlockInspection extends BaseInspection {
 
         @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
-            if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+            if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
                 return;
             }
             if (m_ignoreTestCases &&

@@ -16,7 +16,6 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -67,7 +66,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
         @Override public void visitDoWhileStatement(
                 @NotNull PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
-            if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+            if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
                 return;
             }
             final PsiStatement body = statement.getBody();
@@ -79,7 +78,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
 
         @Override public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
-            if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+            if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
                 return;
             }
             final PsiStatement body = statement.getBody();
@@ -91,7 +90,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
 
         @Override public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
-            if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+            if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
                 return;
             }
             final PsiStatement body = statement.getBody();
@@ -104,7 +103,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
         @Override public void visitForeachStatement(
                 @NotNull PsiForeachStatement statement) {
             super.visitForeachStatement(statement);
-            if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+            if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
                 return;
             }
             final PsiStatement body = statement.getBody();
@@ -116,7 +115,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
 
         @Override public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
-            if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+            if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
                 return;
             }
             final PsiStatement thenBranch = statement.getThenBranch();

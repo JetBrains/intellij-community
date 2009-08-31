@@ -16,7 +16,6 @@
 package com.siyeh.ig.imports;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -53,7 +52,7 @@ public class SamePackageImportInspection extends BaseInspection {
             if(!(aClass.getParent() instanceof PsiJavaFile)){
                 return;
             }
-            if (PsiUtil.isInJspFile(aClass.getContainingFile())) {
+            if (JspPsiUtil.isInJspFile(aClass.getContainingFile())) {
                 return;
             }
             final PsiJavaFile file = (PsiJavaFile) aClass.getParent();

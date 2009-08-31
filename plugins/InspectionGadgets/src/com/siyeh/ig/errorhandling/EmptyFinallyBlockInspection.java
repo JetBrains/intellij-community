@@ -15,11 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.PsiTryStatement;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -52,7 +48,7 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
 
         @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
-            if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+            if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
                 return;
             }
             final PsiCodeBlock finallyBlock = statement.getFinallyBlock();

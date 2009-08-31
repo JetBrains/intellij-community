@@ -17,7 +17,6 @@
 package com.siyeh.ig.security;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -45,7 +44,7 @@ public class DesignForExtensionInspection extends BaseInspection {
             extends BaseInspectionVisitor {
 
         @Override public void visitMethod(PsiMethod method) {
-            if (PsiUtil.isInJspFile(method)) {
+            if (JspPsiUtil.isInJspFile(method)) {
                 // IDEADEV-25538
                 return;
             }

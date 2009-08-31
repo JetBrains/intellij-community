@@ -16,7 +16,6 @@
 package com.siyeh.ig.imports;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -62,7 +61,7 @@ public class RedundantImportInspection extends BaseInspection {
                 return;
             }
             final PsiJavaFile javaFile = (PsiJavaFile)file;
-            if (PsiUtil.isInJspFile(file)) {
+            if (JspPsiUtil.isInJspFile(file)) {
                 return;
             }
             final PsiImportList importList = javaFile.getImportList();

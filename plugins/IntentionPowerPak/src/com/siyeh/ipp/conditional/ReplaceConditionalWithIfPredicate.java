@@ -17,7 +17,6 @@ package com.siyeh.ipp.conditional;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ReplaceConditionalWithIfPredicate implements PsiElementPredicate{
@@ -28,7 +27,7 @@ class ReplaceConditionalWithIfPredicate implements PsiElementPredicate{
         }
         final PsiConditionalExpression conditionalExpression =
                 (PsiConditionalExpression) element;
-        if (PsiUtil.isInJspFile(element)) {
+        if (JspPsiUtil.isInJspFile(element)) {
             final PsiExpression thenExpression =
                     conditionalExpression.getThenExpression();
             if (thenExpression == null) {

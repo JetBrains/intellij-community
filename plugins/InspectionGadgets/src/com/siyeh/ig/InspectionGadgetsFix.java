@@ -30,7 +30,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -154,10 +153,10 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
                 CodeStyleManager.getInstance(project);
         final JavaCodeStyleManager javaStyleManager =
                 JavaCodeStyleManager.getInstance(project);
-        if (PsiUtil.isInJspFile(statement)) {
+        if (JspPsiUtil.isInJspFile(statement)) {
             final PsiDocumentManager documentManager =
                     PsiDocumentManager.getInstance(project);
-            final JspFile file = PsiUtil.getJspFile(statement);
+            final JspFile file = JspPsiUtil.getJspFile(statement);
             final Document document = documentManager.getDocument(file);
             if (document == null) {
                 return;
