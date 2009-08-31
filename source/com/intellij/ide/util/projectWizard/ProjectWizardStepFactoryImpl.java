@@ -5,8 +5,11 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.util.newProjectWizard.SourcePathsStep;
+import com.intellij.ide.util.newProjectWizard.SupportForFrameworksStep;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NonNls;
 
@@ -81,6 +84,14 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
         return com.intellij.ide.util.newProjectWizard.AddModuleWizard.getNewProjectJdk(wizardContext) == null;
       }
     };
+  }
+
+  @Override
+  public ModuleWizardStep createSupportForFrameworksStep(WizardContext wizardContext, ModuleBuilder moduleBuilder) {
+    if (!FrameworkSupportUtil.getProviders(moduleBuilder).isEmpty()) {
+      return new SupportForFrameworksStep(moduleBuilder, LibrariesContainerFactory.createContainer(wizardContext.getProject()));
+    }
+    return null;
   }
 
 }
