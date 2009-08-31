@@ -672,10 +672,15 @@ public class GroovyAnnotator implements Annotator {
       PsiElement refNameElement = refExpr.getReferenceNameElement();
       PsiElement elt = refNameElement == null ? refExpr : refNameElement;
       Annotation annotation = holder.createInfoAnnotation(elt, null);
-      if (refExpr.getQualifierExpression() == null) {
+      final GrExpression qualifier = refExpr.getQualifierExpression();
+      if (qualifier == null) {
         if (!(parent instanceof GrCall)) {
           registerCreateClassByTypeFix(refExpr, annotation);
           registerAddImportFixes(refExpr, annotation);
+        }
+      } else {
+        if (qualifier.getType() == null) {
+          return;
         }
       }
       registerReferenceFixes(refExpr, annotation);
