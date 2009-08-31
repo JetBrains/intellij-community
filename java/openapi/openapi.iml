@@ -29,7 +29,6 @@
     <orderEntry type="module" module-name="resources_eng" exported="" />
     <orderEntry type="library" exported="" name="NanoXML" level="project" />
     <orderEntry type="library" exported="" name="microba" level="project" />
-    <orderEntry type="module" module-name="jsp-openapi" exported="" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="module" module-name="xml-openapi" exported="" />
     <orderEntry type="module" module-name="platform-api" exported="" />

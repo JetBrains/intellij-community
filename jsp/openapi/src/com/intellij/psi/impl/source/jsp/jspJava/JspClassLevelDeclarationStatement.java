@@ -15,10 +15,10 @@
  */
 package com.intellij.psi.impl.source.jsp.jspJava;
 
-import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiClassLevelDeclarationStatement;
 
 /**
  * @author peter
  */
-public interface JspClassLevelDeclarationStatement extends PsiStatement {
+public interface JspClassLevelDeclarationStatement extends PsiClassLevelDeclarationStatement {
 }

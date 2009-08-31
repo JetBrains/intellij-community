@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.infos.MethodCandidateInfo.ApplicabilityLevel;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
@@ -197,13 +196,13 @@ public final class PsiUtil extends PsiUtilBase {
       if (parent instanceof PsiField && ((PsiField) parent).getInitializer() == element) {
         blockSoFar = element;
       }
-      if (parent instanceof JspClassLevelDeclarationStatement) {
+      if (parent instanceof PsiClassLevelDeclarationStatement) {
         parent = parent.getParent();
       }
       if (element instanceof PsiClass && !isLocalOrAnonymousClass((PsiClass)element)) {
         break;
       }
-      if (JspPsiUtil.isInJspFile(element) && element instanceof PsiFile) {
+      if (PsiUtilBase.getTemplateLanguageFile(element) != null && element instanceof PsiFile) {
         return element;
       }
       if (element == scope) break;
@@ -246,7 +245,7 @@ public final class PsiUtil extends PsiUtilBase {
       final PsiClass aClass = ((PsiField) variable).getContainingClass();
       while (context != null && context.getParent() != aClass) {
         context = context.getParent();
-        if (context instanceof JspClassLevelDeclarationStatement) return null;
+        if (context instanceof PsiClassLevelDeclarationStatement) return null;
       }
       return context instanceof PsiMethod ?
              ((PsiMethod) context).getBody() :
