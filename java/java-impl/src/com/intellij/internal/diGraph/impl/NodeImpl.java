@@ -1,13 +1,10 @@
 package com.intellij.internal.diGraph.impl;
 
-import com.intellij.internal.diGraph.Node;
-import com.intellij.internal.diGraph.Edge;
-import com.intellij.internal.diGraph.analyzer.MarkedNode;
 import com.intellij.internal.diGraph.analyzer.Mark;
+import com.intellij.internal.diGraph.analyzer.MarkedNode;
 
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.HashSet;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,17 +14,17 @@ import java.util.HashSet;
  * To change this template use Options | File Templates.
  */
 public class NodeImpl implements MarkedNode {
-  LinkedList myIn;
-  LinkedList myOut;
+  LinkedList<EdgeImpl> myIn;
+  LinkedList<EdgeImpl> myOut;
 
   public NodeImpl() {
-    myIn = new LinkedList();
-    myOut = new LinkedList();
+    myIn = new LinkedList<EdgeImpl>();
+    myOut = new LinkedList<EdgeImpl>();
   }
 
   public NodeImpl(EdgeImpl[] in, EdgeImpl[] out) {
-    myIn = new LinkedList();
-    myOut = new LinkedList();
+    myIn = new LinkedList<EdgeImpl>();
+    myOut = new LinkedList<EdgeImpl>();
 
     for (int i = 0; i < (in == null ? 0 : in.length); i++) {
       myIn.add(in[i]);
@@ -40,19 +37,19 @@ public class NodeImpl implements MarkedNode {
     }
   }
 
-  public NodeImpl(LinkedList in, LinkedList out) {
-    myIn = in == null ? new LinkedList() : in;
-    myOut = out == null ? new LinkedList() : out;
+  public NodeImpl(LinkedList<EdgeImpl> in, LinkedList<EdgeImpl> out) {
+    myIn = in == null ? new LinkedList<EdgeImpl>() : in;
+    myOut = out == null ? new LinkedList<EdgeImpl>() : out;
 
-    for (Iterator i = myIn.iterator(); i.hasNext();) ((EdgeImpl) i.next()).myEnd = this;
-    for (Iterator i = myOut.iterator(); i.hasNext();) ((EdgeImpl) i.next()).myBeg = this;
+    for (EdgeImpl aMyIn : myIn) aMyIn.myEnd = this;
+    for (EdgeImpl aMyOut : myOut) aMyOut.myBeg = this;
   }
 
-  public Iterator inIterator() {
+  public Iterator<EdgeImpl> inIterator() {
     return myIn.iterator();
   }
 
-  public Iterator outIterator() {
+  public Iterator<EdgeImpl> outIterator() {
     return myOut.iterator();
   }
 

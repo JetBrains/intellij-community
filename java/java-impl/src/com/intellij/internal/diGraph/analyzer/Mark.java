@@ -1,7 +1,5 @@
 package com.intellij.internal.diGraph.analyzer;
 
-import com.intellij.internal.typeDeducer.Type;
-
 /**
  * Created by IntelliJ IDEA.
  * User: db

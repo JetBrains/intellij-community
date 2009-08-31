@@ -13,7 +13,6 @@ import java.util.LinkedList;
  * To change this template use Options | File Templates.
  */
 public class GlobalAnalyzer {
-
   private static boolean stepOneEnd(MarkedNode currNode, LinkedList worklist, OneEndFunctor functor) {
     boolean result = false;
 
