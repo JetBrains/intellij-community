@@ -10,6 +10,7 @@
     <coverageRunner implementation="com.intellij.coverage.EmmaCoverageRunner"/>
     <!--<coverageRunner implementation="com.intellij.coverage.CoberturaCoverageRunner"/>-->
     <coverageRunner implementation="com.intellij.coverage.IDEACoverageRunner"/>
+    <projectViewNodeDecorator implementation="com.intellij.coverage.CoverageProjectViewNodeDecorator"/>
   </extensions>
   <extensions defaultExtensionNs="com.theoryinpractice.testng">
     <listener implementation="org.testng.IDEACoverageListener"/>
