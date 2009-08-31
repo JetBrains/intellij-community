@@ -1,11 +1,9 @@
 package com.intellij.conversion.impl;
 
 import com.intellij.conversion.*;
-import com.intellij.ide.impl.convert.QualifiedJDomException;
 import com.intellij.openapi.components.StorageScheme;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -32,7 +30,7 @@ public class ConversionRunner {
     myWorkspaceConverter = converter.createWorkspaceFileConverter();
   }
 
-  public boolean isConversionNeeded() throws IOException, QualifiedJDomException {
+  public boolean isConversionNeeded() throws CannotConvertException {
     myProcessProjectFile = myContext.getStorageScheme() == StorageScheme.DEFAULT && myProjectFileConverter != null
                            && myProjectFileConverter.isConversionNeeded(myContext.getProjectSettings());
 
@@ -49,7 +47,14 @@ public class ConversionRunner {
     return myProcessProjectFile || myProcessWorkspaceFile || !myModulesFilesToProcess.isEmpty();
   }
 
-  public void preProcess() throws IOException, QualifiedJDomException {
+  public boolean isModuleConversionNeeded(File moduleFile) throws CannotConvertException {
+    if (myModuleFileConverter != null && myModuleFileConverter.isConversionNeeded(myContext.getModuleSettings(moduleFile))) {
+      return true;
+    }
+    return false;
+  }
+
+  public void preProcess() throws CannotConvertException {
     if (myProcessProjectFile) {
       myProjectFileConverter.preProcess(myContext.getProjectSettings());
     }
@@ -75,7 +80,7 @@ public class ConversionRunner {
     return affectedFiles;
   }
 
-  public void process() throws IOException, QualifiedJDomException {
+  public void process() throws CannotConvertException {
     if (myProcessProjectFile) {
       myProjectFileConverter.process(myContext.getProjectSettings());
     }
@@ -89,7 +94,7 @@ public class ConversionRunner {
     }
   }
 
-  public void postProcess() throws IOException, QualifiedJDomException {
+  public void postProcess() throws CannotConvertException {
     if (myProcessProjectFile) {
       myProjectFileConverter.postProcess(myContext.getProjectSettings());
     }
@@ -115,5 +120,12 @@ public class ConversionRunner {
       }
     }
     return result;
+  }
+
+  public void convertModule(File moduleFile) throws CannotConvertException {
+    final ModuleSettings settings = myContext.getModuleSettings(moduleFile);
+    myModuleFileConverter.preProcess(settings);
+    myModuleFileConverter.process(settings);
+    myModuleFileConverter.postProcess(settings);
   }
 }

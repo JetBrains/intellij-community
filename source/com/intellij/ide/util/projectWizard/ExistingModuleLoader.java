@@ -18,11 +18,8 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.CommonBundle;
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.application.options.PathMacrosImpl;
+import com.intellij.conversion.ConversionService;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.impl.convert.CompositeConverterFactory;
-import com.intellij.ide.impl.convert.ModuleConverter;
-import com.intellij.ide.impl.convert.ProjectConversionUtil;
-import com.intellij.ide.impl.convert.ProjectFileVersion;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -36,7 +33,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.SystemProperties;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -81,11 +77,11 @@ public class ExistingModuleLoader extends ModuleBuilder {
     final File file = new File(getModuleFilePath());
     if (file.exists()) {
       try {
-        final Document document = JDOMUtil.loadDocument(file);
-        final Element root = document.getRootElement();
-        if (!convertModule(current, file, document, root)) {
+        if (!ConversionService.getInstance().convertModule(dest, file)) {
           return false;
         }
+        final Document document = JDOMUtil.loadDocument(file);
+        final Element root = document.getRootElement();
         final Set<String> usedMacros = PathMacrosCollector.getMacroNames(root);
         final Set<String> definedMacros = PathMacros.getInstance().getAllMacroNames();
         usedMacros.remove("$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$");
@@ -114,32 +110,6 @@ public class ExistingModuleLoader extends ModuleBuilder {
     } else {
       Messages.showErrorDialog(current, IdeBundle.message("title.module.file.does.not.exist"), CommonBundle.message("title.error"));
       return false;
-    }
-    return true;
-  }
-
-  private static boolean convertModule(final Project current, final File file, final Document document, final Element root) throws IOException {
-    final ModuleConverter converter = CompositeConverterFactory.getCompositeModuleConverter();
-    if (converter != null && converter.isConversionNeeded(root)) {
-      if (current != null && !ProjectFileVersion.getInstance(current).isConverted()) {
-        ProjectFileVersion.getInstance(current).showNotAllowedMessage();
-        return false;
-      }
-      final int res = Messages.showYesNoDialog(current, IdeBundle.message("message.module.file.has.an.older.format.do.you.want.to.convert.it"),
-                                               IdeBundle.message("dialog.title.convert.module"), Messages.getQuestionIcon());
-      if (res != 0) {
-        return false;
-      }
-      if (!file.canWrite()) {
-        Messages.showErrorDialog(current, IdeBundle.message("error.message.cannot.modify.file.0", file.getAbsolutePath()),
-                                 IdeBundle.message("dialog.title.convert.module"));
-        return false;
-      }
-      final File backupFile = ProjectConversionUtil.backupFile(file);
-      converter.convertModuleRoot(file.getName(), root);
-      JDOMUtil.writeDocument(document, file, SystemProperties.getLineSeparator());
-      Messages.showInfoMessage(current, IdeBundle.message("message.your.module.was.succesfully.converted.br.old.version.was.saved.to.0", backupFile.getAbsolutePath()),
-                               IdeBundle.message("dialog.title.convert.module"));
     }
     return true;
   }

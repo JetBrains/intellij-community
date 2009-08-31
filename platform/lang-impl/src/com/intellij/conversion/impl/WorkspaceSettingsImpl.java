@@ -1,14 +1,13 @@
 package com.intellij.conversion.impl;
 
+import com.intellij.conversion.CannotConvertException;
 import com.intellij.conversion.WorkspaceSettings;
 import com.intellij.ide.impl.convert.JDomConvertingUtil;
-import com.intellij.ide.impl.convert.QualifiedJDomException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -19,7 +18,7 @@ public class WorkspaceSettingsImpl extends ComponentManagerSettingsImpl implemen
   @NonNls public static final String RUN_MANAGER_COMPONENT_NAME = "RunManager";
   @NonNls public static final String CONFIGURATION_ELEMENT = "configuration";
 
-  public WorkspaceSettingsImpl(File workspaceFile) throws IOException, QualifiedJDomException {
+  public WorkspaceSettingsImpl(File workspaceFile) throws CannotConvertException {
     super(workspaceFile);
   }
 

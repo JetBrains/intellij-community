@@ -1,8 +1,8 @@
 package com.intellij.conversion.impl;
 
+import com.intellij.conversion.CannotConvertException;
 import com.intellij.conversion.ComponentManagerSettings;
 import com.intellij.ide.impl.convert.JDomConvertingUtil;
-import com.intellij.ide.impl.convert.QualifiedJDomException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.SystemProperties;
 import org.jdom.Document;
@@ -16,12 +16,12 @@ import java.io.IOException;
 /**
  * @author nik
  */
-public class ComponentManagerSettingsImpl implements ComponentManagerSettings {
+public abstract class ComponentManagerSettingsImpl implements ComponentManagerSettings {
   protected final Document myDocument;
   protected final File myFile;
   protected final Element myRootElement;
 
-  public ComponentManagerSettingsImpl(File file) throws IOException, QualifiedJDomException {
+  protected ComponentManagerSettingsImpl(File file) throws CannotConvertException {
     myDocument = JDomConvertingUtil.loadDocument(file);
     myFile = file;
     myRootElement = myDocument.getRootElement();

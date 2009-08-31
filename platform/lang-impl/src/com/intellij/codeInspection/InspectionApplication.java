@@ -4,10 +4,10 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.conversion.ConversionListener;
+import com.intellij.conversion.ConversionService;
 import com.intellij.ide.impl.PatchProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.impl.convert.ProjectConversionUtil;
-import com.intellij.conversion.ConversionListener;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -96,7 +96,7 @@ public class InspectionApplication {
       }
 
       logMessage(1, InspectionsBundle.message("inspection.application.opening.project"));
-      if (!ProjectConversionUtil.convertSilently(myProjectPath, createConversionListener())) {
+      if (!ConversionService.getInstance().convertSilently(myProjectPath, createConversionListener())) {
         if (myErrorCodeRequired) System.exit(1);
         return;
       }

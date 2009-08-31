@@ -1,13 +1,13 @@
 package com.intellij.conversion.impl;
 
 import com.intellij.application.options.PathMacrosImpl;
+import com.intellij.conversion.CannotConvertException;
 import com.intellij.conversion.ModuleSettings;
 import com.intellij.conversion.ProjectSettings;
 import com.intellij.conversion.WorkspaceSettings;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.convert.JDomConvertingUtil;
-import com.intellij.ide.impl.convert.QualifiedJDomException;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
@@ -36,7 +36,7 @@ public class ConversionContextImpl {
   private List<File> myNonExistingModuleFiles = new ArrayList<File>();
   private Map<File, ModuleSettingsImpl> myModuleSettingsMap = new HashMap<File, ModuleSettingsImpl>();
 
-  public ConversionContextImpl(String projectPath) throws IOException, QualifiedJDomException {
+  public ConversionContextImpl(String projectPath) throws CannotConvertException {
     myProjectFile = new File(projectPath);
 
     File modulesFile;
@@ -91,14 +91,14 @@ public class ConversionContextImpl {
     return myProjectFile;
   }
 
-  public ProjectSettings getProjectSettings() throws IOException, QualifiedJDomException {
+  public ProjectSettings getProjectSettings() throws CannotConvertException {
     if (myProjectSettings == null) {
       myProjectSettings = new ProjectSettingsImpl(myProjectFile);
     }
     return myProjectSettings;
   }
 
-  public WorkspaceSettings getWorkspaceSettings() throws IOException, QualifiedJDomException {
+  public WorkspaceSettings getWorkspaceSettings() throws CannotConvertException {
     if (myWorkspaceSettings == null) {
       myWorkspaceSettings = new WorkspaceSettingsImpl(myWorkspaceFile);
     }
@@ -106,7 +106,7 @@ public class ConversionContextImpl {
   }
 
 
-  public ModuleSettings getModuleSettings(File moduleFile) throws QualifiedJDomException, IOException {
+  public ModuleSettings getModuleSettings(File moduleFile) throws CannotConvertException {
     ModuleSettingsImpl settings = myModuleSettingsMap.get(moduleFile);
     if (settings == null) {
       settings = new ModuleSettingsImpl(moduleFile);

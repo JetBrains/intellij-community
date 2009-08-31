@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.conversion.CannotConvertException;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -33,12 +34,15 @@ public class JDomConvertingUtil {
   private JDomConvertingUtil() {
   }
 
-  public static Document loadDocument(File file) throws QualifiedJDomException, IOException {
+  public static Document loadDocument(File file) throws CannotConvertException {
     try {
       return JDOMUtil.loadDocument(file);
     }
     catch (JDOMException e) {
       throw new QualifiedJDomException(e, file.getAbsolutePath());
+    }
+    catch (IOException e) {
+      throw new CannotConvertException(e.getMessage(), e);
     }
   }
 

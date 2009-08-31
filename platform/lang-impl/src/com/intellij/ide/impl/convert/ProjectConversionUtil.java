@@ -5,6 +5,7 @@
 package com.intellij.ide.impl.convert;
 
 import com.intellij.conversion.ConversionListener;
+import com.intellij.conversion.CannotConvertException;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.convert.ui.OldProjectConversionWizard;
 import com.intellij.openapi.diagnostic.Logger;
@@ -69,7 +70,13 @@ public class ProjectConversionUtil {
   }
 
   private static Element loadProjectFileRoot(String path) throws QualifiedJDomException, IOException {
-    final Document document = JDomConvertingUtil.loadDocument(new File(FileUtil.toSystemDependentName(path)));
+    final Document document;
+    try {
+      document = JDomConvertingUtil.loadDocument(new File(FileUtil.toSystemDependentName(path)));
+    }
+    catch (CannotConvertException e) {
+      throw new AssertionError();
+    }
     return document.getRootElement();
   }
 
