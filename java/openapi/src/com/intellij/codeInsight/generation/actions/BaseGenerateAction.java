@@ -21,7 +21,6 @@ import com.intellij.codeInsight.actions.CodeInsightAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +41,7 @@ public class BaseGenerateAction extends CodeInsightAction {
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
     final PsiClass target = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-    return target instanceof JspClass ? null : target;
+    return target instanceof SyntheticElement ? null : target;
   }
 
   protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
