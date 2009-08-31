@@ -41,7 +41,7 @@ abstract class CompilationEvent {
       @Override
       protected void process(OutputParser.Callback callback) {
         showProgressFor("Writing ", uri, callback);
-        File file = new File(uri);
+        File file = new File(uri.getPath());
         callback.fileGenerated(new FileObject(file,bytes));
       }
       @Override
@@ -63,7 +63,7 @@ abstract class CompilationEvent {
         else {
           URI uri = fileObject.toUri();
           if (uri.getScheme().equals("file")) {
-            url = VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(new File(uri).getPath()));
+            url = VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(uri.getPath()));
           }
           else {
             url = fileObject.toString();
