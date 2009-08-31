@@ -13,9 +13,8 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="extensions" />
-    <orderEntry type="module" module-name="Annotations" />
-    <orderEntry type="module" module-name="psi-extapi" />
     <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="lang-impl" />
   </component>
   <component name="copyright">
     <Base>
