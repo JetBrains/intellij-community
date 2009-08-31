@@ -16,9 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.psi.javadoc.*;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.jsp.JspImplicitVariable;
-import com.intellij.psi.templateLanguages.OuterLanguageElement;
 
 @SuppressWarnings({"JavaDoc"})
 public abstract class JavaElementVisitor extends PsiElementVisitor {
@@ -319,16 +316,8 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitFile(file);
   }
 
-  public void visitJspFile(JspFile file){
-    visitFile(file);
-  }
-
   public void visitImplicitVariable(ImplicitVariable variable) {
     visitLocalVariable(variable);
-  }
-
-  public void visitJspImplicitVariable(JspImplicitVariable variable){
-    visitImplicitVariable(variable);
   }
 
   public void visitDocToken(PsiDocToken token) {

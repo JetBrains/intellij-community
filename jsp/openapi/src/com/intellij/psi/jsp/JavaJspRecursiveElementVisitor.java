@@ -1,11 +1,14 @@
-/*
- * @author max
- */
-package com.intellij.psi;
+package com.intellij.psi.jsp;
 
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.Stack;
 
-public abstract class JavaRecursiveElementVisitor extends JavaElementVisitor {
+/**
+ * @author yole
+ */
+public abstract class JavaJspRecursiveElementVisitor extends JavaJspElementVisitor {
   // This stack thing is intended to prevent exponential child traversing due to visitReferenceExpression calls both visitRefElement
   // and visitExpression.
   private final Stack<PsiReferenceExpression> myRefExprsInVisit = new Stack<PsiReferenceExpression>();
@@ -49,5 +52,12 @@ public abstract class JavaRecursiveElementVisitor extends JavaElementVisitor {
     finally {
       myRefExprsInVisit.pop();
     }
+  }
+
+  //override in order to visit each root directly in visitor
+  @Override public void visitJspFile(JspFile file) {
+    super.visitJspFile(file);
+    visitClass(file.getJavaClass());
+    visitFile(file.getBaseLanguageRoot());
   }
 }

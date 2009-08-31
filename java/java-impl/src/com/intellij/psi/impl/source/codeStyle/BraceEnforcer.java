@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.jsp.JavaJspRecursiveElementVisitor;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author max
  */
-public class BraceEnforcer extends JavaRecursiveElementVisitor {
+public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.BraceEnforcer");
 
   private final AbstractPostFormatProcessor myPostProcessor;
