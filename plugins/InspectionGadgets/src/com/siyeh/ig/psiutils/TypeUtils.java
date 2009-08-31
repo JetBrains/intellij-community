@@ -70,13 +70,7 @@ public class TypeUtils {
         }
         final PsiClassType classType = (PsiClassType) type;
         final PsiClass aClass = classType.resolve();
-        if (aClass == null) {
-            return false;
-        }
-        if (ClassUtils.isSubclass(aClass, typeName)) {
-            return true;
-        }
-        return false;
+        return aClass != null && ClassUtils.isSubclass(aClass, typeName);
     }
 
     public static String expressionHasTypeOrSubtype(
