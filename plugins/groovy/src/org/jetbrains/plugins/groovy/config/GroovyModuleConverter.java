@@ -15,10 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.config;
 
+import com.intellij.conversion.CannotConvertException;
+import com.intellij.conversion.ConversionProcessor;
+import com.intellij.conversion.ModuleSettings;
 import com.intellij.facet.FacetManagerImpl;
-import com.intellij.ide.impl.convert.ModuleConverter;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.module.impl.ModuleImpl;
 import org.jdom.Element;
 
 import java.util.List;
@@ -26,67 +27,62 @@ import java.util.List;
 /**
  * @author peter
  */
-public class GroovyModuleConverter implements ModuleConverter{
-  public boolean isConversionNeeded(Element root) {
-    if ("GRAILS_MODULE".equals(root.getAttributeValue(ModuleImpl.ELEMENT_TYPE))) {
+public class GroovyModuleConverter extends ConversionProcessor<ModuleSettings> {
+  @Override
+  public boolean isConversionNeeded(ModuleSettings moduleSettings) {
+    if ("GRAILS_MODULE".equals(moduleSettings.getModuleType())) {
       return true;
     }
 
-    for (final Element facetManagerElement : getChildren(root, "component")) {
-      if (FacetManagerImpl.COMPONENT_NAME.equals(facetManagerElement.getAttributeValue("name"))) {
-        for (final Element facetElement : getChildren(facetManagerElement, FacetManagerImpl.FACET_ELEMENT)) {
-          final String facetType = facetElement.getAttributeValue(FacetManagerImpl.TYPE_ATTRIBUTE);
-          if ("Grails".equals(facetType)) {
-            return true;
-          }
-          if ("Groovy".equals(facetType)) {
-            for (Object o1 : getChildren(facetElement, FacetManagerImpl.FACET_ELEMENT)) {
-              final String innerFacetType = ((Element) o1).getAttributeValue(FacetManagerImpl.TYPE_ATTRIBUTE);
-              if ("Gant_Groovy".equals(innerFacetType) || "Gant_Grails".equals(innerFacetType)) {
-                return true;
-              }
-            }
-          }
+    if (!moduleSettings.getFacetElements("Grails").isEmpty()) {
+      return true;
+    }
+
+    for (Element facetElement : moduleSettings.getFacetElements("Groovy")) {
+      for (Element child : getChildren(facetElement, FacetManagerImpl.FACET_ELEMENT)) {
+        final String innerFacetType = child.getAttributeValue(FacetManagerImpl.TYPE_ATTRIBUTE);
+        if ("Gant_Groovy".equals(innerFacetType) || "Gant_Grails".equals(innerFacetType)) {
+          return true;
         }
       }
     }
-
     return false;
   }
 
-  public void convertModuleRoot(String fileName, Element root) {
+  @Override
+  public void process(ModuleSettings moduleSettings) throws CannotConvertException {
     boolean wasGrails = false;
-    if ("GRAILS_MODULE".equals(root.getAttributeValue(ModuleImpl.ELEMENT_TYPE))) {
-      root.setAttribute(ModuleImpl.ELEMENT_TYPE, StdModuleTypes.JAVA.getId());
+    if ("GRAILS_MODULE".equals(moduleSettings.getModuleType())) {
+      moduleSettings.setModuleType(StdModuleTypes.JAVA.getId());
       wasGrails = true;
     }
 
-    for (final Element facetManagerElement : getChildren(root, "component")) {
-      if (FacetManagerImpl.COMPONENT_NAME.equals(facetManagerElement.getAttributeValue("name"))) {
-        boolean hasGroovyFacet = false;
-        final Element[] facetElements = getChildren(facetManagerElement, FacetManagerImpl.FACET_ELEMENT);
-        for (Element facetElement : facetElements) {
-          final String facetType = facetElement.getAttributeValue(FacetManagerImpl.TYPE_ATTRIBUTE);
-          if ("Groovy".equals(facetType)) {
-            hasGroovyFacet = true;
-          }
-          else if ("Grails".equals(facetType)) {
-            facetElement.detach();
-          }
-          for (Element innerFacet : getChildren(facetElement, FacetManagerImpl.FACET_ELEMENT)) {
-            final String innerFacetType = innerFacet.getAttributeValue(FacetManagerImpl.TYPE_ATTRIBUTE);
-            if ("Gant_Groovy".equals(innerFacetType) || "Gant_Grails".equals(innerFacetType)) {
-              innerFacet.detach();
-            }
-          }
-        }
-        if (wasGrails && !hasGroovyFacet) {
-          final Element newFacet = new Element("facet");
-          newFacet.setAttribute(FacetManagerImpl.TYPE_ATTRIBUTE, "Groovy");
-          newFacet.setAttribute(FacetManagerImpl.NAME_ATTRIBUTE, "Groovy");
-          facetManagerElement.addContent(newFacet);
+    final Element facetManagerElement = moduleSettings.getComponentElement(FacetManagerImpl.COMPONENT_NAME);
+    if (facetManagerElement == null) return;
+
+    boolean hasGroovyFacet = false;
+    final Element[] facetElements = getChildren(facetManagerElement, FacetManagerImpl.FACET_ELEMENT);
+    for (Element facetElement : facetElements) {
+      final String facetType = facetElement.getAttributeValue(FacetManagerImpl.TYPE_ATTRIBUTE);
+      if ("Groovy".equals(facetType)) {
+        hasGroovyFacet = true;
+      }
+      else if ("Grails".equals(facetType)) {
+        facetElement.detach();
+      }
+      for (Element innerFacet : getChildren(facetElement, FacetManagerImpl.FACET_ELEMENT)) {
+        final String innerFacetType = innerFacet.getAttributeValue(FacetManagerImpl.TYPE_ATTRIBUTE);
+        if ("Gant_Groovy".equals(innerFacetType) || "Gant_Grails".equals(innerFacetType)) {
+          innerFacet.detach();
         }
       }
+    }
+
+    if (wasGrails && !hasGroovyFacet) {
+      final Element newFacet = new Element("facet");
+      newFacet.setAttribute(FacetManagerImpl.TYPE_ATTRIBUTE, "Groovy");
+      newFacet.setAttribute(FacetManagerImpl.NAME_ATTRIBUTE, "Groovy");
+      facetManagerElement.addContent(newFacet);
     }
   }
 

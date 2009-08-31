@@ -179,7 +179,7 @@
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.ConstructorReferencesSearcher"/>
     <antCustomCompiler implementation="org.jetbrains.plugins.groovy.ant.GroovyAntCustomCompilerProvider"/>
 
-    <module.converter implementation="org.jetbrains.plugins.groovy.config.GroovyModuleConverter"/>
+    <project.converterProvider implementation="org.jetbrains.plugins.groovy.config.GroovyModuleConverterProvider"/>
 
     <iconProvider implementation="org.jetbrains.plugins.groovy.GroovyIconProvider"/>
 
