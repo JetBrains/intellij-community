@@ -125,7 +125,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     LOG.info(getClass().getName() + ".setUp()");
 
-    myTempDirPath = ourOriginalTempDir + getTestName(true) + "/";
+    myTempDirPath = ourOriginalTempDir + "/"+getTestName(true) + "/";
     setTmpDir(myTempDirPath);
     new File(myTempDirPath).mkdir();
 
