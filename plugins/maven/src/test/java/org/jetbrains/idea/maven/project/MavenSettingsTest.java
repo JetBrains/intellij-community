@@ -65,7 +65,7 @@ public class MavenSettingsTest extends MavenTestCase {
         assertFalse(each.isModified());
       }
       finally {
-        s.disposeUIResources(); //prevent memory leaks
+        each.disposeUIResources(); //prevent memory leaks
       }
     }
   }
