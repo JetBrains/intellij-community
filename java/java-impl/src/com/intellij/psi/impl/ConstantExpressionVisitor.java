@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstantEvaluationHelper.AuxEvaluator {
+  
   private final StringInterner myInterner = new StringInterner();
 
   private Set<PsiVariable> myVisitedVars;
@@ -564,7 +565,7 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
   }
 
   public Object computeExpression(final PsiExpression expression, final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
-    return ConstantExpressionEvaluator.computeConstantExpression(expression, myVisitedVars, myThrowExceptionOnOverflow, auxEvaluator);
+    return JavaConstantExpressionEvaluator.computeConstantExpression(expression, myVisitedVars, myThrowExceptionOnOverflow, auxEvaluator);
   }
 
   public ConcurrentMap<PsiElement, Object> getCacheMap(final boolean overflow) {

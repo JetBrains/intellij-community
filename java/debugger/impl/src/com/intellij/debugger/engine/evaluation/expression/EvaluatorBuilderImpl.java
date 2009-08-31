@@ -14,7 +14,7 @@ import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.ConstantExpressionEvaluator;
+import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -268,7 +268,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
             PsiElementFactory elementFactory = JavaPsiFacade.getInstance(localVariable.getProject()).getElementFactory();
             try {
               PsiExpression initialValue = elementFactory.createExpressionFromText(PsiTypesUtil.getDefaultValueOfType(type), null);
-              Object value = ConstantExpressionEvaluator.computeConstantExpression(initialValue, true);
+              Object value = JavaConstantExpressionEvaluator.computeConstantExpression(initialValue, true);
               myCurrentFragmentEvaluator.setInitialValue(localVariable.getName(), value);
             }
             catch (IncorrectOperationException e) {

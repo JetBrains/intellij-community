@@ -10,7 +10,7 @@ import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.ConstantExpressionEvaluator;
+import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +60,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
         if (args.length == 1 + count && parent.getParent() instanceof PsiMethodCallExpression) {
           boolean ok = true;
           for (int i = 1; i < count + 1; i++) {
-            Object value = ConstantExpressionEvaluator.computeConstantExpression(args[i], false);
+            Object value = JavaConstantExpressionEvaluator.computeConstantExpression(args[i], false);
             if (value == null) {
               if (!(args[i] instanceof PsiReferenceExpression)) {
                 ok = false;
@@ -99,7 +99,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
       if (args.length == 1 + count) {
         String text = getI18nMessage((PsiLiteralExpression)args[0]);
         for (int i = 1; i < count + 1; i++) {
-          Object value = ConstantExpressionEvaluator.computeConstantExpression(args[i], false);
+          Object value = JavaConstantExpressionEvaluator.computeConstantExpression(args[i], false);
           if (value == null) {
             if (args[i] instanceof PsiReferenceExpression) {
               value = "{" + args[i].getText() + "}";

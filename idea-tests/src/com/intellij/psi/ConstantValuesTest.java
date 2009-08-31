@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.impl.ConstantExpressionEvaluator;
+import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
@@ -265,7 +265,7 @@ public class ConstantValuesTest extends PsiTestCase{
 
     PsiExpression expression = file.getClasses()[0].findFieldByName("s", false).getInitializer();
 
-    Object o = ConstantExpressionEvaluator.computeConstantExpression(expression, false);
+    Object o = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
 
     assertEquals("", o);
   }

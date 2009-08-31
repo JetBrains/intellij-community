@@ -6,7 +6,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.impl.ConstantExpressionEvaluator;
+import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 
@@ -55,7 +55,7 @@ public class ValueDocTagInfo implements JavadocTagInfo {
             return JavaErrorMessages.message("javadoc.value.static.field.required");
           }
           if (field.getInitializer() == null ||
-              ConstantExpressionEvaluator.computeConstantExpression(field.getInitializer(), false) == null) {
+              JavaConstantExpressionEvaluator.computeConstantExpression(field.getInitializer(), false) == null) {
             return JavaErrorMessages.message("javadoc.value.field.with.initializer.required");
           }
         }

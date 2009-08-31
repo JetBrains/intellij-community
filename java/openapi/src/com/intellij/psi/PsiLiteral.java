@@ -17,16 +17,13 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Represents a Java literal expression.
- */
-public interface PsiLiteralExpression extends PsiExpression, PsiLiteral {
+public interface PsiLiteral extends PsiAnnotationMemberValue {
   /**
-   * Returns the description of the error which occurred when parsing the value of the
-   * literal expression.
+   * Returns the value of the literal expression (an Integer for an integer constant, a String
+   * for a string literal, and so on).
    *
-   * @return the error description, or null if no error occurred when parsing.
+   * @return the value of the expression, or null if the parsing of the literal failed.
    */
   @Nullable
-  String getParsingError();
+  Object getValue();
 }

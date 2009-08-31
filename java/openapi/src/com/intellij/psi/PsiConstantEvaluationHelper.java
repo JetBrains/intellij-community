@@ -33,7 +33,7 @@ public abstract class PsiConstantEvaluationHelper {
    * @return the result of the evaluation, or null if the expression is not a constant expression.
    */
   @Nullable
-  public Object computeConstantExpression(PsiExpression expression) {
+  public Object computeConstantExpression(PsiElement expression) {
     return computeConstantExpression(expression, false);
   }
 
@@ -46,7 +46,7 @@ public abstract class PsiConstantEvaluationHelper {
    * @param throwExceptionOnOverflow if true, an exception is thrown if an overflow is detected during the evaluation.
    * @return the result of the evaluation, or null if the expression is not a constant expression.
    */
-  public abstract Object computeConstantExpression(PsiExpression expression, boolean throwExceptionOnOverflow);
+  public abstract Object computeConstantExpression(PsiElement expression, boolean throwExceptionOnOverflow);
 
   public abstract Object computeExpression(PsiExpression expression, boolean throwExceptionOnOverflow,
                                            @Nullable final AuxEvaluator auxEvaluator);

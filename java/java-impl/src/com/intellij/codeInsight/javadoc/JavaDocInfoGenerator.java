@@ -12,7 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.ConstantExpressionEvaluator;
+import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -948,7 +948,7 @@ public class JavaDocInfoGenerator {
     Object value = null;
     if (valueField != null) {
       PsiExpression initializer = valueField.getInitializer();
-      value = ConstantExpressionEvaluator.computeConstantExpression(initializer, false);
+      value = JavaConstantExpressionEvaluator.computeConstantExpression(initializer, false);
     }
 
     if (value != null) {

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
-public class ConstantExpressionEvaluator extends JavaRecursiveElementWalkingVisitor {
+public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalkingVisitor {
   private final Factory<ConcurrentMap<PsiElement, Object>> myMapFactory;
   private final Project myProject;
 
@@ -24,7 +24,7 @@ public class ConstantExpressionEvaluator extends JavaRecursiveElementWalkingVisi
   private static final Object NO_VALUE = new Object();
   private final ConstantExpressionVisitor myConstantExpressionVisitor;
 
-  private ConstantExpressionEvaluator(Set<PsiVariable> visitedVars, final boolean throwExceptionOnOverflow, final Project project, final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
+  private JavaConstantExpressionEvaluator(Set<PsiVariable> visitedVars, final boolean throwExceptionOnOverflow, final Project project, final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
     myMapFactory = auxEvaluator != null ? new Factory<ConcurrentMap<PsiElement, Object>>() {
       public ConcurrentMap<PsiElement, Object> create() {
         return auxEvaluator.getCacheMap(throwExceptionOnOverflow);
@@ -93,7 +93,7 @@ public class ConstantExpressionEvaluator extends JavaRecursiveElementWalkingVisi
                                                  final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
     if (expression == null) return null;
 
-    ConstantExpressionEvaluator evaluator = new ConstantExpressionEvaluator(visitedVars, throwExceptionOnOverflow, expression.getProject(), auxEvaluator);
+    JavaConstantExpressionEvaluator evaluator = new JavaConstantExpressionEvaluator(visitedVars, throwExceptionOnOverflow, expression.getProject(), auxEvaluator);
 
     if (expression instanceof PsiCompiledElement) {
       // in case of compiled elements we are not allowed to use PSI walking

@@ -10,7 +10,7 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.ConstantExpressionEvaluator;
+import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,7 +88,7 @@ public class DfaValueFactory {
       result = getNotNullFactory().create(psiExpression.getType());
     }
     else {
-      final Object value = ConstantExpressionEvaluator.computeConstantExpression(psiExpression, false);
+      final Object value = JavaConstantExpressionEvaluator.computeConstantExpression(psiExpression, false);
       PsiType type = psiExpression.getType();
       if (value != null && type != null) {
         if (value instanceof String) {

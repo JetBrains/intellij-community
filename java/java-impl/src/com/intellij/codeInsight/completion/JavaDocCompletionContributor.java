@@ -24,7 +24,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.TrueFilter;
-import com.intellij.psi.impl.ConstantExpressionEvaluator;
+import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -75,7 +75,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
               if (!(o instanceof PsiField)) continue;
               PsiField field = (PsiField) o;
               if (!(field.hasModifierProperty(PsiModifier.STATIC) && field.getInitializer() != null &&
-                  ConstantExpressionEvaluator.computeConstantExpression(field.getInitializer(), false) != null)) continue;
+                  JavaConstantExpressionEvaluator.computeConstantExpression(field.getInitializer(), false) != null)) continue;
             }
 
             item.putUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR, Boolean.TRUE);
