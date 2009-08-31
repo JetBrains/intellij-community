@@ -88,7 +88,7 @@ public class GroovyParserDefinition implements ParserDefinition {
     else if (left.getElementType() == MODIFIERS && right.getElementType() == MODIFIERS) {
       return MUST;
     }
-    if (left.getElementType() == mSEMI) {
+    if (left.getElementType() == mSEMI || left.getElementType() == mSL_COMMENT) {
       return MUST_LINE_BREAK;
     }    
 
