@@ -24,7 +24,7 @@ public class TestOutgoingAction extends AnAction {
     if (roots == null) return;
     for (VirtualFile root : roots) {
       try {
-        final List list = provider.getOutgoingChanges(root);
+        final List list = provider.getOutgoingChanges(root, true);
         System.out.println("list.size() = " + list.size());
       }
       catch (VcsException e1) {
