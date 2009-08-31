@@ -4,7 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
-import org.jetbrains.idea.maven.runner.SoutMavenConsole;
+import org.jetbrains.idea.maven.execution.SoutMavenConsole;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.util.List;

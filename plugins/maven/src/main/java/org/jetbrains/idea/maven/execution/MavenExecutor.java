@@ -16,7 +16,7 @@
  */
 
 
-package org.jetbrains.idea.maven.runner;
+package org.jetbrains.idea.maven.execution;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;

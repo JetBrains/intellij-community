@@ -15,7 +15,7 @@
  * =========================================================================
  */
 
-package org.jetbrains.idea.maven.runner;
+package org.jetbrains.idea.maven.execution;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;

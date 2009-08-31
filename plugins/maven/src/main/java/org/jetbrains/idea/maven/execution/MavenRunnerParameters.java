@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.runner;
+package org.jetbrains.idea.maven.execution;
 
 import org.jetbrains.idea.maven.utils.Path;
 

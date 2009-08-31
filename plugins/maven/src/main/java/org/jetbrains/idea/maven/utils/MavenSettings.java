@@ -8,9 +8,9 @@ import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.idea.maven.indices.MavenIndicesConfigurable;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.runner.MavenRunnerConfigurable;
-import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
-import org.jetbrains.idea.maven.runner.MavenRunner;
+import org.jetbrains.idea.maven.execution.MavenRunnerConfigurable;
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
+import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import javax.swing.*;

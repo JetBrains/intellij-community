@@ -2,10 +2,10 @@ package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import gnu.trove.THashMap;
-import org.jetbrains.idea.maven.runner.MavenExecutor;
-import org.jetbrains.idea.maven.runner.MavenExternalExecutor;
-import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
-import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
+import org.jetbrains.idea.maven.execution.MavenExecutor;
+import org.jetbrains.idea.maven.execution.MavenExternalExecutor;
+import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 
 import java.io.File;
 import java.util.Arrays;

@@ -1,7 +1,7 @@
 package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import org.jetbrains.idea.maven.runner.MavenRunner;
+import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.utils.actions.MavenToggleAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 

@@ -657,6 +657,13 @@ public class MavenProject {
     return false;
   }
 
+  public boolean isOptionalDependency(MavenId id) {
+    for (MavenArtifact each : getDependencies()) {
+      if (each.getMavenId().equals(id) && each.isOptional()) return true;
+    }
+    return false;
+  }
+
   public void addDependency(MavenArtifact dependency) {
     State state = myState;
     List<MavenArtifact> dependenciesCopy = new ArrayList<MavenArtifact>(state.myDependencies);

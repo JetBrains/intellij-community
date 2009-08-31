@@ -2,8 +2,8 @@ package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import org.jetbrains.idea.maven.runner.MavenRunConfigurationType;
-import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
+import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
+import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;

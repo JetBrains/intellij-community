@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.runner;
+package org.jetbrains.idea.maven.execution;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;

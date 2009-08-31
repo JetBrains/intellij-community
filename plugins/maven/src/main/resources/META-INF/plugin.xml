@@ -30,7 +30,8 @@
     <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.tasks.MavenBeforeRunTasksProvider"/>
     <keymapExtension implementation="org.jetbrains.idea.maven.tasks.MavenKeymapExtension"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <configurationType implementation="org.jetbrains.idea.maven.runner.MavenRunConfigurationType"/>
+    <configurationType implementation="org.jetbrains.idea.maven.execution.MavenRunConfigurationType"/>
+    <javaClasspathPolicyExtender implementation="org.jetbrains.idea.maven.execution.MavenJavaClasspathPolicyExtender"/>
 
     <compiler implementation="org.jetbrains.idea.maven.compiler.MavenResourceCompiler" order="last"/>
 
@@ -97,7 +98,7 @@
       <implementation-class>org.jetbrains.idea.maven.project.MavenProjectsManager</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.runner.MavenRunner</implementation-class>
+      <implementation-class>org.jetbrains.idea.maven.execution.MavenRunner</implementation-class>
       <option name="workspace" value="true"/>
     </component>
     <component>

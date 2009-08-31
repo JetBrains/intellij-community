@@ -8,7 +8,7 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.component.repository.ComponentDescriptor;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenId;
-import org.jetbrains.idea.maven.runner.SoutMavenConsole;
+import org.jetbrains.idea.maven.execution.SoutMavenConsole;
 
 import java.io.File;
 import java.util.Arrays;
