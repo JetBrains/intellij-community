@@ -12,7 +12,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="psi-extapi" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module-library">
       <library>
