@@ -248,8 +248,7 @@ public class VariableAccessUtils{
                 return false;
             }
             final PsiExpression operand = prefixExpression.getOperand();
-            return evaluatesToVariable(operand,
-                    variable);
+            return evaluatesToVariable(operand, variable);
         } else if (expression instanceof PsiPostfixExpression) {
             final PsiPostfixExpression postfixExpression =
                     (PsiPostfixExpression)expression;
@@ -259,8 +258,7 @@ public class VariableAccessUtils{
                 return false;
             }
             final PsiExpression operand = postfixExpression.getOperand();
-            return evaluatesToVariable(operand,
-                    variable);
+            return evaluatesToVariable(operand, variable);
         } else if (expression instanceof PsiAssignmentExpression) {
             final PsiAssignmentExpression assignmentExpression =
                     (PsiAssignmentExpression) expression;
