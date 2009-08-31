@@ -122,20 +122,40 @@ public class DynamicRegexReplaceableByCompiledPatternInspection
             final PsiElement field = aClass.add(newField);
 
             final StringBuilder expressionText = new StringBuilder("PATTERN.");
-            expressionText.append(methodExpression.getReferenceName());
-            expressionText.append('(');
+            final String methodName = methodExpression.getReferenceName();
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if (qualifier != null) {
-                expressionText.append(qualifier.getText());
+            final String qualifierText;
+            if (qualifier == null) {
+                qualifierText = "this";
             } else {
-                expressionText.append("this");
+                qualifierText = qualifier.getText();
             }
-            for (int i = 1; i < expressionsLength; i++) {
-                expressionText.append(',');
-                expressionText.append(expressions[i].getText());
+            if ("split".equals(methodName)) {
+                expressionText.append(methodName);
+                expressionText.append('(');
+                expressionText.append(qualifierText);
+                for (int i = 1; i < expressionsLength; i++) {
+                    expressionText.append(',');
+                    expressionText.append(expressions[i].getText());
+                }
+                expressionText.append(')');
+            } else {
+                expressionText.append("matcher(");
+                expressionText.append(qualifierText);
+                expressionText.append(").");
+                expressionText.append(methodName);
+                expressionText.append('(');
+                if (expressionsLength > 1) {
+                    expressionText.append(expressions[1].getText());
+                    for (int i = 2; i < expressionsLength; i++) {
+                        expressionText.append(',');
+                        expressionText.append(expressions[i].getText());
+                    }
+                }
+                expressionText.append(')');
             }
-            expressionText.append(')');
+
             final PsiExpression newExpression =
                     factory.createExpressionFromText(expressionText.toString(),
                             element);
@@ -145,11 +165,27 @@ public class DynamicRegexReplaceableByCompiledPatternInspection
             newMethodCallExpression =
                     CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(
                             newMethodCallExpression);
-            final PsiReferenceExpression reference = (PsiReferenceExpression)
-                    newMethodCallExpression.getMethodExpression()
-                            .getQualifierExpression();
+            final PsiReferenceExpression reference =
+                    getReference(newMethodCallExpression);
             HighlightUtils.showRenameTemplate(aClass, (PsiNameIdentifierOwner) field,
                     reference);
+        }
+
+        private static PsiReferenceExpression getReference(
+                PsiMethodCallExpression newMethodCallExpression) {
+            final PsiReferenceExpression methodExpression =
+                    newMethodCallExpression.getMethodExpression();
+            final PsiExpression qualifierExpression =
+                    methodExpression.getQualifierExpression();
+            if (qualifierExpression instanceof PsiMethodCallExpression) {
+                final PsiMethodCallExpression methodCallExpression =
+                        (PsiMethodCallExpression) qualifierExpression;
+                return getReference(methodCallExpression);
+            }
+            if (!(qualifierExpression instanceof PsiReferenceExpression)) {
+                return null;
+            }
+            return (PsiReferenceExpression) qualifierExpression;
         }
     }
 
