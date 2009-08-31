@@ -37,7 +37,7 @@ enhanceClass(className:"java.lang.String") {
   method name:"zzz", type:"void", params:[:]
 }
 """);
-    GroovyDslFileIndex.activateFile(file.virtualFile)
+    GroovyDslFileIndex.activateUntilModification(file.virtualFile)
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy")
   }
 

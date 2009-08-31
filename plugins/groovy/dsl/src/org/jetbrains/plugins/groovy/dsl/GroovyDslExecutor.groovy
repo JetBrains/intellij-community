@@ -41,14 +41,7 @@ public class GroovyDslExecutor {
 
     mc.initialize()
     script.metaClass = mc
-    try {
-      script.run()
-    }
-    catch (Throwable e) {
-      println e
-      // Suppress all exceptions!
-      // todo provide diagnostics
-    }
+    script.run()
   }
 
   def runEnhancer(code, delegate) {

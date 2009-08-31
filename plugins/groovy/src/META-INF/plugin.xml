@@ -81,6 +81,7 @@
     <syntaxHighlighter key="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter"/>
 
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GroovyAnnotator"/>
+    <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.dsl.GroovyDslAnnotator"/>
 
     <lang.psiStructureViewFactory language="Groovy"
                                   implementationClass="org.jetbrains.plugins.groovy.structure.GroovyStructureViewFactory"/>

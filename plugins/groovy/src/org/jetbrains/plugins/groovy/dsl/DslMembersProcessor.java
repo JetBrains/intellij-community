@@ -21,8 +21,8 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
 
 /**
  * @author peter
@@ -34,7 +34,7 @@ public class DslMembersProcessor implements NonCodeMembersProcessor {
       if (psiClass != null && !(psiClass instanceof GroovyScriptClass)) {
         final String qname = psiClass.getQualifiedName();
         if (qname != null) {
-          return GroovyDslFileIndex.processExecutors(place, new GroovyClassDescriptor(psiClass), processor);
+          return GroovyDslFileIndex.processExecutors(psiClass.getProject(), new GroovyClassDescriptor(psiClass), processor);
         }
       }
     }

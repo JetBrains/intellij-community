@@ -58,10 +58,12 @@ import java.util.Set;
  */
 public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl");
+  private static final Object lock = new Object();
 
   private GroovyScriptClass myScriptClass;
   private static final String SYNTHETIC_PARAMETER_NAME = "args";
   private GrParameter mySyntheticArgsParameter = null;
+
 
   private PsiElement myContext;
 
@@ -82,14 +84,14 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return findChildByClass(GrPackageDefinition.class);
   }
 
-  private synchronized GrParameter getSyntheticArgsParameter() {
+  private GrParameter getSyntheticArgsParameter() {
     if (mySyntheticArgsParameter == null) {
-      try {
-        mySyntheticArgsParameter =
-          GroovyPsiElementFactory.getInstance(getProject()).createParameter(SYNTHETIC_PARAMETER_NAME, "java.lang.String[]", this);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
+      final GrParameter candidate =
+        GroovyPsiElementFactory.getInstance(getProject()).createParameter(SYNTHETIC_PARAMETER_NAME, "java.lang.String[]", this);
+      synchronized (lock) {
+        if (mySyntheticArgsParameter == null) {
+          mySyntheticArgsParameter = candidate;
+        }
       }
     }
     return mySyntheticArgsParameter;
@@ -243,7 +245,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       return true;
     }
 
-    return GroovyDslFileIndex.processExecutors(place, new GroovyScriptDescriptor(this, scriptClass), processor);
+    return GroovyDslFileIndex.processExecutors(getProject(), new GroovyScriptDescriptor(this, scriptClass), processor);
   }
 
 
@@ -352,9 +354,16 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return false;
   }
 
-  public synchronized GroovyScriptClass getScriptClass() {
+  public GroovyScriptClass getScriptClass() {
     if (isScript()) {
-      if (myScriptClass == null) myScriptClass = new GroovyScriptClass(this);
+      if (myScriptClass == null) {
+        GroovyScriptClass candidate = new GroovyScriptClass(this);
+        synchronized (lock) {
+          if (myScriptClass == null) {
+            myScriptClass = candidate;
+          }
+        }
+      }
       return myScriptClass;
     }
     else {
@@ -408,11 +417,13 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
   }
 
-  public synchronized void clearCaches() {
+  public void clearCaches() {
     super.clearCaches();
 //    myScriptClass = null;
 //    myScriptClassInitialized = false;
-    mySyntheticArgsParameter = null;
+    synchronized (lock) {
+      mySyntheticArgsParameter = null;
+    }
   }
 
   public PsiElement getContext() {
