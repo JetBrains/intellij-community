@@ -19,9 +19,6 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="xml-openapi" />
-    <orderEntry type="module" module-name="UsageView" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="jam-support-openapi" />
   </component>
   <component name="copyright">
     <Base>
