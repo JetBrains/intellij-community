@@ -2,7 +2,7 @@ package com.intellij.lang.ant;
 
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
@@ -21,7 +21,7 @@ public class CustomTypesTest extends ParsingTestCase {
   }
 
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/ant/tests/data/psi/customTypes";
+    return PluginPathManager.getPluginHomePath("ant") + "/tests/data/psi/customTypes";
   }
 
   public void testAntCustomTask() throws Exception {

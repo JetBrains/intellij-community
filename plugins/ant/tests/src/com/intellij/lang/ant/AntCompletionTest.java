@@ -6,16 +6,13 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.TestLookupManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
-/**
- * @author zhzhot
- */
 public class AntCompletionTest extends LightCodeInsightTestCase {
 
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/ant/tests/data/psi/completion/";
+    return PluginPathManager.getPluginHomePath("ant") + "/tests/data/psi/completion/";
   }
 
   public void testSimpleProperty() throws Exception {

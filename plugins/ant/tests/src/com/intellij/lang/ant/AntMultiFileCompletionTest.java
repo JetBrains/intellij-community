@@ -10,7 +10,7 @@
  */
 package com.intellij.lang.ant;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
@@ -24,7 +24,7 @@ public class AntMultiFileCompletionTest extends TestCase {
   private CodeInsightTestFixture myFixture;
 
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/ant/tests/data/psi/completion/";
+    return PluginPathManager.getPluginHomePath("ant") + "/tests/data/psi/completion/";
   }
 
   public void testPropertyCompletion() throws Throwable {

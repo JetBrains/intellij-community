@@ -4,7 +4,7 @@
 
 package com.intellij.lang.ant;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.ParsingTestCase;
 
 public class AntParsingTest extends ParsingTestCase {
@@ -14,7 +14,7 @@ public class AntParsingTest extends ParsingTestCase {
   }
 
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/ant/tests/data";
+    return PluginPathManager.getPluginHomePath("ant") + "/tests/data";
   }
 
   public void testSingleProject() throws Exception {

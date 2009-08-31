@@ -6,7 +6,7 @@ import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.AntTask;
 import com.intellij.lang.ant.psi.impl.reference.AntPropertyReference;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -249,7 +249,7 @@ public class AntResolveTest extends ResolveTestCase {
   }
 
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/ant/tests/data/psi/resolve/";
+    return PluginPathManager.getPluginHomePath("ant") + "/tests/data/psi/resolve/";
   }
 
   private PsiReference configure() throws Exception {

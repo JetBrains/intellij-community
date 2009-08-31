@@ -2,7 +2,7 @@ package com.intellij.lang.ant;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -115,7 +115,7 @@ public class AntRenameTest extends LightCodeInsightTestCase {
   }
 
   protected String getTestDataPath() {
-    return PathManager.getHomePath().replace('\\', '/') + "/plugins/ant/tests/data/psi/rename/";
+    return PluginPathManager.getPluginHomePath("ant").replace('\\', '/') + "/tests/data/psi/rename/";
   }
 
   private void doTest() throws Exception {
