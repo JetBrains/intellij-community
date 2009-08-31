@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="jsp-openapi" />
+    <orderEntry type="module" module-name="jsp-spi" />
   </component>
   <component name="copyright">
     <Base>
