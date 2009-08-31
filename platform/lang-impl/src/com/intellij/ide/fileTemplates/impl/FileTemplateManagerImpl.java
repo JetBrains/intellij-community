@@ -21,8 +21,8 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.Function;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -875,11 +875,18 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     }
 
     public void addTemplate(@NotNull FileTemplate newTemplate) {
+      String newName = newTemplate.getName();
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        if (newName.endsWith("ForTest")) {
+          throw new RuntimeException("Do not register *ForTest templates in tests!");
+        }
+      }
+
       for (FileTemplate template : myTemplatesList) {
         if (template == newTemplate) {
           return;
         }
-        if (template.getName().compareToIgnoreCase(newTemplate.getName()) > 0) {
+        if (template.getName().compareToIgnoreCase(newName) > 0) {
           myTemplatesList.add(myTemplatesList.indexOf(template), newTemplate);
           return;
         }
