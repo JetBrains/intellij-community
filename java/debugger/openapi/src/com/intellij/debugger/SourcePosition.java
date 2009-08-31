@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -207,8 +206,8 @@ public abstract class SourcePosition implements Navigatable{
   public static SourcePosition createFromElement(PsiElement element) {
     final PsiElement navigationElement = element.getNavigationElement();
     final PsiFile psiFile;
-    if (PsiUtil.isInJspFile(navigationElement)) {
-      psiFile = PsiUtil.getJspFile(navigationElement);
+    if (JspPsiUtil.isInJspFile(navigationElement)) {
+      psiFile = JspPsiUtil.getJspFile(navigationElement);
     }
     else {
       psiFile = navigationElement.getContainingFile();

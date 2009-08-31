@@ -21,7 +21,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +38,7 @@ public class WrongPackageStatementInspection extends BaseJavaLocalInspectionTool
     // does not work in tests since CodeInsightTestCase copies file into temporary location
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     if (file instanceof PsiJavaFile) {
-      if (PsiUtil.isInJspFile(file)) return null;
+      if (JspPsiUtil.isInJspFile(file)) return null;
       PsiJavaFile javaFile = (PsiJavaFile)file;
       // highlight the first class in the file only
       PsiClass[] classes = javaFile.getClasses();

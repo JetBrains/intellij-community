@@ -64,7 +64,7 @@ public class CodeInsightUtil {
         break;
       }
       if (parent instanceof PsiCodeBlock) break;
-      if (PsiUtil.isInJspFile(parent) && parent instanceof PsiFile) break;
+      if (JspPsiUtil.isInJspFile(parent) && parent instanceof PsiFile) break;
       if (parent instanceof PsiCodeFragment) break;
       if (parent == null || parent instanceof PsiFile) return PsiElement.EMPTY_ARRAY;
       parent = parent.getParent();

@@ -97,7 +97,7 @@ public class LocalToFieldHandler {
         aClass = (PsiClass)parent;
         break;
       }
-      if (parent instanceof PsiFile && PsiUtil.isInJspFile(parent)) {
+      if (parent instanceof PsiFile && JspPsiUtil.isInJspFile(parent)) {
         String message = RefactoringBundle.message("error.not.supported.for.jsp", REFACTORING_NAME);
         CommonRefactoringUtil.showErrorHint(myProject, editor, message, REFACTORING_NAME, HelpID.LOCAL_TO_FIELD);
         return false;

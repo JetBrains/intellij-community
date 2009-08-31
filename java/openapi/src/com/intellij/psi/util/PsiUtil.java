@@ -25,7 +25,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.infos.MethodCandidateInfo.ApplicabilityLevel;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.LocalSearchScope;
@@ -204,17 +203,13 @@ public final class PsiUtil extends PsiUtilBase {
       if (element instanceof PsiClass && !isLocalOrAnonymousClass((PsiClass)element)) {
         break;
       }
-      if (isInJspFile(element) && element instanceof PsiFile) {
+      if (JspPsiUtil.isInJspFile(element) && element instanceof PsiFile) {
         return element;
       }
       if (element == scope) break;
       element = parent;
     }
     return blockSoFar;
-  }
-
-  public static boolean isInJspFile(@Nullable final PsiElement element) {
-    return getJspFile(element) != null;
   }
 
   public static boolean isLocalOrAnonymousClass(PsiClass psiClass) {
@@ -586,17 +581,6 @@ public final class PsiUtil extends PsiUtilBase {
     }
     else if (element instanceof PsiMethod) return ((PsiMethod)element).getReturnType();
     return null;
-  }
-
-  public static JspFile getJspFile(final PsiElement element) {
-    final PsiFile psiFile = getTemplateLanguageFile(element);
-    return psiFile instanceof JspFile ? (JspFile)psiFile : null;
-
-    /*final FileViewProvider provider = element.getContainingFile().getViewProvider();
-    PsiFile file = provider.getPsi(StdLanguages.JSP);
-    if (file instanceof JspFile) return (JspFile)file;
-    file = provider.getPsi(StdLanguages.JSPX);
-    return file instanceof JspFile ? (JspFile)file : null;*/
   }
 
   public static PsiType captureToplevelWildcards(final PsiType type, final PsiElement context) {

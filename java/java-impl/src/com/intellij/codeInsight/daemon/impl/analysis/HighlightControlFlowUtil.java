@@ -276,7 +276,7 @@ public class HighlightControlFlowUtil {
         scope = PsiTreeUtil.getParentOfType(scope, PsiCodeBlock.class);
       }
       
-      topBlock = PsiUtil.isInJspFile(scope) && scope instanceof PsiFile ? scope : PsiUtil.getTopLevelEnclosingCodeBlock(expression, scope);
+      topBlock = JspPsiUtil.isInJspFile(scope) && scope instanceof PsiFile ? scope : PsiUtil.getTopLevelEnclosingCodeBlock(expression, scope);
       if (variable instanceof PsiField) {
         // non final field already initalized with default value
         if (!variable.hasModifierProperty(PsiModifier.FINAL)) return null;

@@ -75,7 +75,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     myParentClass = getParentClass(selectedExpr);
     if (myParentClass == null) {
-      if (PsiUtil.isInJspFile(file)) {
+      if (JspPsiUtil.isInJspFile(file)) {
         CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName()),
                                             getRefactoringName(), getHelpID());
         return false;

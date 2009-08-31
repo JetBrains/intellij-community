@@ -81,7 +81,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       return;
     }
     PsiElement targetContainer = findTargetContainer(myAnonClass);
-    if (PsiUtil.isInJspFile(targetContainer) && targetContainer instanceof PsiFile) {
+    if (JspPsiUtil.isInJspFile(targetContainer) && targetContainer instanceof PsiFile) {
       String message = RefactoringBundle.message("error.not.supported.for.jsp", REFACTORING_NAME);
       showErrorMessage(editor, message);
       return;

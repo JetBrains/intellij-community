@@ -21,7 +21,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.CharTable;
 import com.intellij.util.Icons;
@@ -264,11 +263,11 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
 
   @NotNull
   public SearchScope getUseScope() {
-    if (PsiUtil.isInJspFile(this)) {
+    if (JspPsiUtil.isInJspFile(this)) {
       if (getTreeParent().getElementType() == JavaElementType.DECLARATION_STATEMENT &&
           getTreeParent().getTreeParent() instanceof JspCodeBlock &&
           getTreeParent().getTreeParent().getTreeParent().getElementType() == JspElementType.HOLDER_METHOD) { //?
-        final JspFile jspFile = PsiUtil.getJspFile(this);
+        final JspFile jspFile = JspPsiUtil.getJspFile(this);
         final JspContextManager contextManager = JspContextManager.getInstance(getProject());
         if (contextManager == null) {
           return super.getUseScope();

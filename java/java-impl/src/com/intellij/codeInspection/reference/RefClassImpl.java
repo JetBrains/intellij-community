@@ -15,7 +15,6 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +61,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     PsiElement psiParent = psiClass.getParent();
     if (psiParent instanceof PsiFile) {      
       if (isSyntheticJSP()) {
-        final RefFileImpl refFile = (RefFileImpl)getRefManager().getReference(PsiUtil.getJspFile(psiClass));
+        final RefFileImpl refFile = (RefFileImpl)getRefManager().getReference(JspPsiUtil.getJspFile(psiClass));
         LOG.assertTrue(refFile != null);
         refFile.add(this);
       } else if (psiParent instanceof PsiJavaFile) {

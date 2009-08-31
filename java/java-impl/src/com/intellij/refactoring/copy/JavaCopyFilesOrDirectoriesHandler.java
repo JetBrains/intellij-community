@@ -1,7 +1,6 @@
 package com.intellij.refactoring.copy;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 
 /**
  * @author yole
@@ -10,7 +9,7 @@ public class JavaCopyFilesOrDirectoriesHandler extends CopyFilesOrDirectoriesHan
   protected boolean canCopyFiles(final PsiElement[] elements) {
     for (PsiElement element : elements) {
       if (!(element instanceof PsiFile) ||
-          element instanceof PsiJavaFile && !PsiUtil.isInJspFile(element)) {
+          element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element)) {
         return false;
       }
     }

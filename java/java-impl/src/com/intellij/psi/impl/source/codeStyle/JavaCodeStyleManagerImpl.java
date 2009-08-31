@@ -99,7 +99,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
     Set<PsiImportStatementBase> allImports = new THashSet<PsiImportStatementBase>(Arrays.asList(imports));
     final Collection<PsiImportStatementBase> redundants;
-    if (PsiUtil.isInJspFile(file)) {
+    if (JspPsiUtil.isInJspFile(file)) {
       // remove only duplicate imports
       redundants = new THashSet<PsiImportStatementBase>(TObjectHashingStrategy.IDENTITY);
       redundants.addAll(Arrays.asList(imports));

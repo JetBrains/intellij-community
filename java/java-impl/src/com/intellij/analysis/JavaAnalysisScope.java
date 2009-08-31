@@ -14,7 +14,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.PackageScope;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -39,7 +38,7 @@ public class JavaAnalysisScope extends AnalysisScope {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
     final HashSet<Module> modules = new HashSet<Module>();
     if (myType == FILE) {
-      if (myElement instanceof PsiJavaFile && !PsiUtil.isInJspFile(myElement)) {
+      if (myElement instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(myElement)) {
         PsiJavaFile psiJavaFile = (PsiJavaFile)myElement;
         final PsiClass[] classes = psiJavaFile.getClasses();
         boolean onlyPackLocalClasses = true;

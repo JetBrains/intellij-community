@@ -2,7 +2,6 @@ package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.copy.JavaCopyFilesOrDirectoriesHandler;
 import com.intellij.refactoring.move.MoveCallback;
 
@@ -18,7 +17,7 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
         allJava &= JavaCopyFilesOrDirectoriesHandler.hasPackages((PsiDirectory)element);
       }
       else if (element instanceof PsiFile) {
-        allJava &= element instanceof PsiJavaFile && !PsiUtil.isInJspFile(element);
+        allJava &= element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element);
       }
       else {
         return false;

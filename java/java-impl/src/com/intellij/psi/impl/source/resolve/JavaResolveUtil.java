@@ -48,7 +48,7 @@ public class JavaResolveUtil {
         if (visibility == JavaCodeFragment.VisibilityChecker.Visibility.NOT_VISIBLE) return false;
       }
     }
-    else if (placeContainingFile instanceof XmlFile && !PsiUtil.isInJspFile(placeContainingFile)) return true;
+    else if (placeContainingFile instanceof XmlFile && !JspPsiUtil.isInJspFile(placeContainingFile)) return true;
     // We don't care about access rights in javadoc
     if (isInJavaDoc(place)) return true;
 
@@ -59,8 +59,8 @@ public class JavaResolveUtil {
 
     int effectiveAccessLevel = PsiUtil.getAccessLevel(modifierList);
     PsiFile file = FileContextUtil.getContextFile(place); //TODO: implementation method!!!!
-    if (PsiUtil.isInJspFile(file) && PsiUtil.isInJspFile(member.getContainingFile())) return true;
-    if (file instanceof XmlFile && !PsiUtil.isInJspFile(file)) return true;
+    if (JspPsiUtil.isInJspFile(file) && JspPsiUtil.isInJspFile(member.getContainingFile())) return true;
+    if (file instanceof XmlFile && !JspPsiUtil.isInJspFile(file)) return true;
     if (effectiveAccessLevel == PsiUtil.ACCESS_LEVEL_PUBLIC) {
       return true;
     }

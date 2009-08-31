@@ -276,7 +276,7 @@ public class PsiClassImplUtil {
       return new LocalSearchScope(aClass);
     }
     PsiFile file = aClass.getContainingFile();
-    if (PsiUtil.isInJspFile(file)) return maximalUseScope;
+    if (JspPsiUtil.isInJspFile(file)) return maximalUseScope;
     final PsiClass containingClass = aClass.getContainingClass();
     if (aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
       return containingClass != null ? containingClass.getUseScope() : maximalUseScope;

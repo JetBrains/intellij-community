@@ -8,7 +8,6 @@ import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 
 import java.util.Iterator;
@@ -121,9 +120,9 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       return true;
     }
 
-    if (PsiUtil.isInJspFile(aClass.getContainingFile())) {
+    if (JspPsiUtil.isInJspFile(aClass.getContainingFile())) {
       PsiFile file = FileContextUtil.getContextFile(myPlace);
-      if (PsiUtil.isInJspFile(file)) {
+      if (JspPsiUtil.isInJspFile(file)) {
         return true;
       }
     }

@@ -53,7 +53,6 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
@@ -204,8 +203,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     HighlightDisplayKey deadCodeKey = HighlightDisplayKey.find(DeadCodeInspection.SHORT_NAME);
     myDeadCodeInspection = (DeadCodeInspection)profile.getInspectionTool(DeadCodeInspection.SHORT_NAME, myFile);
     myDeadCodeEnabled = profile.isToolEnabled(deadCodeKey, myFile);
-    if (unusedImportEnabled && PsiUtil.isInJspFile(myFile)) {
-      final JspFile jspFile = PsiUtil.getJspFile(myFile);
+    if (unusedImportEnabled && JspPsiUtil.isInJspFile(myFile)) {
+      final JspFile jspFile = JspPsiUtil.getJspFile(myFile);
       if (jspFile != null) {
         unusedImportEnabled = !JspSpiUtil.isIncludedOrIncludesSomething(jspFile);
       }

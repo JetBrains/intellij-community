@@ -11,13 +11,13 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.JspPsiUtil;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 
 /**
@@ -25,7 +25,7 @@ import com.intellij.util.text.CharSequenceSubSequence;
  */
 public class JspIndexPatternBuilder implements IndexPatternBuilder {
   public Lexer getIndexingLexer(final PsiFile file) {
-    if (PsiUtil.isInJspFile(file)) {
+    if (JspPsiUtil.isInJspFile(file)) {
       EditorHighlighter highlighter;
 
       final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
@@ -47,7 +47,7 @@ public class JspIndexPatternBuilder implements IndexPatternBuilder {
   }
 
   public TokenSet getCommentTokenSet(final PsiFile file) {
-    final JspFile jspFile = PsiUtil.getJspFile(file);
+    final JspFile jspFile = JspPsiUtil.getJspFile(file);
     TokenSet commentTokens = TokenSet.orSet(JavaIndexPatternBuilder.XML_COMMENT_BIT_SET, StdTokenSets.COMMENT_BIT_SET);
     final ParserDefinition parserDefinition =
       LanguageParserDefinitions.INSTANCE.forLanguage(jspFile.getViewProvider().getTemplateDataLanguage());

@@ -631,7 +631,7 @@ public class HighlightUtil {
   }
 
   private static HighlightInfoType getUnhandledExceptionHighlightType(final PsiElement element) {
-    if (!PsiUtil.isInJspFile(element)) {
+    if (!JspPsiUtil.isInJspFile(element)) {
       return HighlightInfoType.UNHANDLED_EXCEPTION;
     }
     PsiMethod targetMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);

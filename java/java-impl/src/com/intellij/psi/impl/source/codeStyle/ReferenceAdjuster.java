@@ -13,7 +13,6 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,8 +134,8 @@ public class ReferenceAdjuster implements Constants {
       return;
     }
 
-    if (parent.getPsi() instanceof PsiFile && PsiUtil.isInJspFile(parent.getPsi())) {
-      final JspFile jspFile = (PsiUtil.getJspFile(parent.getPsi()));
+    if (parent.getPsi() instanceof PsiFile && JspPsiUtil.isInJspFile(parent.getPsi())) {
+      final JspFile jspFile = (JspPsiUtil.getJspFile(parent.getPsi()));
       JspClass jspClass = (JspClass) jspFile.getJavaClass();
       addReferencesInRange(array, (TreeElement)jspClass.getNode(), startOffset, endOffset);
       return;

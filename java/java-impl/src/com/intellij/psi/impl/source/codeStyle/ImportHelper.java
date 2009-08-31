@@ -21,7 +21,6 @@ import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
@@ -521,7 +520,7 @@ public class ImportHelper{
   private static String[] collectNamesToImport(PsiJavaFile file, Set<String> namesToImportStaticly){
     Set<String> names = new THashSet<String>();
 
-    final JspFile jspFile = PsiUtil.getJspFile(file);
+    final JspFile jspFile = JspPsiUtil.getJspFile(file);
     collectNamesToImport(names, file, namesToImportStaticly, jspFile);
     if (jspFile != null) {
       PsiFile[] files = ArrayUtil.mergeArrays(JspSpiUtil.getIncludingFiles(jspFile), JspSpiUtil.getIncludedFiles(jspFile), PsiFile.class);

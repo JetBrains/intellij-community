@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.Location;
@@ -147,7 +146,7 @@ public class ContextUtil {
     }
 
     PsiElement element;
-    final PsiElement rootElement = PsiUtil.isInJspFile(psiFile) ? (PsiUtil.getJspFile(psiFile)).getJavaClass() : psiFile;
+    final PsiElement rootElement = JspPsiUtil.isInJspFile(psiFile) ? (JspPsiUtil.getJspFile(psiFile)).getJavaClass() : psiFile;
     while(true) {
       final CharSequence charsSequence = document.getCharsSequence();
       for (; startOffset < charsSequence.length(); startOffset++) {

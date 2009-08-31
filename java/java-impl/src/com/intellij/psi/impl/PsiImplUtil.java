@@ -289,7 +289,7 @@ public class PsiImplUtil {
     final PsiManagerEx psiManager = (PsiManagerEx)member.getManager();
     final GlobalSearchScope maximalUseScope = psiManager.getFileManager().getUseScope(member);
     PsiFile file = member.getContainingFile();
-    if (PsiUtil.isInJspFile(file)) return maximalUseScope;
+    if (JspPsiUtil.isInJspFile(file)) return maximalUseScope;
 
     PsiClass aClass = member.getContainingClass();
     if (aClass instanceof PsiAnonymousClass) {

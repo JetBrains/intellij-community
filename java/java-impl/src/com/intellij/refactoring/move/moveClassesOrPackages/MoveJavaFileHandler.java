@@ -7,7 +7,6 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
@@ -21,7 +20,7 @@ import java.util.Map;
 public class MoveJavaFileHandler extends MoveFileHandler {
   @Override
   public boolean canProcessElement(PsiFile element) {
-    return element instanceof PsiJavaFile && !PsiUtil.isInJspFile(element);
+    return element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element);
   }
 
   @Override

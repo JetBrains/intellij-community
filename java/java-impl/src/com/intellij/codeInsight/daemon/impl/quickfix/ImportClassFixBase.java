@@ -13,7 +13,6 @@ import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -122,7 +121,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
     if (classes.length == 1
         && CodeStyleSettingsManager.getSettings(project).ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
         && (allowCaretNearRef || !isCaretNearRef(editor, myRef))
-        && !PsiUtil.isInJspFile(psiFile)
+        && !JspPsiUtil.isInJspFile(psiFile)
         && codeAnalyzer.canChangeFileSilently(psiFile)
         && !hasUnresolvedImportWhichCanImport(psiFile, classes[0].getName())) {
       CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
