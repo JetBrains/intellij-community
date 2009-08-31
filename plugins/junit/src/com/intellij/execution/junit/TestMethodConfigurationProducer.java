@@ -17,6 +17,7 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.module.Module;
@@ -40,7 +41,7 @@ public class TestMethodConfigurationProducer extends JUnitConfigurationProducer 
     final Module originalModule = configuration.getConfigurationModule().getModule();
     configuration.beMethodConfiguration(myMethodLocation);
     configuration.restoreOriginalModule(originalModule);
-    configuration.setUpCoverageFilters();
+    RunConfigurationExtension.patchCreatedConfiguration(configuration);
     copyStepsBeforeRun(project, configuration);
     return settings;
   }

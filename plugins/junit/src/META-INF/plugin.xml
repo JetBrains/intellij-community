@@ -30,6 +30,11 @@
     <testFrameworkDescriptor implementation="com.intellij.execution.junit.JUnit4FrameworkDescriptor"/>
     <configurationType implementation="com.intellij.execution.junit.JUnitConfigurationType"/>
   </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.junitListener" interface="com.intellij.rt.execution.junit.IDEAJUnitListener"/>
+  </extensionPoints>
+
   <actions>
     <group>
       <action class="com.intellij.execution.junit2.ui.actions.ViewAssertEqualsDiffAction" text="View assertEquals Difference" id="openAssertEqualsDiff"/>
@@ -42,6 +47,4 @@
       <add-to-group anchor="last" group-id="TestStatisticsTablePopupMenu"/>
     </group>
   </actions>
-
-  <depends optional="true">Coverage</depends>
 </idea-plugin>

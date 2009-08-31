@@ -175,6 +175,13 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
      this.ALTERNATIVE_JRE_PATH = ALTERNATIVE_JRE_PATH;
    }
 
+  public String getRunClass() {
+    return !data.TEST_OBJECT.equals(TestType.CLASS.getType()) && !data.TEST_OBJECT.equals(TestType.METHOD.getType()) ? null : data.getMainClassName();
+  }
+
+  public String getPackage() {
+    return !data.TEST_OBJECT.equals(TestType.PACKAGE.getType()) ? null : data.getPackageName();
+  }
 
   public void setClassConfiguration(PsiClass psiclass) {
     setModule(data.setMainClass(psiclass));

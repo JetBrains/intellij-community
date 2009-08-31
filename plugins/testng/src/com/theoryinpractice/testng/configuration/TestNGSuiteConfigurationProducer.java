@@ -22,6 +22,7 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.module.Module;
@@ -60,6 +61,7 @@ public class TestNGSuiteConfigurationProducer extends TestNGConfigurationProduce
     configuration.restoreOriginalModule(originalModule);
     settings.setName(configuration.getName());
     copyStepsBeforeRun(project, configuration);
+    RunConfigurationExtension.patchCreatedConfiguration(configuration);
     return (RunnerAndConfigurationSettingsImpl)settings;
   }
 

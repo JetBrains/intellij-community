@@ -41,11 +41,13 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
+import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
@@ -187,6 +189,26 @@ public abstract class TestObject implements JavaCommandLine {
     myJavaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
     for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
       ext.updateJavaParameters(myConfiguration, myJavaParameters, myRunnerSettings);
+    }
+
+    final Object[] listeners = Extensions.getExtensions(IDEAJUnitListener.EP_NAME);
+    if (listeners.length > 0) {
+      try {
+        final File tempFile = FileUtil.createTempFile("junitlisteners", "");
+        tempFile.deleteOnExit();
+        myJavaParameters.getProgramParametersList().add("@@" + tempFile.getPath());
+
+        final StringBuffer buf = new StringBuffer();
+        for (final Object listener : listeners) {
+          final Class classListener = listener.getClass();
+          buf.append(classListener.getName()).append("\n");
+          myJavaParameters.getClassPath().add(PathUtil.getJarPathForClass(classListener));
+        }
+        FileUtil.writeToFile(tempFile, buf.toString().getBytes());
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
   }
 

@@ -76,28 +76,6 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     return TestObject.fromString(myData.TEST_OBJECT, getProject(), this, env.getRunnerSettings(), env.getConfigurationSettings());
   }
 
-  public void setUpCoverageFilters() {
-    /*if (getCoveragePatterns() == null) {      todo
-      final Data persistentData = getPersistentData();
-      String pattern = null;
-      final String mainClassName = persistentData.getMainClassName();
-      if (mainClassName.length() > 0) {
-        int index = mainClassName.lastIndexOf('.');
-        if (index >= 0) {
-          pattern = mainClassName.substring(0, index);
-        }
-      } else {
-        final String packageName = persistentData.getPackageName();
-        if (packageName != null) {
-          pattern = packageName;
-        }
-      }
-
-      if (pattern != null && pattern.length() > 0) {
-        setCoveragePatterns(new ClassFilter[]{new ClassFilter(pattern + ".*")});
-      }
-    }*/
-  }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<JUnitConfiguration> group = new SettingsEditorGroup<JUnitConfiguration>();
@@ -281,6 +259,16 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
   public void setAlternativeJrePath(String ALTERNATIVE_JRE_PATH) {
     this.ALTERNATIVE_JRE_PATH = ALTERNATIVE_JRE_PATH;
+  }
+
+  public String getRunClass() {
+    final Data data = getPersistentData();
+    return data.TEST_OBJECT != TEST_CLASS && data.TEST_OBJECT != TEST_METHOD ? null : data.getMainClassName();
+  }
+
+  public String getPackage() {
+    final Data data = getPersistentData();
+    return data.TEST_OBJECT != TEST_PACKAGE ? null : data.getPackageName();
   }
 
   public static class Data implements Cloneable {
