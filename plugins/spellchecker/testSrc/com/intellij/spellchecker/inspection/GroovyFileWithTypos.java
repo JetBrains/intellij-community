@@ -9,7 +9,7 @@ import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
 public class GroovyFileWithTypos extends SpellcheckerInspectionTestCase {
 
   protected String getBasePath() {
-    return "/plugins/spellchecker/tests/testData/inspection/groovy";
+    return getSpellcheckerTestDataPath() + "/inspection/groovy";
   }
 
   public void testGroovy() throws Throwable {

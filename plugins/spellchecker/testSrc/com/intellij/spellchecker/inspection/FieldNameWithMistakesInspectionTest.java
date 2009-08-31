@@ -10,7 +10,7 @@ public class FieldNameWithMistakesInspectionTest extends SpellcheckerInspectionT
 
 
   protected String getBasePath() {
-    return "/plugins/spellchecker/tests/testData/inspection/fieldNameWithMistakes";
+    return getSpellcheckerTestDataPath() + "/inspection/fieldNameWithMistakes";
   }
 
   public void testJava() throws Throwable {

@@ -9,7 +9,7 @@ import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
 public class MethodNameWithMistakesInspectionTest extends SpellcheckerInspectionTestCase {
 
    protected String getBasePath() {
-    return "/plugins/spellchecker/tests/testData/inspection/methodNameWithMistakes";
+    return getSpellcheckerTestDataPath() + "/inspection/methodNameWithMistakes";
   }
 
   public void testJava() throws Throwable {

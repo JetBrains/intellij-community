@@ -10,7 +10,7 @@ public class CommentsWithMistakesInspectionTest extends SpellcheckerInspectionTe
 
 
   protected String getBasePath() {
-    return "/plugins/spellchecker/tests/testData/inspection/commentsWithMistakes";
+    return getSpellcheckerTestDataPath() + "/inspection/commentsWithMistakes";
   }
 
   public void testJava() throws Throwable {

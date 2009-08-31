@@ -9,7 +9,7 @@ import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
 public class JSFileWithTypos extends SpellcheckerInspectionTestCase {
 
   protected String getBasePath() {
-    return "/plugins/spellchecker/tests/testData/inspection/js";
+    return getSpellcheckerTestDataPath() + "/inspection/js";
   }
 
   public void testJS() throws Throwable {

@@ -7,9 +7,8 @@ import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
  * User: Ekaterina Shliakhovetskaja
  */
 public class ClassNameWithMistakesInspectionTest extends SpellcheckerInspectionTestCase {
-
   protected String getBasePath() {
-    return "/plugins/spellchecker/tests/testData/inspection/classNameWithMistakes";
+    return getSpellcheckerTestDataPath() + "/inspection/classNameWithMistakes";
   }
 
   public void testJava() throws Throwable {

@@ -17,4 +17,14 @@ public class PluginPathManager {
     }
     return new File(homePath, "plugins/" + pluginName).getPath();
   }
+
+  public static String getPluginHomePathRelative(String pluginName) {
+    String homePath = PathManager.getHomePath();
+    final String relativePath = "/community/plugins/" + pluginName;
+    File candidate = new File(homePath, relativePath);
+    if (candidate.isDirectory()) {
+      return relativePath;
+    }
+    return "/plugins/" + pluginName;
+  }
 }

@@ -9,7 +9,7 @@ import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
 public class LocalVariableWithMistakesInspectionTest extends SpellcheckerInspectionTestCase {
 
    protected String getBasePath() {
-    return "/plugins/spellchecker/tests/testData/inspection/localVariableNameWithMistakes";
+    return getSpellcheckerTestDataPath() + "/inspection/localVariableNameWithMistakes";
   }
 
   public void testJava() throws Throwable {
