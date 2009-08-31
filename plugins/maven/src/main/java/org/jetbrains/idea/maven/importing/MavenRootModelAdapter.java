@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenArtifact;
-import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenConstants;
@@ -295,14 +294,6 @@ public class MavenRootModelAdapter {
 
     String name = library.getName();
     return name != null && name.startsWith(MAVEN_LIB_PREFIX);
-  }
-
-  public static @Nullable MavenId getMavenId(MavenProject ownerProject, @Nullable Library lib) {
-    if (!MavenRootModelAdapter.isMavenLibrary(lib)) return null;
-    for (MavenArtifact each : ownerProject.getDependencies()) {
-      if (makeLibraryName(each).equals(lib.getName())) return each.getMavenId();
-    }
-    return null;
   }
 
   public void setLanguageLevel(LanguageLevel level) {

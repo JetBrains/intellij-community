@@ -3,12 +3,10 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.execution.configurations.JavaClasspathPolicyExtender;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectRootsTraversing;
+import com.intellij.openapi.roots.RootPolicy;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
-import org.jetbrains.idea.maven.project.MavenId;
-import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public class MavenJavaClasspathPolicyExtender implements JavaClasspathPolicyExtender  {
@@ -37,36 +35,11 @@ public class MavenJavaClasspathPolicyExtender implements JavaClasspathPolicyExte
     final ProjectRootsTraversing.RootTraversePolicy.Visit<T> original) {
     return new ProjectRootsTraversing.RootTraversePolicy.Visit<T>() {
       public void visit(T entry, ProjectRootsTraversing.TraverseState state, RootPolicy<ProjectRootsTraversing.TraverseState> policy) {
-        if (shouldSkip(originalModule, entry, manager)) return;
+        Module ownerModule = entry.getOwnerModule();
+        if (originalModule != ownerModule && manager.findProject(ownerModule) != null) return;
+
         original.visit(entry, state, policy);
       }
     };
-  }
-
-  private boolean shouldSkip(Module originalModule, OrderEntry orderEntry, MavenProjectsManager manager) {
-    Module ownerModule = orderEntry.getOwnerModule();
-    if (originalModule == ownerModule) return false;
-
-    MavenProject ownerProject = manager.findProject(ownerModule);
-    if (ownerProject == null) return false;
-
-    MavenId depId;
-    if (orderEntry instanceof ModuleOrderEntry) {
-      Module module = ((ModuleOrderEntry)orderEntry).getModule();
-      if (module == null) return false;
-
-      MavenProject depProject = manager.findProject(module);
-      if (depProject == null) return false;
-
-      depId = depProject.getMavenId();
-    } else if (orderEntry instanceof LibraryOrderEntry) {
-      Library lib = ((LibraryOrderEntry)orderEntry).getLibrary();
-      depId = MavenRootModelAdapter.getMavenId(ownerProject, lib);
-      if (depId == null) return false;
-    } else {
-      return false;
-    }
-
-    return ownerProject.isOptionalDependency(depId);
   }
 }

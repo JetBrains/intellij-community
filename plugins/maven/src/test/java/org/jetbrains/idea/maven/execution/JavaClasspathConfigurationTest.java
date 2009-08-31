@@ -6,10 +6,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -189,7 +185,7 @@ public class JavaClasspathConfigurationTest extends MavenImportingTestCase {
                          getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
   }
 
-  public void testCorrectlyHandleUserLibraries() throws Exception {
+  public void testDoNotIncludeProvidedAndTestTransitiveDependencies() throws Exception {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
                                            "<version>1</version>" +
@@ -204,31 +200,40 @@ public class JavaClasspathConfigurationTest extends MavenImportingTestCase {
 
     VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
                                            "<artifactId>m2</artifactId>" +
-                                           "<version>1</version>");
+                                           "<version>1</version>" +
+
+                                           "<dependencies>" +
+                                           "  <dependency>" +
+                                           "    <groupId>jmock</groupId>" +
+                                           "    <artifactId>jmock</artifactId>" +
+                                           "    <version>1.0</version>" +
+                                           "    <scope>provided</scope>" +
+                                           "  </dependency>" +
+                                           "  <dependency>" +
+                                           "    <groupId>junit</groupId>" +
+                                           "    <artifactId>junit</artifactId>" +
+                                           "    <version>4.0</version>" +
+                                           "    <scope>test</scope>" +
+                                           "  </dependency>" +
+                                           "</dependencies>");
 
     importProjects(m1, m2);
+    assertModules("m1", "m2");
 
-    ModifiableRootModel model = ModuleRootManager.getInstance(getModule("m2")).getModifiableModel();
-    LibraryTable libraryTable = ProjectLibraryTable.getInstance(myProject);
-    Library library = libraryTable.createLibrary("foo");
-    Library.ModifiableModel libraryModel = library.getModifiableModel();
-    libraryModel.addRoot("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/", OrderRootType.CLASSES);
-    libraryModel.commit();
-    model.addLibraryEntry(library);
-    model.commit();
-
-    assertModuleLibDeps("m2", "foo");
+    assertModuleModuleDeps("m1", "m2");
+    assertModuleLibDeps("m1");
+    assertModuleLibDeps("m2", "Maven: jmock:jmock:1.0", "Maven: junit:junit:4.0");
 
     setupJdkForModule("m1");
     setupJdkForModule("m2");
 
     assertModuleClasspath("m1",
                          getProjectPath() + "/m1/target/classes",
-                         getProjectPath() + "/m2/target/classes",
-                         getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
+                         getProjectPath() + "/m2/target/classes");
 
     assertModuleClasspath("m2",
                          getProjectPath() + "/m2/target/classes",
+                         getRepositoryPath() + "/jmock/jmock/1.0/jmock-1.0.jar",
                          getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
   }
 
