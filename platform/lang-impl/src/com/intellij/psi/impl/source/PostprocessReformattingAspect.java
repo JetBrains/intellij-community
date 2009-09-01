@@ -36,7 +36,6 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -302,7 +301,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
 
       if (!expectedPsi.equals(actualPsiTree)) {
         myReformatElements.clear();
-        Assert.assertEquals("Refactored psi should be the same as result of parsing", expectedPsi, actualPsiTree);
+        assert expectedPsi.equals(actualPsiTree): "Refactored psi should be the same as result of parsing";
       }
     }
 

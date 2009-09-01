@@ -12,7 +12,6 @@
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" exported="" name="Trove4j" level="project" />
-    <orderEntry type="library" exported="" name="NanoXML" level="project" />
     <orderEntry type="library" name="picocontainer" level="project" />
     <orderEntry type="module" module-name="platform-resources-en" />
     <orderEntry type="library" name="OroMatcher" level="project" />

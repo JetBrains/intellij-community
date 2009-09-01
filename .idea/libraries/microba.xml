@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="microba">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/microba.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/src/microba-src.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

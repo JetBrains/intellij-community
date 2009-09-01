@@ -40,8 +40,8 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
     <orderEntry type="module" module-name="lvcs-api" exported="" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
   </component>
 </module>
 

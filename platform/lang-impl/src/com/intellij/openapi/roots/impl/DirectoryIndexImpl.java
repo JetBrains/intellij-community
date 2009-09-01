@@ -29,7 +29,6 @@ import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -97,8 +96,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
   @TestOnly
   private void doCheckConsistency(boolean reverseAllSets) {
-    Assert.assertTrue(myInitialized);
-    Assert.assertTrue(!myDisposed);
+    assert myInitialized;
+    assert !myDisposed;
 
     Map<VirtualFile, DirectoryInfo> oldDirToInfoMap = myDirToInfoMap;
     myDirToInfoMap = new THashMap<VirtualFile, DirectoryInfo>();
@@ -124,14 +123,14 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
 
     Set<VirtualFile> keySet = myDirToInfoMap.keySet();
-    Assert.assertEquals(keySet.size(), oldDirToInfoMap.keySet().size());
+    assert keySet.size() == oldDirToInfoMap.keySet().size();
     for (VirtualFile file : keySet) {
       DirectoryInfo info1 = myDirToInfoMap.get(file);
       DirectoryInfo info2 = oldDirToInfoMap.get(file);
-      Assert.assertEquals(info1, info2);
+      assert info1.equals(info2);
     }
 
-    Assert.assertEquals(myPackageNameToDirsMap.keySet().size(), oldPackageNameToDirsMap.keySet().size());
+    assert myPackageNameToDirsMap.keySet().size() == oldPackageNameToDirsMap.keySet().size();
     for (Map.Entry<String, VirtualFile[]> entry : myPackageNameToDirsMap.entrySet()) {
       String packageName = entry.getKey();
       VirtualFile[] dirs = entry.getValue();
@@ -141,7 +140,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       set1.addAll(Arrays.asList(dirs));
       HashSet<VirtualFile> set2 = new HashSet<VirtualFile>();
       set2.addAll(Arrays.asList(dirs1));
-      Assert.assertEquals(set1, set2);
+      assert set1.equals(set2);
     }
   }
 

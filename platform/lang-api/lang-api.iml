@@ -9,6 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="platform-api" exported="" />
     <orderEntry type="module" module-name="lvcs-api" exported="" />
+    <orderEntry type="library" exported="" name="NanoXML" level="project" />
   </component>
 </module>
 

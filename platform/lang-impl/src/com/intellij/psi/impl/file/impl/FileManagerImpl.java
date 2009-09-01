@@ -36,7 +36,6 @@ import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentWeakValueHashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -270,7 +269,7 @@ public class FileManagerImpl implements FileManager {
       LOG.assertTrue(vFile.isValid());
       PsiFile psiFile1 = findFile(vFile);
       if (psiFile1 != null && fileViewProvider != null && fileViewProvider.isPhysical()) { // might get collected
-        Assert.assertEquals(psiFile1.getClass(), fileViewProvider.getPsi(fileViewProvider.getBaseLanguage()).getClass());
+        assert psiFile1.getClass().equals(fileViewProvider.getPsi(fileViewProvider.getBaseLanguage()).getClass());
       }
     }
 
