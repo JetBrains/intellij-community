@@ -4,6 +4,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -106,5 +110,19 @@ public class CollectHighlightsUtil {
       return ((PsiFile)root).getViewProvider().findElementAt(offset, root.getLanguage());
     }
     return root.findElementAt(offset);
+  }
+
+  public static boolean isOutOfSourceRootJavaFile(@Nullable PsiFile psiFile) {
+    if (psiFile == null) return false;
+    if (psiFile.getFileType() == StdFileTypes.JAVA) {
+      final VirtualFile file = psiFile.getVirtualFile();
+      if (file != null) {
+        final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex();
+        if (!projectFileIndex.isInSource(file) && !projectFileIndex.isInLibraryClasses(file)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

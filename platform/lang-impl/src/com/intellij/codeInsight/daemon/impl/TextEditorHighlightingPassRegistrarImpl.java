@@ -12,10 +12,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -27,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.Collections;
 
 /**
  * User: anna
@@ -97,16 +92,6 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
 
   @NotNull
   public List<TextEditorHighlightingPass> instantiatePasses(@NotNull final PsiFile psiFile, @NotNull final Editor editor, @NotNull final int[] passesToIgnore) {
-    if (psiFile.getFileType() == StdFileTypes.JAVA) {
-      final VirtualFile file = psiFile.getVirtualFile();
-      if (file != null) {
-        final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-        if (!projectFileIndex.isInSource(file) && !projectFileIndex.isInLibraryClasses(file)) {
-          return Collections.emptyList();
-        }
-      }
-    }
-
     final int[] nextId = new int[1];
     synchronized (this) {
       nextId[0] = nextAvailableId;

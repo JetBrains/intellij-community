@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveClassesHandler extends MoveClassesOrPackagesHandlerBase {
@@ -14,6 +15,7 @@ public class MoveClassesHandler extends MoveClassesOrPackagesHandlerBase {
       if (element instanceof JspClass) return false;
       if (!(element instanceof PsiClass)) return false;
       if (!(element.getParent() instanceof PsiFile)) return false;
+      if (CollectHighlightsUtil.isOutOfSourceRootJavaFile((PsiFile)element.getParent())) return false;
     }
     return super.canMove(elements, targetContainer);
   }
@@ -25,6 +27,7 @@ public class MoveClassesHandler extends MoveClassesOrPackagesHandlerBase {
 
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
                            final Editor editor) {
+    if (CollectHighlightsUtil.isOutOfSourceRootJavaFile(element.getContainingFile())) return false;
     if (isReferenceInAnonymousClass(reference)) return false;
 
     if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass) && element.getParent() instanceof PsiFile) {

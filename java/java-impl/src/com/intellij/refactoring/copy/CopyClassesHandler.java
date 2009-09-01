@@ -1,6 +1,7 @@
 package com.intellij.refactoring.copy;
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
+import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,7 +27,7 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
 
   @Nullable
   private static PsiClass convertToTopLevelClass(final PsiElement[] elements) {
-    if (elements.length == 1) {
+    if (elements.length == 1 && !CollectHighlightsUtil.isOutOfSourceRootJavaFile(elements[0].getContainingFile())) {
       return getTopLevelClass(elements [0]);
     }
     return null;

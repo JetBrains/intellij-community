@@ -151,13 +151,14 @@ public class FileStatusMap {
   @Nullable
   public TextRange getFileDirtyScope(@NotNull Document document, int passId) {
     synchronized(myDocumentToStatusMap){
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+      if (CollectHighlightsUtil.isOutOfSourceRootJavaFile(file)) return null;
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
-        PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         return file == null ? null : file.getTextRange();
       }
       if (status.defensivelyMarked) {
-        PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        //PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         status.markWholeFile(file, document, myProject);
         status.defensivelyMarked = false;
       }
@@ -235,6 +236,9 @@ public class FileStatusMap {
 
   public boolean allDirtyScopesAreNull(@NotNull Document document) {
     synchronized (myDocumentToStatusMap) {
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+      if (CollectHighlightsUtil.isOutOfSourceRootJavaFile(file)) return true;
+
       FileStatus status = myDocumentToStatusMap.get(document);
       return status != null && !status.defensivelyMarked && status.wolfPassFinfished && status.allDirtyScopesAreNull();
     }

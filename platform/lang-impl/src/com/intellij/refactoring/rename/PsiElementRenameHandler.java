@@ -20,6 +20,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,6 +67,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   static boolean canRename(Project project, Editor editor, PsiElement element) {
+    if (CollectHighlightsUtil.isOutOfSourceRootJavaFile(element.getContainingFile())) return false;
     boolean hasRenameProcessor = RenamePsiElementProcessor.forElement(element) != RenamePsiElementProcessor.DEFAULT;
     boolean hasWritableMetaData = element instanceof PsiMetaOwner && ((PsiMetaOwner)element).getMetaData() instanceof PsiWritableMetaData;
 
