@@ -8,7 +8,6 @@ import com.intellij.conversion.impl.ui.ProjectConversionWizard;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.convert.ProjectConversionUtil;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -211,10 +210,7 @@ public class ConversionServiceImpl extends ConversionService {
 
   public boolean convertModule(@NotNull final Project project, @NotNull final File moduleFile) {
     final IProjectStore stateStore = ((ProjectImpl)project).getStateStore();
-    String projectPath = FileUtil.toSystemDependentName(stateStore.getProjectFilePath());
-    if (stateStore.getStorageScheme() != StorageScheme.DEFAULT) {
-      projectPath = new File(projectPath).getParent();
-    }
+    String projectPath = FileUtil.toSystemDependentName(stateStore.getLocation());
 
     if (!isConversionNeeded(projectPath, moduleFile)) {
       return false;
