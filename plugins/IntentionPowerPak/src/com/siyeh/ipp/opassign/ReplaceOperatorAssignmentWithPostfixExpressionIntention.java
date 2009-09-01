@@ -23,7 +23,7 @@ import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceOperatorAssignmentWithPostfixIncrementIntention
+public class ReplaceOperatorAssignmentWithPostfixExpressionIntention
         extends MutablyNamedIntention {
 
     @Override
@@ -47,7 +47,7 @@ public class ReplaceOperatorAssignmentWithPostfixIncrementIntention
     @NotNull
     @Override
     protected PsiElementPredicate getElementPredicate() {
-        return new ReplaceOperatorAssignmentWithPostfixIncrementPredicate();
+        return new ReplaceOperatorAssignmentWithPostfixExpressionPredicate();
     }
 
     @Override

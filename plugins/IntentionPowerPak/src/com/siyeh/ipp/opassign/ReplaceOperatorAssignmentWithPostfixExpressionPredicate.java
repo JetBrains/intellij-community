@@ -19,7 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-public class ReplaceOperatorAssignmentWithPostfixIncrementPredicate
+public class ReplaceOperatorAssignmentWithPostfixExpressionPredicate
         implements PsiElementPredicate {
 
     private static final Integer ONE = Integer.valueOf(1);
