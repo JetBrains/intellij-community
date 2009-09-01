@@ -211,7 +211,18 @@ public class JDOMXIncluder {
     if (parse) {
       assert !bases.contains(remote.toExternalForm()) : "Circular XInclude Reference to " + remote.toExternalForm();
 
-      List<Object> remoteParsed = parseRemote(bases, remote);
+      List<Object> remoteParsed;
+      try {
+        remoteParsed = parseRemote(bases, remote);
+      }
+      catch (XIncludeException e) {
+        final Element fallbackElement = element.getChild("fallback", element.getNamespace());
+        if (fallbackElement != null) {
+          // TODO[yole] return content of fallback element (we don't have any fallbacks with content ATM)
+          return new ArrayList<Object>();                    
+        }
+        throw e;
+      }
       remoteParsed = extractNeededChildren(element, remoteParsed);
 
       for (int i = 0; i < remoteParsed.size(); i++) {
