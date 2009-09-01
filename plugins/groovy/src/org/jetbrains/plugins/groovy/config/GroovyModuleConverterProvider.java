@@ -31,7 +31,7 @@ public class GroovyModuleConverterProvider extends ConverterProvider {
   @NotNull
   @Override
   public String getConversionDescription() {
-    return "Groovy Modules to Facets";
+    return "Groovy Modules will be replaced by Facets";
   }
 
   @NotNull
