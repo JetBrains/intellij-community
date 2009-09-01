@@ -143,7 +143,7 @@ public class ConversionServiceImpl extends ConversionService {
 
   private List<ConversionRunner> getConvertersToRun(final ConversionContextImpl context) throws CannotConvertException {
     final CachedConversionResult conversionResult = loadCachedConversionResult(context.getProjectFile());
-    return createConversionRunners(context, conversionResult.myConverters);
+    return createConversionRunners(context, conversionResult.myAppliedConverters);
   }
 
   private List<ConversionRunner> createConversionRunners(ConversionContextImpl context, final Set<String> performedConversionIds) {
@@ -172,12 +172,13 @@ public class ConversionServiceImpl extends ConversionService {
   private void saveConversionResult(ConversionContextImpl context) {
     final CachedConversionResult conversionResult = loadCachedConversionResult(context.getProjectFile());
     for (ConverterProvider provider : ConverterProvider.EP_NAME.getExtensions()) {
-      conversionResult.myConverters.add(provider.getId());
+      conversionResult.myAppliedConverters.add(provider.getId());
     }
     for (File file : context.getNonExistingModuleFiles()) {
       conversionResult.myNotConvertedModules.add(file.getAbsolutePath());
     }
     final File infoFile = getConversionInfoFile(context.getProjectFile());
+    infoFile.getParentFile().mkdirs();
     try {
       JDOMUtil.writeDocument(new Document(XmlSerializer.serialize(conversionResult)), infoFile, SystemProperties.getLineSeparator());
     }
@@ -267,10 +268,11 @@ public class ConversionServiceImpl extends ConversionService {
     }
   }
 
+  @Tag("conversion")
   public static class CachedConversionResult {
-    @Tag("converters")
+    @Tag("applied-converters")
     @AbstractCollection(surroundWithTag = false, elementTag = "converter", elementValueAttribute = "id")
-    public Set<String> myConverters = new HashSet<String>();
+    public Set<String> myAppliedConverters = new HashSet<String>();
 
     @Tag("not-converted-modules")
     @AbstractCollection(surroundWithTag = false, elementTag = "module", elementValueAttribute = "path")
