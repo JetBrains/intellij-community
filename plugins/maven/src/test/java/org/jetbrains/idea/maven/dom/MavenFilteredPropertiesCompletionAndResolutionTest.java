@@ -4,6 +4,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
+import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel;
 
 public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDomTestCase {
   public void testBasic() throws Exception {
@@ -49,6 +50,77 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
 
     PsiDirectory baseDir = PsiManager.getInstance(myProject).findDirectory(myProjectPom.getParent());
     assertResolved(f, baseDir);
+  }
+
+  public void testResolvingToNonManagedParentProperties() throws Exception {
+    createProjectSubDir("res");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>parent</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <relativePath>parent/pom.xml</relativePath>" +
+                     "</parent>" +
+
+                     "<build>" +
+                     "  <resources>" +
+                     "    <resource>" +
+                     "      <directory>res</directory>" +
+                     "      <filtering>true</filtering>" +
+                     "    </resource>" +
+                     "  </resources>" +
+                     "</build>");
+
+    VirtualFile parent = createModulePom("parent",
+                                         "<groupId>test</groupId>" +
+                                         "<artifactId>parent</artifactId>" +
+                                         "<version>1</version>" +
+                                         "<packaging>pom</packaging>" +
+
+                                         "<properties>" +
+                                         "  <parentProp>value</parentProp>" +
+                                         "</properties>");
+
+    importProject();
+
+    VirtualFile f = createProjectSubFile("res/foo.properties",
+                                         "foo=${parentProp<caret>}");
+
+    assertResolved(f, findTag(parent, "project.properties.parentProp"));
+  }
+
+  public void testResolvingToProfilesXmlProperties() throws Exception {
+    createProjectSubDir("res");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <resources>" +
+                     "    <resource>" +
+                     "      <directory>res</directory>" +
+                     "      <filtering>true</filtering>" +
+                     "    </resource>" +
+                     "  </resources>" +
+                     "</build>");
+
+    VirtualFile profiles = createProfilesXml("<profile>" +
+                                             "  <id>one</id>" +
+                                             "  <properties>" +
+                                             "    <profileProp>value</profileProp>" +
+                                             "  </properties>" +
+                                             "</profile>");
+    importProjectWithProfiles("one");
+
+    VirtualFile f = createProjectSubFile("res/foo.properties",
+                                         "foo=${profileProp<caret>}");
+
+    assertResolved(f, findTag(profiles, "profilesXml.profiles[0].properties.profileProp", MavenDomProfilesModel.class));
   }
 
   public void testDoNotResolveOutsideResources() throws Exception {
@@ -221,6 +293,6 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   }
 
   public void testFilteredPropertiesUsages() throws Exception {
-    
+
   }
 }

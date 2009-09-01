@@ -126,7 +126,9 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   }
 
   protected XmlTag findTag(VirtualFile file, String path, Class<? extends MavenDomElement> clazz) {
-    return MavenDomUtil.findTag(MavenDomUtil.getMavenDomModel(myProject, file, clazz), path);
+    MavenDomElement model = MavenDomUtil.getMavenDomModel(myProject, file, clazz);
+    assertNotNull("Model is not of " + clazz, model);
+    return MavenDomUtil.findTag(model, path);
   }
 
   protected void assertNoReferences(VirtualFile file, Class refClass) throws IOException {

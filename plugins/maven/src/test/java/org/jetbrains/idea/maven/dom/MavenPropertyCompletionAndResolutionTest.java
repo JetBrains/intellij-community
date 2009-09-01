@@ -208,7 +208,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   public void testResolutionToInheritedModelPropertiesForManagedParent() throws Exception {
-    createProjectPom("<groupId>test</groupId" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
 
@@ -217,12 +217,12 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                      "</build>");
 
     VirtualFile child = createModulePom("child",
-                                        "<groupId>test</groupId" +
+                                        "<groupId>test</groupId>" +
                                         "<artifactId>child</artifactId>" +
                                         "<version>1</version>" +
 
                                         "<parent>" +
-                                        "  <groupId>test</groupId" +
+                                        "  <groupId>test</groupId>" +
                                         "  <artifactId>parent</artifactId>" +
                                         "  <version>1</version>" +
                                         "</parent>" +
@@ -231,12 +231,12 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     importProjects(myProjectPom, child);
 
     createModulePom("child",
-                    "<groupId>test</groupId" +
+                    "<groupId>test</groupId>" +
                     "<artifactId>child</artifactId>" +
                     "<version>1</version>" +
 
                     "<parent>" +
-                    "  <groupId>test</groupId" +
+                    "  <groupId>test</groupId>" +
                     "  <artifactId>parent</artifactId>" +
                     "  <version>1</version>" +
                     "</parent>" +
@@ -247,12 +247,12 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   public void testResolutionToInheritedModelPropertiesForRelativeParent() throws Exception {
-    createProjectPom("<groupId>test</groupId" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
                      "<parent>" +
-                     "  <groupId>test</groupId" +
+                     "  <groupId>test</groupId>" +
                      "  <artifactId>parent</artifactId>" +
                      "  <version>1</version>" +
                      "  <relativePath>./parent/pom.xml</version>" +
@@ -261,7 +261,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                      "<name>${<caret>project.build.directory}</name>");
 
     VirtualFile parent = createModulePom("parent",
-                                         "<groupId>test</groupId" +
+                                         "<groupId>test</groupId>" +
                                          "<artifactId>parent</artifactId>" +
                                          "<version>1</version>" +
 
@@ -270,6 +270,32 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                                          "</build>");
 
     assertResolved(myProjectPom, findTag(parent, "project.build.directory"));
+  }
+
+  public void testResolutionToInheritedPropertiesForNonManagedParent() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>parent</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <relativePath>parent/pom.xml</version>" +
+                     "</parent>" +
+
+                     "<name>${<caret>foo}</name>");
+
+    VirtualFile parent = createModulePom("parent",
+                                         "<groupId>test</groupId>" +
+                                         "<artifactId>parent</artifactId>" +
+                                         "<version>1</version>" +
+
+                                         "<properties>" +
+                                         "  <foo>value</foo>" +
+                                         "</properties>");
+
+    assertResolved(myProjectPom, findTag(parent, "project.properties.foo"));
   }
 
   public void testResolutionToInheritedSuperPomProjectProperty() throws Exception {
@@ -283,12 +309,12 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   public void testHandleResolutionRecursion() throws Exception {
-    createProjectPom("<groupId>test</groupId" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
                      "<parent>" +
-                     "  <groupId>test</groupId" +
+                     "  <groupId>test</groupId>" +
                      "  <artifactId>parent</artifactId>" +
                      "  <version>1</version>" +
                      "  <relativePath>./parent/pom.xml</version>" +
@@ -297,12 +323,12 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                      "<name>${<caret>project.description}</name>");
 
     createModulePom("parent",
-                    "<groupId>test</groupId" +
+                    "<groupId>test</groupId>" +
                     "<artifactId>parent</artifactId>" +
                     "<version>1</version>" +
 
                     "<parent>" +
-                    "  <groupId>test</groupId" +
+                    "  <groupId>test</groupId>" +
                     "  <artifactId>project</artifactId>" +
                     "  <version>1</version>" +
                     "  <relativePath>../pom.xml</version>" +
@@ -312,7 +338,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   public void testResolutionFromProperties() throws Exception {
-    createProjectPom("<groupId>test</groupId" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -328,7 +354,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   public void testResolutionWithProfiles() throws Exception {
     importProjectWithProfiles("two");
 
-    createProjectPom("<groupId>test</groupId" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -355,7 +381,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   public void testResolvingToProfilesBeforeModelsProperties() throws Exception {
     importProjectWithProfiles("one");
 
-    createProjectPom("<groupId>test</groupId" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -394,7 +420,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                                              "</profiles>");
     importProjectWithProfiles("two");
 
-    createProjectPom("<groupId>test</groupId" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -406,7 +432,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   public void testResolvingSettingsModelProperties() throws Exception {
     VirtualFile profiles = updateSettingsXml("<localRepository>" + getRepositoryPath() + "</localRepository>");
 
-    createProjectPom("<groupId>test</groupId" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -416,7 +442,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   public void testResolvingAbsentSettingsModelProperties() throws Exception {
-    createProjectPom("<groupId>test</groupId" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -426,7 +452,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   public void testResolvingUnknownSettingsModelProperties() throws Exception {
-    createProjectPom("<groupId>test</groupId" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -450,7 +476,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                                              "</profile>");
     importProjectWithProfiles("two");
 
-    createProjectPom("<groupId>test</groupId" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -474,7 +500,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                                                      "</profile>");
     importProjectWithProfiles("two");
 
-    createProjectPom("<groupId>test</groupId" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -484,12 +510,12 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   public void testResolvingInheritedProperties() throws Exception {
-    createProjectPom("<groupId>test</groupId" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
                      "<parent>" +
-                     "  <groupId>test</groupId" +
+                     "  <groupId>test</groupId>" +
                      "  <artifactId>parent</artifactId>" +
                      "  <version>1</version>" +
                      "  <relativePath>./parent/pom.xml</version>" +
@@ -498,7 +524,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                      "<name>${<caret>foo}</name>");
 
     VirtualFile parent = createModulePom("parent",
-                                         "<groupId>test</groupId" +
+                                         "<groupId>test</groupId>" +
                                          "<artifactId>parent</artifactId>" +
                                          "<version>1</version>" +
 
@@ -510,7 +536,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   public void testSystemProperties() throws Exception {
-    createProjectPom("<groupId>test</groupId" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -522,7 +548,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   public void testEnvProperties() throws Exception {
-    createProjectPom("<groupId>test</groupId" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -536,12 +562,12 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   public void testCompletion() throws Exception {
     importProjectWithProfiles("one");
 
-    createProjectPom("<groupId>test</groupId" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
                      "<parent>" +
-                     "  <groupId>test</groupId" +
+                     "  <groupId>test</groupId>" +
                      "  <artifactId>parent</artifactId>" +
                      "  <version>1</version>" +
                      "  <relativePath>./parent/pom.xml</version>" +
@@ -576,7 +602,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                       "</profile>");
 
     createModulePom("parent",
-                    "<groupId>test</groupId" +
+                    "<groupId>test</groupId>" +
                     "<artifactId>parent</artifactId>" +
                     "<version>1</version>" +
 
@@ -626,7 +652,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   public void testDoNotIncludeCollectionPropertiesInCompletion() throws Exception {
     importProjectWithProfiles("one");
 
-    createProjectPom("<groupId>test</groupId" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<name>${<caret>}</name>");

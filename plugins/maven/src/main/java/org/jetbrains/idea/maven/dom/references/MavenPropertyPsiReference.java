@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.dom.references;
 
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.TextRange;
@@ -132,19 +133,19 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   @Nullable
   private <T> T processProperties(@NotNull MavenDomProjectModel projectDom, final PropertyProcessor<T> processor) {
     T result;
-    MavenProject mavenProject = MavenDomUtil.findProject(projectDom);
+    MavenProject mavenProjectOrNull = MavenDomUtil.findProject(projectDom);
 
-    result = processSettingsXmlProperties(mavenProject, processor);
+    result = processSettingsXmlProperties(mavenProjectOrNull, processor);
     if (result != null) return result;
 
-    result = processProjectProperties(myVirtualFile, projectDom, mavenProject, processor);
+    result = processProjectProperties(projectDom, mavenProjectOrNull, processor);
     if (result != null) return result;
 
     return new MyMavenParentProjectFileProcessor<T>() {
       protected T doProcessParent(VirtualFile parentFile) {
         MavenDomProjectModel parentProjectDom = MavenDomUtil.getMavenDomProjectModel(myProject, parentFile);
         MavenProject parentMavenProject = MavenDomUtil.findProject(parentProjectDom);
-        return processProjectProperties(parentFile, parentProjectDom, parentMavenProject, processor);
+        return processProjectProperties(parentProjectDom, parentMavenProject, processor);
       }
     }.process(projectDom);
   }
@@ -165,35 +166,34 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   }
 
   @Nullable
-  private <T> T processProjectProperties(VirtualFile file,
-                                         MavenDomProjectModel projectDom,
-                                         MavenProject mavenProject,
+  private <T> T processProjectProperties(MavenDomProjectModel projectDom,
+                                         MavenProject mavenProjectOrNull,
                                          PropertyProcessor<T> processor) {
     T result;
 
-    result = processProfilesXmlProperties(file, mavenProject, processor);
+    result = processProfilesXmlProperties(MavenDomUtil.getVirtualFile(projectDom), mavenProjectOrNull, processor);
     if (result != null) return result;
 
-    result = processProfilesProperties(projectDom.getProfiles(), mavenProject, processor);
+    result = processProfilesProperties(projectDom.getProfiles(), mavenProjectOrNull, processor);
     if (result != null) return result;
 
     return processProperties(projectDom.getProperties(), processor);
   }
 
   @Nullable
-  private <T> T processProfilesXmlProperties(VirtualFile projectFile, MavenProject mavenProject, PropertyProcessor<T> processor) {
+  private <T> T processProfilesXmlProperties(VirtualFile projectFile, MavenProject mavenProjectOrNull, PropertyProcessor<T> processor) {
     VirtualFile profilesFile = MavenUtil.findProfilesXmlFile(projectFile);
     if (profilesFile == null) return null;
 
     MavenDomProfiles profiles = MavenDomUtil.getMavenDomProfilesModel(myProject, profilesFile);
     if (profiles == null) return null;
 
-    return processProfilesProperties(profiles, mavenProject, processor);
+    return processProfilesProperties(profiles, mavenProjectOrNull, processor);
   }
 
   @Nullable
-  private <T> T processProfilesProperties(MavenDomProfiles profilesDom, MavenProject mavenProject, PropertyProcessor<T> processor) {
-    List<String> activePropfiles = mavenProject == null ? null : mavenProject.getActiveProfilesIds();
+  private <T> T processProfilesProperties(MavenDomProfiles profilesDom, MavenProject mavenProjectOrNull, PropertyProcessor<T> processor) {
+    List<String> activePropfiles = mavenProjectOrNull == null ? null : mavenProjectOrNull.getActiveProfilesIds();
     for (MavenDomProfile each : profilesDom.getProfiles()) {
       XmlTag idTag = each.getId().getXmlTag();
       if (idTag == null) continue;
@@ -437,7 +437,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
         parentDesc = new MavenParentDesc(parentId, parentRelativePath);
       }
 
-      return process(myProjectsManager.getGeneralSettings(), myVirtualFile, parentDesc);
+      return process(myProjectsManager.getGeneralSettings(), MavenDomUtil.getVirtualFile(projectDom), parentDesc);
     }
   }
 }

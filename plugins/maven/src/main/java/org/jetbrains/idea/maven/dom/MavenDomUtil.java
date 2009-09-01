@@ -96,8 +96,19 @@ public class MavenDomUtil {
   }
 
   @Nullable
-  public static VirtualFile getVirtualFile(PsiElement element) {
+  public static VirtualFile getVirtualFile(@NotNull DomElement element) {
+    PsiFile psiFile = DomUtil.getFile(element);
+    return getVirtualFile(psiFile);
+  }
+
+  @Nullable
+  public static VirtualFile getVirtualFile(@NotNull PsiElement element) {
     PsiFile psiFile = element.getContainingFile();
+    return getVirtualFile(psiFile);
+  }
+
+  @Nullable
+  private static VirtualFile getVirtualFile(PsiFile psiFile) {
     if (psiFile == null) return null;
     psiFile = psiFile.getOriginalFile();
     return psiFile.getVirtualFile();
