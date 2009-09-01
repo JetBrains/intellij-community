@@ -1,4 +1,3 @@
-
 package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.DataContext;
