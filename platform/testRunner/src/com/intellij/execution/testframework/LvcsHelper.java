@@ -6,7 +6,6 @@ package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.history.LocalHistory;
-import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 
 import java.awt.*;
 
@@ -24,13 +23,7 @@ public class LvcsHelper {
     }
     else {
       color = GREEN.getRGB();
-
-      if (model.getRoot().getMagnitude() != PoolOfTestStates.PASSED_INDEX) {
-        label = ExecutionBundle.message("tests.passed.with.warnings.message");
-      }
-      else {
-        label = ExecutionBundle.message("junit.runing.info.tests.passed.label");
-      }
+      label = ExecutionBundle.message("junit.runing.info.tests.passed.label");
     }
     final TestConsoleProperties consoleProperties = model.getProperties();
     String name = label + " " + consoleProperties.getConfiguration().getName();

@@ -62,32 +62,11 @@ public abstract class Filter {
     }
   };
 
-  public static final Filter TEST_CASE = new Filter() {
-    public boolean shouldAccept(final AbstractTestProxy test) {
-      return test.shouldRun();
-    }
-  };
-
-  public static final Filter IN_PROGRESS = new Filter() {
-    public boolean shouldAccept(final AbstractTestProxy test) {
-      return test.isInProgress();
-    }
-  };
-
   public static final Filter LEAF = new Filter() {
     public boolean shouldAccept(final AbstractTestProxy test) {
       return test.isLeaf();
     }
   };
-
-  public static final Filter RUNNING = new Filter() {
-    public boolean shouldAccept(final AbstractTestProxy test) {
-      return test.getMagnitude() == PoolOfTestStates.RUNNING_INDEX;
-    }
-  };
-
-  public static final Filter NOT_LEAF = LEAF.not();
-  public static final Filter RUNNING_LEAF = RUNNING.and(LEAF);
 
   public static final Filter DEFECTIVE_LEAF = DEFECT.and(LEAF);
 
