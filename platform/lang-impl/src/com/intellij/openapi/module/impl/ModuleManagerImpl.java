@@ -2,7 +2,6 @@ package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.ide.impl.convert.ModuleConverter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,8 +23,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -38,7 +35,6 @@ import com.intellij.util.messages.MessageHandler;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jdom.Document;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -225,8 +221,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
           for (final ModulePath modulePath : myModulePaths) {
             try {
-              convertIfNeeded(modulePath);
-
               final Module module = moduleModel.loadModuleInternal(modulePath.getPath());
               if (module.getModuleType() instanceof UnknownModuleType) {
                 modulesWithUnknownTypes.add(module);
@@ -276,38 +270,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
       else {
         app.invokeAndWait(swingRunnable, ModalityState.defaultModalityState());
-      }
-    }
-  }
-
-  private void convertIfNeeded(ModulePath modulePath) throws IOException {
-    final ModuleConverter[] converters = ModuleConverter.EXTENSION_POINT.getExtensions();
-    final File file = new File(modulePath.getPath());
-    final Document document;
-    try {
-      document = JDOMUtil.loadDocument(file);
-    }
-    catch (JDOMException e) {
-      return;
-    }
-    catch (IOException e) {
-      return;
-    }
-    final Element element = document.getRootElement();
-    for (final ModuleConverter converter : converters) {
-      if (converter.isConversionNeeded(element)) {
-        final String fileName = file.getName();
-        if (Messages.showYesNoDialog(myProject,
-                                     "Module file '" + fileName + "' has old format. Would you like to convert it to a new one?",
-                                     "Conversion",
-                                     Messages.getWarningIcon()) == 0) {
-          converter.convertModuleRoot(fileName, element);
-          JDOMUtil.writeDocument(document, modulePath.myPath, SystemProperties.getLineSeparator());
-          final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-          assert virtualFile != null;
-          virtualFile.refresh(false, false);
-        }
-        return;
       }
     }
   }

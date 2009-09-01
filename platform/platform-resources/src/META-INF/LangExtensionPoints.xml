@@ -77,9 +77,6 @@
                   interface="com.intellij.lang.injection.MultiHostInjector"
                   area="IDEA_PROJECT"/>
 
-  <extensionPoint name="module.converter"
-                    interface="com.intellij.ide.impl.convert.ModuleConverter"/>
-
   <extensionPoint name="annotator"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="externalAnnotator"
